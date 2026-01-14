@@ -162,6 +162,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');
+        Route::put('/settings/wacloud', [App\Http\Controllers\Admin\SettingController::class, 'updateWACloudSettings'])->name('settings.update-wacloud');
+        Route::get('/settings/wacloud/quota', [App\Http\Controllers\Admin\SettingController::class, 'getWACloudQuota'])->name('settings.wacloud-quota');
 
         // DRiiPPreneur Management
         Route::get('/driippreneurs', [App\Http\Controllers\Admin\DriippreneurController::class, 'index'])->name('driippreneurs.index');

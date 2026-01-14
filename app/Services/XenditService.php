@@ -51,7 +51,16 @@ class XenditService
                 ]);
 
             if ($response->successful()) {
-                return $response->json();
+                $result = $response->json();
+                
+                Log::info('Xendit invoice created', [
+                    'invoice_id' => $result['id'] ?? null,
+                    'invoice_url' => $result['invoice_url'] ?? null,
+                    'status' => $result['status'] ?? null,
+                    'has_invoice_url' => isset($result['invoice_url']),
+                ]);
+                
+                return $result;
             }
 
             Log::error('Xendit API Error', [

@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('xendit_invoice_id')->nullable()->after('payment_method');
-            $table->text('xendit_invoice_url')->nullable()->after('xendit_invoice_id');
+            if (!Schema::hasColumn('orders', 'xendit_invoice_id')) {
+                $table->string('xendit_invoice_id')->nullable()->after('payment_method');
+            }
+            if (!Schema::hasColumn('orders', 'xendit_invoice_url')) {
+                $table->text('xendit_invoice_url')->nullable()->after('xendit_invoice_id');
+            }
         });
     }
 

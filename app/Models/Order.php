@@ -41,6 +41,8 @@ class Order extends Model
         'notes',
         'points_earned',
         'points_credited',
+        'xendit_invoice_id',
+        'xendit_invoice_url',
     ];
 
     protected $casts = [

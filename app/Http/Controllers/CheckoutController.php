@@ -13,6 +13,7 @@ use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -444,6 +445,9 @@ class CheckoutController extends Controller
                 'points_earned' => $pointsEarned,
                 'points_credited' => false,
             ]);
+            
+            // Load relationships for notification
+            $order->load('address');
 
             foreach ($carts as $cart) {
                 OrderItem::create([
@@ -466,7 +470,8 @@ class CheckoutController extends Controller
 
             Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->delete();
 
-            // Handle Xendit payment
+            // Handle Xendit payment first (to get invoice URL)
+            $xenditInvoiceUrl = null;
             if ($request->payment_method === 'xendit') {
                 $xenditService = new XenditService();
                 $customer = [
@@ -478,22 +483,113 @@ class CheckoutController extends Controller
                 $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
 
                 if ($invoice && isset($invoice['id'])) {
-                    $order->update([
-                        'xendit_invoice_id' => $invoice['id'],
-                        'xendit_invoice_url' => $invoice['invoice_url'] ?? null,
+                    $xenditInvoiceId = $invoice['id'];
+                    $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
+                    
+                    // If invoice_url is not in the response, try to get it by fetching the invoice
+                    if (empty($xenditInvoiceUrl)) {
+                        Log::warning('Xendit invoice_url not in response, fetching invoice', [
+                            'invoice_id' => $xenditInvoiceId,
+                            'order_id' => $order->id,
+                        ]);
+                        
+                        // Try to get invoice details
+                        $invoiceDetails = $xenditService->getInvoice($xenditInvoiceId);
+                        if ($invoiceDetails && isset($invoiceDetails['invoice_url'])) {
+                            $xenditInvoiceUrl = $invoiceDetails['invoice_url'];
+                            Log::info('Xendit invoice_url retrieved from getInvoice', [
+                                'invoice_id' => $xenditInvoiceId,
+                                'invoice_url' => $xenditInvoiceUrl,
+                            ]);
+                        }
+                    }
+                    
+                    // Ensure invoice_url is available from response
+                    if (empty($xenditInvoiceUrl) && isset($invoice['invoice_url'])) {
+                        $xenditInvoiceUrl = $invoice['invoice_url'];
+                    }
+                    
+                    // Update order with invoice information
+                    $order->xendit_invoice_id = $xenditInvoiceId;
+                    $order->xendit_invoice_url = $xenditInvoiceUrl;
+                    $order->save();
+                    
+                    // Refresh order to get updated xendit_invoice_url
+                    $order->refresh();
+                    
+                    // Log for debugging
+                    Log::info('Xendit invoice saved to order', [
+                        'order_id' => $order->id,
+                        'invoice_id' => $xenditInvoiceId,
+                        'invoice_url' => $order->xendit_invoice_url,
+                        'has_url' => !empty($order->xendit_invoice_url),
                     ]);
-
-                    DB::commit();
-
-                    // Redirect to Xendit payment page
-                    return redirect($invoice['invoice_url']);
+                    
+                    // If invoice URL is still not available, log warning
+                    if (empty($order->xendit_invoice_url)) {
+                        Log::warning('Xendit invoice URL still not available after save', [
+                            'order_id' => $order->id,
+                            'invoice_id' => $xenditInvoiceId,
+                            'invoice_response' => $invoice,
+                            'xenditInvoiceUrl_var' => $xenditInvoiceUrl,
+                        ]);
+                    }
                 } else {
                     DB::rollBack();
+                    Log::error('Failed to create Xendit invoice', [
+                        'order_id' => $order->id,
+                        'invoice_response' => $invoice,
+                    ]);
                     return back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pilih metode pembayaran lain.');
                 }
             }
 
             DB::commit();
+
+            // Load relationships for notification (after commit to ensure data is saved)
+            if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
+                $order->refresh();
+                $order->load(['address.village', 'address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+            } else {
+                // Ensure address relationships are loaded
+                if ($order->address && (!$order->address->relationLoaded('village') || !$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
+                    $order->address->load(['village', 'district', 'regency', 'province']);
+                }
+            }
+
+            // Send WhatsApp payment notification ONLY after Xendit link is ready (for xendit) or immediately (for manual transfer)
+            if ($request->payment_method === 'xendit') {
+                // Always try to send payment notification with Xendit link
+                // If URL is not available, it will be handled in the helper
+                try {
+                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
+                } catch (\Exception $e) {
+                    // Log error but don't fail the checkout process
+                    \Log::error('Failed to send WhatsApp payment notification', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } else {
+                // For manual transfer, send notification immediately
+                try {
+                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
+                } catch (\Exception $e) {
+                    // Log error but don't fail the checkout process
+                    \Log::error('Failed to send WhatsApp payment notification', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            
+            // Note: Thank you notification will be sent after payment is successful via Xendit webhook
+
+            // Redirect based on payment method
+            if ($request->payment_method === 'xendit' && $xenditInvoiceUrl) {
+                // Redirect to Xendit payment page
+                return redirect($xenditInvoiceUrl);
+            }
 
             return redirect()->route('checkout.success', $order)->with('success', 'Pesanan berhasil dibuat.');
         } catch (\Exception $e) {
@@ -504,7 +600,109 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
-        $order->load('items.product', 'address', 'expedition', 'sourceWarehouse');
+        $order->load('items.product', 'address.village', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
+        
+        // Send thank you notification if payment is already paid
+        // This handles the case where user accesses success page after payment
+        // For Xendit: webhook should handle this, but we also check here as backup
+        // For manual transfer: notification should be sent after checkout, but we check here too
+        
+        Log::info('Checkout success page accessed', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method,
+        ]);
+        
+        // For Xendit: Check payment status from Xendit API if invoice ID exists
+        if ($order->payment_method === 'xendit' && $order->xendit_invoice_id && $order->payment_status !== 'paid') {
+            Log::info('Verifying payment status from Xendit API', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'invoice_id' => $order->xendit_invoice_id,
+                'current_payment_status' => $order->payment_status,
+            ]);
+            
+            try {
+                // Verify payment status from Xendit API
+                $xenditService = new XenditService();
+                $invoiceDetails = $xenditService->getInvoice($order->xendit_invoice_id);
+                
+                Log::info('Xendit API response received', [
+                    'order_id' => $order->id,
+                    'invoice_id' => $order->xendit_invoice_id,
+                    'has_response' => !empty($invoiceDetails),
+                    'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
+                ]);
+                
+                if ($invoiceDetails && isset($invoiceDetails['status']) && $invoiceDetails['status'] === 'PAID') {
+                    // Update order status if payment is actually paid
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
+                    
+                    // Auto update order status to processing if still pending
+                    if ($order->order_status === 'pending') {
+                        $order->update(['order_status' => 'processing']);
+                    }
+                    
+                    // Refresh order to get updated status
+                    $order->refresh();
+                    
+                    Log::info('Payment status updated from Xendit API', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'invoice_status' => $invoiceDetails['status'],
+                        'new_payment_status' => $order->payment_status,
+                    ]);
+                } else {
+                    Log::info('Payment not yet paid in Xendit', [
+                        'order_id' => $order->id,
+                        'invoice_id' => $order->xendit_invoice_id,
+                        'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to verify payment status from Xendit', [
+                    'order_id' => $order->id,
+                    'invoice_id' => $order->xendit_invoice_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        } else {
+            Log::info('Skipping Xendit verification', [
+                'order_id' => $order->id,
+                'payment_method' => $order->payment_method,
+                'has_invoice_id' => !empty($order->xendit_invoice_id),
+                'payment_status' => $order->payment_status,
+            ]);
+        }
+        
+        // Send thank you notification if payment is paid
+        if ($order->payment_status === 'paid') {
+            try {
+                Log::info('Payment is paid, sending thank you notification', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+                \App\Helpers\WACloudHelper::sendThankYouNotification($order);
+            } catch (\Exception $e) {
+                // Log error but don't fail the page load
+                Log::error('Failed to send WhatsApp thank you notification on success page', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } else {
+            Log::info('Payment not yet paid, skipping thank you notification', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_status' => $order->payment_status,
+            ]);
+        }
+        
         return view('checkout.success', compact('order'));
     }
 

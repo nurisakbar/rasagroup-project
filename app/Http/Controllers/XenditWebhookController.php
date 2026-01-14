@@ -81,6 +81,20 @@ class XenditWebhookController extends Controller
                             'order_number' => $order->order_number,
                             'amount' => $order->total_amount,
                         ]);
+                        
+                        // Send thank you notification after payment is successful
+                        try {
+                            // Load relationships for notification
+                            $order->load(['address.village', 'address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                            
+                            \App\Helpers\WACloudHelper::sendThankYouNotification($order);
+                        } catch (\Exception $e) {
+                            // Log error but don't fail the webhook processing
+                            Log::error('Failed to send WhatsApp thank you notification after payment', [
+                                'order_id' => $order->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
                         break;
 
                     case 'EXPIRED':
