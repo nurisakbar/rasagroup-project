@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Produk - Otten Coffee</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #8B4513;
+            --primary-dark: #654321;
+            --secondary-color: #D2691E;
+            --accent-color: #F4A460;
+            --dark-color: #2C1810;
+            --light-bg: #F5F5F5;
+            --white: #FFFFFF;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --border-color: #E0E0E0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background: var(--light-bg);
+        }
+
+        /* Header */
+        .main-header {
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .cart-icon {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary-color);
+            color: var(--white);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: var(--white);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb span {
+            color: var(--text-light);
+            margin: 0 10px;
+        }
+
+        /* Product Detail Section */
+        .product-detail-section {
+            padding: 40px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .product-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+        }
+
+        .product-images {
+            position: relative;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            background: var(--light-bg);
+        }
+
+        .thumbnail-images {
+            display: flex;
+            gap: 15px;
+        }
+
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .thumbnail:hover,
+        .thumbnail.active {
+            border-color: var(--primary-color);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .product-info h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .product-category {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .product-rating .stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .product-rating .stars i {
+            color: #FFA500;
+            font-size: 1.2rem;
+        }
+
+        .product-rating .rating-text {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        .product-price-section {
+            margin-bottom: 30px;
+        }
+
+        .current-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .old-price {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            text-decoration: line-through;
+            margin-left: 15px;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: var(--white);
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .product-description {
+            margin-bottom: 30px;
+        }
+
+        .product-description h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .product-description p {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .product-specs {
+            margin-bottom: 30px;
+        }
+
+        .product-specs h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .specs-list {
+            list-style: none;
+        }
+
+        .specs-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .specs-list li:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .spec-value {
+            color: var(--text-light);
+        }
+
+        .quantity-section {
+            margin-bottom: 30px;
+        }
+
+        .quantity-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .quantity-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        .quantity-input {
+            width: 80px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 18px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(139, 69, 19, 0.4);
+        }
+
+        .btn-secondary {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 60px;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .reviews-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .review-item {
+            padding: 25px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .review-date {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 10px;
+        }
+
+        .review-rating i {
+            color: #FFA500;
+        }
+
+        .review-text {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        /* Related Products */
+        .related-products {
+            margin-top: 60px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 30px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark-color);
+            color: var(--white);
+            padding: 40px 0 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            margin-top: 30px;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .product-detail {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <a href="template-otten.html" class="logo">
+                <i class="bi bi-cup-hot"></i>
+                <span>Otten Coffee</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="template-otten.html">Beranda</a></li>
+                <li><a href="categories.html">Kategori</a></li>
+                <li><a href="template-otten.html#products">Produk</a></li>
+                <li><a href="template-otten.html#about">Tentang</a></li>
+            </ul>
+            <div class="header-actions">
+                <div style="position: relative;">
+                    <i class="bi bi-cart3 cart-icon"></i>
+                    <span class="cart-badge">3</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <div class="breadcrumb-content">
+            <a href="template-otten.html">Beranda</a>
+            <span>/</span>
+            <a href="categories.html">Kategori</a>
+            <span>/</span>
+            <a href="products-by-category.html?category=biji-kopi">Biji Kopi</a>
+            <span>/</span>
+            <span id="product-name-breadcrumb">Arabica Premium Blend</span>
+        </div>
+    </div>
+
+    <!-- Product Detail Section -->
+    <section class="product-detail-section">
+        <div class="container">
+            <div class="product-detail" id="product-detail">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="reviews-section">
+                <div class="reviews-header">
+                    <h2>Ulasan Pelanggan</h2>
+                    <div>
+                        <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">4.8</span>
+                        <span style="color: var(--text-light);">/ 5.0</span>
+                    </div>
+                </div>
+                <div class="review-item">
+                    <div class="review-header">
+                        <div>
+                            <div class="reviewer-name">Budi Santoso</div>
+                            <div class="review-date">15 Desember 2024</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="review-text">
+                        Kopi dengan kualitas sangat baik! Aromanya harum dan rasanya sangat nikmat. Pengiriman juga cepat. Highly recommended!
+                    </div>
+                </div>
+                <div class="review-item">
+                    <div class="review-header">
+                        <div>
+                            <div class="reviewer-name">Siti Nurhaliza</div>
+                            <div class="review-date">12 Desember 2024</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-half"></i>
+                    </div>
+                    <div class="review-text">
+                        Produk sesuai dengan deskripsi. Packing rapi dan aman. Akan order lagi di kesempatan berikutnya.
+                    </div>
+                </div>
+                <div class="review-item">
+                    <div class="review-header">
+                        <div>
+                            <div class="reviewer-name">Ahmad Fauzi</div>
+                            <div class="review-date">10 Desember 2024</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="review-text">
+                        Kopi premium dengan harga yang sangat terjangkau. Kualitasnya tidak kalah dengan brand terkenal lainnya. Puas!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Products -->
+            <div class="related-products">
+                <h2 class="section-title">Produk Terkait</h2>
+                <div class="products-grid">
+                    <a href="product-detail.html?id=2" class="product-card">
+                        <img src="https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=400" alt="Product" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name">Robusta Dark Roast</div>
+                            <div class="product-price">Rp 95.000</div>
+                        </div>
+                    </a>
+                    <a href="product-detail.html?id=3" class="product-card">
+                        <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400" alt="Product" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name">Ethiopian Yirgacheffe</div>
+                            <div class="product-price">Rp 180.000</div>
+                        </div>
+                    </a>
+                    <a href="product-detail.html?id=4" class="product-card">
+                        <img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400" alt="Product" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name">Colombian Supremo</div>
+                            <div class="product-price">Rp 145.000</div>
+                        </div>
+                    </a>
+                    <a href="product-detail.html?id=5" class="product-card">
+                        <img src="https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=400" alt="Product" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name">Sumatra Mandheling</div>
+                            <div class="product-price">Rp 135.000</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Otten Coffee. All rights reserved.</p>
+        </div>
+        <div class="footer-bottom">
+            <p>Template statis - Tidak terhubung dengan Laravel</p>
+        </div>
+    </footer>
+
+    <script>
+        // Sample product data
+        const products = {
+            1: {
+                name: 'Arabica Premium Blend',
+                category: 'Biji Kopi',
+                price: 125000,
+                oldPrice: 150000,
+                rating: 4.8,
+                reviews: 234,
+                badge: 'Bestseller',
+                images: [
+                    'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800',
+                    'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=800',
+                    'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800'
+                ],
+                description: 'Arabica Premium Blend adalah kombinasi sempurna dari biji kopi Arabica pilihan dari berbagai daerah terbaik di Indonesia. Dengan proses roasting yang teliti, kopi ini menghasilkan cita rasa yang kompleks dengan aroma yang harum dan aftertaste yang panjang.',
+                specs: {
+                    'Asal': 'Indonesia',
+                    'Tingkat Roasting': 'Medium',
+                    'Berat': '250 gram',
+                    'Kemasan': 'Vacuum Sealed',
+                    'Masa Simpan': '12 bulan',
+                    'Tingkat Asam': 'Sedang'
+                }
+            },
+            2: {
+                name: 'Robusta Dark Roast',
+                category: 'Biji Kopi',
+                price: 95000,
+                oldPrice: null,
+                rating: 4.5,
+                reviews: 189,
+                badge: null,
+                images: [
+                    'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=800',
+                    'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800'
+                ],
+                description: 'Robusta Dark Roast memberikan pengalaman kopi yang kuat dan berkarakter. Dengan tingkat roasting yang lebih gelap, kopi ini memiliki body yang penuh dan rasa yang lebih pahit namun tetap seimbang.',
+                specs: {
+                    'Asal': 'Sumatra',
+                    'Tingkat Roasting': 'Dark',
+                    'Berat': '250 gram',
+                    'Kemasan': 'Vacuum Sealed',
+                    'Masa Simpan': '12 bulan',
+                    'Tingkat Asam': 'Rendah'
+                }
+            }
+        };
+
+        // Get product ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = parseInt(urlParams.get('id')) || 1;
+        const product = products[productId] || products[1];
+
+        // Update breadcrumb
+        document.getElementById('product-name-breadcrumb').textContent = product.name;
+
+        // Render product detail
+        function renderProduct() {
+            const detail = document.getElementById('product-detail');
+            const stars = Array.from({length: 5}, (_, i) => 
+                i < Math.floor(product.rating) 
+                    ? '<i class="bi bi-star-fill"></i>' 
+                    : i < product.rating 
+                        ? '<i class="bi bi-star-half"></i>' 
+                        : '<i class="bi bi-star"></i>'
+            ).join('');
+
+            detail.innerHTML = `
+                <div class="product-images">
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                    <img src="${product.images[0]}" alt="${product.name}" class="main-image" id="main-image">
+                    <div class="thumbnail-images">
+                        ${product.images.map((img, index) => `
+                            <img src="${img}" alt="${product.name}" class="thumbnail ${index === 0 ? 'active' : ''}" 
+                                 onclick="changeImage('${img}', this)">
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="product-info">
+                    <div class="product-category">${product.category}</div>
+                    <h1>${product.name}</h1>
+                    <div class="product-rating">
+                        <div class="stars">${stars}</div>
+                        <span class="rating-text">${product.rating} (${product.reviews} ulasan)</span>
+                    </div>
+                    <div class="product-price-section">
+                        <div>
+                            <span class="current-price">Rp ${product.price.toLocaleString('id-ID')}</span>
+                            ${product.oldPrice ? `<span class="old-price">Rp ${product.oldPrice.toLocaleString('id-ID')}</span>` : ''}
+                            ${product.oldPrice ? `<span class="discount-badge">-${Math.round((1 - product.price/product.oldPrice) * 100)}%</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="product-description">
+                        <h3>Deskripsi Produk</h3>
+                        <p>${product.description}</p>
+                    </div>
+                    <div class="product-specs">
+                        <h3>Spesifikasi</h3>
+                        <ul class="specs-list">
+                            ${Object.entries(product.specs).map(([key, value]) => `
+                                <li>
+                                    <span class="spec-label">${key}</span>
+                                    <span class="spec-value">${value}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="quantity-section">
+                        <h3>Jumlah</h3>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                            <input type="number" class="quantity-input" id="quantity" value="1" min="1" max="10">
+                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-primary" onclick="addToCart()">
+                            <i class="bi bi-cart-plus me-2"></i>Tambah ke Keranjang
+                        </button>
+                        <button class="btn-secondary" onclick="addToWishlist()">
+                            <i class="bi bi-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function changeImage(src, element) {
+            document.getElementById('main-image').src = src;
+            document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function increaseQuantity() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) < 10) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
+
+        function decreaseQuantity() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        function addToCart() {
+            const quantity = document.getElementById('quantity').value;
+            alert(`Ditambahkan ${quantity} item ke keranjang!`);
+        }
+
+        function addToWishlist() {
+            alert('Ditambahkan ke wishlist!');
+        }
+
+        // Initial render
+        renderProduct();
+    </script>
+</body>
+</html>
+
+
+
+
+
