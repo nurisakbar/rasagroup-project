@@ -63,7 +63,7 @@
                                 <tr class="{{ $stock->stock <= 10 ? 'danger' : '' }}">
                                     <td>
                                         @if($stock->product->image)
-                                            <img src="{{ $stock->product->image_url }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                            <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                         @else
                                             <div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa fa-image text-muted"></i>

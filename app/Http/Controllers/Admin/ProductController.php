@@ -51,7 +51,7 @@ class ProductController extends Controller
                 })
                 ->addColumn('image_display', function ($product) {
                     if ($product->image_url) {
-                        return '<img src="' . $product->image_url . '" alt="' . $product->name . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
+                        return '<img src="' . asset($product->image_url) . '" alt="' . $product->name . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
                     }
                     return '<img src="' . asset('adminlte/img/default-50x50.gif') . '" alt="No Image" style="width: 50px; height: 50px;">';
                 })

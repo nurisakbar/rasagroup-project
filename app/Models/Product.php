@@ -152,6 +152,7 @@ class Product extends Model
     /**
      * Get the image URL attribute.
      * Handles different path formats: products/filename.jpg, storage/products/filename.jpg, or full URL
+     * Returns relative path like storage/products/filename.jpg
      */
     public function getImageUrlAttribute(): ?string
     {
@@ -169,10 +170,10 @@ class Product extends Model
         
         // If path already starts with storage/, use it directly
         if (strpos($imagePath, 'storage/') === 0) {
-            return asset($imagePath);
+            return $imagePath;
         }
         
         // Otherwise, prepend storage/
-        return asset('storage/' . $imagePath);
+        return 'storage/' . $imagePath;
     }
 }

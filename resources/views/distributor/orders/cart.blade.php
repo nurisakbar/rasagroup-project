@@ -39,7 +39,7 @@
                                     <tr>
                                         <td>
                                             @if($cart->product->image)
-                                                <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}" style="width: 60px; height: 60px; object-fit: cover;">
+                                                <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->name }}" style="width: 60px; height: 60px; object-fit: cover;">
                                             @else
                                                 <div style="width: 60px; height: 60px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                                     <i class="fa fa-image text-muted"></i>

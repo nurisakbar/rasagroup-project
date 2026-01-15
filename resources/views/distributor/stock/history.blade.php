@@ -28,7 +28,7 @@
                     <div class="row">
                         <div class="col-md-2">
                             @if($stock->product && $stock->product->image)
-                                <img src="{{ $stock->product->image_url }}" alt="{{ $stock->product->name }}" class="img-responsive" style="border-radius: 5px;">
+                                <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->name }}" class="img-responsive" style="border-radius: 5px;">
                             @else
                                 <div style="width: 100%; height: 150px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                                     <i class="fa fa-image fa-3x text-muted"></i>

@@ -299,7 +299,7 @@ class DistributorController extends Controller
                 ->addIndexColumn()
                 ->addColumn('product_image', function ($stock) {
                     if ($stock->product->image_url) {
-                        return '<img src="' . $stock->product->image_url . '" alt="' . $stock->product->name . '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;">';
+                        return '<img src="' . asset($stock->product->image_url) . '" alt="' . $stock->product->name . '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;">';
                     }
                     return '<img src="' . asset('adminlte/img/default-50x50.gif') . '" alt="No Image" style="width: 40px; height: 40px;">';
                 })

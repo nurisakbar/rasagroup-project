@@ -54,7 +54,7 @@
                 <div class="card product-card h-100">
                     <div class="card-img-wrapper">
                         @if($product->image_url)
-                            <img src="{{ $product->image_url }}" class="card-img-top" alt="{{ $product->name }}">
+                            <img src="{{ asset($product->image_url) }}" class="card-img-top" alt="{{ $product->name }}">
                         @else
                             <img src="https://via.placeholder.com/300x220/e74c3c/fff?text={{ urlencode($product->name) }}" class="card-img-top" alt="{{ $product->name }}">
                         @endif

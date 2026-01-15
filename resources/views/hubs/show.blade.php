@@ -245,7 +245,7 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="product-card">
                                 @if(!empty($product->image))
-                                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="product-img">
+                                    <img src="{{ asset($product->image_url) }}" alt="{{ $product->name }}" class="product-img">
                                 @else
                                     <div class="product-img-placeholder">
                                         <i class="bi bi-image fs-1"></i>

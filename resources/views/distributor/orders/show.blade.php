@@ -105,7 +105,7 @@
                                 <tr>
                                     <td>
                                         @if($item->product && $item->product->image)
-                                            <img src="{{ $item->product->image_url }}" alt="" style="width: 60px; height: 60px; object-fit: cover;">
+                                            <img src="{{ asset($item->product->image_url) }}" alt="" style="width: 60px; height: 60px; object-fit: cover;">
                                         @else
                                             <div style="width: 60px; height: 60px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa fa-image text-muted"></i>
