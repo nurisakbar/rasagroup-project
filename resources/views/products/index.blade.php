@@ -53,8 +53,8 @@
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card product-card h-100">
                     <div class="card-img-wrapper">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" class="card-img-top" alt="{{ $product->name }}">
+                        @if($product->image_url)
+                            <img src="{{ $product->image_url }}" class="card-img-top" alt="{{ $product->name }}">
                         @else
                             <img src="https://via.placeholder.com/300x220/e74c3c/fff?text={{ urlencode($product->name) }}" class="card-img-top" alt="{{ $product->name }}">
                         @endif

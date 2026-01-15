@@ -122,8 +122,8 @@
                                         <tr>
                                             <td class="text-start">
                                                 <div class="d-flex align-items-center">
-                                                    @if($item->product->image)
-                                                        <img src="{{ asset('storage/' . $item->product->image) }}" 
+                                                    @if($item->product->image_url)
+                                                        <img src="{{ $item->product->image_url }}" 
                                                              alt="{{ $item->product->name }}" 
                                                              class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                                     @endif

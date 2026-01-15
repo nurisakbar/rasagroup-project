@@ -43,8 +43,8 @@ class StockController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('product_image', function ($stock) {
-                    if ($stock->product && $stock->product->image) {
-                        return '<img src="' . asset('storage/' . $stock->product->image) . '" alt="' . ($stock->product->name ?? '') . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
+                    if ($stock->product && $stock->product->image_url) {
+                        return '<img src="' . $stock->product->image_url . '" alt="' . ($stock->product->name ?? '') . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
                     }
                     return '<div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fa fa-image text-muted"></i></div>';
                 })
@@ -91,7 +91,7 @@ class StockController extends Controller
                         data-product-name="' . ($stock->product ? htmlspecialchars($stock->product->name) : '') . '"
                         data-product-price="' . ($stock->product ? number_format($stock->product->price, 0, ',', '.') : '0') . '"
                         data-current-stock="' . $stock->stock . '"
-                        data-product-image="' . ($stock->product && $stock->product->image ? asset('storage/' . $stock->product->image) : '') . '"
+                        data-product-image="' . ($stock->product && $stock->product->image_url ? $stock->product->image_url : '') . '"
                         data-toggle="modal" 
                         data-target="#updateStockModal">
                         <i class="fa fa-edit"></i> Update

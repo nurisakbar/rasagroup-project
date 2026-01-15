@@ -147,17 +147,8 @@ class WarehouseApiController extends Controller
         // Format response
         $products = $stocks->map(function ($stock) {
             // Build full image URL
-            $imageUrl = null;
-            if ($stock->product->image) {
-                // If image already contains full URL, use it as is
-                if (filter_var($stock->product->image, FILTER_VALIDATE_URL)) {
-                    $imageUrl = $stock->product->image;
-                } else {
-                    // Otherwise, prepend with base URL
-                    $imagePath = ltrim($stock->product->image, '/');
-                    $imageUrl = asset('images/' . $imagePath);
-                }
-            }
+            // Build full image URL using Product accessor
+            $imageUrl = $stock->product->image_url;
 
             return [
                 'id' => $stock->product->id,

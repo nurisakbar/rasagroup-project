@@ -78,7 +78,7 @@ class PosController extends Controller
                     'code' => $product->code,
                     'price' => (float) $product->price,
                     'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
-                    'image' => $product->image ? asset('storage/' . $product->image) : null,
+                    'image' => $product->image_url,
                     'stock' => $stock ? (int) $stock->stock : 0,
                     'brand' => $product->brand ? $product->brand->name : null,
                 ];
@@ -145,7 +145,7 @@ class PosController extends Controller
             'price' => $product->price,
             'quantity' => $newQuantity,
             'subtotal' => $product->price * $newQuantity,
-            'image' => $product->image ? asset('storage/' . $product->image) : null,
+            'image' => $product->image_url,
             'stock' => $availableStock,
         ];
 

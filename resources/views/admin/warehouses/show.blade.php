@@ -234,7 +234,7 @@
                                 <tr>
                                     <td>
                                         @if($stock->product->image)
-                                            <img src="{{ asset('storage/' . $stock->product->image) }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                            <img src="{{ $stock->product->image_url }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                         @else
                                             <div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa fa-image text-muted"></i>

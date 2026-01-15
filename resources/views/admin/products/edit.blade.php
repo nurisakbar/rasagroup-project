@@ -194,7 +194,7 @@
                             <label for="image">Gambar Produk</label>
                             @if($product->image)
                                 <div class="mb-2" style="margin-bottom: 10px;">
-                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
                                     <p class="help-block">Gambar saat ini</p>
                                 </div>
                             @endif

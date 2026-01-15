@@ -512,16 +512,8 @@ class OrderApiController extends Controller
                     'name' => $order->sourceWarehouse->name,
                 ] : null,
                 'items' => $order->items->map(function ($item) {
-                    // Build full image URL
-                    $imageUrl = null;
-                    if ($item->product->image) {
-                        if (filter_var($item->product->image, FILTER_VALIDATE_URL)) {
-                            $imageUrl = $item->product->image;
-                        } else {
-                            $imagePath = ltrim($item->product->image, '/');
-                            $imageUrl = asset('images/' . $imagePath);
-                        }
-                    }
+                    // Build full image URL using Product accessor
+                    $imageUrl = $item->product->image_url;
 
                     return [
                         'id' => $item->id,

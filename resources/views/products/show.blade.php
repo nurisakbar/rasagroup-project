@@ -31,8 +31,8 @@
         <!-- Product Image -->
         <div class="col-lg-6">
             <div class="product-image-wrapper position-relative">
-                @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->name }}" style="width: 100%; height: 450px; object-fit: cover;">
+                @if($product->image_url)
+                    <img src="{{ $product->image_url }}" class="img-fluid rounded-4 shadow" alt="{{ $product->name }}" style="width: 100%; height: 450px; object-fit: cover;">
                 @else
                     <img src="https://via.placeholder.com/500x450/e74c3c/fff?text={{ urlencode($product->name) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->name }}" style="width: 100%; height: 450px; object-fit: cover;">
                 @endif
@@ -196,8 +196,8 @@
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card product-card h-100">
                         <div class="card-img-wrapper">
-                            @if($related->image)
-                                <img src="{{ asset('storage/' . $related->image) }}" class="card-img-top" alt="{{ $related->name }}">
+                            @if($related->image_url)
+                                <img src="{{ $related->image_url }}" class="card-img-top" alt="{{ $related->name }}">
                             @else
                                 <img src="https://via.placeholder.com/300x200/e74c3c/fff?text={{ urlencode($related->name) }}" class="card-img-top" alt="{{ $related->name }}">
                             @endif

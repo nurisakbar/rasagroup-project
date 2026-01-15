@@ -148,4 +148,31 @@ class Product extends Model
         }
         return $this->name;
     }
+
+    /**
+     * Get the image URL attribute.
+     * Handles different path formats: products/filename.jpg, storage/products/filename.jpg, or full URL
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        // Handle different path formats
+        $imagePath = ltrim($this->image, '/');
+        
+        // If path already starts with storage/, use it directly
+        if (strpos($imagePath, 'storage/') === 0) {
+            return asset($imagePath);
+        }
+        
+        // Otherwise, prepend storage/
+        return asset('storage/' . $imagePath);
+    }
 }

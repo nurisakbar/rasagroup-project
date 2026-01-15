@@ -28,7 +28,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-responsive" style="max-width: 100%; border-radius: 5px;">
+                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="img-responsive" style="max-width: 100%; border-radius: 5px;">
                             @else
                                 <div class="text-center" style="padding: 40px; background: #f5f5f5; border-radius: 5px;">
                                     <i class="fa fa-image fa-3x text-muted"></i>

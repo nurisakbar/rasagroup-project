@@ -495,7 +495,7 @@
             <div class="products-grid">
                 @forelse($products as $product)
                     <a href="{{ route('products.show', $product) }}" class="product-card">
-                        <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/400x300/8B4513/fff?text=' . urlencode($product->name) }}" 
+                        <img src="{{ $product->image_url ?? 'https://via.placeholder.com/400x300/8B4513/fff?text=' . urlencode($product->name) }}" 
                              alt="{{ $product->name }}" class="product-image">
                         <div class="product-info">
                             <div class="product-category">{{ $product->category->name ?? 'Produk' }}</div>

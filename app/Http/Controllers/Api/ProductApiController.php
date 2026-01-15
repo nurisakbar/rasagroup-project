@@ -50,16 +50,8 @@ class ProductApiController extends Controller
 
             // Format products for chatbot knowledge
             $formattedProducts = $products->map(function ($product) {
-                // Build image URL
-                $imageUrl = null;
-                if ($product->image) {
-                    if (filter_var($product->image, FILTER_VALIDATE_URL)) {
-                        $imageUrl = $product->image;
-                    } else {
-                        $imagePath = ltrim($product->image, '/');
-                        $imageUrl = asset('storage/' . $imagePath);
-                    }
-                }
+                // Build image URL using Product accessor
+                $imageUrl = $product->image_url;
 
                 return [
                     'id' => $product->id,
@@ -146,16 +138,8 @@ class ProductApiController extends Controller
 
             // Format products for chatbot knowledge
             $formattedProducts = $products->map(function ($product) {
-                // Build image URL
-                $imageUrl = null;
-                if ($product->image) {
-                    if (filter_var($product->image, FILTER_VALIDATE_URL)) {
-                        $imageUrl = $product->image;
-                    } else {
-                        $imagePath = ltrim($product->image, '/');
-                        $imageUrl = asset('storage/' . $imagePath);
-                    }
-                }
+                // Build image URL using Product accessor
+                $imageUrl = $product->image_url;
 
                 return [
                     'id' => $product->id,

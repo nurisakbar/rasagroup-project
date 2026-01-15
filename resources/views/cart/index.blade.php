@@ -73,7 +73,7 @@
                                 <td class="px-4 py-3">
                                     <div class="d-flex align-items-center">
                                         @if($cart->product->image)
-                                            <img src="{{ asset('storage/' . $cart->product->image) }}" alt="{{ $cart->product->name }}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                                            <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
                                         @else
                                             <img src="https://via.placeholder.com/60/e74c3c/fff?text=P" alt="No Image" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
                                         @endif

@@ -38,7 +38,7 @@
                 <div class="box box-widget widget-user-2" style="margin-bottom: 15px;">
                     <div class="widget-user-header bg-white" style="padding: 10px;">
                         @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-responsive" style="width: 100%; height: 150px; object-fit: cover;">
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="img-responsive" style="width: 100%; height: 150px; object-fit: cover;">
                         @else
                             <div style="width: 100%; height: 150px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                 <i class="fa fa-image fa-3x text-muted"></i>

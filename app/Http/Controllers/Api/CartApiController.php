@@ -33,16 +33,8 @@ class CartApiController extends Controller
         });
 
         $items = $carts->map(function ($cart) {
-            // Build full image URL
-            $imageUrl = null;
-            if ($cart->product->image) {
-                if (filter_var($cart->product->image, FILTER_VALIDATE_URL)) {
-                    $imageUrl = $cart->product->image;
-                } else {
-                    $imagePath = ltrim($cart->product->image, '/');
-                    $imageUrl = asset('images/' . $imagePath);
-                }
-            }
+            // Build full image URL using Product accessor
+            $imageUrl = $cart->product->image_url;
 
             return [
                 'id' => $cart->id,

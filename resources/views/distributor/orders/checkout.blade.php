@@ -158,7 +158,7 @@
                             <div style="display: flex; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
                                 <div style="flex: 0 0 50px;">
                                     @if($cart->product->image)
-                                        <img src="{{ asset('storage/' . $cart->product->image) }}" alt="" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <img src="{{ $cart->product->image_url }}" alt="" style="width: 50px; height: 50px; object-fit: cover;">
                                     @else
                                         <div style="width: 50px; height: 50px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                             <i class="fa fa-image text-muted"></i>

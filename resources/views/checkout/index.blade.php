@@ -236,7 +236,7 @@
                                 <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
                                     <div class="position-relative me-3">
                                         @if($cart->product->image)
-                                            <img src="{{ asset('storage/' . $cart->product->image) }}" alt="{{ $cart->product->name }}" 
+                                            <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}" 
                                                  class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
                                         @else
                                             <div class="bg-light rounded d-flex align-items-center justify-content-center" 
