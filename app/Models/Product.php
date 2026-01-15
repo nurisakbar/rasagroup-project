@@ -152,7 +152,7 @@ class Product extends Model
     /**
      * Get the image URL attribute.
      * Handles different path formats: products/filename.jpg, storage/products/filename.jpg, or full URL
-     * Returns relative path like storage/products/filename.jpg
+     * Always returns full URL with domain in format: domain.com/storage/products/filename.jpg
      */
     public function getImageUrlAttribute(): ?string
     {
@@ -168,12 +168,12 @@ class Product extends Model
         // Handle different path formats
         $imagePath = ltrim($this->image, '/');
         
-        // If path already starts with storage/, use it directly
-        if (strpos($imagePath, 'storage/') === 0) {
-            return $imagePath;
-        }
+        // Extract filename from path (basename works regardless of path structure)
+        // Handles: products/filename.jpg, storage/products/filename.jpg, storage/filename.jpg, filename.jpg
+        $filename = basename($imagePath);
         
-        // Otherwise, prepend storage/
-        return 'storage/' . $imagePath;
+        // Build full URL: domain.com/storage/products/filename
+        $baseUrl = rtrim(config('app.url'), '/');
+        return $baseUrl . '/storage/products/' . $filename;
     }
 }
