@@ -5,11 +5,18 @@ use App\Http\Controllers\Api\WarehouseApiController;
 use App\Http\Controllers\Api\CartApiController;
 use App\Http\Controllers\Api\AddressApiController;
 use App\Http\Controllers\Api\OrderApiController;
+use App\Http\Controllers\Api\ProductApiController;
 
 // Public routes (no authentication required)
 Route::prefix('warehouses')->group(function () {
     Route::get('/', [WarehouseApiController::class, 'index'])->name('api.warehouses.index');
     Route::get('/{warehouse}/products', [WarehouseApiController::class, 'getProducts'])->name('api.warehouses.products');
+});
+
+// Products routes (public for chatbot knowledge base)
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductApiController::class, 'index'])->name('api.products.index');
+    Route::get('/all', [ProductApiController::class, 'getAll'])->name('api.products.all');
 });
 
 // Protected routes (authentication required)
