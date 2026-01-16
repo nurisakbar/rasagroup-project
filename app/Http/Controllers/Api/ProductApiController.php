@@ -25,84 +25,85 @@ class ProductApiController extends Controller
                 $query = Product::with(['brand', 'category'])
                     ->where('status', 'active');
 
-            // Search filter
-            if ($request->filled('search')) {
-                $searchTerm = '%' . $request->search . '%';
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', $searchTerm)
-                        ->orWhere('code', 'like', $searchTerm)
-                        ->orWhere('commercial_name', 'like', $searchTerm)
-                        ->orWhere('description', 'like', $searchTerm);
+                // Search filter
+                if ($request->filled('search')) {
+                    $searchTerm = '%' . $request->search . '%';
+                    $query->where(function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', $searchTerm)
+                            ->orWhere('code', 'like', $searchTerm)
+                            ->orWhere('commercial_name', 'like', $searchTerm)
+                            ->orWhere('description', 'like', $searchTerm);
+                    });
+                }
+
+                // Brand filter
+                if ($request->filled('brand_id')) {
+                    $query->where('brand_id', $request->brand_id);
+                }
+
+                // Category filter
+                if ($request->filled('category_id')) {
+                    $query->where('category_id', $request->category_id);
+                }
+
+                // Pagination
+                $perPage = $request->get('per_page', 100); // Default 100 for chatbot knowledge
+                $perPage = min($perPage, 500); // Max 500 per page
+                
+                $products = $query->orderBy('name')->paginate($perPage);
+
+                // Format products for chatbot knowledge
+                $formattedProducts = $products->map(function ($product) {
+                    // Build image URL using Product accessor
+                    $imageUrl = $product->image_url;
+
+                    return [
+                        'id' => $product->id,
+                        'code' => $product->code,
+                        'name' => $product->name,
+                        'commercial_name' => $product->commercial_name,
+                        'description' => $product->description,
+                        'technical_description' => $product->technical_description,
+                        'price' => (float) $product->price,
+                        'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
+                        'unit' => $product->unit,
+                        'size' => $product->size,
+                        'weight' => $product->weight,
+                        'formatted_weight' => $product->formatted_weight,
+                        'image_url' => $imageUrl,
+                        'status' => $product->status,
+                        'brand' => $product->brand ? [
+                            'id' => $product->brand->id,
+                            'name' => $product->brand->name,
+                        ] : null,
+                        'category' => $product->category ? [
+                            'id' => $product->category->id,
+                            'name' => $product->category->name,
+                        ] : null,
+                        // Knowledge base friendly format
+                        'knowledge_text' => $this->buildKnowledgeText($product),
+                    ];
                 });
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Products retrieved successfully',
+                    'data' => $formattedProducts,
+                    'meta' => [
+                        'current_page' => $products->currentPage(),
+                        'last_page' => $products->lastPage(),
+                        'per_page' => $products->perPage(),
+                        'total' => $products->total(),
+                    ],
+                ], 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to retrieve products',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
-
-            // Brand filter
-            if ($request->filled('brand_id')) {
-                $query->where('brand_id', $request->brand_id);
-            }
-
-            // Category filter
-            if ($request->filled('category_id')) {
-                $query->where('category_id', $request->category_id);
-            }
-
-            // Pagination
-            $perPage = $request->get('per_page', 100); // Default 100 for chatbot knowledge
-            $perPage = min($perPage, 500); // Max 500 per page
-            
-            $products = $query->orderBy('name')->paginate($perPage);
-
-            // Format products for chatbot knowledge
-            $formattedProducts = $products->map(function ($product) {
-                // Build image URL using Product accessor
-                $imageUrl = $product->image_url;
-
-                return [
-                    'id' => $product->id,
-                    'code' => $product->code,
-                    'name' => $product->name,
-                    'commercial_name' => $product->commercial_name,
-                    'description' => $product->description,
-                    'technical_description' => $product->technical_description,
-                    'price' => (float) $product->price,
-                    'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
-                    'unit' => $product->unit,
-                    'size' => $product->size,
-                    'weight' => $product->weight,
-                    'formatted_weight' => $product->formatted_weight,
-                    'image_url' => $imageUrl,
-                    'status' => $product->status,
-                    'brand' => $product->brand ? [
-                        'id' => $product->brand->id,
-                        'name' => $product->brand->name,
-                    ] : null,
-                    'category' => $product->category ? [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                    ] : null,
-                    // Knowledge base friendly format
-                    'knowledge_text' => $this->buildKnowledgeText($product),
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Products retrieved successfully',
-                'data' => $formattedProducts,
-                'meta' => [
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                    'per_page' => $products->perPage(),
-                    'total' => $products->total(),
-                ],
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve products',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        });
     }
 
     /**
