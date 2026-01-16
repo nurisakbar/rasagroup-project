@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class OrderApiController extends Controller
 {
@@ -37,14 +38,16 @@ class OrderApiController extends Controller
      */
     public function getExpeditions(): JsonResponse
     {
-        $expeditions = Expedition::where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'code', 'name', 'logo', 'description', 'base_cost', 'est_days_min', 'est_days_max']);
+        return Cache::remember('api_expeditions', 86400, function () {
+            $expeditions = Expedition::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'logo', 'description', 'base_cost', 'est_days_min', 'est_days_max']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $expeditions,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $expeditions,
+            ]);
+        });
     }
 
     /**

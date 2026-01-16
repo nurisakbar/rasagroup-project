@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ProductApiController;
 // Public routes (no authentication required)
 Route::prefix('warehouses')->group(function () {
     Route::get('/', [WarehouseApiController::class, 'index'])->name('api.warehouses.index');
+    Route::get('/all-with-products', [WarehouseApiController::class, 'getAllWithProducts'])->name('api.warehouses.all-with-products');
     Route::get('/{warehouse}/products', [WarehouseApiController::class, 'getProducts'])->name('api.warehouses.products');
 });
 

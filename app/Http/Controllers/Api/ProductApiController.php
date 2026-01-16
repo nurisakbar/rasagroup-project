@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class ProductApiController extends Controller
 {
@@ -17,9 +18,12 @@ class ProductApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
-            $query = Product::with(['brand', 'category'])
-                ->where('status', 'active');
+        $cacheKey = 'api_products_' . md5(json_encode($request->all()));
+        
+        return Cache::remember($cacheKey, 86400, function () use ($request) {
+            try {
+                $query = Product::with(['brand', 'category'])
+                    ->where('status', 'active');
 
             // Search filter
             if ($request->filled('search')) {
@@ -109,79 +113,83 @@ class ProductApiController extends Controller
      */
     public function getAll(Request $request): JsonResponse
     {
-        try {
-            $query = Product::with(['brand', 'category'])
-                ->where('status', 'active');
+        $cacheKey = 'api_products_all_' . md5(json_encode($request->all()));
+        
+        return Cache::remember($cacheKey, 86400, function () use ($request) {
+            try {
+                $query = Product::with(['brand', 'category'])
+                    ->where('status', 'active');
 
-            // Search filter
-            if ($request->filled('search')) {
-                $searchTerm = '%' . $request->search . '%';
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', $searchTerm)
-                        ->orWhere('code', 'like', $searchTerm)
-                        ->orWhere('commercial_name', 'like', $searchTerm)
-                        ->orWhere('description', 'like', $searchTerm);
+                // Search filter
+                if ($request->filled('search')) {
+                    $searchTerm = '%' . $request->search . '%';
+                    $query->where(function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', $searchTerm)
+                            ->orWhere('code', 'like', $searchTerm)
+                            ->orWhere('commercial_name', 'like', $searchTerm)
+                            ->orWhere('description', 'like', $searchTerm);
+                    });
+                }
+
+                // Brand filter
+                if ($request->filled('brand_id')) {
+                    $query->where('brand_id', $request->brand_id);
+                }
+
+                // Category filter
+                if ($request->filled('category_id')) {
+                    $query->where('category_id', $request->category_id);
+                }
+
+                $products = $query->orderBy('name')->get();
+
+                // Format products for chatbot knowledge
+                $formattedProducts = $products->map(function ($product) {
+                    // Build image URL using Product accessor
+                    $imageUrl = $product->image_url;
+
+                    return [
+                        'id' => $product->id,
+                        'code' => $product->code,
+                        'name' => $product->name,
+                        'commercial_name' => $product->commercial_name,
+                        'description' => $product->description,
+                        'technical_description' => $product->technical_description,
+                        'price' => (float) $product->price,
+                        'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
+                        'unit' => $product->unit,
+                        'size' => $product->size,
+                        'weight' => $product->weight,
+                        'formatted_weight' => $product->formatted_weight,
+                        'image_url' => $imageUrl,
+                        'status' => $product->status,
+                        'brand' => $product->brand ? [
+                            'id' => $product->brand->id,
+                            'name' => $product->brand->name,
+                        ] : null,
+                        'category' => $product->category ? [
+                            'id' => $product->category->id,
+                            'name' => $product->category->name,
+                        ] : null,
+                        // Knowledge base friendly format
+                        'knowledge_text' => $this->buildKnowledgeText($product),
+                    ];
                 });
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'All products retrieved successfully',
+                    'data' => $formattedProducts,
+                    'count' => $formattedProducts->count(),
+                ], 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to retrieve products',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
-
-            // Brand filter
-            if ($request->filled('brand_id')) {
-                $query->where('brand_id', $request->brand_id);
-            }
-
-            // Category filter
-            if ($request->filled('category_id')) {
-                $query->where('category_id', $request->category_id);
-            }
-
-            $products = $query->orderBy('name')->get();
-
-            // Format products for chatbot knowledge
-            $formattedProducts = $products->map(function ($product) {
-                // Build image URL using Product accessor
-                $imageUrl = $product->image_url;
-
-                return [
-                    'id' => $product->id,
-                    'code' => $product->code,
-                    'name' => $product->name,
-                    'commercial_name' => $product->commercial_name,
-                    'description' => $product->description,
-                    'technical_description' => $product->technical_description,
-                    'price' => (float) $product->price,
-                    'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
-                    'unit' => $product->unit,
-                    'size' => $product->size,
-                    'weight' => $product->weight,
-                    'formatted_weight' => $product->formatted_weight,
-                    'image_url' => $imageUrl,
-                    'status' => $product->status,
-                    'brand' => $product->brand ? [
-                        'id' => $product->brand->id,
-                        'name' => $product->brand->name,
-                    ] : null,
-                    'category' => $product->category ? [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                    ] : null,
-                    // Knowledge base friendly format
-                    'knowledge_text' => $this->buildKnowledgeText($product),
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'All products retrieved successfully',
-                'data' => $formattedProducts,
-                'count' => $formattedProducts->count(),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve products',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        });
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Models\Village;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class AddressApiController extends Controller
 {
@@ -266,12 +267,14 @@ class AddressApiController extends Controller
      */
     public function getProvinces(): JsonResponse
     {
-        $provinces = Province::orderBy('name')->get(['id', 'name']);
+        return Cache::remember('api_provinces', 86400, function () {
+            $provinces = Province::orderBy('name')->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $provinces,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $provinces,
+            ]);
+        });
     }
 
     /**
@@ -286,14 +289,18 @@ class AddressApiController extends Controller
             'province_id' => 'required|exists:provinces,id',
         ]);
 
-        $regencies = Regency::where('province_id', $request->province_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $cacheKey = 'api_regencies_' . $request->province_id;
+        
+        return Cache::remember($cacheKey, 86400, function () use ($request) {
+            $regencies = Regency::where('province_id', $request->province_id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $regencies,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $regencies,
+            ]);
+        });
     }
 
     /**
@@ -308,14 +315,18 @@ class AddressApiController extends Controller
             'regency_id' => 'required|exists:regencies,id',
         ]);
 
-        $districts = District::where('regency_id', $request->regency_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $cacheKey = 'api_districts_' . $request->regency_id;
+        
+        return Cache::remember($cacheKey, 86400, function () use ($request) {
+            $districts = District::where('regency_id', $request->regency_id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $districts,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $districts,
+            ]);
+        });
     }
 
     /**
@@ -330,14 +341,18 @@ class AddressApiController extends Controller
             'district_id' => 'required|exists:districts,id',
         ]);
 
-        $villages = Village::where('district_id', $request->district_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $cacheKey = 'api_villages_' . $request->district_id;
+        
+        return Cache::remember($cacheKey, 86400, function () use ($request) {
+            $villages = Village::where('district_id', $request->district_id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $villages,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $villages,
+            ]);
+        });
     }
 }
 
