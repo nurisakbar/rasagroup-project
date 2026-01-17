@@ -500,7 +500,7 @@ class CheckoutController extends Controller
                             Log::info('Xendit invoice_url retrieved from getInvoice', [
                                 'invoice_id' => $xenditInvoiceId,
                                 'invoice_url' => $xenditInvoiceUrl,
-                            ]);
+                    ]);
                         }
                     }
                     

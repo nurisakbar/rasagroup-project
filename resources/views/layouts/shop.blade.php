@@ -18,13 +18,19 @@
     
     <style>
         :root {
-            --primary-color: #e74c3c;
-            --primary-dark: #c0392b;
-            --secondary-color: #f39c12;
-            --accent-color: #3498db;
-            --dark-color: #2c3e50;
+            --primary-color: #E63946;
+            --primary-dark: #C1121F;
+            --secondary-color: #F77F00;
+            --accent-color: #FCBF49;
+            --dark-color: #1D3557;
+            --light-bg: #F8F9FA;
             --light-color: #ecf0f1;
-            --gradient-primary: linear-gradient(135deg, #e74c3c 0%, #f39c12 100%);
+            --white: #FFFFFF;
+            --text-dark: #2B2D42;
+            --text-light: #6C757D;
+            --border-color: #E0E0E0;
+            --success-color: #06A77D;
+            --gradient-primary: linear-gradient(135deg, #E63946 0%, #F77F00 100%);
         }
         
         * {

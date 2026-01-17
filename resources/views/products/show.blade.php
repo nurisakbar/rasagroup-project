@@ -181,6 +181,175 @@
             </div>
         </div>
     </div>
+
+    <!-- Reviews Section -->
+    <div class="container py-5 mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4" style="font-weight: 700; color: var(--dark-color);">
+                    <i class="bi bi-star-fill text-warning me-2"></i>Ulasan Pembeli
+                </h2>
+                
+                <!-- Review Summary -->
+                <div class="card mb-4" style="border-radius: 15px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div style="font-size: 3rem; font-weight: 700; color: var(--primary-color);">
+                                    4.8
+                                </div>
+                                <div class="mb-2">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    @endfor
+                                </div>
+                                <small class="text-muted">Berdasarkan 24 ulasan</small>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="me-2" style="width: 30px;">5</small>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 85%"></div>
+                                        </div>
+                                        <small class="ms-2 text-muted">20</small>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="me-2" style="width: 30px;">4</small>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 15%"></div>
+                                        </div>
+                                        <small class="ms-2 text-muted">4</small>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="me-2" style="width: 30px;">3</small>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="ms-2 text-muted">0</small>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="me-2" style="width: 30px;">2</small>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="ms-2 text-muted">0</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="me-2" style="width: 30px;">1</small>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="ms-2 text-muted">0</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review List -->
+                <div class="reviews-list">
+                    @php
+                        $reviews = [
+                            [
+                                'name' => 'Budi Santoso',
+                                'rating' => 5,
+                                'date' => '2 hari yang lalu',
+                                'comment' => 'Produk sangat bagus! Rasa sirupnya enak dan kemasan rapi. Pengiriman cepat dan aman. Sangat recommended!',
+                                'verified' => true
+                            ],
+                            [
+                                'name' => 'Siti Nurhaliza',
+                                'rating' => 5,
+                                'date' => '5 hari yang lalu',
+                                'comment' => 'Kualitas produk sesuai dengan yang diharapkan. Rasa manisnya pas, tidak terlalu manis. Anak-anak suka sekali!',
+                                'verified' => true
+                            ],
+                            [
+                                'name' => 'Ahmad Rizki',
+                                'rating' => 5,
+                                'date' => '1 minggu yang lalu',
+                                'comment' => 'Barang sampai dengan cepat dan dalam kondisi baik. Rasa sirupnya original dan segar. Akan order lagi nanti.',
+                                'verified' => false
+                            ],
+                            [
+                                'name' => 'Dewi Lestari',
+                                'rating' => 4,
+                                'date' => '2 minggu yang lalu',
+                                'comment' => 'Produk bagus, harga terjangkau. Hanya saja pengiriman agak lama karena lokasi saya jauh. Overall puas!',
+                                'verified' => true
+                            ],
+                            [
+                                'name' => 'Rudi Hartono',
+                                'rating' => 5,
+                                'date' => '3 minggu yang lalu',
+                                'comment' => 'Sangat puas dengan produk ini. Rasa sirupnya enak dan kemasan sangat aman. Seller ramah dan responsif.',
+                                'verified' => true
+                            ],
+                            [
+                                'name' => 'Maya Sari',
+                                'rating' => 5,
+                                'date' => '1 bulan yang lalu',
+                                'comment' => 'Produk original dan berkualitas tinggi. Sudah beberapa kali order dan selalu puas. Terima kasih!',
+                                'verified' => true
+                            ]
+                        ];
+                    @endphp
+
+                    @foreach($reviews as $review)
+                    <div class="card mb-3" style="border-radius: 15px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3" style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.2rem;">
+                                        {{ strtoupper(substr($review['name'], 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0" style="font-weight: 600;">{{ $review['name'] }}</h6>
+                                        @if($review['verified'])
+                                        <small class="text-success">
+                                            <i class="bi bi-patch-check-fill"></i> Pembeli Terverifikasi
+                                        </small>
+                                        @endif
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ $review['date'] }}</small>
+                            </div>
+                            
+                            <div class="mb-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= $review['rating'])
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    @else
+                                        <i class="bi bi-star text-muted"></i>
+                                    @endif
+                                @endfor
+                            </div>
+                            
+                            <p class="mb-0" style="color: #555; line-height: 1.6;">{{ $review['comment'] }}</p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <!-- Load More Reviews Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary" style="border-radius: 25px; padding: 10px 30px;">
+                        <i class="bi bi-arrow-down-circle me-2"></i>Muat Lebih Banyak Ulasan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Related Products Section (Optional) -->

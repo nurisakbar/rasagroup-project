@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'xendit_invoice_id')) {
-                $table->string('xendit_invoice_id')->nullable()->after('payment_method');
+            $table->string('xendit_invoice_id')->nullable()->after('payment_method');
             }
             if (!Schema::hasColumn('orders', 'xendit_invoice_url')) {
-                $table->text('xendit_invoice_url')->nullable()->after('xendit_invoice_id');
+            $table->text('xendit_invoice_url')->nullable()->after('xendit_invoice_id');
             }
         });
     }

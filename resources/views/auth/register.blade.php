@@ -128,35 +128,6 @@
         border-color: #dc3545 !important;
     }
     
-    .benefits-list {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 25px;
-    }
-    
-    .benefits-list h6 {
-        font-weight: 600;
-        color: var(--dark-color);
-        margin-bottom: 15px;
-    }
-    
-    .benefits-list ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .benefits-list li {
-        padding: 8px 0;
-        color: #6c757d;
-    }
-    
-    .benefits-list li i {
-        color: var(--primary-color);
-        margin-right: 10px;
-    }
-    
     .form-text {
         color: #6c757d;
         font-size: 0.85rem;
@@ -175,15 +146,6 @@
             </div>
             
             <div class="auth-body">
-                <div class="benefits-list">
-                    <h6><i class="bi bi-star-fill text-warning me-2"></i>Keuntungan Menjadi Member:</h6>
-                    <ul>
-                        <li><i class="bi bi-check-circle-fill"></i> Lacak pesanan dengan mudah</li>
-                        <li><i class="bi bi-check-circle-fill"></i> Akses riwayat pembelian</li>
-                        <li><i class="bi bi-check-circle-fill"></i> Promo eksklusif untuk member</li>
-                    </ul>
-                </div>
-
                 <form method="POST" action="{{ route('register') }}">
                     @csrf
 
