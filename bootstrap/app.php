@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'distributor' => \App\Http\Middleware\DistributorAccess::class,
         ]);
         
+        // API routes do not require authentication by default in Laravel 11
+        // All routes in routes/api.php are public
+        
         // Exclude Xendit webhook from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'webhooks/xendit',

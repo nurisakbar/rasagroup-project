@@ -115,7 +115,7 @@
                             <select class="form-control" id="product_id" name="product_id" required>
                                 <option value="">-- Pilih Produk --</option>
                                 @foreach($availableProducts as $product)
-                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    <option value="{{ $product->id }}">{{ $product->display_name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -234,7 +234,7 @@
                                 <tr>
                                     <td>
                                         @if($stock->product->image)
-                                            <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                            <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->display_name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                         @else
                                             <div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa fa-image text-muted"></i>
@@ -242,7 +242,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>{{ $stock->product->name }}</strong>
+                                        <strong>{{ $stock->product->display_name }}</strong>
                                         @if($stock->product->status !== 'active')
                                             <br><span class="label label-warning">Nonaktif</span>
                                         @endif
@@ -280,7 +280,7 @@
                                                 @method('PUT')
                                                 <div class="modal-header">
                                                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                    <h4 class="modal-title">Update Stock - {{ $stock->product->name }}</h4>
+                                                    <h4 class="modal-title">Update Stock - {{ $stock->product->display_name }}</h4>
                                                 </div>
                                                 <div class="modal-body">
                                                     <div class="form-group">

@@ -143,10 +143,19 @@ class Product extends Model
 
     public function getFullNameAttribute(): string
     {
+        $displayName = $this->commercial_name ?: $this->name;
         if ($this->code) {
-            return "[{$this->code}] {$this->name}";
+            return "[{$this->code}] {$displayName}";
         }
-        return $this->name;
+        return $displayName;
+    }
+
+    /**
+     * Get display name attribute (uses commercial_name as primary, falls back to name).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->commercial_name ?: $this->name;
     }
 
     /**

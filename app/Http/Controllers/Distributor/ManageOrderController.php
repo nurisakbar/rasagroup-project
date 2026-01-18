@@ -240,7 +240,7 @@ class ManageOrderController extends Controller
                 }
                 
                 if ($item->quantity <= 0) {
-                    $skippedItems[] = $item->product->name . ' (quantity tidak valid)';
+                    $skippedItems[] = $item->product->display_name . ' (quantity tidak valid)';
                     continue;
                 }
 
@@ -277,7 +277,7 @@ class ManageOrderController extends Controller
                 ]);
                 
                 $convertedItems[] = [
-                    'product' => $item->product->name,
+                    'product' => $item->product->display_name,
                     'quantity' => $item->quantity,
                     'old_stock' => $stockBefore,
                     'new_stock' => $stockAfter,

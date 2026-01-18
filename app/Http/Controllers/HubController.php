@@ -74,7 +74,7 @@ class HubController extends Controller
             ->filter(function($stock) {
                 return $stock->product !== null 
                     && $stock->product->status === 'active'
-                    && isset($stock->product->name);
+                    && isset($stock->product->display_name);
             })
             ->values();
         
@@ -187,7 +187,7 @@ class HubController extends Controller
             $stock = $stocks->get($productId);
             $result[$productId] = [
                 'available' => $stock ? $stock->stock : 0,
-                'product_name' => $stock ? $stock->product->name : null,
+                'product_name' => $stock ? $stock->product->display_name : null,
             ];
         }
 

@@ -352,7 +352,7 @@ class CheckoutController extends Controller
             $availableStock = $stock ? $stock->stock : 0;
             
             if ($cart->quantity > $availableStock) {
-                $stockErrors[] = "{$cart->product->name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
             }
         }
         
@@ -411,7 +411,7 @@ class CheckoutController extends Controller
             $xenditItems = [];
             foreach ($carts as $cart) {
                 $xenditItems[] = [
-                    'name' => $cart->product->name,
+                    'name' => $cart->product->display_name,
                     'quantity' => $cart->quantity,
                     'price' => $cart->product->price,
                 ];

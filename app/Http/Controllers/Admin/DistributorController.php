@@ -299,7 +299,7 @@ class DistributorController extends Controller
                 ->addIndexColumn()
                 ->addColumn('product_image', function ($stock) {
                     if ($stock->product->image_url) {
-                        return '<img src="' . asset($stock->product->image_url) . '" alt="' . $stock->product->name . '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;">';
+                        return '<img src="' . asset($stock->product->image_url) . '" alt="' . $stock->product->display_name . '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;">';
                     }
                     return '<img src="' . asset('adminlte/img/default-50x50.gif') . '" alt="No Image" style="width: 40px; height: 40px;">';
                 })
@@ -307,9 +307,11 @@ class DistributorController extends Controller
                     return $stock->product->code ?? '-';
                 })
                 ->addColumn('product_name', function ($stock) {
-                    $html = '<strong>' . $stock->product->name . '</strong>';
-                    if ($stock->product->commercial_name) {
-                        $html .= '<br><small class="text-muted">' . $stock->product->commercial_name . '</small>';
+                    // Use display_name (which uses commercial_name as primary)
+                    $html = '<strong>' . $stock->product->display_name . '</strong>';
+                    // Show original name as secondary info if commercial_name exists
+                    if ($stock->product->commercial_name && $stock->product->commercial_name !== $stock->product->name) {
+                        $html .= '<br><small class="text-muted">' . $stock->product->name . '</small>';
                     }
                     return $html;
                 })

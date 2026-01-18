@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', $product->name)
+@section('title', $product->display_name)
 
 @section('content')
 <div class="container py-5">
@@ -9,7 +9,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('home') }}" style="color: var(--primary-color);">Beranda</a></li>
             <li class="breadcrumb-item"><a href="{{ route('products.index') }}" style="color: var(--primary-color);">Produk</a></li>
-            <li class="breadcrumb-item active">{{ $product->name }}</li>
+            <li class="breadcrumb-item active">{{ $product->display_name }}</li>
         </ol>
     </nav>
 
@@ -32,9 +32,9 @@
         <div class="col-lg-6">
             <div class="product-image-wrapper position-relative">
                 @if($product->image_url)
-                    <img src="{{ asset($product->image_url) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->name }}" style="width: 100%; height: 450px; object-fit: cover;">
+                    <img src="{{ asset($product->image_url) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->display_name }}" style="width: 100%; height: 450px; object-fit: cover;">
                 @else
-                    <img src="https://via.placeholder.com/500x450/e74c3c/fff?text={{ urlencode($product->name) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->name }}" style="width: 100%; height: 450px; object-fit: cover;">
+                    <img src="https://via.placeholder.com/500x450/e74c3c/fff?text={{ urlencode($product->display_name) }}" class="img-fluid rounded-4 shadow" alt="{{ $product->display_name }}" style="width: 100%; height: 450px; object-fit: cover;">
                 @endif
             </div>
         </div>
@@ -48,7 +48,7 @@
                 </span>
                 @endif
                 
-                <h1 class="product-title mb-3" style="font-weight: 700; color: var(--dark-color);">{{ $product->name }}</h1>
+                <h1 class="product-title mb-3" style="font-weight: 700; color: var(--dark-color);">{{ $product->display_name }}</h1>
                 
                 @if($product->brand)
                 <p class="mb-2"><i class="bi bi-award me-1"></i> <strong>Brand:</strong> {{ $product->brand->name }}</p>
@@ -366,13 +366,13 @@
                     <div class="card product-card h-100">
                         <div class="card-img-wrapper">
                             @if($related->image_url)
-                                <img src="{{ asset($related->image_url) }}" class="card-img-top" alt="{{ $related->name }}">
+                                <img src="{{ asset($related->image_url) }}" class="card-img-top" alt="{{ $related->display_name }}">
                             @else
-                                <img src="https://via.placeholder.com/300x200/e74c3c/fff?text={{ urlencode($related->name) }}" class="card-img-top" alt="{{ $related->name }}">
+                                <img src="https://via.placeholder.com/300x200/e74c3c/fff?text={{ urlencode($related->display_name) }}" class="card-img-top" alt="{{ $related->display_name }}">
                             @endif
                         </div>
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ $related->name }}</h5>
+                            <h5 class="card-title">{{ $related->display_name }}</h5>
                             <span class="price mb-3">Rp {{ number_format($related->price, 0, ',', '.') }}</span>
                             <a href="{{ route('products.show', $related) }}" class="btn btn-add-cart mt-auto">
                                 <i class="bi bi-eye me-1"></i> Lihat Detail

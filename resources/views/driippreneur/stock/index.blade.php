@@ -69,7 +69,7 @@
                                 <tr class="{{ $stock->stock <= 10 ? 'danger' : '' }}">
                                     <td>
                                         @if($stock->product->image)
-                                            <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                            <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->display_name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                         @else
                                             <div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa fa-image text-muted"></i>
@@ -77,7 +77,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>{{ $stock->product->name }}</strong>
+                                        <strong>{{ $stock->product->display_name }}</strong>
                                         @if($stock->product->status !== 'active')
                                             <br><span class="label label-warning">Produk Nonaktif</span>
                                         @endif
@@ -116,11 +116,11 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             @if($stock->product->image)
-                                                                <img src="{{ $stock->product->image_url }}" alt="{{ $stock->product->name }}" class="img-responsive" style="border-radius: 5px;">
+                                                                <img src="{{ $stock->product->image_url }}" alt="{{ $stock->product->display_name }}" class="img-responsive" style="border-radius: 5px;">
                                                             @endif
                                                         </div>
                                                         <div class="col-md-8">
-                                                            <p><strong>{{ $stock->product->name }}</strong></p>
+                                                            <p><strong>{{ $stock->product->display_name }}</strong></p>
                                                             <p class="text-muted">Harga: Rp {{ number_format($stock->product->price, 0, ',', '.') }}</p>
                                                             <hr>
                                                             <div class="form-group">

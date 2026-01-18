@@ -54,13 +54,13 @@
                 <div class="card product-card h-100">
                     <div class="card-img-wrapper">
                         @if($product->image_url)
-                            <img src="{{ asset($product->image_url) }}" class="card-img-top" alt="{{ $product->name }}">
+                            <img src="{{ asset($product->image_url) }}" class="card-img-top" alt="{{ $product->display_name }}">
                         @else
-                            <img src="https://via.placeholder.com/300x220/e74c3c/fff?text={{ urlencode($product->name) }}" class="card-img-top" alt="{{ $product->name }}">
+                            <img src="https://via.placeholder.com/300x220/e74c3c/fff?text={{ urlencode($product->display_name) }}" class="card-img-top" alt="{{ $product->display_name }}">
                         @endif
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ $product->name }}</h5>
+                        <h5 class="card-title">{{ $product->display_name }}</h5>
                         <p class="text-muted mb-2" style="font-size: 0.9rem;">{{ Str::limit($product->description, 60) }}</p>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="price">Rp {{ number_format($product->price, 0, ',', '.') }}</span>

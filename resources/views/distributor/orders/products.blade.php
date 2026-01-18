@@ -38,7 +38,7 @@
                 <div class="box box-widget widget-user-2" style="margin-bottom: 15px;">
                     <div class="widget-user-header bg-white" style="padding: 10px;">
                         @if($product->image)
-                            <img src="{{ asset($product->image_url) }}" alt="{{ $product->name }}" class="img-responsive" style="width: 100%; height: 150px; object-fit: cover;">
+                            <img src="{{ asset($product->image_url) }}" alt="{{ $product->display_name }}" class="img-responsive" style="width: 100%; height: 150px; object-fit: cover;">
                         @else
                             <div style="width: 100%; height: 150px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                 <i class="fa fa-image fa-3x text-muted"></i>
@@ -46,7 +46,7 @@
                         @endif
                     </div>
                     <div class="box-footer" style="padding: 10px;">
-                        <h5 style="margin: 5px 0; font-size: 14px; height: 36px; overflow: hidden;">{{ $product->name }}</h5>
+                        <h5 style="margin: 5px 0; font-size: 14px; height: 36px; overflow: hidden;">{{ $product->display_name }}</h5>
                         <p style="margin: 5px 0; color: #f39c12; font-weight: bold;">
                             Rp {{ number_format(Auth::user()->getProductPrice($product), 0, ',', '.') }}
                             @if(Auth::user()->priceLevel && Auth::user()->getProductPrice($product) != $product->price)

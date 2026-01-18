@@ -44,7 +44,7 @@ class StockController extends Controller
                 ->addIndexColumn()
                 ->addColumn('product_image', function ($stock) {
                     if ($stock->product && $stock->product->image_url) {
-                        return '<img src="' . asset($stock->product->image_url) . '" alt="' . ($stock->product->name ?? '') . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
+                        return '<img src="' . asset($stock->product->image_url) . '" alt="' . ($stock->product->display_name ?? '') . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
                     }
                     return '<div style="width: 50px; height: 50px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fa fa-image text-muted"></i></div>';
                 })
@@ -52,7 +52,7 @@ class StockController extends Controller
                     if (!$stock->product) {
                         return '<span class="text-muted">Produk tidak ditemukan</span>';
                     }
-                    $html = '<strong>' . $stock->product->name . '</strong>';
+                    $html = '<strong>' . $stock->product->display_name . '</strong>';
                     if ($stock->product->code) {
                         $html .= '<br><small class="text-muted">Kode: ' . $stock->product->code . '</small>';
                     }
@@ -88,7 +88,7 @@ class StockController extends Controller
                 ->addColumn('action', function ($stock) {
                     $updateBtn = '<button type="button" class="btn btn-primary btn-xs btn-update-stock" 
                         data-stock-id="' . $stock->id . '"
-                        data-product-name="' . ($stock->product ? htmlspecialchars($stock->product->name) : '') . '"
+                        data-product-name="' . ($stock->product ? htmlspecialchars($stock->product->display_name) : '') . '"
                         data-product-price="' . ($stock->product ? number_format($stock->product->price, 0, ',', '.') : '0') . '"
                         data-current-stock="' . $stock->stock . '"
                         data-product-image="' . ($stock->product && $stock->product->image_url ? asset($stock->product->image_url) : '') . '"

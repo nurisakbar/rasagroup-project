@@ -112,7 +112,7 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td>{{ $item->product->name ?? 'Produk tidak tersedia' }}</td>
+                                    <td>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</td>
                                     <td class="text-center">{{ $item->quantity }}</td>
                                     <td class="text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                                     <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
@@ -177,7 +177,7 @@
                             @foreach($order->items as $item)
                                 @if($item->product)
                                     <li>
-                                        <strong>{{ $item->product->name }}</strong> - <strong>{{ $item->quantity }} unit</strong>
+                                        <strong>{{ $item->product->display_name }}</strong> - <strong>{{ $item->quantity }} unit</strong>
                                         @php
                                             $currentStock = null;
                                             if ($warehouse) {

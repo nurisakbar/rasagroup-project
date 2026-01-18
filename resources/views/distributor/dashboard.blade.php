@@ -137,7 +137,7 @@
                         <tbody>
                             @forelse($recentStocks as $stock)
                                 <tr>
-                                    <td>{{ $stock->product->name }}</td>
+                                    <td>{{ $stock->product->display_name }}</td>
                                     <td>
                                         @if($stock->stock <= 10)
                                             <span class="badge bg-red">{{ number_format($stock->stock) }}</span>

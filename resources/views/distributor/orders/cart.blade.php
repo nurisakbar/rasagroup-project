@@ -39,7 +39,7 @@
                                     <tr>
                                         <td>
                                             @if($cart->product->image)
-                                                <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->name }}" style="width: 60px; height: 60px; object-fit: cover;">
+                                                <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->display_name }}" style="width: 60px; height: 60px; object-fit: cover;">
                                             @else
                                                 <div style="width: 60px; height: 60px; background: #f4f4f4; display: flex; align-items: center; justify-content: center;">
                                                     <i class="fa fa-image text-muted"></i>
@@ -47,7 +47,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <strong>{{ $cart->product->name }}</strong><br>
+                                            <strong>{{ $cart->product->display_name }}</strong><br>
                                             <small class="text-muted">
                                                 <i class="fa fa-star text-yellow"></i> +{{ number_format($cart->quantity * 5000, 0, ',', '.') }} poin
                                             </small>

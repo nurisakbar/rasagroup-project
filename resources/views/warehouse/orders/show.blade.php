@@ -154,7 +154,7 @@
                             @foreach($order->items as $item)
                                 <tr>
                                     <td>
-                                        <strong>{{ $item->product->name ?? 'Produk tidak tersedia' }}</strong>
+                                        <strong>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</strong>
                                         @if($item->product && $item->product->code)
                                             <br><small class="text-muted">Kode: {{ $item->product->code }}</small>
                                         @endif

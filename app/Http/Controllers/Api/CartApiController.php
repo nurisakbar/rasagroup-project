@@ -14,6 +14,18 @@ use Illuminate\Support\Facades\Auth;
 class CartApiController extends Controller
 {
     /**
+     * Get user ID from request or auth
+     */
+    private function getUserId(Request $request): ?string
+    {
+        if (Auth::check()) {
+            return Auth::id();
+        }
+        
+        return $request->input('user_id') ?? $request->query('user_id');
+    }
+
+    /**
      * Get user's cart items
      * 
      * @param Request $request
@@ -21,10 +33,17 @@ class CartApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
         
         $carts = Cart::with(['product.brand', 'product.category', 'warehouse'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('cart_type', 'regular')
             ->get();
 
@@ -41,7 +60,7 @@ class CartApiController extends Controller
                 'product' => [
                     'id' => $cart->product->id,
                     'code' => $cart->product->code,
-                    'name' => $cart->product->name,
+                    'name' => $cart->product->display_name,
                     'price' => (float) $cart->product->price,
                     'unit' => $cart->product->unit,
                     'image' => $imageUrl,
@@ -83,12 +102,13 @@ class CartApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'product_id' => 'required|exists:products,id',
             'warehouse_id' => 'required|exists:warehouses,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $user = Auth::user();
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
         $product = Product::findOrFail($validated['product_id']);
         $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
 
@@ -107,7 +127,7 @@ class CartApiController extends Controller
         }
 
         // Check if cart has items from different warehouse
-        $existingCart = Cart::where('user_id', $user->id)
+        $existingCart = Cart::where('user_id', $userId)
             ->where('cart_type', 'regular')
             ->whereNotNull('warehouse_id')
             ->where('warehouse_id', '!=', $warehouse->id)
@@ -121,7 +141,7 @@ class CartApiController extends Controller
         }
 
         // Check if same product from same warehouse exists
-        $cart = Cart::where('user_id', $user->id)
+        $cart = Cart::where('user_id', $userId)
             ->where('product_id', $product->id)
             ->where('warehouse_id', $warehouse->id)
             ->where('cart_type', 'regular')
@@ -139,7 +159,7 @@ class CartApiController extends Controller
             $cart->save();
         } else {
             $cart = Cart::create([
-                'user_id' => $user->id,
+                'user_id' => $userId,
                 'product_id' => $product->id,
                 'warehouse_id' => $warehouse->id,
                 'cart_type' => 'regular',
@@ -156,7 +176,7 @@ class CartApiController extends Controller
                 'id' => $cart->id,
                 'product' => [
                     'id' => $cart->product->id,
-                    'name' => $cart->product->name,
+                    'name' => $cart->product->display_name,
                     'price' => (float) $cart->product->price,
                 ],
                 'warehouse' => [
@@ -179,11 +199,12 @@ class CartApiController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $user = Auth::user();
-        $cart = Cart::where('user_id', $user->id)
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
+        $cart = Cart::where('user_id', $userId)
             ->where('id', $id)
             ->where('cart_type', 'regular')
             ->firstOrFail();
@@ -225,10 +246,18 @@ class CartApiController extends Controller
      * @param string $id
      * @return JsonResponse
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $user = Auth::user();
-        $cart = Cart::where('user_id', $user->id)
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
+        
+        $cart = Cart::where('user_id', $userId)
             ->where('id', $id)
             ->where('cart_type', 'regular')
             ->firstOrFail();
@@ -246,10 +275,18 @@ class CartApiController extends Controller
      * 
      * @return JsonResponse
      */
-    public function clear(): JsonResponse
+    public function clear(Request $request): JsonResponse
     {
-        $user = Auth::user();
-        Cart::where('user_id', $user->id)
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
+        
+        Cart::where('user_id', $userId)
             ->where('cart_type', 'regular')
             ->delete();
 

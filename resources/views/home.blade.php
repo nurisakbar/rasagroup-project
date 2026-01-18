@@ -867,15 +867,15 @@
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="{{ route('products.show', $product) }}" class="product-card">
                             <div class="product-image-wrapper">
-                                <img src="{{ $product->image_url ? asset($product->image_url) : 'https://via.placeholder.com/400x300/E63946/fff?text=' . urlencode($product->name) }}" 
-                                     alt="{{ $product->name }}" class="product-image">
+                                <img src="{{ $product->image_url ? asset($product->image_url) : 'https://via.placeholder.com/400x300/E63946/fff?text=' . urlencode($product->display_name) }}" 
+                                     alt="{{ $product->display_name }}" class="product-image">
                                 @if($product->created_at->isToday())
                                     <span class="product-badge new">NEW</span>
                                 @endif
                             </div>
                             <div class="product-info">
                                 <div class="product-category">{{ $product->category->name ?? 'Produk' }}</div>
-                                <h3 class="product-name">{{ $product->name }}</h3>
+                                <h3 class="product-name">{{ $product->display_name }}</h3>
                                 <div class="product-rating">
                                     <i class="bi bi-star-fill"></i>
                                     <i class="bi bi-star-fill"></i>

@@ -16,6 +16,18 @@ use Illuminate\Support\Facades\Cache;
 class AddressApiController extends Controller
 {
     /**
+     * Get user ID from request or auth
+     */
+    private function getUserId(Request $request): ?string
+    {
+        if (Auth::check()) {
+            return Auth::id();
+        }
+        
+        return $request->input('user_id') ?? $request->query('user_id');
+    }
+
+    /**
      * Get list of user's addresses
      * 
      * @param Request $request
@@ -23,10 +35,17 @@ class AddressApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
         
         $addresses = Address::with(['province', 'regency', 'district', 'village'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();
@@ -76,6 +95,7 @@ class AddressApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'label' => 'required|string|max:50',
             'recipient_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
@@ -89,17 +109,18 @@ class AddressApiController extends Controller
             'is_default' => 'nullable|boolean',
         ]);
 
-        $user = Auth::user();
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
 
         // If this is set as default, unset other defaults
         if ($request->boolean('is_default')) {
-            $user->addresses()->update(['is_default' => false]);
+            Address::where('user_id', $userId)->update(['is_default' => false]);
         }
 
         // If this is the first address, make it default
-        $isDefault = $request->boolean('is_default') || $user->addresses()->count() === 0;
+        $isDefault = $request->boolean('is_default') || Address::where('user_id', $userId)->count() === 0;
 
-        $address = $user->addresses()->create([
+        $address = Address::create([
+            'user_id' => $userId,
             'label' => $validated['label'],
             'recipient_name' => $validated['recipient_name'],
             'phone' => $validated['phone'],
@@ -157,12 +178,8 @@ class AddressApiController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $user = Auth::user();
-        $address = Address::where('user_id', $user->id)
-            ->where('id', $id)
-            ->firstOrFail();
-
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'label' => 'required|string|max:50',
             'recipient_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
@@ -176,9 +193,14 @@ class AddressApiController extends Controller
             'is_default' => 'nullable|boolean',
         ]);
 
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
+        $address = Address::where('user_id', $userId)
+            ->where('id', $id)
+            ->firstOrFail();
+
         // If this is set as default, unset other defaults
         if ($request->boolean('is_default') && !$address->is_default) {
-            $user->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
+            Address::where('user_id', $userId)->where('id', '!=', $address->id)->update(['is_default' => false]);
         }
 
         $address->update([
@@ -236,10 +258,18 @@ class AddressApiController extends Controller
      * @param string $id
      * @return JsonResponse
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $user = Auth::user();
-        $address = Address::where('user_id', $user->id)
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
+        
+        $address = Address::where('user_id', $userId)
             ->where('id', $id)
             ->firstOrFail();
 
@@ -248,7 +278,7 @@ class AddressApiController extends Controller
 
         // If deleted address was default, set another as default
         if ($wasDefault) {
-            $newDefault = $user->addresses()->first();
+            $newDefault = Address::where('user_id', $userId)->first();
             if ($newDefault) {
                 $newDefault->update(['is_default' => true]);
             }

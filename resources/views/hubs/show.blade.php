@@ -241,11 +241,11 @@
                         @php 
                             $product = $stock->product ?? null;
                         @endphp
-                        @if($product && isset($product->name) && isset($product->price))
+                        @if($product && isset($product->display_name) && isset($product->price))
                         <div class="col-md-6 col-lg-4">
                             <div class="product-card">
                                 @if(!empty($product->image))
-                                    <img src="{{ asset($product->image_url) }}" alt="{{ $product->name }}" class="product-img">
+                                    <img src="{{ asset($product->image_url) }}" alt="{{ $product->display_name }}" class="product-img">
                                 @else
                                     <div class="product-img-placeholder">
                                         <i class="bi bi-image fs-1"></i>
@@ -257,7 +257,7 @@
                                             <i class="bi bi-bookmark me-1"></i> {{ $product->brand->name }}
                                         </div>
                                     @endif
-                                    <h6 class="product-name">{{ $product->name }}</h6>
+                                    <h6 class="product-name">{{ $product->display_name }}</h6>
                                     @if(!empty($product->code))
                                         <small class="text-muted">{{ $product->code }}</small>
                                     @endif

@@ -74,7 +74,7 @@ class PosController extends Controller
 
                 return [
                     'id' => $product->id,
-                    'name' => $product->name,
+                    'name' => $product->display_name,
                     'code' => $product->code,
                     'price' => (float) $product->price,
                     'formatted_price' => 'Rp ' . number_format($product->price, 0, ',', '.'),

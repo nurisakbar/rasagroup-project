@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rasa Group - Marketplace Sirup Premium (Variasi 2)</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563EB;
+            --primary-dark: #1E40AF;
+            --secondary-color: #10B981;
+            --accent-color: #F59E0B;
+            --dark-color: #111827;
+            --light-bg: #F9FAFB;
+            --white: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --border-color: #E5E7EB;
+            --success-color: #10B981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            overflow-x: hidden;
+            background: var(--white);
+        }
+
+        /* Navbar Minimalis */
+        .navbar {
+            background: var(--white) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary-color) !important;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 0.75rem;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-color) !important;
+        }
+
+        .btn-login {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1.5px solid var(--border-color);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-login:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .btn-register {
+            background: var(--primary-color);
+            color: white;
+            border: 1.5px solid var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-register:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: white;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.3rem;
+            color: var(--text-dark);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hero Section Minimalis */
+        .hero-minimal {
+            padding: 6rem 0 4rem;
+            background: linear-gradient(180deg, var(--light-bg) 0%, var(--white) 100%);
+        }
+
+        .hero-content {
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-hero-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-hero-secondary {
+            background: var(--white);
+            color: var(--text-dark);
+            border: 2px solid var(--border-color);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-hero-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 3rem 0;
+            background: var(--white);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* Categories Grid Minimalis */
+        .categories-minimal {
+            padding: 4rem 0;
+            background: var(--light-bg);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+
+        .category-card-minimal {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .category-card-minimal:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.1);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .category-icon-minimal {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--white);
+            transition: transform 0.3s;
+        }
+
+        .category-card-minimal:hover .category-icon-minimal {
+            transform: scale(1.1);
+        }
+
+        .category-card-minimal h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .category-card-minimal p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Products Grid Minimalis */
+        .products-minimal {
+            padding: 4rem 0;
+            background: var(--white);
+        }
+
+        .product-card-minimal {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .product-card-minimal:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-image-minimal {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            background: var(--light-bg);
+        }
+
+        .product-info-minimal {
+            padding: 1.5rem;
+        }
+
+        .product-category-minimal {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .product-name-minimal {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .product-rating-minimal {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .product-rating-minimal i {
+            color: #F59E0B;
+            font-size: 0.9rem;
+        }
+
+        .product-rating-minimal span {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-left: 5px;
+        }
+
+        .product-price-minimal {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .btn-add-cart-minimal {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-add-cart-minimal:hover {
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        /* Distributors Minimalis */
+        .distributors-minimal {
+            padding: 4rem 0;
+            background: var(--light-bg);
+        }
+
+        .distributor-card-minimal {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            height: 100%;
+        }
+
+        .distributor-card-minimal:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .distributor-image-minimal {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--light-bg);
+        }
+
+        .distributor-info-minimal {
+            padding: 1.5rem;
+        }
+
+        .distributor-name-minimal {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .distributor-location-minimal {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .distributor-location-minimal i {
+            color: var(--primary-color);
+        }
+
+        .distributor-contact-minimal {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .distributor-contact-minimal span {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .distributor-contact-minimal i {
+            color: var(--primary-color);
+            width: 20px;
+        }
+
+        .distributor-badge-minimal {
+            display: inline-block;
+            background: var(--success-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+        }
+
+        .btn-cta {
+            background: var(--white);
+            color: var(--primary-color);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            color: var(--primary-color);
+        }
+
+        /* Footer Minimalis */
+        .footer {
+            background: var(--dark-color);
+            color: white;
+            padding: 3rem 0 1.5rem;
+        }
+
+        .footer h5 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .footer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer ul li a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .footer ul li a:hover {
+            color: var(--white);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-content p {
+                font-size: 1.1rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.75rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .cta-section h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-cup-hot-fill me-2"></i>Rasa Group
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Beranda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#categories">Kategori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#products">Produk</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="distributors.html">Distributor</a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a href="login.html" class="btn-login">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a href="register.html" class="btn-register">
+                            <i class="bi bi-person-plus me-1"></i>Daftar
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a href="#" class="cart-icon">
+                            <i class="bi bi-cart3"></i>
+                            <span class="cart-badge">3</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-minimal">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Sirup Premium dengan Rasa Terbaik</h1>
+                <p>Nikmati berbagai varian sirup berkualitas tinggi dengan harga spesial. Dapatkan produk favorit Anda sekarang!</p>
+                <div class="hero-buttons">
+                    <a href="#products" class="btn btn-hero-primary">
+                        <i class="bi bi-cart-plus me-2"></i>Belanja Sekarang
+                    </a>
+                    <a href="#categories" class="btn btn-hero-secondary">
+                        <i class="bi bi-grid me-2"></i>Lihat Kategori
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Produk Tersedia</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Pelanggan Puas</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label">Kota Terjangkau</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Layanan Pelanggan</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-minimal" id="categories">
+        <div class="container">
+            <div class="section-header">
+                <h2>Kategori Produk</h2>
+                <p>Pilih kategori sirup favorit Anda</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-droplet-fill"></i>
+                        </div>
+                        <h3>Sirup Original</h3>
+                        <p>Rasa klasik</p>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-flower1"></i>
+                        </div>
+                        <h3>Sirup Buah</h3>
+                        <p>Segar & alami</p>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-cup-straw"></i>
+                        </div>
+                        <h3>Sirup Susu</h3>
+                        <p>Krim & lembut</p>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-snow"></i>
+                        </div>
+                        <h3>Sirup Es</h3>
+                        <p>Menyegarkan</p>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-heart-fill"></i>
+                        </div>
+                        <h3>Sirup Premium</h3>
+                        <p>Kualitas terbaik</p>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#" class="category-card-minimal">
+                        <div class="category-icon-minimal">
+                            <i class="bi bi-gift-fill"></i>
+                        </div>
+                        <h3>Paket Gift</h3>
+                        <p>Paket spesial</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-minimal" id="products">
+        <div class="container">
+            <div class="section-header">
+                <h2>Produk Unggulan</h2>
+                <p>Pilihan terbaik untuk kebutuhan minuman Anda</p>
+            </div>
+            <div class="row g-4">
+                <!-- Product 1 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=100&auto=format&fit=crop" alt="Sirup Jeruk" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Buah</div>
+                            <h3 class="product-name-minimal">Sirup Jeruk Premium</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                                <span>(4.5)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 45.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=100&auto=format&fit=crop" alt="Sirup Strawberry" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Buah</div>
+                            <h3 class="product-name-minimal">Sirup Strawberry Segar</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <span>(5.0)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 48.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&q=100&auto=format&fit=crop" alt="Sirup Vanilla" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Premium</div>
+                            <h3 class="product-name-minimal">Sirup Vanilla Premium</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star"></i>
+                                <span>(4.2)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 65.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=100&auto=format&fit=crop" alt="Sirup Cokelat" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Premium</div>
+                            <h3 class="product-name-minimal">Sirup Cokelat Belgia</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                                <span>(4.7)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 75.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 5 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=100&auto=format&fit=crop" alt="Sirup Mangga" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Buah</div>
+                            <h3 class="product-name-minimal">Sirup Mangga Tropis</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star"></i>
+                                <span>(4.3)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 42.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 6 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=100&auto=format&fit=crop" alt="Sirup Melon" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Es</div>
+                            <h3 class="product-name-minimal">Sirup Melon Dingin</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                                <span>(4.6)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 40.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 7 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=100&auto=format&fit=crop" alt="Sirup Leci" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Buah</div>
+                            <h3 class="product-name-minimal">Sirup Leci Eksotis</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star"></i>
+                                <span>(4.1)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 50.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Product 8 -->
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="#" class="product-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&q=100&auto=format&fit=crop" alt="Sirup Susu" class="product-image-minimal">
+                        <div class="product-info-minimal">
+                            <div class="product-category-minimal">Sirup Susu</div>
+                            <h3 class="product-name-minimal">Sirup Susu Krim</h3>
+                            <div class="product-rating-minimal">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <span>(4.9)</span>
+                            </div>
+                            <div class="product-price-minimal">Rp 55.000</div>
+                            <button class="btn-add-cart-minimal" onclick="event.preventDefault();">
+                                <i class="bi bi-cart-plus"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center mt-5">
+                <button class="btn btn-outline-primary btn-lg px-5 py-3" style="border-radius: 10px;">
+                    <i class="bi bi-arrow-down-circle me-2"></i>Muat Lebih Banyak Produk
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Distributors Section -->
+    <section class="distributors-minimal" id="distributors">
+        <div class="container">
+            <div class="section-header">
+                <h2>Lokasi Distributor Kami</h2>
+                <p>Temukan distributor terdekat di kota Anda</p>
+            </div>
+            <div class="row g-4">
+                <!-- Jakarta -->
+                <div class="col-6 col-md-6 col-lg-3">
+                    <div class="distributor-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&q=100&auto=format&fit=crop" alt="Jakarta" class="distributor-image-minimal">
+                        <div class="distributor-info-minimal">
+                            <h3 class="distributor-name-minimal">Jakarta</h3>
+                            <div class="distributor-location-minimal">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>Distributor Utama</span>
+                            </div>
+                            <div class="distributor-contact-minimal">
+                                <span>
+                                    <i class="bi bi-telephone-fill"></i>
+                                    021-12345678
+                                </span>
+                                <span>
+                                    <i class="bi bi-envelope-fill"></i>
+                                    jakarta@rasagroup.com
+                                </span>
+                            </div>
+                            <span class="distributor-badge-minimal">Tersedia</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bandung -->
+                <div class="col-6 col-md-6 col-lg-3">
+                    <div class="distributor-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=100&auto=format&fit=crop" alt="Bandung" class="distributor-image-minimal">
+                        <div class="distributor-info-minimal">
+                            <h3 class="distributor-name-minimal">Bandung</h3>
+                            <div class="distributor-location-minimal">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>Distributor Cabang</span>
+                            </div>
+                            <div class="distributor-contact-minimal">
+                                <span>
+                                    <i class="bi bi-telephone-fill"></i>
+                                    022-87654321
+                                </span>
+                                <span>
+                                    <i class="bi bi-envelope-fill"></i>
+                                    bandung@rasagroup.com
+                                </span>
+                            </div>
+                            <span class="distributor-badge-minimal">Tersedia</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Surabaya -->
+                <div class="col-6 col-md-6 col-lg-3">
+                    <div class="distributor-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=100&auto=format&fit=crop" alt="Surabaya" class="distributor-image-minimal">
+                        <div class="distributor-info-minimal">
+                            <h3 class="distributor-name-minimal">Surabaya</h3>
+                            <div class="distributor-location-minimal">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>Distributor Cabang</span>
+                            </div>
+                            <div class="distributor-contact-minimal">
+                                <span>
+                                    <i class="bi bi-telephone-fill"></i>
+                                    031-11223344
+                                </span>
+                                <span>
+                                    <i class="bi bi-envelope-fill"></i>
+                                    surabaya@rasagroup.com
+                                </span>
+                            </div>
+                            <span class="distributor-badge-minimal">Tersedia</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yogyakarta -->
+                <div class="col-6 col-md-6 col-lg-3">
+                    <div class="distributor-card-minimal">
+                        <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=100&auto=format&fit=crop" alt="Yogyakarta" class="distributor-image-minimal">
+                        <div class="distributor-info-minimal">
+                            <h3 class="distributor-name-minimal">Yogyakarta</h3>
+                            <div class="distributor-location-minimal">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>Distributor Cabang</span>
+                            </div>
+                            <div class="distributor-contact-minimal">
+                                <span>
+                                    <i class="bi bi-telephone-fill"></i>
+                                    0274-55667788
+                                </span>
+                                <span>
+                                    <i class="bi bi-envelope-fill"></i>
+                                    yogyakarta@rasagroup.com
+                                </span>
+                            </div>
+                            <span class="distributor-badge-minimal">Tersedia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="text-center mt-5">
+                <a href="distributors.html" class="btn btn-outline-primary btn-lg px-5 py-3" style="border-radius: 10px;">
+                    <i class="bi bi-geo-alt-fill me-2"></i>Lihat Semua Distributor
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Mulai Belanja Sekarang</h2>
+            <p>Dapatkan produk sirup premium dengan harga terbaik dan pengiriman cepat</p>
+            <a href="#products" class="btn btn-cta">
+                <i class="bi bi-cart-plus me-2"></i>Lihat Produk
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5><i class="bi bi-cup-hot-fill me-2"></i>Rasa Group</h5>
+                    <p style="color: rgba(255,255,255,0.7); margin-top: 1rem; font-size: 0.9rem;">
+                        Produsen dan distributor sirup berkualitas tinggi dengan berbagai varian rasa yang nikmat dan menyegarkan.
+                    </p>
+                </div>
+                <div class="col-md-2 col-6 mb-4">
+                    <h5>Produk</h5>
+                    <ul>
+                        <li><a href="#">Sirup Buah</a></li>
+                        <li><a href="#">Sirup Premium</a></li>
+                        <li><a href="#">Sirup Susu</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 col-6 mb-4">
+                    <h5>Perusahaan</h5>
+                    <ul>
+                        <li><a href="#">Tentang Kami</a></li>
+                        <li><a href="#">Kontak</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 col-6 mb-4">
+                    <h5>Bantuan</h5>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Pengiriman</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 col-6 mb-4">
+                    <h5>Kontak</h5>
+                    <ul>
+                        <li style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">📞 +62 123 456 789</li>
+                        <li style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">✉️ info@rasagroup.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Rasa Group. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

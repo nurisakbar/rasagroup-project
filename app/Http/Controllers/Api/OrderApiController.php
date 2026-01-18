@@ -20,6 +20,18 @@ use Illuminate\Support\Facades\Cache;
 
 class OrderApiController extends Controller
 {
+    /**
+     * Get user ID from request or auth
+     */
+    private function getUserId(Request $request): ?string
+    {
+        if (Auth::check()) {
+            return Auth::id();
+        }
+        
+        return $request->input('user_id') ?? $request->query('user_id');
+    }
+
     // Shipping rates per province (in Rupiah per kg)
     private $shippingRates = [
         '11' => 15000, '12' => 15000, '13' => 18000, '14' => 20000, '15' => 22000,
@@ -59,18 +71,19 @@ class OrderApiController extends Controller
     public function getExpeditionServices(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'address_id' => 'required|exists:addresses,id',
         ]);
 
-        $user = Auth::user();
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
         $expedition = Expedition::findOrFail($validated['expedition_id']);
-        $address = Address::where('user_id', $user->id)
+        $address = Address::where('user_id', $userId)
             ->where('id', $validated['address_id'])
             ->firstOrFail();
 
         $carts = Cart::with('product')
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('cart_type', 'regular')
             ->get();
 
@@ -130,6 +143,7 @@ class OrderApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
             'address_id' => 'required|exists:addresses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
@@ -137,10 +151,10 @@ class OrderApiController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $user = Auth::user();
+        $userId = $this->getUserId($request) ?? $validated['user_id'];
 
         // Verify address belongs to user
-        $address = Address::where('user_id', $user->id)
+        $address = Address::where('user_id', $userId)
             ->where('id', $validated['address_id'])
             ->with(['province', 'regency', 'district', 'village'])
             ->firstOrFail();
@@ -148,7 +162,7 @@ class OrderApiController extends Controller
         $expedition = Expedition::findOrFail($validated['expedition_id']);
 
         $carts = Cart::with(['product', 'warehouse'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('cart_type', 'regular')
             ->get();
 
@@ -191,7 +205,7 @@ class OrderApiController extends Controller
             $availableStock = $stock ? $stock->stock : 0;
 
             if ($cart->quantity > $availableStock) {
-                $stockErrors[] = "{$cart->product->name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
             }
         }
 
@@ -252,7 +266,7 @@ class OrderApiController extends Controller
             $xenditItems = [];
             foreach ($carts as $cart) {
                 $xenditItems[] = [
-                    'name' => $cart->product->name,
+                    'name' => $cart->product->display_name,
                     'quantity' => $cart->quantity,
                     'price' => $cart->product->price,
                 ];
@@ -270,7 +284,7 @@ class OrderApiController extends Controller
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR,
                 'order_number' => $orderNumber,
-                'user_id' => $user->id,
+                'user_id' => $userId,
                 'address_id' => $address->id,
                 'expedition_id' => $expedition->id,
                 'expedition_service' => $validated['expedition_service'],
@@ -306,7 +320,7 @@ class OrderApiController extends Controller
                 }
             }
 
-            Cart::where('user_id', $user->id)->where('cart_type', 'regular')->delete();
+            Cart::where('user_id', $userId)->where('cart_type', 'regular')->delete();
 
             // Handle Xendit payment first (to get invoice URL)
             $xenditInvoiceUrl = null;
@@ -448,7 +462,7 @@ class OrderApiController extends Controller
                         return [
                             'product' => [
                                 'id' => $item->product->id,
-                                'name' => $item->product->name,
+                                'name' => $item->product->display_name,
                                 'code' => $item->product->code,
                             ],
                             'quantity' => $item->quantity,
@@ -470,14 +484,23 @@ class OrderApiController extends Controller
     /**
      * Get order details
      * 
+     * @param Request $request
      * @param string $id
      * @return JsonResponse
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $user = Auth::user();
+        $userId = $this->getUserId($request);
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id diperlukan. Kirim sebagai query parameter atau body, atau login terlebih dahulu.',
+            ], 400);
+        }
+        
         $order = Order::with(['items.product.brand', 'items.product.category', 'address', 'expedition', 'sourceWarehouse'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('id', $id)
             ->firstOrFail();
 

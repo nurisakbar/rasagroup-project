@@ -166,7 +166,7 @@
                                     @endif
                                 </div>
                                 <div style="flex: 1; padding-left: 10px;">
-                                    <small>{{ $cart->product->name }}</small><br>
+                                    <small>{{ $cart->product->display_name }}</small><br>
                                     <small class="text-muted">{{ $cart->quantity }} x Rp {{ number_format($cart->display_price ?? Auth::user()->getProductPrice($cart->product), 0, ',', '.') }}</small>
                                     @if(isset($cart->display_price) && $cart->display_price != $cart->product->price)
                                         <br><small style="text-decoration: line-through; color: #999;">Rp {{ number_format($cart->product->price, 0, ',', '.') }}</small>

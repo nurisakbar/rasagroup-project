@@ -12,7 +12,10 @@ class ProductController extends Controller
         $query = Product::where('status', 'active');
 
         if ($request->has('search') && $request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('commercial_name', 'like', '%' . $request->search . '%');
+            });
         }
 
         // Filter by price range
@@ -33,7 +36,7 @@ class ProductController extends Controller
                 $query->orderBy('price', 'desc');
                 break;
             case 'name':
-                $query->orderBy('name', 'asc');
+                $query->orderByRaw('COALESCE(commercial_name, name) asc');
                 break;
             default:
                 $query->latest();

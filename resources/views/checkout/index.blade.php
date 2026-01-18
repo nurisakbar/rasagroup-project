@@ -236,7 +236,7 @@
                                 <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
                                     <div class="position-relative me-3">
                                         @if($cart->product->image)
-                                            <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->name }}" 
+                                            <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->display_name }}" 
                                                  class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
                                         @else
                                             <div class="bg-light rounded d-flex align-items-center justify-content-center" 
@@ -249,7 +249,7 @@
                                         </span>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-0 small">{{ Str::limit($cart->product->name, 20) }}</h6>
+                                        <h6 class="mb-0 small">{{ Str::limit($cart->product->display_name, 20) }}</h6>
                                         <small class="text-muted">Rp {{ number_format($cart->product->price, 0, ',', '.') }}</small>
                                     </div>
                                     <div class="text-end">

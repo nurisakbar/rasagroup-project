@@ -60,7 +60,7 @@ class ProductApiController extends Controller
                     return [
                         'id' => $product->id,
                         'code' => $product->code,
-                        'name' => $product->name,
+                        'name' => $product->display_name,
                         'commercial_name' => $product->commercial_name,
                         'description' => $product->description,
                         'technical_description' => $product->technical_description,
@@ -152,7 +152,7 @@ class ProductApiController extends Controller
                     return [
                         'id' => $product->id,
                         'code' => $product->code,
-                        'name' => $product->name,
+                        'name' => $product->display_name,
                         'commercial_name' => $product->commercial_name,
                         'description' => $product->description,
                         'technical_description' => $product->technical_description,
@@ -201,7 +201,7 @@ class ProductApiController extends Controller
      */
     private function buildKnowledgeText(Product $product): string
     {
-        $text = "Produk: {$product->name}";
+        $text = "Produk: {$product->display_name}";
         
         if ($product->code) {
             $text .= " (Kode: {$product->code})";

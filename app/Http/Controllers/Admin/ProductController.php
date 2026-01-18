@@ -38,6 +38,15 @@ class ProductController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->orderColumn('name', function ($query, $order) {
+                    $query->orderByRaw('COALESCE(commercial_name, name) ' . $order);
+                })
+                ->filterColumn('name', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('commercial_name', 'like', "%{$keyword}%")
+                          ->orWhere('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->filterColumn('brand', function ($query, $keyword) {
                     $query->whereHas('brand', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
@@ -51,7 +60,7 @@ class ProductController extends Controller
                 })
                 ->addColumn('image_display', function ($product) {
                     if ($product->image_url) {
-                        return '<img src="' . asset($product->image_url) . '" alt="' . $product->name . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
+                        return '<img src="' . asset($product->image_url) . '" alt="' . $product->display_name . '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">';
                     }
                     return '<img src="' . asset('adminlte/img/default-50x50.gif') . '" alt="No Image" style="width: 50px; height: 50px;">';
                 })
@@ -59,9 +68,11 @@ class ProductController extends Controller
                     return $product->code ?? '<span class="text-muted">-</span>';
                 })
                 ->addColumn('name_info', function ($product) {
-                    $html = '<strong>' . $product->name . '</strong>';
-                    if ($product->commercial_name) {
-                        $html .= '<br><small class="text-info">' . $product->commercial_name . '</small>';
+                    // Use display_name (which uses commercial_name as primary)
+                    $html = '<strong>' . $product->display_name . '</strong>';
+                    // Show original name as secondary info if commercial_name exists
+                    if ($product->commercial_name && $product->commercial_name !== $product->name) {
+                        $html .= '<br><small class="text-muted">' . $product->name . '</small>';
                     }
                     return $html;
                 })

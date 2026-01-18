@@ -161,7 +161,7 @@ class WarehouseApiController extends Controller
             return [
                 'id' => $stock->product->id,
                 'code' => $stock->product->code,
-                'name' => $stock->product->name,
+                'name' => $stock->product->display_name,
                 'commercial_name' => $stock->product->commercial_name,
                 'description' => $stock->product->description,
                 'price' => (float) $stock->product->price,
@@ -288,7 +288,7 @@ class WarehouseApiController extends Controller
                     return [
                         'id' => $product->id,
                         'code' => $product->code,
-                        'name' => $product->name,
+                        'name' => $product->display_name,
                         'commercial_name' => $product->commercial_name,
                         'description' => $product->description,
                         'technical_description' => $product->technical_description,

@@ -152,7 +152,7 @@
                             @foreach($order->items as $item)
                                 <tr>
                                     <td>
-                                        <strong>{{ $item->product->name ?? 'Produk tidak tersedia' }}</strong>
+                                        <strong>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</strong>
                                         @if($item->product && $item->product->code)
                                             <br><small class="text-muted">Kode: {{ $item->product->code }}</small>
                                         @endif
@@ -316,7 +316,7 @@
                             @foreach($order->items as $item)
                                 @if($item->product)
                                     <li>
-                                        <strong>{{ $item->product->name }}</strong> - <strong>{{ $item->quantity }} unit</strong>
+                                        <strong>{{ $item->product->display_name }}</strong> - <strong>{{ $item->quantity }} unit</strong>
                                         @php
                                             $currentStock = \App\Models\WarehouseStock::where('warehouse_id', $warehouse->id)
                                                 ->where('product_id', $item->product_id)
