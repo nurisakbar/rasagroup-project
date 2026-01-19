@@ -722,7 +722,7 @@
 
     <!-- Floating WhatsApp Button -->
     <div class="whatsapp-float">
-        <a href="https://wa.me/6281234567890?text=Halo%20Rasa%20Group%2C%20saya%20ingin%20bertanya%20tentang%20produk%20Anda" target="_blank" class="whatsapp-btn" title="Chat via WhatsApp">
+        <a href="https://wa.me/6282355138133?text=Halo%20Rasa%20Group%2C%20saya%20ingin%20bertanya%20tentang%20produk%20Anda" target="_blank" class="whatsapp-btn" title="Chat via WhatsApp">
             <i class="bi bi-whatsapp"></i>
             <span class="whatsapp-text">Chat Kami</span>
         </a>
