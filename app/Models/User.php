@@ -146,6 +146,21 @@ class User extends Authenticatable
         return $this->role === self::ROLE_BUYER && empty($this->distributor_status);
     }
 
+    public function hasDistributorApplicationPending(): bool
+    {
+        return $this->distributor_status === 'pending';
+    }
+
+    public function isDistributorApproved(): bool
+    {
+        return $this->distributor_status === 'approved';
+    }
+
+    public function isDistributorRejected(): bool
+    {
+        return $this->distributor_status === 'rejected';
+    }
+
     public function canApplyAsDriippreneur(): bool
     {
         return $this->role === self::ROLE_BUYER && empty($this->driippreneur_status);
