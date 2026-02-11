@@ -44,7 +44,7 @@ class AddressApiController extends Controller
             ], 400);
         }
         
-        $addresses = Address::with(['province', 'regency', 'district', 'village'])
+        $addresses = Address::with(['province', 'regency', 'district', /* removed village */])
             ->where('user_id', $userId)
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
@@ -72,9 +72,9 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                'village' => $address->village ? [
-                    'id' => $address->village->id,
-                    'name' => $address->village->name,
+                /* removed village */ => $address/* ->village removed */ ? [
+                    'id' => $address/* ->village removed */->id,
+                    'name' => $address/* ->village removed */->name,
                 ] : null,
                 'full_address' => $address->full_address,
             ];
@@ -102,7 +102,7 @@ class AddressApiController extends Controller
             'province_id' => 'required|exists:provinces,id',
             'regency_id' => 'required|exists:regencies,id',
             'district_id' => 'required|exists:districts,id',
-            'village_id' => 'required|exists:villages,id',
+            /* 'village_id' removed */ => 'required|exists:villages,id',
             'address_detail' => 'required|string',
             'postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string|max:500',
@@ -127,14 +127,14 @@ class AddressApiController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            'village_id' => $validated['village_id'],
+            /* 'village_id' removed */ => $validated[/* 'village_id' removed */],
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
             'is_default' => $isDefault,
         ]);
 
-        $address->load(['province', 'regency', 'district', 'village']);
+        $address->load(['province', 'regency', 'district', /* removed village */]);
 
         return response()->json([
             'success' => true,
@@ -160,9 +160,9 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                'village' => $address->village ? [
-                    'id' => $address->village->id,
-                    'name' => $address->village->name,
+                /* removed village */ => $address/* ->village removed */ ? [
+                    'id' => $address/* ->village removed */->id,
+                    'name' => $address/* ->village removed */->name,
                 ] : null,
                 'full_address' => $address->full_address,
             ],
@@ -186,7 +186,7 @@ class AddressApiController extends Controller
             'province_id' => 'required|exists:provinces,id',
             'regency_id' => 'required|exists:regencies,id',
             'district_id' => 'required|exists:districts,id',
-            'village_id' => 'required|exists:villages,id',
+            /* 'village_id' removed */ => 'required|exists:villages,id',
             'address_detail' => 'required|string',
             'postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string|max:500',
@@ -210,14 +210,14 @@ class AddressApiController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            'village_id' => $validated['village_id'],
+            /* 'village_id' removed */ => $validated[/* 'village_id' removed */],
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
             'is_default' => $request->boolean('is_default'),
         ]);
 
-        $address->load(['province', 'regency', 'district', 'village']);
+        $address->load(['province', 'regency', 'district', /* removed village */]);
 
         return response()->json([
             'success' => true,
@@ -243,9 +243,9 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                'village' => $address->village ? [
-                    'id' => $address->village->id,
-                    'name' => $address->village->name,
+                /* removed village */ => $address/* ->village removed */ ? [
+                    'id' => $address/* ->village removed */->id,
+                    'name' => $address/* ->village removed */->name,
                 ] : null,
                 'full_address' => $address->full_address,
             ],
@@ -374,7 +374,7 @@ class AddressApiController extends Controller
         $cacheKey = 'api_villages_' . $request->district_id;
         
         return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $villages = Village::where('district_id', $request->district_id)
+            $villages = /* Village:: removed */where('district_id', $request->district_id)
                 ->orderBy('name')
                 ->get(['id', 'name']);
 

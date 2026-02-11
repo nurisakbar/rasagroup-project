@@ -41,6 +41,8 @@ class Order extends Model
         'notes',
         'points_earned',
         'points_credited',
+        'affiliate_id',
+        'affiliate_points',
         'xendit_invoice_id',
         'xendit_invoice_url',
     ];
@@ -57,6 +59,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'affiliate_id');
     }
 
     public function address(): BelongsTo

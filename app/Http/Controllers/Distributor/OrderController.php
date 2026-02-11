@@ -162,7 +162,7 @@ class OrderController extends Controller
         });
 
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district'])
             ->orderByDesc('is_default')
             ->get();
 
@@ -366,7 +366,7 @@ class OrderController extends Controller
 
         $address = Address::where('id', $request->address_id)
             ->where('user_id', Auth::id())
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district'])
             ->first();
 
         if (!$address) {
@@ -422,7 +422,7 @@ class OrderController extends Controller
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->village ? $address->village->name . ', ' : '') .
+                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->regency ? $address->regency->name . ', ' : '') .
                 ($address->province ? $address->province->name : '') .

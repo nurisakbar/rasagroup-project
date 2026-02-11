@@ -77,6 +77,7 @@ Route::prefix('buyer')->name('buyer.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/track', [App\Http\Controllers\Buyer\OrderController::class, 'trackOrder'])->name('orders.track');
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('profile.update');
@@ -158,11 +159,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/orders/{order}/status', [App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::put('/orders/{order}/tracking', [App\Http\Controllers\Admin\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
         Route::put('/orders/{order}/payment', [App\Http\Controllers\Admin\OrderController::class, 'updatePayment'])->name('orders.update-payment');
+        Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');
         Route::put('/settings/wacloud', [App\Http\Controllers\Admin\SettingController::class, 'updateWACloudSettings'])->name('settings.update-wacloud');
+        Route::put('/settings/expeditions', [App\Http\Controllers\Admin\SettingController::class, 'updateExpeditions'])->name('settings.update-expeditions');
         Route::get('/settings/wacloud/quota', [App\Http\Controllers\Admin\SettingController::class, 'getWACloudQuota'])->name('settings.wacloud-quota');
 
         // DRiiPPreneur Management

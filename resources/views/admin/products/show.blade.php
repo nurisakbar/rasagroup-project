@@ -141,6 +141,26 @@
         </div>
 
         <div class="col-md-4">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-qrcode"></i> Product QR Code</h3>
+                </div>
+                <div class="box-body text-center">
+                    @php
+                        $productUrl = route('products.show', $product->slug ?? $product->id);
+                        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($productUrl);
+                    @endphp
+                    <img src="{{ $qrCodeUrl }}" alt="QR Code" class="img-thumbnail" style="width: 150px; height: 150px; margin-bottom: 10px;">
+                    <p class="text-muted small">Scan to view product on public site</p>
+                    <a href="{{ $qrCodeUrl }}" target="_blank" class="btn btn-default btn-sm btn-block">
+                        <i class="fa fa-download"></i> Download QR Code
+                    </a>
+                    <a href="{{ $productUrl }}" target="_blank" class="btn btn-link btn-xs btn-block">
+                        View Public URL
+                    </a>
+                </div>
+            </div>
+
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h3 class="box-title"><i class="fa fa-clock-o"></i> Info Sistem</h3>
@@ -149,6 +169,10 @@
                     <dl>
                         <dt>ID Produk</dt>
                         <dd><small class="text-muted">{{ $product->id }}</small></dd>
+                        @if($product->slug)
+                        <dt>Slug (SEO URL)</dt>
+                        <dd><small class="text-muted">{{ $product->slug }}</small></dd>
+                        @endif
                         <dt>Dibuat Oleh</dt>
                         <dd>{{ $product->creator->name ?? 'N/A' }}</dd>
                         <dt>Tanggal Dibuat</dt>

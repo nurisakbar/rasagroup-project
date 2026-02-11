@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'distributor' => \App\Http\Middleware\DistributorAccess::class,
         ]);
         
+        // Add affiliate tracking to web middleware
+        $middleware->web(append: [
+            \App\Http\Middleware\AffiliateReferralMiddleware::class,
+        ]);
+        
         // API routes do not require authentication by default in Laravel 11
         // All routes in routes/api.php are public
         

@@ -19,7 +19,7 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        return view('home', compact('products', 'categories'));
+        return view('themes.nest.home.index', compact('products', 'categories'));
     }
 }
 

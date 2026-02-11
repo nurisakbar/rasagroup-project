@@ -107,6 +107,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 50px;">Gambar</th>
+                                <th style="width: 50px;">QRCode</th>
                                 <th style="width: 100px;">Kode</th>
                                 <th>Nama Produk</th>
                                 <th>Brand / Kategori</th>
@@ -244,6 +245,7 @@ $(document).ready(function() {
         },
         columns: [
             { data: 'image_display', name: 'image', orderable: false, searchable: false },
+            { data: 'qrcode_display', name: 'qrcode', orderable: false, searchable: false },
             { data: 'code_display', name: 'code' },
             { data: 'name_info', name: 'name' },
             { data: 'brand_info', name: 'brand', orderable: false, searchable: true },

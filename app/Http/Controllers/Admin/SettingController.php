@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Expedition;
 use App\Models\Setting;
 use App\Services\WACloudService;
 use Illuminate\Http\Request;
@@ -14,10 +15,12 @@ class SettingController extends Controller
         $driippreneurPointRate = Setting::get('driippreneur_point_rate', 1000);
         $wacloudApiKey = Setting::get('wacloud_api_key', '');
         $wacloudDeviceId = Setting::get('wacloud_device_id', '');
+        $expeditions = Expedition::all();
         
         // Get WACloud quota if configured
         $wacloudQuota = null;
         if (!empty($wacloudApiKey) && !empty($wacloudDeviceId)) {
+            // ... existing WACloud logic (omitted for brevity, will be kept by tool) ...
             try {
                 $waCloud = new WACloudService();
                 $accountInfo = $waCloud->getAccount();
@@ -81,7 +84,20 @@ class SettingController extends Controller
             }
         }
         
-        return view('admin.settings.index', compact('driippreneurPointRate', 'wacloudApiKey', 'wacloudDeviceId', 'wacloudQuota'));
+        return view('admin.settings.index', compact('driippreneurPointRate', 'wacloudApiKey', 'wacloudDeviceId', 'wacloudQuota', 'expeditions'));
+    }
+
+    public function updateExpeditions(Request $request)
+    {
+        // Set all to inactive initially
+        Expedition::query()->update(['is_active' => false]);
+
+        // Set selected to active
+        if ($request->has('expeditions')) {
+            Expedition::whereIn('id', $request->expeditions)->update(['is_active' => true]);
+        }
+
+        return back()->with('success', 'Pengaturan ekspedisi berhasil diperbarui.');
     }
 
     public function updateDriippreneurPointRate(Request $request)

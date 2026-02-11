@@ -64,6 +64,15 @@ class ProductController extends Controller
                     }
                     return '<img src="' . asset('adminlte/img/default-50x50.gif') . '" alt="No Image" style="width: 50px; height: 50px;">';
                 })
+                ->addColumn('qrcode_display', function ($product) {
+                    $url = route('products.show', $product->slug ?? $product->id);
+                    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($url);
+                    return '
+                        <a href="' . $qrUrl . '" target="_blank" title="Scan untuk lihat detail">
+                            <img src="' . $qrUrl . '" alt="QR Code" style="width: 50px; height: 50px; border: 1px solid #ddd; padding: 2px;">
+                        </a>
+                    ';
+                })
                 ->addColumn('code_display', function ($product) {
                     return $product->code ?? '<span class="text-muted">-</span>';
                 })
@@ -127,7 +136,7 @@ class ProductController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['image_display', 'code_display', 'name_info', 'brand_info', 'size_unit', 'status_badge', 'action'])
+                ->rawColumns(['image_display', 'qrcode_display', 'code_display', 'name_info', 'brand_info', 'size_unit', 'status_badge', 'action'])
                 ->make(true);
         }
 

@@ -99,7 +99,7 @@ class WarehouseController extends Controller
      */
     public function create()
     {
-        $provinces = Province::orderBy('name')->get();
+        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
         return view('admin.warehouses.create', compact('provinces'));
     }
 
@@ -114,8 +114,9 @@ class WarehouseController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'province_id' => 'nullable|exists:provinces,id',
-            'regency_id' => 'nullable|exists:regencies,id',
+            'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
+            'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
+            'district_id' => 'nullable|exists:raja_ongkir_districts,id',
             'is_active' => 'boolean',
             // User data
             'user_name' => 'required|string|max:255',
@@ -132,6 +133,7 @@ class WarehouseController extends Controller
             'description' => $validated['description'] ?? null,
             'province_id' => $validated['province_id'] ?? null,
             'regency_id' => $validated['regency_id'] ?? null,
+            'district_id' => $validated['district_id'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -180,16 +182,36 @@ class WarehouseController extends Controller
         return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Warehouse $warehouse)
     {
-        $provinces = Province::orderBy('name')->get();
+        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        
         $regencies = $warehouse->province_id 
-            ? Regency::where('province_id', $warehouse->province_id)->orderBy('name')->get() 
+            ? \App\Models\RajaOngkirCity::where('province_id', $warehouse->province_id)->orderBy('name')->get() 
             : collect();
-        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies'));
+            
+        $districts = $warehouse->regency_id
+            ? \App\Models\RajaOngkirDistrict::where('city_id', $warehouse->regency_id)->orderBy('name')->get()
+            : collect();
+
+        // Fetch villages from local table by mapping district name
+        $villages = [];
+        if ($warehouse->district_id) {
+            $roDistrict = \App\Models\RajaOngkirDistrict::find($warehouse->district_id);
+            if ($roDistrict) {
+                $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+                if (!$localDistrict) {
+                    $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+                }
+                if ($localDistrict) {
+                    $villages = \App\Models\Village::where('district_id', $localDistrict->id)
+                        ->orderBy('name')
+                        ->get();
+                }
+            }
+        }
+
+        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages'));
     }
 
     /**
@@ -202,8 +224,9 @@ class WarehouseController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'province_id' => 'nullable|exists:provinces,id',
-            'regency_id' => 'nullable|exists:regencies,id',
+            'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
+            'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
+            'district_id' => 'nullable|exists:raja_ongkir_districts,id',
             'is_active' => 'boolean',
         ]);
 

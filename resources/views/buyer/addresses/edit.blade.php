@@ -71,7 +71,7 @@
                         <h6 class="text-muted mb-3"><i class="bi bi-map"></i> Lokasi</h6>
                         
                         <div class="alert alert-info small mb-3">
-                            <i class="bi bi-info-circle"></i> <strong>Info:</strong> Data wilayah saat ini tersedia untuk wilayah DKI Jakarta, Jawa Barat (Bandung), dan Jawa Timur (Surabaya). Jika wilayah Anda tidak tersedia, silakan hubungi admin.
+                            <i class="bi bi-info-circle"></i> <strong>Info:</strong> Kami menggunakan data wilayah **RajaOngkir** untuk memastikan akurasi perhitungan ongkos kirim. Silakan pilih wilayah Anda dengan benar.
                         </div>
 
                         <!-- Lokasi -->
@@ -81,8 +81,8 @@
                                 <select class="form-select @error('province_id') is-invalid @enderror" id="province_id" name="province_id" required>
                                     <option value="">-- Pilih Provinsi --</option>
                                     @foreach($provinces as $province)
-                                        <option value="{{ $province->id }}" {{ old('province_id', $address->province_id) == $province->id ? 'selected' : '' }}>
-                                            {{ $province->name }}
+                                        <option value="{{ $province['id'] }}" {{ old('province_id', $address->province_id) == $province['id'] ? 'selected' : '' }}>
+                                            {{ $province['name'] }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -95,8 +95,8 @@
                                 <select class="form-select @error('regency_id') is-invalid @enderror" id="regency_id" name="regency_id" required>
                                     <option value="">-- Pilih Kabupaten/Kota --</option>
                                     @foreach($regencies as $regency)
-                                        <option value="{{ $regency->id }}" {{ old('regency_id', $address->regency_id) == $regency->id ? 'selected' : '' }}>
-                                            {{ $regency->name }}
+                                        <option value="{{ $regency['id'] }}" {{ old('regency_id', $address->regency_id) == $regency['id'] ? 'selected' : '' }}>
+                                            {{ $regency['name'] }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -115,8 +115,8 @@
                                 <select class="form-select @error('district_id') is-invalid @enderror" id="district_id" name="district_id" required>
                                     <option value="">-- Pilih Kecamatan --</option>
                                     @foreach($districts as $district)
-                                        <option value="{{ $district->id }}" {{ old('district_id', $address->district_id) == $district->id ? 'selected' : '' }}>
-                                            {{ $district->name }}
+                                        <option value="{{ $district['id'] }}" {{ old('district_id', $address->district_id) == $district['id'] ? 'selected' : '' }}>
+                                            {{ $district['name'] }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -127,12 +127,12 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-6">
-                                <label for="village_id" class="form-label">Kelurahan/Desa <span class="text-danger">*</span></label>
-                                <select class="form-select @error('village_id') is-invalid @enderror" id="village_id" name="village_id" required>
+                            <div class="col-md-6" id="village_container" style="{{ $address->village_id ? '' : 'display: none;' }}">
+                                <label for="village_id" class="form-label">Kelurahan/Desa</label>
+                                <select class="form-select @error('village_id') is-invalid @enderror" id="village_id" name="village_id">
                                     <option value="">-- Pilih Kelurahan/Desa --</option>
                                     @foreach($villages as $village)
-                                        <option value="{{ $village->id }}" {{ old('village_id', $address->village_id) == $village->id ? 'selected' : '' }}>
+                                        <option value="{{ $village->id }}" {{ $address->village_id == $village->id ? 'selected' : '' }}>
                                             {{ $village->name }}
                                         </option>
                                     @endforeach
@@ -380,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(function(data) {
                     villageSelect.innerHTML = '<option value="">-- Pilih Kelurahan/Desa --</option>';
                     if (data && data.length > 0) {
+                        document.getElementById('village_container').style.display = 'block';
                         for (var i = 0; i < data.length; i++) {
                             var option = document.createElement('option');
                             option.value = data[i].id;
@@ -387,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             villageSelect.appendChild(option);
                         }
                     } else {
-                        villageSelect.innerHTML = '<option value="">-- Tidak ada data untuk kecamatan ini --</option>';
+                        document.getElementById('village_container').style.display = 'none';
                     }
                 })
                 .catch(function(error) {

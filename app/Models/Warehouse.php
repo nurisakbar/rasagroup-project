@@ -23,6 +23,8 @@ class Warehouse extends Model
         'description',
         'province_id',
         'regency_id',
+        'district_id',
+        'village_id',
         'is_active',
     ];
 
@@ -32,12 +34,22 @@ class Warehouse extends Model
 
     public function province(): BelongsTo
     {
-        return $this->belongsTo(Province::class);
+        return $this->belongsTo(RajaOngkirProvince::class, 'province_id');
     }
 
     public function regency(): BelongsTo
     {
-        return $this->belongsTo(Regency::class);
+        return $this->belongsTo(RajaOngkirCity::class, 'regency_id');
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(RajaOngkirDistrict::class, 'district_id');
+    }
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class, 'village_id');
     }
 
     public function stocks(): HasMany

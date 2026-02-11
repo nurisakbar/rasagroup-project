@@ -25,6 +25,7 @@ class Product extends Model
         'technical_description',
         'brand_id',
         'category_id',
+        'slug',
         'size',
         'unit',
         'price',
@@ -47,6 +48,18 @@ class Product extends Model
         parent::boot();
 
         static::creating(function ($product) {
+            if (!$product->slug) {
+                $product->slug = \Illuminate\Support\Str::slug($product->display_name ?: $product->name);
+                
+                // Ensure uniqueness
+                $originalSlug = $product->slug;
+                $count = 1;
+                while (static::where('slug', $product->slug)->exists()) {
+                    $product->slug = $originalSlug . '-' . $count;
+                    $count++;
+                }
+            }
+
             Log::info('Product: Creating product', [
                 'code' => $product->code,
                 'name' => $product->name,
@@ -64,6 +77,18 @@ class Product extends Model
         });
 
         static::saving(function ($product) {
+            if ($product->isDirty('name') || $product->isDirty('commercial_name')) {
+                $product->slug = \Illuminate\Support\Str::slug($product->display_name ?: $product->name);
+                
+                // Ensure uniqueness
+                $originalSlug = $product->slug;
+                $count = 1;
+                while (static::where('slug', $product->slug)->where('id', '!=', $product->id)->exists()) {
+                    $product->slug = $originalSlug . '-' . $count;
+                    $count++;
+                }
+            }
+
             Log::debug('Product: Saving product', [
                 'id' => $product->id,
                 'code' => $product->code,
@@ -184,5 +209,15 @@ class Product extends Model
         // Build full URL: domain.com/storage/products/filename
         $baseUrl = rtrim(config('app.url'), '/');
         return $baseUrl . '/storage/products/' . $filename;
+    }
+
+    /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 }

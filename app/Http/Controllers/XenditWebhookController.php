@@ -85,7 +85,7 @@ class XenditWebhookController extends Controller
                         // Send thank you notification after payment is successful
                         try {
                             // Load relationships for notification
-                            $order->load(['address.village', 'address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                            $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
                             
                             \App\Helpers\WACloudHelper::sendThankYouNotification($order);
                         } catch (\Exception $e) {

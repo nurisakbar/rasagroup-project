@@ -156,7 +156,7 @@ class OrderApiController extends Controller
         // Verify address belongs to user
         $address = Address::where('user_id', $userId)
             ->where('id', $validated['address_id'])
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district'])
             ->firstOrFail();
 
         $expedition = Expedition::findOrFail($validated['expedition_id']);
@@ -248,7 +248,7 @@ class OrderApiController extends Controller
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->village ? $address->village->name . ', ' : '') .
+                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->regency ? $address->regency->name . ', ' : '') .
                 ($address->province ? $address->province->name : '') .
@@ -406,11 +406,11 @@ class OrderApiController extends Controller
             // Load relationships for notification (after commit to ensure data is saved)
             if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
                 $order->refresh();
-                $order->load(['address.village', 'address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
             } else {
                 // Ensure address relationships are loaded
-                if ($order->address && (!$order->address->relationLoaded('village') || !$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
-                    $order->address->load(['village', 'district', 'regency', 'province']);
+                if ($order->address && (!$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
+                    $order->address->load(['district', 'regency', 'province']);
                 }
             }
 

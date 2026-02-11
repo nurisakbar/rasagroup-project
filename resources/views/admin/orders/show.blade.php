@@ -105,6 +105,11 @@
                             <td>
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
+                                    @if($order->expedition)
+                                        <button type="button" class="btn btn-xs btn-info" id="btn-track-order" style="margin-left: 10px;">
+                                            <i class="fa fa-search"></i> Lacak Pengiriman
+                                        </button>
+                                    @endif
                                     @if($order->shipped_at)
                                         <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
                                     @endif
@@ -231,6 +236,19 @@
 
                         <hr>
 
+                        <!-- Expedition Selection -->
+                        <div class="form-group">
+                            <label>Ekspedisi Pengiriman</label>
+                            <select name="expedition_id" class="form-control">
+                                <option value="">-- Pilih Ekspedisi --</option>
+                                @foreach($expeditions as $exped)
+                                    <option value="{{ $exped->id }}" {{ ($order->expedition_id == $exped->id) ? 'selected' : '' }}>
+                                        {{ $exped->name }} ({{ strtoupper($exped->code) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Tracking Number -->
                         <div class="form-group">
                             <label for="tracking_number">Nomor Resi Pengiriman</label>
@@ -348,6 +366,91 @@ $(document).ready(function() {
     });
 });
 </script>
+
+@if($order->tracking_number && $order->expedition)
+<div class="modal fade" id="trackingModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Status Pengiriman ({{ $order->expedition->name }} - {{ $order->tracking_number }})</h4>
+            </div>
+            <div class="modal-body" id="tracking-content">
+                <div class="text-center">
+                    <i class="fa fa-spinner fa-spin fa-3x"></i>
+                    <p>Sedang melacak status pengiriman...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$('#btn-track-order').click(function(e) {
+    e.preventDefault();
+    $('#trackingModal').modal('show');
+    $('#tracking-content').html('<div class="text-center" style="padding: 20px;"><i class="fa fa-spinner fa-spin fa-3x"></i><p style="margin-top: 10px;">Sedang melacak status pengiriman...</p></div>');
+    
+    $.ajax({
+        url: "{{ route('admin.orders.track', $order->id) }}",
+        type: 'GET',
+        success: function(response) {
+            var html = '';
+            
+            if (response.success && response.data) {
+                var data = response.data;
+                var status = data.delivery_status;
+                
+                // Summary Box
+                html += '<div class="row" style="margin-bottom: 20px;">';
+                html += '<div class="col-md-12">';
+                html += '<div class="callout callout-' + (status.status == 'DELIVERED' ? 'success' : 'info') + '">';
+                html += '<h4>Status: ' + status.status + '</h4>';
+                html += '<p>Penerima: <strong>' + (status.pod_receiver || '-') + '</strong></p>';
+                html += '<p>Waktu: ' + (status.pod_date || '-') + ' ' + (status.pod_time || '') + '</p>';
+                html += '</div></div></div>';
+                
+                // Timeline
+                html += '<ul class="timeline">';
+                if (data.manifest && data.manifest.length > 0) {
+                    data.manifest.forEach(function(item) {
+                        html += '<li>';
+                        html += '<i class="fa fa-truck bg-blue"></i>';
+                        html += '<div class="timeline-item">';
+                        html += '<span class="time"><i class="fa fa-clock-o"></i> ' + item.manifest_date + ' ' + item.manifest_time + '</span>';
+                        html += '<h3 class="timeline-header"><strong>' + item.manifest_description + '</strong></h3>';
+                        if (item.city_name) {
+                            html += '<div class="timeline-body"><i class="fa fa-map-marker"></i> ' + item.city_name + '</div>';
+                        }
+                        html += '</div>';
+                        html += '</li>';
+                    });
+                    html += '<li><i class="fa fa-clock-o bg-gray"></i></li>';
+                } else {
+                    html += '<li><div class="timeline-item"><div class="timeline-body">Tidak ada data manifest.</div></div></li>';
+                }
+                html += '</ul>';
+                
+            } else {
+                html = '<div class="alert alert-warning">Gagal mendapatkan data tracking atau data tidak ditemukan.</div>';
+            }
+            
+            $('#tracking-content').html(html);
+        },
+        error: function(xhr) {
+            var msg = 'Gagal melacak resi.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                msg = xhr.responseJSON.message;
+            }
+            $('#tracking-content').html('<div class="alert alert-danger">' + msg + '</div>');
+        }
+    });
+});
+</script>
+@endif
 @endpush
 
 

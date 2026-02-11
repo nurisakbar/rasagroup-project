@@ -22,12 +22,6 @@
                     @csrf
                     @method('PUT')
                     <div class="box-body">
-                        <div class="form-group">
-                            <label for="id">ID (UUID)</label>
-                            <input type="text" class="form-control" id="id" value="{{ $warehouse->id }}" disabled>
-                            <p class="help-block">UUID tidak dapat diubah</p>
-                        </div>
-
                         <div class="form-group @error('name') has-error @enderror">
                             <label for="name">Nama Hub <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $warehouse->name) }}" placeholder="Masukkan nama hub" required>
@@ -66,6 +60,41 @@
                                         @endforeach
                                     </select>
                                     @error('regency_id')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('district_id') has-error @enderror">
+                                    <label for="district_id">Kecamatan <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="district_id" name="district_id" required>
+                                        <option value="">-- Pilih Kecamatan --</option>
+                                        @foreach($districts as $district)
+                                            <option value="{{ $district->id }}" {{ old('district_id', $warehouse->district_id) == $district->id ? 'selected' : '' }}>
+                                                {{ $district->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('district_id')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('village_id') has-error @enderror">
+                                    <label for="village_id">Desa/Kelurahan</label>
+                                    <select class="form-control" id="village_id" name="village_id">
+                                        <option value="">-- Pilih Desa/Kelurahan --</option>
+                                        @foreach($villages as $village)
+                                            <option value="{{ $village->id }}" {{ old('village_id', $warehouse->village_id) == $village->id ? 'selected' : '' }}>
+                                                {{ $village->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('village_id')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -146,12 +175,16 @@ $(document).ready(function() {
     $('#province_id').change(function() {
         var provinceId = $(this).val();
         var regencySelect = $('#regency_id');
+        var districtSelect = $('#district_id');
+        var villageSelect = $('#village_id');
         
         regencySelect.html('<option value="">Loading...</option>');
+        districtSelect.html('<option value="">-- Pilih Kecamatan --</option>');
+        villageSelect.html('<option value="">-- Pilih Desa/Kelurahan --</option>');
         
         if (provinceId) {
             $.ajax({
-                url: '{{ route("admin.get-regencies") }}',
+                url: '{{ route("buyer.addresses.get-regencies") }}',
                 type: 'GET',
                 data: { province_id: provinceId },
                 success: function(data) {
@@ -167,6 +200,64 @@ $(document).ready(function() {
             });
         } else {
             regencySelect.html('<option value="">-- Pilih Kabupaten/Kota --</option>');
+        }
+    });
+
+    // Load districts when regency changes
+    $('#regency_id').change(function() {
+        var regencyId = $(this).val();
+        var districtSelect = $('#district_id');
+        var villageSelect = $('#village_id');
+        
+        districtSelect.html('<option value="">Loading...</option>');
+        villageSelect.html('<option value="">-- Pilih Desa/Kelurahan --</option>');
+        
+        if (regencyId) {
+            $.ajax({
+                url: '{{ route("buyer.addresses.get-districts") }}',
+                type: 'GET',
+                data: { regency_id: regencyId },
+                success: function(data) {
+                    districtSelect.html('<option value="">-- Pilih Kecamatan --</option>');
+                    $.each(data, function(index, district) {
+                        districtSelect.append('<option value="' + district.id + '">' + district.name + '</option>');
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                    districtSelect.html('<option value="">Error loading data</option>');
+                }
+            });
+        } else {
+            districtSelect.html('<option value="">-- Pilih Kecamatan --</option>');
+        }
+    });
+
+    // Load villages when district changes
+    $('#district_id').change(function() {
+        var districtId = $(this).val();
+        var villageSelect = $('#village_id');
+        
+        villageSelect.html('<option value="">Loading...</option>');
+        
+        if (districtId) {
+            $.ajax({
+                url: '{{ route("buyer.addresses.get-villages") }}',
+                type: 'GET',
+                data: { district_id: districtId },
+                success: function(data) {
+                    villageSelect.html('<option value="">-- Pilih Desa/Kelurahan --</option>');
+                    $.each(data, function(index, village) {
+                        villageSelect.append('<option value="' + village.id + '">' + village.name + '</option>');
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                    villageSelect.html('<option value="">Error loading data</option>');
+                }
+            });
+        } else {
+            villageSelect.html('<option value="">-- Pilih Desa/Kelurahan --</option>');
         }
     });
 });

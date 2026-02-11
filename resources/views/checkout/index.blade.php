@@ -119,17 +119,12 @@
                         <div class="mt-3">
                             <label class="form-label fw-semibold">Pilih Layanan:</label>
                             <div id="serviceList" class="row">
-                                @if($defaultExpedition)
-                                    @foreach($defaultExpedition->services as $index => $service)
-                                        @php
-                                            $serviceCost = round(($shippingRates[$defaultAddress?->province_id ?? '31'] ?? 35000) * $defaultExpedition->base_cost * $service['multiplier']);
-                                            $estMin = max(1, $defaultExpedition->est_days_min + $service['days_add']);
-                                            $estMax = max(1, $defaultExpedition->est_days_max + $service['days_add']);
-                                        @endphp
+                                @if(!empty($allShippingServices))
+                                    @foreach($allShippingServices as $index => $service)
                                         <div class="col-md-4 mb-2">
                                             <div class="service-card p-3 border rounded {{ $index === 0 ? 'selected border-primary' : '' }}"
                                                  data-service-code="{{ $service['code'] }}"
-                                                 data-cost="{{ $serviceCost }}"
+                                                 data-cost="{{ $service['cost'] }}"
                                                  onclick="selectService('{{ $service['code'] }}')">
                                                 <input type="radio" name="expedition_service" value="{{ $service['code'] }}" 
                                                        id="service{{ $service['code'] }}" class="d-none"
@@ -137,15 +132,21 @@
                                                 <div class="d-flex justify-content-between align-items-start">
                                                     <div>
                                                         <div class="fw-semibold">{{ $service['name'] }}</div>
-                                                        <small class="text-muted">{{ $estMin === $estMax ? $estMin : $estMin.'-'.$estMax }} hari</small>
+                                                        <small class="text-muted">{{ $service['estimated_days'] }}</small>
                                                     </div>
                                                     <div class="text-end">
-                                                        <div class="fw-bold text-primary service-cost">Rp {{ number_format($serviceCost, 0, ',', '.') }}</div>
+                                                        <div class="fw-bold text-primary service-cost">{{ $service['cost_formatted'] }}</div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     @endforeach
+                                @else
+                                     <div class="col-12">
+                                         <div class="alert alert-warning py-2 small">
+                                             <i class="bi bi-exclamation-circle"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.
+                                         </div>
+                                     </div>
                                 @endif
                             </div>
                             @error('expedition_service')
@@ -286,7 +287,13 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2 text-muted small">
                                 <span><i class="bi bi-clock"></i> Estimasi</span>
-                                <span id="estimatedDelivery">{{ $defaultExpedition?->estimated_delivery ?? '-' }}</span>
+                                <span id="estimatedDelivery">
+                                    @if($defaultService)
+                                        {{ $defaultService['estimated_days'] }}
+                                    @else
+                                        -
+                                    @endif
+                                </span>
                             </div>
                             <hr>
                             
@@ -412,7 +419,7 @@
 <script>
 var currentAddressId = '{{ $defaultAddress?->id ?? '' }}';
 var currentExpeditionId = '{{ $defaultExpedition?->id ?? '' }}';
-var currentServiceCode = '{{ $defaultService["code"] ?? "REG" }}';
+var currentServiceCode = '{{ $defaultService["code"] ?? "" }}';
 
 function selectAddress(addressId) {
     currentAddressId = addressId;
@@ -431,8 +438,10 @@ function selectAddress(addressId) {
         selectedCard.classList.remove('border');
     }
     
-    // Recalculate shipping (this will also update warehouse)
-    updateShipping();
+    // Reload services for current expedition with new address
+    if (currentExpeditionId) {
+        loadExpeditionServices(currentExpeditionId);
+    }
 }
 
 function selectExpedition(expeditionId) {
@@ -452,24 +461,36 @@ function selectExpedition(expeditionId) {
 }
 
 function loadExpeditionServices(expeditionId) {
+    if (!currentAddressId) {
+        alert('Silakan pilih alamat pengiriman terlebih dahulu');
+        return;
+    }
+
+    var serviceList = document.getElementById('serviceList');
+    serviceList.innerHTML = '<div class="col-12"><div class="text-center py-3"><i class="bi bi-arrow-repeat spin"></i> Memuat layanan...</div></div>';
+
     fetch('{{ route("checkout.expedition-services") }}?expedition_id=' + expeditionId + '&address_id=' + currentAddressId)
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.error) {
-                alert(data.error);
+                serviceList.innerHTML = '<div class="col-12"><div class="alert alert-danger">' + data.error + '</div></div>';
                 return;
             }
             
-            var serviceList = document.getElementById('serviceList');
             serviceList.innerHTML = '';
             
+            if (data.services.length === 0) {
+                serviceList.innerHTML = '<div class="col-12"><div class="alert alert-warning py-2 small"><i class="bi bi-exclamation-circle"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>';
+                return;
+            }
+
             data.services.forEach(function(service, index) {
                 var isSelected = index === 0;
                 if (isSelected) {
                     currentServiceCode = service.code;
                 }
                 
-                serviceList.innerHTML += 
+                var serviceHtml = 
                     '<div class="col-md-4 mb-2">' +
                         '<div class="service-card p-3 border rounded ' + (isSelected ? 'selected border-primary' : '') + '"' +
                              ' data-service-code="' + service.code + '"' +
@@ -489,6 +510,8 @@ function loadExpeditionServices(expeditionId) {
                             '</div>' +
                         '</div>' +
                     '</div>';
+                
+                serviceList.innerHTML += serviceHtml;
             });
             
             // Update displays with first service
@@ -498,6 +521,7 @@ function loadExpeditionServices(expeditionId) {
         })
         .catch(function(error) {
             console.error('Error:', error);
+            serviceList.innerHTML = '<div class="col-12"><div class="alert alert-danger">Gagal memuat layanan pengiriman</div></div>';
         });
 }
 
@@ -518,7 +542,10 @@ function selectService(serviceCode) {
 }
 
 function updateShipping() {
-    if (!currentAddressId || !currentExpeditionId || !currentServiceCode) return;
+    if (!currentAddressId || !currentExpeditionId || !currentServiceCode) {
+        console.log('Missing data:', {address: currentAddressId, expedition: currentExpeditionId, service: currentServiceCode});
+        return;
+    }
     
     fetch('{{ route("checkout.calculate-shipping") }}?address_id=' + currentAddressId + 
           '&expedition_id=' + currentExpeditionId + 
@@ -539,19 +566,6 @@ function updateShipping() {
             var expCard = document.querySelector('.expedition-card.selected');
             var expName = expCard ? expCard.querySelector('.fw-semibold').textContent : '';
             document.getElementById('expeditionInfo').textContent = expName + ' - ' + data.service_name;
-            
-            // Update selected address preview
-            document.getElementById('selectedAddressPreview').innerHTML = 
-                '<small class="text-muted d-block mb-1"><i class="bi bi-geo-alt"></i> Dikirim ke:</small>' +
-                '<strong>' + data.address.recipient_name + '</strong>' +
-                '<p class="mb-0 small text-muted">' + data.address.full_address + '</p>';
-            
-            // Update source warehouse display
-            if (data.warehouse) {
-                document.getElementById('sourceWarehouseDisplay').innerHTML = 
-                    '<strong>' + data.warehouse.name + '</strong>' +
-                    '<small class="d-block text-muted">' + data.warehouse.location + '</small>';
-            }
         })
         .catch(function(error) {
             console.error('Error:', error);
@@ -574,18 +588,11 @@ function selectPayment(method) {
     });
     event.currentTarget.classList.add('selected');
 }
+
+// Add spinning animation for loading
+var style = document.createElement('style');
+style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .spin { animation: spin 1s linear infinite; display: inline-block; }';
+document.head.appendChild(style);
 </script>
 
-@php
-    // For service cost calculation in blade
-    $shippingRates = [
-        '11' => 15000, '12' => 15000, '13' => 18000, '14' => 20000, '15' => 22000,
-        '16' => 25000, '17' => 25000, '18' => 28000, '19' => 30000, '21' => 32000,
-        '31' => 10000, '32' => 12000, '33' => 12000, '34' => 10000, '35' => 12000,
-        '36' => 15000, '51' => 20000, '52' => 25000, '53' => 30000, '61' => 35000,
-        '62' => 35000, '63' => 35000, '64' => 35000, '65' => 35000, '71' => 40000,
-        '72' => 40000, '73' => 40000, '74' => 40000, '75' => 40000, '76' => 40000,
-        '81' => 50000, '82' => 50000, '91' => 55000, '94' => 55000,
-    ];
-@endphp
 @endsection

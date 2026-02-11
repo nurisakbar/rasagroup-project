@@ -44,7 +44,39 @@ class User extends Authenticatable
         'driippreneur_applied_at',
         'points',
         'price_level_id',
+        'referral_code',
+        'referred_by_id',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+        });
+    }
+
+    public static function generateUniqueReferralCode()
+    {
+        do {
+            $code = strtoupper(\Illuminate\Support\Str::random(8));
+        } while (static::where('referral_code', $code)->exists());
+
+        return $code;
+    }
+
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by_id');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by_id');
+    }
 
     protected $hidden = [
         'password',

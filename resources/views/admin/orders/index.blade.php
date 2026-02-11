@@ -11,7 +11,7 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
 <style>
-    .dataTables_filter { display: none; }
+    /* .dataTables_filter { display: none; } */
     .filter-box { margin-bottom: 0; }
     #orders-table_length { margin-bottom: 15px; }
 </style>
@@ -152,7 +152,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
         language: {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
-            search: "Cari:",
+            search: "Cari (No. Pesanan / Nama):",
             lengthMenu: "Tampilkan _MENU_ data",
             info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
             infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",

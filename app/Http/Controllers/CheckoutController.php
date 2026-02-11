@@ -17,43 +17,12 @@ use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
-    // Simulasi tarif ongkir per provinsi (dalam Rupiah per kg)
-    private $shippingRates = [
-        '11' => 15000,  // Aceh
-        '12' => 15000,  // Sumatera Utara
-        '13' => 18000,  // Sumatera Barat
-        '14' => 20000,  // Riau
-        '15' => 22000,  // Jambi
-        '16' => 25000,  // Sumatera Selatan
-        '17' => 25000,  // Bengkulu
-        '18' => 28000,  // Lampung
-        '19' => 30000,  // Kepulauan Bangka Belitung
-        '21' => 32000,  // Kepulauan Riau
-        '31' => 10000,  // DKI Jakarta
-        '32' => 12000,  // Jawa Barat
-        '33' => 12000,  // Jawa Tengah
-        '34' => 10000,  // DI Yogyakarta
-        '35' => 12000,  // Jawa Timur
-        '36' => 15000,  // Banten
-        '51' => 20000,  // Bali
-        '52' => 25000,  // Nusa Tenggara Barat
-        '53' => 30000,  // Nusa Tenggara Timur
-        '61' => 35000,  // Kalimantan Barat
-        '62' => 35000,  // Kalimantan Tengah
-        '63' => 35000,  // Kalimantan Selatan
-        '64' => 35000,  // Kalimantan Timur
-        '65' => 35000,  // Kalimantan Utara
-        '71' => 40000,  // Sulawesi Utara
-        '72' => 40000,  // Sulawesi Tengah
-        '73' => 40000,  // Sulawesi Selatan
-        '74' => 40000,  // Sulawesi Tenggara
-        '75' => 40000,  // Gorontalo
-        '76' => 40000,  // Sulawesi Barat
-        '81' => 50000,  // Maluku
-        '82' => 50000,  // Maluku Utara
-        '91' => 55000,  // Papua Barat
-        '94' => 55000,  // Papua
-    ];
+    protected $rajaOngkir;
+
+    public function __construct(\App\Services\RajaOngkirService $rajaOngkir)
+    {
+        $this->rajaOngkir = $rajaOngkir;
+    }
 
     public function index()
     {
@@ -88,54 +57,160 @@ class CheckoutController extends Controller
                 ->with('error', 'Hub pengirim tidak ditemukan. Silakan tambahkan produk ke keranjang kembali.');
         }
 
+        // Check if warehouse has complete location data
+        if (!$sourceWarehouse->district_id) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Data lokasi hub pengirim belum lengkap. Silakan hubungi administrator untuk melengkapi data lokasi hub (Provinsi, Kota, dan Kecamatan).');
+        }
+
         $subtotal = $carts->sum(function ($cart) {
             return $cart->product->price * $cart->quantity;
         });
 
+        $totalWeight = $carts->sum(function ($cart) {
+            return ($cart->product->weight ?? 500) * $cart->quantity;
+        });
+
+        $expeditions = Expedition::where('is_active', true)->get();
+        $defaultExpedition = $expeditions->first();
+
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district'])
             ->orderByDesc('is_default')
             ->get();
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
-        
-        // Calculate total weight
-        $totalWeight = $carts->sum(function ($cart) {
-            return ($cart->product->weight ?? 500) * $cart->quantity;
-        });
-        
-        // Get available expeditions
-        $expeditions = Expedition::active()->get();
-        $defaultExpedition = $expeditions->first();
-        $defaultService = $defaultExpedition ? $defaultExpedition->services[0] : null;
-        
-        // Calculate shipping cost based on default address and expedition
-        $shippingCost = 0;
-        if ($defaultAddress && $defaultExpedition && $defaultService) {
-            $shippingCost = $this->calculateShippingCost(
-                $defaultAddress->province_id, 
-                $totalWeight, 
-                $defaultExpedition->base_cost,
-                $defaultService['multiplier']
-            );
-        }
-
-        $total = $subtotal + $shippingCost;
-
-        return view('checkout.index', compact(
-            'carts', 
-            'subtotal', 
-            'shippingCost', 
-            'total', 
-            'addresses', 
-            'defaultAddress',
-            'totalWeight',
-            'expeditions',
-            'defaultExpedition',
-            'defaultService',
-            'sourceWarehouse'
-        ));
+    
+    // Check if default address has district_id
+    if ($defaultAddress && !$defaultAddress->district_id) {
+        return redirect()->route('buyer.addresses.index')
+            ->with('error', 'Alamat pengiriman belum memiliki data kecamatan. Silakan lengkapi data alamat Anda terlebih dahulu.');
     }
+    
+    // Calculate shipping cost based on default address and expedition
+    $shippingCost = 0;
+    $allShippingServices = [];
+    $defaultService = null;
+
+    // Debug logging
+    \Log::info('=== CHECKOUT DEBUG ===');
+    \Log::info('Source Warehouse:', [
+        'id' => $sourceWarehouse->id,
+        'name' => $sourceWarehouse->name,
+        'district_id' => $sourceWarehouse->district_id,
+        'province_id' => $sourceWarehouse->province_id,
+        'regency_id' => $sourceWarehouse->regency_id,
+    ]);
+    
+    if ($defaultAddress) {
+        \Log::info('Default Address:', [
+            'id' => $defaultAddress->id,
+            'recipient' => $defaultAddress->recipient_name,
+            'district_id' => $defaultAddress->district_id,
+            'province_id' => $defaultAddress->province_id,
+            'regency_id' => $defaultAddress->regency_id,
+        ]);
+    } else {
+        \Log::warning('No default address found');
+    }
+    
+    \Log::info('Total Weight:', ['weight' => $totalWeight]);
+    \Log::info('Expeditions:', ['count' => $expeditions->count(), 'codes' => $expeditions->pluck('code')->toArray()]);
+
+    if ($defaultAddress && $sourceWarehouse && $sourceWarehouse->district_id && $expeditions->count() > 0) {
+        $courierCodes = $expeditions->pluck('code')->implode(':');
+        
+        \Log::info('Calling RajaOngkir API:', [
+            'origin' => $sourceWarehouse->district_id,
+            'destination' => $defaultAddress->district_id,
+            'weight' => $totalWeight,
+            'courier' => $courierCodes,
+        ]);
+        
+        $costResult = $this->rajaOngkir->calculateCost(
+            $sourceWarehouse->district_id,
+            $defaultAddress->district_id,
+            $totalWeight,
+            $courierCodes
+        );
+
+        \Log::info('RajaOngkir Response:', [
+            'has_data' => isset($costResult['data']),
+            'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
+            'full_response' => $costResult,
+        ]);
+
+        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+            // RajaOngkir returns flat array of services, filter by first expedition code
+            $firstExpCode = $defaultExpedition->code;
+            \Log::info('Looking for services for expedition:', ['code' => $firstExpCode]);
+            
+            $matchCount = 0;
+            foreach ($costResult['data'] as $service) {
+                \Log::info('Checking service:', [
+                    'code' => $service['code'],
+                    'name' => $service['name'] ?? 'N/A',
+                    'service' => $service['service'] ?? 'N/A',
+                    'cost' => $service['cost'] ?? 'N/A',
+                ]);
+                
+                // Match by courier code
+                if ($service['code'] === $firstExpCode) {
+                    \Log::info('Found matching service for expedition');
+                    
+                    $item = [
+                        'code' => $service['service'],
+                        'name' => $service['description'],
+                        'cost' => $service['cost'],
+                        'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
+                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari'
+                    ];
+                    $allShippingServices[] = $item;
+                    
+                    \Log::info('Added service:', $item);
+                    
+                    // Set first matching service as default
+                    if ($matchCount === 0) {
+                        $defaultService = $item;
+                        $shippingCost = $item['cost'];
+                        \Log::info('Set as default service');
+                    }
+                    $matchCount++;
+                }
+            }
+            
+            \Log::info('Total services found:', ['count' => count($allShippingServices)]);
+        } else {
+            \Log::warning('No cost data returned from RajaOngkir');
+        }
+    } else {
+        \Log::warning('Skipping shipping calculation:', [
+            'has_address' => (bool)$defaultAddress,
+            'has_warehouse' => (bool)$sourceWarehouse,
+            'warehouse_has_district' => $sourceWarehouse ? (bool)$sourceWarehouse->district_id : false,
+            'expeditions_count' => $expeditions->count(),
+        ]);
+    }
+
+    \Log::info('=== END CHECKOUT DEBUG ===');
+
+    $total = $subtotal + $shippingCost;
+
+    return view('checkout.index', compact(
+        'carts', 
+        'subtotal', 
+        'shippingCost', 
+        'total', 
+        'addresses', 
+        'defaultAddress',
+        'totalWeight',
+        'expeditions',
+        'defaultExpedition',
+        'defaultService',
+        'allShippingServices',
+        'sourceWarehouse'
+    ));
+}
 
     public function calculateShipping(Request $request)
     {
@@ -145,7 +220,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Alamat tidak valid'], 400);
         }
 
-        $carts = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
+        $carts = Cart::with(['product', 'warehouse'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -158,40 +233,64 @@ class CheckoutController extends Controller
             return $cart->product->price * $cart->quantity;
         });
 
-        // Get source warehouse from cart
         $sourceWarehouse = $carts->first()?->warehouse;
+        if (!$sourceWarehouse || !$sourceWarehouse->district_id) {
+            return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
+        }
 
-        // Get expedition and service multipliers
-        $expeditionId = $request->expedition_id;
-        $serviceCode = $request->service_code;
-        
-        $expedition = Expedition::find($expeditionId);
-        $expeditionMultiplier = $expedition ? $expedition->base_cost : 1.0;
-        
-        // Find service multiplier
-        $serviceMultiplier = 1.0;
-        $serviceName = 'Reguler';
-        $estDaysMin = $expedition->est_days_min ?? 2;
-        $estDaysMax = $expedition->est_days_max ?? 4;
-        
-        if ($expedition && $serviceCode) {
-            foreach ($expedition->services as $service) {
-                if ($service['code'] === $serviceCode) {
-                    $serviceMultiplier = $service['multiplier'];
-                    $serviceName = $service['name'];
-                    $estDaysMin = max(1, $expedition->est_days_min + $service['days_add']);
-                    $estDaysMax = max(1, $expedition->est_days_max + $service['days_add']);
+        $expedition = Expedition::find($request->expedition_id);
+        if (!$expedition) {
+            return response()->json(['error' => 'Ekspedisi tidak ditemukan'], 400);
+        }
+
+        $costResult = $this->rajaOngkir->calculateCost(
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $totalWeight,
+            $expedition->code
+        );
+
+        $shippingCost = 0;
+        $serviceName = $request->service_code;
+        $estimatedDelivery = '-';
+
+        \Log::info('=== CALCULATE SHIPPING DEBUG ===');
+        \Log::info('Request params:', [
+            'expedition_id' => $request->expedition_id,
+            'expedition_code' => $expedition->code,
+            'service_code' => $request->service_code,
+        ]);
+        \Log::info('RajaOngkir response:', [
+            'has_data' => isset($costResult['data']),
+            'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
+        ]);
+
+        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+            // RajaOngkir returns flat array, find matching service
+            foreach ($costResult['data'] as $service) {
+                \Log::info('Checking service:', [
+                    'service_code' => $service['code'],
+                    'service_name' => $service['service'],
+                    'matches_expedition' => $service['code'] === $expedition->code,
+                    'matches_service' => $service['service'] === $request->service_code,
+                ]);
+                
+                if ($service['code'] === $expedition->code && $service['service'] === $request->service_code) {
+                    $shippingCost = $service['cost'];
+                    $serviceName = $service['description'];
+                    $estimatedDelivery = ($service['etd'] ?: '2-3') . ' hari';
+                    \Log::info('MATCH FOUND!', [
+                        'cost' => $shippingCost,
+                        'name' => $serviceName,
+                        'etd' => $estimatedDelivery,
+                    ]);
                     break;
                 }
             }
         }
         
-        $shippingCost = $this->calculateShippingCost(
-            $address->province_id, 
-            $totalWeight,
-            $expeditionMultiplier,
-            $serviceMultiplier
-        );
+        \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
+        \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
 
         return response()->json([
             'shipping_cost' => $shippingCost,
@@ -203,9 +302,7 @@ class CheckoutController extends Controller
             'total_weight' => $totalWeight,
             'total_weight_formatted' => number_format($totalWeight / 1000, 1) . ' kg',
             'service_name' => $serviceName,
-            'estimated_delivery' => $estDaysMin === $estDaysMax 
-                ? $estDaysMin . ' hari' 
-                : $estDaysMin . '-' . $estDaysMax . ' hari',
+            'estimated_delivery' => $estimatedDelivery,
             'address' => [
                 'recipient_name' => $address->recipient_name,
                 'phone' => $address->phone,
@@ -228,35 +325,45 @@ class CheckoutController extends Controller
         }
 
         $address = Address::find($request->address_id);
-        $carts = Cart::with('product')->where('user_id', Auth::id())->where('cart_type', 'regular')->get();
+        if (!$address) {
+            return response()->json(['error' => 'Alamat tidak ditemukan'], 400);
+        }
+
+        $carts = Cart::with(['product', 'warehouse'])
+            ->where('user_id', Auth::id())
+            ->where('cart_type', 'regular')
+            ->get();
         
         $totalWeight = $carts->sum(function ($cart) {
             return ($cart->product->weight ?? 500) * $cart->quantity;
         });
 
-        $provinceId = $address ? $address->province_id : '31';
+        $sourceWarehouse = $carts->first()?->warehouse;
+        if (!$sourceWarehouse || !$sourceWarehouse->district_id) {
+             return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
+        }
         
+        $costResult = $this->rajaOngkir->calculateCost(
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $totalWeight,
+            $expedition->code
+        );
+
         $services = [];
-        foreach ($expedition->services as $service) {
-            $cost = $this->calculateShippingCost(
-                $provinceId,
-                $totalWeight,
-                $expedition->base_cost,
-                $service['multiplier']
-            );
-            
-            $estDaysMin = max(1, $expedition->est_days_min + $service['days_add']);
-            $estDaysMax = max(1, $expedition->est_days_max + $service['days_add']);
-            
-            $services[] = [
-                'code' => $service['code'],
-                'name' => $service['name'],
-                'cost' => $cost,
-                'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
-                'estimated_days' => $estDaysMin === $estDaysMax 
-                    ? $estDaysMin . ' hari'
-                    : $estDaysMin . '-' . $estDaysMax . ' hari',
-            ];
+        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+            // RajaOngkir returns flat array, filter by expedition code
+            foreach ($costResult['data'] as $service) {
+                if ($service['code'] === $expedition->code) {
+                    $services[] = [
+                        'code' => $service['service'],
+                        'name' => $service['description'],
+                        'cost' => $service['cost'],
+                        'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
+                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari',
+                    ];
+                }
+            }
         }
 
         return response()->json([
@@ -269,25 +376,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    private function calculateShippingCost($provinceId, $totalWeight, $expeditionMultiplier = 1.0, $serviceMultiplier = 1.0)
-    {
-        // Base rate per province (for first 1kg)
-        $baseRate = $this->shippingRates[$provinceId] ?? 35000;
-        
-        // Additional cost per kg after first kg
-        $perKgCost = 5000;
-        
-        // Calculate total weight in kg
-        $weightInKg = $totalWeight / 1000;
-        
-        // First 1kg included in base rate
-        $additionalKg = max(0, ceil($weightInKg) - 1);
-        
-        $baseCost = $baseRate + ($additionalKg * $perKgCost);
-        
-        // Apply expedition and service multipliers
-        return round($baseCost * $expeditionMultiplier * $serviceMultiplier);
-    }
+    // Hardcoded logic removed in favor of RajaOngkirService
 
     public function store(Request $request)
     {
@@ -305,7 +394,7 @@ class CheckoutController extends Controller
         // Verify address belongs to user
         $address = Address::where('id', $request->address_id)
             ->where('user_id', Auth::id())
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district'])
             ->first();
 
         if (!$address) {
@@ -371,28 +460,58 @@ class CheckoutController extends Controller
                 return ($cart->product->weight ?? 500) * $cart->quantity;
             });
 
-            // Find service multiplier
-            $serviceMultiplier = 1.0;
-            foreach ($expedition->services as $service) {
-                if ($service['code'] === $request->expedition_service) {
-                    $serviceMultiplier = $service['multiplier'];
-                    break;
+            $shippingCost = 0;
+            \Log::info('Store: calculating shipping cost', [
+                'origin' => $sourceWarehouse->district_id,
+                'destination' => $address->district_id,
+                'weight' => $totalWeight,
+                'courier_code' => $expedition->code,
+                'service_requested' => $request->expedition_service
+            ]);
+            $costResult = $this->rajaOngkir->calculateCost(
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                $totalWeight,
+                $expedition->code
+            );
+
+            if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+                // RajaOngkir returns flat array, find matching service
+                foreach ($costResult['data'] as $service) {
+                    \Log::info('Store: checking service', [
+                        'code' => $service['code'],
+                        'service' => $service['service'] ?? null,
+                    ]);
+                    $serviceCode = $service['service'] ?? '';
+                    $serviceCourier = $service['code'] ?? '';
+                    
+                    // Normalize for comparison
+                    $normalizedServiceCode = strtoupper(trim($serviceCode));
+                    $normalizedRequestService = strtoupper(trim($request->expedition_service));
+                    $normalizedCourier = strtolower(trim($serviceCourier));
+                    $normalizedExpeditionCode = strtolower(trim($expedition->code));
+                    
+                    if ($normalizedCourier === $normalizedExpeditionCode && $normalizedServiceCode === $normalizedRequestService) {
+                        $shippingCost = $service['cost'];
+                        \Log::info('Store: shipping cost matched', ['cost' => $shippingCost]);
+                        break;
+                    }
                 }
+            } else {
+                \Log::warning('Store: costResult data empty or format unexpected', ['result' => $costResult]);
             }
 
-            $shippingCost = $this->calculateShippingCost(
-                $address->province_id, 
-                $totalWeight,
-                $expedition->base_cost,
-                $serviceMultiplier
-            );
+            if ($shippingCost <= 0) {
+                 // Fallback or error if shipping cost calculation fails at store time
+                 \Log::error('Store: Gagal menghitung ongkos kirim. Shipping cost is 0 or less.');
+                 throw new \Exception('Gagal menghitung ongkos kirim. Silakan pilih layanan pengiriman kembali.');
+            }
             $total = $subtotal + $shippingCost;
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->village ? $address->village->name . ', ' : '') .
                 ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->regency ? $address->regency->name . ', ' : '') .
                 ($address->province ? $address->province->name : '') .
@@ -405,6 +524,23 @@ class CheckoutController extends Controller
                 $pointRate = \App\Models\Setting::get('driippreneur_point_rate', 1000);
                 $totalItems = $carts->sum('quantity');
                 $pointsEarned = (int)$pointRate * $totalItems;
+            }
+
+            // Track affiliate referral and award points
+            $affiliateId = session('affiliate_id');
+            $affiliatePoints = 0;
+            
+            if ($affiliateId && $affiliateId !== Auth::id()) {
+                $affiliate = User::find($affiliateId);
+                
+                if ($affiliate) {
+                    // Award 1 point per product purchased
+                    $totalProducts = $carts->sum('quantity');
+                    $affiliatePoints = $totalProducts;
+                    
+                    // Add points to affiliate's account
+                    $affiliate->increment('points', $affiliatePoints);
+                }
             }
 
             // Prepare items for Xendit invoice
@@ -444,6 +580,8 @@ class CheckoutController extends Controller
                 'notes' => $request->notes,
                 'points_earned' => $pointsEarned,
                 'points_credited' => false,
+                'affiliate_id' => $affiliateId,
+                'affiliate_points' => $affiliatePoints,
             ]);
             
             // Load relationships for notification
@@ -549,11 +687,11 @@ class CheckoutController extends Controller
             // Load relationships for notification (after commit to ensure data is saved)
             if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
                 $order->refresh();
-                $order->load(['address.village', 'address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
             } else {
                 // Ensure address relationships are loaded
-                if ($order->address && (!$order->address->relationLoaded('village') || !$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
-                    $order->address->load(['village', 'district', 'regency', 'province']);
+                if ($order->address && (!$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
+                    $order->address->load(['district', 'regency', 'province']);
                 }
             }
 
@@ -600,7 +738,7 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
-        $order->load('items.product', 'address.village', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
+        $order->load('items.product', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
         
         // Send thank you notification if payment is already paid
         // This handles the case where user accesses success page after payment

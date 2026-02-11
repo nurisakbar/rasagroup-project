@@ -39,6 +39,17 @@ class OrderController extends Controller
                 $query->where('source_warehouse_id', $request->source_warehouse_id);
             }
 
+            // Global search
+            if ($request->filled('search') && $request->search['value'] != '') {
+                $searchValue = $request->search['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('order_number', 'like', "%{$searchValue}%")
+                      ->orWhereHas('user', function ($u) use ($searchValue) {
+                          $u->where('name', 'like', "%{$searchValue}%");
+                      });
+                });
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('order_info', function ($order) {
@@ -123,7 +134,8 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['user', 'items.product', 'expedition', 'address', 'sourceWarehouse']);
-        return view('admin.orders.show', compact('order'));
+        $expeditions = \App\Models\Expedition::where('is_active', true)->get();
+        return view('admin.orders.show', compact('order', 'expeditions'));
     }
 
     public function updateStatus(Request $request, Order $order)
@@ -209,10 +221,17 @@ class OrderController extends Controller
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
             'tracking_number' => 'nullable|string|max:100',
             'payment_status' => 'nullable|in:pending,paid,failed,refunded',
+            'expedition_id' => 'nullable|exists:expeditions,id',
         ]);
 
         $updateData = [];
         $messages = [];
+
+        // Update expedition
+        if ($request->filled('expedition_id')) {
+            $updateData['expedition_id'] = $request->expedition_id;
+            $messages[] = 'Ekspedisi';
+        }
 
         // Update order status
         if ($request->filled('order_status')) {
@@ -284,5 +303,34 @@ class OrderController extends Controller
         }
 
         return back()->with('info', 'Tidak ada perubahan yang disimpan.');
+    }
+
+    public function trackOrder(Order $order)
+    {
+        if (!$order->tracking_number || !$order->expedition) {
+            return response()->json(['success' => false, 'message' => 'Resi atau ekspedisi belum tersedia'], 400);
+        }
+
+        $rajaOngkir = new \App\Services\RajaOngkirService();
+        $code = strtolower($order->expedition->code);
+        
+        // Map courier codes if necessary (e.g., if database has 'jne' but API needs 'jne')
+        // RajaOngkir supports: jne, pos, tiki, wahana, jnt, rpx, sap, sicepat, pcp, jet, dse, first, ninja, lion, idl, rex, ide, sentral
+        
+        $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
+
+        if ($result && isset($result['data']) && !is_null($result['data'])) {
+            return response()->json(['success' => true, 'data' => $result['data']]);
+        }
+        
+        // Check for specific error message from RajaOngkir/Komerce
+        $errorMessage = 'Gagal melacak resi via RajaOngkir';
+        if (isset($result['meta']['message'])) {
+            $errorMessage .= ': ' . $result['meta']['message'];
+        } elseif (isset($result['status']['description'])) {
+            $errorMessage .= ': ' . $result['status']['description'];
+        }
+
+        return response()->json(['success' => false, 'message' => $errorMessage], 400);
     }
 }

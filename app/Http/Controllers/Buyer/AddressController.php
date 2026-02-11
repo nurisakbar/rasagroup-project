@@ -13,13 +13,20 @@ use Illuminate\Support\Facades\Auth;
 
 class AddressController extends Controller
 {
+    protected $rajaOngkir;
+
+    public function __construct(\App\Services\RajaOngkirService $rajaOngkir)
+    {
+        $this->rajaOngkir = $rajaOngkir;
+    }
+
     /**
      * Display a listing of addresses.
      */
     public function index()
     {
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['province', 'regency', 'district', /* removed village */])
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();
@@ -32,7 +39,8 @@ class AddressController extends Controller
      */
     public function create()
     {
-        $provinces = Province::orderBy('name')->get();
+        $result = $this->rajaOngkir->getProvinces();
+        $provinces = isset($result['data']) ? $result['data'] : [];
         return view('buyer.addresses.create', compact('provinces'));
     }
 
@@ -45,10 +53,10 @@ class AddressController extends Controller
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
-            'province_id' => ['required', 'exists:provinces,id'],
-            'regency_id' => ['required', 'exists:regencies,id'],
-            'district_id' => ['required', 'exists:districts,id'],
-            'village_id' => ['required', 'exists:villages,id'],
+            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
+            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
+            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            /* 'village_id' removed */ => ['nullable', 'string'], // RO might not have villages
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -60,7 +68,6 @@ class AddressController extends Controller
             'province_id.required' => 'Provinsi wajib dipilih.',
             'regency_id.required' => 'Kabupaten/Kota wajib dipilih.',
             'district_id.required' => 'Kecamatan wajib dipilih.',
-            'village_id.required' => 'Kelurahan/Desa wajib dipilih.',
             'address_detail.required' => 'Alamat lengkap wajib diisi.',
         ]);
 
@@ -81,7 +88,7 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            'village_id' => $validated['village_id'],
+            /* 'village_id' removed */ => $validated[/* 'village_id' removed */] ?? null,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -90,12 +97,10 @@ class AddressController extends Controller
 
         // If request expects JSON (AJAX), return JSON response
         if ($request->expectsJson() || $request->ajax()) {
-            $address->load(['province', 'regency', 'district', 'village']);
             return response()->json([
                 'success' => true,
                 'message' => 'Alamat berhasil ditambahkan.',
                 'address' => $address,
-                'full_address' => $address->full_address,
             ]);
         }
 
@@ -113,10 +118,29 @@ class AddressController extends Controller
             abort(403);
         }
 
-        $provinces = Province::orderBy('name')->get();
-        $regencies = Regency::where('province_id', $address->province_id)->orderBy('name')->get();
-        $districts = District::where('regency_id', $address->regency_id)->orderBy('name')->get();
-        $villages = Village::where('district_id', $address->district_id)->orderBy('name')->get();
+        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
+        
+        $regencyRes = $this->rajaOngkir->getCities($address->province_id);
+        $regencies = isset($regencyRes['data']) ? $regencyRes['data'] : [];
+        
+        $districtRes = $this->rajaOngkir->getDistricts($address->regency_id);
+        $districts = isset($districtRes['data']) ? $districtRes['data'] : [];
+
+        // Fetch villages from local table by mapping district name
+        /* $villages removed */ = [];
+        $roDistrict = \App\Models\RajaOngkirDistrict::find($address->district_id);
+        if ($roDistrict) {
+            $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+            if (!$localDistrict) {
+                $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+            }
+            if ($localDistrict) {
+                /* $villages removed */ = \App\Models\/* Village:: removed */where('district_id', $localDistrict->id)
+                    ->orderBy('name')
+                    ->get();
+            }
+        }
 
         return view('buyer.addresses.edit', compact('address', 'provinces', 'regencies', 'districts', 'villages'));
     }
@@ -135,10 +159,10 @@ class AddressController extends Controller
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
-            'province_id' => ['required', 'exists:provinces,id'],
-            'regency_id' => ['required', 'exists:regencies,id'],
-            'district_id' => ['required', 'exists:districts,id'],
-            'village_id' => ['required', 'exists:villages,id'],
+            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
+            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
+            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            /* 'village_id' removed */ => ['nullable', 'string'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -159,7 +183,7 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            'village_id' => $validated['village_id'],
+            /* 'village_id' removed */ => $validated[/* 'village_id' removed */] ?? null,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -220,11 +244,8 @@ class AddressController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $regencies = Regency::where('province_id', $request->province_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
-        
-        return response()->json($regencies);
+        $result = $this->rajaOngkir->getCities($request->province_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
     /**
@@ -232,23 +253,40 @@ class AddressController extends Controller
      */
     public function getDistricts(Request $request)
     {
-        $districts = District::where('regency_id', $request->regency_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
-        
-        return response()->json($districts);
+        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
-    /**
-     * Get villages by district (AJAX).
-     */
     public function getVillages(Request $request)
     {
-        $villages = Village::where('district_id', $request->district_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $districtId = $request->district_id;
+        if (!$districtId) {
+            return response()->json([]);
+        }
+
+        // 1. Get district name from RajaOngkirDistrict
+        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
+        if (!$roDistrict) {
+            return response()->json([]);
+        }
+
+        // 2. Find matching local district by name
+        // Use where like for flexibility, or exact name
+        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
         
-        return response()->json($villages);
+        // If not found exactly, try case-insensitive or partial
+        if (!$localDistrict) {
+            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+        }
+
+        if ($localDistrict) {
+            /* $villages removed */ = \App\Models\/* Village:: removed */where('district_id', $localDistrict->id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+            return response()->json(/* $villages removed */);
+        }
+
+        return response()->json([]);
     }
 }
 

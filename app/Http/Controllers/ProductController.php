@@ -47,8 +47,17 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 
-    public function show(Request $request, Product $product)
+    public function show(Request $request, $identifier)
     {
+        $product = Product::where('slug', $identifier)
+            ->orWhere('id', $identifier)
+            ->firstOrFail();
+
+        // If found by ID instead of slug, redirect to SEO URL
+        if ($product->id === $identifier && $product->slug) {
+            return redirect()->route('products.show', $product->slug);
+        }
+
         if ($product->status !== 'active') {
             abort(404);
         }
