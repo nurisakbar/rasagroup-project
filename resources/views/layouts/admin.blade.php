@@ -191,6 +191,18 @@
           </ul>
         </li>
         
+        <li class="{{ request()->routeIs('admin.sliders.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.sliders.index') }}">
+            <i class="fa fa-image"></i> <span>WEB SLIDER</span>
+          </a>
+        </li>
+        
+        <li class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.pages.index') }}">
+            <i class="fa fa-file-text"></i> <span>HALAMAN STATIS</span>
+          </a>
+        </li>
+        
         <li class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
           <a href="{{ route('admin.settings.index') }}">
             <i class="fa fa-cog"></i> <span>PENGATURAN</span>

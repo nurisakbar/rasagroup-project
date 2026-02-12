@@ -18,6 +18,7 @@ class Warehouse extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'address',
         'phone',
         'description',
@@ -31,6 +32,34 @@ class Warehouse extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($warehouse) {
+            if (empty($warehouse->slug)) {
+                $warehouse->slug = static::generateUniqueSlug($warehouse->name);
+            }
+        });
+    }
+
+    public static function generateUniqueSlug($name)
+    {
+        $slug = \Illuminate\Support\Str::slug($name);
+        $originalSlug = $slug;
+        $count = 1;
+        while (static::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        return $slug;
+    }
 
     public function province(): BelongsTo
     {

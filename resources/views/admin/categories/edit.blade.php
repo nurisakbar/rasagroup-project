@@ -16,7 +16,7 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">Form Edit Kategori</h3>
                 </div>
-                <form action="{{ route('admin.categories.update', $category) }}" method="POST">
+                <form action="{{ route('admin.categories.update', $category) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="box-body">
@@ -44,17 +44,21 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('icon') has-error @enderror">
-                            <label for="icon">Icon (Font Awesome)</label>
-                            <div class="input-group">
-                                <span class="input-group-addon"><i class="fa fa-fw {{ $category->icon }}" id="icon-preview"></i></span>
-                                <input type="text" class="form-control" id="icon" name="icon" value="{{ old('icon', $category->icon) }}" placeholder="fa-leaf">
-                            </div>
-                            <p class="help-block">Contoh: fa-leaf, fa-coffee, fa-tint</p>
-                            @error('icon')
+                        <div class="form-group @error('image') has-error @enderror">
+                            <label for="image">Gambar Kategori</label>
+                            @if($category->image)
+                                <div style="margin-bottom: 10px;">
+                                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" style="max-height: 100px; border-radius: 5px; border: 1px solid #ddd; padding: 2px;">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control" id="image" name="image">
+                            <p class="help-block">Format: jpg, png, jpeg. Maks: 2MB.</p>
+                            @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
+
+
 
                         <div class="form-group">
                             <div class="checkbox">
@@ -94,13 +98,6 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function() {
-    $('#icon').on('input', function() {
-        var icon = $(this).val();
-        $('#icon-preview').attr('class', 'fa fa-fw ' + icon);
-    });
-});
-</script>
+{{-- Script removed --}}
 @endpush
 

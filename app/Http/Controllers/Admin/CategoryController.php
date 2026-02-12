@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class CategoryController extends Controller
@@ -22,8 +23,8 @@ class CategoryController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('icon_display', function ($category) {
-                    if ($category->icon) {
-                        return '<i class="fa ' . $category->icon . ' fa-2x"></i>';
+                    if ($category->image) {
+                        return '<img src="' . asset('storage/' . $category->image) . '" style="height: 50px; width: 50px; object-fit: cover; border-radius: 5px;" alt="' . $category->name . '">';
                     }
                     return '<i class="fa fa-folder fa-2x text-muted"></i>';
                 })
@@ -73,12 +74,16 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255|unique:categories,name',
             'slug' => 'nullable|string|max:255|unique:categories,slug',
             'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_active' => 'boolean',
         ]);
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('categories', 'public');
         }
 
         $validated['is_active'] = $request->has('is_active');
@@ -100,12 +105,19 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
             'slug' => 'nullable|string|max:255|unique:categories,slug,' . $category->id,
             'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_active' => 'boolean',
         ]);
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        if ($request->hasFile('image')) {
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $validated['image'] = $request->file('image')->store('categories', 'public');
         }
 
         $validated['is_active'] = $request->has('is_active');
@@ -120,6 +132,10 @@ class CategoryController extends Controller
     {
         if ($category->products()->count() > 0) {
             return back()->with('error', 'Tidak dapat menghapus kategori yang masih memiliki produk.');
+        }
+
+        if ($category->image) {
+            Storage::disk('public')->delete($category->image);
         }
 
         $category->delete();

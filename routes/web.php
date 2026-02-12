@@ -7,6 +7,7 @@ Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('ho
 Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
 Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [App\Http\Controllers\PageController::class, 'sendContact'])->name('contact.send');
+Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 
 // Xendit Webhook (no CSRF protection needed)
 Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
@@ -138,6 +139,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/products/import', [App\Http\Controllers\Admin\ProductController::class, 'import'])->name('products.import');
         Route::get('/products/template', [App\Http\Controllers\Admin\ProductController::class, 'downloadTemplate'])->name('products.template');
         Route::resource('products', App\Http\Controllers\Admin\ProductController::class);
+
+        // Sliders Management
+        Route::resource('sliders', App\Http\Controllers\Admin\SliderController::class)->except(['show']);
+
+        // Pages Management
+        Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
         // Warehouses CRUD
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);

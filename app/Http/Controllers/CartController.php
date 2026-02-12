@@ -87,18 +87,21 @@ class CartController extends Controller
     {
         $request->validate([
             'quantity' => 'required|integer|min:1',
-            'warehouse_id' => 'required|exists:warehouses,id',
+            'warehouse_id' => 'required',
         ], [
             'warehouse_id.required' => 'Pilih hub pengirim terlebih dahulu.',
-            'warehouse_id.exists' => 'Hub tidak valid.',
         ]);
 
-        $warehouseId = $request->warehouse_id;
-        $warehouse = Warehouse::find($warehouseId);
+        $warehouse = Warehouse::where('id', $request->warehouse_id)
+            ->orWhere('slug', $request->warehouse_id)
+            ->first();
 
         if (!$warehouse || !$warehouse->is_active) {
-            return back()->with('error', 'Hub tidak tersedia.');
+            return back()->with('error', 'Hub tidak valid atau tidak tersedia.');
         }
+
+        $warehouseId = $warehouse->id;
+
 
         // Check stock availability
         $stock = WarehouseStock::where('warehouse_id', $warehouseId)
@@ -215,9 +218,12 @@ class CartController extends Controller
         // If specific warehouse_id is requested, return that warehouse's stock (even if 0)
         if ($warehouseId) {
             try {
-                // First check if warehouse exists and is active
+                // First check if warehouse exists (by ID or Slug) and is active
                 $warehouse = Warehouse::with(['province', 'regency'])
-                    ->where('id', $warehouseId)
+                    ->where(function($q) use ($warehouseId) {
+                        $q->where('id', $warehouseId)
+                          ->orWhere('slug', $warehouseId);
+                    })
                     ->where('is_active', true)
                     ->first();
                 

@@ -194,21 +194,11 @@ class Product extends Model
             return null;
         }
 
-        // If already a full URL, return as is
         if (filter_var($this->image, FILTER_VALIDATE_URL)) {
             return $this->image;
         }
 
-        // Handle different path formats
-        $imagePath = ltrim($this->image, '/');
-        
-        // Extract filename from path (basename works regardless of path structure)
-        // Handles: products/filename.jpg, storage/products/filename.jpg, storage/filename.jpg, filename.jpg
-        $filename = basename($imagePath);
-        
-        // Build full URL: domain.com/storage/products/filename
-        $baseUrl = rtrim(config('app.url'), '/');
-        return $baseUrl . '/storage/products/' . $filename;
+        return asset('storage/' . $this->image);
     }
 
     /**

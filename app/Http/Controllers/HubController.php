@@ -153,6 +153,7 @@ class HubController extends Controller
                 
                 return [
                     'id' => $w->id,
+                    'slug' => $w->slug,
                     'name' => $w->name,
                     'address' => $w->address,
                     'phone' => $w->phone,
@@ -194,6 +195,7 @@ class HubController extends Controller
         return response()->json([
             'warehouse' => [
                 'id' => $warehouse->id,
+                'slug' => $warehouse->slug,
                 'name' => $warehouse->name,
                 'location' => $warehouse->full_location,
             ],

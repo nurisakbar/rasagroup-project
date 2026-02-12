@@ -4,7 +4,7 @@
             <div class="modal-content">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <div class="modal-body">
-                    <div class="deal" style="background-image: url("{{ asset('themes/nest-frontend/assets/imgs/banner/popup-1.png') }}")">
+                    <div class="deal" style="background-image: url('{{ asset('themes/nest-frontend/assets/imgs/banner/popup-1.png') }}')">
                         <div class="deal-top">
                             <h6 class="mb-10 text-brand-2">Deal of the Day</h6>
                         </div>

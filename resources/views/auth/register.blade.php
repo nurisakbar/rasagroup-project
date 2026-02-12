@@ -1,268 +1,98 @@
-@extends('layouts.shop')
+@extends('themes.nest.layouts.app')
 
-@section('title', 'Daftar Akun')
-
-@push('styles')
-<style>
-    .auth-section {
-        min-height: calc(100vh - 400px);
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 60px 0;
-    }
-    
-    .auth-card {
-        background: white;
-        border-radius: 25px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-        overflow: hidden;
-        max-width: 550px;
-        margin: 0 auto;
-    }
-    
-    .auth-header {
-        background: var(--gradient-primary);
-        padding: 40px 30px;
-        text-align: center;
-        color: white;
-    }
-    
-    .auth-header i {
-        font-size: 4rem;
-        margin-bottom: 15px;
-        display: block;
-    }
-    
-    .auth-header h1 {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    
-    .auth-header p {
-        opacity: 0.9;
-        margin-bottom: 0;
-    }
-    
-    .auth-body {
-        padding: 40px;
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: var(--dark-color);
-        margin-bottom: 8px;
-    }
-    
-    .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 14px 18px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
-    }
-    
-    .input-group-text {
-        background: transparent;
-        border: 2px solid #e9ecef;
-        border-right: none;
-        border-radius: 12px 0 0 12px;
-        color: #6c757d;
-    }
-    
-    .input-group .form-control {
-        border-left: none;
-        border-radius: 0 12px 12px 0;
-    }
-    
-    .input-group:focus-within .input-group-text {
-        border-color: var(--primary-color);
-    }
-    
-    .btn-register {
-        background: var(--gradient-primary);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 14px 30px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        width: 100%;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-register:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
-        color: white;
-    }
-    
-    .auth-footer {
-        text-align: center;
-        padding-top: 25px;
-        border-top: 1px solid #e9ecef;
-        margin-top: 25px;
-    }
-    
-    .auth-footer a {
-        color: var(--primary-color);
-        font-weight: 600;
-        text-decoration: none;
-    }
-    
-    .auth-footer a:hover {
-        text-decoration: underline;
-    }
-    
-    .invalid-feedback {
-        color: #dc3545;
-        font-size: 0.875rem;
-        margin-top: 5px;
-    }
-    
-    .is-invalid {
-        border-color: #dc3545 !important;
-    }
-    
-    .form-text {
-        color: #6c757d;
-        font-size: 0.85rem;
-    }
-</style>
-@endpush
+@section('title', 'Register')
 
 @section('content')
-<section class="auth-section">
+<div class="page-header breadcrumb-wrap">
     <div class="container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <i class="bi bi-person-plus-fill"></i>
-                <h1>Buat Akun Baru</h1>
-                <p>Daftar sekarang dan nikmati kemudahan berbelanja</p>
-            </div>
-            
-            <div class="auth-body">
-                <form method="POST" action="{{ route('register') }}">
-                    @csrf
-
-                    <!-- Name -->
-                    <div class="mb-4">
-                        <label for="name" class="form-label">
-                            <i class="bi bi-person me-1"></i> Nama Lengkap
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" 
-                                   class="form-control @error('name') is-invalid @enderror" 
-                                   id="name" 
-                                   name="name" 
-                                   value="{{ old('name') }}" 
-                                   placeholder="Masukkan nama lengkap"
-                                   required 
-                                   autofocus 
-                                   autocomplete="name">
+        <div class="breadcrumb">
+            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
+            <span></span> Register
+        </div>
+    </div>
+</div>
+<div class="page-content pt-150 pb-150">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-8 col-lg-10 col-md-12 m-auto">
+                <div class="row">
+                    <div class="col-lg-6 col-md-8">
+                        <div class="login_wrap widget-taber-content background-white">
+                            <div class="padding_eight_all bg-white">
+                                <div class="heading_s1">
+                                    <h1 class="mb-5">Create an Account</h1>
+                                    <p class="mb-30">Already have an account? <a href="{{ route('login') }}">Login</a></p>
+                                </div>
+                                <form method="POST" action="{{ route('register') }}">
+                                    @csrf
+                                    <div class="form-group">
+                                        <input type="text" required="" name="name" placeholder="Name" value="{{ old('name') }}" autofocus />
+                                        @error('name')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="email" required="" name="email" placeholder="Email" value="{{ old('email') }}" />
+                                        @error('email')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <input required="" type="password" name="password" placeholder="Password" />
+                                        @error('password')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group">
+                                        <input required="" type="password" name="password_confirmation" placeholder="Confirm password" />
+                                    </div>
+                                    <div class="payment_option mb-50">
+                                        <div class="custome-radio">
+                                            <input class="form-check-input" required="" type="radio" name="payment_option" id="exampleRadios3" checked="" />
+                                            <label class="form-check-label" for="exampleRadios3" data-bs-toggle="collapse" data-target="#bankTranfer" aria-controls="bankTranfer">I am a customer</label>
+                                        </div>
+                                        <div class="custome-radio">
+                                            <input class="form-check-input" required="" type="radio" name="payment_option" id="exampleRadios4" />
+                                            <label class="form-check-label" for="exampleRadios4" data-bs-toggle="collapse" data-target="#checkPayment" aria-controls="checkPayment">I am a vendor</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="login_footer form-group mb-50">
+                                        <div class="chek-form">
+                                            <div class="custome-checkbox">
+                                                <input class="form-check-input" type="checkbox" name="terms" id="exampleCheckbox12" value="" required />
+                                                <label class="form-check-label" for="exampleCheckbox12"><span>I agree to terms &amp; Policy.</span></label>
+                                            </div>
+                                        </div>
+                                        <a href="page-privacy-policy.html"><i class="fi-rs-book-alt mr-5 text-muted"></i>Lean more</a>
+                                    </div>
+                                    <div class="form-group mb-30">
+                                        <button type="submit" class="btn btn-fill-out btn-block hover-up font-weight-bold" name="login">Submit &amp; Register</button>
+                                    </div>
+                                    <p class="font-xs text-muted"><strong>Note:</strong>Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our privacy policy</p>
+                                </form>
+                            </div>
                         </div>
-                        @error('name')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
                     </div>
-
-                    <!-- Email Address -->
-                    <div class="mb-4">
-                        <label for="email" class="form-label">
-                            <i class="bi bi-envelope me-1"></i> Email
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email') }}" 
-                                   placeholder="Masukkan email aktif"
-                                   required 
-                                   autocomplete="username">
+                    <div class="col-lg-6 pr-30 d-none d-lg-block">
+                        <div class="card-login mt-115">
+                            <a href="#" class="social-login facebook-login">
+                                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-facebook.svg') }}" alt="" />
+                                <span>Continue with Facebook</span>
+                            </a>
+                            <a href="#" class="social-login google-login">
+                                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" />
+                                <span>Continue with Google</span>
+                            </a>
+                            <a href="#" class="social-login apple-login">
+                                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-apple.svg') }}" alt="" />
+                                <span>Continue with Apple</span>
+                            </a>
                         </div>
-                        @error('email')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
                     </div>
-
-                    <!-- Phone -->
-                    <div class="mb-4">
-                        <label for="phone" class="form-label">
-                            <i class="bi bi-telephone me-1"></i> No. Telepon <span class="text-muted">(Opsional)</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                            <input type="text" 
-                                   class="form-control @error('phone') is-invalid @enderror" 
-                                   id="phone" 
-                                   name="phone" 
-                                   value="{{ old('phone') }}" 
-                                   placeholder="Contoh: 08123456789"
-                                   autocomplete="tel">
-                        </div>
-                        @error('phone')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <!-- Password -->
-                    <div class="mb-4">
-                        <label for="password" class="form-label">
-                            <i class="bi bi-lock me-1"></i> Password
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" 
-                                   class="form-control @error('password') is-invalid @enderror" 
-                                   id="password" 
-                                   name="password" 
-                                   placeholder="Minimal 8 karakter"
-                                   required 
-                                   autocomplete="new-password">
-                        </div>
-                        @error('password')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                        <small class="form-text">Password minimal 8 karakter</small>
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div class="mb-4">
-                        <label for="password_confirmation" class="form-label">
-                            <i class="bi bi-lock-fill me-1"></i> Konfirmasi Password
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                            <input type="password" 
-                                   class="form-control @error('password_confirmation') is-invalid @enderror" 
-                                   id="password_confirmation" 
-                                   name="password_confirmation" 
-                                   placeholder="Ulangi password"
-                                   required 
-                                   autocomplete="new-password">
-                        </div>
-                        @error('password_confirmation')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-register">
-                        <i class="bi bi-person-plus me-2"></i> Daftar Sekarang
-                    </button>
-                </form>
-                
-                <div class="auth-footer">
-                    <p class="mb-0">Sudah punya akun? <a href="{{ route('login') }}">Masuk di sini</a></p>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 @endsection

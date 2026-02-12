@@ -1,150 +1,208 @@
-@extends('layouts.shop')
+@extends('themes.nest.layouts.app')
 
-@section('title', 'Keranjang Belanja')
+@section('title', 'Cart')
 
 @section('content')
-<div class="container py-5">
-    <h2 class="mb-4"><i class="bi bi-cart3 me-2"></i>Keranjang Belanja</h2>
+<div class="page-header breadcrumb-wrap">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
+            <span></span> Shop
+            <span></span> Cart
+        </div>
+    </div>
+</div>
+<div class="container mb-80 mt-50">
+    <div class="row">
+        <div class="col-lg-8 mb-40">
+            <h1 class="heading-2 mb-10">Your Cart</h1>
+            <div class="d-flex justify-content-between">
+                <h6 class="text-body">There are <span class="text-brand">{{ $carts->count() }}</span> products in your cart</h6>
+                <h6 class="text-body">
+                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Clear cart? All items will be removed.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-muted bg-transparent border-0 p-0"><i class="fi-rs-trash mr-5"></i>Clear Cart</button>
+                    </form>
+                </h6>
+            </div>
+        </div>
+    </div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+            <i class="fi-rs-check me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
+            <i class="fi-rs-cross me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     @if($carts->isEmpty())
         <div class="text-center py-5">
-            <i class="bi bi-cart-x" style="font-size: 4rem; color: #ddd;"></i>
-            <h4 class="mt-3 text-muted">Keranjang Anda kosong</h4>
-            <p class="text-muted">Mulai belanja dan tambahkan produk ke keranjang</p>
-            <a href="{{ route('products.index') }}" class="btn btn-primary mt-2">
-                <i class="bi bi-bag me-2"></i>Mulai Belanja
-            </a>
+            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" alt="Empty Cart" style="width: 100px; opacity: 0.5;" class="mb-4">
+            <h4 class="mb-3">Your cart is empty</h4>
+            <p class="text-muted mb-4">Start shopping and add products to your cart</p>
+            <a href="{{ route('products.index') }}" class="btn btn-fill-out"><i class="fi-rs-shopping-bag mr-10"></i>Start Shopping</a>
         </div>
     @else
         <!-- Hub Info Banner -->
-        @if($cartWarehouse)
-        <div class="alert alert-info mb-4" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border: none; border-radius: 15px;">
+        @if(isset($cartWarehouse) && $cartWarehouse)
+        <div class="alert alert-info mb-30" style="border-radius: 15px;">
             <div class="d-flex align-items-center">
-                <i class="bi bi-geo-alt-fill me-3" style="font-size: 1.5rem; color: #1976d2;"></i>
+                <i class="fi-rs-marker mr-15" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Hub Pengirim:</strong> {{ $cartWarehouse->name }}
+                    <strong>Shipping from Hub:</strong> {{ $cartWarehouse->name }}
                     <br>
-                    <small class="text-muted">{{ $cartWarehouse->full_location }}</small>
-                </div>
-                <div class="ms-auto">
-                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Kosongkan keranjang? Semua item akan dihapus.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash me-1"></i>Kosongkan Keranjang
-                        </button>
-                    </form>
+                    <small>{{ $cartWarehouse->full_location }}</small>
                 </div>
             </div>
         </div>
         @endif
 
-        <div class="card shadow-sm" style="border-radius: 15px; overflow: hidden;">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead style="background: #f8f9fa;">
-                        <tr>
-                            <th class="px-4 py-3">Produk</th>
-                            <th class="py-3">Harga</th>
-                            <th class="py-3 text-center">Jumlah</th>
-                            <th class="py-3 text-end">Subtotal</th>
-                            @auth
-                            <th class="py-3 text-center px-4">Aksi</th>
-                            @endauth
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($carts as $cart)
-                            <tr>
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        @if($cart->product->image)
-                                            <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->display_name }}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
-                                        @else
-                                            <img src="https://via.placeholder.com/60/e74c3c/fff?text=P" alt="No Image" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
-                                        @endif
-                                        <div class="ms-3">
-                                            <strong>{{ $cart->product->display_name }}</strong>
-                                            <br>
-                                            <small class="text-muted">{{ $cart->product->formatted_weight }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-3 align-middle">Rp {{ number_format($cart->product->price, 0, ',', '.') }}</td>
-                                <td class="py-3 align-middle text-center">
-                                    @auth
-                                        <form action="{{ route('cart.update', $cart) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" class="form-control form-control-sm text-center mx-auto" style="width: 80px;" onchange="this.form.submit()">
-                                        </form>
-                                    @else
-                                        <span>{{ $cart->quantity }}</span>
-                                    @endauth
-                                </td>
-                                <td class="py-3 align-middle text-end fw-semibold" style="color: var(--primary-color);">
-                                    Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }}
-                                </td>
-                                @auth
-                                <td class="py-3 align-middle text-center px-4">
-                                    <form action="{{ route('cart.destroy', $cart) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Hapus item ini?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                                @endauth
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="table-responsive shopping-summery">
+                    <table class="table table-wishlist">
+                        <thead>
+                            <tr class="main-heading">
+                                <th class="custome-checkbox start pl-30">
+                                    <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox11" value="">
+                                    <label class="form-check-label" for="exampleCheckbox11"></label>
+                                </th>
+                                <th scope="col" colspan="2">Product</th>
+                                <th scope="col">Unit Price</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Subtotal</th>
+                                <th scope="col" class="end">Remove</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot style="background: #f8f9fa;">
-                        <tr>
-                            <td colspan="{{ auth()->check() ? '3' : '2' }}" class="px-4 py-3 text-end fw-bold">Total:</td>
-                            <td class="py-3 text-end fw-bold" style="font-size: 1.2rem; color: var(--primary-color);">
-                                Rp {{ number_format($total, 0, ',', '.') }}
-                            </td>
-                            @auth
-                            <td></td>
-                            @endauth
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="{{ route('products.index') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-2"></i>Lanjut Belanja
-            </a>
-            @auth
-                <a href="{{ route('checkout.index') }}" class="btn btn-primary btn-lg px-5" style="background: var(--gradient-primary); border: none; border-radius: 10px;">
-                    <i class="bi bi-credit-card me-2"></i>Checkout
-                </a>
-            @else
-                <div>
-                    <small class="text-muted d-block mb-2">Silakan login untuk melanjutkan checkout</small>
-                    <a href="{{ route('login') }}" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Login untuk Checkout
-                    </a>
+                        </thead>
+                        <tbody>
+                            @foreach($carts as $cart)
+                                <tr class="pt-30">
+                                    <td class="custome-checkbox pl-30">
+                                        <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox{{ $loop->iteration }}" value="">
+                                        <label class="form-check-label" for="exampleCheckbox{{ $loop->iteration }}"></label>
+                                    </td>
+                                    <td class="image product-thumbnail pt-40">
+                                        <img src="{{ $cart->product->image_url ? $cart->product->image_url : 'https://via.placeholder.com/60' }}" alt="#" onerror="this.src='https://via.placeholder.com/60'">
+                                    </td>
+                                    <td class="product-des product-name">
+                                        <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }}</a></h6>
+                                        <div class="product-rate-cover">
+                                            <div class="product-rate d-inline-block">
+                                                <div class="product-rating" style="width:90%">
+                                                </div>
+                                            </div>
+                                            <span class="font-small ml-5 text-muted"> (4.0)</span>
+                                        </div>
+                                        @if($cart->product->weight)
+                                        <small class="text-muted">Weight: {{ $cart->product->formatted_weight }}</small>
+                                        @endif
+                                    </td>
+                                    <td class="price" data-title="Price">
+                                        <h4 class="text-body">Rp {{ number_format($cart->product->price, 0, ',', '.') }} </h4>
+                                    </td>
+                                    <td class="text-center detail-info" data-title="Stock">
+                                        <div class="detail-extralink mr-15">
+                                            <form action="{{ route('cart.update', $cart) }}" method="POST" class="cart-update-form">
+                                                @csrf
+                                                @method('PUT')
+                                                <div class="detail-qty border radius">
+                                                    <a href="#" class="qty-down"><i class="fi-rs-angle-small-down"></i></a>
+                                                    <input type="text" name="quantity" class="qty-val" value="{{ $cart->quantity }}" min="1">
+                                                    <a href="#" class="qty-up"><i class="fi-rs-angle-small-up"></i></a>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </td>
+                                    <td class="price" data-title="Price">
+                                        <h4 class="text-brand">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
+                                    </td>
+                                    <td class="action text-center" data-title="Remove">
+                                        <form action="{{ route('cart.destroy', $cart) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-body bg-transparent border-0 p-0" onclick="return confirm('Remove this item?')"><i class="fi-rs-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-            @endauth
+                <div class="divider-2 mb-30"></div>
+                <div class="cart-action d-flex justify-content-between">
+                    <a class="btn " href="{{ route('products.index') }}"><i class="fi-rs-arrow-left mr-10"></i>Continue Shopping</a>
+                    
+                </div>
+                <!-- Optional: Shipping Calculator Section preserved from template if needed by USER, currently placeholders -->
+                
+            </div>
+            <div class="col-lg-4">
+                <div class="border p-md-4 cart-totals ml-30">
+                    <div class="table-responsive">
+                        <table class="table no-border">
+                            <tbody>
+                                <tr>
+                                    <td class="cart_total_label">
+                                        <h6 class="text-muted">Subtotal</h6>
+                                    </td>
+                                    <td class="cart_total_amount">
+                                        <h4 class="text-brand text-end">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td scope="col" colspan="2">
+                                        <div class="divider-2 mt-10 mb-10"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="cart_total_label">
+                                        <h6 class="text-muted">Total</h6>
+                                    </td>
+                                    <td class="cart_total_amount">
+                                        <h4 class="text-brand text-end">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    @auth
+                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100">Proceed To CheckOut<i class="fi-rs-sign-out ml-15"></i></a>
+                    @else
+                        <a href="{{ route('login') }}" class="btn mb-20 w-100">Login to Checkout<i class="fi-rs-sign-in ml-15"></i></a>
+                    @endauth
+                </div>
+            </div>
         </div>
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Auto-submit form when quantity changes via buttons
+        $('.qty-up, .qty-down').on('click', function(e) {
+            e.preventDefault();
+            // The shop.js handles the increment/decrement visual
+            // We need to wait a tiny bit for the input value to update, then submit
+            var form = $(this).closest('form');
+            setTimeout(function() {
+                form.submit();
+            }, 300); // Increased delay slightly to ensure value update
+        });
+
+        // Also submit on manual input change
+        $('.qty-val').on('change', function() {
+            $(this).closest('form').submit();
+        });
+    });
+</script>
+@endpush

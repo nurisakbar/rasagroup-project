@@ -29,35 +29,7 @@
                     <div class="col-xl-3 col-lg-4">
                         <div class="header-info header-info-right">
                             <ul>
-                                <li>Need help? Call Us: <strong class="text-brand"> + 1800 900</strong></li>
-                                <li>
-                                    <a class="language-dropdown-active" href="#">English <i class="fi-rs-angle-small-down"></i></a>
-                                    <ul class="language-dropdown">
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-fr.png') }}" alt="" />Français</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-dt.png') }}" alt="" />Deutsch</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-ru.png') }}" alt="" />Pусский</a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a class="language-dropdown-active" href="#">USD <i class="fi-rs-angle-small-down"></i></a>
-                                    <ul class="language-dropdown">
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-fr.png') }}" alt="" />INR</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-dt.png') }}" alt="" />MBP</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/flag-ru.png') }}" alt="" />EU</a>
-                                        </li>
-                                    </ul>
-                                </li>
+                                <li>Need help? Call Us: <strong class="text-brand" style="white-space: nowrap;"> +62 812-3456-7890</strong></li>
                             </ul>
                         </div>
                     </div>
@@ -68,7 +40,9 @@
             <div class="container">
                 <div class="header-wrap">
                     <div class="logo logo-width-1">
-                        <a href="index.html"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
+                        <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.8rem; color: #253D4E !important; text-decoration: none;">
+                            <span style="color: #3BB77E;">Rasa</span>Group
+                        </a>
                     </div>
                     <div class="header-right">
                         <div class="search-style-2">
@@ -207,11 +181,11 @@
             <div class="container">
                 <div class="header-wrap header-space-between position-relative">
                     <div class="logo logo-width-1 d-block d-lg-none">
-                        <a href="index.html"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
+                        <a href="/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
                     </div>
                     <div class="header-nav d-none d-lg-flex">
                         <div class="main-categori-wrap d-none d-lg-block">
-                            <a class="categories-button-active" href="#">
+                            <a class="categories-button-active" href="#" style="white-space: nowrap;">
                                 <span class="fi-rs-apps"></span> <span class="et">Browse</span> All Categories
                                 <i class="fi-rs-angle-down"></i>
                             </a>
@@ -280,18 +254,10 @@
                                 <ul>
                                     <li class="hot-deals"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-hot.svg') }}" alt="hot deals" /><a href="shop-grid-right.html">Deals</a></li>
                                     <li>
-                                        <a class="active" href="index.html">Home <i class="fi-rs-angle-down"></i></a>
-                                        <ul class="sub-menu">
-                                            <li><a href="index.html">Home 1</a></li>
-                                            <li><a href="index-2.html">Home 2</a></li>
-                                            <li><a href="index-3.html">Home 3</a></li>
-                                            <li><a href="index-4.html">Home 4</a></li>
-                                            <li><a href="index-5.html">Home 5</a></li>
-                                            <li><a href="index-6.html">Home 6</a></li>
-                                        </ul>
+                                        <a class="active" href="{{ route('home') }}">Home</a>
                                     </li>
                                     <li>
-                                        <a href="page-about.html">About</a>
+                                        <a href="{{ route('about') }}">About</a>
                                     </li>
                                     <li>
                                         <a href="shop-grid-right.html">Shop <i class="fi-rs-angle-down"></i></a>
@@ -329,15 +295,7 @@
                                         </ul>
                                     </li>
                                     <li>
-                                        <a href="#">Vendors <i class="fi-rs-angle-down"></i></a>
-                                        <ul class="sub-menu">
-                                            <li><a href="vendors-grid.html">Vendors Grid</a></li>
-                                            <li><a href="vendors-list.html">Vendors List</a></li>
-                                            <li><a href="vendor-details-1.html">Vendor Details 01</a></li>
-                                            <li><a href="vendor-details-2.html">Vendor Details 02</a></li>
-                                            <li><a href="vendor-dashboard.html">Vendor Dashboard</a></li>
-                                            <li><a href="vendor-guide.html">Vendor Guide</a></li>
-                                        </ul>
+                                        <a href="{{ route('hubs.index') }}">Hub & Distributor</a>
                                     </li>
                                     <li class="position-static">
                                         <a href="#">Mega menu <i class="fi-rs-angle-down"></i></a>
@@ -435,7 +393,7 @@
                                         </ul>
                                     </li>
                                     <li>
-                                        <a href="page-contact.html">Contact</a>
+                                        <a href="{{ route('contact') }}">Contact</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -443,7 +401,7 @@
                     </div>
                     <div class="hotline d-none d-lg-flex">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-headphone.svg') }}" alt="hotline" />
-                        <p>1900 - 888<span>24/7 Support Center</span></p>
+                        <p style="white-space: nowrap;">+62 812-3456-7890<span style="display: block;">24/7 Support Center</span></p>
                     </div>
                     <div class="header-action-icon-2 d-block d-lg-none">
                         <div class="burger-icon burger-icon-white">

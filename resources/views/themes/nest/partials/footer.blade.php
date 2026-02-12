@@ -99,27 +99,27 @@
                     <div class="col">
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
-                                <a href="index.html" class="mb-15"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
-                                <p class="font-lg text-heading">Awesome grocery store website template</p>
+                                <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.8rem; color: #253D4E !important; text-decoration: none;">
+                                    <span style="color: #3BB77E;">Rasa</span>Group
+                                </a>
+                                <p class="font-lg text-heading">Penyedia sirup premium dengan rasa terbaik untuk kebutuhan Anda.</p>
                             </div>
                             <ul class="contact-infor">
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Address: </strong> <span>5171 W Campbell Ave undefined Kent, Utah 53127 United States</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Call Us:</strong><span>(+91) - 540-025-124553</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email:</strong><span>sale@Nest.com</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Hours:</strong><span>10:00 - 18:00, Mon - Sat</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Address: </strong> <span>Jl. Rasa Manis No. 123, Jakarta Selatan, Indonesia 12345</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Call Us:</strong><span style="white-space: nowrap;">+62 812-3456-7890</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email:</strong><span>info@rasagroup.com</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Hours:</strong><span>08:00 - 17:00, Mon - Sat</span></li>
                             </ul>
                         </div>
                     </div>
-                    <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".1s>
+                    <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
                         <h4 class=" widget-title">Company</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="#">About Us</a></li>
-                            <li><a href="#">Delivery Information</a></li>
-                            <li><a href="#">Privacy Policy</a></li>
-                            <li><a href="#">Terms &amp; Conditions</a></li>
-                            <li><a href="#">Contact Us</a></li>
-                            <li><a href="#">Support Center</a></li>
-                            <li><a href="#">Careers</a></li>
+                            <li><a href="{{ route('about') }}">About Us</a></li>
+                            {{-- <li><a href="#">Delivery Information</a></li> --}}
+                            {{-- <li><a href="#">Privacy Policy</a></li> --}}
+                            {{-- <li><a href="#">Terms &amp; Conditions</a></li> --}}
+                            <li><a href="{{ route('contact') }}">Contact Us</a></li>
                         </ul>
                     </div>
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
@@ -137,7 +137,7 @@
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
                         <h4 class="widget-title">Corporate</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="#">Become a Vendor</a></li>
+                            <li><a href="{{ route('hubs.index') }}">Hub & Distributor</a></li>
                             <li><a href="#">Affiliate Program</a></li>
                             <li><a href="#">Farm Business</a></li>
                             <li><a href="#">Farm Careers</a></li>
@@ -158,16 +158,16 @@
                             <li><a href="#">Cheese</a></li>
                         </ul>
                     </div>
-                    <div class="footer-link-widget widget-install-app col wow animate__animated animate__fadeInUp" data-wow-delay=".5s">
-                        <h4 class="widget-title">Install App</h4>
-                        <p class="">From App Store or Google Play</p>
-                        <div class="download-app">
-                            <a href="#" class="hover-up mb-sm-2 mb-lg-0"><img class="active" src="{{ asset('themes/nest-frontend/assets/imgs/theme/app-store.jpg') }}" alt="" /></a>
-                            <a href="#" class="hover-up mb-sm-2"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/google-play.jpg') }}" alt="" /></a>
-                        </div>
-                        <p class="mb-20">Secured Payment Gateways</p>
-                        <img class="" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
-                    </div>
+{{-- <div class="footer-link-widget widget-install-app col wow animate__animated animate__fadeInUp" data-wow-delay=".5s">
+    <h4 class="widget-title">Install App</h4>
+    <p class="">From App Store or Google Play</p>
+    <div class="download-app">
+        <a href="#" class="hover-up mb-sm-2 mb-lg-0"><img class="active" src="{{ asset('themes/nest-frontend/assets/imgs/theme/app-store.jpg') }}" alt="" /></a>
+        <a href="#" class="hover-up mb-sm-2"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/google-play.jpg') }}" alt="" /></a>
+    </div>
+    <p class="mb-20">Secured Payment Gateways</p>
+    <img class="" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
+</div> --}}
                 </div>
         </section>
         <div class="container pb-30 wow animate__animated animate__fadeInUp" data-wow-delay="0">
@@ -176,16 +176,16 @@
                     <div class="footer-bottom"></div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6">
-                    <p class="font-sm mb-0">&copy; 2025, <strong class="text-brand">Nest</strong> - HTML Ecommerce Template <br />All rights reserved</p>
+                    <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - Sirup Premium <br />All rights reserved</p>
                 </div>
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex mr-30">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p>1900 - 6666<span>Working 8:00 - 22:00</span></p>
+                        <p style="white-space: nowrap;">+62 812-3456-7890<span style="display: block;">Working 8:00 - 17:00</span></p>
                     </div>
                     <div class="hotline d-lg-inline-flex">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p>1900 - 8888<span>24/7 Support Center</span></p>
+                        <p style="white-space: nowrap;">+62 812-3456-7891<span style="display: block;">24/7 Support Center</span></p>
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">

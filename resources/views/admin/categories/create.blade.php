@@ -11,12 +11,12 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">Form Tambah Kategori</h3>
                 </div>
-                <form action="{{ route('admin.categories.store') }}" method="POST">
+                <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="box-body">
                         <div class="form-group @error('name') has-error @enderror">
@@ -43,14 +43,11 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('icon') has-error @enderror">
-                            <label for="icon">Icon (Font Awesome)</label>
-                            <div class="input-group">
-                                <span class="input-group-addon"><i class="fa fa-fw" id="icon-preview"></i></span>
-                                <input type="text" class="form-control" id="icon" name="icon" value="{{ old('icon') }}" placeholder="fa-leaf">
-                            </div>
-                            <p class="help-block">Contoh: fa-leaf, fa-coffee, fa-tint. <a href="https://fontawesome.com/v4/icons/" target="_blank">Lihat daftar icon</a></p>
-                            @error('icon')
+                        <div class="form-group @error('image') has-error @enderror">
+                            <label for="image">Gambar Kategori</label>
+                            <input type="file" class="form-control" id="image" name="image">
+                            <p class="help-block">Format: jpg, png, jpeg. Maks: 2MB.</p>
+                            @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
@@ -70,39 +67,5 @@
                 </form>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="box box-info">
-                <div class="box-header with-border">
-                    <h3 class="box-title">Icon Populer</h3>
-                </div>
-                <div class="box-body">
-                    <p>Klik untuk menggunakan:</p>
-                    <div class="icon-picker">
-                        @foreach(['fa-leaf', 'fa-coffee', 'fa-tint', 'fa-cutlery', 'fa-glass', 'fa-beer', 'fa-lemon-o', 'fa-apple', 'fa-envira', 'fa-pagelines', 'fa-tree', 'fa-cube', 'fa-cubes', 'fa-shopping-basket', 'fa-shopping-bag'] as $icon)
-                            <button type="button" class="btn btn-default btn-sm icon-btn" data-icon="{{ $icon }}" style="margin: 2px;">
-                                <i class="fa {{ $icon }}"></i>
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function() {
-    $('#icon').on('input', function() {
-        var icon = $(this).val();
-        $('#icon-preview').attr('class', 'fa fa-fw ' + icon);
-    });
-
-    $('.icon-btn').click(function() {
-        var icon = $(this).data('icon');
-        $('#icon').val(icon).trigger('input');
-    });
-});
-</script>
-@endpush
-

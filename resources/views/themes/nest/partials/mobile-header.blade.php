@@ -1,8 +1,10 @@
-    <div class="mobile-header-active mobile-header-wrapper-style">
+<div class="mobile-header-active mobile-header-wrapper-style">
         <div class="mobile-header-wrapper-inner">
             <div class="mobile-header-top">
                 <div class="mobile-header-logo">
-                    <a href="index.html"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
+                    <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.5rem; color: #253D4E !important; text-decoration: none;">
+                        <span style="color: #3BB77E;">Rasa</span>Group
+                    </a>
                 </div>
                 <div class="mobile-menu-close close-style-wrap close-style-position-inherit">
                     <button class="close-style search-close">
@@ -22,17 +24,7 @@
                     <!-- mobile menu start -->
                     <nav>
                         <ul class="mobile-menu font-heading">
-                            <li class="menu-item-has-children">
-                                <a href="index.html">Home</a>
-                                <ul class="dropdown">
-                                    <li><a href="index.html">Home 1</a></li>
-                                    <li><a href="index-2.html">Home 2</a></li>
-                                    <li><a href="index-3.html">Home 3</a></li>
-                                    <li><a href="index-4.html">Home 4</a></li>
-                                    <li><a href="index-5.html">Home 5</a></li>
-                                    <li><a href="index-6.html">Home 6</a></li>
-                                </ul>
-                            </li>
+                            <li><a href="{{ route('home') }}">Home</a></li>
                             <li class="menu-item-has-children">
                                 <a href="shop-grid-right.html">shop</a>
                                 <ul class="dropdown">
@@ -68,16 +60,8 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li class="menu-item-has-children">
-                                <a href="#">Vendors</a>
-                                <ul class="dropdown">
-                                    <li><a href="vendors-grid.html">Vendors Grid</a></li>
-                                    <li><a href="vendors-list.html">Vendors List</a></li>
-                                    <li><a href="vendor-details-1.html">Vendor Details 01</a></li>
-                                    <li><a href="vendor-details-2.html">Vendor Details 02</a></li>
-                                    <li><a href="vendor-dashboard.html">Vendor Dashboard</a></li>
-                                    <li><a href="vendor-guide.html">Vendor Guide</a></li>
-                                </ul>
+                            <li>
+                                <a href="{{ route('hubs.index') }}">Hub & Distributor</a>
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Mega menu</a>
@@ -159,13 +143,13 @@
                 </div>
                 <div class="mobile-header-info-wrap">
                     <div class="single-mobile-header-info">
-                        <a href="page-contact.html"><i class="fi-rs-marker"></i> Our location </a>
+                        <a href="{{ route('contact') }}"><i class="fi-rs-marker"></i> Our location </a>
                     </div>
                     <div class="single-mobile-header-info">
-                        <a href="page-login.html"><i class="fi-rs-user"></i>Log In / Sign Up </a>
+                        <a href="{{ route('login') }}"><i class="fi-rs-user"></i>Log In / Sign Up </a>
                     </div>
                     <div class="single-mobile-header-info">
-                        <a href="#"><i class="fi-rs-headphones"></i>(+01) - 2345 - 6789 </a>
+                        <a href="#"><i class="fi-rs-headphones"></i>+62 812-3456-7890 </a>
                     </div>
                 </div>
                 <div class="mobile-social-icon mb-50">
@@ -176,7 +160,7 @@
                     <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
                     <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                 </div>
-                <div class="site-copyright">Copyright 2025 © Nest. All rights reserved. Powered by AliThemes.</div>
+                <div class="site-copyright">Copyright {{ date('Y') }} © Rasa Group. All rights reserved.</div>
             </div>
         </div>
     </div>
