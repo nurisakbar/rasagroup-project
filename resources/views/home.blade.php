@@ -626,6 +626,7 @@
 @endpush
 
 @section('content')
+    <main class="main">
     <!-- Hero Slider -->
     <div id="heroCarousel" class="carousel slide hero-slider" data-bs-ride="carousel" data-bs-interval="3000">
         <div class="carousel-indicators">
@@ -916,6 +917,7 @@
             @endif
         </div>
     </section>
+    </main>
 @endsection
 
 @push('scripts')

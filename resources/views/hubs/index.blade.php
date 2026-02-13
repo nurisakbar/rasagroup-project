@@ -1,16 +1,18 @@
-@extends('themes.nest.layouts.app')
+@extends('layouts.shop')
 
-@section('title', 'Hub & Distributor - ' . config('app.name'))
+@section('title', 'Daftar Distributor')
 
 @section('content')
-<div class="page-header breadcrumb-wrap">
-    <div class="container">
-        <div class="breadcrumb">
-            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
-            <span></span> Hub & Distributor
+    <main class="main pages">
+        <div class="page-header breadcrumb-wrap">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+                    <span></span> Distributor
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+        <div class="page-content pt-50">
 <div class="container mb-30">
     <div class="archive-header-3 mt-30 mb-80" style="background-image: url({{ asset('themes/nest-frontend/assets/imgs/vendor/vendor-header-bg.png') }})">
         <div class="archive-header-3-inner">
@@ -175,7 +177,8 @@
             </div>
         </div>
     </div>
-</div>
+        </div>
+    </main>
 @endsection
 
 @push('scripts')

@@ -312,18 +312,16 @@
 @endpush
 
 @section('content')
-    <!-- Hero Banner -->
-    <section class="page-hero">
-        <div class="container">
-            <h1><i class="bi bi-chat-dots me-2"></i>Hubungi Kami</h1>
-            <p>Kami siap membantu dan menjawab pertanyaan Anda</p>
-            <div class="breadcrumb-nav">
-                <a href="{{ route('home') }}"><i class="bi bi-house me-1"></i> Beranda</a>
-                <span>/</span>
-                <span>Kontak</span>
+    <main class="main pages">
+        <div class="page-header breadcrumb-wrap">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+                    <span></span> Hubungi Kami
+                </div>
             </div>
         </div>
-    </section>
+        <div class="page-content pt-50">
 
     <!-- Contact Info Cards -->
     <section class="contact-section">
@@ -590,5 +588,7 @@
             </div>
         </div>
     </section>
+        </div>
+    </main>
 @endsection
 

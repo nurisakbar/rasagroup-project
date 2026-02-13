@@ -210,10 +210,20 @@
                 <div class="col-xl-3 primary-sidebar sticky-sidebar mt-30">
                     <div class="sidebar-widget widget-category-2 mb-30">
                         <h5 class="section-title style-1 mb-30">Category</h5>
-                        <ul>
-                            <li>
-                                <a href="#"> <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />Uncategorized</a><span class="count">0</span>
-                            </li>
+                         <ul>
+                            @foreach($globalCategories as $cat)
+                                <li>
+                                    <a href="{{ route('products.index', ['category' => $cat->slug]) }}">
+                                        @if($cat->image)
+                                            <img src="{{ asset('storage/' . $cat->image) }}" alt="{{ $cat->name }}" />
+                                        @else
+                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
+                                        @endif
+                                        {{ $cat->name }}
+                                    </a>
+                                    <span class="count">{{ $cat->products_count }}</span>
+                                </li>
+                            @endforeach
                         </ul>
                     </div>
                     <!-- Fillter By Price -->

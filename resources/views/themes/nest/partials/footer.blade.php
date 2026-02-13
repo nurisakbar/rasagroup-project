@@ -6,13 +6,13 @@
                         <div class="position-relative newsletter-inner">
                             <div class="newsletter-content">
                                 <h2 class="mb-20">
-                                    Stay home & get your daily <br />
-                                    needs from our shop
+                                    Dapatkan info terbaru & <br />
+                                    promo menarik dari kami
                                 </h2>
-                                <p class="mb-45">Start You'r Daily Shopping with <span class="text-brand">Nest Mart</span></p>
+                                <p class="mb-45">Mulai belanja kebutuhan sirup Anda dengan <span class="text-brand">Rasa Group</span></p>
                                 <form class="form-subcriber d-flex">
-                                    <input type="email" placeholder="Your emaill address" />
-                                    <button class="btn" type="submit">Subscribe</button>
+                                    <input type="email" placeholder="Alamat email Anda" />
+                                    <button class="btn" type="submit">Berlangganan</button>
                                 </form>
                             </div>
                             <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-9.png') }}" alt="newsletter" />
@@ -30,8 +30,8 @@
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-1.svg') }}" alt="" />
                             </div>
                             <div class="banner-text">
-                                <h3 class="icon-box-title">Best prices & offers</h3>
-                                <p>Orders $50 or more</p>
+                                <h3 class="icon-box-title">Harga & Penawaran Terbaik</h3>
+                                <p>Hemat lebih banyak setiap hari</p>
                             </div>
                         </div>
                     </div>
@@ -41,8 +41,8 @@
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-2.svg') }}" alt="" />
                             </div>
                             <div class="banner-text">
-                                <h3 class="icon-box-title">Free delivery</h3>
-                                <p>24/7 amazing services</p>
+                                <h3 class="icon-box-title">Pengiriman Nasional</h3>
+                                <p>Menuju ke seluruh Indonesia</p>
                             </div>
                         </div>
                     </div>
@@ -52,8 +52,8 @@
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-3.svg') }}" alt="" />
                             </div>
                             <div class="banner-text">
-                                <h3 class="icon-box-title">Great daily deal</h3>
-                                <p>When you sign up</p>
+                                <h3 class="icon-box-title">Promo Harian</h3>
+                                <p>Diskon spesial setiap hari</p>
                             </div>
                         </div>
                     </div>
@@ -63,8 +63,8 @@
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-4.svg') }}" alt="" />
                             </div>
                             <div class="banner-text">
-                                <h3 class="icon-box-title">Wide assortment</h3>
-                                <p>Mega Discounts</p>
+                                <h3 class="icon-box-title">Koleksi Lengkap</h3>
+                                <p>Pilihan sirup terlengkap</p>
                             </div>
                         </div>
                     </div>
@@ -74,19 +74,8 @@
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-5.svg') }}" alt="" />
                             </div>
                             <div class="banner-text">
-                                <h3 class="icon-box-title">Easy returns</h3>
-                                <p>Within 30 days</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 d-xl-none">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay=".5s">
-                            <div class="banner-icon">
-                                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-6.svg') }}" alt="" />
-                            </div>
-                            <div class="banner-text">
-                                <h3 class="icon-box-title">Safe delivery</h3>
-                                <p>Within 30 days</p>
+                                <h3 class="icon-box-title">Pengembalian Mudah</h3>
+                                <p>Garansi kualitas produk</p>
                             </div>
                         </div>
                     </div>
@@ -99,75 +88,54 @@
                     <div class="col">
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
-                                <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.8rem; color: #253D4E !important; text-decoration: none;">
-                                    <span style="color: #3BB77E;">Rasa</span>Group
-                                </a>
-                                <p class="font-lg text-heading">Penyedia sirup premium dengan rasa terbaik untuk kebutuhan Anda.</p>
+                                <a href="{{ route('home') }}" class="mb-15"><h3 class="fw-bold mb-0 text-brand">Rasa<span class="text-dark">Group</span></h3></a>
+                                <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi untuk kebutuhan industri dan rumah tangga.</p>
                             </div>
                             <ul class="contact-infor">
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Address: </strong> <span>Jl. Rasa Manis No. 123, Jakarta Selatan, Indonesia 12345</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Call Us:</strong><span style="white-space: nowrap;">+62 812-3456-7890</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>Jl. Rasa Manis No. 123, Jakarta Selatan</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon:</strong><span>0813-1234-5678</span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email:</strong><span>info@rasagroup.com</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Hours:</strong><span>08:00 - 17:00, Mon - Sat</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Jam Kerja:</strong><span>08:00 - 17:00, Senin - Sabtu</span></li>
                             </ul>
                         </div>
                     </div>
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
-                        <h4 class=" widget-title">Company</h4>
+                        <h4 class=" widget-title">Perusahaan</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="{{ route('about') }}">About Us</a></li>
-                            {{-- <li><a href="#">Delivery Information</a></li> --}}
-                            {{-- <li><a href="#">Privacy Policy</a></li> --}}
-                            {{-- <li><a href="#">Terms &amp; Conditions</a></li> --}}
-                            <li><a href="{{ route('contact') }}">Contact Us</a></li>
+                            <li><a href="{{ route('about') }}">Tentang Kami</a></li>
+                            <li><a href="{{ route('contact') }}">Kontak Kami</a></li>
+                            <li><a href="#">Syarat & Ketentuan</a></li>
+                            <li><a href="#">Kebijakan Privasi</a></li>
                         </ul>
                     </div>
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
-                        <h4 class="widget-title">Account</h4>
+                        <h4 class="widget-title">Akun</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="#">Sign In</a></li>
-                            <li><a href="#">View Cart</a></li>
-                            <li><a href="#">My Wishlist</a></li>
-                            <li><a href="#">Track My Order</a></li>
-                            <li><a href="#">Help Ticket</a></li>
-                            <li><a href="#">Shipping Details</a></li>
-                            <li><a href="#">Compare products</a></li>
+                            <li><a href="{{ route('login') }}">Login</a></li>
+                            <li><a href="{{ route('cart.index') }}">Keranjang Saya</a></li>
+                            <li><a href="{{ route('buyer.dashboard') }}">Dashboard</a></li>
                         </ul>
                     </div>
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
-                        <h4 class="widget-title">Corporate</h4>
+                        <h4 class="widget-title">Link Cepat</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="{{ route('hubs.index') }}">Hub & Distributor</a></li>
-                            <li><a href="#">Affiliate Program</a></li>
-                            <li><a href="#">Farm Business</a></li>
-                            <li><a href="#">Farm Careers</a></li>
-                            <li><a href="#">Our Suppliers</a></li>
-                            <li><a href="#">Accessibility</a></li>
-                            <li><a href="#">Promotions</a></li>
+                            <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
+                            <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
+                            <li><a href="#">Promo</a></li>
                         </ul>
                     </div>
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".4s">
-                        <h4 class="widget-title">Popular</h4>
+                        <h4 class="widget-title">Produk Populer</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="#">Milk & Flavoured Milk</a></li>
-                            <li><a href="#">Butter and Margarine</a></li>
-                            <li><a href="#">Eggs Substitutes</a></li>
-                            <li><a href="#">Marmalades</a></li>
-                            <li><a href="#">Sour Cream and Dips</a></li>
-                            <li><a href="#">Tea & Kombucha</a></li>
-                            <li><a href="#">Cheese</a></li>
+                            <li><a href="#">Sirup Buah</a></li>
+                            <li><a href="#">Sirup Kopi</a></li>
+                            <li><a href="#">Sirup Dessert</a></li>
                         </ul>
                     </div>
-{{-- <div class="footer-link-widget widget-install-app col wow animate__animated animate__fadeInUp" data-wow-delay=".5s">
-    <h4 class="widget-title">Install App</h4>
-    <p class="">From App Store or Google Play</p>
-    <div class="download-app">
-        <a href="#" class="hover-up mb-sm-2 mb-lg-0"><img class="active" src="{{ asset('themes/nest-frontend/assets/imgs/theme/app-store.jpg') }}" alt="" /></a>
-        <a href="#" class="hover-up mb-sm-2"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/google-play.jpg') }}" alt="" /></a>
-    </div>
-    <p class="mb-20">Secured Payment Gateways</p>
-    <img class="" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
-</div> --}}
+                    <div class="footer-link-widget widget-install-app col wow animate__animated animate__fadeInUp" data-wow-delay=".5s">
+                        <h4 class="widget-title">Metode Pembayaran</h4>
+                        <img class="" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
+                    </div>
                 </div>
         </section>
         <div class="container pb-30 wow animate__animated animate__fadeInUp" data-wow-delay="0">
@@ -176,28 +144,21 @@
                     <div class="footer-bottom"></div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6">
-                    <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - Sirup Premium <br />All rights reserved</p>
+                    <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - All rights reserved</p>
                 </div>
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex mr-30">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p style="white-space: nowrap;">+62 812-3456-7890<span style="display: block;">Working 8:00 - 17:00</span></p>
-                    </div>
-                    <div class="hotline d-lg-inline-flex">
-                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p style="white-space: nowrap;">+62 812-3456-7891<span style="display: block;">24/7 Support Center</span></p>
+                        <p>0813-1234-5678<span>Layanan Pelanggan</span></p>
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">
                     <div class="mobile-social-icon">
-                        <h6>Follow Us</h6>
+                        <h6>Ikuti Kami</h6>
                         <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
-                        <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-twitter-white.svg') }}" alt="" /></a>
                         <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
-                        <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
                         <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                     </div>
-                    <p class="font-sm">Up to 15% discount on your first subscribe</p>
                 </div>
             </div>
         </div>
