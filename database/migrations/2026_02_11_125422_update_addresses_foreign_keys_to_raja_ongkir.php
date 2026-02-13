@@ -22,12 +22,17 @@ return new class extends Migration
             if (in_array('addresses_district_id_foreign', $fkNames)) { $table->dropForeign(['district_id']); }
         });
 
+        // First, make columns nullable so we can cleanse data
+        Schema::table('addresses', function (Blueprint $table) {
+            $table->string('province_id')->nullable()->change();
+            $table->string('regency_id')->nullable()->change();
+            $table->string('district_id')->nullable()->change();
+        });
+
         // Convert empty strings and invalid IDs to NULL to avoid foreign key violations
-        if (Schema::getColumnType('addresses', 'province_id') === 'string') {
-            DB::table('addresses')->where('province_id', '')->update(['province_id' => null]);
-            DB::table('addresses')->where('regency_id', '')->update(['regency_id' => null]);
-            DB::table('addresses')->where('district_id', '')->update(['district_id' => null]);
-        }
+        DB::table('addresses')->where('province_id', '')->update(['province_id' => null]);
+        DB::table('addresses')->where('regency_id', '')->update(['regency_id' => null]);
+        DB::table('addresses')->where('district_id', '')->update(['district_id' => null]);
 
         // Cleanse invalid IDs that don't exist in RajaOngkir
         DB::table('addresses')->whereNotExists(function($q){

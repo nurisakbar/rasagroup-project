@@ -21,14 +21,17 @@ return new class extends Migration
             if (in_array('warehouses_regency_id_foreign', $fkNames)) { $table->dropForeign(['regency_id']); }
         });
 
+        // First, make columns nullable so we can cleanse data
+        Schema::table('warehouses', function (Blueprint $table) {
+            $table->string('province_id')->nullable()->change();
+            $table->string('regency_id')->nullable()->change();
+            $table->string('district_id')->nullable()->change();
+        });
+
         // Convert empty strings and invalid IDs to NULL to avoid foreign key violations
-        if (Schema::getColumnType('warehouses', 'province_id') === 'string') {
-            DB::table('warehouses')->where('province_id', '')->update(['province_id' => null]);
-            DB::table('warehouses')->where('regency_id', '')->update(['regency_id' => null]);
-        }
-        if (Schema::getColumnType('warehouses', 'district_id') === 'string') {
-            DB::table('warehouses')->where('district_id', '')->update(['district_id' => null]);
-        }
+        DB::table('warehouses')->where('province_id', '')->update(['province_id' => null]);
+        DB::table('warehouses')->where('regency_id', '')->update(['regency_id' => null]);
+        DB::table('warehouses')->where('district_id', '')->update(['district_id' => null]);
 
         // Cleanse invalid IDs that don't exist in RajaOngkir
         DB::table('warehouses')->whereNotExists(function($q){
