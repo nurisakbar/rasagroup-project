@@ -294,8 +294,9 @@
 <!-- AdminLTE App -->
 <script src="{{ asset('adminlte/js/adminlte.min.js') }}"></script>
 
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- SweetAlert v1 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
 
 <script>
   $(document).ready(function() {
@@ -304,29 +305,26 @@
       e.preventDefault();
       var form = this;
       
-      Swal.fire({
-        title: 'Apakah Anda yakin?',
+      swal({
+        title: "Apakah Anda yakin?",
         text: "Data yang dihapus tidak dapat dikembalikan!",
-        icon: 'warning',
+        type: "warning",
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, hapus!',
-        cancelButtonText: 'Batal',
-        reverseButtons: true
-      }).then((result) => {
-        if (result.isConfirmed) {
-          form.submit();
-        }
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+        closeOnConfirm: false
+      }, function() {
+        form.submit();
       });
     });
 
     // Success notification from session
     @if(session('success'))
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
+      swal({
+        title: "Berhasil!",
         text: "{{ session('success') }}",
+        type: "success",
         timer: 3000,
         showConfirmButton: false
       });
@@ -334,10 +332,10 @@
 
     // Error notification from session
     @if(session('error'))
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal!',
+      swal({
+        title: "Gagal!",
         text: "{{ session('error') }}",
+        type: "error"
       });
     @endif
   });

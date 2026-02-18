@@ -8,6 +8,8 @@
     <li class="active">Hub</li>
 @endsection
 
+
+
 @section('content')
     <div class="row">
         <div class="col-xs-12">
@@ -163,6 +165,8 @@ $(function() {
         $('#filter-status').val('');
         table.draw();
     });
+
+
 });
 </script>
 @endpush

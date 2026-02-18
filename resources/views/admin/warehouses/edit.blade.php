@@ -11,7 +11,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">Form Edit Hub</h3>
@@ -148,23 +148,6 @@
             <!-- /.box -->
         </div>
 
-        <div class="col-md-4">
-            <div class="box box-info">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-info-circle"></i> Informasi</h3>
-                </div>
-                <div class="box-body">
-                    <p>Edit data hub sesuai kebutuhan.</p>
-                    <hr>
-                    <dl>
-                        <dt>Dibuat Pada</dt>
-                        <dd>{{ $warehouse->created_at->format('d M Y, H:i') }}</dd>
-                        <dt>Diupdate Pada</dt>
-                        <dd>{{ $warehouse->updated_at->format('d M Y, H:i') }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
     </div>
 @endsection
 

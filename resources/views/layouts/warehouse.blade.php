@@ -170,6 +170,53 @@
 <!-- AdminLTE App -->
 <script src="{{ asset('adminlte/js/adminlte.min.js') }}"></script>
 
+<!-- SweetAlert v1 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    // Global delete confirmation
+    $(document).on('submit', '.delete-form', function(e) {
+      e.preventDefault();
+      var form = this;
+      
+      swal({
+        title: "Apakah Anda yakin?",
+        text: "Data yang dihapus tidak dapat dikembalikan!",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+        closeOnConfirm: false
+      }, function() {
+        form.submit();
+      });
+    });
+
+    // Success notification from session
+    @if(session('success'))
+      swal({
+        title: "Berhasil!",
+        text: "{{ session('success') }}",
+        type: "success",
+        timer: 3000,
+        showConfirmButton: false
+      });
+    @endif
+
+    // Error notification from session
+    @if(session('error'))
+      swal({
+        title: "Gagal!",
+        text: "{{ session('error') }}",
+        type: "error"
+      });
+    @endif
+  });
+</script>
+
 @stack('scripts')
 
 </body>

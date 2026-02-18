@@ -37,8 +37,8 @@
                                     <select class="form-control select2" id="province_id" name="province_id" required style="width: 100%;">
                                         <option value="">-- Pilih Provinsi --</option>
                                         @foreach($provinces as $province)
-                                            <option value="{{ $province->id }}" {{ old('province_id') == $province->id ? 'selected' : '' }}>
-                                                {{ $province->name }}
+                                            <option value="{{ $province['id'] }}" {{ old('province_id') == $province['id'] ? 'selected' : '' }}>
+                                                {{ $province['name'] }}
                                             </option>
                                         @endforeach
                                     </select>
