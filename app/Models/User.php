@@ -105,22 +105,22 @@ class User extends Authenticatable
 
     public function distributorProvince(): BelongsTo
     {
-        return $this->belongsTo(Province::class, 'distributor_province_id');
+        return $this->belongsTo(RajaOngkirProvince::class, 'distributor_province_id');
     }
 
     public function distributorRegency(): BelongsTo
     {
-        return $this->belongsTo(Regency::class, 'distributor_regency_id');
+        return $this->belongsTo(RajaOngkirCity::class, 'distributor_regency_id');
     }
 
     public function driippreneurProvince(): BelongsTo
     {
-        return $this->belongsTo(Province::class, 'driippreneur_province_id');
+        return $this->belongsTo(RajaOngkirProvince::class, 'driippreneur_province_id');
     }
 
     public function driippreneurRegency(): BelongsTo
     {
-        return $this->belongsTo(Regency::class, 'driippreneur_regency_id');
+        return $this->belongsTo(RajaOngkirCity::class, 'driippreneur_regency_id');
     }
 
     public function addresses(): HasMany

@@ -33,6 +33,10 @@ class PageController extends Controller
                     }
                     return '<span class="label label-danger">Nonaktif</span>';
                 })
+                ->addColumn('url_info', function ($page) {
+                    $url = route('pages.show', $page->slug);
+                    return '<a href="' . $url . '" target="_blank" class="text-info"><i class="fa fa-external-link"></i> ' . $url . '</a>';
+                })
                 ->addColumn('action', function ($page) {
                     $editUrl = route('admin.pages.edit', $page);
                     $deleteUrl = route('admin.pages.destroy', $page);
@@ -41,7 +45,7 @@ class PageController extends Controller
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i>
                         </a>
-                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" onsubmit="return confirm(\'Apakah Anda yakin ingin menghapus halaman ini?\');">
+                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
                             ' . csrf_field() . method_field('DELETE') . '
                             <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
                                 <i class="fa fa-trash"></i>
@@ -49,7 +53,7 @@ class PageController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['title_info', 'status_badge', 'action'])
+                ->rawColumns(['title_info', 'url_info', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -116,8 +120,7 @@ class PageController extends Controller
 
         $page->update($validated);
 
-        return redirect()->route('admin.pages.index')
-            ->with('success', 'Halaman berhasil diperbarui.');
+        return back()->with('success', 'Halaman berhasil diperbarui.');
     }
 
     /**

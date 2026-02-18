@@ -10,10 +10,12 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 <style>
     /* .dataTables_filter { display: none; } */
     .filter-box { margin-bottom: 0; }
     #orders-table_length { margin-bottom: 15px; }
+    .datepicker { z-index: 1151 !important; }
 </style>
 @endpush
 
@@ -30,6 +32,28 @@
         </div>
         <div class="box-body">
             <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Dari Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-date-from" class="form-control datepicker" value="{{ date('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Sampai Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-date-to" class="form-control datepicker" value="{{ date('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Status Pesanan</label>
@@ -68,21 +92,9 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Dari Tanggal</label>
-                        <input type="date" id="filter-date-from" class="form-control">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Sampai Tanggal</label>
-                        <input type="date" id="filter-date-to" class="form-control">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
                         <label>&nbsp;</label>
-                        <button type="button" id="btn-reset" class="btn btn-default btn-block">
-                            <i class="fa fa-refresh"></i> Reset
+                        <button type="button" id="btn-reset" class="btn btn-danger btn-block">
+                            <i class="fa fa-refresh"></i> Reset Filter
                         </button>
                     </div>
                 </div>
@@ -122,6 +134,7 @@
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <script>
 $(document).ready(function() {
     var table = $('#orders-table').DataTable({
@@ -168,6 +181,16 @@ $(document).ready(function() {
         }
     });
 
+    // Initialize Datepicker
+    $('.datepicker').datepicker({
+        autoclose: true,
+        format: 'yyyy-mm-dd',
+        todayHighlight: true,
+        orientation: "bottom auto",
+        todayBtn: "linked",
+        clearBtn: true
+    });
+
     // Initialize Select2 for source warehouse filter
     $('#filter-source-warehouse').select2({
         placeholder: '-- Semua Hub --',
@@ -188,8 +211,8 @@ $(document).ready(function() {
         $('#filter-status').val('');
         $('#filter-order-type').val('');
         $('#filter-source-warehouse').val(null).trigger('change');
-        $('#filter-date-from').val('');
-        $('#filter-date-to').val('');
+        $('#filter-date-from').datepicker('update', '{{ date('Y-m-d') }}');
+        $('#filter-date-to').datepicker('update', '{{ date('Y-m-d') }}');
         table.draw();
     });
 });

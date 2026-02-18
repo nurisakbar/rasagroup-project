@@ -10,10 +10,12 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 <style>
     .dataTables_filter { display: none; }
     .filter-box { margin-bottom: 0; }
     #withdrawals-table_length { margin-bottom: 15px; }
+    .datepicker { z-index: 1151 !important; }
 </style>
 @endpush
 
@@ -92,6 +94,28 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
+                        <label>Dari Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-start-date" class="form-control datepicker" placeholder="dd-mm-yyyy">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Sampai Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-end-date" class="form-control datepicker" placeholder="dd-mm-yyyy">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
                         <label>&nbsp;</label>
                         <button type="button" id="btn-reset" class="btn btn-default btn-block">
                             <i class="fa fa-refresh"></i> Reset
@@ -134,8 +158,16 @@
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Initialize Datepicker
+    $('.datepicker').datepicker({
+        format: 'dd-mm-yyyy',
+        autoclose: true,
+        todayHighlight: true
+    });
+
     var table = $('#withdrawals-table').DataTable({
         processing: true,
         serverSide: true,
@@ -143,6 +175,8 @@ $(document).ready(function() {
             url: "{{ route('admin.point-withdrawals.index') }}",
             data: function(d) {
                 d.status = $('#filter-status').val();
+                d.start_date = $('#filter-start-date').val();
+                d.end_date = $('#filter-end-date').val();
             }
         },
         columns: [
@@ -176,13 +210,15 @@ $(document).ready(function() {
     });
 
     // Filter handler
-    $('#filter-status').change(function() {
+    $('#filter-status, #filter-start-date, #filter-end-date').change(function() {
         table.draw();
     });
 
     // Reset button
     $('#btn-reset').click(function() {
         $('#filter-status').val('');
+        $('#filter-start-date').val('');
+        $('#filter-end-date').val('');
         table.draw();
     });
 

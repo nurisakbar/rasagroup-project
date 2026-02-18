@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Slider;
+use App\Models\WebsitePopup;
 
 class HomeController extends Controller
 {
@@ -65,6 +66,8 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $activePopups = WebsitePopup::where('is_active', true)->latest()->get();
+
         return view('themes.nest.home.index', compact(
             'popularProducts', 
             'dailyBestSells', 
@@ -74,7 +77,8 @@ class HomeController extends Controller
             'topRated', 
             'categories', 
             'categoryProducts', 
-            'sliders'
+            'sliders',
+            'activePopups'
         ));
     }
 }

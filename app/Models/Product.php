@@ -208,6 +208,6 @@ class Product extends Model
      */
     public function getRouteKeyName()
     {
-        return 'slug';
+        return request()->is('admin/*') ? 'id' : 'slug';
     }
 }

@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\PriceLevel;
-use App\Models\Province;
-use App\Models\Regency;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
@@ -16,9 +14,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
+use App\Services\RajaOngkirService;
 
 class DistributorController extends Controller
 {
+    protected $rajaOngkir;
+
+    public function __construct(RajaOngkirService $rajaOngkir)
+    {
+        $this->rajaOngkir = $rajaOngkir;
+    }
     /**
      * Display a listing of Distributors.
      */
@@ -74,13 +79,17 @@ class DistributorController extends Controller
                 })
                 ->addColumn('action', function ($dist) {
                     $showUrl = route('admin.distributors.show', $dist);
+                    $editUrl = route('admin.distributors.edit', $dist);
                     $deleteUrl = route('admin.distributors.destroy', $dist);
                     
                     return '
                         <a href="' . $showUrl . '" class="btn btn-info btn-xs" title="Detail">
                             <i class="fa fa-eye"></i>
                         </a>
-                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" onsubmit="return confirm(\'Hapus Distributor ini?\');">
+                        <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
                             ' . csrf_field() . method_field('DELETE') . '
                             <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
                                 <i class="fa fa-trash"></i>
@@ -92,7 +101,7 @@ class DistributorController extends Controller
                 ->make(true);
         }
 
-        $provinces = Province::orderBy('name')->get();
+        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
         $pendingCount = User::where('distributor_status', 'pending')->count();
 
         return view('admin.distributors.index', compact('provinces', 'pendingCount'));
@@ -117,7 +126,7 @@ class DistributorController extends Controller
         }
 
         $applications = $query->orderBy('distributor_applied_at', 'asc')->paginate(20);
-        $provinces = Province::orderBy('name')->get();
+        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
 
         return view('admin.distributors.applications', compact('applications', 'provinces'));
     }
@@ -133,7 +142,10 @@ class DistributorController extends Controller
         }
 
         $user->load(['distributorProvince', 'distributorRegency']);
-        $provinces = Province::orderBy('name')->get();
+        
+        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
+        
         $priceLevels = PriceLevel::active()->ordered()->get();
         return view('admin.distributors.application-detail', compact('user', 'provinces', 'priceLevels'));
     }
@@ -150,8 +162,10 @@ class DistributorController extends Controller
 
         $validated = $request->validate([
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required', 'exists:provinces,id'],
-            'regency_id' => ['required', 'exists:regencies,id'],
+            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
+            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
+            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'address' => ['nullable', 'string'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
@@ -163,6 +177,8 @@ class DistributorController extends Controller
             'name' => $validated['hub_name'],
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
+            'district_id' => $validated['district_id'],
+            'village_id' => $validated['village_id'] ?? null,
             'address' => $validated['address'],
             'phone' => $validated['hub_phone'],
             'is_active' => true,
@@ -214,7 +230,8 @@ class DistributorController extends Controller
      */
     public function create()
     {
-        $provinces = Province::orderBy('name')->get();
+        $result = $this->rajaOngkir->getProvinces();
+        $provinces = isset($result['data']) ? $result['data'] : [];
         $priceLevels = PriceLevel::active()->ordered()->get();
         return view('admin.distributors.create', compact('provinces', 'priceLevels'));
     }
@@ -227,8 +244,10 @@ class DistributorController extends Controller
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required', 'exists:provinces,id'],
-            'regency_id' => ['required', 'exists:regencies,id'],
+            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
+            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
+            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'address' => ['nullable', 'string'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
             // User data
@@ -245,6 +264,8 @@ class DistributorController extends Controller
             'name' => $validated['hub_name'],
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
+            'district_id' => $validated['district_id'],
+            'village_id' => $validated['village_id'] ?? null,
             'address' => $validated['address'],
             'phone' => $validated['hub_phone'],
             'is_active' => true,
@@ -356,13 +377,37 @@ class DistributorController extends Controller
                 $query->where('payment_status', $request->payment_status);
             }
 
+            // Filter by date range
+            if ($request->filled('start_date')) {
+                try {
+                    $startDate = \Carbon\Carbon::createFromFormat('d-m-Y', $request->start_date)->format('Y-m-d');
+                    $query->whereDate('created_at', '>=', $startDate);
+                } catch (\Exception $e) {
+                    // Fallback or ignore invalid format
+                }
+            }
+            if ($request->filled('end_date')) {
+                try {
+                    $endDate = \Carbon\Carbon::createFromFormat('d-m-Y', $request->end_date)->format('Y-m-d');
+                    $query->whereDate('created_at', '<=', $endDate);
+                } catch (\Exception $e) {
+                    // Fallback or ignore invalid format
+                }
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('order_number_display', function ($order) {
-                    return '<strong>' . $order->order_number . '</strong>';
+                    $html = '<strong>' . $order->order_number . '</strong>';
+                    if ($order->order_type === 'distributor') {
+                        $html .= '<br><span class="label label-warning" style="font-size: 10px;">Distributor</span>';
+                    } else {
+                        $html .= '<br><span class="label label-default" style="font-size: 10px;">Regular</span>';
+                    }
+                    return $html;
                 })
                 ->addColumn('order_date', function ($order) {
-                    return $order->created_at->format('d M Y H:i');
+                    return $order->created_at->format('d-m-Y');
                 })
                 ->addColumn('customer_info', function ($order) {
                     $html = '<strong>' . $order->user->name . '</strong>';
@@ -398,19 +443,13 @@ class DistributorController extends Controller
                     $statusText = ucfirst($order->payment_status);
                     return '<span class="label label-' . $color . '">' . $statusText . '</span>';
                 })
-                ->addColumn('order_type_badge', function ($order) {
-                    if ($order->order_type === 'distributor') {
-                        return '<span class="label label-warning">Distributor</span>';
-                    }
-                    return '<span class="label label-default">Regular</span>';
-                })
                 ->addColumn('action', function ($order) {
                     $showUrl = route('admin.orders.show', $order);
                     return '<a href="' . $showUrl . '" class="btn btn-info btn-xs" title="Detail">
                         <i class="fa fa-eye"></i> Detail
                     </a>';
                 })
-                ->rawColumns(['order_number_display', 'customer_info', 'order_status_badge', 'payment_status_badge', 'order_type_badge', 'action'])
+                ->rawColumns(['order_number_display', 'customer_info', 'order_status_badge', 'payment_status_badge', 'action'])
                 ->make(true);
         }
 
@@ -454,6 +493,95 @@ class DistributorController extends Controller
     }
 
     /**
+     * Show the form for editing a Distributor.
+     */
+    public function edit(User $distributor)
+    {
+        if (!$distributor->isDistributor()) {
+            abort(404);
+        }
+
+        $distributor->load('warehouse');
+        
+        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
+        
+        $regencies = ($distributor->warehouse && $distributor->warehouse->province_id)
+            ? ($this->rajaOngkir->getCities($distributor->warehouse->province_id)['data'] ?? [])
+            : [];
+            
+        $districts = ($distributor->warehouse && $distributor->warehouse->regency_id)
+            ? ($this->rajaOngkir->getDistricts($distributor->warehouse->regency_id)['data'] ?? [])
+            : [];
+
+        $villages = [];
+        if ($distributor->warehouse && $distributor->warehouse->district_id) {
+            $villages = $this->getVillagesInternal($distributor->warehouse->district_id);
+        }
+
+        $priceLevels = PriceLevel::active()->ordered()->get();
+        
+        return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages', 'priceLevels'));
+    }
+
+    /**
+     * Update the specified distributor.
+     */
+    public function update(Request $request, User $distributor)
+    {
+        if (!$distributor->isDistributor()) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            // Hub data
+            'hub_name' => ['required', 'string', 'max:255'],
+            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
+            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
+            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
+            'address' => ['nullable', 'string'],
+            'hub_phone' => ['nullable', 'string', 'max:20'],
+            // User data
+            'user_name' => ['required', 'string', 'max:255'],
+            'user_email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $distributor->id],
+            'user_phone' => ['nullable', 'string', 'max:20'],
+            'user_password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'price_level_id' => ['nullable', 'exists:price_levels,id'],
+        ]);
+
+        // Update hub
+        if ($distributor->warehouse) {
+            $distributor->warehouse->update([
+                'name' => $validated['hub_name'],
+                'province_id' => $validated['province_id'],
+                'regency_id' => $validated['regency_id'],
+                'district_id' => $validated['district_id'],
+                'village_id' => $validated['village_id'] ?? null,
+                'address' => $validated['address'],
+                'phone' => $validated['hub_phone'],
+            ]);
+        }
+
+        // Update user
+        $userData = [
+            'name' => $validated['user_name'],
+            'email' => $validated['user_email'],
+            'phone' => $validated['user_phone'],
+            'price_level_id' => $validated['price_level_id'] ?? null,
+        ];
+
+        if ($request->filled('user_password')) {
+            $userData['password'] = Hash::make($validated['user_password']);
+        }
+
+        $distributor->update($userData);
+
+        return redirect()->route('admin.distributors.index')
+            ->with('success', 'Distributor berhasil diperbarui.');
+    }
+
+    /**
      * Delete a Distributor.
      */
     public function destroy(User $distributor)
@@ -481,11 +609,32 @@ class DistributorController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $regencies = Regency::where('province_id', $request->province_id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
-        
-        return response()->json($regencies);
+        $result = $this->rajaOngkir->getCities($request->province_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
+    }
+
+    /**
+     * Internal helper to get villages for initial form load.
+     */
+    private function getVillagesInternal($districtId)
+    {
+        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
+        if (!$roDistrict) {
+            return [];
+        }
+
+        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+        if (!$localDistrict) {
+            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+        }
+
+        if ($localDistrict) {
+            return \App\Models\Village::where('district_id', $localDistrict->id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+
+        return [];
     }
 
     /**

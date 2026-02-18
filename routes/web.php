@@ -143,6 +143,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Sliders Management
         Route::resource('sliders', App\Http\Controllers\Admin\SliderController::class)->except(['show']);
 
+        // Website Pop-ups Management
+        Route::resource('website-popups', App\Http\Controllers\Admin\WebsitePopupController::class)->except(['show']);
+
         // Pages Management
         Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
@@ -155,6 +158,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/warehouses/{warehouse}/users', [App\Http\Controllers\Admin\WarehouseController::class, 'addUser'])->name('warehouses.add-user');
         Route::delete('/warehouses/{warehouse}/users/{user}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeUser'])->name('warehouses.remove-user');
         Route::get('/get-regencies', [App\Http\Controllers\Admin\WarehouseController::class, 'getRegencies'])->name('get-regencies');
+        Route::get('/get-districts', [App\Http\Controllers\Admin\WarehouseController::class, 'getDistricts'])->name('get-districts');
+        Route::get('/get-villages', [App\Http\Controllers\Admin\WarehouseController::class, 'getVillages'])->name('get-villages');
 
         // Users Management
         Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
@@ -199,6 +204,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/distributors', [App\Http\Controllers\Admin\DistributorController::class, 'store'])->name('distributors.store');
         Route::get('/distributors/get-regencies', [App\Http\Controllers\Admin\DistributorController::class, 'getRegencies'])->name('distributors.get-regencies');
         Route::get('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'show'])->name('distributors.show');
+        Route::get('/distributors/{distributor}/edit', [App\Http\Controllers\Admin\DistributorController::class, 'edit'])->name('distributors.edit');
+        Route::put('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'update'])->name('distributors.update');
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
         Route::delete('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'destroy'])->name('distributors.destroy');
     });

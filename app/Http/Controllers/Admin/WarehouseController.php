@@ -7,14 +7,19 @@ use App\Models\Warehouse;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\WarehouseStock;
-use App\Models\Province;
-use App\Models\Regency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
+use App\Services\RajaOngkirService;
 
 class WarehouseController extends Controller
 {
+    protected $rajaOngkir;
+
+    public function __construct(RajaOngkirService $rajaOngkir)
+    {
+        $this->rajaOngkir = $rajaOngkir;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -78,7 +83,7 @@ class WarehouseController extends Controller
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i>
                         </a>
-                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" onsubmit="return confirm(\'Apakah Anda yakin ingin menghapus hub ini?\');">
+                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
                             ' . csrf_field() . method_field('DELETE') . '
                             <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
                                 <i class="fa fa-trash"></i>
@@ -90,7 +95,8 @@ class WarehouseController extends Controller
                 ->make(true);
         }
 
-        $provinces = Province::orderBy('name')->get();
+        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+
         return view('admin.warehouses.index', compact('provinces'));
     }
 
@@ -99,7 +105,8 @@ class WarehouseController extends Controller
      */
     public function create()
     {
-        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        $result = $this->rajaOngkir->getProvinces();
+        $provinces = isset($result['data']) ? $result['data'] : [];
         return view('admin.warehouses.create', compact('provinces'));
     }
 
@@ -117,6 +124,7 @@ class WarehouseController extends Controller
             'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
             'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
             'district_id' => 'nullable|exists:raja_ongkir_districts,id',
+            'village_id' => 'nullable|exists:villages,id',
             'is_active' => 'boolean',
             // User data
             'user_name' => 'required|string|max:255',
@@ -134,6 +142,7 @@ class WarehouseController extends Controller
             'province_id' => $validated['province_id'] ?? null,
             'regency_id' => $validated['regency_id'] ?? null,
             'district_id' => $validated['district_id'] ?? null,
+            'village_id' => $validated['village_id'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -184,31 +193,21 @@ class WarehouseController extends Controller
 
     public function edit(Warehouse $warehouse)
     {
-        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
         $regencies = $warehouse->province_id 
-            ? \App\Models\RajaOngkirCity::where('province_id', $warehouse->province_id)->orderBy('name')->get() 
-            : collect();
+            ? ($this->rajaOngkir->getCities($warehouse->province_id)['data'] ?? [])
+            : [];
             
         $districts = $warehouse->regency_id
-            ? \App\Models\RajaOngkirDistrict::where('city_id', $warehouse->regency_id)->orderBy('name')->get()
-            : collect();
+            ? ($this->rajaOngkir->getDistricts($warehouse->regency_id)['data'] ?? [])
+            : [];
 
         // Fetch villages from local table by mapping district name
         $villages = [];
         if ($warehouse->district_id) {
-            $roDistrict = \App\Models\RajaOngkirDistrict::find($warehouse->district_id);
-            if ($roDistrict) {
-                $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
-                if (!$localDistrict) {
-                    $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
-                }
-                if ($localDistrict) {
-                    $villages = \App\Models\Village::where('district_id', $localDistrict->id)
-                        ->orderBy('name')
-                        ->get();
-                }
-            }
+            $villages = $this->getVillages(new Request(['district_id' => $warehouse->district_id]))->getData();
         }
 
         return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages'));
@@ -227,6 +226,7 @@ class WarehouseController extends Controller
             'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
             'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
             'district_id' => 'nullable|exists:raja_ongkir_districts,id',
+            'village_id' => 'nullable|exists:villages,id',
             'is_active' => 'boolean',
         ]);
 
@@ -343,11 +343,47 @@ class WarehouseController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $regencies = Regency::where('province_id', $request->province_id)
-            ->orderBy('name')
-            ->get();
+        $result = $this->rajaOngkir->getCities($request->province_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
+    }
 
-        return response()->json($regencies);
+    /**
+     * Get districts by regency (AJAX).
+     */
+    public function getDistricts(Request $request)
+    {
+        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
+    }
+
+    /**
+     * Get villages by district (AJAX).
+     */
+    public function getVillages(Request $request)
+    {
+        $districtId = $request->district_id;
+        if (!$districtId) {
+            return response()->json([]);
+        }
+
+        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
+        if (!$roDistrict) {
+            return response()->json([]);
+        }
+
+        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+        if (!$localDistrict) {
+            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+        }
+
+        if ($localDistrict) {
+            $villages = \App\Models\Village::where('district_id', $localDistrict->id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+            return response()->json($villages);
+        }
+
+        return response()->json([]);
     }
 
     /**

@@ -48,7 +48,7 @@ class CategoryController extends Controller
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i>
                         </a>
-                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" onsubmit="return confirm(\'Hapus kategori ini?\');">
+                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
                             ' . csrf_field() . method_field('DELETE') . '
                             <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
                                 <i class="fa fa-trash"></i>
@@ -124,8 +124,7 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->route('admin.categories.index')
-            ->with('success', 'Kategori berhasil diperbarui.');
+        return back()->with('success', 'Kategori berhasil diperbarui.');
     }
 
     public function destroy(Category $category)

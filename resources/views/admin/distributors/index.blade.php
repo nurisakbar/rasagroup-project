@@ -131,7 +131,7 @@ $(function() {
             regencySelect.prop('disabled', false);
             
             $.ajax({
-                url: "{{ route('admin.distributors.get-regencies') }}",
+                url: "{{ route('admin.get-regencies') }}",
                 type: 'GET',
                 data: { province_id: provinceId },
                 success: function(data) {

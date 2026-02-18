@@ -196,6 +196,12 @@
             <i class="fa fa-image"></i> <span>WEB SLIDER</span>
           </a>
         </li>
+
+        <li class="{{ request()->routeIs('admin.website-popups.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.website-popups.index') }}">
+            <i class="fa fa-window-maximize"></i> <span>POP UP WEBSITE</span>
+          </a>
+        </li>
         
         <li class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
           <a href="{{ route('admin.pages.index') }}">
@@ -287,6 +293,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('adminlte/js/adminlte.min.js') }}"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  $(document).ready(function() {
+    // Global delete confirmation
+    $(document).on('submit', '.delete-form', function(e) {
+      e.preventDefault();
+      var form = this;
+      
+      Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit();
+        }
+      });
+    });
+
+    // Success notification from session
+    @if(session('success'))
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: "{{ session('success') }}",
+        timer: 3000,
+        showConfirmButton: false
+      });
+    @endif
+
+    // Error notification from session
+    @if(session('error'))
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: "{{ session('error') }}",
+      });
+    @endif
+  });
+</script>
 
 @stack('scripts')
 

@@ -158,7 +158,7 @@
                             @foreach($warehouse->users as $user)
                                 <li class="list-group-item">
                                     <div class="pull-right">
-                                        <form action="{{ route('admin.warehouses.remove-user', [$warehouse, $user]) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus user ini?');">
+                                        <form action="{{ route('admin.warehouses.remove-user', [$warehouse, $user]) }}" method="POST" style="display: inline;" class="delete-form">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-xs">
@@ -261,7 +261,7 @@
                                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#updateStockModal{{ $stock->id }}" title="Update Stock">
                                             <i class="fa fa-edit"></i>
                                         </button>
-                                        <form action="{{ route('admin.warehouses.remove-stock', [$warehouse, $stock]) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Hapus produk ini dari hub?');">
+                                        <form action="{{ route('admin.warehouses.remove-stock', [$warehouse, $stock]) }}" method="POST" style="display: inline-block;" class="delete-form">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm" title="Hapus">

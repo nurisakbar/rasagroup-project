@@ -201,7 +201,7 @@
                 </div>
                 <div class="box-body">
                     <p class="text-muted">Hapus produk ini secara permanen.</p>
-                    <form action="{{ route('admin.products.destroy', $product) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                    <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="delete-form">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-block">

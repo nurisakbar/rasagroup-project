@@ -24,6 +24,20 @@ class PointWithdrawalController extends Controller
                 $query->where('status', $request->status);
             }
 
+            // Date range filter
+            if ($request->filled('start_date')) {
+                try {
+                    $startDate = \Carbon\Carbon::createFromFormat('d-m-Y', $request->start_date)->format('Y-m-d');
+                    $query->whereDate('requested_at', '>=', $startDate);
+                } catch (\Exception $e) {}
+            }
+            if ($request->filled('end_date')) {
+                try {
+                    $endDate = \Carbon\Carbon::createFromFormat('d-m-Y', $request->end_date)->format('Y-m-d');
+                    $query->whereDate('requested_at', '<=', $endDate);
+                } catch (\Exception $e) {}
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('user_info', function ($withdrawal) {
@@ -47,7 +61,7 @@ class PointWithdrawalController extends Controller
                     return $badges[$withdrawal->status] ?? '<span class="label label-default">' . $withdrawal->status . '</span>';
                 })
                 ->addColumn('requested_at_formatted', function ($withdrawal) {
-                    return $withdrawal->requested_at ? $withdrawal->requested_at->format('d M Y H:i') : '-';
+                    return $withdrawal->requested_at ? $withdrawal->requested_at->format('d-m-Y H:i') : '-';
                 })
                 ->addColumn('action', function ($withdrawal) {
                     $html = '<a href="' . route('admin.point-withdrawals.show', $withdrawal) . '" class="btn btn-info btn-xs" title="Detail">
