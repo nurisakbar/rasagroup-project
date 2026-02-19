@@ -46,12 +46,15 @@ require __DIR__.'/auth.php';
 // Public Routes
 Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+Route::get('/promo', [App\Http\Controllers\PromoController::class, 'index'])->name('promo.index');
+Route::get('/promo/{slug}', [App\Http\Controllers\PromoController::class, 'show'])->name('promo.show');
 
 // Hub & Distributor Routes
 Route::get('/hubs', [App\Http\Controllers\HubController::class, 'index'])->name('hubs.index');
 Route::get('/hubs/get-regencies', [App\Http\Controllers\HubController::class, 'getRegencies'])->name('hubs.get-regencies');
 Route::get('/hubs/nearby', [App\Http\Controllers\HubController::class, 'getNearbyHubs'])->name('hubs.nearby');
 Route::get('/hubs/check-stock', [App\Http\Controllers\HubController::class, 'checkStock'])->name('hubs.check-stock');
+Route::post('/hubs/select', [App\Http\Controllers\HubController::class, 'select'])->name('hubs.select');
 Route::get('/hubs/{warehouse}', [App\Http\Controllers\HubController::class, 'show'])->name('hubs.show');
 
 // Cart Routes (both guest and auth)
@@ -142,6 +145,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Sliders Management
         Route::resource('sliders', App\Http\Controllers\Admin\SliderController::class)->except(['show']);
+
+        // Promos Management
+        Route::resource('promos', App\Http\Controllers\Admin\PromoController::class)->except(['show']);
 
         // Website Pop-ups Management
         Route::resource('website-popups', App\Http\Controllers\Admin\WebsitePopupController::class)->except(['show']);

@@ -47,7 +47,7 @@
                     <div class="col-lg-4">
                         <div class="follow-social">
                             <h6 class="mb-15 text-white">Hubungi Kami</h6>
-                            <ul class="social-network">
+                            <ul class="social-network mb-20">
                                 <li class="hover-up">
                                     <a href="#">
                                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/social-tw.svg') }}" alt="" />
@@ -64,6 +64,11 @@
                                     </a>
                                 </li>
                             </ul>
+                            <form action="{{ route('hubs.select') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
+                                <button type="submit" class="btn btn-sm btn-light text-brand">Pilih Hub Ini <i class="fi-rs-check"></i></button>
+                            </form>
                         </div>
                     </div>
                 </div>

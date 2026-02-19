@@ -1,4 +1,5 @@
     <footer class="main">
+    @if(request()->routeIs('home'))
         <section class="newsletter mb-15 wow animate__animated animate__fadeIn">
             <div class="container">
                 <div class="row">
@@ -82,6 +83,7 @@
                 </div>
             </div>
         </section>
+    @endif
         <section class="section-padding footer-mid">
             <div class="container pt-15 pb-20">
                 <div class="row">

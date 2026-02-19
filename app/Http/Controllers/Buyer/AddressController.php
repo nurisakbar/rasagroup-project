@@ -26,7 +26,7 @@ class AddressController extends Controller
     public function index()
     {
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district', /* removed village */])
+            ->with(['province', 'regency', 'district'])
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();
@@ -56,7 +56,6 @@ class AddressController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            /* 'village_id' removed */ => ['nullable', 'string'], // RO might not have villages
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -88,7 +87,6 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            /* 'village_id' removed */ => $validated[/* 'village_id' removed */] ?? null,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -128,19 +126,8 @@ class AddressController extends Controller
         $districts = isset($districtRes['data']) ? $districtRes['data'] : [];
 
         // Fetch villages from local table by mapping district name
-        /* $villages removed */ = [];
-        $roDistrict = \App\Models\RajaOngkirDistrict::find($address->district_id);
-        if ($roDistrict) {
-            $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
-            if (!$localDistrict) {
-                $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
-            }
-            if ($localDistrict) {
-                /* $villages removed */ = \App\Models\/* Village:: removed */where('district_id', $localDistrict->id)
-                    ->orderBy('name')
-                    ->get();
-            }
-        }
+        $villages = [];
+        // Village logic removed/commented out previously caused errors, explicitly removed now.
 
         return view('buyer.addresses.edit', compact('address', 'provinces', 'regencies', 'districts', 'villages'));
     }
@@ -162,7 +149,6 @@ class AddressController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            /* 'village_id' removed */ => ['nullable', 'string'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -183,7 +169,6 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            /* 'village_id' removed */ => $validated[/* 'village_id' removed */] ?? null,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -280,10 +265,8 @@ class AddressController extends Controller
         }
 
         if ($localDistrict) {
-            /* $villages removed */ = \App\Models\/* Village:: removed */where('district_id', $localDistrict->id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-            return response()->json(/* $villages removed */);
+             // Village logic removed
+             return response()->json([]);
         }
 
         return response()->json([]);

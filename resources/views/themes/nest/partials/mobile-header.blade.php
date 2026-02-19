@@ -26,7 +26,7 @@
                         <ul class="mobile-menu font-heading">
                             <li><a href="{{ route('home') }}">Halaman Utama</a></li>
                             <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
-                            <li><a href="#">Promo</a></li>
+                            <li><a href="{{ route('promo.index') }}">Promo</a></li>
                             <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
                             <li><a href="{{ route('about') }}">Tentang Kami</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
@@ -38,9 +38,23 @@
                     <div class="single-mobile-header-info">
                         <a href="{{ route('contact') }}"><i class="fi-rs-marker"></i> Our location </a>
                     </div>
+                    @auth
+                    <div class="single-mobile-header-info">
+                        <a href="{{ route('buyer.dashboard') }}"><i class="fi-rs-user"></i>Akun Saya </a>
+                    </div>
+                    <div class="single-mobile-header-info">
+                        <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile">
+                            @csrf
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" style="display: flex; align-items: center;">
+                                <i class="fi-rs-sign-out" style="margin-right: 10px;"></i>Keluar
+                            </a>
+                        </form>
+                    </div>
+                    @else
                     <div class="single-mobile-header-info">
                         <a href="{{ route('login') }}"><i class="fi-rs-user"></i>Log In / Sign Up </a>
                     </div>
+                    @endauth
                     <div class="single-mobile-header-info">
                         <a href="#"><i class="fi-rs-headphones"></i>+62 812-3456-7890 </a>
                     </div>

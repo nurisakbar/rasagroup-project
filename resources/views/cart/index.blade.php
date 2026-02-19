@@ -90,10 +90,10 @@
                                         <label class="form-check-label" for="exampleCheckbox{{ $loop->iteration }}"></label>
                                     </td>
                                     <td class="image product-thumbnail pt-40">
-                                        <img src="{{ $cart->product->image_url ? $cart->product->image_url : 'https://via.placeholder.com/60' }}" alt="#" onerror="this.src='https://via.placeholder.com/60'">
+                                        <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="#" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
                                     </td>
                                     <td class="product-des product-name">
-                                        <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }}</a></h6>
+                                        <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }} {{ $cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : '' }}</a></h6>
                                         <div class="product-rate-cover">
                                             <div class="product-rate d-inline-block">
                                                 <div class="product-rating" style="width:90%">

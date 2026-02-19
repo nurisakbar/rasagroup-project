@@ -118,7 +118,14 @@
                                     @endif
                                 </ul>
                             </div>
-                            <a href="{{ route('hubs.show', $warehouse) }}" class="btn btn-xs">Kunjungi <i class="fi-rs-arrow-small-right"></i></a>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ route('hubs.show', $warehouse) }}" class="btn btn-xs btn-outline-primary">Detail <i class="fi-rs-arrow-small-right"></i></a>
+                                <form action="{{ route('hubs.select') }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
+                                    <button type="submit" class="btn btn-xs">Pilih Hub Ini <i class="fi-rs-check"></i></button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

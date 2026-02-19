@@ -100,45 +100,54 @@
                                     <a href="shop-wishlist.html"><span class="lable">Wishlist</span></a>
                                 </div>
                                 <div class="header-action-icon-2">
-                                    <a class="mini-cart-icon" href="shop-cart.html">
+                                    <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                         <span class="pro-count blue">2</span>
                                     </a>
-                                    <a href="shop-cart.html"><span class="lable">Cart</span></a>
+                                    <a href="{{ route('cart.index') }}"><span class="lable">Cart</span></a>
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2">
                                         <ul>
+                                            @php
+                                                $miniCarts = auth()->check() 
+                                                    ? \App\Models\Cart::with('product')->where('user_id', auth()->id())->latest()->get()
+                                                    : \App\Models\Cart::with('product')->where('session_id', session()->getId())->latest()->get();
+                                                $miniCartTotal = $miniCarts->sum(function($item) { return $item->product->price * $item->quantity; });
+                                            @endphp
+                                            
+                                            @forelse($miniCarts as $cartItem)
                                             <li>
                                                 <div class="shopping-cart-img">
-                                                    <a href="shop-product-right.html"><img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}" /></a>
+                                                    <a href="{{ route('products.show', $cartItem->product) }}">
+                                                        <img alt="{{ $cartItem->product->name }}" src="{{ $cartItem->product->image_url ? $cartItem->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                                                    </a>
                                                 </div>
                                                 <div class="shopping-cart-title">
-                                                    <h4><a href="shop-product-right.html">Daisy Casual Bag</a></h4>
-                                                    <h4><span>1 × </span>$800.00</h4>
+                                                    <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->name . ($cartItem->product->commercial_name ? ' - ' . $cartItem->product->commercial_name : ''), 40) }}</a></h4>
+                                                    <h4><span>{{ $cartItem->quantity }} × </span>Rp {{ number_format($cartItem->product->price, 0, ',', '.') }}</h4>
                                                 </div>
                                                 <div class="shopping-cart-delete">
-                                                    <a href="#"><i class="fi-rs-cross-small"></i></a>
+                                                    <form action="{{ route('cart.destroy', $cartItem) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;" onclick="return confirm('Hapus item ini?')"><i class="fi-rs-cross-small"></i></button>
+                                                    </form>
                                                 </div>
                                             </li>
+                                            @empty
                                             <li>
-                                                <div class="shopping-cart-img">
-                                                    <a href="shop-product-right.html"><img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-2.jpg') }}" /></a>
-                                                </div>
                                                 <div class="shopping-cart-title">
-                                                    <h4><a href="shop-product-right.html">Corduroy Shirts</a></h4>
-                                                    <h4><span>1 × </span>$3200.00</h4>
-                                                </div>
-                                                <div class="shopping-cart-delete">
-                                                    <a href="#"><i class="fi-rs-cross-small"></i></a>
+                                                    <h4>Keranjang masih kosong</h4>
                                                 </div>
                                             </li>
+                                            @endforelse
                                         </ul>
                                         <div class="shopping-cart-footer">
                                             <div class="shopping-cart-total">
-                                                <h4>Total <span>$4000.00</span></h4>
+                                                <h4>Total <span>Rp {{ number_format($miniCartTotal, 0, ',', '.') }}</span></h4>
                                             </div>
                                             <div class="shopping-cart-button">
-                                                <a href="shop-cart.html" class="outline">View cart</a>
-                                                <a href="shop-checkout.html">Checkout</a>
+                                                <a href="{{ route('cart.index') }}" class="outline">Lihat Keranjang</a>
+                                                <a href="{{ route('checkout.index') }}">Checkout</a>
                                             </div>
                                         </div>
                                     </div>
@@ -151,22 +160,24 @@
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2 account-dropdown">
                                         <ul>
                                             <li>
-                                                <a href="page-account.html"><i class="fi fi-rs-user mr-10"></i>My Account</a>
+                                                <a href="{{ route('buyer.dashboard') }}"><i class="fi fi-rs-user mr-10"></i>Akun Saya</a>
                                             </li>
                                             <li>
-                                                <a href="page-account.html"><i class="fi fi-rs-location-alt mr-10"></i>Order Tracking</a>
+                                                <a href="{{ route('buyer.orders.index') }}"><i class="fi fi-rs-shopping-bag mr-10"></i>Pesanan Saya</a>
                                             </li>
                                             <li>
-                                                <a href="page-account.html"><i class="fi fi-rs-label mr-10"></i>My Voucher</a>
+                                                <a href="{{ route('buyer.addresses.index') }}"><i class="fi fi-rs-marker mr-10"></i>Alamat Saya</a>
                                             </li>
                                             <li>
-                                                <a href="shop-wishlist.html"><i class="fi fi-rs-heart mr-10"></i>My Wishlist</a>
+                                                <a href="{{ route('buyer.profile') }}"><i class="fi fi-rs-settings-sliders mr-10"></i>Pengaturan</a>
                                             </li>
                                             <li>
-                                                <a href="page-account.html"><i class="fi fi-rs-settings-sliders mr-10"></i>Setting</a>
-                                            </li>
-                                            <li>
-                                                <a href="page-login.html"><i class="fi fi-rs-sign-out mr-10"></i>Sign out</a>
+                                                <form method="POST" action="{{ route('logout') }}" id="logout-form-header">
+                                                    @csrf
+                                                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-header').submit();">
+                                                        <i class="fi fi-rs-sign-out mr-10"></i>Keluar
+                                                    </a>
+                                                </form>
                                             </li>
                                         </ul>
                                     </div>
@@ -226,7 +237,7 @@
                                         <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">Katalog Produk</a>
                                     </li>
                                     <li>
-                                        <a href="#">Promo</a>
+                                        <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">Promo</a>
                                     </li>
                                     <li>
                                         <a class="{{ request()->routeIs('hubs.*') ? 'active' : '' }}" href="{{ route('hubs.index') }}">Distributor</a>
@@ -261,44 +272,53 @@
                                 </a>
                             </div>
                             <div class="header-action-icon-2">
-                                <a class="mini-cart-icon" href="#">
+                                <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                     <span class="pro-count white">2</span>
                                 </a>
                                 <div class="cart-dropdown-wrap cart-dropdown-hm2">
                                     <ul>
+                                        @php
+                                            $miniCarts = auth()->check() 
+                                                ? \App\Models\Cart::with('product')->where('user_id', auth()->id())->latest()->get()
+                                                : \App\Models\Cart::with('product')->where('session_id', session()->getId())->latest()->get();
+                                            $miniCartTotal = $miniCarts->sum(function($item) { return $item->product->price * $item->quantity; });
+                                        @endphp
+                                        
+                                        @forelse($miniCarts as $cartItem)
                                         <li>
                                             <div class="shopping-cart-img">
-                                                <a href="shop-product-right.html"><img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}" /></a>
+                                                <a href="{{ route('products.show', $cartItem->product) }}">
+                                                    <img alt="{{ $cartItem->product->name }}" src="{{ $cartItem->product->image_url ? $cartItem->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                                                </a>
                                             </div>
                                             <div class="shopping-cart-title">
-                                                <h4><a href="shop-product-right.html">Plain Striola Shirts</a></h4>
-                                                <h3><span>1 × </span>$800.00</h3>
+                                                <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->name . ($cartItem->product->commercial_name ? ' - ' . $cartItem->product->commercial_name : ''), 40) }}</a></h4>
+                                                <h4><span>{{ $cartItem->quantity }} × </span>Rp {{ number_format($cartItem->product->price, 0, ',', '.') }}</h4>
                                             </div>
                                             <div class="shopping-cart-delete">
-                                                <a href="#"><i class="fi-rs-cross-small"></i></a>
+                                                <form action="{{ route('cart.destroy', $cartItem) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" style="background:none; border:none; padding:0; cursor:pointer;" onclick="return confirm('Hapus item ini?')"><i class="fi-rs-cross-small"></i></button>
+                                                </form>
                                             </div>
                                         </li>
+                                        @empty
                                         <li>
-                                            <div class="shopping-cart-img">
-                                                <a href="shop-product-right.html"><img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-4.jpg') }}" /></a>
-                                            </div>
                                             <div class="shopping-cart-title">
-                                                <h4><a href="shop-product-right.html">Macbook Pro 2025</a></h4>
-                                                <h3><span>1 × </span>$3500.00</h3>
-                                            </div>
-                                            <div class="shopping-cart-delete">
-                                                <a href="#"><i class="fi-rs-cross-small"></i></a>
+                                                <h4>Keranjang masih kosong</h4>
                                             </div>
                                         </li>
+                                        @endforelse
                                     </ul>
                                     <div class="shopping-cart-footer">
                                         <div class="shopping-cart-total">
-                                            <h4>Total <span>$383.00</span></h4>
+                                            <h4>Total <span>Rp {{ number_format($miniCartTotal, 0, ',', '.') }}</span></h4>
                                         </div>
                                         <div class="shopping-cart-button">
-                                            <a href="shop-cart.html">View cart</a>
-                                            <a href="shop-checkout.html">Checkout</a>
+                                            <a href="{{ route('cart.index') }}" class="outline">Lihat Keranjang</a>
+                                            <a href="{{ route('checkout.index') }}">Checkout</a>
                                         </div>
                                     </div>
                                 </div>

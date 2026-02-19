@@ -208,6 +208,12 @@
             <i class="fa fa-file-text"></i> <span>HALAMAN STATIS</span>
           </a>
         </li>
+
+        <li class="{{ request()->routeIs('admin.promos.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.promos.index') }}">
+            <i class="fa fa-ticket"></i> <span>PROMO</span>
+          </a>
+        </li>
         
         <li class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
           <a href="{{ route('admin.settings.index') }}">

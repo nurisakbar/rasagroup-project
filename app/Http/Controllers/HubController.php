@@ -202,5 +202,30 @@ class HubController extends Controller
             'stocks' => $result,
         ]);
     }
+
+    /**
+     * Set selected hub for shopping session
+     */
+    public function select(Request $request)
+    {
+        $request->validate([
+            'warehouse_id' => 'required|exists:warehouses,id'
+        ]);
+
+        $warehouse = Warehouse::find($request->warehouse_id);
+        
+        // Store in session
+        session([
+            'selected_hub_id' => $warehouse->id,
+            'selected_hub_name' => $warehouse->name,
+            'selected_hub_slug' => $warehouse->slug
+        ]);
+        
+        // Store in cookie for 30 days
+        cookie()->queue('selected_hub_id', $warehouse->id, 60 * 24 * 30);
+        cookie()->queue('selected_hub_name', $warehouse->name, 60 * 24 * 30);
+
+        return redirect()->route('home')->with('success', "Hub {$warehouse->name} terpilih sebagai lokasi belanja Anda.");
+    }
 }
 

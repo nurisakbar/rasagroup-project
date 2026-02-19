@@ -72,10 +72,7 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                /* removed village */ => $address/* ->village removed */ ? [
-                    'id' => $address/* ->village removed */->id,
-                    'name' => $address/* ->village removed */->name,
-                ] : null,
+
                 'full_address' => $address->full_address,
             ];
         });
@@ -102,7 +99,6 @@ class AddressApiController extends Controller
             'province_id' => 'required|exists:provinces,id',
             'regency_id' => 'required|exists:regencies,id',
             'district_id' => 'required|exists:districts,id',
-            /* 'village_id' removed */ => 'required|exists:villages,id',
             'address_detail' => 'required|string',
             'postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string|max:500',
@@ -127,7 +123,7 @@ class AddressApiController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            /* 'village_id' removed */ => $validated[/* 'village_id' removed */],
+
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -160,10 +156,7 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                /* removed village */ => $address/* ->village removed */ ? [
-                    'id' => $address/* ->village removed */->id,
-                    'name' => $address/* ->village removed */->name,
-                ] : null,
+
                 'full_address' => $address->full_address,
             ],
         ], 201);
@@ -186,7 +179,6 @@ class AddressApiController extends Controller
             'province_id' => 'required|exists:provinces,id',
             'regency_id' => 'required|exists:regencies,id',
             'district_id' => 'required|exists:districts,id',
-            /* 'village_id' removed */ => 'required|exists:villages,id',
             'address_detail' => 'required|string',
             'postal_code' => 'nullable|string|max:10',
             'notes' => 'nullable|string|max:500',
@@ -210,7 +202,7 @@ class AddressApiController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
-            /* 'village_id' removed */ => $validated[/* 'village_id' removed */],
+
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -243,10 +235,7 @@ class AddressApiController extends Controller
                     'id' => $address->district->id,
                     'name' => $address->district->name,
                 ] : null,
-                /* removed village */ => $address/* ->village removed */ ? [
-                    'id' => $address/* ->village removed */->id,
-                    'name' => $address/* ->village removed */->name,
-                ] : null,
+
                 'full_address' => $address->full_address,
             ],
         ]);

@@ -20,4 +20,3 @@
     <!-- Template  JS -->
     <script src="{{ asset('themes/nest-frontend/assets/js/main.js?v=6.1') }}"></script>
     <script src="{{ asset('themes/nest-frontend/assets/js/shop.js?v=6.1') }}"></script>
-</body>
