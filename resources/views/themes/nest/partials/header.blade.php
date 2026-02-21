@@ -9,7 +9,7 @@
                         <div class="header-info">
                             <ul>
                                 <li><a href="{{ route('about') }}">Tentang Kami</a></li>
-                                {{-- <li>
+                                <li>
                                     <a href="{{ route('hubs.index') }}">
                                         <i class="fi-rs-marker mr-5"></i>
                                         @if(session()->has('selected_hub_name'))
@@ -18,7 +18,7 @@
                                             <span class="text-danger">Pilih Hub Terdekat</span>
                                         @endif
                                     </a>
-                                </li> --}}
+                                </li>
                                 <li><a href="{{ route('buyer.dashboard') }}">Akun Saya</a></li>
                                 <li><a href="{{ route('buyer.orders.index') }}">Lacak Pesanan</a></li>
                             </ul>

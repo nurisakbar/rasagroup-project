@@ -27,7 +27,7 @@
                             <li><a href="{{ route('home') }}">Halaman Utama</a></li>
                             <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
                             <li><a href="{{ route('promo.index') }}">Promo</a></li>
-                            {{-- <li><a href="{{ route('hubs.index') }}">Distributor</a></li> --}}
+                            <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
                             <li><a href="{{ route('about') }}">Tentang Kami</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
                         </ul>
