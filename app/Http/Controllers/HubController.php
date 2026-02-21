@@ -224,8 +224,107 @@ class HubController extends Controller
         // Store in cookie for 30 days
         cookie()->queue('selected_hub_id', $warehouse->id, 60 * 24 * 30);
         cookie()->queue('selected_hub_name', $warehouse->name, 60 * 24 * 30);
+        cookie()->queue('selected_hub_slug', $warehouse->slug, 60 * 24 * 30);
 
         return redirect()->route('home')->with('success', "Hub {$warehouse->name} terpilih sebagai lokasi belanja Anda.");
+    }
+
+    /**
+     * Detect nearest hub based on coordinates (AJAX)
+     */
+    public function detectNearestHub(Request $request)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+
+        // Get all active hubs with coordinates
+        $hubs = Warehouse::where('is_active', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+
+        if ($hubs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada hub aktif dengan data lokasi untuk saat ini.'
+            ]);
+        }
+
+        $nearestHub = null;
+        $minDistance = null;
+
+        foreach ($hubs as $hub) {
+            // Haversine formula
+            $distance = $this->calculateDistance($lat, $lng, $hub->latitude, $hub->longitude);
+            
+            if ($minDistance === null || $distance < $minDistance) {
+                $minDistance = $distance;
+                $nearestHub = $hub;
+            }
+        }
+
+        if ($nearestHub) {
+            // Check if already selected the same hub to avoid redundant flash messages
+            $currentHubId = session('selected_hub_id');
+            
+            // Store in session
+            session([
+                'selected_hub_id' => $nearestHub->id,
+                'selected_hub_name' => $nearestHub->name,
+                'selected_hub_slug' => $nearestHub->slug
+            ]);
+            
+            // Store coordinates for reference
+            session([
+                'user_latitude' => $lat,
+                'user_longitude' => $lng
+            ]);
+
+            // Store in cookie for 30 days
+            cookie()->queue('selected_hub_id', $nearestHub->id, 60 * 24 * 30);
+            cookie()->queue('selected_hub_name', $nearestHub->name, 60 * 24 * 30);
+            cookie()->queue('selected_hub_slug', $nearestHub->slug, 60 * 24 * 30);
+
+            return response()->json([
+                'success' => true,
+                'hub' => [
+                    'id' => $nearestHub->id,
+                    'name' => $nearestHub->name,
+                    'distance' => round($minDistance, 2) . ' km'
+                ],
+                'is_new' => $currentHubId != $nearestHub->id
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menentukan hub terdekat.'
+        ]);
+    }
+
+    /**
+     * Helper to calculate distance between two points (Haversine formula)
+     */
+    private function calculateDistance($lat1, $lng1, $lat2, $lng2)
+    {
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLng / 2) * sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $distance = $earthRadius * $c;
+
+        return $distance;
     }
 }
 

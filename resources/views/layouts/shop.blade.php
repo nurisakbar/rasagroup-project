@@ -98,6 +98,101 @@
                     type: "warning"
                 });
             @endif
+
+            // Automatic Hub Detection
+            @if(!session()->has('selected_hub_id'))
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        $.ajax({
+                            url: '{{ route("hubs.detect-nearest") }}',
+                            type: 'POST',
+                            data: {
+                                latitude: lat,
+                                longitude: lng,
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success && response.is_new) {
+                                    swal({
+                                        title: "Lokasi Terdeteksi!",
+                                        text: "Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.",
+                                        type: "success",
+                                        timer: 4000,
+                                        showConfirmButton: true
+                                    }, function() {
+                                        window.location.reload();
+                                    });
+                                }
+                            }
+                        });
+                    }, function(error) {
+                        console.warn("Geolocation access denied or failed.");
+                    }, {
+                        timeout: 10000
+                    });
+                }
+            @endif
+            // AJAX Add to Cart
+            $('.add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const url = form.attr('action');
+                const data = form.serialize();
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    success: function(response) {
+                        if (response.success) {
+                            swal({
+                                title: "Berhasil!",
+                                text: response.message,
+                                type: "success",
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            
+                            // Update cart count in header if element exists
+                            $('.pro-count.blue').text(response.cart_count);
+                            $('.pro-count.white').text(response.cart_count);
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            swal({
+                                title: "Perhatian!",
+                                text: "Silakan masuk terlebih dahulu untuk belanja.",
+                                type: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Masuk Sekarang",
+                                cancelButtonText: "Nanti",
+                                closeOnConfirm: true
+                            }, function() {
+                                window.location.href = '{{ route("login") }}';
+                            });
+                            return;
+                        }
+
+                        let errorMsg = "Terjadi kesalahan saat menambahkan ke keranjang.";
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+                            errorMsg = Object.values(errors).flat()[0];
+                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        
+                        swal({
+                            title: "Gagal!",
+                            text: errorMsg,
+                            type: "error"
+                        });
+                    }
+                });
+            });
         });
     </script>
     @stack('scripts')

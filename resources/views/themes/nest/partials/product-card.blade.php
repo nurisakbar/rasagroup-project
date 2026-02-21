@@ -42,7 +42,14 @@
                     @endif
                 </div>
                 <div class="add-cart">
-                    <a class="add" href="#"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                    <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
+                        <button type="submit" class="add" style="border: none; background: none; cursor: pointer; padding: 0;">
+                            <i class="fi-rs-shopping-cart mr-5"></i>Add
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

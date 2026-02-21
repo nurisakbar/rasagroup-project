@@ -3,7 +3,11 @@
     // Page loading
     $(window).on("load", function () {
         $("#preloader-active").fadeOut("slow");
-        $("#onloadModal").modal("show");
+        var modalShown = localStorage.getItem("onloadModalShown");
+        if (!modalShown) {
+            $("#onloadModal").modal("show");
+            localStorage.setItem("onloadModalShown", "true");
+        }
     });
     /*-----------------
         Menu Stick

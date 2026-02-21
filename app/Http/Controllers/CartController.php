@@ -85,6 +85,17 @@ class CartController extends Controller
 
     public function store(Request $request, Product $product)
     {
+        if (!Auth::check()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Silakan masuk terlebih dahulu untuk menambahkan produk ke keranjang.',
+                    'redirect' => route('login')
+                ], 401);
+            }
+            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mendaftar.');
+        }
+
         $request->validate([
             'quantity' => 'required|integer|min:1',
             'warehouse_id' => 'required',
@@ -185,6 +196,16 @@ class CartController extends Controller
                     'quantity' => $request->quantity,
                 ]);
             }
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk dari ' . $warehouse->name . ' ditambahkan ke keranjang.',
+                'cart_count' => Auth::check() 
+                    ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
+                    : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity')
+            ]);
         }
 
         return redirect()->route('cart.index')->with('success', 'Produk dari ' . $warehouse->name . ' ditambahkan ke keranjang.');

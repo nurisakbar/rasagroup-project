@@ -8,10 +8,19 @@
                     <div class="col-xl-3 col-lg-4">
                         <div class="header-info">
                             <ul>
-                                <li><a href="page-about.htlm">About Us</a></li>
-                                <li><a href="page-account.html">My Account</a></li>
-                                <li><a href="shop-wishlist.html">Wishlist</a></li>
-                                <li><a href="shop-order.html">Order Tracking</a></li>
+                                <li><a href="{{ route('about') }}">Tentang Kami</a></li>
+                                {{-- <li>
+                                    <a href="{{ route('hubs.index') }}">
+                                        <i class="fi-rs-marker mr-5"></i>
+                                        @if(session()->has('selected_hub_name'))
+                                            Hub: <span class="text-brand"><strong>{{ session('selected_hub_name') }}</strong></span>
+                                        @else
+                                            <span class="text-danger">Pilih Hub Terdekat</span>
+                                        @endif
+                                    </a>
+                                </li> --}}
+                                <li><a href="{{ route('buyer.dashboard') }}">Akun Saya</a></li>
+                                <li><a href="{{ route('buyer.orders.index') }}">Lacak Pesanan</a></li>
                             </ul>
                         </div>
                     </div>
@@ -85,7 +94,7 @@
                                         </select>
                                     </form>
                                 </div>
-                                <div class="header-action-icon-2">
+                                {{-- <div class="header-action-icon-2">
                                     <a href="shop-compare.html">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-compare.svg') }}" />
                                         <span class="pro-count blue">3</span>
@@ -98,11 +107,16 @@
                                         <span class="pro-count blue">6</span>
                                     </a>
                                     <a href="shop-wishlist.html"><span class="lable">Wishlist</span></a>
-                                </div>
+                                </div> --}}
                                 <div class="header-action-icon-2">
+                                    @php
+                                        $cartCount = auth()->check() 
+                                            ? \App\Models\Cart::where('user_id', auth()->id())->where('cart_type', 'regular')->sum('quantity')
+                                            : 0;
+                                    @endphp
                                     <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
-                                        <span class="pro-count blue">2</span>
+                                        <span class="pro-count blue">{{ $cartCount }}</span>
                                     </a>
                                     <a href="{{ route('cart.index') }}"><span class="lable">Cart</span></a>
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2">
@@ -153,10 +167,11 @@
                                     </div>
                                 </div>
                                 <div class="header-action-icon-2">
-                                    <a href="page-account.html">
+                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                     </a>
-                                    <a href="page-account.html"><span class="lable ml-0">Account</span></a>
+                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Account</span></a>
+                                    @auth
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2 account-dropdown">
                                         <ul>
                                             <li>
@@ -181,6 +196,7 @@
                                             </li>
                                         </ul>
                                     </div>
+                                    @endauth
                                 </div>
                             </div>
                         </div>
@@ -239,9 +255,9 @@
                                     <li>
                                         <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">Promo</a>
                                     </li>
-                                    <li>
+                                    {{-- <li>
                                         <a class="{{ request()->routeIs('hubs.*') ? 'active' : '' }}" href="{{ route('hubs.index') }}">Distributor</a>
-                                    </li>
+                                    </li> --}}
                                     <li>
                                         <a class="{{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">Tentang Kami</a>
                                     </li>
@@ -265,16 +281,16 @@
                     </div>
                     <div class="header-action-right d-block d-lg-none">
                         <div class="header-action-2">
-                            <div class="header-action-icon-2">
+                            {{-- <div class="header-action-icon-2">
                                 <a href="shop-wishlist.html">
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-heart.svg') }}" />
                                     <span class="pro-count white">4</span>
                                 </a>
-                            </div>
+                            </div> --}}
                             <div class="header-action-icon-2">
                                 <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
-                                    <span class="pro-count white">2</span>
+                                    <span class="pro-count white">{{ $cartCount }}</span>
                                 </a>
                                 <div class="cart-dropdown-wrap cart-dropdown-hm2">
                                     <ul>

@@ -41,6 +41,11 @@
                     <p>Kami menemukan <strong class="text-brand">{{ $warehouses->count() }}</strong> lokasi tersedia!</p>
                 </div>
                 <div class="sort-by-product-area">
+                    <div class="sort-by-cover mr-10">
+                        <button type="button" class="btn btn-xs btn-outline-primary" id="btn-detect-location">
+                            <i class="fi-rs-location mr-5"></i> Deteksi Hub Terdekat
+                        </button>
+                    </div>
                     <div class="sort-by-cover">
                         <div class="sort-by-product-wrap">
                             <div class="sort-by">
@@ -214,6 +219,50 @@
                 });
             } else {
                 regencySelect.html('<option value="">Semua Kota/Kab</option>');
+            }
+        });
+
+        // Manual Location Detection
+        $('#btn-detect-location').on('click', function() {
+            var btn = $(this);
+            if ("geolocation" in navigator) {
+                btn.html('<i class="fi-rs-spinner fa-spin mr-5"></i> Mendeteksi...').prop('disabled', true);
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    $.ajax({
+                        url: "{{ route('hubs.detect-nearest') }}",
+                        type: "POST",
+                        data: {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                swal({
+                                    title: "Berhasil!",
+                                    text: "Hub terdekat terdeteksi: " + response.hub.name + " (" + response.hub.distance + ")",
+                                    type: "success",
+                                    timer: 3000
+                                }, function() {
+                                    window.location.href = "{{ route('home') }}";
+                                });
+                            } else {
+                                swal("Oops!", response.message, "error");
+                                btn.html('<i class="fi-rs-location mr-5"></i> Deteksi Hub Terdekat').prop('disabled', false);
+                            }
+                        },
+                        error: function() {
+                            swal("Gagal!", "Gagal menghubungi server.", "error");
+                            btn.html('<i class="fi-rs-location mr-5"></i> Deteksi Hub Terdekat').prop('disabled', false);
+                        }
+                    });
+                }, function(error) {
+                    swal("Izin Ditolak", "Harap izinkan akses lokasi di browser Anda.", "warning");
+                    btn.html('<i class="fi-rs-location mr-5"></i> Deteksi Hub Terdekat').prop('disabled', false);
+                });
+            } else {
+                swal("Tidak Didukung", "Browser Anda tidak mendukung deteksi lokasi.", "error");
             }
         });
     });

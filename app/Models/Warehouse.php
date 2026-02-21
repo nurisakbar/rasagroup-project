@@ -26,6 +26,8 @@ class Warehouse extends Model
         'regency_id',
         'district_id',
         'village_id',
+        'latitude',
+        'longitude',
         'is_active',
     ];
 

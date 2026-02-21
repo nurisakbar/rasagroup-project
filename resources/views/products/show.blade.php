@@ -485,11 +485,71 @@
     }
 
     document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
         if (!selectedWarehouseId) {
-            e.preventDefault();
-            alert('Silakan pilih hub pengirim terlebih dahulu.');
+            swal({
+                title: "Pilih Hub",
+                text: "Silakan pilih hub pengirim terlebih dahulu.",
+                type: "warning"
+            });
             return false;
         }
+
+        const form = $(this);
+        const url = form.attr('action');
+        const data = form.serialize();
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.success) {
+                    swal({
+                        title: "Berhasil!",
+                        text: response.message,
+                        type: "success",
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    // Update cart count in header
+                    $('.pro-count.blue').text(response.cart_count);
+                    $('.pro-count.white').text(response.cart_count);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    swal({
+                        title: "Perhatian!",
+                        text: "Silakan masuk terlebih dahulu untuk belanja.",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Masuk Sekarang",
+                        cancelButtonText: "Nanti",
+                        closeOnConfirm: true
+                    }, function() {
+                        window.location.href = '{{ route("login") }}';
+                    });
+                    return;
+                }
+
+                let errorMsg = "Terjadi kesalahan saat menambahkan ke keranjang.";
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    errorMsg = Object.values(errors).flat()[0];
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                
+                swal({
+                    title: "Gagal!",
+                    text: errorMsg,
+                    type: "error"
+                });
+            }
+        });
     });
 
     document.addEventListener('DOMContentLoaded', function() {

@@ -54,6 +54,7 @@ Route::get('/hubs', [App\Http\Controllers\HubController::class, 'index'])->name(
 Route::get('/hubs/get-regencies', [App\Http\Controllers\HubController::class, 'getRegencies'])->name('hubs.get-regencies');
 Route::get('/hubs/nearby', [App\Http\Controllers\HubController::class, 'getNearbyHubs'])->name('hubs.nearby');
 Route::get('/hubs/check-stock', [App\Http\Controllers\HubController::class, 'checkStock'])->name('hubs.check-stock');
+Route::post('/hubs/detect-nearest', [App\Http\Controllers\HubController::class, 'detectNearestHub'])->name('hubs.detect-nearest');
 Route::post('/hubs/select', [App\Http\Controllers\HubController::class, 'select'])->name('hubs.select');
 Route::get('/hubs/{warehouse}', [App\Http\Controllers\HubController::class, 'show'])->name('hubs.show');
 

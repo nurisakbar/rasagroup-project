@@ -121,7 +121,7 @@
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
                         <h4 class="widget-title">Link Cepat</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
+                            {{-- <li><a href="{{ route('hubs.index') }}">Distributor</a></li> --}}
                             <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
                             <li><a href="#">Promo</a></li>
                         </ul>

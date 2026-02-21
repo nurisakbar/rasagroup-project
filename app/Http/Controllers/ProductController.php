@@ -9,7 +9,22 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $selectedHubId = session('selected_hub_id');
+        
         $query = Product::where('status', 'active');
+
+        // Only show products that have stock in the selected hub
+        if ($selectedHubId) {
+            $query->whereHas('warehouseStocks', function($q) use ($selectedHubId) {
+                $q->where('warehouse_id', $selectedHubId)
+                  ->where('stock', '>', 0);
+            });
+            
+            // Eager load the stock for the current hub
+            $query->with(['warehouseStocks' => function($q) use ($selectedHubId) {
+                $q->where('warehouse_id', $selectedHubId);
+            }]);
+        }
 
         if ($request->has('search') && $request->search) {
             $query->where(function($q) use ($request) {
@@ -48,9 +63,11 @@ class ProductController extends Controller
                 $query->latest();
         }
 
-        $products = $query->paginate(12)->withQueryString();
+        $perPage = $request->get('per_page', 12);
+        $products = $query->paginate($perPage)->withQueryString();
+        $categories = \App\Models\Category::where('is_active', true)->get();
 
-        return view('products.index', compact('products'));
+        return view('products.index', compact('products', 'selectedHubId', 'categories'));
     }
 
     public function show(Request $request, $identifier)
@@ -68,8 +85,22 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $selectedWarehouseId = $request->query('warehouse_id');
+        $selectedHubId = session('selected_hub_id');
+        $selectedWarehouseId = $request->query('warehouse_id', $selectedHubId);
         
-        return view('products.show', compact('product', 'selectedWarehouseId'));
+        // Ensure the product is available in the selected hub
+        if ($selectedWarehouseId) {
+            $hasStock = $product->warehouseStocks()
+                ->where('warehouse_id', $selectedWarehouseId)
+                ->where('stock', '>', 0)
+                ->exists();
+                
+            if (!$hasStock && $selectedWarehouseId == $selectedHubId) {
+                // If no stock in session-selected hub, we still show the product but let them choose another hub
+                $selectedWarehouseId = null;
+            }
+        }
+        
+        return view('products.show', compact('product', 'selectedHubId', 'selectedWarehouseId'));
     }
 }

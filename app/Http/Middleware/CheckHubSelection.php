@@ -15,8 +15,7 @@ class CheckHubSelection
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Exclude routes that don't need hub selection
-        // Admin, auth, and the hub selection routes themselves
+        // 1. Exclude system routes, admin panels, and auth routes
         if ($request->is('admin/*') || 
             $request->is('warehouse/*') || 
             $request->is('distributor/*') || 
@@ -24,32 +23,45 @@ class CheckHubSelection
             $request->is('login') || 
             $request->is('register') || 
             $request->is('logout') || 
-            $request->routeIs('hubs.index') || 
-            $request->routeIs('hubs.select') ||
-            $request->routeIs('hubs.get-regencies') || // Allow ajax calls
+            $request->is('password/*') ||
             $request->routeIs('webhooks.*')) {
             return $next($request);
         }
 
-        // Check if hub is selected in session
+        // 2. Allow public browsing routes so geolocation can run in the background
+        // This is the "smooth" experience: user can land on home/products and location will be detected
+        if ($request->is('/') || 
+            $request->is('about') || 
+            $request->is('contact') || 
+            $request->is('p/*') ||
+            $request->is('products*') || 
+            $request->is('promo*') || 
+            $request->is('hubs*') || 
+            $request->routeIs('hubs.*') ||
+            $request->routeIs('cart.product-stock')) {
+            return $next($request);
+        }
+
+        // 3. Check if hub is selected in session
         if (!session()->has('selected_hub_id')) {
             // Check if cookie exists to restore session
             if ($request->hasCookie('selected_hub_id')) {
                 $hubId = $request->cookie('selected_hub_id');
-                // Verify if warehouse still exists and is active (optional but good practice)
-                // For performance, we might skip DB check or trust the ID
-                session(['selected_hub_id' => $hubId]);
+                $hubName = $request->cookie('selected_hub_name');
+                $hubSlug = $request->cookie('selected_hub_slug');
                 
-                // Optionally verify name from cookie or DB if needed, but ID is enough for logic
-                if ($request->hasCookie('selected_hub_name')) {
-                    session(['selected_hub_name' => $request->cookie('selected_hub_name')]);
-                }
+                session([
+                    'selected_hub_id' => $hubId,
+                    'selected_hub_name' => $hubName,
+                    'selected_hub_slug' => $hubSlug
+                ]);
                 
                 return $next($request);
             }
 
-            // If no session and no cookie, redirect to hub selection
-            return redirect()->route('hubs.index')->with('info', 'Silakan pilih Hub/Distributor terdekat untuk melanjutkan belanja.');
+            // 4. Force redirect for "action" routes (Cart, Checkout, Buyer Profile, etc.)
+            // We only redirect if they are NOT on a whitelisted browsing route
+            return redirect()->route('hubs.index')->with('info', 'Silakan pilih Hub/Distributor terdekat untuk melihat ketersediaan barang dan mulai berbelanja.');
         }
 
         return $next($request);

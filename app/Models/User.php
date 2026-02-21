@@ -46,6 +46,9 @@ class User extends Authenticatable
         'price_level_id',
         'referral_code',
         'referred_by_id',
+        'google_id',
+        'google_token',
+        'google_refresh_token',
     ];
 
     protected static function boot()

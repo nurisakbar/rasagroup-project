@@ -125,6 +125,8 @@ class WarehouseController extends Controller
             'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
             'district_id' => 'nullable|exists:raja_ongkir_districts,id',
             'village_id' => 'nullable|exists:villages,id',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
             // User data
             'user_name' => 'required|string|max:255',
@@ -143,6 +145,8 @@ class WarehouseController extends Controller
             'regency_id' => $validated['regency_id'] ?? null,
             'district_id' => $validated['district_id'] ?? null,
             'village_id' => $validated['village_id'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -227,6 +231,8 @@ class WarehouseController extends Controller
             'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
             'district_id' => 'nullable|exists:raja_ongkir_districts,id',
             'village_id' => 'nullable|exists:villages,id',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
         ]);
 
