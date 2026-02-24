@@ -28,8 +28,8 @@ Route::get('/dashboard', function () {
         return redirect()->route('driippreneur.dashboard');
     }
     
-    if ($user->role === 'distributor' && $user->warehouse_id) {
-        return redirect()->route('distributor.dashboard');
+    if ($user->role === 'distributor') {
+        return redirect()->route('buyer.dashboard');
     }
     
     return redirect()->route('buyer.dashboard');

@@ -41,4 +41,38 @@ class Cart extends Model
     {
         return $this->belongsTo(Warehouse::class);
     }
+
+    /**
+     * Merge session-based cart items to the authenticated user's cart.
+     */
+    public static function mergeSessionCartToUser($userId, $sessionId): void
+    {
+        $sessionCarts = self::where('session_id', $sessionId)
+            ->where('cart_type', 'regular')
+            ->get();
+
+        if ($sessionCarts->isEmpty()) {
+            return;
+        }
+
+        foreach ($sessionCarts as $sessionCart) {
+            $userCart = self::where('user_id', $userId)
+                ->where('product_id', $sessionCart->product_id)
+                ->where('warehouse_id', $sessionCart->warehouse_id)
+                ->where('cart_type', 'regular')
+                ->first();
+
+            if ($userCart) {
+                // Merge quantity
+                $userCart->quantity += $sessionCart->quantity;
+                $userCart->save();
+                $sessionCart->delete();
+            } else {
+                // Transfer cart to user
+                $sessionCart->user_id = $userId;
+                $sessionCart->session_id = null;
+                $sessionCart->save();
+            }
+        }
+    }
 }

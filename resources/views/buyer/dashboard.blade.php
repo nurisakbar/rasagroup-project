@@ -32,6 +32,14 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('buyer.profile') }}"><i class="fi-rs-user mr-10"></i>Detail Akun</a>
                             </li>
+                            @if(Auth::user()->isDistributor())
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-shopping-bag mr-10"></i>Kelola Pesanan</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('distributor.dashboard') }}"><i class="fi-rs-settings mr-10"></i>Panel Distributor</a>
+                            </li>
+                            @endif
                             <li class="nav-item">
                                 <form method="POST" action="{{ route('logout') }}" id="logout-form-dashboard">
                                     @csrf

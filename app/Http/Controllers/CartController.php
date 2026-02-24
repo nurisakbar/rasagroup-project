@@ -85,16 +85,6 @@ class CartController extends Controller
 
     public function store(Request $request, Product $product)
     {
-        if (!Auth::check()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Silakan masuk terlebih dahulu untuk menambahkan produk ke keranjang.',
-                    'redirect' => route('login')
-                ], 401);
-            }
-            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mendaftar.');
-        }
 
         $request->validate([
             'quantity' => 'required|integer|min:1',

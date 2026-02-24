@@ -31,6 +31,7 @@ class GoogleController extends Controller
     public function handleGoogleCallback()
     {
         try {
+            $sessionId = session()->getId();
             $user = Socialite::driver('google')->user();
             
             $findUser = User::where('google_id', $user->id)
@@ -53,6 +54,7 @@ class GoogleController extends Controller
                 }
 
                 Auth::login($findUser);
+                \App\Models\Cart::mergeSessionCartToUser($findUser->id, $sessionId);
                 return redirect()->intended('dashboard');
             } else {
                 $newUser = User::create([
@@ -62,10 +64,12 @@ class GoogleController extends Controller
                     'google_token' => $user->token,
                     'google_refresh_token' => $user->refreshToken,
                     'password' => bcrypt(Str::random(16)),
-                    'role' => 'buyer', // Default role
+                    'role' => User::ROLE_BUYER,
+                    'email_verified_at' => now(), // Google emails are already verified
                 ]);
 
                 Auth::login($newUser);
+                \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
                 return redirect()->intended('dashboard');
             }
         } catch (Exception $e) {

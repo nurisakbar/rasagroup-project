@@ -42,6 +42,11 @@
                     <div class="single-mobile-header-info">
                         <a href="{{ route('buyer.dashboard') }}"><i class="fi-rs-user"></i>Akun Saya </a>
                     </div>
+                    @if(Auth::user()->isDistributor())
+                    <div class="single-mobile-header-info">
+                        <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-shopping-bag"></i>Kelola Pesanan </a>
+                    </div>
+                    @endif
                     <div class="single-mobile-header-info">
                         <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile">
                             @csrf

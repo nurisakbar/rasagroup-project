@@ -24,12 +24,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $sessionId = $request->session()->getId();
+
         $request->authenticate();
 
         $request->session()->regenerate();
 
         // Merge cart dari session ke user_id saat login
-        $this->mergeCart();
+        \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
 
         // Redirect berdasarkan role
         if (in_array(Auth::user()->role, ['agent', 'super_admin'])) {
@@ -37,34 +39,6 @@ class AuthenticatedSessionController extends Controller
         }
 
         return redirect()->intended(route('buyer.dashboard', absolute: false));
-    }
-
-    private function mergeCart(): void
-    {
-        $sessionId = session()->getId();
-        $sessionCarts = \App\Models\Cart::where('session_id', $sessionId)->get();
-
-        if ($sessionCarts->isEmpty()) {
-            return;
-        }
-
-        foreach ($sessionCarts as $sessionCart) {
-            $userCart = \App\Models\Cart::where('user_id', Auth::id())
-                ->where('product_id', $sessionCart->product_id)
-                ->first();
-
-            if ($userCart) {
-                // Merge quantity
-                $userCart->quantity += $sessionCart->quantity;
-                $userCart->save();
-                $sessionCart->delete();
-            } else {
-                // Transfer cart ke user
-                $sessionCart->user_id = Auth::id();
-                $sessionCart->session_id = null;
-                $sessionCart->save();
-            }
-        }
     }
 
     /**

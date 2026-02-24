@@ -112,7 +112,7 @@
                                     @php
                                         $cartCount = auth()->check() 
                                             ? \App\Models\Cart::where('user_id', auth()->id())->where('cart_type', 'regular')->sum('quantity')
-                                            : 0;
+                                            : \App\Models\Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
                                     @endphp
                                     <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
@@ -186,6 +186,11 @@
                                             <li>
                                                 <a href="{{ route('buyer.profile') }}"><i class="fi fi-rs-settings-sliders mr-10"></i>Pengaturan</a>
                                             </li>
+                                            @if(Auth::user()->isDistributor())
+                                            <li>
+                                                <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi fi-rs-shopping-bag mr-10"></i>Kelola Pesanan</a>
+                                            </li>
+                                            @endif
                                             <li>
                                                 <form method="POST" action="{{ route('logout') }}" id="logout-form-header">
                                                     @csrf
