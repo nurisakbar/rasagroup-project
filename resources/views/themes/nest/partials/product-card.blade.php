@@ -8,9 +8,7 @@
                 </a>
             </div>
             <div class="product-action-1">
-                <a aria-label="Add To Wishlist" class="action-btn" href="#"><i class="fi-rs-heart"></i></a>
-                <a aria-label="Compare" class="action-btn" href="#"><i class="fi-rs-shuffle"></i></a>
-                <a aria-label="Quick view" class="action-btn" data-bs-toggle="modal" data-bs-target="#quickViewModal"><i class="fi-rs-eye"></i></a>
+                <a aria-label="Quick view" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->id) }}"><i class="fi-rs-eye"></i></a>
             </div>
             <div class="product-badges product-badges-position product-badges-mrg">
                 @if($product->created_at->diffInDays(now()) < 7)
@@ -46,8 +44,8 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
-                        <button type="submit" class="add" style="border: none; background: none; cursor: pointer; padding: 0;">
-                            <i class="fi-rs-shopping-cart mr-5"></i>Add
+                        <button type="submit" class="add" style="border: none; cursor: pointer; background-color: #3BB77E; color: #ffffff;">
+                            <i class="fi-rs-shopping-cart mr-5"></i>Tambah
                         </button>
                     </form>
                 </div>

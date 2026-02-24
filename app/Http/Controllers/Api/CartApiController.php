@@ -171,7 +171,7 @@ class CartApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Produk berhasil ditambahkan ke keranjang.',
+            'message' => 'Produk "' . $product->display_name . '" berhasil ditambahkan.',
             'data' => [
                 'id' => $cart->id,
                 'product' => [

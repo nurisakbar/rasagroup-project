@@ -48,6 +48,7 @@
 
     @yield('content')
 
+    @include('themes.nest.partials.modals')
     @include('themes.nest.partials.footer')
 
     <!-- WhatsApp Floating Button -->

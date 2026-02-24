@@ -139,10 +139,8 @@
                                             </div>
                                             <div class="product-extra-link2">
                                                 <button type="submit" class="button button-add-to-cart" id="add-to-cart-btn" {{ !$selectedWarehouseId ? 'disabled' : '' }}>
-                                                    <i class="fi-rs-shopping-cart"></i> {{ $selectedWarehouseId ? 'Add to cart' : 'Pilih Hub Terlebih Dahulu' }}
+                                                    <i class="fi-rs-shopping-cart"></i> {{ $selectedWarehouseId ? 'Tambah ke Keranjang' : 'Pilih Hub Terlebih Dahulu' }}
                                                 </button>
-                                                <a aria-label="Add To Wishlist" class="action-btn hover-up" href="shop-wishlist.html"><i class="fi-rs-heart"></i></a>
-                                                <a aria-label="Compare" class="action-btn hover-up" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a>
                                             </div>
                                         </div>
                                         <div>
@@ -326,7 +324,7 @@
         const btn = document.getElementById('add-to-cart-btn');
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fi-rs-shopping-cart me-2"></i> Add to cart';
+            btn.innerHTML = '<i class="fi-rs-shopping-cart me-2"></i> Tambah ke Keranjang';
         }
         
         // Update max stock hint

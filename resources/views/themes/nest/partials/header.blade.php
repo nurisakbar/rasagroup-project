@@ -136,7 +136,7 @@
                                                     </a>
                                                 </div>
                                                 <div class="shopping-cart-title">
-                                                    <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->name . ($cartItem->product->commercial_name ? ' - ' . $cartItem->product->commercial_name : ''), 40) }}</a></h4>
+                                                    <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->display_name, 10) }}</a></h4>
                                                     <h4><span>{{ $cartItem->quantity }} × </span>Rp {{ number_format($cartItem->product->price, 0, ',', '.') }}</h4>
                                                 </div>
                                                 <div class="shopping-cart-delete">
@@ -314,7 +314,7 @@
                                                 </a>
                                             </div>
                                             <div class="shopping-cart-title">
-                                                <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->name . ($cartItem->product->commercial_name ? ' - ' . $cartItem->product->commercial_name : ''), 40) }}</a></h4>
+                                                <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->display_name, 10) }}</a></h4>
                                                 <h4><span>{{ $cartItem->quantity }} × </span>Rp {{ number_format($cartItem->product->price, 0, ',', '.') }}</h4>
                                             </div>
                                             <div class="shopping-cart-delete">

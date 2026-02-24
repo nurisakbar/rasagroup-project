@@ -98,8 +98,9 @@ class OrderController extends Controller
             ]);
         }
 
+        $product = Product::find($request->product_id);
         return redirect()->route('distributor.orders.cart')
-            ->with('success', 'Produk berhasil ditambahkan ke keranjang.');
+            ->with('success', 'Produk "' . ($product->display_name ?? 'Produk') . '" berhasil ditambahkan.');
     }
 
     /**

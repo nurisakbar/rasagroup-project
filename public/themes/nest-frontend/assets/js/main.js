@@ -5,7 +5,10 @@
         $("#preloader-active").fadeOut("slow");
         var modalShown = localStorage.getItem("onloadModalShown");
         if (!modalShown) {
-            $("#onloadModal").modal("show");
+            var $onloadModal = $("#onloadModal");
+            if ($onloadModal.length) {
+                $onloadModal.modal("show");
+            }
             localStorage.setItem("onloadModalShown", "true");
         }
     });
@@ -524,16 +527,70 @@
         }
     });
 
-    $('.btn-close').on('click', function (e) {
+    $(document).on('click', '.btn-close, .modal', function (e) {
+        if ($(e.target).is('.btn-close') || $(e.target).is('.modal')) {
+            $('.zoomContainer').remove();
+        }
+    });
+
+    $('#quickViewModal').on('hide.bs.modal', function (e) {
         $('.zoomContainer').remove();
     });
 
-    $('#quickViewModal').on('show.bs.modal', function (e) {
-        $(document).click(function (e) {
-            var modalDialog = $('.modal-dialog');
-            if (!modalDialog.is(e.target) && modalDialog.has(e.target).length === 0) {
-                $('.zoomContainer').remove();
-            }
+    $(document).on('click', '.btn-quick-view', function (e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        var $modal = $('#quickViewModal');
+        $modal.find('.modal-body').html('<div class="text-center p-30"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+        $.get(url, function (data) {
+            $modal.find('.modal-body').html(data);
+
+            // Re-initialize slider
+            $modal.find('.product-image-slider').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                arrows: false,
+                fade: false,
+                asNavFor: $modal.find('.slider-nav-thumbnails'),
+            });
+
+            $modal.find('.slider-nav-thumbnails').slick({
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                asNavFor: $modal.find('.product-image-slider'),
+                dots: false,
+                focusOnSelect: true,
+                prevArrow: '<button type="button" class="slick-prev"><i class="fi-rs-arrow-small-left"></i></button>',
+                nextArrow: '<button type="button" class="slick-next"><i class="fi-rs-arrow-small-right"></i></button>'
+            });
+
+            // Set active class to first thumbnail slides
+            $modal.find('.slider-nav-thumbnails .slick-slide').eq(0).addClass('slick-active');
+
+            // On before slide change match active thumbnail to current slide
+            $modal.find('.product-image-slider').on('beforeChange', function (event, slick, currentSlide, nextSlide) {
+                var mySlideNumber = nextSlide;
+                $modal.find('.slider-nav-thumbnails .slick-slide').removeClass('slick-active');
+                $modal.find('.slider-nav-thumbnails .slick-slide').eq(mySlideNumber).addClass('slick-active');
+            });
+
+            // Re-initialize quantity buttons
+            $modal.find('.detail-qty').each(function () {
+                var $qtyInput = $(this).find(".qty-val");
+                $(this).find('.qty-up').on('click', function (event) {
+                    event.preventDefault();
+                    var qtyval = parseInt($qtyInput.val(), 10);
+                    qtyval = qtyval + 1;
+                    $qtyInput.val(qtyval);
+                });
+                $(this).find(".qty-down").on("click", function (event) {
+                    event.preventDefault();
+                    var qtyval = parseInt($qtyInput.val(), 10);
+                    qtyval = Math.max(1, qtyval - 1);
+                    $qtyInput.val(qtyval);
+                });
+            });
         });
     });
 

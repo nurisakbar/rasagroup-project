@@ -139,6 +139,7 @@
                         <img class="" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
                     </div>
                 </div>
+            </div>
         </section>
         <div class="container pb-30 wow animate__animated animate__fadeInUp" data-wow-delay="0">
             <div class="row align-items-center">

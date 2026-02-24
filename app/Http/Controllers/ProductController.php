@@ -103,4 +103,10 @@ class ProductController extends Controller
         
         return view('products.show', compact('product', 'selectedHubId', 'selectedWarehouseId'));
     }
+
+    public function quickView(Product $product)
+    {
+        $selectedHubId = session('selected_hub_id');
+        return view('themes.nest.partials.quick-view-content', compact('product', 'selectedHubId'))->render();
+    }
 }

@@ -45,6 +45,7 @@ require __DIR__.'/auth.php';
 
 // Public Routes
 Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+Route::get('/products/quick-view/{product}', [App\Http\Controllers\ProductController::class, 'quickView'])->name('products.quick-view');
 Route::get('/products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
 Route::get('/promo', [App\Http\Controllers\PromoController::class, 'index'])->name('promo.index');
 Route::get('/promo/{slug}', [App\Http\Controllers\PromoController::class, 'show'])->name('promo.show');

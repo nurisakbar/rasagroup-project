@@ -58,7 +58,7 @@
             </div>
         </section>
         <!--End hero slider-->
-        <section class="popular-categories section-padding">
+        <section class="popular-categories section-padding" style="display: none;">
             <div class="container wow animate__animated animate__fadeIn">
                 <div class="section-title">
                     <div class="title">
@@ -252,7 +252,7 @@
                                             <span class="old-price">Rp 33.800</span>
                                         </div>
                                         <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
                                         </div>
                                     </div>
                                 </div>
@@ -289,7 +289,7 @@
                                             <span class="old-price">Rp 26.800</span>
                                         </div>
                                         <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
                                         </div>
                                     </div>
                                 </div>
@@ -326,7 +326,7 @@
                                             <span class="old-price">Rp 13.800</span>
                                         </div>
                                         <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
                                         </div>
                                     </div>
                                 </div>
@@ -363,7 +363,7 @@
                                             <span class="old-price">Rp 16.800</span>
                                         </div>
                                         <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
                                         </div>
                                     </div>
                                 </div>
