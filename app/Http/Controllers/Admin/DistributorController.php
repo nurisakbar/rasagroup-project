@@ -168,6 +168,8 @@ class DistributorController extends Controller
             'village_id' => ['nullable', 'exists:villages,id'],
             'address' => ['nullable', 'string'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
         ]);
 
@@ -181,6 +183,8 @@ class DistributorController extends Controller
             'village_id' => $validated['village_id'] ?? null,
             'address' => $validated['address'],
             'phone' => $validated['hub_phone'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_active' => true,
         ]);
 
@@ -250,6 +254,8 @@ class DistributorController extends Controller
             'village_id' => ['nullable', 'exists:villages,id'],
             'address' => ['nullable', 'string'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             // User data
             'user_name' => ['required', 'string', 'max:255'],
             'user_email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -268,6 +274,8 @@ class DistributorController extends Controller
             'village_id' => $validated['village_id'] ?? null,
             'address' => $validated['address'],
             'phone' => $validated['hub_phone'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_active' => true,
         ]);
 
@@ -542,6 +550,8 @@ class DistributorController extends Controller
             'village_id' => ['nullable', 'exists:villages,id'],
             'address' => ['nullable', 'string'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             // User data
             'user_name' => ['required', 'string', 'max:255'],
             'user_email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $distributor->id],
@@ -560,6 +570,8 @@ class DistributorController extends Controller
                 'village_id' => $validated['village_id'] ?? null,
                 'address' => $validated['address'],
                 'phone' => $validated['hub_phone'],
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
             ]);
         }
 

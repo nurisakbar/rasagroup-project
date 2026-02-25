@@ -176,6 +176,36 @@
                             @enderror
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('latitude') has-error @enderror">
+                                    <label for="latitude">Latitude</label>
+                                    <input type="text" class="form-control" id="latitude" name="latitude" value="{{ old('latitude') }}" placeholder="Contoh: -6.123456">
+                                    @error('latitude')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('longitude') has-error @enderror">
+                                    <label for="longitude">Longitude</label>
+                                    <input type="text" class="form-control" id="longitude" name="longitude" value="{{ old('longitude') }}" placeholder="Contoh: 106.123456">
+                                    @error('longitude')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-sm btn-info" id="btn-get-coordinates">
+                                <i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" id="btn-geocode">
+                                <i class="fa fa-search"></i> Cari dari Kota/Kecamatan
+                            </button>
+                        </div>
+                        <div class="help-block">Latitude dan Longitude sangat penting agar sistem dapat mendeteksi hub terdekat dari pembeli.</div>
+
                         <div class="form-group @error('hub_phone') has-error @enderror">
                             <label for="hub_phone">Nomor Telepon Hub</label>
                             <input type="text" class="form-control" id="hub_phone" name="hub_phone" 
@@ -328,6 +358,68 @@ $(document).ready(function() {
         // Actually, usually it's better to just let the user pick.
         loadRegencies(initialProvinceId, initialRegencyId);
     }
+
+    // Geolocation for coordinates
+    $('#btn-get-coordinates').click(function() {
+        if ("geolocation" in navigator) {
+            $(this).html('<i class="fa fa-spinner fa-spin"></i> Mendeteksi...').prop('disabled', true);
+            navigator.geolocation.getCurrentPosition(function(position) {
+                $('#latitude').val(position.coords.latitude.toFixed(8));
+                $('#longitude').val(position.coords.longitude.toFixed(8));
+                $('#btn-get-coordinates').html('<i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini').prop('disabled', false);
+                alert('Lokasi berhasil dideteksi!');
+            }, function(error) {
+                console.error("Error detecting location: ", error);
+                $('#btn-get-coordinates').html('<i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini').prop('disabled', false);
+                alert('Gagal mendeteksi lokasi. Pastikan izin lokasi diberikan.');
+            });
+        } else {
+            alert('Browser Anda tidak mendukung geolokasi.');
+        }
+    });
+
+    // Geocode from selected city/district
+    $('#btn-geocode').click(function() {
+        var province = $('#province_id option:selected').text();
+        var regency = $('#regency_id option:selected').text();
+        var district = $('#district_id option:selected').text();
+        
+        if (!regency || regency.includes('Pilih')) {
+            alert('Silakan pilih Kabupaten/Kota terlebih dahulu.');
+            return;
+        }
+
+        var query = "";
+        if (district && !district.includes('Pilih')) query += district + ", ";
+        query += regency + ", " + province + ", Indonesia";
+
+        var btn = $(this);
+        btn.html('<i class="fa fa-spinner fa-spin"></i> Mencari...').prop('disabled', true);
+
+        $.ajax({
+            url: 'https://nominatim.openstreetmap.org/search',
+            type: 'GET',
+            data: {
+                q: query,
+                format: 'json',
+                limit: 1
+            },
+            success: function(data) {
+                if (data && data.length > 0) {
+                    $('#latitude').val(parseFloat(data[0].lat).toFixed(8));
+                    $('#longitude').val(parseFloat(data[0].lon).toFixed(8));
+                    alert('Berhasil menemukan koordinat untuk: ' + query);
+                } else {
+                    alert('Gagal menemukan koordinat untuk lokasi tersebut.');
+                }
+                btn.html('<i class="fa fa-search"></i> Cari dari Kota/Kecamatan').prop('disabled', false);
+            },
+            error: function() {
+                alert('Gagal menghubungi layanan pencarian lokasi.');
+                btn.html('<i class="fa fa-search"></i> Cari dari Kota/Kecamatan').prop('disabled', false);
+            }
+        });
+    });
 });
 </script>
 @endpush
