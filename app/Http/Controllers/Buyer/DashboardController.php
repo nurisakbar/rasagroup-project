@@ -12,12 +12,36 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $totalOrders = Order::where('user_id', Auth::id())->count();
-        $pendingOrders = Order::where('user_id', Auth::id())->where('order_status', 'pending')->count();
+        $user = Auth::user();
+        $totalOrders = Order::where('user_id', $user->id)->count();
+        $pendingOrders = Order::where('user_id', $user->id)->where('order_status', 'pending')->count();
+
+        // Distributor specific data
+        $totalIncomingOrders = 0;
+        $pendingIncomingOrders = 0;
+        $isDistributor = $user->isDistributor();
+        $warehouse = null;
+
+        if ($isDistributor) {
+            $warehouse = $user->warehouse;
+            if ($warehouse) {
+                $totalIncomingOrders = Order::where('source_warehouse_id', $warehouse->id)->count();
+                $pendingIncomingOrders = Order::where('source_warehouse_id', $warehouse->id)
+                    ->where('order_status', 'pending')
+                    ->count();
+            }
+        }
 
         if ($request->ajax()) {
-            $query = Order::where('user_id', Auth::id())
-                ->with(['expedition', 'sourceWarehouse']);
+            $type = $request->get('type', 'own'); // 'own' or 'incoming'
+            
+            if ($type === 'incoming' && $isDistributor && $warehouse) {
+                $query = Order::where('source_warehouse_id', $warehouse->id)
+                    ->with(['user', 'expedition']);
+            } else {
+                $query = Order::where('user_id', $user->id)
+                    ->with(['expedition', 'sourceWarehouse']);
+            }
 
             // Filter by status
             if ($request->filled('status') && $request->status != '') {
@@ -26,10 +50,13 @@ class DashboardController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('order_info', function ($order) {
+                ->addColumn('order_info', function ($order) use ($type) {
                     $html = '<strong>' . $order->order_number . '</strong>';
-                    if ($order->order_type === 'distributor') {
+                    if ($type === 'own' && $order->order_type === 'distributor') {
                         $html .= '<br><span class="badge bg-warning" style="font-size: 10px;">DISTRIBUTOR</span>';
+                    }
+                    if ($type === 'incoming') {
+                        $html .= '<br><small class="text-muted">' . $order->user->name . '</small>';
                     }
                     return $html;
                 })
@@ -60,9 +87,17 @@ class DashboardController extends Controller
 
                     return '<span class="badge bg-' . $statusClass . '">' . $statusText . '</span>';
                 })
-                ->addColumn('action', function ($order) {
-                    return '<a href="' . route('buyer.orders.show', $order) . '" class="btn btn-sm btn-primary">
-                        <i class="bi bi-eye"></i> Detail
+                ->addColumn('action', function ($order) use ($type) {
+                    if ($type === 'incoming') {
+                        return '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-sm btn-info text-white">
+                            <i class="fi-rs-shopping-bag mr-5"></i> Kelola
+                        </a>';
+                    }
+                    
+                    $route = $order->order_type === 'distributor' ? 'distributor.orders.show' : 'buyer.orders.show';
+                    
+                    return '<a href="' . route($route, $order) . '" class="btn btn-sm btn-primary">
+                        <i class="fi-rs-eye mr-5"></i> Detail
                     </a>';
                 })
                 ->rawColumns(['order_info', 'status_badge', 'action'])
@@ -72,6 +107,12 @@ class DashboardController extends Controller
                 ->make(true);
         }
 
-        return view('buyer.dashboard', compact('totalOrders', 'pendingOrders'));
+        return view('buyer.dashboard', compact(
+            'totalOrders', 
+            'pendingOrders', 
+            'totalIncomingOrders', 
+            'pendingIncomingOrders',
+            'isDistributor'
+        ));
     }
 }

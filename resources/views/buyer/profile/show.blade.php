@@ -1,3 +1,8 @@
+@extends('layouts.shop')
+
+@section('title', 'Profil')
+
+@section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -13,30 +18,7 @@
         <div class="col-lg-12">
             <div class="row">
                 <div class="col-lg-4">
-                    <div class="dashboard-menu">
-                        <ul class="nav flex-column" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.dashboard') }}"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.orders.index') }}"><i class="fi-rs-shopping-bag mr-10"></i>Pesanan Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.addresses.index') }}"><i class="fi-rs-marker mr-10"></i>Alamat Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link active" href="{{ route('buyer.profile') }}"><i class="fi-rs-user mr-10"></i>Detail Akun</a>
-                            </li>
-                            <li class="nav-item">
-                                <form method="POST" action="{{ route('logout') }}" id="logout-form-profile">
-                                    @csrf
-                                    <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-profile').submit();">
-                                        <i class="fi-rs-sign-out mr-10"></i>Keluar
-                                    </a>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+                    @include('buyer.partials.sidebar')
                 </div>
                 <div class="col-lg-8">
                     <div class="tab-content account dashboard-content pl-50">
@@ -120,11 +102,14 @@
     </div>
 </div>
 
+@endsection
+
+@push('styles')
 <style>
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .required { color: #fd3d11; }
 </style>
-@endsection
+@endpush
 
 
 

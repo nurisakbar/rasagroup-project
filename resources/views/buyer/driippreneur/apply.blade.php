@@ -1,3 +1,8 @@
+@extends('layouts.shop')
+
+@section('title', 'Daftar DRiiPPreneur')
+
+@section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">

@@ -109,7 +109,7 @@ class ManageOrderController extends Controller
                 ->make(true);
         }
 
-        return view('distributor.manage-orders.index', compact('warehouse'));
+        return view('buyer.distributor.manage-orders.index', compact('warehouse'));
     }
 
     /**
@@ -127,7 +127,7 @@ class ManageOrderController extends Controller
 
         $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);
 
-        return view('distributor.manage-orders.show', compact('warehouse', 'order'));
+        return view('buyer.distributor.manage-orders.show', compact('warehouse', 'order'));
     }
 
     /**
@@ -202,114 +202,5 @@ class ManageOrderController extends Controller
         return back()->with('info', 'Tidak ada perubahan yang disimpan.');
     }
 
-    /**
-     * Convert order items to stock (for delivered/completed orders)
-     */
-    public function convertToStock(Order $order)
-    {
-        $user = Auth::user();
-        $warehouse = $user->warehouse;
-
-        // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
-            abort(403, 'Akses ditolak.');
-        }
-
-        // Check if order is delivered or completed
-        if (!in_array($order->order_status, ['delivered', 'completed'])) {
-            return back()->with('error', 'Pesanan harus berstatus Delivered atau Completed untuk dikonversi ke stock.');
-        }
-
-        // Load order items with products
-        $order->load('items.product');
-
-        if ($order->items->isEmpty()) {
-            return back()->with('error', 'Pesanan tidak memiliki item.');
-        }
-
-        DB::beginTransaction();
-        try {
-            $convertedItems = [];
-            $totalQuantity = 0;
-            $skippedItems = [];
-            
-            foreach ($order->items as $item) {
-                if (!$item->product) {
-                    $skippedItems[] = 'Item dengan ID ' . $item->id . ' (produk tidak ditemukan)';
-                    continue;
-                }
-                
-                if ($item->quantity <= 0) {
-                    $skippedItems[] = $item->product->display_name . ' (quantity tidak valid)';
-                    continue;
-                }
-
-                // Get or create warehouse stock
-                $warehouseStock = WarehouseStock::firstOrCreate(
-                    [
-                        'warehouse_id' => $warehouse->id,
-                        'product_id' => $item->product_id,
-                    ],
-                    [
-                        'stock' => 0,
-                    ]
-                );
-
-                // Record stock before
-                $stockBefore = $warehouseStock->stock;
-                
-                // Add quantity to stock
-                $warehouseStock->increment('stock', $item->quantity);
-                
-                // Record stock after
-                $stockAfter = $warehouseStock->stock;
-                
-                // Create stock history record
-                WarehouseStockHistory::create([
-                    'warehouse_id' => $warehouse->id,
-                    'product_id' => $item->product_id,
-                    'order_id' => $order->id,
-                    'user_id' => $user->id,
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $stockAfter,
-                    'quantity_added' => $item->quantity,
-                    'notes' => 'Konversi dari order ' . $order->order_number,
-                ]);
-                
-                $convertedItems[] = [
-                    'product' => $item->product->display_name,
-                    'quantity' => $item->quantity,
-                    'old_stock' => $stockBefore,
-                    'new_stock' => $stockAfter,
-                ];
-                
-                $totalQuantity += $item->quantity;
-            }
-
-            if (empty($convertedItems)) {
-                DB::rollBack();
-                return back()->with('error', 'Tidak ada item yang valid untuk dikonversi.');
-            }
-
-            DB::commit();
-
-            $itemsCount = count($convertedItems);
-            $message = "Berhasil mengkonversi {$itemsCount} produk ({$totalQuantity} unit) dari pesanan ke stock warehouse.";
-            
-            if (!empty($skippedItems)) {
-                $message .= " Item yang dilewati: " . implode(', ', $skippedItems);
-            }
-            
-            return back()->with('success', $message);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error converting order to stock: ' . $e->getMessage(), [
-                'order_id' => $order->id,
-                'warehouse_id' => $warehouse->id,
-                'user_id' => $user->id,
-            ]);
-            return back()->with('error', 'Terjadi kesalahan saat mengkonversi pesanan ke stock: ' . $e->getMessage());
-        }
-    }
 }
 

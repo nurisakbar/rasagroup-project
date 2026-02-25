@@ -1,3 +1,8 @@
+@extends('layouts.shop')
+
+@section('title', 'Penarikan Poin')
+
+@section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -148,10 +153,13 @@
     </div>
 </div>
 
+@endsection
+
+@push('styles')
 <style>
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .table-clean thead th { border-top: 0; border-bottom-width: 1px; color: #253D4E; font-weight: 700; }
     .table-clean tbody td { vertical-align: middle; }
 </style>
-@endsection
+@endpush
 

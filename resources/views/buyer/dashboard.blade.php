@@ -18,38 +18,7 @@
         <div class="col-lg-12">
             <div class="row">
                 <div class="col-lg-4">
-                    <div class="dashboard-menu">
-                        <ul class="nav flex-column" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="{{ route('buyer.dashboard') }}"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.orders.index') }}"><i class="fi-rs-shopping-bag mr-10"></i>Pesanan Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.addresses.index') }}"><i class="fi-rs-marker mr-10"></i>Alamat Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.profile') }}"><i class="fi-rs-user mr-10"></i>Detail Akun</a>
-                            </li>
-                            @if(Auth::user()->isDistributor())
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-shopping-bag mr-10"></i>Kelola Pesanan</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('distributor.dashboard') }}"><i class="fi-rs-settings mr-10"></i>Panel Distributor</a>
-                            </li>
-                            @endif
-                            <li class="nav-item">
-                                <form method="POST" action="{{ route('logout') }}" id="logout-form-dashboard">
-                                    @csrf
-                                    <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-dashboard').submit();">
-                                        <i class="fi-rs-sign-out mr-10"></i>Keluar
-                                    </a>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+                    @include('buyer.partials.sidebar')
                 </div>
                 <div class="col-lg-8">
                     <div class="tab-content account dashboard-content pl-50">
@@ -60,10 +29,16 @@
                                 </div>
                                 <div class="card-body p-4 pt-0">
                                     <p class="font-md text-muted mb-4">
-                                        Dari dashboard akun Anda, Anda dapat dengan mudah melihat <a href="{{ route('buyer.orders.index') }}" class="text-brand">pesanan terbaru</a>, mengelola <a href="{{ route('buyer.addresses.index') }}" class="text-brand">alamat pengiriman</a>, serta mengedit <a href="{{ route('buyer.profile') }}" class="text-brand">kata sandi dan detail akun Anda</a>.
+                                        @if($isDistributor)
+                                            Sebagai <strong>Distributor</strong>, Anda dapat mengelola pesanan yang masuk ke warehouse Anda, memantau stok, dan melakukan pemesanan produk ke pusat.
+                                        @else
+                                            Dari dashboard akun Anda, Anda dapat dengan mudah melihat <a href="{{ route('buyer.orders.index') }}" class="text-brand">pesanan terbaru</a>, mengelola <a href="{{ route('buyer.addresses.index') }}" class="text-brand">alamat pengiriman</a>, serta mengedit <a href="{{ route('buyer.profile') }}" class="text-brand">kata sandi dan detail akun Anda</a>.
+                                        @endif
                                     </p>
 
-                                    <div class="row g-3">
+                                    <!-- My Activity Stats -->
+                                    <h5 class="mb-3">Aktivitas Belanja Saya</h5>
+                                    <div class="row g-3 mb-4">
                                         <div class="col-md-4">
                                             <div class="card p-3 border-0 bg-brand-light border-radius-10 h-100">
                                                 <div class="d-flex align-items-center">
@@ -107,6 +82,39 @@
                                         </div>
                                     </div>
 
+                                    @if($isDistributor)
+                                    <!-- Distributor Activity Stats -->
+                                    <h5 class="mb-3">Aktivitas Distributor (Incoming)</h5>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card p-3 border-0 bg-primary-light border-radius-10 h-100">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-white p-3 rounded-circle me-3 text-primary">
+                                                        <i class="fi-rs-shopping-bag"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="mb-0 text-primary">{{ $totalIncomingOrders }}</h4>
+                                                        <span class="font-xs text-muted">Pesanan Masuk</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card p-3 border-0 bg-danger-light border-radius-10 h-100">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-white p-3 rounded-circle me-3 text-danger">
+                                                        <i class="fi-rs-clock"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="mb-0 text-danger">{{ $pendingIncomingOrders }}</h4>
+                                                        <span class="font-xs text-muted">Menunggu Diproses</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     @if(Auth::user()->isDriippreneurApproved())
                                         <div class="card mt-4 border-radius-10 border-0 bg-brand text-white">
                                             <div class="card-body p-4">
@@ -127,10 +135,22 @@
                                     @endif
 
                                     <div class="mt-5">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <h4 class="mb-0">Pesanan Terbaru</h4>
+                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                                            <div class="nav-tabs-wrap mb-3 mb-md-0">
+                                                <ul class="nav nav-pills dash-tabs" id="pills-tab" role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                      <button class="nav-link active" id="type-own-tab" data-type="own" type="button">Pesanan Saya</button>
+                                                    </li>
+                                                    @if($isDistributor)
+                                                    <li class="nav-item" role="presentation">
+                                                      <button class="nav-link" id="type-incoming-tab" data-type="incoming" type="button">Pesanan Masuk</button>
+                                                    </li>
+                                                    @endif
+                                                </ul>
+                                            </div>
+                                            
                                             <div class="d-flex align-items-center">
-                                                <label class="font-xs text-muted mr-10 mb-0 d-none d-md-block">Filter Status:</label>
+                                                <label class="font-xs text-muted mr-10 mb-0 d-none d-md-block">Filter:</label>
                                                 <select id="filter-status" class="form-select form-select-sm font-sm rounded border-radius-5" style="width: 150px;">
                                                     <option value="">Semua Status</option>
                                                     <option value="pending">Menunggu</option>
@@ -191,6 +211,13 @@
         position: absolute; top: 50%; left: 50%; width: 200px; margin-left: -100px; margin-top: -26px; 
         text-align: center; padding: 1em 0; z-index: 100; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     }
+    .bg-primary-light { background-color: rgba(69, 115, 248, 0.08); }
+    .bg-danger-light { background-color: rgba(253, 61, 17, 0.08); }
+    
+    .dash-tabs .nav-link { 
+        background-color: #f7f8f9; color: #253D4E; border-radius: 30px; padding: 8px 20px; font-weight: 600; font-size: 13px; margin-right: 10px; border: 1px solid #f2f2f2; 
+    }
+    .dash-tabs .nav-link.active { background-color: #3BB77E; color: #fff; border-color: #3BB77E; }
 </style>
 @endpush
 
@@ -199,6 +226,8 @@
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script>
 $(document).ready(function() {
+    var orderType = 'own';
+    
     var table = $('#orders-table').DataTable({
         processing: true,
         serverSide: true,
@@ -206,10 +235,11 @@ $(document).ready(function() {
             url: "{{ route('buyer.dashboard') }}",
             data: function(d) {
                 d.status = $('#filter-status').val();
+                d.type = orderType;
             }
         },
         columns: [
-            { data: 'order_number', name: 'order_number', render: function(data) { return '<strong class="text-brand">#' + data + '</strong>'; } },
+            { data: 'order_info', name: 'order_number' },
             { data: 'date_formatted', name: 'created_at', render: function(data) { return '<span class="text-muted">' + data + '</span>'; } },
             { data: 'status_badge', name: 'order_status' },
             { data: 'total_formatted', name: 'total_amount', render: function(data) { return '<strong class="text-brand">' + data + '</strong>'; } },
@@ -228,6 +258,13 @@ $(document).ready(function() {
     });
 
     $('#filter-status').change(function() {
+        table.draw();
+    });
+
+    $('.dash-tabs .nav-link').on('click', function() {
+        $('.dash-tabs .nav-link').removeClass('active');
+        $(this).addClass('active');
+        orderType = $(this).data('type');
         table.draw();
     });
 });

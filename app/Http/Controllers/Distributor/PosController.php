@@ -28,7 +28,7 @@ class PosController extends Controller
                 ->with('error', 'Anda tidak memiliki warehouse yang terkait.');
         }
 
-        return view('distributor.pos.index', compact('warehouse'));
+        return view('buyer.distributor.pos.index', compact('warehouse'));
     }
 
     /**

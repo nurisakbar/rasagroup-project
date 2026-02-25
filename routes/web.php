@@ -311,8 +311,6 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/manage-orders', [App\Http\Controllers\Distributor\ManageOrderController::class, 'index'])->name('manage-orders.index');
         Route::get('/manage-orders/{order}', [App\Http\Controllers\Distributor\ManageOrderController::class, 'show'])->name('manage-orders.show');
         Route::put('/manage-orders/{order}', [App\Http\Controllers\Distributor\ManageOrderController::class, 'update'])->name('manage-orders.update');
-        Route::post('/manage-orders/{order}/convert-to-stock', [App\Http\Controllers\Distributor\ManageOrderController::class, 'convertToStock'])->name('manage-orders.convert-to-stock');
-        Route::post('/manage-orders/{order}/convert-to-stock', [App\Http\Controllers\Distributor\ManageOrderController::class, 'convertToStock'])->name('manage-orders.convert-to-stock');
 
         // Order Management
         Route::get('/orders/products', [App\Http\Controllers\Distributor\OrderController::class, 'products'])->name('orders.products');
@@ -323,6 +321,7 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/orders/checkout', [App\Http\Controllers\Distributor\OrderController::class, 'checkout'])->name('orders.checkout');
         Route::post('/orders/checkout', [App\Http\Controllers\Distributor\OrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/calculate-shipping', [App\Http\Controllers\Distributor\OrderController::class, 'calculateShipping'])->name('orders.calculate-shipping');
+        Route::post('/orders/shipping-services', [App\Http\Controllers\Distributor\OrderController::class, 'getExpeditionServices'])->name('orders.shipping-services');
         Route::get('/orders/expedition-services', [App\Http\Controllers\Distributor\OrderController::class, 'getExpeditionServices'])->name('orders.expedition-services');
         Route::get('/orders/success/{order}', [App\Http\Controllers\Distributor\OrderController::class, 'success'])->name('orders.success');
         Route::get('/orders/history', [App\Http\Controllers\Distributor\OrderController::class, 'history'])->name('orders.history');

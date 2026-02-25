@@ -86,22 +86,22 @@ class StockController extends Controller
                     return $stock->updated_at->format('d M Y, H:i');
                 })
                 ->addColumn('action', function ($stock) {
-                    $updateBtn = '<button type="button" class="btn btn-primary btn-xs btn-update-stock" 
+                    $updateBtn = '<button type="button" class="btn btn-primary btn-sm btn-update-stock" 
                         data-stock-id="' . $stock->id . '"
                         data-product-name="' . ($stock->product ? htmlspecialchars($stock->product->display_name) : '') . '"
                         data-product-price="' . ($stock->product ? number_format($stock->product->price, 0, ',', '.') : '0') . '"
                         data-current-stock="' . $stock->stock . '"
                         data-product-image="' . ($stock->product && $stock->product->image_url ? asset($stock->product->image_url) : '') . '"
-                        data-toggle="modal" 
-                        data-target="#updateStockModal">
-                        <i class="fa fa-edit"></i> Update
+                        data-bs-toggle="modal" 
+                        data-bs-target="#updateStockModal">
+                        <i class="fi-rs-edit mr-5"></i> Update
                     </button>';
                     
-                    $historyBtn = '<a href="' . route('distributor.stock.history', $stock) . '" class="btn btn-info btn-xs" title="Riwayat Stock">
-                        <i class="fa fa-history"></i> History
+                    $historyBtn = '<a href="' . route('distributor.stock.history', $stock) . '" class="btn btn-info btn-sm text-white px-3" title="Riwayat Stock">
+                        <i class="fi-rs-time-past"></i>
                     </a>';
                     
-                    return $updateBtn . ' ' . $historyBtn;
+                    return '<div class="d-flex justify-content-end gap-2">' . $updateBtn . ' ' . $historyBtn . '</div>';
                 })
                 ->filterColumn('product_name', function ($query, $keyword) {
                     $query->whereHas('product', function ($q) use ($keyword) {
@@ -113,7 +113,7 @@ class StockController extends Controller
                 ->make(true);
         }
 
-        return view('distributor.stock.index', compact('warehouse'));
+        return view('buyer.distributor.stock.index', compact('warehouse'));
     }
 
     /**

@@ -1,3 +1,8 @@
+@extends('layouts.shop')
+
+@section('title', 'Ajukan Penarikan Poin')
+
+@section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -146,12 +151,15 @@
     </div>
 </div>
 
+@endsection
+
+@push('styles')
 <style>
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .bg-warning-light { background-color: rgba(255, 193, 7, 0.1); }
     .required { color: #fd3d11; }
 </style>
-@endsection
+@endpush
 
 
 

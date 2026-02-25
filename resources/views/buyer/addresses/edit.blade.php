@@ -89,7 +89,7 @@
                                                         <option value="Lainnya" {{ old('label', $address->label) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                                                     </select>
                                                 </div>
-                                            <div class="row">
+                                            </div>
                                             <div class="form-group col-md-6 mb-3">
                                                 <label class="form-label">Nama Penerima <span class="required">*</span></label>
                                                 <input type="text" required class="form-control @error('recipient_name') is-invalid @enderror" 
@@ -102,101 +102,97 @@
                                             </div>
                                         </div>
 
-                                        <div class="row mt-20">
-                                            <div class="col-12 mb-20 border-top pt-20">
-                                                <h5 class="text-brand mb-10"><i class="fi-rs-marker mr-10"></i> Informasi Lokasi</h5>
-                                                <p class="text-muted font-xs">Wilayah pengiriman untuk akurasi ongkos kirim.</p>
-                                            </div>
-                                            
-                                            <div class="col-12">
-                                                <div class="alert alert-info border-0 bg-info-light mb-4 p-3 border-radius-10">
-                                                    <p class="font-xs mb-0">
-                                                        <i class="fi-rs-info mr-5"></i> Pilih wilayah yang sesuai agar sistem dapat menghitung biaya pengiriman dengan tepat.
-                                                    </p>
+                                        <div class="location-box border border-radius-15 bg-light p-4 mt-20 mb-30">
+                                            <div class="row">
+                                                <div class="col-12 mb-20">
+                                                    <h5 class="text-brand mb-5"><i class="fi-rs-marker mr-10"></i> Informasi Lokasi</h5>
+                                                    <p class="text-muted font-xs">Wilayah pengiriman untuk akurasi ongkos kirim.</p>
                                                 </div>
-                                            </div>
 
-                                            <div class="form-group col-md-6 mb-4">
-                                                <label class="form-label">Provinsi <span class="required">*</span></label>
-                                                <div class="custom_select">
-                                                    <select class="form-control select-active @error('province_id') is-invalid @enderror" id="province_id" name="province_id" required>
-                                                        <option value="">-- Pilih Provinsi --</option>
-                                                        @foreach($provinces as $province)
-                                                            <option value="{{ $province['id'] }}" {{ old('province_id', $address->province_id) == $province['id'] ? 'selected' : '' }}>
-                                                                {{ $province['name'] }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                <div class="form-group col-md-6 mb-4">
+                                                    <label class="form-label">Provinsi <span class="required">*</span></label>
+                                                    <div class="custom_select">
+                                                        <select class="form-control select-active @error('province_id') is-invalid @enderror" id="province_id" name="province_id" required>
+                                                            <option value="">-- Pilih Provinsi --</option>
+                                                            @foreach($provinces as $province)
+                                                                <option value="{{ $province['id'] }}" {{ old('province_id', $address->province_id) == $province['id'] ? 'selected' : '' }}>
+                                                                    {{ $province['name'] }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="form-group col-md-6 mb-4">
-                                                <label class="form-label">Kabupaten/Kota <span class="required">*</span></label>
-                                                <div class="custom_select">
-                                                    <select class="form-control select-active @error('regency_id') is-invalid @enderror" id="regency_id" name="regency_id" required>
-                                                        <option value="">-- Pilih Kabupaten/Kota --</option>
-                                                        @foreach($regencies as $regency)
-                                                            <option value="{{ $regency['id'] }}" {{ old('regency_id', $address->regency_id) == $regency['id'] ? 'selected' : '' }}>
-                                                                {{ $regency['name'] }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                <div class="form-group col-md-6 mb-4">
+                                                    <label class="form-label">Kabupaten/Kota <span class="required">*</span></label>
+                                                    <div class="custom_select">
+                                                        <select class="form-control select-active @error('regency_id') is-invalid @enderror" id="regency_id" name="regency_id" required>
+                                                            <option value="">-- Pilih Kabupaten/Kota --</option>
+                                                            @foreach($regencies as $regency)
+                                                                <option value="{{ $regency['id'] }}" {{ old('regency_id', $address->regency_id) == $regency['id'] ? 'selected' : '' }}>
+                                                                    {{ $regency['name'] }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <small class="text-brand font-xs" id="regency_loading" style="display: none;">
+                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
+                                                    </small>
                                                 </div>
-                                                <small class="text-brand font-xs" id="regency_loading" style="display: none;">
-                                                    <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                </small>
-                                            </div>
 
-                                            <div class="form-group col-md-4 mb-4">
-                                                <label class="form-label">Kecamatan <span class="required">*</span></label>
-                                                <div class="custom_select">
-                                                    <select class="form-control select-active @error('district_id') is-invalid @enderror" id="district_id" name="district_id" required>
-                                                        <option value="">-- Pilih Kecamatan --</option>
-                                                        @foreach($districts as $district)
-                                                            <option value="{{ $district['id'] }}" {{ old('district_id', $address->district_id) == $district['id'] ? 'selected' : '' }}>
-                                                                {{ $district['name'] }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                <div class="form-group col-md-4 mb-4">
+                                                    <label class="form-label">Kecamatan <span class="required">*</span></label>
+                                                    <div class="custom_select">
+                                                        <select class="form-control select-active @error('district_id') is-invalid @enderror" id="district_id" name="district_id" required>
+                                                            <option value="">-- Pilih Kecamatan --</option>
+                                                            @foreach($districts as $district)
+                                                                <option value="{{ $district['id'] }}" {{ old('district_id', $address->district_id) == $district['id'] ? 'selected' : '' }}>
+                                                                    {{ $district['name'] }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <small class="text-brand font-xs" id="district_loading" style="display: none;">
+                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
+                                                    </small>
                                                 </div>
-                                                <small class="text-brand font-xs" id="district_loading" style="display: none;">
-                                                    <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                </small>
-                                            </div>
-                                            <div class="form-group col-md-4 mb-4" id="village_container" style="{{ $address->village_id ? '' : 'display: none;' }}">
-                                                <label class="form-label">Kelurahan/Desa</label>
-                                                <div class="custom_select">
-                                                    <select class="form-control select-active @error('village_id') is-invalid @enderror" id="village_id" name="village_id">
-                                                        <option value="">-- Pilih Kelurahan/Desa --</option>
-                                                        @foreach($villages as $village)
-                                                            <option value="{{ $village->id }}" {{ old('village_id', $address->village_id) == $village->id ? 'selected' : '' }}>
-                                                                {{ $village->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                <div class="form-group col-md-4 mb-4" id="village_container" style="{{ $address->village_id ? '' : 'display: none;' }}">
+                                                    <label class="form-label">Kelurahan/Desa</label>
+                                                    <div class="custom_select">
+                                                        <select class="form-control select-active @error('village_id') is-invalid @enderror" id="village_id" name="village_id">
+                                                            <option value="">-- Pilih Kelurahan/Desa --</option>
+                                                            @foreach($villages as $village)
+                                                                <option value="{{ $village->id }}" {{ old('village_id', $address->village_id) == $village->id ? 'selected' : '' }}>
+                                                                    {{ $village->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <small class="text-brand font-xs" id="village_loading" style="display: none;">
+                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
+                                                    </small>
                                                 </div>
-                                                <small class="text-brand font-xs" id="village_loading" style="display: none;">
-                                                    <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                </small>
-                                            </div>
-                                            <div class="form-group col-md-4 mb-4">
-                                                <label class="form-label">Kode Pos</label>
-                                                <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
-                                                       name="postal_code" value="{{ old('postal_code', $address->postal_code) }}" 
-                                                       placeholder="12345" maxlength="10">
-                                            </div>
+                                                <div class="form-group col-md-4 mb-4" id="postal_code_container">
+                                                    <label class="form-label">Kode Pos</label>
+                                                    <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
+                                                           name="postal_code" value="{{ old('postal_code', $address->postal_code) }}" 
+                                                           placeholder="12345" maxlength="10">
+                                                </div>
 
-                                            <div class="form-group col-md-12 mb-4">
-                                                <label class="form-label">Alamat Lengkap <span class="required">*</span></label>
-                                                <textarea required class="form-control border-radius-10 @error('address_detail') is-invalid @enderror" 
-                                                          name="address_detail" rows="3" 
-                                                          placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dll">{{ old('address_detail', $address->address_detail) }}</textarea>
-                                            </div>
+                                                <div class="form-group col-md-12 mb-4">
+                                                    <label class="form-label">Alamat Lengkap <span class="required">*</span></label>
+                                                    <textarea required class="form-control border-radius-10 @error('address_detail') is-invalid @enderror" 
+                                                              name="address_detail" rows="3" 
+                                                              style="height: auto;"
+                                                              placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dll">{{ old('address_detail', $address->address_detail) }}</textarea>
+                                                </div>
 
-                                            <div class="form-group col-md-12 mb-4">
-                                                <label class="form-label">Catatan Kurir (Opsional)</label>
-                                                <textarea class="form-control border-radius-10 @error('notes') is-invalid @enderror" 
-                                                          name="notes" rows="2" 
-                                                          placeholder="Contoh: Rumah warna biru, samping masjid, dll">{{ old('notes', $address->notes) }}</textarea>
+                                                <div class="form-group col-md-12 mb-0">
+                                                    <label class="form-label">Catatan Kurir (Opsional)</label>
+                                                    <textarea class="form-control border-radius-10 @error('notes') is-invalid @enderror" 
+                                                              name="notes" rows="2" 
+                                                              style="height: auto;"
+                                                              placeholder="Contoh: Rumah warna biru, samping masjid, dll">{{ old('notes', $address->notes) }}</textarea>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -230,6 +226,8 @@
     .border-radius-15 { border-radius: 15px !important; }
     .border-radius-10 { border-radius: 10px !important; }
     .form-label { font-weight: 700; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
+    .location-box { background-color: #f9f9f9; border: 1px solid #eee !important; transition: all 0.3s ease; }
+    .location-box:hover { border-color: #3BB77E !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
     .dashboard-menu { position: sticky; top: 100px; }
     
     /* Form control refinements */

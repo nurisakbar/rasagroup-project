@@ -124,6 +124,12 @@
             <i class="fa fa-cash-register"></i> <span>POINT OF SALES</span>
           </a>
         </li>
+        <li class="header">NAVIGASI</li>
+        <li>
+          <a href="{{ route('buyer.dashboard') }}">
+            <i class="fa fa-arrow-left"></i> <span>PANEL BUYER (TOKO)</span>
+          </a>
+        </li>
       </ul>
     </section>
   </aside>

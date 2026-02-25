@@ -42,7 +42,7 @@ class OrderController extends Controller
 
         $products = $query->orderBy('name')->paginate(12);
 
-        return view('distributor.orders.products', compact('products'));
+        return view('buyer.distributor.orders.products', compact('products'));
     }
 
     /**
@@ -69,7 +69,7 @@ class OrderController extends Controller
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
         });
 
-        return view('distributor.orders.cart', compact('carts', 'subtotal', 'totalItems', 'potentialPoints'));
+        return view('buyer.distributor.orders.cart', compact('carts', 'subtotal', 'totalItems', 'potentialPoints'));
     }
 
     /**
@@ -199,7 +199,7 @@ class OrderController extends Controller
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
         });
 
-        return view('distributor.orders.checkout', compact(
+        return view('buyer.distributor.orders.checkout', compact(
             'carts',
             'subtotal',
             'shippingCost',
@@ -485,7 +485,7 @@ class OrderController extends Controller
 
         $order->load('items.product', 'address', 'expedition');
 
-        return view('distributor.orders.success', compact('order'));
+        return view('buyer.distributor.orders.success', compact('order'));
     }
 
     /**
@@ -503,7 +503,7 @@ class OrderController extends Controller
 
         $orders = $query->orderByDesc('created_at')->paginate(10);
 
-        return view('distributor.orders.history', compact('orders'));
+        return view('buyer.distributor.orders.history', compact('orders'));
     }
 
     /**
@@ -518,7 +518,7 @@ class OrderController extends Controller
         $order->load('items.product', 'address', 'expedition');
         $warehouse = Auth::user()->warehouse;
 
-        return view('distributor.orders.show', compact('order', 'warehouse'));
+        return view('buyer.distributor.orders.show', compact('order', 'warehouse'));
     }
 
     /**
