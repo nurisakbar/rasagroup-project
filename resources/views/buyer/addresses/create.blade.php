@@ -1,3 +1,8 @@
+@extends('layouts.shop')
+
+@section('title', 'Tambah Alamat Baru')
+
+@section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -11,10 +16,11 @@
 
 <div class="container mb-80 mt-50">
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-lg-12 m-auto">
             <div class="row">
                 <div class="col-lg-4">
-                    <div class="dashboard-menu">
+                    <div class="dashboard-menu shadow-sm border-radius-15 p-4 bg-white">
+                        <h4 class="mb-30 border-bottom pb-2">Menu Akun</h4>
                         <ul class="nav flex-column" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('buyer.dashboard') }}"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
@@ -28,7 +34,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('buyer.profile') }}"><i class="fi-rs-user mr-10"></i>Detail Akun</a>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item mt-20">
                                 <form method="POST" action="{{ route('logout') }}" id="logout-form-create-address">
                                     @csrf
                                     <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-create-address').submit();">
@@ -40,20 +46,20 @@
                     </div>
                 </div>
                 <div class="col-lg-8">
-                    <div class="tab-content account dashboard-content pl-50">
+                    <div class="tab-content account dashboard-content pl-lg-4 pl-0">
                         <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="card border-0 shadow-sm border-radius-10">
-                                <div class="card-header bg-white border-bottom-0 p-4">
+                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden">
+                                <div class="card-header bg-white border-bottom p-4">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h3 class="mb-0">Tambah Alamat Baru</h3>
-                                        <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-secondary rounded font-sm">
+                                        <h3 class="mb-0 heading-3">Tambah Alamat Baru</h3>
+                                        <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill font-sm">
                                             <i class="fi-rs-arrow-left mr-5"></i> Kembali
                                         </a>
                                     </div>
                                 </div>
-                                <div class="card-body p-4 pt-0">
+                                <div class="card-body p-4 p-md-5 pt-4">
                                     @if ($errors->any())
-                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert">
                                             <ul class="mb-0 font-sm">
                                                 @foreach ($errors->all() as $error)
                                                     <li><i class="fi-rs-cross-circle mr-5"></i> {{ $error }}</li>
@@ -66,9 +72,13 @@
                                     <form action="{{ route('buyer.addresses.store') }}" method="POST" id="addressForm">
                                         @csrf
 
-                                        <div class="row mb-4">
-                                            <div class="form-group col-md-4 mb-3">
-                                                <label>Label Alamat <span class="required">*</span></label>
+                                        <div class="row mb-30">
+                                            <div class="col-12 mb-20">
+                                                <h5 class="text-brand mb-10"><i class="fi-rs-user mr-10"></i> Informasi Penerima</h5>
+                                                <p class="text-muted font-xs">Informasi dasar untuk identitas pengiriman.</p>
+                                            </div>
+                                            <div class="form-group col-md-12 mb-3">
+                                                <label class="form-label">Label Alamat <span class="required">*</span></label>
                                                 <div class="custom_select">
                                                     <select class="form-control select-active @error('label') is-invalid @enderror" id="label" name="label" required>
                                                         <option value="">-- Pilih --</option>
@@ -79,30 +89,35 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="form-group col-md-4 mb-3">
-                                                <label>Nama Penerima <span class="required">*</span></label>
-                                                <input required type="text" class="form-control @error('recipient_name') is-invalid @enderror" 
-                                                       name="recipient_name" value="{{ old('recipient_name', Auth::user()->name) }}">
-                                            </div>
-                                            <div class="form-group col-md-4 mb-3">
-                                                <label>No. HP Penerima <span class="required">*</span></label>
-                                                <input required type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                                       name="phone" value="{{ old('phone', Auth::user()->phone) }}" placeholder="08xxxxxxxxxx">
-                                            </div>
-                                        </div>
-
-                                        <div class="divider mt-2 mb-4"></div>
-                                        <h5 class="mb-3">Informasi Lokasi</h5>
-                                        
-                                        <div class="alert alert-info border-0 bg-info-light mb-4">
-                                            <p class="font-sm mb-0">
-                                                <i class="fi-rs-info mr-5"></i> <strong>Penting:</strong> Pilih wilayah sesuai KTP atau alamat pengiriman Anda untuk perhitungan ongkos kirim yang akurat.
-                                            </p>
-                                        </div>
-
-                                        <div class="row mb-3">
+                                            <div class="row">
                                             <div class="form-group col-md-6 mb-3">
-                                                <label>Provinsi <span class="required">*</span></label>
+                                                <label class="form-label">Nama Penerima <span class="required">*</span></label>
+                                                <input type="text" required class="form-control @error('recipient_name') is-invalid @enderror" 
+                                                       name="recipient_name" value="{{ old('recipient_name', Auth::user()->name) }}" placeholder="Nama Lengkap">
+                                            </div>
+                                            <div class="form-group col-md-6 mb-3">
+                                                <label class="form-label">No. Telepon <span class="required">*</span></label>
+                                                <input type="text" required class="form-control @error('phone') is-invalid @enderror" 
+                                                       name="phone" value="{{ old('phone', Auth::user()->phone) }}" placeholder="Contoh: 081234567890">
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-20">
+                                            <div class="col-12 mb-20 border-top pt-20">
+                                                <h5 class="text-brand mb-10"><i class="fi-rs-marker mr-10"></i> Informasi Lokasi</h5>
+                                                <p class="text-muted font-xs">Wilayah pengiriman untuk akurasi ongkos kirim.</p>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <div class="alert alert-info border-0 bg-info-light mb-4 p-3 border-radius-10">
+                                                    <p class="font-xs mb-0">
+                                                        <i class="fi-rs-info mr-5"></i> Pilih wilayah yang sesuai agar sistem dapat menghitung biaya pengiriman dengan tepat.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group col-md-6 mb-4">
+                                                <label class="form-label">Provinsi <span class="required">*</span></label>
                                                 <div class="custom_select">
                                                     <select class="form-control select-active @error('province_id') is-invalid @enderror" id="province_id" name="province_id" required>
                                                         <option value="">-- Pilih Provinsi --</option>
@@ -114,8 +129,8 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Kabupaten/Kota <span class="required">*</span></label>
+                                            <div class="form-group col-md-6 mb-4">
+                                                <label class="form-label">Kabupaten/Kota <span class="required">*</span></label>
                                                 <div class="custom_select">
                                                     <select class="form-control select-active @error('regency_id') is-invalid @enderror" id="regency_id" name="regency_id" required disabled>
                                                         <option value="">-- Pilih Kabupaten/Kota --</option>
@@ -125,11 +140,9 @@
                                                     <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
                                                 </small>
                                             </div>
-                                        </div>
 
-                                        <div class="row mb-3">
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Kecamatan <span class="required">*</span></label>
+                                            <div class="form-group col-md-4 mb-4">
+                                                <label class="form-label">Kecamatan <span class="required">*</span></label>
                                                 <div class="custom_select">
                                                     <select class="form-control select-active @error('district_id') is-invalid @enderror" id="district_id" name="district_id" required disabled>
                                                         <option value="">-- Pilih Kecamatan --</option>
@@ -139,10 +152,10 @@
                                                     <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
                                                 </small>
                                             </div>
-                                            <div class="form-group col-md-6 mb-3" id="village_container" style="display: none;">
-                                                <label>Kelurahan/Desa</label>
+                                            <div class="form-group col-md-4 mb-4" id="village_container">
+                                                <label class="form-label">Kelurahan/Desa</label>
                                                 <div class="custom_select">
-                                                    <select class="form-control select-active @error('village_id') is-invalid @enderror" id="village_id" name="village_id">
+                                                    <select class="form-control select-active @error('village_id') is-invalid @enderror" id="village_id" name="village_id" disabled>
                                                         <option value="">-- Pilih Kelurahan/Desa --</option>
                                                     </select>
                                                 </div>
@@ -150,40 +163,38 @@
                                                     <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
                                                 </small>
                                             </div>
-                                        </div>
-
-                                        <div class="row mb-3">
-                                            <div class="form-group col-md-9 mb-3">
-                                                <label>Alamat Lengkap <span class="required">*</span></label>
-                                                <textarea required class="form-control @error('address_detail') is-invalid @enderror" 
-                                                          name="address_detail" rows="2" 
-                                                          placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dll">{{ old('address_detail') }}</textarea>
-                                            </div>
-                                            <div class="form-group col-md-3 mb-3">
-                                                <label>Kode Pos</label>
+                                            <div class="form-group col-md-4 mb-4">
+                                                <label class="form-label">Kode Pos</label>
                                                 <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
                                                        name="postal_code" value="{{ old('postal_code') }}" 
                                                        placeholder="12345" maxlength="10">
                                             </div>
+
+                                            <div class="form-group col-md-12 mb-4">
+                                                <label class="form-label">Alamat Lengkap <span class="required">*</span></label>
+                                                <textarea required class="form-control border-radius-10 @error('address_detail') is-invalid @enderror" 
+                                                          name="address_detail" rows="3" 
+                                                          placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dll">{{ old('address_detail') }}</textarea>
+                                            </div>
+
+                                            <div class="form-group col-md-12 mb-4">
+                                                <label class="form-label">Catatan Kurir (Opsional)</label>
+                                                <textarea class="form-control border-radius-10 @error('notes') is-invalid @enderror" 
+                                                          name="notes" rows="2" 
+                                                          placeholder="Contoh: Rumah warna biru, samping masjid, dll">{{ old('notes') }}</textarea>
+                                            </div>
                                         </div>
 
-                                        <div class="form-group col-md-12 mb-4">
-                                            <label>Catatan untuk Kurir (Opsional)</label>
-                                            <textarea class="form-control @error('notes') is-invalid @enderror" 
-                                                      name="notes" rows="2" 
-                                                      placeholder="Contoh: Rumah warna biru, dekat masjid, dll">{{ old('notes') }}</textarea>
-                                        </div>
-
-                                        <div class="form-check mb-4 custom-control custom-checkbox">
-                                            <input class="form-check-input custom-control-input" type="checkbox" id="is_default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
-                                            <label class="form-check-label custom-control-label font-sm" for="is_default">
-                                                Jadikan sebagai alamat utama
+                                        <div class="form-check mb-30 custom-control custom-checkbox bg-light p-3 border-radius-10">
+                                            <input class="form-check-input custom-control-input ml-10" type="checkbox" id="is_default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
+                                            <label class="form-check-label custom-control-label font-sm ml-25" for="is_default">
+                                                <strong>Jadikan alamat utama</strong> (digunakan otomatis saat checkout)
                                             </label>
                                         </div>
 
-                                        <div class="col-md-12">
-                                            <button type="submit" class="btn btn-fill-out submit font-weight-bold">
-                                                <i class="fi-rs-check-circle mr-5"></i> Simpan Alamat
+                                        <div class="d-grid mt-40 pt-20 border-top">
+                                            <button type="submit" class="btn btn-fill-out btn-lg w-100 rounded-pill font-weight-bold">
+                                                <i class="fi-rs-check-circle mr-10"></i> Simpan Alamat Baru
                                             </button>
                                         </div>
                                     </form>
@@ -198,9 +209,71 @@
 </div>
 
 <style>
-    .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
-    .required { color: #fd3d11; }
-    .divider { height: 1px; background-color: #f2f2f2; width: 100%; }
+    .bg-info-light { background-color: rgba(59, 183, 126, 0.05); color: #3BB77E; }
+    .required { color: #fd3d11; font-weight: bold; }
+    .border-radius-15 { border-radius: 15px !important; }
+    .border-radius-10 { border-radius: 10px !important; }
+    .form-label { font-weight: 700; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
+    .dashboard-menu { position: sticky; top: 100px; }
+    
+    /* Form control refinements */
+    .form-control {
+        height: 50px;
+        padding: 0 20px;
+        border-radius: 10px !important;
+        border: 1px solid #ececec;
+        font-size: 14px;
+        background-color: #f7f8f9;
+    }
+    
+    textarea.form-control {
+        height: auto;
+        padding: 15px 20px;
+    }
+    
+    .form-control:focus {
+        background-color: #fff;
+        border-color: #3BB77E;
+        box-shadow: 0 0 10px rgba(59, 183, 126, 0.1);
+        outline: 0;
+    }
+    
+    /* Select refinements */
+    .custom_select {
+        width: 100%;
+    }
+    
+    .custom_select .select2-container--default .select2-selection--single {
+        height: 50px;
+        line-height: 50px;
+        border-radius: 10px;
+        border: 1px solid #ececec;
+        background-color: #f7f8f9;
+    }
+    
+    .custom_select .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 50px;
+        padding-left: 20px;
+        color: #687188;
+        padding-right: 30px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .custom_select .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 48px;
+    }
+
+    /* Fixed height for normal select if select2 not enabled */
+    select.form-control {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23687188' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 20px center;
+    }
+
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -209,215 +282,158 @@
         display: inline-block;
         animation: spin 1s linear infinite;
     }
-</style>
-
-<style>
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-.spin {
-    display: inline-block;
-    animation: spin 1s linear infinite;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var provinceSelect = document.getElementById('province_id');
-    var regencySelect = document.getElementById('regency_id');
-    var districtSelect = document.getElementById('district_id');
-    var villageSelect = document.getElementById('village_id');
     
-    var regencyLoading = document.getElementById('regency_loading');
-    var districtLoading = document.getElementById('district_loading');
-    var villageLoading = document.getElementById('village_loading');
+    /* Checkbox refinement */
+    .custom-checkbox .custom-control-label::before {
+        border-radius: 4px;
+        border: 2px solid #3BB77E;
+    }
+    
+    .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #3BB77E;
+        border-color: #3BB77E;
+    }
+    
+    .bg-light-green {
+        background-color: #f0f9f4;
+    }
+    
+    .text-brand { color: #3BB77E !important; }
+    .btn-fill-out {
+        background-color: #3BB77E !important;
+        border: 1px solid #3BB77E !important;
+        color: #fff !important;
+        padding: 15px 40px !important;
+    }
+    .btn-fill-out:hover {
+        background-color: #29a56c !important;
+        border-color: #29a56c !important;
+    }
+</style>
 
-    // Helper function for fetch with error handling and retry
-    function fetchData(url, retries) {
-        retries = retries || 3;
+@push('scripts')
+<script>
+$(document).ready(function() {
+    const provinceSelect = $('#province_id');
+    const regencySelect = $('#regency_id');
+    const districtSelect = $('#district_id');
+    const villageSelect = $('#village_id');
+    
+    const regencyLoading = $('#regency_loading');
+    const districtLoading = $('#district_loading');
+    const villageLoading = $('#village_loading');
+
+    function updateSelect(target, data, placeholder) {
+        target.empty().append($('<option>', {
+            value: '',
+            text: placeholder
+        }));
         
-        return new Promise(function(resolve, reject) {
-            function attemptFetch(attempt) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                xhr.setRequestHeader('Accept', 'application/json');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                
-                var csrfToken = document.querySelector('meta[name="csrf-token"]');
-                if (csrfToken) {
-                    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.getAttribute('content'));
-                }
-                
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            try {
-                                var data = JSON.parse(xhr.responseText);
-                                resolve(data);
-                            } catch (e) {
-                                console.error('JSON parse error:', e);
-                                if (attempt < retries) {
-                                    console.log('Retrying... attempt ' + (attempt + 1));
-                                    setTimeout(function() { attemptFetch(attempt + 1); }, 500);
-                                } else {
-                                    reject(new Error('Failed to parse JSON'));
-                                }
-                            }
-                        } else {
-                            console.error('HTTP error:', xhr.status);
-                            if (attempt < retries) {
-                                console.log('Retrying... attempt ' + (attempt + 1));
-                                setTimeout(function() { attemptFetch(attempt + 1); }, 500);
-                            } else {
-                                reject(new Error('HTTP error: ' + xhr.status));
-                            }
-                        }
-                    }
-                };
-                
-                xhr.onerror = function() {
-                    console.error('Network error');
-                    if (attempt < retries) {
-                        console.log('Retrying... attempt ' + (attempt + 1));
-                        setTimeout(function() { attemptFetch(attempt + 1); }, 500);
-                    } else {
-                        reject(new Error('Network error'));
-                    }
-                };
-                
-                xhr.timeout = 10000; // 10 second timeout
-                xhr.ontimeout = function() {
-                    console.error('Request timeout');
-                    if (attempt < retries) {
-                        console.log('Retrying... attempt ' + (attempt + 1));
-                        setTimeout(function() { attemptFetch(attempt + 1); }, 500);
-                    } else {
-                        reject(new Error('Request timeout'));
-                    }
-                };
-                
-                xhr.send();
-            }
-            
-            attemptFetch(1);
-        });
+        if (data && data.length > 0) {
+            $.each(data, function(i, item) {
+                target.append($('<option>', {
+                    value: item.id,
+                    text: item.name
+                }));
+            });
+            target.prop('disabled', false);
+        } else {
+            target.prop('disabled', true);
+        }
+        
+        // Refresh Select2 if it's active
+        if (target.hasClass('select2-hidden-accessible')) {
+            target.trigger('change.select2');
+        } else {
+            target.trigger('change');
+        }
     }
 
-    // Province change
-    provinceSelect.addEventListener('change', function() {
-        var provinceId = this.value;
+    provinceSelect.on('change', function() {
+        const provinceId = $(this).val();
         
-        // Reset child selects
-        regencySelect.innerHTML = '<option value="">-- Pilih Kabupaten/Kota --</option>';
-        districtSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
-        villageSelect.innerHTML = '<option value="">-- Pilih Kelurahan/Desa --</option>';
-        regencySelect.disabled = true;
-        districtSelect.disabled = true;
-        villageSelect.disabled = true;
+        // Reset sub selects
+        updateSelect(regencySelect, [], '-- Pilih Kabupaten/Kota --');
+        updateSelect(districtSelect, [], '-- Pilih Kecamatan --');
+        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
 
         if (provinceId) {
-            regencyLoading.style.display = 'block';
+            regencyLoading.show();
             
-            fetchData('{{ route("buyer.addresses.get-regencies") }}?province_id=' + provinceId)
-                .then(function(data) {
-                    regencySelect.innerHTML = '<option value="">-- Pilih Kabupaten/Kota --</option>';
-                    if (data && data.length > 0) {
-                        for (var i = 0; i < data.length; i++) {
-                            var option = document.createElement('option');
-                            option.value = data[i].id;
-                            option.textContent = data[i].name;
-                            regencySelect.appendChild(option);
-                        }
-                        regencySelect.disabled = false;
-                    } else {
-                        regencySelect.innerHTML = '<option value="">-- Tidak ada data untuk provinsi ini --</option>';
-                    }
-                })
-                .catch(function(error) {
+            $.ajax({
+                url: '{{ route("buyer.addresses.get-regencies") }}',
+                type: 'GET',
+                data: { province_id: provinceId },
+                dataType: 'json',
+                success: function(data) {
+                    updateSelect(regencySelect, data, '-- Pilih Kabupaten/Kota --');
+                },
+                error: function(xhr, status, error) {
                     console.error('Error loading regencies:', error);
-                    regencySelect.innerHTML = '<option value="">-- Gagal memuat data, coba refresh --</option>';
-                })
-                .finally(function() {
-                    regencyLoading.style.display = 'none';
-                });
+                    updateSelect(regencySelect, [], '-- Gagal memuat data --');
+                },
+                complete: function() {
+                    regencyLoading.hide();
+                }
+            });
         }
     });
 
-    // Regency change
-    regencySelect.addEventListener('change', function() {
-        var regencyId = this.value;
-        
-        // Reset child selects
-        districtSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
-        villageSelect.innerHTML = '<option value="">-- Pilih Kelurahan/Desa --</option>';
-        districtSelect.disabled = true;
-        villageSelect.disabled = true;
+    regencySelect.on('change', function() {
+        const regencyId = $(this).val();
+        updateSelect(districtSelect, [], '-- Pilih Kecamatan --');
+        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
 
         if (regencyId) {
-            districtLoading.style.display = 'block';
-            
-            fetchData('{{ route("buyer.addresses.get-districts") }}?regency_id=' + regencyId)
-                .then(function(data) {
-                    districtSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
-                    if (data && data.length > 0) {
-                        for (var i = 0; i < data.length; i++) {
-                            var option = document.createElement('option');
-                            option.value = data[i].id;
-                            option.textContent = data[i].name;
-                            districtSelect.appendChild(option);
-                        }
-                        districtSelect.disabled = false;
-                    } else {
-                        districtSelect.innerHTML = '<option value="">-- Tidak ada data untuk kabupaten ini --</option>';
-                    }
-                })
-                .catch(function(error) {
+            districtLoading.show();
+            $.ajax({
+                url: '{{ route("buyer.addresses.get-districts") }}',
+                type: 'GET',
+                data: { regency_id: regencyId },
+                dataType: 'json',
+                success: function(data) {
+                    updateSelect(districtSelect, data, '-- Pilih Kecamatan --');
+                },
+                error: function(xhr, status, error) {
                     console.error('Error loading districts:', error);
-                    districtSelect.innerHTML = '<option value="">-- Gagal memuat data, coba refresh --</option>';
-                })
-                .finally(function() {
-                    districtLoading.style.display = 'none';
-                });
+                    updateSelect(districtSelect, [], '-- Gagal memuat data --');
+                },
+                complete: function() {
+                    districtLoading.hide();
+                }
+            });
         }
     });
 
-    // District change
-    districtSelect.addEventListener('change', function() {
-        var districtId = this.value;
-        
-        // Reset child select
-        villageSelect.innerHTML = '<option value="">-- Pilih Kelurahan/Desa --</option>';
-        villageSelect.disabled = true;
+    districtSelect.on('change', function() {
+        const districtId = $(this).val();
+        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
 
         if (districtId) {
-            villageLoading.style.display = 'block';
-            
-            fetchData('{{ route("buyer.addresses.get-villages") }}?district_id=' + districtId)
-                .then(function(data) {
-                    villageSelect.innerHTML = '<option value="">-- Pilih Kelurahan/Desa --</option>';
+            villageLoading.show();
+            $.ajax({
+                url: '{{ route("buyer.addresses.get-villages") }}',
+                type: 'GET',
+                data: { district_id: districtId },
+                dataType: 'json',
+                success: function(data) {
                     if (data && data.length > 0) {
-                        document.getElementById('village_container').style.display = 'block';
-                        for (var i = 0; i < data.length; i++) {
-                            var option = document.createElement('option');
-                            option.value = data[i].id;
-                            option.textContent = data[i].name;
-                            villageSelect.appendChild(option);
-                        }
-                        villageSelect.disabled = false;
+                        $('#village_container').show();
+                        updateSelect(villageSelect, data, '-- Pilih Kelurahan/Desa --');
                     } else {
-                        document.getElementById('village_container').style.display = 'none';
+                        $('#village_container').hide();
                     }
-                })
-                .catch(function(error) {
+                },
+                error: function(xhr, status, error) {
                     console.error('Error loading villages:', error);
-                    villageSelect.innerHTML = '<option value="">-- Gagal memuat data, coba refresh --</option>';
-                })
-                .finally(function() {
-                    villageLoading.style.display = 'none';
-                });
+                },
+                complete: function() {
+                    villageLoading.hide();
+                }
+            });
         }
     });
 });
 </script>
+@endpush
 @endsection

@@ -56,6 +56,7 @@ class AddressController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -87,6 +88,7 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
+            'village_id' => $request->village_id,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -127,7 +129,18 @@ class AddressController extends Controller
 
         // Fetch villages from local table by mapping district name
         $villages = [];
-        // Village logic removed/commented out previously caused errors, explicitly removed now.
+        if ($address->district_id) {
+            $roDistrict = \App\Models\RajaOngkirDistrict::find($address->district_id);
+            if ($roDistrict) {
+                $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+                if (!$localDistrict) {
+                    $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+                }
+                if ($localDistrict) {
+                    $villages = \App\Models\Village::where('district_id', $localDistrict->id)->orderBy('name')->get();
+                }
+            }
+        }
 
         return view('buyer.addresses.edit', compact('address', 'provinces', 'regencies', 'districts', 'villages'));
     }
@@ -149,6 +162,7 @@ class AddressController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -169,6 +183,7 @@ class AddressController extends Controller
             'province_id' => $validated['province_id'],
             'regency_id' => $validated['regency_id'],
             'district_id' => $validated['district_id'],
+            'village_id' => $request->village_id,
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
@@ -265,8 +280,8 @@ class AddressController extends Controller
         }
 
         if ($localDistrict) {
-             // Village logic removed
-             return response()->json([]);
+             $villages = \App\Models\Village::where('district_id', $localDistrict->id)->orderBy('name')->get();
+             return response()->json($villages);
         }
 
         return response()->json([]);

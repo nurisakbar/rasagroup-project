@@ -22,6 +22,7 @@ class Address extends Model
         'province_id',
         'regency_id',
         'district_id',
+        'village_id',
         'address_detail',
         'postal_code',
         'notes',
@@ -52,10 +53,18 @@ class Address extends Model
         return $this->belongsTo(RajaOngkirDistrict::class, 'district_id');
     }
 
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class, 'village_id');
+    }
+
     public function getFullAddressAttribute(): string
     {
         $parts = [$this->address_detail];
         
+        if ($this->village) {
+            $parts[] = 'Ds/Kel. ' . $this->village->name;
+        }
         if ($this->district) {
             $parts[] = 'Kec. ' . $this->district->name;
         }
