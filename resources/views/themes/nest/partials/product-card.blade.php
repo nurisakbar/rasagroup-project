@@ -8,7 +8,7 @@
                 </a>
             </div>
             <div class="product-action-1">
-                <a aria-label="Quick view" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->id) }}"><i class="fi-rs-eye"></i></a>
+                <a aria-label="Quick view" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->slug) }}"><i class="fi-rs-eye"></i></a>
             </div>
             <div class="product-badges product-badges-position product-badges-mrg">
                 @if($product->created_at->diffInDays(now()) < 7)
