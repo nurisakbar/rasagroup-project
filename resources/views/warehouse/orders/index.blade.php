@@ -100,13 +100,13 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Dari Tanggal</label>
-                        <input type="date" id="filter-date-from" class="form-control">
+                        <input type="date" id="filter-date-from" class="form-control" value="{{ now()->format('Y-m-d') }}">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Sampai Tanggal</label>
-                        <input type="date" id="filter-date-to" class="form-control">
+                        <input type="date" id="filter-date-to" class="form-control" value="{{ now()->format('Y-m-d') }}">
                     </div>
                 </div>
             </div>
@@ -216,8 +216,8 @@ $(document).ready(function() {
     $('#btn-reset').click(function() {
         $('#filter-order-status').val('');
         $('#filter-payment-status').val('');
-        $('#filter-date-from').val('');
-        $('#filter-date-to').val('');
+        $('#filter-date-from').val('{{ now()->format("Y-m-d") }}');
+        $('#filter-date-to').val('{{ now()->format("Y-m-d") }}');
         table.draw();
     });
 });

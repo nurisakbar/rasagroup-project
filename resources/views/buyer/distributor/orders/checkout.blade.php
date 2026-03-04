@@ -96,6 +96,21 @@
 
                                         <div class="card border-0 shadow-sm border-radius-10 mb-4">
                                             <div class="card-header bg-white border-bottom p-4">
+                                                <h4 class="mb-0">Rencana Pengiriman</h4>
+                                                <p class="text-muted font-sm">Kapan Anda ingin paket ini dikirim dari pusat?</p>
+                                            </div>
+                                            <div class="card-body p-4">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label font-sm fw-bold">Tanggal Kirim</label>
+                                                        <input type="date" name="preferred_shipping_date" class="form-control font-sm border-radius-10" value="{{ $preferredShippingDate ? $preferredShippingDate->format('Y-m-d') : date('Y-m-d') }}" min="{{ date('Y-m-d') }}" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card border-0 shadow-sm border-radius-10 mb-4">
+                                            <div class="card-header bg-white border-bottom p-4">
                                                 <h4 class="mb-0">Metode Pembayaran</h4>
                                             </div>
                                             <div class="card-body p-4">

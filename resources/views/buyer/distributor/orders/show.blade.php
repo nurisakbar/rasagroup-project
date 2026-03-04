@@ -46,7 +46,7 @@
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="row g-4 order-info-cards mb-4">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="p-3 bg-light border-radius-10 h-100">
                                                 <h6 class="font-sm mb-2 text-muted uppercase">Pengiriman Ke</h6>
                                                 <p class="font-sm mb-0">
@@ -55,7 +55,16 @@
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
+                                            <div class="p-3 bg-light border-radius-10 h-100">
+                                                <h6 class="font-sm mb-2 text-muted uppercase">Rencana Kirim</h6>
+                                                <p class="font-sm mb-0">
+                                                    <strong>{{ $order->preferred_shipping_date ? $order->preferred_shipping_date->format('d M Y') : 'Segera' }}</strong><br>
+                                                    <span class="text-muted font-xs">Rencana dikirim dari pusat</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
                                             <div class="p-3 bg-light border-radius-10 h-100">
                                                 <h6 class="font-sm mb-2 text-muted uppercase">Ekspedisi</h6>
                                                 <p class="font-sm mb-0">
@@ -65,7 +74,7 @@
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="p-3 bg-light border-radius-10 h-100">
                                                 <h6 class="font-sm mb-2 text-muted uppercase">Pembayaran</h6>
                                                 <p class="font-sm mb-0">

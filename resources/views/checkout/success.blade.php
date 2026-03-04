@@ -129,7 +129,12 @@
                                 <p class="mt-15 mb-0 text-center text-muted font-sm">Mohon lakukan pembayaran sebelum <strong>{{ $order->created_at->addDay()->format('d M Y, H:i') }}</strong></p>
                             </div>
                         @elseif($order->payment_method === 'xendit')
-                            @if($order->xendit_invoice_url)
+                            @if($order->payment_status === 'paid')
+                                <div class="alert alert-success border-radius-10 text-center">
+                                    <h6 class="mb-10"><i class="fi-rs-check-circle mr-10"></i>Pembayaran Berhasil!</h6>
+                                    <p class="mb-0">Terima kasih, pembayaran Anda telah kami terima secara otomatis.</p>
+                                </div>
+                            @elseif($order->xendit_invoice_url)
                                 <div class="alert alert-warning border-radius-10 text-center">
                                     <h6 class="mb-15"><i class="fi-rs-credit-card mr-10"></i>Selesaikan Pembayaran Anda</h6>
                                     <p class="mb-20">Silakan klik tombol di bawah untuk melanjutkan pembayaran via Xendit.</p>

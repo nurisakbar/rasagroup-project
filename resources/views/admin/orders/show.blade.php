@@ -42,6 +42,12 @@
                             <th>Tanggal Pesanan</th>
                             <td>{{ $order->created_at->format('d M Y H:i') }}</td>
                         </tr>
+                        @if($order->preferred_shipping_date)
+                        <tr class="bg-yellow">
+                            <th><i class="fa fa-calendar"></i> Rencana Pengiriman</th>
+                            <td><strong>{{ $order->preferred_shipping_date->format('d M Y') }}</strong></td>
+                        </tr>
+                        @endif
                         <tr>
                             <th>Tipe Order</th>
                             <td>
@@ -165,8 +171,14 @@
                         <tfoot>
                             <tr>
                                 <th colspan="3" class="text-right">Subtotal:</th>
-                                <td class="text-right">Rp {{ number_format($order->subtotal ?? $order->total_amount - ($order->shipping_cost ?? 0), 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format($order->subtotal ?? 0, 0, ',', '.') }}</td>
                             </tr>
+                            @if($order->discount_amount > 0)
+                            <tr>
+                                <th colspan="3" class="text-right text-danger">Potongan Harga ({{ $order->discount_percent }}%):</th>
+                                <td class="text-right text-danger">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <th colspan="3" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>

@@ -119,16 +119,26 @@ class OrderController extends Controller
                 ->make(true);
         }
 
-        // Get statistics
-        $totalOrders = Order::where('source_warehouse_id', $warehouse->id)->count();
+        // Get statistics (Default to today's stats if no date filter is provided in the initial load)
+        $today = now()->format('Y-m-d');
+        
+        $totalOrders = Order::where('source_warehouse_id', $warehouse->id)
+            ->whereDate('created_at', $today)
+            ->count();
+            
         $pendingOrders = Order::where('source_warehouse_id', $warehouse->id)
             ->where('order_status', 'pending')
+            ->whereDate('created_at', $today)
             ->count();
+            
         $processingOrders = Order::where('source_warehouse_id', $warehouse->id)
             ->where('order_status', 'processing')
+            ->whereDate('created_at', $today)
             ->count();
+            
         $totalRevenue = Order::where('source_warehouse_id', $warehouse->id)
             ->where('payment_status', 'paid')
+            ->whereDate('created_at', $today)
             ->sum('total_amount');
 
         return view('warehouse.orders.index', compact(

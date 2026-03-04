@@ -214,6 +214,12 @@
             <i class="fa fa-ticket"></i> <span>PROMO</span>
           </a>
         </li>
+
+        <li class="{{ request()->routeIs('admin.discount-tiers.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.discount-tiers.index') }}">
+            <i class="fa fa-percent"></i> <span>POTONGAN HARGA</span>
+          </a>
+        </li>
         
         <li class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
           <a href="{{ route('admin.settings.index') }}">

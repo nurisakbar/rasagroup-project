@@ -72,46 +72,64 @@
                                     <form action="{{ route('buyer.addresses.store') }}" method="POST" id="addressForm">
                                         @csrf
 
-                                        <div class="row mb-30">
+                                        <div class="row section-info mb-30 p-3 border-radius-15 bg-white shadow-sm border">
                                             <div class="col-12 mb-20">
                                                 <h5 class="text-brand mb-10"><i class="fi-rs-user mr-10"></i> Informasi Penerima</h5>
                                                 <p class="text-muted font-xs">Informasi dasar untuk identitas pengiriman.</p>
                                             </div>
-                                            <div class="form-group col-md-12 mb-3">
-                                                <label class="form-label">Label Alamat <span class="required">*</span></label>
-                                                <div class="custom_select">
-                                                    <select class="form-control select-active @error('label') is-invalid @enderror" id="label" name="label" required>
-                                                        <option value="">-- Pilih --</option>
-                                                        <option value="Rumah" {{ old('label') == 'Rumah' ? 'selected' : '' }}>Rumah</option>
-                                                        <option value="Kantor" {{ old('label') == 'Kantor' ? 'selected' : '' }}>Kantor</option>
-                                                        <option value="Toko" {{ old('label') == 'Toko' ? 'selected' : '' }}>Toko</option>
-                                                        <option value="Lainnya" {{ old('label') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                                                    </select>
+                                            <div class="form-group col-md-12 mb-4">
+                                                <label class="form-label">Simpan Alamat Sebagai <span class="required">*</span></label>
+                                                <div class="d-flex flex-wrap gap-2 mb-3 mt-2 label-selector">
+                                                    <input type="radio" name="label" class="btn-check" id="label-home" value="Rumah" {{ old('label', 'Rumah') == 'Rumah' ? 'checked' : '' }}>
+                                                    <label class="btn btn-outline-brand rounded-pill px-4 py-2" for="label-home"><i class="fi-rs-home mr-5"></i> Rumah</label>
+
+                                                    <input type="radio" name="label" class="btn-check" id="label-office" value="Kantor" {{ old('label') == 'Kantor' ? 'checked' : '' }}>
+                                                    <label class="btn btn-outline-brand rounded-pill px-4 py-2" for="label-office"><i class="fi-rs-briefcase mr-5"></i> Kantor</label>
+
+                                                    <input type="radio" name="label" class="btn-check" id="label-shop" value="Toko" {{ old('label') == 'Toko' ? 'checked' : '' }}>
+                                                    <label class="btn btn-outline-brand rounded-pill px-4 py-2" for="label-shop"><i class="fi-rs-shop mr-5"></i> Toko</label>
+
+                                                    <input type="radio" name="label" class="btn-check" id="label-other" value="Lainnya" {{ old('label') == 'Lainnya' ? 'checked' : '' }}>
+                                                    <label class="btn btn-outline-brand rounded-pill px-4 py-2" for="label-other"><i class="fi-rs-marker mr-5"></i> Lainnya</label>
                                                 </div>
                                             </div>
                                             
                                             <div class="form-group col-md-6 mb-3">
                                                 <label class="form-label">Nama Penerima <span class="required">*</span></label>
-                                                <input type="text" required class="form-control @error('recipient_name') is-invalid @enderror" 
-                                                       name="recipient_name" value="{{ old('recipient_name', Auth::user()->name) }}" placeholder="Nama Lengkap">
+                                                <div class="input-with-icon">
+                                                    <i class="fi-rs-user icon-field"></i>
+                                                    <input type="text" required class="form-control px-40 @error('recipient_name') is-invalid @enderror" 
+                                                           name="recipient_name" value="{{ old('recipient_name', Auth::user()->name) }}" placeholder="Nama Lengkap">
+                                                </div>
                                             </div>
                                             <div class="form-group col-md-6 mb-3">
-                                                <label class="form-label">No. Telepon <span class="required">*</span></label>
-                                                <input type="text" required class="form-control @error('phone') is-invalid @enderror" 
-                                                       name="phone" value="{{ old('phone', Auth::user()->phone) }}" placeholder="Contoh: 081234567890">
+                                                <label class="form-label">No. Telepon / WhatsApp <span class="required">*</span></label>
+                                                <div class="input-with-icon">
+                                                    <i class="fi-rs-smartphone icon-field"></i>
+                                                    <input type="text" required class="form-control px-40 @error('phone') is-invalid @enderror" 
+                                                           name="phone" value="{{ old('phone', Auth::user()->phone) }}" placeholder="Contoh: 081234567890">
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="location-box border border-radius-15 bg-light p-4 mt-20 mb-30">
-                                            <div class="row">
-                                                <div class="col-12 mb-20">
-                                                    <h5 class="text-brand mb-5"><i class="fi-rs-marker mr-10"></i> Informasi Lokasi</h5>
-                                                    <p class="text-muted font-xs">Wilayah pengiriman untuk akurasi ongkos kirim.</p>
+                                        <div class="location-box border-radius-15 bg-white p-4 p-md-5 mt-20 mb-30 border shadow-sm">
+                                            <div class="row align-items-start">
+                                                <div class="col-12 mb-30">
+                                                    <div class="d-flex align-items-center mb-10">
+                                                        <div class="icon-shape bg-brand-light text-brand rounded-circle mr-15">
+                                                            <i class="fi-rs-marker"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="mb-0 text-brand">Informasi Lokasi</h5>
+                                                            <p class="text-muted font-xs mb-0">Wilayah pengiriman untuk akurasi ongkos kirim.</p>
+                                                        </div>
+                                                    </div>
+                                                    <hr class="mt-20">
                                                 </div>
 
-                                                <div class="form-group col-md-6 mb-4">
-                                                    <label class="form-label">Provinsi <span class="required">*</span></label>
-                                                    <div class="custom_select">
+                                                <div class="form-group col-md-6 mb-20 province-group">
+                                                    <label class="form-label-custom">Provinsi <span class="required">*</span></label>
+                                                    <div class="custom_select_wrapper">
                                                         <select class="form-control select-active @error('province_id') is-invalid @enderror" id="province_id" name="province_id" required>
                                                             <option value="">-- Pilih Provinsi --</option>
                                                             @foreach($provinces as $province)
@@ -122,61 +140,63 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div class="form-group col-md-6 mb-4">
-                                                    <label class="form-label">Kabupaten/Kota <span class="required">*</span></label>
-                                                    <div class="custom_select">
+                                                <div class="form-group col-md-6 mb-20 regency-group">
+                                                    <label class="form-label-custom">Kabupaten/Kota <span class="required">*</span></label>
+                                                    <div class="custom_select_wrapper position-relative">
                                                         <select class="form-control select-active @error('regency_id') is-invalid @enderror" id="regency_id" name="regency_id" required disabled>
                                                             <option value="">-- Pilih Kabupaten/Kota --</option>
                                                         </select>
+                                                        <div class="loading-overlay-new" id="regency_loading">
+                                                            <div class="spinner-border spinner-border-sm text-brand" role="status"></div>
+                                                        </div>
                                                     </div>
-                                                    <small class="text-brand font-xs" id="regency_loading" style="display: none;">
-                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                    </small>
                                                 </div>
 
-                                                <div class="form-group col-md-4 mb-4">
-                                                    <label class="form-label">Kecamatan <span class="required">*</span></label>
-                                                    <div class="custom_select">
+                                                <div class="form-group col-md-4 mb-20 district-group">
+                                                    <label class="form-label-custom">Kecamatan <span class="required">*</span></label>
+                                                    <div class="custom_select_wrapper position-relative">
                                                         <select class="form-control select-active @error('district_id') is-invalid @enderror" id="district_id" name="district_id" required disabled>
                                                             <option value="">-- Pilih Kecamatan --</option>
                                                         </select>
+                                                        <div class="loading-overlay-new" id="district_loading">
+                                                            <div class="spinner-border spinner-border-sm text-brand" role="status"></div>
+                                                        </div>
                                                     </div>
-                                                    <small class="text-brand font-xs" id="district_loading" style="display: none;">
-                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                    </small>
                                                 </div>
-                                                <div class="form-group col-md-4 mb-4" id="village_container">
-                                                    <label class="form-label">Kelurahan/Desa</label>
-                                                    <div class="custom_select">
+                                                <div class="form-group col-md-4 mb-20 village-group" id="village_container">
+                                                    <label class="form-label-custom">Kelurahan/Desa</label>
+                                                    <div class="custom_select_wrapper position-relative">
                                                         <select class="form-control select-active @error('village_id') is-invalid @enderror" id="village_id" name="village_id" disabled>
-                                                            <option value="">-- Pilih Kelurahan/Desa --</option>
+                                                            <option value="">-- Pilih Desa --</option>
                                                         </select>
+                                                        <div class="loading-overlay-new" id="village_loading">
+                                                            <div class="spinner-border spinner-border-sm text-brand" role="status"></div>
+                                                        </div>
                                                     </div>
-                                                    <small class="text-brand font-xs" id="village_loading" style="display: none;">
-                                                        <i class="fi-rs-refresh spin mr-5"></i> Memuat data...
-                                                    </small>
                                                 </div>
-                                                <div class="form-group col-md-4 mb-4">
-                                                    <label class="form-label">Kode Pos</label>
-                                                    <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
+                                                <div class="form-group col-md-4 mb-20">
+                                                    <label class="form-label-custom">Kode Pos</label>
+                                                    <input type="text" class="form-control custom-input @error('postal_code') is-invalid @enderror" 
                                                            name="postal_code" value="{{ old('postal_code') }}" 
                                                            placeholder="12345" maxlength="10">
                                                 </div>
 
                                                 <div class="form-group col-md-12 mb-4">
-                                                    <label class="form-label">Alamat Lengkap <span class="required">*</span></label>
-                                                    <textarea required class="form-control border-radius-10 @error('address_detail') is-invalid @enderror" 
+                                                    <label class="form-label-custom d-flex justify-content-between">
+                                                        <span>Alamat Lengkap <span class="required">*</span></span>
+                                                        <span class="text-muted font-xxs">Jl. Rumah, No. Rumah, Blok, RT/RW</span>
+                                                    </label>
+                                                    <textarea required class="form-control custom-textarea @error('address_detail') is-invalid @enderror" 
                                                               name="address_detail" rows="3" 
-                                                              style="height: auto;"
-                                                              placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dll">{{ old('address_detail') }}</textarea>
+                                                              tabindex="1"
+                                                              placeholder="Contoh: Jl. Diponegoro No. 123, Blok C2, RT. 001/002, Kel. Menteng">{{ old('address_detail') }}</textarea>
                                                 </div>
 
                                                 <div class="form-group col-md-12 mb-0">
-                                                    <label class="form-label">Catatan Kurir (Opsional)</label>
-                                                    <textarea class="form-control border-radius-10 @error('notes') is-invalid @enderror" 
-                                                              name="notes" rows="2" 
-                                                              style="height: auto;"
-                                                              placeholder="Contoh: Rumah warna biru, samping masjid, dll">{{ old('notes') }}</textarea>
+                                                    <label class="form-label-custom text-muted"><i class="fi-rs-info mr-5 font-xs"></i> Patokan / Catatan (Opsional)</label>
+                                                    <input type="text" class="form-control custom-input @error('notes') is-invalid @enderror" 
+                                                           name="notes" value="{{ old('notes') }}" 
+                                                           placeholder="Contoh: Depan Alfamart, pagar kayu warna putih">
                                                 </div>
                                             </div>
                                         </div>
@@ -190,8 +210,9 @@
                                         </div>
 
                                         <div class="d-grid mt-40 pt-20 border-top">
-                                            <button type="submit" class="btn btn-fill-out btn-lg w-100 rounded-pill font-weight-bold">
-                                                <i class="fi-rs-check-circle mr-10"></i> Simpan Alamat Baru
+                                            <button type="submit" class="btn btn-fill-out btn-lg w-100 rounded-pill font-weight-bold" id="btnSubmit">
+                                                <i class="fi-rs-check-circle mr-10"></i> <span id="btnText">Simpan Alamat Baru</span>
+                                                <span id="btnLoading" style="display: none;"><i class="fi-rs-refresh spin mr-5"></i> Menyimpan...</span>
                                             </button>
                                         </div>
                                     </form>
@@ -210,67 +231,124 @@
     .required { color: #fd3d11; font-weight: bold; }
     .border-radius-15 { border-radius: 15px !important; }
     .border-radius-10 { border-radius: 10px !important; }
-    .form-label { font-weight: 700; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
-    .location-box { background-color: #f9f9f9; border: 1px solid #eee !important; transition: all 0.3s ease; }
-    .location-box:hover { border-color: #3BB77E !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-    .dashboard-menu { position: sticky; top: 100px; }
     
-    /* Form control refinements */
-    .form-control {
-        height: 50px;
-        padding: 0 20px;
-        border-radius: 10px !important;
-        border: 1px solid #ececec;
-        font-size: 14px;
-        background-color: #f7f8f9;
+    .bg-info-light { background-color: rgba(59, 183, 126, 0.05); color: #3BB77E; }
+    .required { color: #fd3d11; font-weight: bold; }
+    .border-radius-15 { border-radius: 15px !important; }
+    .border-radius-10 { border-radius: 10px !important; }
+    
+    .form-label-custom { font-weight: 700; color: #253D4E; margin-bottom: 10px; font-size: 14px; display: block; }
+    .location-box { border-radius: 20px !important; border-color: #f1f1f1 !important; background-color: #ffffff; border: 1px solid #f1f1f1 !important; }
+    .icon-shape { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .bg-brand-light { background-color: #f0f9f4 !important; }
+
+    .section-info { transition: all 0.3s ease; border-radius: 20px !important; border: 1px solid #f1f1f1 !important; }
+    .section-info:focus-within { border-color: #3BB77E !important; box-shadow: 0 10px 30px rgba(59, 183, 126, 0.08) !important; }
+
+    /* Normalizing Input Heights & Padding */
+    .form-control,
+    .custom-input, 
+    .custom-textarea,
+    .custom_select_wrapper,
+    .select2-container,
+    .select2-selection--single {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
     }
-    
-    textarea.form-control {
-        height: auto;
-        padding: 15px 20px;
+
+    .form-control,
+    .custom-input, 
+    .custom_select_wrapper .select2-container--default .select2-selection--single {
+        height: 56px !important;
+        background-color: #f9f9f9 !important;
+        border: 1px solid #f1f1f1 !important;
+        border-radius: 12px !important;
+        transition: all 0.25s ease;
+        padding-left: 5px !important;
     }
-    
-    .form-control:focus {
-        background-color: #fff;
+
+    .custom-textarea {
+        background-color: #f9f9f9 !important;
+        border: 1px solid #f1f1f1 !important;
+        border-radius: 12px !important;
+        padding: 18px 20px !important;
+        height: auto !important;
+    }
+
+    /* Input with icon */
+    .input-with-icon { position: relative; }
+    .icon-field { position: absolute; left: 18px; top: 19px; color: #9B9B9B; font-size: 18px; z-index: 5; }
+    .px-40 { padding-left: 50px !important; }
+
+    /* Label Selector Hook */
+    .btn-check:checked + label.btn-outline-brand {
+        background-color: #3BB77E;
+        color: white;
         border-color: #3BB77E;
-        box-shadow: 0 0 10px rgba(59, 183, 126, 0.1);
-        outline: 0;
     }
-    
-    /* Select refinements */
-    .custom_select {
-        width: 100%;
-    }
-    
-    .custom_select .select2-container--default .select2-selection--single {
-        height: 50px;
-        line-height: 50px;
-        border-radius: 10px;
-        border: 1px solid #ececec;
-        background-color: #f7f8f9;
-    }
-    
-    .custom_select .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 50px;
-        padding-left: 20px;
+    .btn-outline-brand {
         color: #687188;
-        padding-right: 30px;
-        overflow: hidden;
+        border-color: #f1f1f1;
+        background-color: #f9f9f9;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .btn-outline-brand:hover {
+        border-color: #3BB77E;
+        color: #3BB77E;
+    }
+
+    /* Loading Overlay New */
+    .loading-overlay-new {
+        position: absolute;
+        right: 15px;
+        top: 0;
+        height: 100%;
+        display: none;
+        align-items: center;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* Select2 Force Fixes */
+    .custom_select_wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 54px !important;
+        padding-left: 15px !important;
+        color: #253D4E !important;
+        font-size: 14px !important;
+        display: block;
+        width: 100%;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    
-    .custom_select .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 48px;
+
+    .custom_select_wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 54px !important;
+        right: 12px !important;
     }
 
-    /* Fixed height for normal select if select2 not enabled */
-    select.form-control {
-        appearance: none;
-        -webkit-appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23687188' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 20px center;
+    .select2-container--default .select2-selection--single:focus,
+    .custom-input:focus, .custom-textarea:focus {
+        border-color: #3BB77E !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(59, 183, 126, 0.05) !important;
+        outline: none;
+    }
+
+    .select2-container--open .select2-dropdown {
+        border-color: #3BB77E;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body { padding: 20px 15px !important; }
+        .location-box, .section-info { padding: 25px 15px !important; }
+        .form-label-custom { font-size: 13px; }
+        .btn-fill-out { padding: 15px 20px !important; font-size: 15px; }
     }
 
     @keyframes spin {
@@ -282,31 +360,14 @@
         animation: spin 1s linear infinite;
     }
     
-    /* Checkbox refinement */
-    .custom-checkbox .custom-control-label::before {
-        border-radius: 4px;
-        border: 2px solid #3BB77E;
-    }
-    
-    .custom-control-input:checked ~ .custom-control-label::before {
-        background-color: #3BB77E;
-        border-color: #3BB77E;
-    }
-    
-    .bg-light-green {
-        background-color: #f0f9f4;
-    }
-    
     .text-brand { color: #3BB77E !important; }
     .btn-fill-out {
         background-color: #3BB77E !important;
         border: 1px solid #3BB77E !important;
         color: #fff !important;
-        padding: 15px 40px !important;
-    }
-    .btn-fill-out:hover {
-        background-color: #29a56c !important;
-        border-color: #29a56c !important;
+        padding: 18px 40px !important;
+        font-size: 16px;
+        border-radius: 12px !important;
     }
 </style>
 
@@ -321,6 +382,11 @@ $(document).ready(function() {
     const regencyLoading = $('#regency_loading');
     const districtLoading = $('#district_loading');
     const villageLoading = $('#village_loading');
+
+    // Initialize Select2 with 100% width
+    $('.select-active').select2({
+        width: '100%'
+    });
 
     function updateSelect(target, data, placeholder) {
         target.empty().append($('<option>', {
@@ -354,10 +420,10 @@ $(document).ready(function() {
         // Reset sub selects
         updateSelect(regencySelect, [], '-- Pilih Kabupaten/Kota --');
         updateSelect(districtSelect, [], '-- Pilih Kecamatan --');
-        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
+        updateSelect(villageSelect, [], '-- Pilih Desa --');
 
         if (provinceId) {
-            regencyLoading.show();
+            regencyLoading.css('display', 'flex');
             
             $.ajax({
                 url: '{{ route("buyer.addresses.get-regencies") }}',
@@ -366,6 +432,10 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(data) {
                     updateSelect(regencySelect, data, '-- Pilih Kabupaten/Kota --');
+                    // Focus next select after brief delay for natural flow
+                    setTimeout(() => {
+                        regencySelect.select2('open');
+                    }, 200);
                 },
                 error: function(xhr, status, error) {
                     console.error('Error loading regencies:', error);
@@ -381,10 +451,10 @@ $(document).ready(function() {
     regencySelect.on('change', function() {
         const regencyId = $(this).val();
         updateSelect(districtSelect, [], '-- Pilih Kecamatan --');
-        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
+        updateSelect(villageSelect, [], '-- Pilih Desa --');
 
         if (regencyId) {
-            districtLoading.show();
+            districtLoading.css('display', 'flex');
             $.ajax({
                 url: '{{ route("buyer.addresses.get-districts") }}',
                 type: 'GET',
@@ -392,6 +462,9 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(data) {
                     updateSelect(districtSelect, data, '-- Pilih Kecamatan --');
+                    setTimeout(() => {
+                        districtSelect.select2('open');
+                    }, 200);
                 },
                 error: function(xhr, status, error) {
                     console.error('Error loading districts:', error);
@@ -406,10 +479,10 @@ $(document).ready(function() {
 
     districtSelect.on('change', function() {
         const districtId = $(this).val();
-        updateSelect(villageSelect, [], '-- Pilih Kelurahan/Desa --');
+        updateSelect(villageSelect, [], '-- Pilih Desa --');
 
         if (districtId) {
-            villageLoading.show();
+            villageLoading.css('display', 'flex');
             $.ajax({
                 url: '{{ route("buyer.addresses.get-villages") }}',
                 type: 'GET',
@@ -417,10 +490,15 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(data) {
                     if (data && data.length > 0) {
-                        $('#village_container').show();
-                        updateSelect(villageSelect, data, '-- Pilih Kelurahan/Desa --');
+                        $('#village_container').fadeIn();
+                        updateSelect(villageSelect, data, '-- Pilih Desa --');
+                        setTimeout(() => {
+                            villageSelect.select2('open');
+                        }, 200);
                     } else {
-                        $('#village_container').hide();
+                        $('#village_container').fadeOut();
+                        // Scroll to address detail if village is skipped
+                        $('textarea[name="address_detail"]').focus();
                     }
                 },
                 error: function(xhr, status, error) {
@@ -430,6 +508,24 @@ $(document).ready(function() {
                     villageLoading.hide();
                 }
             });
+        }
+    });
+
+    // Form submission helper
+    $('#addressForm').on('submit', function() {
+        $('#btnSubmit').prop('disabled', true);
+        $('#btnText').hide();
+        $('#btnLoading').show();
+        $('.fi-rs-check-circle').hide();
+    });
+
+    // Auto focus and smooth scroll when select changes
+    $('select.select-active').on('select2:select', function (e) {
+        const nextGroup = $(this).closest('.form-group').nextAll('.form-group:not(:disabled)').first();
+        if (nextGroup.length) {
+            $('html, body').animate({
+                scrollTop: nextGroup.offset().top - 200
+            }, 500);
         }
     });
 });

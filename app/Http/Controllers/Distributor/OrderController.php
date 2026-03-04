@@ -15,6 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\DistributorOrderImport;
+use App\Exports\DistributorOrderTemplateExport;
 
 class OrderController extends Controller
 {
@@ -43,6 +46,58 @@ class OrderController extends Controller
         $products = $query->orderBy('name')->paginate(12);
 
         return view('buyer.distributor.orders.products', compact('products'));
+    }
+
+    /**
+     * Download Excel template for ordering.
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new DistributorOrderTemplateExport, 'template_order_distributor.xlsx');
+    }
+
+    /**
+     * Process products from uploaded Excel and add to cart.
+     */
+    public function processExcelOrder(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls,csv',
+            'preferred_shipping_date' => 'required|date|after_or_equal:today',
+        ]);
+
+        try {
+            $import = new DistributorOrderImport;
+            Excel::import($import, $request->file('excel_file'));
+
+            if (empty($import->rows)) {
+                return back()->with('error', 'Tidak ada data produk yang valid di dalam Excel.');
+            }
+
+            // Clear current distributor cart first or merge? 
+            // Better to clear or ask, but usually distributors want to replace the current session with the excel list.
+            // Let's clear for simplicity as "Order from Excel" is a specific action.
+            Cart::where('user_id', Auth::id())
+                ->where('cart_type', 'distributor')
+                ->delete();
+
+            foreach ($import->rows as $row) {
+                Cart::create([
+                    'user_id' => Auth::id(),
+                    'product_id' => $row['product_id'],
+                    'quantity' => $row['quantity'],
+                    'cart_type' => 'distributor',
+                ]);
+            }
+
+            // Store preferred shipping date in session to be used in checkout
+            session(['preferred_shipping_date' => $request->preferred_shipping_date]);
+
+            return redirect()->route('distributor.orders.cart')
+                ->with('success', count($import->rows) . ' produk berhasil diimpor dari Excel.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat mengimpor Excel: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -199,6 +254,11 @@ class OrderController extends Controller
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
         });
 
+        $preferredShippingDate = session('preferred_shipping_date');
+        if ($preferredShippingDate && is_string($preferredShippingDate)) {
+            $preferredShippingDate = \Illuminate\Support\Carbon::parse($preferredShippingDate);
+        }
+
         return view('buyer.distributor.orders.checkout', compact(
             'carts',
             'subtotal',
@@ -213,7 +273,8 @@ class OrderController extends Controller
             'totalItems',
             'potentialPoints',
             'provinces',
-            'warehouses'
+            'warehouses',
+            'preferredShippingDate'
         ));
     }
 
@@ -363,6 +424,7 @@ class OrderController extends Controller
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
             'payment_method' => 'required|string',
+            'preferred_shipping_date' => 'nullable|date',
         ]);
 
         $address = Address::where('id', $request->address_id)
@@ -447,7 +509,11 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
                 'notes' => $request->notes,
+                'preferred_shipping_date' => $request->preferred_shipping_date ?? session('preferred_shipping_date'),
             ]);
+
+            // Clear the session after order created
+            session()->forget('preferred_shipping_date');
 
             foreach ($carts as $cart) {
                 $productPrice = $user->getProductPrice($cart->product);

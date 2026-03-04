@@ -45,199 +45,226 @@
                     </div>
                 </div>
                 <div class="col-lg-8">
-                    <div class="tab-content account dashboard-content pl-50">
+                    <div class="tab-content account dashboard-content">
                         <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Detail Pesanan</h3>
-                                @php
-                                    $statusClass = match($order->order_status) {
-                                        'pending' => 'bg-warning',
-                                        'processing', 'shipped' => 'bg-info',
-                                        'delivered' => 'bg-success',
-                                        'cancelled' => 'bg-danger',
-                                        default => 'bg-secondary',
-                                    };
-                                    $statusLabel = match($order->order_status) {
-                                        'pending' => 'Menunggu',
-                                        'processing' => 'Diproses',
-                                        'shipped' => 'Dikirim',
-                                        'delivered' => 'Selesai',
-                                        'cancelled' => 'Dibatalkan',
-                                        default => ucfirst($order->order_status),
-                                    };
-                                @endphp
-                                <span class="badge rounded-pill {{ $statusClass }} text-white font-md">{{ $statusLabel }}</span>
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+                                <div>
+                                    <a href="{{ route('buyer.orders.index') }}" class="text-brand font-sm fw-bold mb-2 d-inline-block">
+                                        <i class="fi-rs-arrow-left mr-5"></i> Kembali ke Daftar Pesanan
+                                    </a>
+                                    <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
+                                </div>
+                                <div class="badge-group">
+                                    @php
+                                        $statusClass = match($order->order_status) {
+                                            'pending' => 'bg-warning',
+                                            'processing' => 'bg-info',
+                                            'shipped' => 'bg-primary',
+                                            'delivered' => 'bg-success',
+                                            'cancelled' => 'bg-danger',
+                                            default => 'bg-secondary',
+                                        };
+                                        $statusLabel = match($order->order_status) {
+                                            'pending' => 'Menunggu Pembayaran',
+                                            'processing' => 'Sedang Diproses',
+                                            'shipped' => 'Dalam Pengiriman',
+                                            'delivered' => 'Selesai',
+                                            'cancelled' => 'Dibatalkan',
+                                            default => ucfirst($order->order_status),
+                                        };
+                                    @endphp
+                                    <span class="badge rounded-pill {{ $statusClass }} px-4 py-2 text-white font-sm">{{ $statusLabel }}</span>
+                                </div>
                             </div>
 
-                            <!-- Order Info & Shipping -->
-                            <div class="card mb-4 border-0 shadow-sm border-radius-10">
-                                <div class="card-body p-4">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-4 mb-md-0">
-                                            <h5 class="mb-3 text-brand border-bottom pb-2">Informasi Pesanan</h5>
-                                            <div class="table-responsive">
-                                                <table class="table table-clean font-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">No. Pesanan</td>
-                                                            <td class="py-1 text-end"><span class="text-brand">#{{ $order->order_number }}</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Tanggal</td>
-                                                            <td class="py-1 text-end">{{ $order->created_at->format('d M Y, H:i') }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Pembayaran</td>
-                                                            <td class="py-1 text-end">{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Status Bayar</td>
-                                                            <td class="py-1 text-end">
-                                                                <span class="badge rounded-pill bg-{{ $order->payment_status === 'paid' ? 'success' : 'warning' }} text-white font-xs px-2">
-                                                                    {{ ucfirst($order->payment_status) }}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                            <div class="row g-4">
+                                <!-- Order Info Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
+                                        <div class="card-header bg-brand-light border-0 p-3">
+                                            <h5 class="mb-0 text-brand font-md"><i class="fi-rs-document mr-10"></i>Informasi Pesanan</h5>
                                         </div>
-                                        <div class="col-md-6">
-                                            <h5 class="mb-3 text-brand border-bottom pb-2">Pengiriman</h5>
-                                             <div class="table-responsive">
-                                                <table class="table table-clean font-sm">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Ekspedisi</td>
-                                                            <td class="py-1 text-end">{{ $order->expedition ? $order->expedition->name . ' (' . strtoupper($order->expedition->code) . ')' : '-' }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Layanan</td>
-                                                            <td class="py-1 text-end">{{ $order->expedition_service ?? '-' }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">No. Resi</td>
-                                                            <td class="py-1 text-end">
-                                                                @if($order->tracking_number)
-                                                                    <strong class="text-brand">{{ $order->tracking_number }}</strong>
-                                                                    @if($order->expedition)
-                                                                        <br><a href="javascript:void(0)" class="btn-small p-0 mt-1" id="btn-track-order">
-                                                                            <i class="fi-rs-search"></i> Lacak Pengiriman
-                                                                        </a>
-                                                                    @endif
-                                                                @else
-                                                                    <span class="text-muted">-</span>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold py-1">Dikirim</td>
-                                                            <td class="py-1 text-end">{{ $order->shipped_at ? $order->shipped_at->format('d M Y') : '-' }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                        <div class="card-body p-4">
+                                            <div class="info-list">
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                                    <span class="text-dark font-sm">Tanggal Transaksi</span>
+                                                    <span class="fw-bold font-sm text-dark">{{ $order->created_at->format('d M Y, H:i') }}</span>
+                                                </div>
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                                    <span class="text-dark font-sm">Metode Pembayaran</span>
+                                                    <span class="fw-bold font-sm text-dark">{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</span>
+                                                </div>
+                                                <div class="info-item d-flex justify-content-between">
+                                                    <span class="text-dark font-sm">Status Pembayaran</span>
+                                                    <span class="badge rounded-pill {{ $order->payment_status === 'paid' ? 'bg-success' : 'bg-warning' }} px-3">
+                                                        {{ strtoupper($order->payment_status) }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <div class="divider mt-2 mb-4"></div>
-                                    
-                                    <div class="row">
-                                         <!-- Dikirim Dari -->
-                                        @if($order->sourceWarehouse)
-                                        <div class="col-md-6 mb-4 mb-md-0">
-                                            <h6 class="mb-3 text-muted"><i class="fi-rs-shop mr-10"></i>Pengirim</h6>
-                                            <div class="bg-light p-3 border-radius-5">
-                                                <h6 class="mb-1">{{ $order->sourceWarehouse->name }}</h6>
-                                                <p class="font-sm text-muted mb-0">
-                                                    {{ $order->sourceWarehouse->address }}<br>
-                                                    {{ $order->sourceWarehouse->full_location }}<br>
-                                                    @if($order->sourceWarehouse->phone) <span class="font-xs"><i class="fi-rs-smartphone mr-5"></i> {{ $order->sourceWarehouse->phone }}</span> @endif
-                                                </p>
+                                </div>
+
+                                <!-- Shipping Status Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
+                                        <div class="card-header bg-info-light border-0 p-3">
+                                            <h5 class="mb-0 text-info font-md"><i class="fi-rs-truck-side mr-10"></i>Status Pengiriman</h5>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <div class="info-list">
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                                    <span class="text-dark font-sm">Kurir & Layanan</span>
+                                                    <span class="fw-bold font-sm text-dark text-end">
+                                                        {{ $order->expedition ? $order->expedition->name : '-' }} 
+                                                        <br><small class="text-dark fw-bold">({{ $order->expedition_service ?? 'Standard' }})</small>
+                                                    </span>
+                                                </div>
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom align-items-center">
+                                                    <span class="text-dark font-sm">Nomor Resi</span>
+                                                    @if($order->tracking_number)
+                                                        <div class="text-end">
+                                                            <span class="fw-bold font-sm text-brand d-block">{{ $order->tracking_number }}</span>
+                                                            <a href="javascript:void(0)" class="font-xs text-info fw-bold" id="btn-track-order">
+                                                                <i class="fi-rs-search mr-5"></i> Lacak Sekarang
+                                                            </a>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-dark font-sm fw-bold">Belum tersedia</span>
+                                                    @endif
+                                                </div>
+                                                <div class="info-item d-flex justify-content-between">
+                                                    <span class="text-dark font-sm">Tanggal Pengiriman</span>
+                                                    <span class="fw-bold font-sm text-dark">{{ $order->shipped_at ? $order->shipped_at->format('d M Y') : '-' }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        @endif
+                                    </div>
+                                </div>
 
-                                        <!-- Alamat Penerima -->
-                                        <div class="{{ $order->sourceWarehouse ? 'col-md-6' : 'col-12' }}">
-                                            <h6 class="mb-3 text-muted"><i class="fi-rs-marker mr-10"></i>Penerima</h6>
-                                            <div class="bg-light p-3 border-radius-5">
-                                                <p class="font-sm mb-0">
-                                                    {!! nl2br(e($order->shipping_address)) !!}
-                                                </p>
-                                                @if($order->notes)
-                                                    <div class="mt-2 text-brand italic font-xs border-top pt-2">
-                                                        <i class="fi-rs-edit mr-5"></i> Catatan: {{ $order->notes }}
+                                <!-- Warehouse & Shipping Address Card -->
+                                <div class="col-12 mt-4">
+                                    <div class="card border border-light-2 shadow-sm border-radius-15 p-4">
+                                        <div class="row g-4">
+                                            @if($order->sourceWarehouse)
+                                            <div class="col-md-6 border-end-md">
+                                                <h6 class="mb-3 text-dark text-uppercase fw-bold letter-spacing-1 font-xs">Dikirim Dari</h6>
+                                                <div class="d-flex">
+                                                    <div class="icon-circle bg-brand-light text-brand shadow-sm mr-15">
+                                                        <i class="fi-rs-shop"></i>
                                                     </div>
-                                                @endif
+                                                    <div>
+                                                        <h6 class="mb-1 text-dark fw-bold">{{ $order->sourceWarehouse->name }}</h6>
+                                                        <p class="font-sm text-dark mb-0">
+                                                            {{ $order->sourceWarehouse->address }},<br>
+                                                            {{ $order->sourceWarehouse->full_location }}<br>
+                                                            @if($order->sourceWarehouse->phone) 
+                                                                <span class="font-sm mt-2 d-block text-dark fw-bold"><i class="fi-rs-smartphone mr-5"></i> {{ $order->sourceWarehouse->phone }}</span> 
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <div class="col-md-{{ $order->sourceWarehouse ? '6' : '12' }}">
+                                                <h6 class="mb-3 text-dark text-uppercase fw-bold letter-spacing-1 font-xs">Alamat Penerima</h6>
+                                                <div class="d-flex">
+                                                    <div class="icon-circle bg-info-light text-info shadow-sm mr-15">
+                                                        <i class="fi-rs-marker"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-sm text-dark fw-bold mb-1">
+                                                            {!! nl2br(e($order->shipping_address)) !!}
+                                                        </p>
+                                                        @if($order->notes)
+                                                            <div class="mt-2 p-2 bg-light border-radius-5 border-start border-3 border-brand">
+                                                                <p class="font-sm text-dark mb-0 italic">
+                                                                    <i class="fi-rs-edit mr-5"></i> Catatan: {{ $order->notes }}
+                                                                </p>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Items List -->
+                                <div class="col-12 mt-4">
+                                    <div class="card border-0 shadow-sm border-radius-15 overflow-hidden">
+                                        <div class="card-header bg-white p-4 border-bottom">
+                                            <h5 class="mb-0">Daftar Produk</h5>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-borderless align-middle mb-0">
+                                                    <thead class="bg-brand-light">
+                                                        <tr>
+                                                            <th class="ps-4 py-3 font-sm text-dark fw-bold">Produk</th>
+                                                            <th class="py-3 font-sm text-dark fw-bold text-center">Harga Satuan</th>
+                                                            <th class="py-3 font-sm text-dark fw-bold text-center">Jumlah</th>
+                                                            <th class="pe-4 py-3 font-sm text-dark fw-bold text-end">Subtotal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($order->items as $item)
+                                                            <tr class="border-bottom">
+                                                                <td class="ps-4 py-3">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="product-img-wrap mr-15">
+                                                                            <img src="{{ $item->product->image_url ? $item->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" 
+                                                                                 alt="{{ $item->product->display_name }}" 
+                                                                                 class="rounded" 
+                                                                                 style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #eee;"
+                                                                                 onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                                                                        </div>
+                                                                        <div>
+                                                                            <h6 class="font-sm mb-1 text-dark">{{ $item->product->display_name }}</h6>
+                                                                            <span class="font-xs text-muted">SKU: {{ $item->sku ?? '-' }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="py-3 text-center font-sm" data-label="Harga">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                                                <td class="py-3 text-center font-sm" data-label="Jumlah">{{ $item->quantity }}</td>
+                                                                <td class="pe-4 py-3 text-end fw-bold text-brand" data-label="Subtotal">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white p-4 border-top">
+                                            <div class="row justify-content-end">
+                                                <div class="col-md-5 col-lg-4">
+                                                    <div class="price-summary">
+                                                        <div class="d-flex justify-content-between mb-2">
+                                                            <span class="text-dark font-sm fw-bold">Subtotal Produk</span>
+                                                            <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->subtotal ?? 0, 0, ',', '.') }}</span>
+                                                        </div>
+                                                        @if($order->discount_amount > 0)
+                                                        <div class="d-flex justify-content-between mb-2 text-danger fw-bold">
+                                                            <span class="font-sm">Diskon ({{ $order->discount_percent }}%)</span>
+                                                            <span class="font-sm fw-bold">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
+                                                        </div>
+                                                        @endif
+                                                        <div class="d-flex justify-content-between mb-3 text-dark fw-bold">
+                                                            <span class="font-sm">Ongkos Kirim</span>
+                                                            <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between pt-3 border-top">
+                                                            <h5 class="mb-0">Total Harga</h5>
+                                                            <h4 class="mb-0 text-brand text-nowrap">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Items -->
-                            <div class="card border-0 shadow-sm border-radius-10">
-                                <div class="card-header bg-white border-bottom-0 p-4 pb-0">
-                                     <h5 class="mb-0">Item Pesanan</h5>
-                                </div>
-                                <div class="card-body p-4 pt-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-clean font-sm">
-                                            <thead>
-                                                <tr class="main-heading">
-                                                    <th>Produk</th>
-                                                    <th>Harga</th>
-                                                    <th class="text-center">Jml</th>
-                                                    <th class="text-end">Subtotal</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($order->items as $item)
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <img src="{{ $item->product->image_url ? $item->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" 
-                                                                     alt="{{ $item->product->display_name }}" 
-                                                                     class="img-fluid rounded mr-15" 
-                                                                     style="width: 60px; height: 60px; object-fit: cover;"
-                                                                     onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
-                                                                <div>
-                                                                    <h6 class="font-sm mb-0">{{ $item->product->display_name }}</h6>
-                                                                    <span class="font-xs text-muted">{{ $item->sku ?? '' }}</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                                                        <td class="text-center">{{ $item->quantity }}</td>
-                                                        <td class="text-end product-price">
-                                                            <strong class="text-brand">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</strong>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot>
-                                                <tr>
-                                                    <td colspan="3" class="text-end fw-bold py-2">Subtotal</td>
-                                                    <td class="text-end py-2">Rp {{ number_format($order->subtotal ?? $order->total_amount, 0, ',', '.') }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="3" class="text-end fw-bold py-2">Biaya Pengiriman</td>
-                                                    <td class="text-end py-2">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
-                                                </tr>
-                                                <tr class="bg-light">
-                                                    <td colspan="3" class="text-end fw-bold py-3"><h5 class="mb-0 text-brand">Total Pembayaran</h5></td>
-                                                    <td class="text-end py-3"><h5 class="mb-0 text-brand text-nowrap">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h5></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-
-                                    <div class="mt-4">
-                                         <a href="{{ route('buyer.orders.index') }}" class="btn btn-outline-secondary rounded font-sm"><i class="fi-rs-arrow-left mr-5"></i>Kembali ke Pesanan</a>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -270,9 +297,66 @@
 </div>
 
 <style>
-    .table-clean tbody td { vertical-align: middle; padding: 10px 0; border-top: 1px solid #f2f2f2; }
-    .table-clean thead th { border-top: 0; border-bottom-width: 1px; color: #253D4E; font-weight: 700; }
-    .divider { height: 1px; background-color: #f2f2f2; width: 100%; }
+    .border-radius-15 { border-radius: 15px; }
+    .bg-brand-light { background-color: rgba(59, 183, 126, 0.08); }
+    .bg-info-light { background-color: rgba(61, 144, 239, 0.08); }
+    .bg-light-gray { background-color: #f8fafc; }
+    
+    .icon-circle {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 18px;
+    }
+    
+    .letter-spacing-1 { letter-spacing: 1px; }
+    .italic { font-style: italic; }
+    
+    .info-item:last-child { border-bottom: 0 !important; margin-bottom: 0 !important; }
+    
+    .product-img-wrap {
+        flex-shrink: 0;
+    }
+    
+    @media (min-width: 768px) {
+        .border-end-md { border-right: 1px solid #edf2f7; }
+        .dashboard-content { padding-left: 50px; }
+    }
+    
+    @media (max-width: 767px) {
+        .badge-group { margin-top: 10px; width: 100%; }
+        .badge-group .badge { width: 100%; display: block; text-align: center; }
+        .card-header h5 { font-size: 14px; }
+        .info-list .info-item { flex-direction: row; align-items: center; }
+        .table thead { display: none; }
+        .table tbody tr { display: block; padding: 15px; }
+        .table tbody td { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 0 !important;
+            text-align: right !important;
+            border: 0;
+        }
+        .table tbody td:first-child { 
+            display: block; 
+            text-align: left !important; 
+            padding-bottom: 15px !important;
+            border-bottom: 1px dashed #eee !important;
+            margin-bottom: 10px;
+        }
+        .table tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #777;
+            text-align: left;
+        }
+        .table tbody td:first-child::before { display: none; }
+        .price-summary { width: 100%; }
+    }
 </style>
 
 @push('scripts')

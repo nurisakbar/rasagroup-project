@@ -43,17 +43,23 @@ class Order extends Model
         'points_credited',
         'affiliate_id',
         'affiliate_points',
+        'discount_percent',
+        'discount_amount',
         'xendit_invoice_id',
         'xendit_invoice_url',
+        'preferred_shipping_date',
     ];
 
     protected $casts = [
         'subtotal' => 'decimal:2',
+        'discount_percent' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'points_credited' => 'boolean',
         'paid_at' => 'datetime',
         'shipped_at' => 'datetime',
+        'preferred_shipping_date' => 'date',
     ];
 
     public function user(): BelongsTo

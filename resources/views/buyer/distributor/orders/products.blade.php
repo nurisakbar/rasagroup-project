@@ -29,10 +29,41 @@
                                         <h3 class="mb-0">Pesan Produk ke Pusat</h3>
                                         <p class="text-muted font-sm">Pilih produk untuk menambah stok warehouse Anda.</p>
                                     </div>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <button class="btn btn-sm btn-info rounded-pill px-4 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#excelOrderForm" aria-expanded="false" aria-controls="excelOrderForm">
+                                            <i class="fi-rs-file-excel mr-5"></i> Order dari Excel
+                                        </button>
                                         <a href="{{ route('distributor.orders.cart') }}" class="btn btn-sm btn-warning rounded-pill px-4 text-dark">
                                             <i class="fi-rs-shopping-cart mr-5"></i> Keranjang
                                         </a>
+                                    </div>
+                                </div>
+                                <div class="collapse" id="excelOrderForm">
+                                    <div class="bg-light p-4 border-bottom">
+                                        <h5 class="mb-3">Impor Pesanan dari Excel</h5>
+                                        <p class="text-muted font-sm mb-4">
+                                            1. <a href="{{ route('distributor.orders.download-template') }}" class="text-brand fw-bold">Unduh template Excel di sini</a><br>
+                                            2. Isi kolom <strong>Jumlah</strong> untuk produk yang ingin dipesan.<br>
+                                            3. Pilih <strong>Tanggal Pengiriman</strong> dan unggah file yang telah diisi.
+                                        </p>
+                                        <form action="{{ route('distributor.orders.import-excel') }}" method="POST" enctype="multipart/form-data">
+                                            @csrf
+                                            <div class="row g-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label font-sm fw-bold">Tanggal Paket Dikirim</label>
+                                                    <input type="date" name="preferred_shipping_date" class="form-control font-sm" required min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label font-sm fw-bold">File Excel (XLSX/XLS/CSV)</label>
+                                                    <input type="file" name="excel_file" class="form-control font-sm" required accept=".xlsx,.xls,.csv">
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" class="btn btn-brand btn-sm w-100 mt-md-0 mt-3">
+                                                        <i class="fi-rs-upload mr-5"></i> Impor & Pesan
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                                 <div class="card-body p-4">

@@ -190,6 +190,18 @@ class OrderController extends Controller
         }
 
         $order->update($updateData);
+        
+        // Send WhatsApp notification for tracking number
+        try {
+            // Load necessary relationships
+            $order->load(['address', 'expedition']);
+            \App\Helpers\WACloudHelper::sendTrackingNotification($order);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send tracking notification from Admin OrderController', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return back()->with('success', 'Nomor resi berhasil disimpan.');
     }
@@ -208,6 +220,22 @@ class OrderController extends Controller
         }
 
         $order->update($updateData);
+
+        // If marked as paid, send thank you notification
+        if ($request->payment_status === 'paid') {
+            try {
+                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                \App\Helpers\WACloudHelper::sendThankYouNotification($order);
+                
+                // Notify warehouse/hub owner
+                \App\Helpers\WACloudHelper::notifyWarehouseOwnersAboutPayment($order);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send thank you notification or notify warehouse from Admin OrderController', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return back()->with('success', 'Status pembayaran berhasil diperbarui.');
     }
@@ -298,7 +326,38 @@ class OrderController extends Controller
 
         if (!empty($updateData)) {
             $order->update($updateData);
+            
+            // If tracking number was updated, send WhatsApp notification
+            if (isset($updateData['tracking_number'])) {
+                try {
+                    // Load necessary relationships
+                    $order->load(['address', 'expedition']);
+                    \App\Helpers\WACloudHelper::sendTrackingNotification($order);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send tracking notification from Admin OrderController (batch update)', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
+            // If payment status was updated to paid, send WhatsApp notification
+            if (isset($updateData['payment_status']) && $updateData['payment_status'] === 'paid') {
+                try {
+                    $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                    \App\Helpers\WACloudHelper::sendThankYouNotification($order);
+                    
+                    // Notify warehouse/hub owner
+                    \App\Helpers\WACloudHelper::notifyWarehouseOwnersAboutPayment($order);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send thank you notification or notify warehouse from Admin OrderController (batch update)', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return back()->with('success', $message);
         }
 

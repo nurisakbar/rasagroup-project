@@ -193,13 +193,24 @@ class CheckoutController extends Controller
     }
 
     \Log::info('=== END CHECKOUT DEBUG ===');
+    
+    // Calculate discount
+    $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+    $discountAmount = 0;
+    $discountPercent = 0;
+    if ($applicableDiscount) {
+        $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
+        $discountPercent = $applicableDiscount->discount_percent;
+    }
 
-    $total = $subtotal + $shippingCost;
+    $total = $subtotal - $discountAmount + $shippingCost;
 
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
         'shippingCost', 
+        'discountAmount',
+        'discountPercent',
         'total', 
         'addresses', 
         'defaultAddress',
@@ -292,13 +303,27 @@ class CheckoutController extends Controller
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
         \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
 
+        // Calculate discount
+        $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+        $discountAmount = 0;
+        $discountPercent = 0;
+        if ($applicableDiscount) {
+            $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
+            $discountPercent = $applicableDiscount->discount_percent;
+        }
+
+        $total = $subtotal - $discountAmount + $shippingCost;
+
         return response()->json([
             'shipping_cost' => $shippingCost,
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
-            'total' => $subtotal + $shippingCost,
-            'total_formatted' => 'Rp ' . number_format($subtotal + $shippingCost, 0, ',', '.'),
+            'discount_amount' => $discountAmount,
+            'discount_amount_formatted' => 'Rp ' . number_format($discountAmount, 0, ',', '.'),
+            'discount_percent' => $discountPercent,
+            'total' => $total,
+            'total_formatted' => 'Rp ' . number_format($total, 0, ',', '.'),
             'total_weight' => $totalWeight,
             'total_weight_formatted' => number_format($totalWeight / 1000, 1) . ' kg',
             'service_name' => $serviceName,
@@ -506,7 +531,17 @@ class CheckoutController extends Controller
                  \Log::error('Store: Gagal menghitung ongkos kirim. Shipping cost is 0 or less.');
                  throw new \Exception('Gagal menghitung ongkos kirim. Silakan pilih layanan pengiriman kembali.');
             }
-            $total = $subtotal + $shippingCost;
+            
+            // Calculate discount
+            $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+            $discountAmount = 0;
+            $discountPercent = 0;
+            if ($applicableDiscount) {
+                $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
+                $discountPercent = $applicableDiscount->discount_percent;
+            }
+
+            $total = $subtotal - $discountAmount + $shippingCost;
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .
@@ -562,6 +597,15 @@ class CheckoutController extends Controller
                 ];
             }
 
+            // Add discount as item (if any)
+            if ($discountAmount > 0) {
+                $xenditItems[] = [
+                    'name' => 'Potongan Harga (' . $discountPercent . '%)',
+                    'quantity' => 1,
+                    'price' => -$discountAmount, // Negative amount for discount
+                ];
+            }
+
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR, // Online order
                 'order_number' => $orderNumber,
@@ -571,6 +615,8 @@ class CheckoutController extends Controller
                 'expedition_service' => $request->expedition_service,
                 'source_warehouse_id' => $sourceWarehouse->id,
                 'subtotal' => $subtotal,
+                'discount_percent' => $discountPercent,
+                'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,

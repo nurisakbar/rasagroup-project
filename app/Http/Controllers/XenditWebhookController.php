@@ -92,6 +92,16 @@ class XenditWebhookController extends Controller
                             $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
                             
                             \App\Helpers\WACloudHelper::sendThankYouNotification($order);
+
+                            // Notify Hub/Warehouse owner about the new paid order
+                            try {
+                                \App\Helpers\WACloudHelper::notifyWarehouseOwnersAboutPayment($order);
+                            } catch (\Exception $e) {
+                                Log::error('Failed to notify warehouse owners after Xendit payment success', [
+                                    'order_id' => $order->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
                         } catch (\Exception $e) {
                             // Log error but don't fail the webhook processing
                             Log::error('Failed to send WhatsApp thank you notification after payment', [

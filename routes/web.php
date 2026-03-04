@@ -160,6 +160,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Pages Management
         Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
+        // Discount Tiers Management
+        Route::resource('discount-tiers', App\Http\Controllers\Admin\DiscountTierController::class)->except(['show']);
+
         // Warehouses CRUD
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
@@ -248,6 +251,10 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         Route::get('/orders', [App\Http\Controllers\Warehouse\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'update'])->name('orders.update');
+
+        // Hub Profile/Settings
+        Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
+        Route::put('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'update'])->name('profile.update');
     });
 });
 
@@ -317,6 +324,8 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
 
         // Order Management
         Route::get('/orders/products', [App\Http\Controllers\Distributor\OrderController::class, 'products'])->name('orders.products');
+        Route::get('/orders/download-template', [App\Http\Controllers\Distributor\OrderController::class, 'downloadTemplate'])->name('orders.download-template');
+        Route::post('/orders/import-excel', [App\Http\Controllers\Distributor\OrderController::class, 'processExcelOrder'])->name('orders.import-excel');
         Route::get('/orders/cart', [App\Http\Controllers\Distributor\OrderController::class, 'cart'])->name('orders.cart');
         Route::post('/orders/add-to-cart', [App\Http\Controllers\Distributor\OrderController::class, 'addToCart'])->name('orders.add-to-cart');
         Route::put('/orders/cart/{cart}', [App\Http\Controllers\Distributor\OrderController::class, 'updateCart'])->name('orders.update-cart');

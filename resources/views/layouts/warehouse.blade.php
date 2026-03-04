@@ -106,6 +106,12 @@
             <i class="fa fa-shopping-cart"></i> <span>KELOLA PESANAN</span>
           </a>
         </li>
+        <li class="header">SETTING</li>
+        <li class="{{ request()->routeIs('warehouse.profile*') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.profile') }}">
+            <i class="fa fa-user"></i> <span>PENGATURAN HUB</span>
+          </a>
+        </li>
       </ul>
     </section>
   </aside>

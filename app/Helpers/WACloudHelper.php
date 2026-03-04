@@ -292,6 +292,119 @@ class WACloudHelper
     }
 
     /**
+     * Send tracking number notification when order is shipped
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return array|null
+     */
+    public static function sendTrackingNotification(\App\Models\Order $order): ?array
+    {
+        if (!self::isConfigured()) {
+            Log::warning('WACloud not configured. Cannot send tracking notification.');
+            return null;
+        }
+
+        if (!$order->address || !$order->address->phone) {
+            Log::warning('Order address or phone not available for tracking notification', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        if (!$order->tracking_number) {
+            Log::warning('Order tracking number not available', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        try {
+            $phone = $order->address->phone;
+            $message = self::buildTrackingMessage($order);
+            
+            Log::info('Sending tracking notification via WhatsApp', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'phone' => $phone,
+                'tracking_number' => $order->tracking_number,
+            ]);
+            
+            $result = self::sendText($phone, $message);
+            
+            if ($result) {
+                Log::info('Tracking notification sent via WhatsApp', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                    'message_id' => $result['message_id'] ?? null,
+                ]);
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to send tracking notification via WhatsApp', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Notify warehouse/hub owners about a new paid order
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return void
+     */
+    public static function notifyWarehouseOwnersAboutPayment(\App\Models\Order $order): void
+    {
+        if (!self::isConfigured()) {
+            Log::warning('WACloud not configured. Cannot notify warehouse owners.');
+            return;
+        }
+
+        if (!$order->source_warehouse_id) {
+            Log::warning('Order has no source warehouse', [
+                'order_id' => $order->id,
+            ]);
+            return;
+        }
+
+        try {
+            // Find all users associated with this warehouse
+            $warehouseOwners = \App\Models\User::where('warehouse_id', $order->source_warehouse_id)
+                ->whereIn('role', ['warehouse', 'distributor'])
+                ->get();
+
+            if ($warehouseOwners->isEmpty()) {
+                Log::info('No owners found for warehouse to notify', [
+                    'warehouse_id' => $order->source_warehouse_id,
+                    'order_id' => $order->id,
+                ]);
+                return;
+            }
+
+            $message = self::buildWarehouseOrderNotificationMessage($order);
+
+            foreach ($warehouseOwners as $owner) {
+                if ($owner->phone) {
+                    Log::info('Sending new order notification to warehouse owner', [
+                        'order_id' => $order->id,
+                        'owner_id' => $owner->id,
+                        'phone' => $owner->phone,
+                    ]);
+                    self::sendText($owner->phone, $message);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to notify warehouse owners about payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Build thank you notification message
      * 
      * @param \App\Models\Order $order Order model
@@ -373,6 +486,87 @@ class WACloudHelper
         
         $message .= "Terima kasih telah mempercayakan Rasa Group untuk kebutuhan Anda! 🙏\n";
         $message .= "Kami berharap Anda puas dengan produk dan layanan kami.";
+        
+        return $message;
+    }
+
+    /**
+     * Build tracking notification message
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return string
+     */
+    private static function buildTrackingMessage(\App\Models\Order $order): string
+    {
+        $message = "🚚 *Pesanan Anda Sedang Dikirim!*\n\n";
+        
+        $message .= "Kabar gembira! Pesanan *#{$order->order_number}* telah diserahkan ke kurir dan sedang dalam perjalanan menuju lokasi Anda.\n\n";
+        
+        $message .= "📦 *Informasi Pengiriman:*\n";
+        
+        if ($order->expedition) {
+            $message .= "Kurir: *{$order->expedition->name}*\n";
+        }
+        
+        $message .= "No. Resi: *{$order->tracking_number}*\n\n";
+        
+        $message .= "💡 *Tips:*\n";
+        $message .= "Anda dapat melacak posisi pesanan Anda secara berkala melalui website kurir terkait atau di menu 'Pesanan Saya' pada aplikasi/website kami.\n\n";
+        
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $message .= "📞 *Butuh Bantuan?*\n";
+        $message .= "Hubungi customer service kami jika Anda menemui kendala dalam pengiriman.\n";
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+        $message .= "Terima kasih telah berbelanja di Rasa Group! 🙏";
+        
+        return $message;
+    }
+
+    /**
+     * Build notification message for warehouse owners
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return string
+     */
+    private static function buildWarehouseOrderNotificationMessage(\App\Models\Order $order): string
+    {
+        $message = "📢 *PESANAN BARU MASUK (SUDAH LUNAS)*\n\n";
+        
+        $message .= "Halo, ada pesanan baru yang masuk ke Hub/Gudang Anda dan sudah dikonfirmasi lunas.\n\n";
+        
+        $message .= "📦 *Detail Pesanan:*\n";
+        $message .= "No. Pesanan: *#{$order->order_number}*\n";
+        $message .= "Tanggal: " . $order->created_at->format('d/m/Y H:i') . "\n";
+        $message .= "Total: Rp " . number_format($order->total_amount, 0, ',', '.') . "\n\n";
+        
+        if ($order->items && $order->items->count() > 0) {
+            $message .= "🛍️ *Item:* \n";
+            foreach ($order->items as $item) {
+                $productName = $item->product ? $item->product->name : 'Produk';
+                $message .= "• {$productName} (Qty: {$item->quantity})\n";
+            }
+            $message .= "\n";
+        }
+        
+        $message .= "🚚 *Kurir:* " . ($order->expedition ? $order->expedition->name : '-') . " (" . ($order->expedition_service ?: '-') . ")\n\n";
+        
+        $message .= "📍 *Tujuan:* \n";
+        if ($order->address) {
+            $message .= "{$order->address->recipient_name}\n";
+            $message .= "{$order->address->phone}\n";
+            $message .= "{$order->address->city_name}, {$order->address->province_name}\n\n";
+        } else {
+            $message .= "Lihat detail di dashboard\n\n";
+        }
+        
+        $message .= "📝 *Catatan:* {$order->notes}\n\n";
+        
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $message .= "Silakan login ke dashboard Warehouse Anda untuk memproses pesanan ini.\n";
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+        $message .= "Terima kasih, tim Rasa Group.";
         
         return $message;
     }

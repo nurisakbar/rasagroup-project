@@ -267,6 +267,14 @@
                                         <p class="text-muted text-end" id="totalWeightDisplay">{{ number_format($totalWeight / 1000, 1) }} kg</p>
                                     </td>
                                 </tr>
+                                <tr id="discountRow" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
+                                    <td class="cart_total_label">
+                                        <h6 class="text-muted">Potongan Harga (<span id="discountPercentDisplay">{{ $discountPercent }}</span>%)</h6>
+                                    </td>
+                                    <td class="cart_total_amount">
+                                        <h5 class="text-danger text-end" id="discountAmountDisplay">-Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td class="cart_total_label">
                                         <h6 class="text-muted">Ongkos Kirim</h6>
@@ -566,6 +574,16 @@
                 // Update displays
                 $('#shippingCostDisplay').text(data.shipping_cost_formatted);
                 $('#totalDisplay').text(data.total_formatted);
+                
+                // Update discount if present in response
+                if (data.discount_amount > 0) {
+                    $('#discountPercentDisplay').text(data.discount_percent);
+                    $('#discountAmountDisplay').text('-' + data.discount_amount_formatted);
+                    $('#discountRow').show();
+                } else {
+                    $('#discountRow').hide();
+                }
+
                 if(data.estimated_delivery) {
                     $('#estimatedDelivery').text('Estimasi: ' + data.estimated_delivery);
                 } else {
