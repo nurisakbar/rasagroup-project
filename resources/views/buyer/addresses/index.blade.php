@@ -151,7 +151,6 @@
 <style>
     .border-radius-15 { border-radius: 15px !important; }
     .border-radius-10 { border-radius: 10px !important; }
-    .dashboard-menu { position: sticky; top: 100px; }
     .nav-link.active { font-weight: 700; color: #3BB77E !important; }
     .text-brand { color: #3BB77E !important; }
     .border-brand { border-color: #3BB77E !important; }

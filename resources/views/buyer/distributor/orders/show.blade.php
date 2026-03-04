@@ -160,3 +160,11 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .order-info-cards .bg-light { border: 1px solid #f2f2f2; transition: all 0.3s; }
+    .order-info-cards .bg-light:hover { border-color: #3BB77E; background-color: #fff !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .uppercase { text-transform: uppercase; letter-spacing: 1px; }
+</style>
+@endpush
