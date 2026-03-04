@@ -120,7 +120,7 @@ Route::prefix('buyer')->name('buyer.')->middleware('auth')->group(function () {
 });
 
 // Log Viewer Route (Access via /logs)
-Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index'])->middleware(['auth', 'agent']);
+Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
