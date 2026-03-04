@@ -119,6 +119,9 @@ Route::prefix('buyer')->name('buyer.')->middleware('auth')->group(function () {
     Route::get('/point-withdrawals/{pointWithdrawal}', [App\Http\Controllers\Buyer\PointWithdrawalController::class, 'show'])->name('point-withdrawals.show');
 });
 
+// Log Viewer Route (Access via /logs)
+Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index'])->middleware(['auth', 'agent']);
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Admin Login (Guest only)

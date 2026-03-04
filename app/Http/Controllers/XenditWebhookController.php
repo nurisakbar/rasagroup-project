@@ -26,10 +26,14 @@ class XenditWebhookController extends Controller
 
             $data = $request->json()->all();
 
-            Log::info('Xendit Webhook Received', [
+            Log::info('Xendit Webhook Received - FULL DEBUG', [
+                'headers' => $request->headers->all(),
+                'payload' => $data,
                 'event' => $data['status'] ?? 'unknown',
                 'invoice_id' => $data['id'] ?? null,
                 'external_id' => $data['external_id'] ?? null,
+                'payment_method' => $data['payment_method'] ?? null,
+                'payment_channel' => $data['payment_channel'] ?? null,
             ]);
 
             // Find order by invoice ID or external_id (order_number)
