@@ -65,6 +65,11 @@
                     <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.affiliate.*') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">
+                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Afiliasi
+                </a>
+            </li>
             @if($isDistributor)
                 <li class="nav-item {{ $layout === 'vertical' ? 'mt-3' : '' }}">
                     <a class="nav-link mode-switch distributor-mode text-warning fw-bold" href="{{ route('distributor.manage-orders.index') }}">

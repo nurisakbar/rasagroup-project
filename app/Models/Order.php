@@ -157,4 +157,49 @@ class Order extends Model
             default => 'label-default',
         };
     }
+    /**
+     * Credit earned points to the buyer (DRiiPPreneur) and the affiliate.
+     */
+    public function creditPoints()
+    {
+        if ($this->points_credited) {
+            return false;
+        }
+
+        $credited = false;
+
+        // 1. Credit DRiiPPreneur points (for regular orders)
+        if ($this->order_type === self::TYPE_REGULAR && $this->points_earned > 0) {
+            $user = $this->user;
+            if ($user && $user->isDriippreneurApproved()) {
+                $user->increment('points', $this->points_earned);
+                $credited = true;
+            }
+        }
+
+        // 2. Credit Distributor points (for distributor orders)
+        if ($this->order_type === self::TYPE_DISTRIBUTOR && $this->points_earned > 0) {
+            $user = $this->user;
+            if ($user) {
+                $user->increment('points', $this->points_earned);
+                $credited = true;
+            }
+        }
+
+        // 3. Credit Affiliate points
+        if ($this->affiliate_id && $this->affiliate_points > 0) {
+            $affiliate = User::find($this->affiliate_id);
+            if ($affiliate) {
+                $affiliate->increment('points', $this->affiliate_points);
+                $credited = true;
+            }
+        }
+
+        if ($credited || ($this->points_earned == 0 && $this->affiliate_points == 0)) {
+            $this->update(['points_credited' => true]);
+            return true;
+        }
+
+        return false;
+    }
 }

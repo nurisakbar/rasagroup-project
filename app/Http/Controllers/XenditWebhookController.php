@@ -71,14 +71,8 @@ class XenditWebhookController extends Controller
                             $order->update(['order_status' => 'processing']);
                         }
 
-                        // Credit points for DRiiPPreneur if applicable
-                        if ($order->points_earned > 0 && !$order->points_credited) {
-                            $user = $order->user;
-                            if ($user && $user->isDriippreneurApproved()) {
-                                $user->increment('points', $order->points_earned);
-                                $order->update(['points_credited' => true]);
-                            }
-                        }
+                        // Credit points for DRiiPPreneur and Affiliate if applicable
+                        $order->creditPoints();
 
                         Log::info('Xendit payment successful', [
                             'order_id' => $order->id,

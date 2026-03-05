@@ -117,6 +117,9 @@ Route::prefix('buyer')->name('buyer.')->middleware('auth')->group(function () {
     Route::get('/point-withdrawals/create', [App\Http\Controllers\Buyer\PointWithdrawalController::class, 'create'])->name('point-withdrawals.create');
     Route::post('/point-withdrawals', [App\Http\Controllers\Buyer\PointWithdrawalController::class, 'store'])->name('point-withdrawals.store');
     Route::get('/point-withdrawals/{pointWithdrawal}', [App\Http\Controllers\Buyer\PointWithdrawalController::class, 'show'])->name('point-withdrawals.show');
+
+    // Affiliate
+    Route::get('/affiliate', [App\Http\Controllers\Buyer\AffiliateController::class, 'index'])->name('affiliate.index');
 });
 
 // Log Viewer Route (Access via /logs)

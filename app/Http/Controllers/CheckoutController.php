@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Expedition;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Services\XenditService;
@@ -561,20 +562,17 @@ class CheckoutController extends Controller
                 $pointsEarned = (int)$pointRate * $totalItems;
             }
 
-            // Track affiliate referral and award points
+            // Track affiliate referral
             $affiliateId = session('affiliate_id');
             $affiliatePoints = 0;
             
             if ($affiliateId && $affiliateId !== Auth::id()) {
-                $affiliate = User::find($affiliateId);
+                $affiliateExists = User::where('id', $affiliateId)->exists();
                 
-                if ($affiliate) {
-                    // Award 1 point per product purchased
-                    $totalProducts = $carts->sum('quantity');
-                    $affiliatePoints = $totalProducts;
-                    
-                    // Add points to affiliate's account
-                    $affiliate->increment('points', $affiliatePoints);
+                if ($affiliateExists) {
+                    // Calculate 1 point per item purchased
+                    $totalItems = $carts->sum('quantity');
+                    $affiliatePoints = $totalItems;
                 }
             }
 

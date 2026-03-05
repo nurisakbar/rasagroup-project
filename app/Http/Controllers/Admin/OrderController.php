@@ -151,21 +151,9 @@ class OrderController extends Controller
             $updateData['shipped_at'] = now();
         }
 
-        // If order is completed and it's a distributor order, credit points
+        // If order is completed, credit points
         if ($request->order_status === 'completed') {
-            // Load user relationship if not already loaded
-            if (!$order->relationLoaded('user')) {
-                $order->load('user');
-            }
-            
-            // Credit points for distributor orders
-            if ($order->order_type === Order::TYPE_DISTRIBUTOR && 
-                !$order->points_credited && 
-                $order->points_earned > 0) {
-                
-                $order->user->increment('points', $order->points_earned);
-                $updateData['points_credited'] = true;
-            }
+            $order->creditPoints();
         }
 
         $order->update($updateData);
@@ -217,6 +205,8 @@ class OrderController extends Controller
         // If payment is marked as paid, record the timestamp
         if ($request->payment_status === 'paid' && !$order->paid_at) {
             $updateData['paid_at'] = now();
+            // Credit points when marked as paid
+            $order->creditPoints();
         }
 
         $order->update($updateData);
@@ -270,27 +260,9 @@ class OrderController extends Controller
                 $updateData['shipped_at'] = now();
             }
 
-            // If order is completed, credit points for distributor or driippreneur
+            // If order is completed, credit points
             if ($request->order_status === 'completed') {
-                // Load user relationship if not already loaded
-                if (!$order->relationLoaded('user')) {
-                    $order->load('user');
-                }
-                
-                // Credit points if not already credited and points_earned > 0
-                if (!$order->points_credited && $order->points_earned > 0) {
-                    // Credit points for distributor orders
-                    if ($order->order_type === Order::TYPE_DISTRIBUTOR) {
-                        $order->user->increment('points', $order->points_earned);
-                        $updateData['points_credited'] = true;
-                    }
-                    
-                    // Credit points for regular orders by approved DRiiPPreneur
-                    if ($order->order_type === Order::TYPE_REGULAR && $order->user->isDriippreneurApproved()) {
-                        $order->user->increment('points', $order->points_earned);
-                        $updateData['points_credited'] = true;
-                    }
-                }
+                $order->creditPoints();
             }
             
             $messages[] = 'Status pesanan';
@@ -319,6 +291,7 @@ class OrderController extends Controller
             // If payment is marked as paid, record the timestamp
             if ($request->payment_status === 'paid' && !$order->paid_at) {
                 $updateData['paid_at'] = now();
+                $order->creditPoints();
             }
             
             $messages[] = 'Status pembayaran';

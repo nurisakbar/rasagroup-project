@@ -23,7 +23,12 @@ class AffiliateReferralMiddleware
             
             if ($affiliate) {
                 session(['affiliate_id' => $affiliate->id]);
+                // Store in cookie for 30 days
+                \Illuminate\Support\Facades\Cookie::queue('affiliate_id', $affiliate->id, 60 * 24 * 30);
             }
+        } elseif (!$request->session()->has('affiliate_id') && $request->hasCookie('affiliate_id')) {
+            // Restore from cookie if session is empty
+            session(['affiliate_id' => $request->cookie('affiliate_id')]);
         }
 
         return $next($request);
