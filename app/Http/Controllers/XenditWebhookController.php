@@ -61,6 +61,7 @@ class XenditWebhookController extends Controller
             try {
                 switch ($status) {
                     case 'PAID':
+                    case 'SETTLED':
                         $order->update([
                             'payment_status' => 'paid',
                             'paid_at' => now(),

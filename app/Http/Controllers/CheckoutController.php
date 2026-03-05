@@ -854,7 +854,7 @@ class CheckoutController extends Controller
                     'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
                 ]);
                 
-                if ($invoiceDetails && isset($invoiceDetails['status']) && $invoiceDetails['status'] === 'PAID') {
+                if ($invoiceDetails && isset($invoiceDetails['status']) && ($invoiceDetails['status'] === 'PAID' || $invoiceDetails['status'] === 'SETTLED')) {
                     // Update order status if payment is actually paid
                     $order->update([
                         'payment_status' => 'paid',
