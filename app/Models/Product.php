@@ -28,6 +28,7 @@ class Product extends Model
         'slug',
         'size',
         'unit',
+        'large_unit',
         'price',
         'weight',
         'image',

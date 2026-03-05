@@ -49,8 +49,8 @@
             <div class="container">
                 <div class="header-wrap">
                     <div class="logo logo-width-1">
-                        <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.8rem; color: #253D4E !important; text-decoration: none;">
-                            <span style="color: #3BB77E;">Rasa</span>Group
+                        <a href="{{ route('home') }}">
+                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 180px;" />
                         </a>
                     </div>
                     <div class="header-right">
@@ -213,7 +213,7 @@
             <div class="container">
                 <div class="header-wrap header-space-between position-relative">
                     <div class="logo logo-width-1 d-block d-lg-none">
-                        <a href="/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logo.svg') }}" alt="logo" /></a>
+                        <a href="/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" /></a>
                     </div>
                     <div class="header-nav d-none d-lg-flex">
 

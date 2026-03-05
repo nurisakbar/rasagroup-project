@@ -72,8 +72,53 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
+                                <div class="form-group @error('status') has-error @enderror">
+                                    <label for="status">Status <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="status" name="status" required>
+                                        <option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif</option>
+                                        <option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Non-Aktif</option>
+                                    </select>
+                                    @error('status')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('name') has-error @enderror">
+                                    <label for="name">Nama Produk <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $product->name) }}" placeholder="Contoh: MB Cons 1L-Coconut Milk" required>
+                                    @error('name')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('commercial_name') has-error @enderror">
+                                    <label for="commercial_name">Nama Komersial</label>
+                                    <input type="text" class="form-control" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name) }}" placeholder="Contoh: Coconut Milk (Tampil di website)">
+                                    @error('commercial_name')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group @error('large_unit') has-error @enderror">
+                                    <label for="large_unit">Satuan Terbesar</label>
+                                    <input type="text" class="form-control" id="large_unit" name="large_unit" value="{{ old('large_unit', $product->large_unit ?: 'ctn') }}" placeholder="CTN">
+                                    @error('large_unit')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <div class="form-group @error('unit') has-error @enderror">
-                                    <label for="unit">Satuan (UM)</label>
+                                    <label for="unit">Satuan Terkecil (UM)</label>
                                     <select class="form-control" id="unit" name="unit">
                                         <option value="">-- Pilih --</option>
                                         <option value="BT" {{ old('unit', $product->unit) === 'BT' ? 'selected' : '' }}>Bottle (BT)</option>
@@ -88,42 +133,11 @@
                                     @enderror
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="form-group @error('name') has-error @enderror">
-                            <label for="name">Nama Produk <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $product->name) }}" placeholder="Contoh: MB Cons 1L-Coconut Milk" required>
-                            @error('name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('commercial_name') has-error @enderror">
-                            <label for="commercial_name">Nama Komersial</label>
-                            <input type="text" class="form-control" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name) }}" placeholder="Contoh: Coconut Milk (Nama yang tampil di website)">
-                            @error('commercial_name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group @error('size') has-error @enderror">
                                     <label for="size">Ukuran (Size)</label>
                                     <input type="text" class="form-control" id="size" name="size" value="{{ old('size', $product->size) }}" placeholder="Contoh: 1 L">
                                     @error('size')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group @error('price') has-error @enderror">
-                                    <label for="price">Harga Jual <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">Rp</span>
-                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price', (int)$product->price) }}" step="1" min="0" placeholder="0" required>
-                                    </div>
-                                    @error('price')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -140,14 +154,17 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group @error('status') has-error @enderror">
-                                    <label for="status">Status <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="status" name="status" required>
-                                        <option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif</option>
-                                        <option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Non-Aktif</option>
-                                    </select>
-                                    @error('status')
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group @error('price') has-error @enderror">
+                                    <label for="price">Harga Jual <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rp</span>
+                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price', (int)$product->price) }}" step="1" min="0" placeholder="0" required>
+                                    </div>
+                                    @error('price')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -272,6 +289,12 @@ $(document).ready(function() {
             }
             reader.readAsDataURL(file);
         }
+    });
+
+    // Unit Conversion Label Helper
+    $('#small_unit').on('input', function() {
+        var val = $(this).val() || 'satuan';
+        $('#small_unit_label').text(val);
     });
 });
 </script>

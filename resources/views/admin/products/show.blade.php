@@ -109,8 +109,14 @@
                                 @endif
                                 @if($product->unit)
                                 <tr>
-                                    <th>Satuan (UM)</th>
+                                    <th>Satuan</th>
                                     <td>{{ $product->unit }}</td>
+                                </tr>
+                                @endif
+                                @if($product->large_unit)
+                                <tr>
+                                    <th>Satuan Terbesar</th>
+                                    <td><span class="label label-warning">{{ $product->large_unit }}</span></td>
                                 </tr>
                                 @endif
                             </table>
@@ -136,6 +142,7 @@
                             </table>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

@@ -2,8 +2,8 @@
         <div class="mobile-header-wrapper-inner">
             <div class="mobile-header-top">
                 <div class="mobile-header-logo">
-                    <a href="{{ route('home') }}" class="navbar-brand" style="font-weight: 700; font-size: 1.5rem; color: #253D4E !important; text-decoration: none;">
-                        <span style="color: #3BB77E;">Rasa</span>Group
+                    <a href="{{ route('home') }}">
+                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 120px;" />
                     </a>
                 </div>
                 <div class="mobile-menu-close close-style-wrap close-style-position-inherit">

@@ -90,7 +90,9 @@
                     <div class="col">
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
-                                <a href="{{ route('home') }}" class="mb-15"><h3 class="fw-bold mb-0 text-brand">Rasa<span class="text-dark">Group</span></h3></a>
+                                <a href="{{ route('home') }}" class="mb-15">
+                                    <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 150px;" />
+                                </a>
                                 <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi untuk kebutuhan industri dan rumah tangga.</p>
                             </div>
                             <ul class="contact-infor">
