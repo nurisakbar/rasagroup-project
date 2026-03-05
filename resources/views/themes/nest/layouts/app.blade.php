@@ -10,6 +10,42 @@
     @include('themes.nest.partials.mobile-header')
 
     <main class="main">
+        @if(session('success'))
+            <div class="container mt-4">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fi-rs-check-circle me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="container mt-4">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fi-rs-cross-circle me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
+
+        @if(session('warning'))
+            <div class="container mt-4">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fi-rs-exclamation me-2"></i> {{ session('warning') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
+
+        @if(session('info'))
+            <div class="container mt-4">
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fi-rs-info me-2"></i> {{ session('info') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
+
         @yield('content')
     </main>
 
@@ -18,46 +54,8 @@
     @include('themes.nest.partials.preloader')
     @include('themes.nest.partials.scripts')
 
-    <!-- SweetAlert v1 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
-
     <script>
         $(document).ready(function() {
-            @if(session('success'))
-                swal({
-                    title: "Berhasil!",
-                    text: "{{ session('success') }}",
-                    type: "success",
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-            @endif
-
-            @if(session('error'))
-                swal({
-                    title: "Gagal!",
-                    text: "{{ session('error') }}",
-                    type: "error"
-                });
-            @endif
-
-            @if(session('info'))
-                swal({
-                    title: "Informasi",
-                    text: "{{ session('info') }}",
-                    type: "info"
-                });
-            @endif
-
-            @if(session('warning'))
-                swal({
-                    title: "Peringatan",
-                    text: "{{ session('warning') }}",
-                    type: "warning"
-                });
-            @endif
-
             // Automatic Hub Detection
             @if(!session()->has('selected_hub_id'))
                 if ("geolocation" in navigator) {
@@ -75,15 +73,8 @@
                             },
                             success: function(response) {
                                 if (response.success && response.is_new) {
-                                    swal({
-                                        title: "Lokasi Terdeteksi!",
-                                        text: "Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.",
-                                        type: "success",
-                                        timer: 4000,
-                                        showConfirmButton: true
-                                    }, function() {
-                                        window.location.reload();
-                                    });
+                                    alert("Lokasi Terdeteksi! Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.");
+                                    window.location.reload();
                                 }
                             }
                         });

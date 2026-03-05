@@ -464,7 +464,7 @@
     
     function loadExpeditionServices(expeditionId) {
         if (!currentAddressId) {
-            swal("Perhatian", "Silakan pilih alamat pengiriman terlebih dahulu", "warning");
+            alert("Silakan pilih alamat pengiriman terlebih dahulu");
             return;
         }
     
@@ -567,7 +567,7 @@
             },
             success: function(data) {
                 if (data.error) {
-                    swal("Error", data.error, "error");
+                    alert(data.error);
                     return;
                 }
                 
@@ -597,7 +597,7 @@
             },
             error: function(xhr) {
                 console.error('Error:', xhr);
-                swal("Error", "Gagal menghitung biaya pengiriman", "error");
+                alert("Gagal menghitung biaya pengiriman");
             }
         });
     }

@@ -486,11 +486,7 @@
         e.preventDefault();
         
         if (!selectedWarehouseId) {
-            swal({
-                title: "Pilih Hub",
-                text: "Silakan pilih hub pengirim terlebih dahulu.",
-                type: "warning"
-            });
+            alert("Silakan pilih hub pengirim terlebih dahulu.");
             return false;
         }
 
@@ -504,13 +500,7 @@
             data: data,
             success: function(response) {
                 if (response.success) {
-                    swal({
-                        title: "Berhasil!",
-                        text: response.message,
-                        type: "success",
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                    alert(response.message);
                     
                     // Update cart count in header
                     $('.pro-count.blue').text(response.cart_count);
@@ -519,17 +509,9 @@
             },
             error: function(xhr) {
                 if (xhr.status === 401) {
-                    swal({
-                        title: "Perhatian!",
-                        text: "Silakan masuk terlebih dahulu untuk belanja.",
-                        type: "warning",
-                        showCancelButton: true,
-                        confirmButtonText: "Masuk Sekarang",
-                        cancelButtonText: "Nanti",
-                        closeOnConfirm: true
-                    }, function() {
+                    if (confirm("Silakan masuk terlebih dahulu untuk belanja. Masuk sekarang?")) {
                         window.location.href = '{{ route("login") }}';
-                    });
+                    }
                     return;
                 }
 
@@ -541,11 +523,7 @@
                     errorMsg = xhr.responseJSON.error;
                 }
                 
-                swal({
-                    title: "Gagal!",
-                    text: errorMsg,
-                    type: "error"
-                });
+                alert(errorMsg);
             }
         });
     });

@@ -40,7 +40,34 @@
     @if(session('success'))
         <div class="container mt-4">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
+                <i class="fi-rs-check-circle me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="container mt-4">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fi-rs-cross-circle me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="container mt-4">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fi-rs-exclamation me-2"></i> {{ session('warning') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    @endif
+
+    @if(session('info'))
+        <div class="container mt-4">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fi-rs-info me-2"></i> {{ session('info') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </div>
@@ -60,46 +87,8 @@
 
     @include('themes.nest.partials.scripts')
 
-    <!-- SweetAlert v1 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
-
     <script>
         $(document).ready(function() {
-            @if(session('success'))
-                swal({
-                    title: "Berhasil!",
-                    text: "{{ session('success') }}",
-                    type: "success",
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-            @endif
-
-            @if(session('error'))
-                swal({
-                    title: "Gagal!",
-                    text: "{{ session('error') }}",
-                    type: "error"
-                });
-            @endif
-
-            @if(session('info'))
-                swal({
-                    title: "Informasi",
-                    text: "{{ session('info') }}",
-                    type: "info"
-                });
-            @endif
-
-            @if(session('warning'))
-                swal({
-                    title: "Peringatan",
-                    text: "{{ session('warning') }}",
-                    type: "warning"
-                });
-            @endif
-
             // Automatic Hub Detection
             @if(!session()->has('selected_hub_id'))
                 if ("geolocation" in navigator) {
@@ -117,15 +106,8 @@
                             },
                             success: function(response) {
                                 if (response.success && response.is_new) {
-                                    swal({
-                                        title: "Lokasi Terdeteksi!",
-                                        text: "Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.",
-                                        type: "success",
-                                        timer: 4000,
-                                        showConfirmButton: true
-                                    }, function() {
-                                        window.location.reload();
-                                    });
+                                    alert("Lokasi Terdeteksi! Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.");
+                                    window.location.reload();
                                 }
                             }
                         });
@@ -136,6 +118,7 @@
                     });
                 }
             @endif
+
             // AJAX Add to Cart
             $('.add-to-cart-form').on('submit', function(e) {
                 e.preventDefault();
@@ -149,13 +132,7 @@
                     data: data,
                     success: function(response) {
                         if (response.success) {
-                            swal({
-                                title: "Berhasil!",
-                                text: response.message,
-                                type: "success",
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
+                            alert(response.message);
                             
                             // Update cart count in header if element exists
                             $('.pro-count.blue').text(response.cart_count);
@@ -164,17 +141,9 @@
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            swal({
-                                title: "Perhatian!",
-                                text: "Silakan masuk terlebih dahulu untuk belanja.",
-                                type: "warning",
-                                showCancelButton: true,
-                                confirmButtonText: "Masuk Sekarang",
-                                cancelButtonText: "Nanti",
-                                closeOnConfirm: true
-                            }, function() {
+                            if (confirm("Silakan masuk terlebih dahulu untuk belanja. Masuk sekarang?")) {
                                 window.location.href = '{{ route("login") }}';
-                            });
+                            }
                             return;
                         }
 
@@ -186,11 +155,7 @@
                             errorMsg = xhr.responseJSON.error;
                         }
                         
-                        swal({
-                            title: "Gagal!",
-                            text: errorMsg,
-                            type: "error"
-                        });
+                        alert(errorMsg);
                     }
                 });
             });
