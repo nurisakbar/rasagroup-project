@@ -13,6 +13,13 @@ class AffiliateController extends Controller
     {
         $user = Auth::user();
         
+        // Ensure user has referral code
+        if (empty($user->referral_code)) {
+            $user->update([
+                'referral_code' => \App\Models\User::generateUniqueReferralCode()
+            ]);
+        }
+        
         // Get orders that used this user's affiliate code
         $referralOrders = Order::where('affiliate_id', $user->id)
             ->where('payment_status', 'paid')
