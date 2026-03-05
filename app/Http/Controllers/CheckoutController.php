@@ -281,13 +281,13 @@ class CheckoutController extends Controller
             // RajaOngkir returns flat array, find matching service
             foreach ($costResult['data'] as $service) {
                 \Log::info('Checking service:', [
-                    'service_code' => $service['code'],
-                    'service_name' => $service['service'],
-                    'matches_expedition' => $service['code'] === $expedition->code,
-                    'matches_service' => $service['service'] === $request->service_code,
+                    'service_code' => $service['service'] ?? null,
+                    'service_name' => $service['description'] ?? null,
+                    'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
+                    'matches_service' => ($service['service'] ?? '') === $request->service_code,
                 ]);
                 
-                if ($service['code'] === $expedition->code && $service['service'] === $request->service_code) {
+                if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $request->service_code) {
                     $shippingCost = $service['cost'];
                     $serviceName = $service['description'];
                     $estimatedDelivery = ($service['etd'] ?: '2-3') . ' hari';
@@ -298,6 +298,19 @@ class CheckoutController extends Controller
                     ]);
                     break;
                 }
+            }
+        }
+
+        // Fallback for simulation if no results or match from RajaOngkir
+        if ($shippingCost <= 0) {
+            if ($request->service_code === 'REG') {
+                $shippingCost = 15000;
+                $serviceName = 'Layanan Reguler';
+                $estimatedDelivery = '2-3 hari';
+            } elseif ($request->service_code === 'OKE') {
+                $shippingCost = 12000;
+                $serviceName = 'Layanan Hemat';
+                $estimatedDelivery = '4-5 hari';
             }
         }
         
@@ -380,7 +393,7 @@ class CheckoutController extends Controller
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
             // RajaOngkir returns flat array, filter by expedition code
             foreach ($costResult['data'] as $service) {
-                if ($service['code'] === $expedition->code) {
+                if (($service['code'] ?? '') === $expedition->code) {
                     $services[] = [
                         'code' => $service['service'],
                         'name' => $service['description'],
@@ -390,6 +403,24 @@ class CheckoutController extends Controller
                     ];
                 }
             }
+        }
+
+        // Add dummy services if no results from RajaOngkir for simulation
+        if (empty($services)) {
+            $services[] = [
+                'code' => 'REG',
+                'name' => 'Layanan Reguler',
+                'cost' => 15000,
+                'cost_formatted' => 'Rp 15.000',
+                'estimated_days' => '2-3 hari',
+            ];
+            $services[] = [
+                'code' => 'OKE',
+                'name' => 'Layanan Hemat',
+                'cost' => 12000,
+                'cost_formatted' => 'Rp 12.000',
+                'estimated_days' => '4-5 hari',
+            ];
         }
 
         return response()->json([
@@ -528,9 +559,15 @@ class CheckoutController extends Controller
             }
 
             if ($shippingCost <= 0) {
-                 // Fallback or error if shipping cost calculation fails at store time
-                 \Log::error('Store: Gagal menghitung ongkos kirim. Shipping cost is 0 or less.');
-                 throw new \Exception('Gagal menghitung ongkos kirim. Silakan pilih layanan pengiriman kembali.');
+                // Fallback for simulation
+                if ($request->expedition_service === 'REG') {
+                    $shippingCost = 15000;
+                } elseif ($request->expedition_service === 'OKE') {
+                    $shippingCost = 12000;
+                } else {
+                    \Log::error('Store: Gagal menghitung ongkos kirim. Shipping cost is 0 or less.');
+                    throw new \Exception('Gagal menghitung ongkos kirim. Silakan pilih layanan pengiriman kembali.');
+                }
             }
             
             // Calculate discount
