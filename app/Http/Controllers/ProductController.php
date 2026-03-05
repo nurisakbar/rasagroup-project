@@ -13,7 +13,7 @@ class ProductController extends Controller
         
         $query = Product::where('status', 'active');
 
-        // Only show products that have stock in the selected hub
+        // Only show products that have stock
         if ($selectedHubId) {
             $query->whereHas('warehouseStocks', function($q) use ($selectedHubId) {
                 $q->where('warehouse_id', $selectedHubId)
@@ -24,6 +24,10 @@ class ProductController extends Controller
             $query->with(['warehouseStocks' => function($q) use ($selectedHubId) {
                 $q->where('warehouse_id', $selectedHubId);
             }]);
+        } else {
+            $query->whereHas('warehouseStocks', function($q) {
+                $q->where('stock', '>', 0);
+            });
         }
 
         if ($request->has('search') && $request->search) {

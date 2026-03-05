@@ -11,37 +11,51 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $popularProducts = Product::where('status', 'active')
+        $selectedHubId = session('selected_hub_id');
+        
+        $baseQuery = Product::where('status', 'active');
+        
+        if ($selectedHubId) {
+            $baseQuery->whereHas('warehouseStocks', function($q) use ($selectedHubId) {
+                $q->where('warehouse_id', $selectedHubId)->where('stock', '>', 0);
+            });
+        } else {
+            $baseQuery->whereHas('warehouseStocks', function($q) {
+                $q->where('stock', '>', 0);
+            });
+        }
+
+        $popularProducts = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->latest()
             ->take(10)
             ->get();
 
-        $dailyBestSells = Product::where('status', 'active')
+        $dailyBestSells = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->inRandomOrder()
             ->take(4)
             ->get();
 
-        $topSelling = Product::where('status', 'active')
+        $topSelling = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->orderBy('price', 'desc')
             ->take(3)
             ->get();
 
-        $trendingProducts = Product::where('status', 'active')
+        $trendingProducts = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->inRandomOrder()
             ->take(3)
             ->get();
 
-        $recentlyAdded = Product::where('status', 'active')
+        $recentlyAdded = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->latest()
             ->take(3)
             ->get();
 
-        $topRated = Product::where('status', 'active')
+        $topRated = (clone $baseQuery)
             ->with(['category', 'brand'])
             ->inRandomOrder()
             ->take(3)
@@ -55,7 +69,7 @@ class HomeController extends Controller
         // Get products for each category for the tabs
         $categoryProducts = [];
         foreach($categories as $category) {
-            $categoryProducts[$category->id] = Product::where('status', 'active')
+            $categoryProducts[$category->id] = (clone $baseQuery)
                 ->where('category_id', $category->id)
                 ->with(['category', 'brand'])
                 ->take(8)
