@@ -42,6 +42,11 @@ class User extends Authenticatable
         'driippreneur_regency_id',
         'driippreneur_address',
         'driippreneur_applied_at',
+        'ktp_file',
+        'npwp_file',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
         'points',
         'price_level_id',
         'referral_code',
@@ -49,6 +54,8 @@ class User extends Authenticatable
         'google_id',
         'google_token',
         'google_refresh_token',
+        'term_of_payment',
+        'monthly_target',
     ];
 
     protected static function boot()

@@ -19,13 +19,12 @@
                 @csrf
                 <div class="box-body">
                     <div class="form-group">
-                        <label for="min_purchase_display">Minimal Pembelian (Subtotal)</label>
+                        <label for="min_quantity">Minimal Item Belanja</label>
                         <div class="input-group">
-                            <span class="input-group-addon">Rp</span>
-                            <input type="text" class="form-control" id="min_purchase_display" required placeholder="Contoh: 1.000.000">
-                            <input type="hidden" name="min_purchase" id="min_purchase">
+                            <input type="number" class="form-control" name="min_quantity" id="min_quantity" required placeholder="Contoh: 10">
+                            <span class="input-group-addon">Item</span>
                         </div>
-                        <p class="help-block">Gunakan format angka tanpa titik/koma untuk input manual, titik akan muncul otomatis.</p>
+                        <p class="help-block">Masukkan jumlah minimal item belanja untuk mendapatkan diskon ini.</p>
                     </div>
                     <div class="form-group">
                         <label for="discount_percent">Potongan (%)</label>
@@ -51,27 +50,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-$(document).ready(function() {
-    const displayInput = $('#min_purchase_display');
-    const hiddenInput = $('#min_purchase');
-
-    function formatNumber(n) {
-        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    displayInput.on('input', function() {
-        let val = $(this).val();
-        let rawVal = val.replace(/\./g, '');
-        
-        // Update hidden input with raw number
-        hiddenInput.val(rawVal);
-        
-        // Update display with formatted number
-        $(this).val(formatNumber(rawVal));
-    });
-});
-</script>
-@endpush

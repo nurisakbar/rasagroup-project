@@ -109,6 +109,14 @@
                             <th>No. HP</th>
                             <td>{{ $user->phone ?? '-' }}</td>
                         </tr>
+                        <tr>
+                            <th>TOP</th>
+                            <td>{{ $user->term_of_payment ?? '0' }} Hari</td>
+                        </tr>
+                        <tr>
+                            <th>Target Bulanan</th>
+                            <td>Rp {{ number_format($user->monthly_target ?? 0, 0, ',', '.') }}</td>
+                        </tr>
                     </table>
                 </div>
             </div>

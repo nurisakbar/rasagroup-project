@@ -196,7 +196,8 @@ class CheckoutController extends Controller
     \Log::info('=== END CHECKOUT DEBUG ===');
     
     // Calculate discount
-    $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+    $totalQuantity = $carts->sum('quantity');
+    $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
     $discountAmount = 0;
     $discountPercent = 0;
     if ($applicableDiscount) {
@@ -318,7 +319,8 @@ class CheckoutController extends Controller
         \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
 
         // Calculate discount
-        $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+        $totalQuantity = $carts->sum('quantity');
+        $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
         $discountAmount = 0;
         $discountPercent = 0;
         if ($applicableDiscount) {
@@ -571,7 +573,8 @@ class CheckoutController extends Controller
             }
             
             // Calculate discount
-            $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($subtotal);
+            $totalQuantity = $carts->sum('quantity');
+            $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
             $discountAmount = 0;
             $discountPercent = 0;
             if ($applicableDiscount) {

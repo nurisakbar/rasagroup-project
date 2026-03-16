@@ -10,25 +10,25 @@ class DiscountTier extends Model
     use HasFactory;
 
     protected $fillable = [
-        'min_purchase',
+        'min_quantity',
         'discount_percent',
         'is_active',
     ];
 
     protected $casts = [
-        'min_purchase' => 'decimal:2',
+        'min_quantity' => 'integer',
         'discount_percent' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
     /**
-     * Get the applicable discount for a given amount.
+     * Get the applicable discount for a given quantity.
      */
-    public static function getApplicableDiscount($amount)
+    public static function getApplicableDiscount($quantity)
     {
         return self::where('is_active', true)
-            ->where('min_purchase', '<=', $amount)
-            ->orderBy('min_purchase', 'desc')
+            ->where('min_quantity', '<=', $quantity)
+            ->orderBy('min_quantity', 'desc')
             ->first();
     }
 }

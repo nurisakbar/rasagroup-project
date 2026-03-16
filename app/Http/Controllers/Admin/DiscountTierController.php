@@ -13,7 +13,7 @@ class DiscountTierController extends Controller
      */
     public function index()
     {
-        $discountTiers = DiscountTier::orderBy('min_purchase', 'asc')->get();
+        $discountTiers = DiscountTier::orderBy('min_quantity', 'asc')->get();
         return view('admin.discount_tiers.index', compact('discountTiers'));
     }
 
@@ -31,18 +31,18 @@ class DiscountTierController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'min_purchase' => 'required|numeric|min:0',
+            'min_quantity' => 'required|integer|min:0',
             'discount_percent' => 'required|numeric|min:0|max:100',
             'is_active' => 'boolean',
         ], [
-            'min_purchase.required' => 'Minimal pembelian wajib diisi.',
-            'min_purchase.numeric' => 'Minimal pembelian harus berupa angka.',
+            'min_quantity.required' => 'Minimal item belanja wajib diisi.',
+            'min_quantity.integer' => 'Minimal item belanja harus berupa angka bulat.',
             'discount_percent.required' => 'Persentase diskon wajib diisi.',
             'discount_percent.max' => 'Persentase diskon tidak boleh lebih dari 100%.',
         ]);
 
         DiscountTier::create([
-            'min_purchase' => $request->min_purchase,
+            'min_quantity' => $request->min_quantity,
             'discount_percent' => $request->discount_percent,
             'is_active' => $request->has('is_active'),
         ]);
@@ -64,12 +64,17 @@ class DiscountTierController extends Controller
     public function update(Request $request, DiscountTier $discountTier)
     {
         $request->validate([
-            'min_purchase' => 'required|numeric|min:0',
+            'min_quantity' => 'required|integer|min:0',
             'discount_percent' => 'required|numeric|min:0|max:100',
+        ], [
+            'min_quantity.required' => 'Minimal item belanja wajib diisi.',
+            'min_quantity.integer' => 'Minimal item belanja harus berupa angka bulat.',
+            'discount_percent.required' => 'Persentase diskon wajib diisi.',
+            'discount_percent.max' => 'Persentase diskon tidak boleh lebih dari 100%.',
         ]);
 
         $discountTier->update([
-            'min_purchase' => $request->min_purchase,
+            'min_quantity' => $request->min_quantity,
             'discount_percent' => $request->discount_percent,
             'is_active' => $request->has('is_active'),
         ]);

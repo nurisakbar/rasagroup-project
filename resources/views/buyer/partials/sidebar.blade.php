@@ -66,7 +66,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.affiliate.*') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">
+                <a class="nav-link {{ Route::is('buyer.affiliate.*') || Route::is('buyer.point-withdrawals.*') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">
                     <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Afiliasi
                 </a>
             </li>

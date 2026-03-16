@@ -20,7 +20,7 @@ class PointWithdrawalController extends Controller
         // Only DRiiPPreneurs who are approved can withdraw points
         if (!$user->isDriippreneurApproved()) {
             return redirect()->route('buyer.dashboard')
-                ->with('error', 'Anda belum terdaftar sebagai DRiiPPreneur atau aplikasi belum disetujui.');
+                ->with('error', 'Anda belum terdaftar sebagai Affiliator atau aplikasi belum disetujui.');
         }
 
         $withdrawals = PointWithdrawal::where('user_id', $user->id)
@@ -40,7 +40,7 @@ class PointWithdrawalController extends Controller
         // Only DRiiPPreneurs who are approved can withdraw points
         if (!$user->isDriippreneurApproved()) {
             return redirect()->route('buyer.dashboard')
-                ->with('error', 'Anda belum terdaftar sebagai DRiiPPreneur atau aplikasi belum disetujui.');
+                ->with('error', 'Anda belum terdaftar sebagai Affiliator atau aplikasi belum disetujui.');
         }
 
         // Check if user has pending withdrawal
@@ -66,7 +66,7 @@ class PointWithdrawalController extends Controller
         // Only DRiiPPreneurs who are approved can withdraw points
         if (!$user->isDriippreneurApproved()) {
             return redirect()->route('buyer.dashboard')
-                ->with('error', 'Anda belum terdaftar sebagai DRiiPPreneur atau aplikasi belum disetujui.');
+                ->with('error', 'Anda belum terdaftar sebagai Affiliator atau aplikasi belum disetujui.');
         }
 
         // Check if user has pending withdrawal

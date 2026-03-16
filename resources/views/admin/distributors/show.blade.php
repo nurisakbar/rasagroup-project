@@ -32,6 +32,12 @@
                             <b>Level Harga</b> <a class="pull-right">{{ $distributor->priceLevel->name ?? 'Harga Normal' }}</a>
                         </li>
                         <li class="list-group-item">
+                            <b>TOP</b> <a class="pull-right">{{ $distributor->term_of_payment ?? '0' }} Hari</a>
+                        </li>
+                        <li class="list-group-item">
+                            <b>Target Bulanan</b> <a class="pull-right">Rp {{ number_format($distributor->monthly_target ?? 0, 0, ',', '.') }}</a>
+                        </li>
+                        <li class="list-group-item">
                             <b>Terdaftar</b> <a class="pull-right">{{ $distributor->created_at->format('d M Y') }}</a>
                         </li>
                     </ul>

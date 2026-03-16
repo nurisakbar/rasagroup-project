@@ -1,8 +1,8 @@
 @extends('layouts.driippreneur')
 
 @section('title', 'Dashboard')
-@section('page-title', 'Dashboard DRiiPPreneur')
-@section('page-description', 'Selamat datang di panel DRiiPPreneur')
+@section('page-title', 'Dashboard Affiliator')
+@section('page-description', 'Selamat datang di panel Affiliator')
 
 @section('breadcrumb')
     <li class="active">Dashboard</li>
@@ -12,7 +12,7 @@
     @if(!$warehouse)
     <div class="callout callout-warning">
         <h4><i class="fa fa-info-circle"></i> Akun Belum Aktif</h4>
-        <p>Akun DRiiPPreneur Anda belum terhubung ke Hub manapun. Silakan hubungi admin untuk mengaktifkan akun Anda.</p>
+        <p>Akun Affiliator Anda belum terhubung ke Hub manapun. Silakan hubungi admin untuk mengaktifkan akun Anda.</p>
     </div>
     @else
     <!-- Info boxes -->

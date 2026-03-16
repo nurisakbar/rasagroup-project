@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daftar DRiiPPreneur | {{ config('app.name', 'Laravel') }}</title>
+  <title>Daftar Affiliator | {{ config('app.name', 'Laravel') }}</title>
 
   <!-- Bootstrap 3.4.1 -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/bootstrap/css/bootstrap.min.css') }}">
@@ -63,11 +63,11 @@
 <body class="hold-transition register-page">
 <div class="register-box">
   <div class="register-logo">
-    <a href="#"><b>DRiiP</b>Preneur</a>
+    <a href="#"><b>Affili</b>ator</a>
   </div>
 
   <div class="benefits-box">
-    <h4><i class="fa fa-star"></i> Keuntungan Menjadi DRiiPPreneur</h4>
+    <h4><i class="fa fa-star"></i> Keuntungan Menjadi Affiliator</h4>
     <ul>
       <li>Kelola stock produk sendiri</li>
       <li>Akses dashboard khusus</li>
@@ -77,7 +77,7 @@
   </div>
 
   <div class="register-box-body">
-    <p class="login-box-msg"><strong>Daftar sebagai DRiiPPreneur</strong></p>
+    <p class="login-box-msg"><strong>Daftar sebagai Affiliator</strong></p>
 
     @if ($errors->any())
       <div class="alert alert-danger">

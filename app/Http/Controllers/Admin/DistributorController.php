@@ -171,6 +171,8 @@ class DistributorController extends Controller
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
+            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'monthly_target' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Create the warehouse/hub
@@ -195,6 +197,8 @@ class DistributorController extends Controller
             'price_level_id' => $validated['price_level_id'] ?? null,
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
+            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'monthly_target' => $validated['monthly_target'] ?? null,
         ]);
 
         // Sync all active products to warehouse stock
@@ -262,6 +266,8 @@ class DistributorController extends Controller
             'user_phone' => ['nullable', 'string', 'max:20'],
             'user_password' => ['required', 'string', 'min:8', 'confirmed'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
+            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'monthly_target' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Create the warehouse/hub first
@@ -290,6 +296,8 @@ class DistributorController extends Controller
             'price_level_id' => $validated['price_level_id'] ?? null,
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
+            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'monthly_target' => $validated['monthly_target'] ?? null,
         ]);
 
         // Sync all active products to warehouse stock
@@ -558,6 +566,8 @@ class DistributorController extends Controller
             'user_phone' => ['nullable', 'string', 'max:20'],
             'user_password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
+            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'monthly_target' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Update hub
@@ -581,6 +591,8 @@ class DistributorController extends Controller
             'email' => $validated['user_email'],
             'phone' => $validated['user_phone'],
             'price_level_id' => $validated['price_level_id'] ?? null,
+            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'monthly_target' => $validated['monthly_target'] ?? null,
         ];
 
         if ($request->filled('user_password')) {

@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Detail DRiiPPreneur')
-@section('page-title', 'Detail DRiiPPreneur')
-@section('page-description', 'Detail informasi aplikasi DRiiPPreneur')
+@section('title', 'Detail Affiliator')
+@section('page-title', 'Detail Affiliator')
+@section('page-description', 'Detail informasi aplikasi Affiliator')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.driippreneurs.index') }}">DRiiPPreneur</a></li>
+    <li><a href="{{ route('admin.driippreneurs.index') }}">Affiliator</a></li>
     <li class="active">Detail</li>
 @endsection
 
@@ -70,8 +70,55 @@
                             <td>{{ $driippreneur->no_ktp ?? '-' }}</td>
                         </tr>
                         <tr>
+                            <th>Foto KTP</th>
+                            <td>
+                                @if($driippreneur->ktp_file)
+                                    <a href="{{ Storage::url($driippreneur->ktp_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-eye"></i> Lihat Foto KTP
+                                    </a>
+                                @else
+                                    <span class="text-muted">Tidak ada file</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
                             <th>No. NPWP</th>
                             <td>{{ $driippreneur->no_npwp ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Foto NPWP</th>
+                            <td>
+                                @if($driippreneur->npwp_file)
+                                    <a href="{{ Storage::url($driippreneur->npwp_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-eye"></i> Lihat Foto NPWP
+                                    </a>
+                                @else
+                                    <span class="text-muted">Tidak ada file</span>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Informasi Rekening Bank -->
+            <div class="box box-success">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-bank"></i> Informasi Rekening Bank</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Nama Bank</th>
+                            <td>{{ $driippreneur->bank_name ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nomor Rekening</th>
+                            <td><code>{{ $driippreneur->bank_account_number ?? '-' }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Atas Nama</th>
+                            <td>{{ $driippreneur->bank_account_name ?? '-' }}</td>
                         </tr>
                     </table>
                 </div>
@@ -89,7 +136,7 @@
                         <form action="{{ route('admin.driippreneurs.approve', $driippreneur) }}" method="POST" style="margin-bottom: 10px;">
                             @csrf
                             @method('PUT')
-                            <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Setujui aplikasi DRiiPPreneur ini?');">
+                            <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Setujui aplikasi Affiliator ini?');">
                                 <i class="fa fa-check"></i> Setujui Aplikasi
                             </button>
                         </form>
@@ -123,7 +170,7 @@
                         <h4 class="modal-title" style="color: #fff;"><i class="fa fa-times"></i> Tolak Aplikasi</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Tolak aplikasi DRiiPPreneur dari <strong>{{ $driippreneur->name }}</strong>?</p>
+                        <p>Tolak aplikasi Affiliator dari <strong>{{ $driippreneur->name }}</strong>?</p>
                         <div class="form-group">
                             <label for="rejection_reason">Alasan Penolakan (Opsional)</label>
                             <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>

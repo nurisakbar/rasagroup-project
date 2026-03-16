@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DRiiPPreneur Login | {{ config('app.name', 'Laravel') }}</title>
+  <title>Affiliator Login | {{ config('app.name', 'Laravel') }}</title>
 
   <!-- Bootstrap 3.4.1 -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/bootstrap/css/bootstrap.min.css') }}">
@@ -43,11 +43,11 @@
 <body class="hold-transition login-page">
 <div class="login-box">
   <div class="login-logo">
-    <a href="#"><b>DRiiP</b>Preneur</a>
+    <a href="#"><b>Affili</b>ator</a>
   </div>
 
   <div class="login-box-body">
-    <p class="login-box-msg">Login ke akun DRiiPPreneur Anda</p>
+    <p class="login-box-msg">Login ke akun Affiliator Anda</p>
 
     @if ($errors->any())
       <div class="alert alert-danger">

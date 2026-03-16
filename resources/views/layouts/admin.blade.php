@@ -152,7 +152,7 @@
         
         <li class="{{ request()->routeIs('admin.driippreneurs.*') ? 'active' : '' }}">
           <a href="{{ route('admin.driippreneurs.index') }}">
-            <i class="fa fa-users"></i> <span>DRIIPPRENEUR</span>
+            <i class="fa fa-users"></i> <span>AFFILIATOR</span>
           </a>
         </li>
         

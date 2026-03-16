@@ -77,7 +77,7 @@
                                         </div>
                                     @endif
 
-                                    <form action="{{ route('buyer.driippreneur.apply') }}" method="POST">
+                                    <form action="{{ route('buyer.driippreneur.apply') }}" method="POST" enctype="multipart/form-data">
                                         @csrf
 
                                         <h5 class="mb-3">Informasi Akun</h5>
@@ -108,12 +108,60 @@
                                             <small class="font-xs text-muted">Masukkan 16 digit nomor KTP Anda sesuai e-KTP.</small>
                                         </div>
 
-                                        <div class="form-group mb-4">
+                                        <div class="form-group mb-3">
+                                            <label>Foto/Scan KTP <span class="required">*</span></label>
+                                            <input type="file" class="form-control @error('ktp_file') is-invalid @enderror" 
+                                                   name="ktp_file" accept="image/jpeg,image/png,image/jpg" required>
+                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB.</small>
+                                        </div>
+
+                                        <div class="form-group mb-3">
                                             <label>Nomor NPWP <span class="required">*</span></label>
                                             <input type="text" class="form-control @error('no_npwp') is-invalid @enderror" 
                                                    name="no_npwp" value="{{ old('no_npwp') }}" 
                                                    placeholder="Contoh: 12.345.678.9-012.345" maxlength="20" required>
-                                            <small class="font-xs text-muted">Masukkan nomor NPWP Anda (wajib untuk DRiiPPreneur).</small>
+                                            <small class="font-xs text-muted">Masukkan nomor NPWP Anda (wajib untuk Affiliator).</small>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label>Foto/Scan NPWP <span class="required">*</span></label>
+                                            <input type="file" class="form-control @error('npwp_file') is-invalid @enderror" 
+                                                   name="npwp_file" accept="image/jpeg,image/png,image/jpg" required>
+                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB.</small>
+                                        </div>
+
+                                        <div class="divider mb-4"></div>
+
+                                        <h5 class="mb-3">Informasi Rekening Bank</h5>
+
+                                        <div class="row">
+                                            <div class="form-group col-md-12 mb-3">
+                                                <label>Nama Bank <span class="required">*</span></label>
+                                                <input type="text" 
+                                                       class="form-control @error('bank_name') is-invalid @enderror" 
+                                                       name="bank_name" 
+                                                       value="{{ old('bank_name') }}" 
+                                                       placeholder="Contoh: BCA, Mandiri, BNI, dll"
+                                                       required>
+                                            </div>
+                                            <div class="form-group col-md-6 mb-3">
+                                                <label>Nomor Rekening <span class="required">*</span></label>
+                                                <input type="text" 
+                                                       class="form-control @error('bank_account_number') is-invalid @enderror" 
+                                                       name="bank_account_number" 
+                                                       value="{{ old('bank_account_number') }}" 
+                                                       placeholder="Masukkan nomor rekening Anda"
+                                                       required>
+                                            </div>
+                                            <div class="form-group col-md-6 mb-3">
+                                                <label>Atas Nama <span class="required">*</span></label>
+                                                <input type="text" 
+                                                       class="form-control @error('bank_account_name') is-invalid @enderror" 
+                                                       name="bank_account_name" 
+                                                       value="{{ old('bank_account_name') }}" 
+                                                       placeholder="Masukkan nama pemilik rekening"
+                                                       required>
+                                            </div>
                                         </div>
 
                                         <div class="alert alert-info border-0 bg-info-light mb-4">

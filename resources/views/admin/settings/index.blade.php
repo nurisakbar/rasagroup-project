@@ -12,10 +12,10 @@
 <div class="row">
     <div class="col-md-12">
 
-        <!-- DRiiPPreneur Point Rate Setting -->
+        <!-- Affiliator Point Rate Setting -->
         <div class="box box-primary">
             <div class="box-header with-border">
-                <h3 class="box-title"><i class="fa fa-cog"></i> Point Rate DRiiPPreneur</h3>
+                <h3 class="box-title"><i class="fa fa-cog"></i> Point Rate Affiliator</h3>
             </div>
             <div class="box-body">
                 <form action="{{ route('admin.settings.update-driippreneur-point-rate') }}" method="POST">
@@ -36,9 +36,9 @@
                             <span class="input-group-addon">point/item</span>
                         </div>
                         <p class="help-block">
-                            Point yang akan diberikan kepada DRiiPPreneur untuk setiap item yang dibeli saat pesanan selesai.
+                            Point yang akan diberikan kepada Affiliator untuk setiap item yang dibeli saat pesanan selesai.
                             <br>
-                            <strong>Contoh:</strong> Jika di-set 1000 point/item, dan DRiiPPreneur membeli 5 item, maka akan mendapat 5000 point.
+                            <strong>Contoh:</strong> Jika di-set 1000 point/item, dan Affiliator membeli 5 item, maka akan mendapat 5000 point.
                         </p>
                     </div>
 

@@ -230,6 +230,33 @@
                                 <span class="help-block text-danger">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('term_of_payment') has-error @enderror">
+                                    <label for="term_of_payment">Term Of Payment (Hari)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="term_of_payment" name="term_of_payment" value="{{ old('term_of_payment') }}" placeholder="Contoh: 30">
+                                        <span class="input-group-addon">Hari</span>
+                                    </div>
+                                    @error('term_of_payment')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('monthly_target') has-error @enderror">
+                                    <label for="monthly_target">Target Belanja Bulanan</label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rp</span>
+                                        <input type="number" class="form-control" id="monthly_target" name="monthly_target" value="{{ old('monthly_target') }}" placeholder="Contoh: 50000000">
+                                    </div>
+                                    @error('monthly_target')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="box-footer">
                         <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Yakin ingin menyetujui pengajuan ini?')">

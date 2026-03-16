@@ -40,8 +40,17 @@
                                             </div>
                                         </div>
                                         <div class="col-md-5 mt-3 mt-md-0 text-md-end">
-                                            <p class="font-xs text-muted mb-1">Total Poin Afiliasi</p>
-                                            <h3 class="mb-0">{{ number_format($totalReferralPoints, 0, ',', '.') }} <span class="font-xs">Poin</span></h3>
+                                            <p class="font-xs text-muted mb-1">Poin Tersedia (Bisa ditarik)</p>
+                                            <h3 class="mb-0 text-brand">{{ number_format($user->points, 0, ',', '.') }} <span class="font-xs text-muted">/ {{ number_format($totalReferralPoints, 0, ',', '.') }} (Total)</span></h3>
+                                            @if($user->isDriippreneurApproved())
+                                            <a href="{{ route('buyer.point-withdrawals.index') }}" class="btn btn-sm btn-brand mt-2" style="border-radius: 5px;">
+                                                <i class="fi-rs-money mt-1"></i> Tarik Poin
+                                            </a>
+                                            @else
+                                            <a href="{{ route('buyer.driippreneur.status') }}" class="btn btn-sm btn-secondary mt-2" style="border-radius: 5px;" title="Daftar jadi Affiliator untuk menarik poin">
+                                                <i class="fi-rs-lock mt-1"></i> Verifikasi untuk Tarik
+                                            </a>
+                                            @endif
                                         </div>
                                     </div>
 

@@ -12,7 +12,7 @@
     <div class="col-md-12">
         <div class="box box-primary">
             <div class="box-header with-border">
-                <h3 class="box-title">Daftar Potongan Harga Berdasarkan Total Belanja</h3>
+                <h3 class="box-title">Daftar Potongan Harga Berdasarkan Jumlah Item</h3>
                 <div class="box-tools">
                     <a href="{{ route('admin.discount-tiers.create') }}" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Tambah Potongan Harga
@@ -24,7 +24,7 @@
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Min. Pembelian (Subtotal)</th>
+                            <th>Min. Item Belanja</th>
                             <th>Potongan (%)</th>
                             <th>Status</th>
                             <th>Aksi</th>
@@ -34,7 +34,7 @@
                         @forelse($discountTiers as $index => $tier)
                         <tr>
                             <td>{{ $index + 1 }}</td>
-                            <td>Rp {{ number_format($tier->min_purchase, 0, ',', '.') }}</td>
+                            <td>{{ number_format($tier->min_quantity, 0, ',', '.') }} Item</td>
                             <td>{{ $tier->discount_percent }} %</td>
                             <td>
                                 @if($tier->is_active)

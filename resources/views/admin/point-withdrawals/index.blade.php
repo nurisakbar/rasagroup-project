@@ -2,7 +2,7 @@
 
 @section('title', 'Penarikan Poin')
 @section('page-title', 'Manajemen Penarikan Poin')
-@section('page-description', 'Kelola request penarikan poin DRiiPPreneur')
+@section('page-description', 'Kelola request penarikan poin Affiliator')
 
 @section('breadcrumb')
     <li class="active">Penarikan Poin</li>

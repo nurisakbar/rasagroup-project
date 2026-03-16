@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Status DRiiPPreneur')
+@section('title', 'Status Affiliator')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> <a href="{{ route('buyer.dashboard') }}">Akun Saya</a>
-            <span></span> Status DRiiPPreneur
+            <span></span> Status Affiliator
         </div>
     </div>
 </div>
@@ -48,7 +48,7 @@
                         <div class="tab-pane fade show active" role="tabpanel">
                             <div class="card border-0 shadow-sm border-radius-10">
                                 <div class="card-header bg-white border-bottom-0 p-4">
-                                    <h3 class="mb-0">Status Pengajuan DRiiPPreneur</h3>
+                                    <h3 class="mb-0">Status Pengajuan Affiliator</h3>
                                 </div>
                                 <div class="card-body p-4 pt-0 text-center">
                                     @if($user->driippreneur_status === 'pending')
@@ -100,7 +100,7 @@
                                             
                                             <div class="card bg-success-light border-0 mx-auto mb-4" style="max-width: 400px;">
                                                 <div class="card-body p-4">
-                                                    <h5 class="mb-2"><i class="fi-rs-star mr-10 text-success"></i>Aktif sebagai DRiiPPreneur</h5>
+                                                    <h5 class="mb-2"><i class="fi-rs-star mr-10 text-success"></i>Aktif sebagai Affiliator</h5>
                                                     <p class="font-sm text-muted mb-0">Anda tetap dapat berbelanja seperti biasa dan poin akan otomatis ditambahkan setelah pesanan selesai.</p>
                                                 </div>
                                             </div>
@@ -121,7 +121,7 @@
                                                 <i class="fi-rs-cross-circle text-danger" style="font-size: 80px;"></i>
                                             </div>
                                             <h3 class="text-danger mb-3">Pengajuan Ditolak</h3>
-                                            <p class="font-md text-muted mb-4">Maaf, pengajuan DRiiPPreneur Anda tidak dapat disetujui saat ini.</p>
+                                            <p class="font-md text-muted mb-4">Maaf, pengajuan Affiliator Anda tidak dapat disetujui saat ini.</p>
                                             
                                             <div class="alert alert-secondary border-0 bg-light mt-4 mx-auto" style="max-width: 500px;">
                                                 <p class="font-sm mb-0">
@@ -143,7 +143,7 @@
                                                 <i class="fi-rs-document text-muted" style="font-size: 80px;"></i>
                                             </div>
                                             <h3 class="text-muted mb-3">Belum Ada Pengajuan</h3>
-                                            <p class="font-md text-muted mb-4">Anda belum mengajukan pendaftaran sebagai DRiiPPreneur.</p>
+                                            <p class="font-md text-muted mb-4">Anda belum mengajukan pendaftaran sebagai Affiliator.</p>
                                             
                                             <a href="{{ route('buyer.driippreneur.apply') }}" class="btn btn-fill-out btn-lg">
                                                 <i class="fi-rs-add mr-5"></i> Daftar Sekarang

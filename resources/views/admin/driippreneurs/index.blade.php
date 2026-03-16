@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'DRiiPPreneur')
-@section('page-title', 'Manajemen DRiiPPreneur')
-@section('page-description', 'Kelola aplikasi DRiiPPreneur')
+@section('title', 'Affiliator')
+@section('page-title', 'Manajemen Affiliator')
+@section('page-description', 'Kelola aplikasi Affiliator')
 
 @section('breadcrumb')
-    <li class="active">DRiiPPreneur</li>
+    <li class="active">Affiliator</li>
 @endsection
 
 @push('styles')
@@ -106,7 +106,7 @@
         <div class="col-xs-12">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Daftar Aplikasi DRiiPPreneur</h3>
+                    <h3 class="box-title">Daftar Aplikasi Affiliator</h3>
                 </div>
                 <div class="box-body">
                     <table id="driippreneurs-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
@@ -192,7 +192,7 @@ $(document).ready(function() {
         e.preventDefault();
         var form = $(this);
         
-        if (!confirm('Setujui aplikasi DRiiPPreneur ini?')) {
+        if (!confirm('Setujui aplikasi Affiliator ini?')) {
             return false;
         }
 
