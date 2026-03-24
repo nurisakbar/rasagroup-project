@@ -12,4 +12,5 @@
 <!-- Template CSS -->
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/plugins/animate.min.css') }}" />
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/main.css?v=6.1') }}" />
+<link rel="stylesheet" href="{{ asset('rasafont/fonts.css') }}" />
 @stack('styles')
