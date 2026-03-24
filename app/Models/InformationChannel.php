@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
+class InformationChannel extends Model
+{
+    use HasFactory, HasUuids;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
+    protected $fillable = [
+        'title',
+        'slug',
+        'description',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($channel) {
+            if (empty($channel->slug)) {
+                $channel->slug = static::generateUniqueSlug($channel->title);
+            }
+        });
+
+        static::updating(function ($channel) {
+            if ($channel->isDirty('title') && !$channel->isDirty('slug')) {
+                $channel->slug = static::generateUniqueSlug($channel->title);
+            }
+        });
+    }
+
+    public static function generateUniqueSlug($title)
+    {
+        $slug = Str::slug($title);
+        $originalSlug = $slug;
+        $count = 1;
+        while (static::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        return $slug;
+    }
+}

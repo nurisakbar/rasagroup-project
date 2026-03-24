@@ -121,4 +121,27 @@ class Warehouse extends Model
         }
         return implode(', ', $parts) ?: '-';
     }
+
+    /**
+     * Find the best warehouse for a given address
+     */
+    public static function findBestHubForAddress(Address $address)
+    {
+        // 1. Try Same Regency
+        $hub = self::where('is_active', true)
+            ->where('regency_id', $address->regency_id)
+            ->first();
+            
+        if ($hub) return $hub;
+        
+        // 2. Try Same Province
+        $hub = self::where('is_active', true)
+            ->where('province_id', $address->province_id)
+            ->first();
+            
+        if ($hub) return $hub;
+        
+        // 3. Fallback to any active hub (maybe the first one)
+        return self::where('is_active', true)->first();
+    }
 }

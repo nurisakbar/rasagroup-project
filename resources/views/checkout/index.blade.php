@@ -30,6 +30,15 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
+            <i class="fi-rs-exclamation mr-10"></i>{!! nl2br(e(session('warning'))) !!}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <div id="checkoutAlertContainer"></div>
+
     <form action="{{ route('checkout.store') }}" method="POST" id="checkoutForm">
         @csrf
         <div class="row">
@@ -318,8 +327,8 @@
                     <div class="payment_method mb-30">
                          <div class="payment_accordion">
                              <div class="payment-content" style="display: block;">
-                                 <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong>{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
-                                 <p class="font-xs text-muted">{{ $sourceWarehouse->full_location ?? '' }}</p>
+                                 <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong id="sourceWarehouseName">{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
+                                 <p class="font-xs text-muted" id="sourceWarehouseLocation">{{ $sourceWarehouse->full_location ?? '' }}</p>
                              </div>
                          </div>
                     </div>
@@ -329,10 +338,11 @@
                             <div class="payment-content" style="display: block;">
                                 <p class="font-sm mb-0"><i class="fi-rs-marker mr-5"></i> Dikirim ke:</p>
                                 @if($defaultAddress)
-                                    <p class="font-sm font-weight-bold mb-0 text-dark">{{ $defaultAddress->recipient_name }}</p>
-                                    <p class="font-xs text-muted">{{ Str::limit($defaultAddress->full_address, 60) }}</p>
+                                    <p class="font-sm font-weight-bold mb-0 text-dark" id="shippingRecipient">{{ $defaultAddress->recipient_name }}</p>
+                                    <p class="font-xs text-muted" id="shippingAddress">{{ Str::limit($defaultAddress->full_address, 60) }}</p>
                                 @else
-                                    <p class="font-sm text-danger">Pilih alamat pengiriman</p>
+                                    <p class="font-sm text-danger" id="shippingRecipient">Pilih alamat pengiriman</p>
+                                    <p class="font-xs text-muted" id="shippingAddress"></p>
                                 @endif
                             </div>
                         </div>
@@ -575,6 +585,38 @@
                 $('#shippingCostDisplay').text(data.shipping_cost_formatted);
                 $('#totalDisplay').text(data.total_formatted);
                 
+                // Update Address & Hub info
+                if (data.address) {
+                    $('#shippingRecipient').text(data.address.recipient_name).removeClass('text-danger');
+                    $('#shippingAddress').text(data.address.full_address);
+                }
+
+                if (data.warehouse) {
+                    $('#sourceWarehouseName').text(data.warehouse.name);
+                    $('#sourceWarehouseLocation').text(data.warehouse.location);
+                }
+
+                // Handle Hub changes and Stock warnings
+                $('#checkoutAlertContainer').empty();
+                if (data.hub_changed) {
+                    const hubAlert = `
+                        <div class="alert alert-info alert-dismissible fade show mb-30" role="alert">
+                            <i class="fi-rs-info mr-10"></i> Sumber pengiriman diubah ke <strong>${data.warehouse.name}</strong> menyesuaikan alamat Anda.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
+                    $('#checkoutAlertContainer').append(hubAlert);
+                }
+
+                if (data.stock_warnings && data.stock_warnings.length > 0) {
+                    const warningHtml = data.stock_warnings.join('<br>');
+                    const stockAlert = `
+                        <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
+                            <i class="fi-rs-exclamation mr-10"></i> <strong>Peringatan Stok:</strong><br>${warningHtml}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
+                    $('#checkoutAlertContainer').append(stockAlert);
+                }
+
                 // Update discount if present in response
                 if (data.discount_amount > 0) {
                     $('#discountPercentDisplay').text(data.discount_percent);

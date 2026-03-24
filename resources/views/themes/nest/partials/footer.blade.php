@@ -149,7 +149,7 @@
                     <div class="footer-bottom"></div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6">
-                    <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - All rights reserved</p>
+                    <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - Seluruh hak cipta dilindungi</p>
                 </div>
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex mr-30">

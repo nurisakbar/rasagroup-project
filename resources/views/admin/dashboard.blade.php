@@ -285,7 +285,7 @@
                             <div class="description-block">
                                 <span class="description-percentage text-purple"><i class="fa fa-star"></i></span>
                                 <h5 class="description-header">{{ $totalDriippreneurs }}</h5>
-                                <span class="description-text">DRIIPPRENEUR</span>
+                                <span class="description-text">AFFILIATOR</span>
                             </div>
                         </div>
                     </div>

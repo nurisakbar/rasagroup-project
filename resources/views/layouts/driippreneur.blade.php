@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   
-  <title>@yield('title', 'DRiiPPreneur Panel') | {{ config('app.name', 'Laravel') }}</title>
+  <title>@yield('title', 'Affiliator Panel') | {{ config('app.name', 'Laravel') }}</title>
 
   <!-- Bootstrap 3.4.1 -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/bootstrap/css/bootstrap.min.css') }}">
@@ -28,8 +28,8 @@
   <header class="main-header">
     <!-- Logo -->
     <a href="{{ route('driippreneur.dashboard') }}" class="logo">
-      <span class="logo-mini"><b>D</b>P</span>
-      <span class="logo-lg"><b>DRiiP</b>Preneur</span>
+      <span class="logo-mini"><b>A</b>P</span>
+      <span class="logo-lg"><b>Affili</b>ator</span>
     </a>
 
     <!-- Header Navbar -->
@@ -49,7 +49,7 @@
                 <img src="{{ asset('adminlte/img/user2-160x160.jpg') }}" class="img-circle" alt="User Image">
                 <p>
                   {{ Auth::user()->name }}
-                  <small>DRiiPPreneur</small>
+                  <small>Affiliator</small>
                 </p>
               </li>
               <li class="user-footer">
@@ -106,7 +106,7 @@
     <section class="content-header">
       <h1>
         @yield('page-title', 'Dashboard')
-        <small>@yield('page-description', 'DRiiPPreneur Panel')</small>
+        <small>@yield('page-description', 'Affiliator Panel')</small>
       </h1>
       <ol class="breadcrumb">
         <li><a href="{{ route('driippreneur.dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
@@ -149,7 +149,7 @@
 
   <footer class="main-footer">
     <div class="pull-right hidden-xs">
-      DRiiPPreneur Panel
+      Affiliator Panel
     </div>
     <strong>Copyright &copy; 2025 <a href="#">{{ config('app.name', 'Laravel') }}</a>.</strong> All rights reserved.
   </footer>

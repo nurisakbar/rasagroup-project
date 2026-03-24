@@ -1,6 +1,6 @@
     <header class="header-area header-style-1 header-height-2">
         <div class="mobile-promotion">
-            <span>Grand opening, <strong>up to 15%</strong> off all items. Only <strong>3 days</strong> left</span>
+            <span>Pembukaan besar-besaran, diskon hingga <strong>15%</strong> untuk semua item. Tinggal <strong>3 hari</strong> lagi</span>
         </div>
         <div class="header-top header-top-ptb-1 d-none d-lg-block">
             <div class="container">
@@ -38,7 +38,7 @@
                     <div class="col-xl-3 col-lg-4">
                         <div class="header-info header-info-right">
                             <ul>
-                                <li>Need help? Call Us: <strong class="text-brand" style="white-space: nowrap;"> +62 812-3456-7890</strong></li>
+                                <li>Butuh bantuan? Hubungi kami: <strong class="text-brand" style="white-space: nowrap;"> +62 812-3456-7890</strong></li>
                             </ul>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
                         <div class="search-style-2">
                             <form action="#">
                                 <select class="select-active">
-                                    <option>All Categories</option>
+                                    <option>Semua Kategori</option>
                                     <option>Milks and Dairies</option>
                                     <option>Wines & Alcohol</option>
                                     <option>Clothing & Beauty</option>
@@ -69,7 +69,7 @@
                                     <option>Noodles & Rice</option>
                                     <option>Ice cream</option>
                                 </select>
-                                <input type="text" placeholder="Search for items..." />
+                                <input type="text" placeholder="Cari produk..." />
                             </form>
                         </div>
                         <div class="header-action-right">
@@ -77,7 +77,7 @@
                                 <div class="search-location">
                                     <form action="#">
                                         <select class="select-active">
-                                            <option>Your Location</option>
+                                            <option>Lokasi Anda</option>
                                             <option>Alabama</option>
                                             <option>Alaska</option>
                                             <option>Arizona</option>
@@ -118,7 +118,7 @@
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                         <span class="pro-count blue">{{ $cartCount }}</span>
                                     </a>
-                                    <a href="{{ route('cart.index') }}"><span class="lable">Cart</span></a>
+                                    <a href="{{ route('cart.index') }}"><span class="lable">Keranjang</span></a>
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2">
                                         <ul>
                                             @php
@@ -161,7 +161,7 @@
                                             </div>
                                             <div class="shopping-cart-button">
                                                 <a href="{{ route('cart.index') }}" class="outline">Lihat Keranjang</a>
-                                                <a href="{{ route('checkout.index') }}">Checkout</a>
+                                                <a href="{{ route('checkout.index') }}">Selesaikan Pesanan</a>
                                             </div>
                                         </div>
                                     </div>
@@ -170,7 +170,7 @@
                                     <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                     </a>
-                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Account</span></a>
+                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun</span></a>
                                     @auth
                                     <div class="cart-dropdown-wrap cart-dropdown-hm2 account-dropdown">
                                         <ul>
@@ -219,7 +219,7 @@
 
                         <div class="main-categori-wrap d-none d-lg-block">
                             <a class="categories-button-active" href="#" style="white-space: nowrap;">
-                                <span class="fi-rs-apps"></span> <span class="et">Browse</span> All Categories
+                                <span class="fi-rs-apps"></span> <span class="et">Jelajahi</span> Semua Kategori
                                 <i class="fi-rs-angle-down"></i>
                             </a>
                             <div class="categories-dropdown-wrap categories-dropdown-active-large font-heading">
@@ -264,19 +264,25 @@
                                         <a class="{{ request()->routeIs('hubs.*') ? 'active' : '' }}" href="{{ route('hubs.index') }}">Distributor</a>
                                     </li> --}}
                                     <li>
-                                        <a class="{{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">Tentang Kami</a>
+                                        <a class="{{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">Hubungi Kami</a>
                                     </li>
                                     <li>
-                                        <a class="{{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">Hubungi Kami</a>
+                                        <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">Saluran Informasi</a>
+                                    </li>
+                                    <li>
+                                        <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
+                                    </li>
+                                    <li>
+                                        <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
                                     </li>
                                 </ul>
                             </nav>
                         </div>
                     </div>
-                    <div class="hotline d-none d-lg-flex">
+                    {{-- <div class="hotline d-none d-lg-flex">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-headphone.svg') }}" alt="hotline" />
                         <p style="white-space: nowrap;">+62 812-3456-7890<span style="display: block;">24/7 Support Center</span></p>
-                    </div>
+                    </div> --}}
                     <div class="header-action-icon-2 d-block d-lg-none">
                         <div class="burger-icon burger-icon-white">
                             <span class="burger-icon-top"></span>

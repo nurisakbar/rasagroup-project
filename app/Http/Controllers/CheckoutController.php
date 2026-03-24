@@ -81,12 +81,30 @@ class CheckoutController extends Controller
             ->get();
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
-    
-    // Check if default address has district_id
-    if ($defaultAddress && !$defaultAddress->district_id) {
-        return redirect()->route('buyer.addresses.index')
-            ->with('error', 'Alamat pengiriman belum memiliki data kecamatan. Silakan lengkapi data alamat Anda terlebih dahulu.');
-    }
+
+        // Re-detect best Hub based on default address
+        if ($defaultAddress) {
+            $syncResult = $this->syncWarehouseByAddress($defaultAddress);
+            if ($syncResult && $syncResult['hub_changed']) {
+                $sourceWarehouse = $syncResult['warehouse'];
+                // Refresh carts
+                $carts = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
+                    ->where('user_id', Auth::id())
+                    ->where('cart_type', 'regular')
+                    ->get();
+
+                if (!empty($syncResult['stock_warnings'])) {
+                    $warningMessage = "Sumber pengiriman diubah ke {$sourceWarehouse->name} berdasarkan alamat Anda. Namun ada beberapa kendala stok:\n" . implode("\n", $syncResult['stock_warnings']);
+                    session()->flash('warning', $warningMessage);
+                }
+            }
+        }
+
+        // Check if default address has district_id
+        if ($defaultAddress && !$defaultAddress->district_id) {
+            return redirect()->route('buyer.addresses.index')
+                ->with('error', 'Alamat pengiriman belum memiliki data kecamatan. Silakan lengkapi data alamat Anda terlebih dahulu.');
+        }
     
     // Calculate shipping cost based on default address and expedition
     $shippingCost = 0;
@@ -246,7 +264,12 @@ class CheckoutController extends Controller
             return $cart->product->price * $cart->quantity;
         });
 
-        $sourceWarehouse = $carts->first()?->warehouse;
+        // Re-detect best Hub based on selected address
+        $syncResult = $this->syncWarehouseByAddress($address);
+        $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
+        $hubChanged = $syncResult['hub_changed'] ?? false;
+        $stockWarnings = $syncResult['stock_warnings'] ?? [];
+
         if (!$sourceWarehouse || !$sourceWarehouse->district_id) {
             return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
@@ -344,6 +367,8 @@ class CheckoutController extends Controller
             'total_weight_formatted' => number_format($totalWeight / 1000, 1) . ' kg',
             'service_name' => $serviceName,
             'estimated_delivery' => $estimatedDelivery,
+            'hub_changed' => $hubChanged,
+            'stock_warnings' => $stockWarnings,
             'address' => [
                 'recipient_name' => $address->recipient_name,
                 'phone' => $address->phone,
@@ -379,7 +404,10 @@ class CheckoutController extends Controller
             return ($cart->product->weight ?? 500) * $cart->quantity;
         });
 
-        $sourceWarehouse = $carts->first()?->warehouse;
+        // Re-detect best Hub based on selected address
+        $syncResult = $this->syncWarehouseByAddress($address);
+        $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
+
         if (!$sourceWarehouse || !$sourceWarehouse->district_id) {
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
@@ -459,6 +487,9 @@ class CheckoutController extends Controller
         if (!$address) {
             return back()->with('error', 'Alamat tidak valid.');
         }
+
+        // Final sync of hub before order
+        $this->syncWarehouseByAddress($address);
 
         $expedition = Expedition::find($request->expedition_id);
         if (!$expedition) {
@@ -941,5 +972,51 @@ class CheckoutController extends Controller
         }
 
         return 'ORD-' . $date . '-' . $newNumber;
+    }
+
+    private function syncWarehouseByAddress(Address $address)
+    {
+        $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
+        if ($carts->isEmpty()) return null;
+        
+        $currentWarehouseId = $carts->first()->warehouse_id;
+        $bestHub = Warehouse::findBestHubForAddress($address);
+        
+        $hubChanged = false;
+        if ($bestHub && $bestHub->id !== $currentWarehouseId) {
+            $hubChanged = true;
+            Cart::where('user_id', Auth::id())
+                ->where('cart_type', 'regular')
+                ->update(['warehouse_id' => $bestHub->id]);
+            
+            session(['selected_hub_id' => $bestHub->id]);
+        }
+        
+        // Always check stocks in the (new or current) warehouse
+        $stockWarnings = [];
+        $currentHub = $bestHub ?: Warehouse::find($currentWarehouseId);
+        
+        if ($currentHub) {
+            $cartsForStock = Cart::with('product')
+                ->where('user_id', Auth::id())
+                ->where('cart_type', 'regular')
+                ->get();
+
+            foreach ($cartsForStock as $item) {
+                $stock = WarehouseStock::where('warehouse_id', $currentHub->id)
+                    ->where('product_id', $item->product_id)
+                    ->first();
+                if (!$stock || $stock->stock < $item->quantity) {
+                    $available = $stock ? $stock->stock : 0;
+                    $stockWarnings[] = "Stok {$item->product->name} tidak mencukupi (Tersedia: {$available})";
+                }
+            }
+        }
+        
+        return [
+            'hub_changed' => $hubChanged,
+            'warehouse' => $currentHub,
+            'stock_warnings' => $stockWarnings,
+        ];
     }
 }

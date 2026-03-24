@@ -107,6 +107,7 @@
                                                     <th>Pembeli</th>
                                                     <th>No. Pesanan</th>
                                                     <th>Tanggal</th>
+                                                    <th>Total Belanja</th>
                                                     <th>Poin Didapat</th>
                                                 </tr>
                                             </thead>
@@ -116,11 +117,12 @@
                                                         <td>{{ $order->user->name ?? 'User' }}</td>
                                                         <td>#{{ $order->order_number }}</td>
                                                         <td>{{ $order->created_at->format('d M Y') }}</td>
+                                                        <td>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
                                                         <td><strong class="text-brand">+{{ number_format($order->affiliate_points, 0, ',', '.') }}</strong></td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="4" class="text-center py-4">Belum ada riwayat referral.</td>
+                                                        <td colspan="5" class="text-center py-4">Belum ada riwayat referral.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

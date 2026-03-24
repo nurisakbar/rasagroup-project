@@ -120,7 +120,8 @@
                                             <div class="card-body p-4">
                                                 <div class="row align-items-center">
                                                     <div class="col-md-8">
-                                                        <h6 class="text-white mb-2">Member DRiiPPreneur</h6>
+                                                        <h6 class="text-white mb-2">Member Affiliator</h6>
+
                                                         <p class="font-sm mb-0">Total Poin yang dapat ditarik:</p>
                                                         <h3 class="text-white mb-0">{{ number_format(Auth::user()->points, 0, ',', '.') }} <span class="font-sm">Poin</span></h3>
                                                     </div>

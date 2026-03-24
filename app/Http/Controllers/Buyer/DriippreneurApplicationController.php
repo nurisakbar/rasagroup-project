@@ -42,6 +42,7 @@ class DriippreneurApplicationController extends Controller
             'no_npwp' => ['required', 'string', 'min:15', 'max:20'],
             'ktp_file' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'npwp_file' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'selfie_file' => [$request->filled('selfie_base64') ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'bank_name' => ['required', 'string', 'max:100'],
             'bank_account_number' => ['required', 'string', 'max:50'],
             'bank_account_name' => ['required', 'string', 'max:100'],
@@ -57,6 +58,9 @@ class DriippreneurApplicationController extends Controller
             'npwp_file.required' => 'Foto NPWP wajib diupload.',
             'npwp_file.image' => 'File NPWP harus berupa gambar.',
             'npwp_file.max' => 'Ukuran file NPWP maksimal 2MB.',
+            'selfie_file.required' => 'Foto Selfie wajib diupload.',
+            'selfie_file.image' => 'File Selfie harus berupa gambar.',
+            'selfie_file.max' => 'Ukuran file Selfie maksimal 2MB.',
             'bank_name.required' => 'Nama Bank wajib diisi.',
             'bank_account_number.required' => 'Nomor Rekening wajib diisi.',
             'bank_account_name.required' => 'Nama Pemilik Rekening wajib diisi.',
@@ -72,11 +76,25 @@ class DriippreneurApplicationController extends Controller
             $npwpPath = $request->file('npwp_file')->store('verification', 'public');
         }
 
+        $selfiePath = null;
+        if ($request->filled('selfie_base64')) {
+            $imageData = $request->input('selfie_base64');
+            $imageData = str_replace('data:image/jpeg;base64,', '', $imageData);
+            $imageData = str_replace('data:image/png;base64,', '', $imageData);
+            $imageData = str_replace(' ', '+', $imageData);
+            $imageName = 'selfie_' . auth()->id() . '_' . time() . '.jpg';
+            \Illuminate\Support\Facades\Storage::disk('public')->put('verification/' . $imageName, base64_decode($imageData));
+            $selfiePath = 'verification/' . $imageName;
+        } elseif ($request->hasFile('selfie_file')) {
+            $selfiePath = $request->file('selfie_file')->store('verification', 'public');
+        }
+
         $user->update([
             'no_ktp' => $validated['no_ktp'],
             'no_npwp' => $validated['no_npwp'],
             'ktp_file' => $ktpPath,
             'npwp_file' => $npwpPath,
+            'selfie_file' => $selfiePath,
             'bank_name' => $validated['bank_name'],
             'bank_account_number' => $validated['bank_account_number'],
             'bank_account_name' => $validated['bank_account_name'],

@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Daftar DRiiPPreneur')
+@section('title', 'Daftar Affiliator')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> <a href="{{ route('buyer.dashboard') }}">Akun Saya</a>
-            <span></span> Daftar DRiiPPreneur
+            <span></span> Daftar Affiliator
         </div>
     </div>
 </div>
@@ -54,8 +54,8 @@
                                             <i class="fi-rs-star fs-1 text-brand"></i>
                                         </div>
                                         <div class="ms-4">
-                                            <h5 class="mb-1">Jadilah DRiiPPreneur Kami!</h5>
-                                            <p class="font-sm text-muted mb-0">Dapatkan keuntungan lebih dengan menjadi mitra DRiiPPreneur. Kelola stock sendiri dan raih penghasilan lebih besar.</p>
+                                            <h5 class="mb-1">Jadilah Affiliator Kami!</h5>
+                                            <p class="font-sm text-muted mb-0">Dapatkan keuntungan lebih dengan menjadi mitra Affiliator. Kelola stock sendiri dan raih penghasilan lebih besar.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -130,6 +130,36 @@
                                             <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB.</small>
                                         </div>
 
+                                        <div class="form-group mb-4">
+                                            <label>Foto Selfie dengan KTP <span class="required">*</span></label>
+                                            <div id="selfie-camera-container" class="mb-3" style="display: none;">
+                                                <div class="position-relative">
+                                                    <video id="video" width="100%" height="auto" autoplay class="border-radius-10"></video>
+                                                    <div class="camera-overlay"></div>
+                                                </div>
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" id="snap" class="btn btn-sm btn-brand"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="selfie-preview-container" class="mb-3" style="display: none;">
+                                                <img id="selfie-preview-img" src="" class="border-radius-10 w-100">
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" id="retake" class="btn btn-sm btn-secondary"><i class="fi-rs-refresh mr-5"></i>Foto Ulang</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex align-items-center mb-2">
+                                                <input type="file" class="form-control @error('selfie_file') is-invalid @enderror" 
+                                                       name="selfie_file" id="selfie_file_input" accept="image/jpeg,image/png,image/jpg" required>
+                                                <button type="button" id="start-camera" class="btn btn-sm btn-brand ml-10" style="white-space: nowrap;">
+                                                    <i class="fi-rs-camera"></i> Gunakan Kamera
+                                                </button>
+                                            </div>
+                                            <input type="hidden" name="selfie_base64" id="selfie_base64">
+                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB. Pastikan wajah dan KTP terlihat jelas.</small>
+                                        </div>
+
                                         <div class="divider mb-4"></div>
 
                                         <h5 class="mb-3">Informasi Rekening Bank</h5>
@@ -186,7 +216,7 @@
                             <!-- Benefits -->
                             <div class="card border-0 shadow-sm border-radius-10 mt-4">
                                 <div class="card-header bg-white border-bottom-0 p-4 pb-0">
-                                    <h5 class="mb-0"><i class="fi-rs-star mr-10 text-brand"></i>Keuntungan Menjadi DRiiPPreneur</h5>
+                                    <h5 class="mb-0"><i class="fi-rs-star mr-10 text-brand"></i>Keuntungan Menjadi Affiliator</h5>
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="row">
@@ -226,7 +256,84 @@
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .required { color: #fd3d11; }
     .divider { height: 1px; background-color: #f2f2f2; width: 100%; }
+    .camera-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px dashed rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 50px rgba(0,0,0,0.2);
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    const snap = document.getElementById('snap');
+    const startCameraBtn = document.getElementById('start-camera');
+    const retakeBtn = document.getElementById('retake');
+    const cameraContainer = document.getElementById('selfie-camera-container');
+    const previewContainer = document.getElementById('selfie-preview-container');
+    const previewImg = document.getElementById('selfie-preview-img');
+    const fileInput = document.getElementById('selfie_file_input');
+    const base64Input = document.getElementById('selfie_base64');
+    
+    let stream = null;
+
+    startCameraBtn.addEventListener('click', async function() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+            cameraContainer.style.display = 'block';
+            previewContainer.style.display = 'none';
+            startCameraBtn.style.display = 'none';
+        } catch (err) {
+            alert("Tidak dapat mengakses kamera: " + err.message);
+        }
+    });
+
+    snap.addEventListener('click', function() {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        previewImg.src = dataUrl;
+        base64Input.value = dataUrl;
+        
+        // Disable file input requirement if base64 is present
+        fileInput.required = false;
+        
+        // Stop camera
+        stream.getTracks().forEach(track => track.stop());
+        
+        cameraContainer.style.display = 'none';
+        previewContainer.style.display = 'block';
+    });
+
+    retakeBtn.addEventListener('click', function() {
+        previewContainer.style.display = 'none';
+        startCameraBtn.click();
+    });
+
+    // If file is selected manually, clear base64 and show preview if possible
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files && fileInput.files[0]) {
+            base64Input.value = '';
+            previewContainer.style.display = 'none';
+            cameraContainer.style.display = 'none';
+            startCameraBtn.style.display = 'block';
+        }
+    });
+});
+</script>
 @endsection
 
 

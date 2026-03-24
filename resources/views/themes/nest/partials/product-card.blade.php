@@ -8,19 +8,19 @@
                 </a>
             </div>
             <div class="product-action-1">
-                <a aria-label="Quick view" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->slug) }}"><i class="fi-rs-eye"></i></a>
+                <a aria-label="Lihat cepat" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->slug) }}"><i class="fi-rs-eye"></i></a>
             </div>
             <div class="product-badges product-badges-position product-badges-mrg">
                 @if($product->created_at->diffInDays(now()) < 7)
-                    <span class="new">New</span>
+                    <span class="new">Baru</span>
                 @elseif($product->price < ($product->compare_price ?? 0))
-                    <span class="hot">Hot</span>
+                    <span class="hot">Populer</span>
                 @endif
             </div>
         </div>
         <div class="product-content-wrap">
             <div class="product-category">
-                <a href="#">{{ $product->category->name ?? 'Uncategorized' }}</a>
+                <a href="#">{{ $product->category->name ?? 'Tanpa Kategori' }}</a>
             </div>
             <h2><a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a></h2>
             <div class="product-rate-cover">
@@ -30,7 +30,7 @@
                 <span class="font-small ml-5 text-muted"> ({{ number_format($product->rating ?? 0, 1) }})</span>
             </div>
             <div>
-                <span class="font-small text-muted">By <a href="#">{{ $product->brand->name ?? 'Unknown' }}</a></span>
+                <span class="font-small text-muted">Oleh <a href="#">{{ $product->brand->name ?? 'Tanpa Brand' }}</a></span>
             </div>
             <div class="product-card-bottom">
                 <div class="product-price">

@@ -215,6 +215,12 @@
           </a>
         </li>
 
+        <li class="{{ request()->routeIs('admin.information-channels.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.information-channels.index') }}">
+            <i class="fa fa-info-circle"></i> <span>SALURAN INFORMASI</span>
+          </a>
+        </li>
+
         <li class="{{ request()->routeIs('admin.discount-tiers.*') ? 'active' : '' }}">
           <a href="{{ route('admin.discount-tiers.index') }}">
             <i class="fa fa-percent"></i> <span>POTONGAN HARGA</span>

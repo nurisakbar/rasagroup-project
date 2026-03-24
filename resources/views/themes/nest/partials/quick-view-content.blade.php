@@ -30,7 +30,7 @@
     <div class="col-md-6 col-sm-12 col-xs-12">
         <div class="detail-info pr-30 pl-30">
             @if($product->price < ($product->compare_price ?? 0))
-                <span class="stock-status out-stock"> Sale Off </span>
+                <span class="stock-status out-stock"> Diskon </span>
             @endif
             <h3 class="title-detail"><a href="{{ route('products.show', $product->slug) }}" class="text-heading">{{ $product->display_name }}</a></h3>
             <div class="product-detail-rating">
@@ -46,7 +46,7 @@
                     <span class="current-price text-brand">Rp{{ number_format($product->price, 0, ',', '.') }}</span>
                     @if(isset($product->compare_price) && $product->compare_price > $product->price)
                         <span>
-                            <span class="save-price font-md color3 ml-15">{{ round((($product->compare_price - $product->price) / $product->compare_price) * 100) }}% Off</span>
+                             <span class="save-price font-md color3 ml-15">Hemat {{ round((($product->compare_price - $product->price) / $product->compare_price) * 100) }}%</span>
                             <span class="old-price font-md ml-15">Rp{{ number_format($product->compare_price, 0, ',', '.') }}</span>
                         </span>
                     @endif

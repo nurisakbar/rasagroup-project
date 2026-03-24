@@ -8,6 +8,8 @@ Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->nam
 Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [App\Http\Controllers\PageController::class, 'sendContact'])->name('contact.send');
 Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
+Route::get('/saluran-informasi', [App\Http\Controllers\InformationChannelController::class, 'index'])->name('information-channels.index');
+Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannelController::class, 'show'])->name('information-channels.show');
 
 // Xendit Webhook (no CSRF protection needed)
 Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
@@ -162,6 +164,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Pages Management
         Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
+
+        // Information Channels Management
+        Route::resource('information-channels', App\Http\Controllers\Admin\InformationChannelController::class);
 
         // Discount Tiers Management
         Route::resource('discount-tiers', App\Http\Controllers\Admin\DiscountTierController::class)->except(['show']);

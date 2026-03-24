@@ -16,7 +16,7 @@
                         <div class="sort-by-cover mr-10">
                             <div class="sort-by-product-wrap">
                                 <div class="sort-by">
-                                    <span><i class="fi-rs-apps"></i>Show:</span>
+                                    <span><i class="fi-rs-apps"></i>Tampilkan:</span>
                                 </div>
                                 <div class="sort-by-dropdown-wrap">
                                     <span> {{ $products->perPage() }} <i class="fi-rs-angle-small-down"></i></span>
@@ -33,7 +33,7 @@
                         <div class="sort-by-cover">
                             <div class="sort-by-product-wrap">
                                 <div class="sort-by">
-                                    <span><i class="fi-rs-apps-sort"></i>Sort by:</span>
+                                    <span><i class="fi-rs-apps-sort"></i>Urutkan:</span>
                                 </div>
                                 <div class="sort-by-dropdown-wrap">
                                     <span> 

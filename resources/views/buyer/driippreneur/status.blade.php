@@ -95,7 +95,7 @@
                                                 <i class="fi-rs-check text-success" style="font-size: 80px;"></i>
                                             </div>
                                             <h3 class="text-success mb-3">Pengajuan Disetujui!</h3>
-                                            <p class="font-md text-muted mb-4">Selamat! Pengajuan DRiiPPreneur Anda telah disetujui. 
+                                            <p class="font-md text-muted mb-4">Selamat! Pengajuan Affiliator Anda telah disetujui. 
                                                 Sekarang Anda akan mendapatkan poin untuk setiap item yang dibeli.</p>
                                             
                                             <div class="card bg-success-light border-0 mx-auto mb-4" style="max-width: 400px;">

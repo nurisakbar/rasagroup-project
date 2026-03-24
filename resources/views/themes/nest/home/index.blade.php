@@ -14,7 +14,7 @@
                                 <p class="mb-65">{{ $slider->description }}</p>
                                 @if($slider->link)
                                     <div class="form-subcriber d-flex">
-                                        <a href="{{ $slider->link }}" class="btn">Shop Now</a>
+                                        <a href="{{ $slider->link }}" class="btn">Belanja Sekarang</a>
                                     </div>
                                 @else
                                     <form class="form-subcriber d-flex">
@@ -33,8 +33,8 @@
                                 </h1>
                                 <p class="mb-65">Sign up for the daily newsletter</p>
                                 <form class="form-subcriber d-flex">
-                                    <input type="email" placeholder="Your emaill address" />
-                                    <button class="btn" type="submit">Subscribe</button>
+                                    <input type="email" placeholder="Alamat email Anda" />
+                                    <button class="btn" type="submit">Berlangganan</button>
                                 </form>
                             </div>
                         </div>
@@ -46,8 +46,8 @@
                                 </h1>
                                 <p class="mb-65">Save up to 50% off on your first order</p>
                                 <form class="form-subcriber d-flex">
-                                    <input type="email" placeholder="Your emaill address" />
-                                    <button class="btn" type="submit">Subscribe</button>
+                                    <input type="email" placeholder="Alamat email Anda" />
+                                    <button class="btn" type="submit">Berlangganan</button>
                                 </form>
                             </div>
                         </div>
@@ -137,10 +137,10 @@
         <section class="product-tabs section-padding position-relative">
             <div class="container">
                 <div class="section-title style-2 wow animate__animated animate__fadeIn">
-                    <h3>Popular Products</h3>
+                    <h3>Produk Populer</h3>
                     <ul class="nav nav-tabs links" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="nav-tab-one" data-bs-toggle="tab" data-bs-target="#tab-one" type="button" role="tab" aria-controls="tab-one" aria-selected="true">All</button>
+                            <button class="nav-link active" id="nav-tab-one" data-bs-toggle="tab" data-bs-target="#tab-one" type="button" role="tab" aria-controls="tab-one" aria-selected="true">Semua</button>
                         </li>
                         @foreach($categories as $index => $category)
                             <li class="nav-item" role="presentation">
@@ -181,16 +181,16 @@
         <section class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn">
-                    <h3 class="">Daily Best Sells</h3>
+                    <h3 class="">Produk Unggulan Harian</h3>
                     <ul class="nav nav-tabs links" id="myTab-2" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="nav-tab-one-1" data-bs-toggle="tab" data-bs-target="#tab-one-1" type="button" role="tab" aria-controls="tab-one" aria-selected="true">Featured</button>
+                            <button class="nav-link active" id="nav-tab-one-1" data-bs-toggle="tab" data-bs-target="#tab-one-1" type="button" role="tab" aria-controls="tab-one" aria-selected="true">Unggulan</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="nav-tab-two-1" data-bs-toggle="tab" data-bs-target="#tab-two-1" type="button" role="tab" aria-controls="tab-two" aria-selected="false">Popular</button>
+                            <button class="nav-link" id="nav-tab-two-1" data-bs-toggle="tab" data-bs-target="#tab-two-1" type="button" role="tab" aria-controls="tab-two" aria-selected="false">Populer</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="nav-tab-three-1" data-bs-toggle="tab" data-bs-target="#tab-three-1" type="button" role="tab" aria-controls="tab-three" aria-selected="false">New added</button>
+                            <button class="nav-link" id="nav-tab-three-1" data-bs-toggle="tab" data-bs-target="#tab-three-1" type="button" role="tab" aria-controls="tab-three" aria-selected="false">Baru Ditambahkan</button>
                         </li>
                     </ul>
                 </div>
@@ -215,9 +215,9 @@
         <section class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
-                    <h3 class="">Deals Of The Day</h3>
+                    <h3 class="">Penawaran Hari Ini</h3>
                     <a class="show-all" href="shop-grid-right.html">
-                        All Deals
+                        Semua Penawaran
                         <i class="fi-rs-angle-right"></i>
                     </a>
                 </div>
@@ -378,7 +378,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
-                        <h4 class="section-title style-1 mb-30 animated animated">Top Selling</h4>
+                        <h4 class="section-title style-1 mb-30 animated animated">Paling Laris</h4>
                         <div class="product-list-small animated animated">
                             @foreach($topSelling as $product)
                                 @include('themes.nest.partials.product-list-small', compact('product'))
@@ -386,7 +386,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-md-0 wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
-                        <h4 class="section-title style-1 mb-30 animated animated">Trending Products</h4>
+                        <h4 class="section-title style-1 mb-30 animated animated">Produk Tren</h4>
                         <div class="product-list-small animated animated">
                             @foreach($trendingProducts as $product)
                                 @include('themes.nest.partials.product-list-small', compact('product'))
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0 d-none d-lg-block wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
-                        <h4 class="section-title style-1 mb-30 animated animated">Recently Added</h4>
+                        <h4 class="section-title style-1 mb-30 animated animated">Terbaru</h4>
                         <div class="product-list-small animated animated">
                             @foreach($recentlyAdded as $product)
                                 @include('themes.nest.partials.product-list-small', compact('product'))
@@ -402,7 +402,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0 d-none d-xl-block wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
-                        <h4 class="section-title style-1 mb-30 animated animated">Top Rated</h4>
+                        <h4 class="section-title style-1 mb-30 animated animated">Rating Tertinggi</h4>
                         <div class="product-list-small animated animated">
                             @foreach($topRated as $product)
                                 @include('themes.nest.partials.product-list-small', compact('product'))
