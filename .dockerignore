@@ -1,0 +1,16 @@
+vendor
+node_modules
+public/build
+public/storage
+storage/*.key
+.git
+.env
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+bootstrap/cache/*.php
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*.php
+storage/logs/*.log
+.DS_Store

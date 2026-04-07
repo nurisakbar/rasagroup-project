@@ -126,13 +126,7 @@
                                 <br><span style="margin-left: 20px; color: #666;">Pembayaran via transfer ke rekening perusahaan</span>
                             </label>
                         </div>
-                        <div class="radio" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            <label>
-                                <input type="radio" name="payment_method" value="cod">
-                                <strong>COD (Bayar di Tempat)</strong>
-                                <br><span style="margin-left: 20px; color: #666;">Bayar saat barang diterima</span>
-                            </label>
-                        </div>
+
                     </div>
                 </div>
 

@@ -197,18 +197,7 @@
                                 </div>
                             </div>
 
-                            <!-- COD -->
-                            <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('cod')" id="card-cod">
-                                <div class="custom-radio">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="cod" id="payCOD">
-                                    <label class="form-check-label" for="payCOD">
-                                        <strong>COD (Bayar di Tempat)</strong>
-                                    </label>
-                                </div>
-                                <div class="payment-content pl-20 mt-10" style="display: block;">
-                                    <p class="font-sm text-muted">Bayar tunai kepada kurir saat pesanan sampai di alamat Anda.</p>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </div>

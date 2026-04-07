@@ -1,0 +1,90 @@
+services:
+  # PHP Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rasagroup/app
+    container_name: rasagroup-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      APP_NAME: Laravel
+      APP_ENV: local
+      APP_KEY: base64:keKCTQnWZdvJu3WBNPyNkLtBi/5hbwocIVCN5e+C3rQ=
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: rasagroup
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      REDIS_HOST: redis
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    depends_on:
+      - db
+      - redis
+    networks:
+      - rasagroup-network
+
+  # Nginx Service
+  web:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    image: rasagroup/web
+    container_name: rasagroup-web
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+    depends_on:
+      - app
+    networks:
+      - rasagroup-network
+
+  # MySQL Service
+  db:
+    image: mysql:8.0
+    container_name: rasagroup-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: rasagroup
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_PASSWORD: password
+      MYSQL_USER: user
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - rasagroup-network
+
+  # Redis Service
+  redis:
+    image: redis:alpine
+    container_name: rasagroup-redis
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - rasagroup-network
+
+# Networks
+networks:
+  rasagroup-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  dbdata:
+  redisdata:
