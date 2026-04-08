@@ -14,7 +14,8 @@ return new class extends Migration
         if (!Schema::hasTable('comments')) {
             Schema::create('comments', function (Blueprint $table) {
                 $table->uuid('id')->primary();
-                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->uuid('user_id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 $table->uuid('commentable_id');
                 $table->string('commentable_type');
                 $table->text('content');
