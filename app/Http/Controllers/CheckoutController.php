@@ -460,6 +460,13 @@ class CheckoutController extends Controller
                 'name' => $expedition->name,
             ],
             'services' => $services,
+            'hub_changed' => $syncResult['hub_changed'] ?? false,
+            'stock_warnings' => $syncResult['stock_warnings'] ?? [],
+            'warehouse' => $sourceWarehouse ? [
+                'id' => $sourceWarehouse->id,
+                'name' => $sourceWarehouse->name,
+                'location' => $sourceWarehouse->full_location,
+            ] : null,
         ]);
     }
 

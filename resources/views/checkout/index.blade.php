@@ -540,6 +540,11 @@
                 
                 // Update displays if services found
                 if (data.services.length > 0) {
+                    // Update Warehouse info if returned (keeps Geolocation info in sync)
+                    if (data.warehouse) {
+                        $('#sourceWarehouseName').text(data.warehouse.name);
+                        $('#sourceWarehouseLocation').text(data.warehouse.location);
+                    }
                     updateShipping();
                 } else {
                      // Reset shipping displays if no services

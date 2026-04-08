@@ -127,21 +127,31 @@ class Warehouse extends Model
      */
     public static function findBestHubForAddress(Address $address)
     {
-        // 1. Try Same Regency
-        $hub = self::where('is_active', true)
-            ->where('regency_id', $address->regency_id)
-            ->first();
-            
-        if ($hub) return $hub;
+        // 1. Try Same District
+        if ($address->district_id) {
+            $hub = self::where('is_active', true)
+                ->where('district_id', $address->district_id)
+                ->first();
+            if ($hub) return $hub;
+        }
+
+        // 2. Try Same Regency
+        if ($address->regency_id) {
+            $hub = self::where('is_active', true)
+                ->where('regency_id', $address->regency_id)
+                ->first();
+            if ($hub) return $hub;
+        }
         
-        // 2. Try Same Province
-        $hub = self::where('is_active', true)
-            ->where('province_id', $address->province_id)
-            ->first();
-            
-        if ($hub) return $hub;
+        // 3. Try Same Province
+        if ($address->province_id) {
+            $hub = self::where('is_active', true)
+                ->where('province_id', $address->province_id)
+                ->first();
+            if ($hub) return $hub;
+        }
         
-        // 3. Fallback to any active hub (maybe the first one)
+        // 4. Fallback to any active hub
         return self::where('is_active', true)->first();
     }
 }
