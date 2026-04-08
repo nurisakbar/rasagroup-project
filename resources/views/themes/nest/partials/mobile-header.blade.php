@@ -30,8 +30,19 @@
                             <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
                             <li><a href="{{ route('information-channels.index') }}">Saluran Informasi</a></li>
-                            <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                            <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                            @auth
+                                @if(Auth::user()->isDistributor())
+                                    <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                                @elseif(Auth::user()->isDriippreneur())
+                                    <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
+                                @else
+                                    <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
+                                    <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                                @endif
+                            @else
+                                <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
+                                <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                            @endauth
 
 
                         </ul>

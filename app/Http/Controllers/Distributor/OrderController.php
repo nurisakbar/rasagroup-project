@@ -559,17 +559,35 @@ class OrderController extends Controller
      */
     public function history(Request $request)
     {
-        $query = Order::where('user_id', Auth::id())
+        $user = Auth::user();
+        $query = Order::where('user_id', $user->id)
             ->where('order_type', Order::TYPE_DISTRIBUTOR)
             ->with(['items.product', 'expedition']);
+
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', now()->endOfMonth()->format('Y-m-d'));
 
         if ($request->filled('status')) {
             $query->where('order_status', $request->status);
         }
 
-        $orders = $query->orderByDesc('created_at')->paginate(10);
+        $query->whereDate('created_at', '>=', $dateFrom);
+        $query->whereDate('created_at', '<=', $dateTo);
 
-        return view('buyer.distributor.orders.history', compact('orders'));
+        $orders = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
+
+        // Calculate Monthly Target Progress
+        $monthlyTarget = $user->monthly_target ?? 0;
+        $totalSpentThisMonth = Order::where('user_id', $user->id)
+            ->where('order_type', Order::TYPE_DISTRIBUTOR)
+            ->whereNotIn('order_status', ['cancelled'])
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('total_amount');
+
+        $progressPercentage = $monthlyTarget > 0 ? min(100, ($totalSpentThisMonth / $monthlyTarget) * 100) : 0;
+
+        return view('buyer.distributor.orders.history', compact('orders', 'monthlyTarget', 'totalSpentThisMonth', 'progressPercentage'));
     }
 
     /**
@@ -715,6 +733,52 @@ class OrderController extends Controller
         }
 
         return 'DST-' . $date . '-' . $newNumber;
+    }
+
+    /**
+     * Show payment confirmation form.
+     */
+    public function confirmPaymentForm(Order $order)
+    {
+        if ($order->user_id !== Auth::id() || $order->order_type !== Order::TYPE_DISTRIBUTOR) {
+            abort(403);
+        }
+
+        if ($order->payment_status === 'paid') {
+            return redirect()->route('distributor.orders.show', $order)->with('info', 'Pesanan ini sudah dibayar.');
+        }
+
+        return view('buyer.distributor.orders.confirm-payment', compact('order'));
+    }
+
+    /**
+     * Store payment confirmation.
+     */
+    public function storePaymentConfirmation(Request $request, Order $order)
+    {
+        if ($order->user_id !== Auth::id() || $order->order_type !== Order::TYPE_DISTRIBUTOR) {
+            abort(403);
+        }
+
+        $request->validate([
+            'payment_proof' => 'required|image|max:2048',
+            'payment_submit_note' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            if ($request->hasFile('payment_proof')) {
+                $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+                $order->update([
+                    'payment_proof' => $path,
+                    'payment_submit_note' => $request->payment_submit_note,
+                    'payment_submitted_at' => now(),
+                ]);
+            }
+
+            return redirect()->route('distributor.orders.show', $order)->with('success', 'Konfirmasi pembayaran berhasil dikirim. Tunggu verifikasi dari pusat.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memproses konfirmasi: ' . $e->getMessage());
+        }
     }
 }
 

@@ -10,6 +10,7 @@ Route::post('/contact', [App\Http\Controllers\PageController::class, 'sendContac
 Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 Route::get('/saluran-informasi', [App\Http\Controllers\InformationChannelController::class, 'index'])->name('information-channels.index');
 Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannelController::class, 'show'])->name('information-channels.show');
+Route::post('/saluran-informasi/{slug}/comment', [App\Http\Controllers\InformationChannelController::class, 'storeComment'])->name('information-channels.comment')->middleware('auth');
 
 // Xendit Webhook (no CSRF protection needed)
 Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
@@ -66,6 +67,7 @@ Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name
 Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
 Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 Route::get('/cart/product-stock/{product}', [App\Http\Controllers\CartController::class, 'getProductStock'])->name('cart.product-stock');
+Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
 Route::middleware('auth')->group(function () {
     Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cart}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
@@ -184,7 +186,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/get-villages', [App\Http\Controllers\Admin\WarehouseController::class, 'getVillages'])->name('get-villages');
 
         // Users Management
-        Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+        Route::resource('users', App\Http\Controllers\Admin\UserController::class);
 
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
@@ -198,9 +200,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');
-        Route::put('/settings/wacloud', [App\Http\Controllers\Admin\SettingController::class, 'updateWACloudSettings'])->name('settings.update-wacloud');
         Route::put('/settings/expeditions', [App\Http\Controllers\Admin\SettingController::class, 'updateExpeditions'])->name('settings.update-expeditions');
-        Route::get('/settings/wacloud/quota', [App\Http\Controllers\Admin\SettingController::class, 'getWACloudQuota'])->name('settings.wacloud-quota');
 
         // DRiiPPreneur Management
         Route::get('/driippreneurs', [App\Http\Controllers\Admin\DriippreneurController::class, 'index'])->name('driippreneurs.index');
@@ -346,6 +346,8 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/orders/success/{order}', [App\Http\Controllers\Distributor\OrderController::class, 'success'])->name('orders.success');
         Route::get('/orders/history', [App\Http\Controllers\Distributor\OrderController::class, 'history'])->name('orders.history');
         Route::get('/orders/{order}', [App\Http\Controllers\Distributor\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/confirm-payment', [App\Http\Controllers\Distributor\OrderController::class, 'confirmPaymentForm'])->name('orders.confirm-payment');
+        Route::post('/orders/{order}/confirm-payment', [App\Http\Controllers\Distributor\OrderController::class, 'storePaymentConfirmation'])->name('orders.confirm-payment.store');
         Route::post('/orders/{order}/convert-to-stock', [App\Http\Controllers\Distributor\OrderController::class, 'convertToStock'])->name('orders.convert-to-stock');
     });
 });

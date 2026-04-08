@@ -192,6 +192,18 @@ class QidApiService
     }
 
     /**
+     * Kirim PATCH request ke endpoint QidApi.
+     *
+     * @param string $endpoint  Path endpoint
+     * @param array  $payload   Body JSON
+     * @return array|null
+     */
+    public function patch(string $endpoint, array $payload = []): ?array
+    {
+        return $this->request('PATCH', $endpoint, $payload);
+    }
+
+    /**
      * Kirim DELETE request ke endpoint QidApi.
      *
      * @param string $endpoint  Path endpoint
@@ -228,6 +240,7 @@ class QidApiService
                 'GET'    => $http->get($url, $data),
                 'POST'   => $http->post($url, $data),
                 'PUT'    => $http->put($url, $data),
+                'PATCH'  => $http->patch($url, $data),
                 'DELETE' => $http->delete($url, $data),
                 default  => throw new \InvalidArgumentException("Unsupported HTTP method: {$method}"),
             };

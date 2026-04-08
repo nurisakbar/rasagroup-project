@@ -223,7 +223,7 @@
                                     <label for="monthly_target">Target Belanja Bulanan</label>
                                     <div class="input-group">
                                         <span class="input-group-addon">Rp</span>
-                                        <input type="number" class="form-control" id="monthly_target" name="monthly_target" value="{{ old('monthly_target') }}" placeholder="Contoh: 50000000">
+                                        <input type="text" class="form-control rupiah-format" id="monthly_target" name="monthly_target" value="{{ number_format(old('monthly_target', 0), 0, ',', '.') }}" placeholder="Contoh: 50.000.000">
                                     </div>
                                     @error('monthly_target')
                                         <span class="help-block text-danger">{{ $message }}</span>
@@ -422,6 +422,34 @@ $(document).ready(function() {
                 alert('Gagal menghubungi layanan pencarian lokasi.');
                 btn.html('<i class="fa fa-search"></i> Cari dari Kota/Kecamatan').prop('disabled', false);
             }
+        });
+    });
+
+    // Rupiah Formatter
+    function formatRupiah(angka, prefix) {
+        var number_string = angka.replace(/[^,\d]/g, '').toString(),
+            split = number_string.split(','),
+            sisa = split[0].length % 3,
+            rupiah = split[0].substr(0, sisa),
+            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        return prefix == undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
+    }
+
+    $('.rupiah-format').on('keyup', function() {
+        $(this).val(formatRupiah($(this).val()));
+    });
+
+    $('form').on('submit', function() {
+        $('.rupiah-format').each(function() {
+            var val = $(this).val().replace(/\./g, '');
+            $(this).val(val);
         });
     });
 });

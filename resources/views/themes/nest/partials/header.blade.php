@@ -269,12 +269,31 @@
                                     <li>
                                         <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">Saluran Informasi</a>
                                     </li>
-                                    <li>
-                                        <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
-                                    </li>
-                                    <li>
-                                        <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
-                                    </li>
+                                    @auth
+                                        @if(Auth::user()->isDistributor())
+                                            <li>
+                                                <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                            </li>
+                                        @elseif(Auth::user()->isDriippreneur())
+                                            <li>
+                                                <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
+                                            </li>
+                                        @else
+                                            <li>
+                                                <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
+                                            </li>
+                                            <li>
+                                                <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                            </li>
+                                        @endif
+                                    @else
+                                        <li>
+                                            <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
+                                        </li>
+                                        <li>
+                                            <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                        </li>
+                                    @endauth
                                 </ul>
                             </nav>
                         </div>

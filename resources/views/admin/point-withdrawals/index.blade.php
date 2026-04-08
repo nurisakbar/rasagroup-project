@@ -99,7 +99,7 @@
                             <div class="input-group-addon">
                                 <i class="fa fa-calendar"></i>
                             </div>
-                            <input type="text" id="filter-start-date" class="form-control datepicker" placeholder="dd-mm-yyyy">
+                            <input type="text" id="filter-start-date" class="form-control datepicker" placeholder="dd-mm-yyyy" value="{{ now()->startOfMonth()->format('d-m-Y') }}">
                         </div>
                     </div>
                 </div>
@@ -110,7 +110,7 @@
                             <div class="input-group-addon">
                                 <i class="fa fa-calendar"></i>
                             </div>
-                            <input type="text" id="filter-end-date" class="form-control datepicker" placeholder="dd-mm-yyyy">
+                            <input type="text" id="filter-end-date" class="form-control datepicker" placeholder="dd-mm-yyyy" value="{{ now()->format('d-m-Y') }}">
                         </div>
                     </div>
                 </div>
@@ -217,8 +217,8 @@ $(document).ready(function() {
     // Reset button
     $('#btn-reset').click(function() {
         $('#filter-status').val('');
-        $('#filter-start-date').val('');
-        $('#filter-end-date').val('');
+        $('#filter-start-date').val('{{ now()->startOfMonth()->format("d-m-Y") }}');
+        $('#filter-end-date').val('{{ now()->format("d-m-Y") }}');
         table.draw();
     });
 

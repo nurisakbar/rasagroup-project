@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'User')
-@section('page-title', 'Manajemen User')
-@section('page-description', 'Kelola data user (Super Admin, Agent, Reseller, Pembeli)')
+@section('title', 'Super Admin')
+@section('page-title', 'Manajemen Super Admin')
+@section('page-description', 'Kelola data pengguna dengan akses administrator penuh')
 
 @section('breadcrumb')
-    <li class="active">User</li>
+    <li class="active">Super Admin</li>
 @endsection
 
 @push('styles')
@@ -23,7 +23,12 @@
         <div class="col-xs-12">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Daftar User</h3>
+                    <h3 class="box-title">Daftar Super Admin</h3>
+                    <div class="box-tools">
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> Tambah Super Admin
+                        </a>
+                    </div>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
@@ -83,6 +88,12 @@
                     next: "Selanjutnya",
                     previous: "Sebelumnya"
                 }
+            }
+        });
+
+        $(document).on('submit', '.delete-form', function(e) {
+            if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) {
+                e.preventDefault();
             }
         });
     });

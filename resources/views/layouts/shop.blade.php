@@ -37,6 +37,7 @@
     @include('themes.nest.partials.header')
     @include('themes.nest.partials.mobile-header')
 
+    @if(!View::hasSection('hide_layout_alerts'))
     @if(session('success'))
         <div class="container mt-4">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -71,6 +72,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </div>
+    @endif
     @endif
 
     @yield('content')

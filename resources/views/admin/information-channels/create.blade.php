@@ -34,12 +34,38 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('slug') has-error @enderror">
-                            <label for="slug">Slug</label>
-                            <input type="text" class="form-control" id="slug" name="slug" value="{{ old('slug') }}" placeholder="Otomatis dari judul">
-                            @error('slug')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group @error('target_audience') has-error @enderror">
+                                    <label for="target_audience">Target Audiens <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="target_audience" id="target_audience" required>
+                                        <option value="all" {{ old('target_audience') == 'all' ? 'selected' : '' }}>Semua Pengguna</option>
+                                        <option value="distributor" {{ old('target_audience') == 'distributor' ? 'selected' : '' }}>Khusus Distributor</option>
+                                        <option value="customer" {{ old('target_audience') == 'customer' ? 'selected' : '' }}>Khusus Customer (Non-Distributor)</option>
+                                    </select>
+                                    @error('target_audience')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group @error('start_date') has-error @enderror">
+                                    <label for="start_date">Berlaku Dari</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date') }}">
+                                    @error('start_date')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group @error('end_date') has-error @enderror">
+                                    <label for="end_date">Berlaku Sampai</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date') }}">
+                                    @error('end_date')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group @error('description') has-error @enderror">
@@ -84,16 +110,6 @@
                     ['insert', ['link', 'picture', 'video']],
                     ['view', ['fullscreen', 'codeview', 'help']]
                 ]
-            });
-
-            $('#title').on('blur', function() {
-                if ($('#slug').val() == '') {
-                    var title = $(this).val();
-                    var slug = title.toLowerCase()
-                        .replace(/[^\w ]+/g, '')
-                        .replace(/ +/g, '-');
-                    $('#slug').val(slug);
-                }
             });
         });
     </script>

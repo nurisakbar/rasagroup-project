@@ -30,4 +30,23 @@ class InformationChannelController extends Controller
 
         return view('themes.nest.information-channels.show', compact('channel'));
     }
+
+    /**
+     * Store a comment for the information channel.
+     */
+    public function storeComment(Request $request, $slug)
+    {
+        $request->validate([
+            'content' => 'required|string|max:1000',
+        ]);
+
+        $channel = InformationChannel::where('slug', $slug)->firstOrFail();
+
+        $channel->comments()->create([
+            'user_id' => auth()->id(),
+            'content' => $request->content,
+        ]);
+
+        return back()->with('success', 'Komentar berhasil ditambahkan.');
+    }
 }

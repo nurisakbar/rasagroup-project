@@ -123,6 +123,18 @@
                                                         </label>
                                                     </div>
                                                 </div>
+
+                                                @if(auth()->user()->term_of_payment > 0)
+                                                    <div class="payment-option p-3 border border-radius-10 mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="payment_method" id="pay_top" value="term_of_payment">
+                                                            <label class="form-check-label w-100" for="pay_top">
+                                                                <h6 class="mb-1">Term of Payment (TOP)</h6>
+                                                                <p class="font-sm text-muted mb-0">Pembayaran dengan tempo {{ auth()->user()->term_of_payment }} hari.</p>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -278,6 +290,12 @@ $(document).ready(function() {
 
     $('#checkout-form').on('submit', function() {
         $('#btn-place-order').prop('disabled', true).html('<div class="spinner-border spinner-border-sm text-white" role="status"></div> Sedang memproses...');
+    });
+
+    $('.payment-option').click(function() {
+        $(this).find('input[type="radio"]').prop('checked', true);
+        $('.payment-option').removeClass('border-brand');
+        $(this).addClass('border-brand');
     });
 });
 </script>

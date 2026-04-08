@@ -52,6 +52,61 @@
                                                 </ul>
                                             </div>
                                         </div>
+
+                                        <!-- Comments Section -->
+                                        <div class="comments-area mt-50 mb-30 border-top pt-30">
+                                            <h4 class="mb-30">Komentar ({{ $channel->comments->count() }})</h4>
+                                            <div class="comment-list">
+                                                @forelse($channel->comments as $comment)
+                                                    <div class="single-comment justify-content-between d-flex mb-30 pb-30 border-bottom">
+                                                        <div class="user justify-content-between d-flex">
+                                                            <div class="thumb mr-15">
+                                                                <img src="https://ui-avatars.com/api/?name={{ urlencode($comment->user->name) }}&background=3BB77E&color=fff" alt="" class="rounded-circle shadow-sm" style="width: 50px; height: 50px;">
+                                                            </div>
+                                                            <div class="desc">
+                                                                <div class="d-flex justify-content-between mb-5">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <span class="font-heading text-brand mr-10 fw-bold">{{ $comment->user->name }}</span>
+                                                                        <span class="font-xs text-muted">{{ $comment->created_at->diffForHumans() }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <p class="mb-0 text-muted font-sm">{{ $comment->content }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @empty
+                                                    <p class="text-muted font-sm">Belum ada komentar. Jadilah yang pertama memberikan komentar!</p>
+                                                @endforelse
+                                            </div>
+                                        </div>
+
+                                        <div class="comment-form mt-50 mb-100">
+                                            <h4 class="mb-15">Tinggalkan Komentar</h4>
+                                            @auth
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12">
+                                                        <form class="form-contact comment_form" action="{{ route('information-channels.comment', $channel->slug) }}" method="POST">
+                                                            @csrf
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <div class="form-group mb-3">
+                                                                        <textarea class="form-control w-100 border-radius-10 p-3" name="content" cols="30" rows="5" placeholder="Tulis komentar Anda di sini..." required></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <button type="submit" class="btn btn-brand rounded-pill px-5">Kirim Komentar</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-info border-radius-10 p-3 d-flex align-items-center">
+                                                    <i class="fi-rs-info mr-10"></i>
+                                                    <span>Anda harus <a href="{{ route('login') }}" class="text-brand fw-bold">Masuk</a> terlebih dahulu untuk memberikan komentar.</span>
+                                                </div>
+                                            @endauth
+                                        </div>
                                     </div>
                                 </div>
                             </div>

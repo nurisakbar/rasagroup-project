@@ -5,16 +5,54 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DiscountTier;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class DiscountTierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $discountTiers = DiscountTier::orderBy('min_quantity', 'asc')->get();
-        return view('admin.discount_tiers.index', compact('discountTiers'));
+        if ($request->ajax()) {
+            $query = DiscountTier::query();
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('quantity_display', function ($tier) {
+                    return number_format($tier->min_quantity, 0, ',', '.') . ' Item';
+                })
+                ->addColumn('discount_display', function ($tier) {
+                    return $tier->discount_percent . ' %';
+                })
+                ->addColumn('status_badge', function ($tier) {
+                    if ($tier->is_active) {
+                        return '<span class="label label-success">Aktif</span>';
+                    }
+                    return '<span class="label label-danger">Tidak Aktif</span>';
+                })
+                ->addColumn('action', function ($tier) {
+                    $editUrl = route('admin.discount-tiers.edit', $tier);
+                    $deleteUrl = route('admin.discount-tiers.destroy', $tier);
+                    
+                    return '
+                        <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>
+                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
+                            ' . csrf_field() . '
+                            ' . method_field('DELETE') . '
+                            <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
+                                <i class="fa fa-trash"></i> Hapus
+                            </button>
+                        </form>
+                    ';
+                })
+                ->rawColumns(['status_badge', 'action'])
+                ->make(true);
+        }
+
+        return view('admin.discount_tiers.index');
     }
 
     /**

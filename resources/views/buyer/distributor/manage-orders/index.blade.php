@@ -54,11 +54,11 @@
                                         </div>
                                         <div class="col-md-3">
                                             <label class="font-xs text-muted mb-1">Dari Tanggal</label>
-                                            <input type="date" id="filter-date-from" class="form-control form-control-sm">
+                                            <input type="date" id="filter-date-from" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="font-xs text-muted mb-1">Sampai Tanggal</label>
-                                            <input type="date" id="filter-date-to" class="form-control form-control-sm">
+                                            <input type="date" id="filter-date-to" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                                         </div>
                                     </div>
 
@@ -72,7 +72,6 @@
                                                     <th>Ekspedisi</th>
                                                     <th>Total</th>
                                                     <th>Status</th>
-                                                    <th>Pembayaran</th>
                                                     <th class="text-end">Aksi</th>
                                                 </tr>
                                             </thead>
@@ -127,7 +126,6 @@ $(document).ready(function() {
             { data: 'expedition_info', name: 'expedition.name', orderable: false },
             { data: 'total_formatted', name: 'total_amount' },
             { data: 'status_badge', name: 'order_status' },
-            { data: 'payment_badge', name: 'payment_status' },
             { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end' }
         ],
         order: [[1, 'desc']],

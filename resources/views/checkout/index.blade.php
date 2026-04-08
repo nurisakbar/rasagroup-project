@@ -1,4 +1,5 @@
 @extends('layouts.shop')
+@section('hide_layout_alerts', true)
 
 @section('title', 'Checkout')
 
@@ -23,19 +24,39 @@
         </div>
     </div>
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-30" role="alert">
-            <i class="fi-rs-cross-circle mr-10"></i>{{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+    <div id="sessionAlerts">
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-30" role="alert">
+                <i class="fi-rs-cross-circle mr-10"></i>{!! nl2br(e(session('error'))) !!}
+                @if(str_contains(session('error'), 'Stock tidak mencukupi') || str_contains(session('error'), 'stok'))
+                    <div class="mt-15">
+                        <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
+                        </form>
+                    </div>
+                @endif
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
-    @if(session('warning'))
-        <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
-            <i class="fi-rs-exclamation mr-10"></i>{!! nl2br(e(session('warning'))) !!}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+        @if(session('warning'))
+            <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
+                <i class="fi-rs-exclamation mr-10"></i>{!! nl2br(e(session('warning'))) !!}
+                @if(str_contains(session('warning'), 'stok') || str_contains(session('warning'), 'Stok'))
+                    <div class="mt-15">
+                        <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
+                        </form>
+                    </div>
+                @endif
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+    </div>
 
     <div id="checkoutAlertContainer"></div>
 
@@ -597,10 +618,23 @@
                 }
 
                 if (data.stock_warnings && data.stock_warnings.length > 0) {
+                    // Hide session alerts if we are showing new stock warnings from AJAX
+                    $('#sessionAlerts').empty();
+                    
                     const warningHtml = data.stock_warnings.join('<br>');
+                    const removeBtnHtml = `
+                        <div class="mt-15">
+                            <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
+                            </form>
+                        </div>`;
+                        
                     const stockAlert = `
                         <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
                             <i class="fi-rs-exclamation mr-10"></i> <strong>Peringatan Stok:</strong><br>${warningHtml}
+                            ${removeBtnHtml}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>`;
                     $('#checkoutAlertContainer').append(stockAlert);

@@ -131,15 +131,6 @@
                                                             <input type="text" name="tracking_number" class="form-control font-sm" value="{{ $order->tracking_number }}" placeholder="Contoh: JNE12345678">
                                                         </div>
 
-                                                        <div class="mb-3">
-                                                            <label class="form-label font-sm">Status Pembayaran</label>
-                                                            <select name="payment_status" class="form-select font-sm">
-                                                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                                                <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid</option>
-                                                                <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed</option>
-                                                                <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded</option>
-                                                            </select>
-                                                        </div>
 
                                                         <button type="submit" class="btn btn-sm btn-fill-out w-100 mt-2">Update Pesanan</button>
                                                     </form>

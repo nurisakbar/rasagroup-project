@@ -48,6 +48,9 @@ class Order extends Model
         'xendit_invoice_id',
         'xendit_invoice_url',
         'preferred_shipping_date',
+        'payment_proof',
+        'payment_submit_note',
+        'payment_submitted_at',
     ];
 
     protected $casts = [
@@ -60,6 +63,7 @@ class Order extends Model
         'paid_at' => 'datetime',
         'shipped_at' => 'datetime',
         'preferred_shipping_date' => 'date',
+        'payment_submitted_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

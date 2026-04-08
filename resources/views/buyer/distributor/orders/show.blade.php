@@ -85,6 +85,23 @@
                                         </div>
                                     </div>
 
+                                    @if($order->payment_proof)
+                                        <div class="mb-4 p-3 border-radius-10 bg-light border">
+                                            <h6 class="mb-3 uppercase font-xs text-muted fw-bold">Bukti Pembayaran Terkirim</h6>
+                                            <div class="d-flex align-items-start">
+                                                <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" class="me-4">
+                                                    <img src="{{ asset('storage/' . $order->payment_proof) }}" class="border-radius-10 shadow-sm" style="max-width: 150px; border: 2px solid #fff;">
+                                                </a>
+                                                <div>
+                                                    <p class="font-sm mb-1"><strong>Dikirim:</strong> {{ $order->payment_submitted_at ? $order->payment_submitted_at->format('d M Y H:i') : '-' }}</p>
+                                                    @if($order->payment_submit_note)
+                                                        <p class="font-sm mb-0"><strong>Catatan:</strong><br><span class="text-muted">{{ $order->payment_submit_note }}</span></p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     <h5 class="mb-3">Item Pesanan</h5>
                                     <div class="table-responsive">
                                         <table class="table font-sm">
@@ -148,7 +165,14 @@
                                 <div class="card-footer bg-white border-top p-4 d-flex justify-content-between align-items-center">
                                     <a href="{{ route('distributor.orders.history') }}" class="btn btn-sm btn-secondary rounded-pill px-4">Kembali</a>
                                     @if($order->payment_status === 'pending')
-                                        <a href="#" class="btn btn-sm btn-fill-out rounded-pill px-4">Konfirmasi Pembayaran</a>
+                                        @if($order->payment_submitted_at)
+                                            <div class="d-flex flex-column align-items-end">
+                                                <span class="text-muted font-sm mb-1"><i class="fi-rs-info mr-5"></i> Menunggu Verifikasi Pusat</span>
+                                                <a href="{{ route('distributor.orders.confirm-payment', $order) }}" class="text-brand font-sm"><u>Update Konfirmasi</u></a>
+                                            </div>
+                                        @else
+                                            <a href="{{ route('distributor.orders.confirm-payment', $order) }}" class="btn btn-sm btn-fill-out rounded-pill px-4">Konfirmasi Pembayaran</a>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

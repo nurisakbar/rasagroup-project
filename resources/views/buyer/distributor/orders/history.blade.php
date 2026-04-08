@@ -29,14 +29,62 @@
                                     <p class="text-muted font-sm">Daftar pesanan restok yang Anda buat ke pusat.</p>
                                 </div>
                                 <div class="card-body p-4">
+                                    @if($monthlyTarget > 0)
+                                        <div class="mb-4 p-3 border-radius-10" style="background-color: #f7fef9; border: 1px solid #3BB77E;">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0 text-brand"><i class="fi-rs-chart-pie mr-5"></i> Target Belanja Bulanan ({{ now()->translatedFormat('F Y') }})</h6>
+                                                <span class="font-sm fw-bold {{ $progressPercentage >= 100 ? 'text-success' : 'text-muted' }}">
+                                                    {{ number_format($progressPercentage, 1) }}% Tercapai
+                                                </span>
+                                            </div>
+                                            <div class="progress mb-2" style="height: 12px; background-color: #eee; border-radius: 6px; overflow: hidden;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                                    style="width: {{ $progressPercentage }}%; background-color: #3BB77E;" 
+                                                    aria-valuenow="{{ $progressPercentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between font-xs text-muted">
+                                                <span>Realisasi: <strong>Rp {{ number_format($totalSpentThisMonth, 0, ',', '.') }}</strong></span>
+                                                <span>Target: <strong>Rp {{ number_format($monthlyTarget, 0, ',', '.') }}</strong></span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    <!-- Filter Box -->
+                                    <form action="{{ route('distributor.orders.history') }}" method="GET" class="mb-4">
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <label class="font-xs text-muted mb-1">Status</label>
+                                                <select name="status" class="form-select form-select-sm">
+                                                    <option value="">Semua Status</option>
+                                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>Processing</option>
+                                                    <option value="shipped" {{ request('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
+                                                    <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="font-xs text-muted mb-1">Dari</label>
+                                                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from', now()->startOfMonth()->format('Y-m-d')) }}">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="font-xs text-muted mb-1">Sampai</label>
+                                                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to', now()->endOfMonth()->format('Y-m-d')) }}">
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-sm btn-brand w-100" style="padding: 10px;">Filter</button>
+                                            </div>
+                                        </div>
+                                    </form>
                                     <div class="table-responsive">
                                         <table class="table table-clean font-sm">
                                             <thead>
                                                 <tr class="main-heading">
                                                     <th class="pl-10">Tanggal</th>
                                                     <th>No. Pesanan</th>
-                                                    <th>Status</th>
+                                                    <th>Status Order</th>
                                                     <th>Total</th>
+                                                    <th>Pembayaran</th>
                                                     <th class="text-end pr-10">Aksi</th>
                                                 </tr>
                                             </thead>
@@ -59,13 +107,24 @@
                                                             <span class="badge {{ $statusClass }}">{{ ucfirst($order->order_status) }}</span>
                                                         </td>
                                                         <td><strong class="text-brand">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong></td>
+                                                        <td>
+                                                            @php
+                                                                $paymentClass = [
+                                                                    'pending' => 'bg-warning',
+                                                                    'paid' => 'bg-success',
+                                                                    'failed' => 'bg-danger',
+                                                                    'refunded' => 'bg-info',
+                                                                ][$order->payment_status] ?? 'bg-secondary';
+                                                            @endphp
+                                                            <span class="badge {{ $paymentClass }}">{{ ucfirst($order->payment_status) }}</span>
+                                                        </td>
                                                         <td class="text-end pr-10">
                                                             <a href="{{ route('distributor.orders.show', $order) }}" class="btn-small d-block">Detail</a>
                                                         </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="5" class="text-center py-4 text-muted">Belum ada riwayat pesanan.</td>
+                                                        <td colspan="6" class="text-center py-4 text-muted">Belum ada riwayat pesanan.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

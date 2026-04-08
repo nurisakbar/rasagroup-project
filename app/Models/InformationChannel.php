@@ -18,11 +18,16 @@ class InformationChannel extends Model
         'title',
         'slug',
         'description',
+        'target_audience',
+        'start_date',
+        'end_date',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     protected static function boot()
@@ -52,5 +57,10 @@ class InformationChannel extends Model
             $count++;
         }
         return $slug;
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable')->orderBy('created_at', 'desc');
     }
 }

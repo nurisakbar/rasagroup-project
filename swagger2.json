@@ -1,0 +1,5358 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "QAD Web API",
+    "description": "An API for QAD Web",
+    "contact": {
+      "name": "IT Rasa Group"
+    },
+    "version": "v1"
+  },
+  "paths": {
+    "/authorization/login": {
+      "post": {
+        "tags": [
+          "authorization"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Authorization.Login.Query.Login"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Authorization.Login.Query.Login"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Authorization.Login.Query.Login"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/bom/formula-code-save": {
+      "post": {
+        "tags": [
+          "Bill of Material"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.Save.Formula_Save"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.Save.Formula_Save"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.Save.Formula_Save"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/bom/formula-detail-save": {
+      "post": {
+        "tags": [
+          "Bill of Material"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.SaveDetail.FormulaDetail_Save"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.SaveDetail.FormulaDetail_Save"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Query.SaveDetail.FormulaDetail_Save"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/bom/get": {
+      "get": {
+        "tags": [
+          "Bill of Material"
+        ],
+        "parameters": [
+          {
+            "name": "FormulaCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/bom/get-all": {
+      "get": {
+        "tags": [
+          "Bill of Material"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/business-relation/get": {
+      "get": {
+        "tags": [
+          "Business Relation"
+        ],
+        "parameters": [
+          {
+            "name": "businessRelationCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/business-relation/list": {
+      "get": {
+        "tags": [
+          "Business Relation"
+        ],
+        "parameters": [
+          {
+            "name": "businessRelationCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "businessRelationSearchName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "corporateGroupCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/business-relation/create": {
+      "post": {
+        "tags": [
+          "Business Relation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Create.BusinessRelation_Create"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Create.BusinessRelation_Create"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Create.BusinessRelation_Create"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/business-relation/update": {
+      "patch": {
+        "tags": [
+          "Business Relation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Update.BusinessRelation_Update"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Update.BusinessRelation_Update"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Update.BusinessRelation_Update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer/get": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "CustomerCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SharedSetCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer/list": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "customerCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addressSearchName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer/create": {
+      "post": {
+        "tags": [
+          "Customer"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Create.Customer_Create"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Create.Customer_Create"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Create.Customer_Create"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer/create-data": {
+      "post": {
+        "tags": [
+          "Customer"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.CustomerData.Create.CustomerData_Create"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.CustomerData.Create.CustomerData_Create"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.CustomerData.Create.CustomerData_Create"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.LogUpload]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.LogUpload]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.LogUpload]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer/update": {
+      "patch": {
+        "tags": [
+          "Customer"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Update.Customer_Update"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Update.Customer_Update"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Update.Customer_Update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/inventory/location": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Query.Location.Inventory_Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/inventory/all": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Query.GetAllWithFilter.Inventory_GetAllWithFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Query.GetAllWithFilter.Inventory_GetAllWithFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Query.GetAllWithFilter.Inventory_GetAllWithFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/item/list": {
+      "post": {
+        "tags": [
+          "Item Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.GetAll.Item_GetAll"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.GetAll.Item_GetAll"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.GetAll.Item_GetAll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/item/get": {
+      "get": {
+        "tags": [
+          "Item Master"
+        ],
+        "parameters": [
+          {
+            "name": "ItemCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/item/paging": {
+      "post": {
+        "tags": [
+          "Item Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Paging.Item_Paging"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Paging.Item_Paging"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Paging.Item_Paging"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/item/save": {
+      "post": {
+        "tags": [
+          "Item Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Save.Item_Save"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Save.Item_Save"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Save.Item_Save"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/item/update": {
+      "patch": {
+        "tags": [
+          "Item Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Update.Item_Update"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Update.Item_Update"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Query.Update.Item_Update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notification/send-text": {
+      "post": {
+        "tags": [
+          "Notification"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.System.Notification.SendText.Notification_SendText"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.System.Notification.SendText.Notification_SendText"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.System.Notification.SendText.Notification_SendText"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/trailer": {
+      "get": {
+        "tags": [
+          "Qad Master"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Query.Trailer.Qad_Trailer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/customer": {
+      "get": {
+        "tags": [
+          "Qad Master"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Query.Customer.Qad_Customer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/general-ledger": {
+      "get": {
+        "tags": [
+          "Qad Master"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Query.GeneralLedger.Qad_GeneralLedger"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/cost-centre": {
+      "get": {
+        "tags": [
+          "Qad Master"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Query.CostCentre.Qad_CostCentre"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/master/tax": {
+      "get": {
+        "tags": [
+          "Qad Master"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Query.Tax.Qad_Tax"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transaction/sales-orders/get": {
+      "get": {
+        "tags": [
+          "Sales Orders"
+        ],
+        "parameters": [
+          {
+            "name": "SalesOrderCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transaction/sales-orders/list": {
+      "get": {
+        "tags": [
+          "Sales Orders"
+        ],
+        "parameters": [
+          {
+            "name": "salesOrderNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "soldToCustomerCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transaction/sales-orders/create": {
+      "post": {
+        "tags": [
+          "Sales Orders"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Create.SalesOrder_Create"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Create.SalesOrder_Create"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Create.SalesOrder_Create"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transaction/sales-orders/update": {
+      "patch": {
+        "tags": [
+          "Sales Orders"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Update.SalesOrder_Update"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Update.SalesOrder_Update"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Update.SalesOrder_Update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RG2026_QADWebAPI.Common.Library.Response.Error": {
+        "type": "object",
+        "properties": {
+          "isError": {
+            "type": "boolean"
+          },
+          "errorType": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorMessages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.LogUpload": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "information": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "search": {
+            "type": "string",
+            "nullable": true
+          },
+          "order_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "ascending": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageAll": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.LogUpload]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.LogUpload"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.PaginGlobalResponse`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Common.Library.Response.ResponseBuilder`1[System.Collections.Generic.List`1[RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response]]": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/RG2026_QADWebAPI.Common.Library.Response.Error"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Authorization.Login.Query.Login": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "appsId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Authorization.Login.Response.Login_Response": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullname": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "roleId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Formula.Query.Save.Formula_Save": {
+        "type": "object",
+        "properties": {
+          "formulaCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "batchSize": {
+            "type": "number",
+            "format": "double"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Formula.Query.SaveDetail.FormulaDetail_Save": {
+        "type": "object",
+        "properties": {
+          "formulaCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "formulaDetailLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Request.FormulaDetailLine_Request"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Formula.Request.FormulaDetailLine_Request": {
+        "type": "object",
+        "properties": {
+          "componentItem": {
+            "type": "string",
+            "nullable": true
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "qtyPerBatch": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Detail_Response": {
+        "type": "object",
+        "properties": {
+          "componentItem": {
+            "type": "string",
+            "nullable": true
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "qtyPerBatch": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Global_Response": {
+        "type": "object",
+        "properties": {
+          "formulaCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "batchSize": {
+            "type": "number",
+            "format": "double"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.Master.Formula.Response.Formula_Detail_Response"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Inventory.Query.GetAllWithFilter.Inventory_GetAllWithFilter": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "search": {
+            "type": "string",
+            "nullable": true
+          },
+          "batch": {
+            "type": "string",
+            "nullable": true
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Inventory.Query.Location.Inventory_Location": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Global_Response": {
+        "type": "object",
+        "properties": {
+          "item_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "item_desc1": {
+            "type": "string",
+            "nullable": true
+          },
+          "item_desc2": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "lot_serial": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "qty": {
+            "type": "number",
+            "format": "double"
+          },
+          "qty_book": {
+            "type": "number",
+            "format": "double"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "expired": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expired_short": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_short": {
+            "type": "string",
+            "nullable": true
+          },
+          "mobile_color": {
+            "type": "string",
+            "nullable": true
+          },
+          "web_color": {
+            "type": "string",
+            "nullable": true
+          },
+          "tag": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Inventory.Response.Inventory_Location_Response": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "tstatus": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Item.Query.GetAll.Item_GetAll": {
+        "type": "object",
+        "properties": {
+          "prodLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Item.Query.Paging.Item_Paging": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "search": {
+            "type": "string",
+            "nullable": true
+          },
+          "order_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "ascending": {
+            "type": "string",
+            "nullable": true
+          },
+          "rangeColumn": {
+            "type": "string",
+            "nullable": true
+          },
+          "dtmFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dtmTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Item.Query.Save.Item_Save": {
+        "type": "object",
+        "properties": {
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description1": {
+            "type": "string",
+            "nullable": true
+          },
+          "description2": {
+            "type": "string",
+            "nullable": true
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "sizing": {
+            "type": "string",
+            "nullable": true
+          },
+          "productLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseOrManufacture": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Item.Query.Update.Item_Update": {
+        "type": "object",
+        "properties": {
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description1": {
+            "type": "string",
+            "nullable": true
+          },
+          "description2": {
+            "type": "string",
+            "nullable": true
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "sizing": {
+            "type": "string",
+            "nullable": true
+          },
+          "productLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseOrManufacture": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Item.Response.Item_Global_Response": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "descriptionAlt": {
+            "type": "string",
+            "nullable": true
+          },
+          "syncDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description2": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "prodLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "sizing": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Query.CostCentre.Qad_CostCentre": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Query.Customer.Qad_Customer": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Query.GeneralLedger.Qad_GeneralLedger": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Query.Tax.Qad_Tax": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Query.Trailer.Qad_Trailer": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_CostCentre_WSA_Response": {
+        "type": "object",
+        "properties": {
+          "costCentre_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "address1": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "address3": {
+            "type": "string",
+            "nullable": true
+          },
+          "costCentreable": {
+            "type": "boolean"
+          },
+          "costCentre_class": {
+            "type": "string",
+            "nullable": true
+          },
+          "cust_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Customer_WSA_Response": {
+        "type": "object",
+        "properties": {
+          "customer_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "address1": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "address3": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxable": {
+            "type": "boolean"
+          },
+          "tax_class": {
+            "type": "string",
+            "nullable": true
+          },
+          "cust_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_GeneralLedger_WSA_Response": {
+        "type": "object",
+        "properties": {
+          "generalLedger_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "address1": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "address3": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxable": {
+            "type": "boolean"
+          },
+          "tax_class": {
+            "type": "string",
+            "nullable": true
+          },
+          "cust_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Tax_WSA_Response": {
+        "type": "object",
+        "properties": {
+          "tax_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "address1": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "address3": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxable": {
+            "type": "boolean"
+          },
+          "tax_class": {
+            "type": "string",
+            "nullable": true
+          },
+          "cust_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.Master.Qad.Response.Qad_Trailer_WSA_Response": {
+        "type": "object",
+        "properties": {
+          "trlCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "codeDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "account": {
+            "type": "string",
+            "nullable": true
+          },
+          "subAccount": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxable": {
+            "type": "boolean"
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Create.BusinessRelation_Create": {
+        "type": "object",
+        "properties": {
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName1": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName2": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName3": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "corporateGroupCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeBusinessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLatitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeLongitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeStreet1": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStreet2": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTelephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeWebSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeZipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.AddressV2": {
+        "type": "object",
+        "properties": {
+          "addressID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "stateID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "countyID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "telephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "fax": {
+            "type": "string",
+            "nullable": true
+          },
+          "eMail": {
+            "type": "string",
+            "nullable": true
+          },
+          "webSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "languageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "street1": {
+            "type": "string",
+            "nullable": true
+          },
+          "street2": {
+            "type": "string",
+            "nullable": true
+          },
+          "street3": {
+            "type": "string",
+            "nullable": true
+          },
+          "federalTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxInCity": {
+            "type": "boolean"
+          },
+          "isTaxIncluded": {
+            "type": "boolean"
+          },
+          "stateTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax1": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax2": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax3": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxDeclaration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxZoneDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClassDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxUsage": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxUsageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTemporaryAddress": {
+            "type": "boolean"
+          },
+          "addressTypeID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxableAddress": {
+            "type": "boolean"
+          },
+          "logicKeyString": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalValidationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSkipRecordProcessing": {
+            "type": "boolean"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "changeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastModifiedTime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastModifiedUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyHash": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.BusinessRelation_Response": {
+        "type": "object",
+        "properties": {
+          "headOfficeAddressID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "headOfficeAddressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeBusinessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeBusinessRelationID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "headOfficeCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeZipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeCityCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeCountyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTelephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeFax": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeEMail": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeWebSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLatitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeLongitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeCountryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeCountryDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLanguageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStreet1": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStreet2": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStreet3": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeFederalTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeIsTaxInCity": {
+            "type": "boolean"
+          },
+          "headOfficeIsTaxIncluded": {
+            "type": "boolean"
+          },
+          "headOfficeStateTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeMiscellaneousTax1": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeMiscellaneousTax2": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeMiscellaneousTax3": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxDeclaration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "headOfficeTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxZoneDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxClassDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxUsage": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxUsageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficePostalFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeIsTemporaryAddress": {
+            "type": "boolean"
+          },
+          "headOfficeLogicKeyString": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "domainID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "domainCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressTypeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeIsTaxableAddress": {
+            "type": "boolean"
+          },
+          "corporateGroupID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "corporateGroupCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "corporateGroupDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "languageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName1": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName2": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName3": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "intercompanyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "changeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "changeRequestCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceURI": {
+            "type": "string",
+            "nullable": true
+          },
+          "isIntercompany": {
+            "type": "boolean"
+          },
+          "isInternalEntity": {
+            "type": "boolean"
+          },
+          "isCompensationAllowed": {
+            "type": "boolean"
+          },
+          "isForTaxReport": {
+            "type": "boolean"
+          },
+          "isLastFiling": {
+            "type": "boolean"
+          },
+          "isDomainRestricted": {
+            "type": "boolean"
+          },
+          "nameControl": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "eORINumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "commercialRegisterID": {
+            "type": "string",
+            "nullable": true
+          },
+          "institutionID": {
+            "type": "string",
+            "nullable": true
+          },
+          "institutionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesPriceList": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "purchasePriceList": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "costPriceList": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastModifiedTime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastModifiedUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressV2s": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Response.AddressV2"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.BusinessRelation.Update.BusinessRelation_Update": {
+        "type": "object",
+        "properties": {
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName1": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName2": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName3": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "corporateGroupCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeBusinessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeLatitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeLongitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "headOfficeStreet1": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeStreet2": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeTelephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeWebSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "headOfficeZipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.Customer.Create.Customer_Create": {
+        "type": "object",
+        "properties": {
+          "addressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "street1": {
+            "type": "string",
+            "nullable": true
+          },
+          "street2": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxInCity": {
+            "type": "boolean"
+          },
+          "taxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isBusinessRelationActive": {
+            "type": "boolean"
+          },
+          "businessRelationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditNoteControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "prePaymentControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAccountGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsType": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceStatusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "sharedSetCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatDeliveryType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercentageLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isBusinessRelationFieldsEnabled": {
+            "type": "boolean"
+          },
+          "customerCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.Customer.Response.Customer_Response": {
+        "type": "object",
+        "properties": {
+          "addressID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "stateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "countyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "telephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "fax": {
+            "type": "string",
+            "nullable": true
+          },
+          "eMail": {
+            "type": "string",
+            "nullable": true
+          },
+          "webSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "street1": {
+            "type": "string",
+            "nullable": true
+          },
+          "street2": {
+            "type": "string",
+            "nullable": true
+          },
+          "street3": {
+            "type": "string",
+            "nullable": true
+          },
+          "federalTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxInCity": {
+            "type": "boolean"
+          },
+          "isTaxIncluded": {
+            "type": "boolean"
+          },
+          "stateTax": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax1": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax2": {
+            "type": "string",
+            "nullable": true
+          },
+          "miscellaneousTax3": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxDeclaration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxZoneDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClassDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxUsage": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxUsageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTemporaryAddress": {
+            "type": "boolean"
+          },
+          "reminderAddressID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reminderAddressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderAddressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderZipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderStateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderStateDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountyDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderTelephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderFax": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderEMail": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderWebSite": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountryDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderLanguageDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderStreet1": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderStreet2": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderStreet3": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderPostalFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderIsTemporaryAddress": {
+            "type": "boolean"
+          },
+          "customerID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isBusinessRelationActive": {
+            "type": "boolean"
+          },
+          "isBusinessRelationIntercompany": {
+            "type": "boolean"
+          },
+          "businessRelationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName2": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationName3": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToCustomerID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "billToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceControlGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "invoiceControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceControlGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditNoteControlGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creditNoteControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditNoteControlGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "prePaymentControlGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prePaymentControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "prePaymentControlGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "deductionControlGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deductionControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deductionControlGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAccountGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "salesAccountGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAccountGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "financeChargeGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "financeChargeGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "financeChargeGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "subAccountProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subAccountProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "subAccountProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerTypeID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerTypeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsType": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceStatusID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "invoiceStatusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceStatusDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentGroupID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentGroupCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentGroupDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingScheduleID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "billingScheduleCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingScheduleDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "billCollectorID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "billCollectorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isInvoiceByAuthorization": {
+            "type": "boolean"
+          },
+          "isFinanceCharge": {
+            "type": "boolean"
+          },
+          "statementCycle": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPrintReminder": {
+            "type": "boolean"
+          },
+          "isPrintStatement": {
+            "type": "boolean"
+          },
+          "isPrintBillWithItemDetails": {
+            "type": "boolean"
+          },
+          "isFixedCreditLimit": {
+            "type": "boolean"
+          },
+          "fixedCreditLimit": {
+            "type": "number",
+            "format": "double"
+          },
+          "isTurnOverCreditLimit": {
+            "type": "boolean"
+          },
+          "turnoverCreditLimitPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "isMaxDaysOverdueCreditLimit": {
+            "type": "boolean"
+          },
+          "maxDaysCreditLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creditAgencyReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "isToBeLockedCreditLimit": {
+            "type": "boolean"
+          },
+          "isLockedCreditLimit": {
+            "type": "boolean"
+          },
+          "creditRatingID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "creditRatingCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isIncludeSOCheckCreditLimit": {
+            "type": "boolean"
+          },
+          "isIncludeOpenItemsCreditLimit": {
+            "type": "boolean"
+          },
+          "isIncludeDraftCreditLimit": {
+            "type": "boolean"
+          },
+          "isCheckBeforeSOCreditLimit": {
+            "type": "boolean"
+          },
+          "isCheckAfterSOCreditLimit": {
+            "type": "boolean"
+          },
+          "isOverruleAllowedSOCreditLimit": {
+            "type": "boolean"
+          },
+          "isCheckBeforeInvoiceCreditLimit": {
+            "type": "boolean"
+          },
+          "isCheckAfterInvoiceCreditLimit": {
+            "type": "boolean"
+          },
+          "isOverAllowedInvoiceCreditLimit": {
+            "type": "boolean"
+          },
+          "warningCreditLimitPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "highCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "customerIsInclDeduction": {
+            "type": "boolean"
+          },
+          "reminderCountReset": {
+            "type": "boolean"
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "corporateGroupID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "corporateGroupCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "corporateGroupDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "commentNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "sharedSetID": {
+            "type": "string",
+            "nullable": true
+          },
+          "sharedSetCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatDeliveryType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercentageLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerGTVatTransType": {
+            "type": "string",
+            "nullable": true
+          },
+          "domiciliationNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isWithPreInvoiceGroup": {
+            "type": "boolean"
+          },
+          "totalDaysLate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalNumberOfInvoices": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isDomainRestricted": {
+            "type": "boolean"
+          },
+          "isCompensationAllowed": {
+            "type": "boolean"
+          },
+          "isInternalEntity": {
+            "type": "boolean"
+          },
+          "isTaxReport": {
+            "type": "boolean"
+          },
+          "isLastFiling": {
+            "type": "boolean"
+          },
+          "intercompanyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "nameControl": {
+            "type": "string",
+            "nullable": true
+          },
+          "eoriNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "isCreateBusinessRelationRequired": {
+            "type": "boolean"
+          },
+          "overToleranceAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "overTolerancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "shortToleranceAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "shortTolerancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "toleranceAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "isElectronicInvoiceIN": {
+            "type": "boolean"
+          },
+          "isReportedIN": {
+            "type": "boolean"
+          },
+          "isToleranceFromOwnBank": {
+            "type": "boolean"
+          },
+          "deferredRevRecGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deferredRevRecGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deferredRevRecGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "revRecRuleID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "accruedRevRecGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "accruedRevRecGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "accruedRevRecGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAutoCreateRevRecContracts": {
+            "type": "boolean"
+          },
+          "cogsDeferredRevRecGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cogsDeferredRevRecGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cogsDeferredRevRecGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "cogsAccruedRevRecGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cogsAccruedRevRecGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cogsAccruedRevRecGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "cogsOffsetRevRecGLProfileID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cogsOffsetRevRecGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cogsOffsetRevRecGLProfileDesc": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isReminderRequired": {
+            "type": "boolean"
+          },
+          "reviewRequiredForContracts": {
+            "type": "string",
+            "nullable": true
+          },
+          "changeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceURI": {
+            "type": "string",
+            "nullable": true
+          },
+          "isBusinessRelationFieldsEnabled": {
+            "type": "boolean"
+          },
+          "reminderAddressChangeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastModifiedTime": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastModifiedUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationConcurrencyHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressConcurrencyHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "customDecimal0": {
+            "type": "number",
+            "format": "double"
+          },
+          "customDecimal1": {
+            "type": "number",
+            "format": "double"
+          },
+          "customDecimal2": {
+            "type": "number",
+            "format": "double"
+          },
+          "customDecimal3": {
+            "type": "number",
+            "format": "double"
+          },
+          "customDecimal4": {
+            "type": "number",
+            "format": "double"
+          },
+          "customInteger0": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customInteger1": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customInteger2": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customInteger3": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customInteger4": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customLong0": {
+            "type": "string",
+            "nullable": true
+          },
+          "customLong1": {
+            "type": "string",
+            "nullable": true
+          },
+          "customNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort0": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort1": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort2": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort3": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort4": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort5": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort6": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort7": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort8": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort9": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort10": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort11": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort12": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort13": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort14": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort15": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort16": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort17": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort18": {
+            "type": "string",
+            "nullable": true
+          },
+          "customShort19": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo0": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo1": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo2": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo3": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo4": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo5": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo6": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo7": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo8": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo9": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo10": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo11": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo12": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo13": {
+            "type": "string",
+            "nullable": true
+          },
+          "customCombo14": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.Customer.Update.Customer_Update": {
+        "type": "object",
+        "properties": {
+          "addressName": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressSearchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessRelationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "languageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "street1": {
+            "type": "string",
+            "nullable": true
+          },
+          "street2": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxInCity": {
+            "type": "boolean"
+          },
+          "taxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderCountryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderLanguageCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reminderTaxZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isBusinessRelationActive": {
+            "type": "boolean"
+          },
+          "businessRelationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditNoteControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "prePaymentControlGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAccountGLProfileCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsType": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceStatusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "sharedSetCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatDeliveryType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercentageLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isBusinessRelationFieldsEnabled": {
+            "type": "boolean"
+          },
+          "customerCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.CustomerData.Create.CustomerData_Create": {
+        "type": "object",
+        "properties": {
+          "customerCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Create.SalesOrder_Create": {
+        "type": "object",
+        "properties": {
+          "domainCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "requiredDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "promiseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "salespersonCode_01": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSelfBillingEnabled": {
+            "type": "boolean"
+          },
+          "salesOrderLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Request.SalesOrderLineCreate"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Request.SalesOrderLineCreate": {
+        "type": "object",
+        "properties": {
+          "salesOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderLine": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantityOrdered": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitOfMeasure": {
+            "type": "string",
+            "nullable": true
+          },
+          "listPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "netPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "salesAcct": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesCC": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountAcct": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountCC": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Request.SalesOrderLineUpdate": {
+        "type": "object",
+        "properties": {
+          "salesOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderLine": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantityOrdered": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityAllocated": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitOfMeasure": {
+            "type": "string",
+            "nullable": true
+          },
+          "listPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "netPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "salesAcct": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesCC": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountAcct": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountCC": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOLineInvoiceHistory": {
+        "type": "object",
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "quantityInvoiced": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOLineShippingHistory": {
+        "type": "object",
+        "properties": {
+          "shipperNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "shipDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "shipperStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOSalesperson": {
+        "type": "object",
+        "properties": {
+          "salespersonCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salespersonName": {
+            "type": "string",
+            "nullable": true
+          },
+          "commissionPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dataOperation": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrderLine": {
+        "type": "object",
+        "properties": {
+          "salesOrderLine": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "description2": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantityOrdered": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityShipped": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantityInvoiced": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitOfMeasure": {
+            "type": "string",
+            "nullable": true
+          },
+          "listPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "netPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "extendedPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "lotSerial": {
+            "type": "string",
+            "nullable": true
+          },
+          "siteCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderLineOID": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "soLineShippingHistorys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOLineShippingHistory"
+            },
+            "nullable": true
+          },
+          "soLineInvoiceHistorys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOLineInvoiceHistory"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrder_Response": {
+        "type": "object",
+        "properties": {
+          "domainCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "numberFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "sequenceID": {
+            "type": "string",
+            "nullable": true
+          },
+          "numberFormatDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditTermsInterestPercentage": {
+            "type": "number",
+            "format": "double"
+          },
+          "soldToAddressField1": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToAddressField2": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToAddressField3": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToAddressField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToAddressField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToAddressField6": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField1": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField2": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField3": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToAddressField6": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField1": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField2": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField3": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToAddressField6": {
+            "type": "string",
+            "nullable": true
+          },
+          "confirmedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "requiredDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pricedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pricingDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "shipDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isCreditReviewed": {
+            "type": "boolean"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "isConfirmed": {
+            "type": "boolean"
+          },
+          "purchaseOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesQuoteNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "siteCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "siteDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "isForecastConsumed": {
+            "type": "boolean"
+          },
+          "isDetailAllocations": {
+            "type": "boolean"
+          },
+          "allocateDays": {
+            "type": "number",
+            "format": "double"
+          },
+          "isLinePricing": {
+            "type": "boolean"
+          },
+          "manual": {
+            "type": "string",
+            "nullable": true
+          },
+          "manualPriceListDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "isFixedPrice": {
+            "type": "boolean"
+          },
+          "isReprice": {
+            "type": "boolean"
+          },
+          "creatingUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "creatingUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "exchangeRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "isTaxIncluded": {
+            "type": "boolean"
+          },
+          "taxEnvironment": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "soSalespersons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SOSalesperson"
+            },
+            "nullable": true
+          },
+          "salesOrderLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Response.SalesOrderLine"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Update.SalesOrder_Update": {
+        "type": "object",
+        "properties": {
+          "domainCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "billToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "soldToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shipToCustomerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "requiredDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "shipDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "promiseDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "creditTermsCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseOrderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTaxable": {
+            "type": "boolean"
+          },
+          "salespersonCode_01": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSelfBillingEnabled": {
+            "type": "boolean"
+          },
+          "salesOrderLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RG2026_QADWebAPI.Logic.QADServices.SalesOrder.Request.SalesOrderLineUpdate"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.System.Notification.Response.Notification_SendText_Response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RG2026_QADWebAPI.Logic.System.Notification.SendText.Notification_SendText": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

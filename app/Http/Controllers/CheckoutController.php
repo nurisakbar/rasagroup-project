@@ -93,7 +93,7 @@ class CheckoutController extends Controller
                     ->where('cart_type', 'regular')
                     ->get();
 
-                if (!empty($syncResult['stock_warnings'])) {
+                if (!empty($syncResult['stock_warnings']) && !session()->has('error')) {
                     $warningMessage = "Sumber pengiriman diubah ke {$sourceWarehouse->name} berdasarkan alamat Anda. Namun ada beberapa kendala stok:\n" . implode("\n", $syncResult['stock_warnings']);
                     session()->flash('warning', $warningMessage);
                 }

@@ -1,6 +1,6 @@
 @php
     $isDistributor = Auth::user()->isDistributor();
-    $isDistributorPage = request()->is('distributor*');
+    $isDistributorPage = request()->is('distributor*') || $isDistributor;
     $layout = $layout ?? 'vertical';
 @endphp
 
@@ -38,11 +38,13 @@
                     <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat
                 </a>
             </li>
-            <li class="nav-item {{ $layout === 'vertical' ? 'mt-3' : '' }}">
-                <a class="nav-link mode-switch buyer-mode text-brand fw-bold" href="{{ route('buyer.dashboard') }}">
-                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i> {{ $layout === 'horizontal' ? 'Mode Pembeli' : 'Mode Pembeli' }}
-                </a>
-            </li>
+            @if(!$isDistributor)
+                <li class="nav-item {{ $layout === 'vertical' ? 'mt-3' : '' }}">
+                    <a class="nav-link mode-switch buyer-mode text-brand fw-bold" href="{{ route('buyer.dashboard') }}">
+                        <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i> {{ $layout === 'horizontal' ? 'Mode Pembeli' : 'Mode Pembeli' }}
+                    </a>
+                </li>
+            @endif
         @else
             {{-- BUYER MODE MENUS --}}
             <li class="nav-item">

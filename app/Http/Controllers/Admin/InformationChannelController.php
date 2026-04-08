@@ -18,8 +18,30 @@ class InformationChannelController extends Controller
         if ($request->ajax()) {
             $query = InformationChannel::query();
 
+            // Status filter
             if ($request->filled('status') && $request->status != '') {
                 $query->where('is_active', $request->status == '1');
+            }
+
+            // Target audience filter
+            if ($request->filled('target') && $request->target != '') {
+                $query->where('target_audience', $request->target);
+            }
+
+            // Start date range filter
+            if ($request->filled('start_from')) {
+                $query->whereDate('start_date', '>=', $request->start_from);
+            }
+            if ($request->filled('start_until')) {
+                $query->whereDate('start_date', '<=', $request->start_until);
+            }
+
+            // End date range filter
+            if ($request->filled('end_from')) {
+                $query->whereDate('end_date', '>=', $request->end_from);
+            }
+            if ($request->filled('end_until')) {
+                $query->whereDate('end_date', '<=', $request->end_until);
             }
 
             return DataTables::of($query)
@@ -27,8 +49,19 @@ class InformationChannelController extends Controller
                 ->addColumn('title_info', function ($channel) {
                     return '<strong>' . $channel->title . '</strong><br><small class="text-muted">' . $channel->slug . '</small>';
                 })
-                ->addColumn('description_text', function ($channel) {
-                    return Str::limit(strip_tags($channel->description), 100);
+                ->addColumn('audience', function ($channel) {
+                    $audiences = [
+                        'all' => '<span class="label label-primary">Semua</span>',
+                        'distributor' => '<span class="label label-warning">Distributor</span>',
+                        'customer' => '<span class="label label-info">Customer</span>',
+                    ];
+                    return $audiences[$channel->target_audience] ?? $channel->target_audience;
+                })
+                ->addColumn('date_start', function ($channel) {
+                    return $channel->start_date ? $channel->start_date->format('d/m/Y') : '-';
+                })
+                ->addColumn('date_end', function ($channel) {
+                    return $channel->end_date ? $channel->end_date->format('d/m/Y') : '-';
                 })
                 ->addColumn('status_badge', function ($channel) {
                     if ($channel->is_active) {
@@ -52,7 +85,7 @@ class InformationChannelController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['title_info', 'status_badge', 'action'])
+                ->rawColumns(['title_info', 'audience', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -74,14 +107,11 @@ class InformationChannelController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:information_channels,slug',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'target_audience' => 'required|in:all,distributor,customer',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
         ]);
-
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
-        }
 
         $validated['is_active'] = $request->has('is_active');
 
@@ -106,14 +136,11 @@ class InformationChannelController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:information_channels,slug,' . $informationChannel->id,
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'target_audience' => 'required|in:all,distributor,customer',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
         ]);
-
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
-        }
 
         $validated['is_active'] = $request->has('is_active');
 

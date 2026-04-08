@@ -220,6 +220,36 @@ class CartController extends Controller
     }
 
     /**
+     * Remove items that are out of stock in their respective warehouse
+     */
+    public function removeOutOfStock()
+    {
+        if (Auth::check()) {
+            $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
+        } else {
+            $carts = Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->get();
+        }
+
+        $removedCount = 0;
+        foreach ($carts as $cart) {
+            if ($cart->warehouse_id) {
+                $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
+                    ->where('product_id', $cart->product_id)
+                    ->first();
+                
+                $availableStock = $stock ? $stock->stock : 0;
+                
+                if ($cart->quantity > $availableStock) {
+                    $cart->delete();
+                    $removedCount++;
+                }
+            }
+        }
+
+        return back()->with('success', "$removedCount item yang stoknya tidak mencukupi telah dihapus dari keranjang.");
+    }
+
+    /**
      * Get stock info for a product in different warehouses (AJAX)
      */
     public function getProductStock(Request $request, Product $product)

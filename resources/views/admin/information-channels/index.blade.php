@@ -25,9 +25,21 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-9 text-right">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Target</label>
+                        <select id="filter-target" class="form-control">
+                            <option value="">Semua Target</option>
+                            <option value="all">Semua</option>
+                            <option value="distributor">Distributor</option>
+                            <option value="customer">Customer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6 text-right">
                     <div class="form-group">
                         <label>&nbsp;</label><br>
+                        <button id="btn-reset" class="btn btn-default"><i class="fa fa-refresh"></i> Reset</button>
                         <a href="{{ route('admin.information-channels.create') }}" class="btn btn-primary">
                             <i class="fa fa-plus"></i> Tambah Saluran
                         </a>
@@ -47,7 +59,9 @@
                     <tr>
                         <th width="5%">No</th>
                         <th>Judul</th>
-                        <th>Deskripsi</th>
+                        <th>Target</th>
+                        <th>Mulai</th>
+                        <th>Selesai</th>
                         <th>Status</th>
                         <th width="100px">Action</th>
                     </tr>
@@ -69,12 +83,15 @@ $(document).ready(function() {
             url: "{{ route('admin.information-channels.index') }}",
             data: function(d) {
                 d.status = $('#filter-status').val();
+                d.target = $('#filter-target').val();
             }
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'title_info', name: 'title' },
-            { data: 'description_text', name: 'description' },
+            { data: 'audience', name: 'target_audience' },
+            { data: 'date_start', name: 'start_date' },
+            { data: 'date_end', name: 'end_date' },
             { data: 'status_badge', name: 'is_active', orderable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
@@ -91,7 +108,12 @@ $(document).ready(function() {
         }
     });
 
-    $('#filter-status').change(function() { table.draw(); });
+    $('select').change(function() { table.draw(); });
+    
+    $('#btn-reset').click(function() {
+        $('select').val('');
+        table.draw();
+    });
 });
 </script>
 @endpush

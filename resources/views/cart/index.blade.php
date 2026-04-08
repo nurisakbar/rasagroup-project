@@ -1,28 +1,28 @@
 @extends('themes.nest.layouts.app')
 
-@section('title', 'Cart')
+@section('title', 'Keranjang Belanja')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
-            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
-            <span></span> Shop
-            <span></span> Cart
+            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+            <span></span> Toko
+            <span></span> Keranjang
         </div>
     </div>
 </div>
 <div class="container mb-80 mt-50">
     <div class="row">
         <div class="col-lg-8 mb-40">
-            <h1 class="heading-2 mb-10">Your Cart</h1>
+            <h1 class="heading-2 mb-10">Keranjang Belanja Anda</h1>
             <div class="d-flex justify-content-between">
-                <h6 class="text-body">There are <span class="text-brand">{{ $carts->count() }}</span> products in your cart</h6>
+                <h6 class="text-body">Ada <span class="text-brand">{{ $carts->count() }}</span> produk di keranjang Anda</h6>
                 <h6 class="text-body">
-                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Clear cart? All items will be removed.');">
+                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Kosongkan keranjang? Semua item akan dihapus.');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-muted bg-transparent border-0 p-0"><i class="fi-rs-trash mr-5"></i>Clear Cart</button>
+                        <button type="submit" class="text-muted bg-transparent border-0 p-0"><i class="fi-rs-trash mr-5"></i>Kosongkan Keranjang</button>
                     </form>
                 </h6>
             </div>
@@ -45,10 +45,10 @@
 
     @if($carts->isEmpty())
         <div class="text-center py-5">
-            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" alt="Empty Cart" style="width: 100px; opacity: 0.5;" class="mb-4">
-            <h4 class="mb-3">Your cart is empty</h4>
-            <p class="text-muted mb-4">Start shopping and add products to your cart</p>
-            <a href="{{ route('products.index') }}" class="btn btn-fill-out"><i class="fi-rs-shopping-bag mr-10"></i>Start Shopping</a>
+            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" alt="Keranjang Kosong" style="width: 100px; opacity: 0.5;" class="mb-4">
+            <h4 class="mb-3">Keranjang Anda kosong</h4>
+            <p class="text-muted mb-4">Mulai belanja dan tambahkan produk ke keranjang Anda</p>
+            <a href="{{ route('products.index') }}" class="btn btn-fill-out"><i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja</a>
         </div>
     @else
         <!-- Hub Info Banner -->
@@ -57,7 +57,7 @@
             <div class="d-flex align-items-center">
                 <i class="fi-rs-marker mr-15" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Shipping from Hub:</strong> {{ $cartWarehouse->name }}
+                    <strong>Pengiriman dari Hub:</strong> {{ $cartWarehouse->name }}
                     <br>
                     <small>{{ $cartWarehouse->full_location }}</small>
                 </div>
@@ -75,11 +75,11 @@
                                     <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox11" value="">
                                     <label class="form-check-label" for="exampleCheckbox11"></label>
                                 </th>
-                                <th scope="col" colspan="2">Product</th>
-                                <th scope="col">Unit Price</th>
-                                <th scope="col">Quantity</th>
+                                <th scope="col" colspan="2">Produk</th>
+                                <th scope="col">Harga Satuan</th>
+                                <th scope="col">Jumlah</th>
                                 <th scope="col">Subtotal</th>
-                                <th scope="col" class="end">Remove</th>
+                                <th scope="col" class="end">Hapus</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,13 +102,13 @@
                                             <span class="font-small ml-5 text-muted"> (4.0)</span>
                                         </div>
                                         @if($cart->product->weight)
-                                        <small class="text-muted">Weight: {{ $cart->product->formatted_weight }}</small>
+                                        <small class="text-muted">Berat: {{ $cart->product->formatted_weight }}</small>
                                         @endif
                                     </td>
-                                    <td class="price" data-title="Price">
+                                    <td class="price" data-title="Harga">
                                         <h4 class="text-body">Rp {{ number_format($cart->product->price, 0, ',', '.') }} </h4>
                                     </td>
-                                    <td class="text-center detail-info" data-title="Stock">
+                                    <td class="text-center detail-info" data-title="Jumlah">
                                         <div class="detail-extralink mr-15">
                                             <form action="{{ route('cart.update', $cart) }}" method="POST" class="cart-update-form">
                                                 @csrf
@@ -121,14 +121,14 @@
                                             </form>
                                         </div>
                                     </td>
-                                    <td class="price" data-title="Price">
+                                    <td class="price" data-title="Subtotal">
                                         <h4 class="text-brand">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
                                     </td>
-                                    <td class="action text-center" data-title="Remove">
+                                    <td class="action text-center" data-title="Hapus">
                                         <form action="{{ route('cart.destroy', $cart) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-body bg-transparent border-0 p-0" onclick="return confirm('Remove this item?')"><i class="fi-rs-trash"></i></button>
+                                            <button type="submit" class="text-body bg-transparent border-0 p-0" onclick="return confirm('Hapus item ini?')"><i class="fi-rs-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -138,7 +138,7 @@
                 </div>
                 <div class="divider-2 mb-30"></div>
                 <div class="cart-action d-flex justify-content-between">
-                    <a class="btn " href="{{ route('products.index') }}"><i class="fi-rs-arrow-left mr-10"></i>Continue Shopping</a>
+                    <a class="btn " href="{{ route('products.index') }}"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                     
                 </div>
                 <!-- Optional: Shipping Calculator Section preserved from template if needed by USER, currently placeholders -->
@@ -174,9 +174,9 @@
                         </table>
                     </div>
                     @auth
-                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100">Proceed To CheckOut<i class="fi-rs-sign-out ml-15"></i></a>
+                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></a>
                     @else
-                        <a href="{{ route('login') }}" class="btn mb-20 w-100">Login to Checkout<i class="fi-rs-sign-in ml-15"></i></a>
+                        <a href="{{ route('login') }}" class="btn mb-20 w-100">Login untuk Melanjutkan<i class="fi-rs-sign-in ml-15"></i></a>
                     @endauth
                 </div>
             </div>

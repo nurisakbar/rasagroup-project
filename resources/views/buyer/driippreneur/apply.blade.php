@@ -110,9 +110,32 @@
 
                                         <div class="form-group mb-3">
                                             <label>Foto/Scan KTP <span class="required">*</span></label>
-                                            <input type="file" class="form-control @error('ktp_file') is-invalid @enderror" 
-                                                   name="ktp_file" accept="image/jpeg,image/png,image/jpg" required>
-                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB.</small>
+                                            <div id="ktp-camera-container" class="mb-3" style="display: none;">
+                                                <div class="position-relative">
+                                                    <video id="ktp-video" width="100%" height="auto" autoplay class="border-radius-10" style="background: #000;"></video>
+                                                    <div class="camera-overlay"></div>
+                                                </div>
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="ktp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="ktp-preview-container" class="mb-3" style="display: none;">
+                                                <img id="ktp-preview-img" src="" class="border-radius-10 w-100">
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" class="btn btn-sm btn-secondary retake-btn" data-target="ktp"><i class="fi-rs-refresh mr-5"></i>Foto Ulang</button>
+                                                </div>
+                                            </div>
+
+                                            <div id="ktp-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
+                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="ktp">
+                                                    <i class="fi-rs-camera mr-5"></i> Buka Kamera KTP
+                                                </button>
+                                            </div>
+                                            
+                                            <input type="hidden" name="ktp_base64" id="ktp_base64">
+                                            <input type="file" name="ktp_file" id="ktp_file_input" style="display: none;">
+                                            <small class="font-xs text-muted">Akses kamera Anda untuk memotret KTP secara langsung.</small>
                                         </div>
 
                                         <div class="form-group mb-3">
@@ -125,39 +148,62 @@
 
                                         <div class="form-group mb-4">
                                             <label>Foto/Scan NPWP <span class="required">*</span></label>
-                                            <input type="file" class="form-control @error('npwp_file') is-invalid @enderror" 
-                                                   name="npwp_file" accept="image/jpeg,image/png,image/jpg" required>
-                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB.</small>
+                                            <div id="npwp-camera-container" class="mb-3" style="display: none;">
+                                                <div class="position-relative">
+                                                    <video id="npwp-video" width="100%" height="auto" autoplay class="border-radius-10" style="background: #000;"></video>
+                                                    <div class="camera-overlay"></div>
+                                                </div>
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="npwp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="npwp-preview-container" class="mb-3" style="display: none;">
+                                                <img id="npwp-preview-img" src="" class="border-radius-10 w-100">
+                                                <div class="mt-2 text-center">
+                                                    <button type="button" class="btn btn-sm btn-secondary retake-btn" data-target="npwp"><i class="fi-rs-refresh mr-5"></i>Foto Ulang</button>
+                                                </div>
+                                            </div>
+
+                                            <div id="npwp-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
+                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="npwp">
+                                                    <i class="fi-rs-camera mr-5"></i> Buka Kamera NPWP
+                                                </button>
+                                            </div>
+                                            
+                                            <input type="hidden" name="npwp_base64" id="npwp_base64">
+                                            <input type="file" name="npwp_file" id="npwp_file_input" style="display: none;">
+                                            <small class="font-xs text-muted">Akses kamera Anda untuk memotret NPWP secara langsung.</small>
                                         </div>
 
                                         <div class="form-group mb-4">
                                             <label>Foto Selfie dengan KTP <span class="required">*</span></label>
                                             <div id="selfie-camera-container" class="mb-3" style="display: none;">
                                                 <div class="position-relative">
-                                                    <video id="video" width="100%" height="auto" autoplay class="border-radius-10"></video>
+                                                    <video id="selfie-video" width="100%" height="auto" autoplay class="border-radius-10" style="background: #000;"></video>
                                                     <div class="camera-overlay"></div>
                                                 </div>
                                                 <div class="mt-2 text-center">
-                                                    <button type="button" id="snap" class="btn btn-sm btn-brand"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="selfie"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
                                                 </div>
                                             </div>
                                             
                                             <div id="selfie-preview-container" class="mb-3" style="display: none;">
                                                 <img id="selfie-preview-img" src="" class="border-radius-10 w-100">
                                                 <div class="mt-2 text-center">
-                                                    <button type="button" id="retake" class="btn btn-sm btn-secondary"><i class="fi-rs-refresh mr-5"></i>Foto Ulang</button>
+                                                    <button type="button" class="btn btn-sm btn-secondary retake-btn" data-target="selfie"><i class="fi-rs-refresh mr-5"></i>Foto Ulang</button>
                                                 </div>
                                             </div>
 
-                                            <div class="d-flex align-items-center mb-2">
-                                                <input type="file" class="form-control @error('selfie_file') is-invalid @enderror" 
-                                                       name="selfie_file" id="selfie_file_input" accept="image/jpeg,image/png,image/jpg" required>
-                                                <button type="button" id="start-camera" class="btn btn-sm btn-brand ml-10" style="white-space: nowrap;">
-                                                    <i class="fi-rs-camera"></i> Gunakan Kamera
+                                            <div id="selfie-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
+                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="selfie">
+                                                    <i class="fi-rs-camera mr-5"></i> Buka Kamera Selfie
                                                 </button>
                                             </div>
+                                            
                                             <input type="hidden" name="selfie_base64" id="selfie_base64">
-                                            <small class="font-xs text-muted">Format: JPG, JPEG, PNG. Max: 2MB. Pastikan wajah dan KTP terlihat jelas.</small>
+                                            <input type="file" name="selfie_file" id="selfie_file_input" style="display: none;">
+                                            <small class="font-xs text-muted">Akses kamera Anda untuk mengambil foto selfie dengan KTP.</small>
                                         </div>
 
                                         <div class="divider mb-4"></div>
@@ -256,6 +302,7 @@
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .required { color: #fd3d11; }
     .divider { height: 1px; background-color: #f2f2f2; width: 100%; }
+    .border-dashed { border: 2px dashed #f2f2f2; }
     .camera-overlay {
         position: absolute;
         top: 0;
@@ -265,72 +312,106 @@
         border: 2px dashed rgba(255, 255, 255, 0.5);
         border-radius: 10px;
         pointer-events: none;
-        box-shadow: inset 0 0 0 50px rgba(0,0,0,0.2);
+        box-shadow: inset 0 0 0 50px rgba(0,0,0,0.1);
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const video = document.getElementById('video');
     const canvas = document.createElement('canvas');
-    const snap = document.getElementById('snap');
-    const startCameraBtn = document.getElementById('start-camera');
-    const retakeBtn = document.getElementById('retake');
-    const cameraContainer = document.getElementById('selfie-camera-container');
-    const previewContainer = document.getElementById('selfie-preview-container');
-    const previewImg = document.getElementById('selfie-preview-img');
-    const fileInput = document.getElementById('selfie_file_input');
-    const base64Input = document.getElementById('selfie_base64');
-    
-    let stream = null;
+    let activeStream = null;
 
-    startCameraBtn.addEventListener('click', async function() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "user" }, 
-                audio: false 
-            });
-            video.srcObject = stream;
-            cameraContainer.style.display = 'block';
-            previewContainer.style.display = 'none';
-            startCameraBtn.style.display = 'none';
-        } catch (err) {
-            alert("Tidak dapat mengakses kamera: " + err.message);
-        }
+    // Handle Start Camera
+    document.querySelectorAll('.start-camera-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const type = this.getAttribute('data-target');
+            const video = document.getElementById(`${type}-video`);
+            const cameraContainer = document.getElementById(`${type}-camera-container`);
+            const previewContainer = document.getElementById(`${type}-preview-container`);
+            const initContainer = document.getElementById(`${type}-init-container`);
+            
+            try {
+                // Stop any active stream first
+                if (activeStream) {
+                    activeStream.getTracks().forEach(track => track.stop());
+                }
+
+                activeStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: type === 'selfie' ? "user" : "environment" }, 
+                    audio: false 
+                });
+                
+                video.srcObject = activeStream;
+                cameraContainer.style.display = 'block';
+                previewContainer.style.display = 'none';
+                initContainer.style.display = 'none';
+            } catch (err) {
+                alert("Tidak dapat mengakses kamera: " + err.message);
+            }
+        });
     });
 
-    snap.addEventListener('click', function() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        previewImg.src = dataUrl;
-        base64Input.value = dataUrl;
-        
-        // Disable file input requirement if base64 is present
-        fileInput.required = false;
-        
-        // Stop camera
-        stream.getTracks().forEach(track => track.stop());
-        
-        cameraContainer.style.display = 'none';
-        previewContainer.style.display = 'block';
-    });
+    // Handle Snap Photo
+    document.querySelectorAll('.snap-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const type = this.getAttribute('data-target');
+            const video = document.getElementById(`${type}-video`);
+            const cameraContainer = document.getElementById(`${type}-camera-container`);
+            const previewContainer = document.getElementById(`${type}-preview-container`);
+            const previewImg = document.getElementById(`${type}-preview-img`);
+            const base64Input = document.getElementById(`${type}_base64`);
 
-    retakeBtn.addEventListener('click', function() {
-        previewContainer.style.display = 'none';
-        startCameraBtn.click();
-    });
-
-    // If file is selected manually, clear base64 and show preview if possible
-    fileInput.addEventListener('change', function() {
-        if (fileInput.files && fileInput.files[0]) {
-            base64Input.value = '';
-            previewContainer.style.display = 'none';
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            previewImg.src = dataUrl;
+            base64Input.value = dataUrl;
+            
+            // Stop camera
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+                activeStream = null;
+            }
+            
             cameraContainer.style.display = 'none';
-            startCameraBtn.style.display = 'block';
-        }
+            previewContainer.style.display = 'block';
+        });
+    });
+
+    // Handle Retake Photo
+    document.querySelectorAll('.retake-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const type = this.getAttribute('data-target');
+            const initContainer = document.getElementById(`${type}-init-container`);
+            const previewContainer = document.getElementById(`${type}-preview-container`);
+            
+            previewContainer.style.display = 'none';
+            initContainer.style.display = 'block';
+            
+            // Auto click start button 
+            document.querySelector(`.start-camera-btn[data-target="${type}"]`).click();
+        });
+    });
+
+    // Handle File Input Change
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const id = this.id;
+            const type = id.replace('_file_input', '');
+            const base64Input = document.getElementById(`${type}_base64`);
+            const previewContainer = document.getElementById(`${type}-preview-container`);
+            const cameraContainer = document.getElementById(`${type}-camera-container`);
+            const startBtn = document.querySelector(`.start-camera-btn[data-target="${type}"]`);
+
+            if (this.files && this.files[0]) {
+                base64Input.value = '';
+                previewContainer.style.display = 'none';
+                cameraContainer.style.display = 'none';
+                startBtn.style.display = 'block';
+            }
+        });
     });
 });
 </script>
