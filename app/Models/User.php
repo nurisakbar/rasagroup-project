@@ -65,12 +65,43 @@ class User extends Authenticatable
 
         static::creating(function ($user) {
             if (empty($user->referral_code)) {
-                $user->referral_code = static::generateUniqueReferralCode();
+                $user->referral_code = static::generateUniqueReferralCode($user->name);
             }
         });
     }
 
-    public static function generateUniqueReferralCode()
+    public static function generateUniqueReferralCode($name = null)
+    {
+        if (empty($name)) {
+            return static::generateRandomReferralCode();
+        }
+
+        // Clean name: lowercase, remove spaces and non-alphanumeric characters
+        $baseCode = strtolower(preg_replace('/[^a-z0-9]/', '', $name));
+        
+        // If empty or too short after cleaning, use random
+        if (strlen($baseCode) < 3) {
+            return static::generateRandomReferralCode();
+        }
+
+        // Limit length to 20 characters
+        $baseCode = substr($baseCode, 0, 20);
+        
+        $code = $baseCode;
+        $counter = 1;
+
+        while (static::where('referral_code', $code)->exists()) {
+            $suffix = (string)$counter;
+            // Shorten baseCode if necessary to fit suffix within 20 chars
+            $maxBaseLen = 20 - strlen($suffix);
+            $code = substr($baseCode, 0, $maxBaseLen) . $suffix;
+            $counter++;
+        }
+        
+        return $code;
+    }
+
+    private static function generateRandomReferralCode()
     {
         do {
             $code = strtoupper(\Illuminate\Support\Str::random(8));

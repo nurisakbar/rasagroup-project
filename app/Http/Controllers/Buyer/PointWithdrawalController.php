@@ -53,6 +53,12 @@ class PointWithdrawalController extends Controller
                 ->with('error', 'Anda masih memiliki request penarikan yang pending. Harap tunggu hingga request tersebut diproses.');
         }
 
+        // Check if user has bank information
+        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
+            return redirect()->route('buyer.dashboard')
+                ->with('error', 'Silakan lengkapi informasi rekening bank Anda di profil sebelum melakukan penarikan poin.');
+        }
+
         return view('buyer.point-withdrawals.create', compact('user'));
     }
 
@@ -81,17 +87,17 @@ class PointWithdrawalController extends Controller
 
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
-            'bank_name' => ['required', 'string', 'max:100'],
-            'account_number' => ['required', 'string', 'max:50'],
-            'account_name' => ['required', 'string', 'max:100'],
         ], [
             'amount.required' => 'Jumlah poin harus diisi.',
             'amount.integer' => 'Jumlah poin harus berupa angka.',
             'amount.min' => 'Jumlah poin minimal 1.',
-            'bank_name.required' => 'Nama bank harus diisi.',
-            'account_number.required' => 'Nomor rekening harus diisi.',
-            'account_name.required' => 'Nama pemilik rekening harus diisi.',
         ]);
+
+        // Check if user has bank information
+        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
+            return redirect()->route('buyer.dashboard')
+                ->with('error', 'Silakan lengkapi informasi rekening bank Anda di profil sebelum melakukan penarikan poin.');
+        }
 
         // Check if user has enough points
         if ($user->points < $validated['amount']) {
@@ -102,13 +108,13 @@ class PointWithdrawalController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create withdrawal request
+            // Create withdrawal request using strictly from user profile
             $withdrawal = PointWithdrawal::create([
                 'user_id' => $user->id,
                 'amount' => $validated['amount'],
-                'bank_name' => $validated['bank_name'],
-                'account_number' => $validated['account_number'],
-                'account_name' => $validated['account_name'],
+                'bank_name' => $user->bank_name,
+                'account_number' => $user->bank_account_number,
+                'account_name' => $user->bank_account_name,
                 'status' => 'pending',
                 'requested_at' => now(),
             ]);

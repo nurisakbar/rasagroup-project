@@ -65,6 +65,35 @@
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <div class="row mb-5">
+                                        <div class="col-lg-12">
+                                            <div class="bg-light p-4 border-radius-10">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <h5 class="mb-0">Informasi Rekening Bank</h5>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="font-sm text-muted mb-1">Nama Bank</label>
+                                                        <p class="font-md fw-bold mb-0 text-brand">{{ Auth::user()->bank_name ?? '-' }}</p>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="font-sm text-muted mb-1">Nomor Rekening</label>
+                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->bank_account_number ?? '-' }}</p>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="font-sm text-muted mb-1">Atas Nama</label>
+                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->bank_account_name ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+                                                @if(empty(Auth::user()->bank_name))
+                                                    <div class="alert alert-warning border-0 p-2 mt-2">
+                                                        <small><i class="fi-rs-info mr-5"></i> Anda belum melengkapi data rekening. Data ini diperlukan untuk penarikan poin.</small>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="row">
                                         <div class="col-lg-12">

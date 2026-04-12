@@ -71,12 +71,18 @@
                                                     <span class="text-dark font-sm">Metode Pembayaran</span>
                                                     <span class="fw-bold font-sm text-dark">{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</span>
                                                 </div>
-                                                <div class="info-item d-flex justify-content-between">
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Status Pembayaran</span>
                                                     <span class="badge rounded-pill {{ $order->payment_status === 'paid' ? 'bg-success' : 'bg-warning' }} px-3">
                                                         {{ strtoupper($order->payment_status) }}
                                                     </span>
                                                 </div>
+                                                @if($order->affiliate)
+                                                <div class="info-item d-flex justify-content-between">
+                                                    <span class="text-dark font-sm">Kode Referal</span>
+                                                    <span class="fw-bold font-sm text-brand">{{ $order->affiliate->referral_code }}</span>
+                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

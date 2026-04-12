@@ -66,42 +66,24 @@
                                             <small class="font-xs text-muted">Maksimal penarikan: {{ number_format($user->points, 0, ',', '.') }} poin</small>
                                         </div>
 
-                                        <div class="row">
-                                            <div class="form-group col-md-12 mb-3">
-                                                <label>Nama Bank <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('bank_name') is-invalid @enderror" 
-                                                       name="bank_name" 
-                                                       value="{{ old('bank_name') }}" 
-                                                       placeholder="Contoh: BCA, Mandiri, BNI, dll"
-                                                       required>
-                                                @error('bank_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
+                                        <div class="row bg-light p-3 rounded mb-4">
+                                            <div class="col-md-12">
+                                                <h6 class="mb-3">Informasi Rekening Tujuan:</h6>
                                             </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Nomor Rekening <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('account_number') is-invalid @enderror" 
-                                                       name="account_number" 
-                                                       value="{{ old('account_number') }}" 
-                                                       placeholder="Masukkan nomor rekening Anda"
-                                                       required>
-                                                @error('account_number')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
+                                            <div class="col-md-12 mb-2">
+                                                <label class="text-muted font-xs">Nama Bank</label>
+                                                <p class="font-weight-bold mb-0">{{ $user->bank_name }}</p>
                                             </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Atas Nama <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('account_name') is-invalid @enderror" 
-                                                       name="account_name" 
-                                                       value="{{ old('account_name') }}" 
-                                                       placeholder="Masukkan nama pemilik rekening"
-                                                       required>
-                                                @error('account_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
+                                            <div class="col-md-6 mb-2">
+                                                <label class="text-muted font-xs">Nomor Rekening</label>
+                                                <p class="font-weight-bold mb-0">{{ $user->bank_account_number }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <label class="text-muted font-xs">Atas Nama</label>
+                                                <p class="font-weight-bold mb-0">{{ $user->bank_account_name }}</p>
+                                            </div>
+                                            <div class="col-md-12 mt-2">
+                                                <small class="text-muted font-xs italic text-info">* Informasi rekening diambil dari data yang Anda daftarkan di profil.</small>
                                             </div>
                                         </div>
 

@@ -35,6 +35,13 @@
                                 <h4 class="text-brand">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
                             </div>
                         </div>
+                        @if($order->affiliate)
+                            <div class="mt-20 pt-20 border-top text-start">
+                                <span class="badge bg-info-light text-info border-info-light px-3 py-2">
+                                    <i class="fi-rs-info mr-5"></i> Menggunakan Kode Referal: <strong>{{ $order->affiliate->referral_code }}</strong> ({{ $order->affiliate->name }})
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="row text-start mb-40">

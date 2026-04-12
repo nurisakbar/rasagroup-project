@@ -30,6 +30,7 @@ class Product extends Model
         'unit',
         'large_unit',
         'price',
+        'reseller_point',
         'weight',
         'image',
         'status',
@@ -38,6 +39,7 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'reseller_point' => 'integer',
         'weight' => 'integer',
     ];
 

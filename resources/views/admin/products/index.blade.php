@@ -113,6 +113,7 @@
                                 <th>Brand / Kategori</th>
                                 <th>Ukuran</th>
                                 <th>Harga</th>
+                                <th>Poin</th>
                                 <th>Status</th>
                                 <th style="width: 100px;">Action</th>
                             </tr>
@@ -195,6 +196,11 @@
                                         <td><strong>Harga (Wajib)</strong></td>
                                         <td>70000</td>
                                     </tr>
+                                    <tr>
+                                        <td><code>Reseller Point</code></td>
+                                        <td>Poin untuk reseller / DRiiPPreneur</td>
+                                        <td>1000</td>
+                                    </tr>
                                 </tbody>
                             </table>
                             <p class="text-muted">
@@ -251,6 +257,7 @@ $(document).ready(function() {
             { data: 'brand_info', name: 'brand', orderable: false, searchable: true },
             { data: 'size_unit', name: 'size', orderable: false, searchable: true },
             { data: 'price_formatted', name: 'price' },
+            { data: 'reseller_point_display', name: 'reseller_point', orderable: true },
             { data: 'status_badge', name: 'status', orderable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],

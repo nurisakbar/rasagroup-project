@@ -240,6 +240,17 @@
                     <div class="d-flex align-items-end justify-content-between mb-30">
                         <h4>Ringkasan Pesanan</h4>
                     </div>
+
+                    @if($affiliate)
+                        <div class="alert alert-info py-3 px-3 mb-30 d-flex align-items-center" style="border-radius: 10px; background-color: #f4f9ff; border: 1px solid #d1e7ff;">
+                            <i class="fi-rs-info mr-10 text-primary"></i>
+                            <div class="small text-dark">
+                                Pesanan ini menggunakan kode referal: <strong class="text-brand">{{ $affiliate->referral_code }}</strong><br>
+                                <span class="text-muted">Direkomendasikan oleh: {{ $affiliate->name }}</span>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="divider-2 mb-30"></div>
                     
                     <div class="order-items-scroll mb-30" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">

@@ -108,6 +108,9 @@ class ProductController extends Controller
                 ->addColumn('price_formatted', function ($product) {
                     return 'Rp ' . number_format($product->price, 0, ',', '.');
                 })
+                ->addColumn('reseller_point_display', function ($product) {
+                    return number_format($product->reseller_point, 0, ',', '.') . ' Pts';
+                })
                 ->addColumn('weight_formatted', function ($product) {
                     return $product->formatted_weight;
                 })
@@ -239,11 +242,11 @@ class ProductController extends Controller
             'Content-Disposition' => 'attachment; filename="template_import_produk.csv"',
         ];
 
-        $columns = ['Product Code', 'Description', 'Description 2', 'Commercial Name', 'Brand', 'Size', 'Category', 'UM', 'Price'];
+        $columns = ['Product Code', 'Description', 'Description 2', 'Commercial Name', 'Brand', 'Size', 'Category', 'UM', 'Price', 'Reseller Point'];
         $examples = [
-            ['FMF020-CT12', 'MB Cons 1L-Coconut Milk', '(In Bottle) FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'BT', '70000'],
-            ['FMF020-CT11', 'MB Cons 1L-Coconut Water', '(In Bottle) FG Multibev', 'Coconut Water', 'Multibev', '1 L', 'Coconut', 'BT', '70000'],
-            ['FMF020-CT02', 'MB Cons 1L-Coconut Milk', 'FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'PK', '70000'],
+            ['FMF020-CT12', 'MB Cons 1L-Coconut Milk', '(In Bottle) FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'BT', '70000', '1000'],
+            ['FMF020-CT11', 'MB Cons 1L-Coconut Water', '(In Bottle) FG Multibev', 'Coconut Water', 'Multibev', '1 L', 'Coconut', 'BT', '70000', '1000'],
+            ['FMF020-CT02', 'MB Cons 1L-Coconut Milk', 'FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'PK', '70000', '1000'],
         ];
 
         $callback = function () use ($columns, $examples) {

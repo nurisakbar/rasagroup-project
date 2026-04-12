@@ -169,6 +169,18 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-group @error('reseller_point') has-error @enderror">
+                                    <label for="reseller_point">Poin Reseller</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="reseller_point" name="reseller_point" value="{{ old('reseller_point', $product->reseller_point) }}" step="1" min="0" placeholder="0">
+                                        <span class="input-group-addon">Poin</span>
+                                    </div>
+                                    @error('reseller_point')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group @error('technical_description') has-error @enderror">

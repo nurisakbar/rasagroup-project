@@ -128,6 +128,10 @@
                                     <td><strong class="text-green" style="font-size: 1.2em;">Rp {{ number_format($product->price, 0, ',', '.') }}</strong></td>
                                 </tr>
                                 <tr>
+                                    <th>Poin Reseller</th>
+                                    <td><span class="label label-info" style="font-size: 1.1em;">{{ number_format($product->reseller_point, 0, ',', '.') }} Poin</span></td>
+                                </tr>
+                                <tr>
                                     <th>Berat</th>
                                     <td>{{ $product->formatted_weight }}</td>
                                 </tr>

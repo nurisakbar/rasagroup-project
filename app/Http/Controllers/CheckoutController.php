@@ -225,6 +225,13 @@ class CheckoutController extends Controller
 
     $total = $subtotal - $discountAmount + $shippingCost;
 
+    // Track affiliate
+    $affiliate = null;
+    $affiliateId = session('affiliate_id');
+    if ($affiliateId && $affiliateId !== Auth::id()) {
+        $affiliate = User::find($affiliateId);
+    }
+
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
@@ -239,7 +246,8 @@ class CheckoutController extends Controller
         'defaultExpedition',
         'defaultService',
         'allShippingServices',
-        'sourceWarehouse'
+        'sourceWarehouse',
+        'affiliate'
     ));
 }
 
@@ -631,13 +639,13 @@ class CheckoutController extends Controller
                 ($address->province ? $address->province->name : '') .
                 ($address->postal_code ? ' ' . $address->postal_code : '');
 
-            // Calculate points for DRiiPPreneur
+            // Calculate points for DRiiPPreneur based on product reseller_point
             $pointsEarned = 0;
             $user = Auth::user();
             if ($user->isDriippreneurApproved()) {
-                $pointRate = \App\Models\Setting::get('driippreneur_point_rate', 1000);
-                $totalItems = $carts->sum('quantity');
-                $pointsEarned = (int)$pointRate * $totalItems;
+                foreach ($carts as $cart) {
+                    $pointsEarned += ($cart->product->reseller_point ?? 0) * $cart->quantity;
+                }
             }
 
             // Track affiliate referral

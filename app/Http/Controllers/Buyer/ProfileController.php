@@ -21,13 +21,16 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . Auth::id(),
             'phone' => 'nullable|string|max:20',
+            'bank_name' => 'nullable|string|max:100',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_account_name' => 'nullable|string|max:100',
         ]);
 
-        Auth::user()->update($request->only(['name', 'email', 'phone']));
+        Auth::user()->update($validated);
 
         return redirect()->route('buyer.profile')->with('success', 'Profil berhasil diperbarui.');
     }

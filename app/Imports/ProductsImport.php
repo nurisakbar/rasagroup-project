@@ -64,6 +64,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 // Convert weight and price
                 $weight = $this->parseWeight($row['size'] ?? null);
                 $price = $this->parsePrice($row['price'] ?? 0);
+                $resellerPoint = (int)($row['reseller_point'] ?? 0);
 
                 // Update existing product
                 $existingProduct->update([
@@ -76,6 +77,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                     'size' => $row['size'] ?? $existingProduct->size,
                     'unit' => $row['um'] ?? $existingProduct->unit,
                     'price' => $price,
+                    'reseller_point' => $resellerPoint,
                     'weight' => $weight,
                 ]);
 
@@ -113,6 +115,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             // Convert weight from unit string (e.g., "1 L" -> 1000g, "500 ML" -> 500g)
             $weight = $this->parseWeight($row['size'] ?? null);
             $price = $this->parsePrice($row['price'] ?? 0);
+            $resellerPoint = (int)($row['reseller_point'] ?? 0);
 
             $productData = [
                 'id' => (string) Str::uuid(),
@@ -126,6 +129,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 'size' => $row['size'] ?? null,
                 'unit' => $row['um'] ?? null,
                 'price' => $price,
+                'reseller_point' => $resellerPoint,
                 'weight' => $weight,
                 'status' => 'active',
                 'created_by' => Auth::id(),
@@ -358,6 +362,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'category' => 'nullable|string|max:100',
             'um' => 'nullable|string|max:20',
             'price' => 'required',
+            'reseller_point' => 'nullable|integer|min:0',
         ];
     }
 

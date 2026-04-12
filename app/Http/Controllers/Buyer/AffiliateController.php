@@ -16,7 +16,7 @@ class AffiliateController extends Controller
         // Ensure user has referral code
         if (empty($user->referral_code)) {
             $user->update([
-                'referral_code' => \App\Models\User::generateUniqueReferralCode()
+                'referral_code' => \App\Models\User::generateUniqueReferralCode($user->name)
             ]);
         }
         

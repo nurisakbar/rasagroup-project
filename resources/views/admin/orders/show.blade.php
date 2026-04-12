@@ -72,6 +72,15 @@
                                 </span>
                             </td>
                         </tr>
+                        @if($order->affiliate)
+                        <tr>
+                            <th>Kode Referal</th>
+                            <td>
+                                <span class="label label-info">{{ $order->affiliate->referral_code }}</span>
+                                <br><small class="text-muted">Oleh: {{ $order->affiliate->name }}</small>
+                            </td>
+                        </tr>
+                        @endif
                         @if($order->notes)
                         <tr>
                             <th>Catatan</th>
