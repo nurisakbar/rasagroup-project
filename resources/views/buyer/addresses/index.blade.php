@@ -23,115 +23,87 @@
                 <div class="col-lg-8">
                     <div class="tab-content account dashboard-content pl-lg-4 pl-0">
                         <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden">
-                                <div class="card-header border-bottom bg-white p-4 d-flex justify-content-between align-items-center">
-                                    <h3 class="mb-0 heading-3">Alamat Pengiriman</h3>
-                                    <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm btn-fill-out rounded-pill">
-                                        <i class="fi-rs-plus mr-5"></i> Tambah Alamat Baru
-                                    </a>
-                                </div>
-                                <div class="card-body p-4 p-md-5">
+                                    <div class="d-flex justify-content-between align-items-center mb-40">
+                                        <h3 class="mb-0 address-header">Alamat Pengiriman</h3>
+                                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-maroon btn-sm">
+                                            <i class="fi-rs-plus mr-5"></i> Tambah Baru
+                                        </a>
+                                    </div>
+
                                     @if(session('success'))
-                                        <div class="alert alert-success alert-dismissible border-0 fade show mb-4" role="alert">
+                                        <div class="alert alert-success border-0 fade show mb-30 p-20 border-radius-15" style="background-color: #e8f5e9; color: #2e7d32;">
                                             <i class="fi-rs-check mr-5"></i> {{ session('success') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     @endif
 
                                     @if($addresses->isEmpty())
-                                        <div class="text-center py-5">
-                                            <div class="mb-4">
-                                                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="Empty" style="width: 80px; opacity: 0.5;">
-                                            </div>
-                                            <h4 class="mb-3 text-muted">Belum ada alamat</h4>
-                                            <p class="text-muted mb-4">Tambahkan alamat pengiriman untuk memudahkan proses checkout pesanan Anda.</p>
-                                            <a href="{{ route('buyer.addresses.create') }}" class="btn btn-fill-out rounded-pill">
-                                                <i class="fi-rs-plus mr-5"></i> Tambah Alamat Pertama
+                                        <div class="text-center py-100">
+                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="Empty" style="width: 80px; opacity: 0.2; margin-bottom: 25px;">
+                                            <h4 class="mb-10 address-header">Belum ada alamat</h4>
+                                            <p class="text-muted mb-30">Tambahkan alamat pengiriman untuk mempercepat checkout.</p>
+                                            <a href="{{ route('buyer.addresses.create') }}" class="btn btn-maroon px-40">
+                                                <i class="fi-rs-plus mr-5"></i> Tambah Alamat
                                             </a>
                                         </div>
                                     @else
                                         <div class="row">
                                             @foreach($addresses as $address)
-                                                <div class="col-md-12 mb-4">
-                                                    <div class="card h-100 border-radius-15 {{ $address->is_default ? 'border-brand shadow-sm' : 'border-light' }}" style="border-width: 1px;">
-                                                        <div class="card-body p-4">
-                                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                <div>
-                                                                    <div class="d-flex align-items-center mb-2">
-                                                                        <span class="badge rounded-pill bg-light text-muted font-xs px-3 py-2 mr-10">{{ strtoupper($address->label) }}</span>
-                                                                        @if($address->is_default)
-                                                                            <span class="badge rounded-pill bg-brand text-white font-xs px-3 py-2">Utama</span>
-                                                                        @endif
-                                                                    </div>
-                                                                    <h5 class="mb-1 text-brand">{{ $address->recipient_name }}</h5>
+                                                <div class="col-12 mb-25">
+                                                    <div class="address-card p-30 {{ $address->is_default ? 'active' : '' }}">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div class="flex-grow-1">
+                                                                <div class="d-flex align-items-center gap-2 mb-15">
+                                                                    <span class="badge px-3 py-2 border-radius-8" style="background: #f1f1f1; color: #7E7E7E; font-weight: 600; font-size: 11px;">{{ strtoupper($address->label) }}</span>
+                                                                    @if($address->is_default)
+                                                                        <span class="badge px-3 py-2 border-radius-8 bg-maroon text-white" style="font-weight: 600; font-size: 11px;">UTAMA</span>
+                                                                    @endif
                                                                 </div>
+                                                                <h5 class="mb-15 address-header" style="font-size: 20px;">{{ $address->recipient_name }}</h5>
+                                                                <p class="font-sm text-dark font-weight-bold mb-10"><i class="fi-rs-phone-call mr-10 text-maroon"></i> {{ $address->phone }}</p>
+                                                                <p class="font-md text-muted mb-5">{{ $address->address_detail }}</p>
+                                                                <p class="font-sm text-muted mb-0">
+                                                                    <i class="fi-rs-marker mr-10 text-maroon"></i> 
+                                                                    @if($address->village) {{ $address->village->name }}, @endif
+                                                                    {{ $address->district?->name }}, {{ $address->regency?->name }}, {{ $address->province?->name }} 
+                                                                    @if($address->postal_code) - {{ $address->postal_code }} @endif
+                                                                </p>
+                                                            </div>
+
+                                                            <div class="desktop-actions">
                                                                 <div class="dropdown">
-                                                                    <button class="btn btn-sm btn-outline-secondary p-2 border-0 rounded-circle" type="button" data-bs-toggle="dropdown">
-                                                                        <i class="fi-rs-menu-dots-vertical"></i>
+                                                                    <button class="btn p-2 border-0" type="button" data-bs-toggle="dropdown" style="background: #f8f9fa; border-radius: 10px;">
+                                                                        <i class="fi-rs-menu-dots" style="font-size: 18px; color: #253D4E;"></i>
                                                                     </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 border-radius-10">
-                                                                        <li>
-                                                                            <a class="dropdown-item font-sm py-2" href="{{ route('buyer.addresses.edit', $address) }}">
-                                                                                <i class="fi-rs-edit mr-10"></i> Edit Alamat
-                                                                            </a>
-                                                                        </li>
+                                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 border-radius-15 p-10">
+                                                                        <li><a class="dropdown-item py-2 border-radius-8" href="{{ route('buyer.addresses.edit', $address) }}"><i class="fi-rs-edit mr-10"></i>Edit</a></li>
                                                                         @if(!$address->is_default)
                                                                             <li>
                                                                                 <form action="{{ route('buyer.addresses.set-default', $address) }}" method="POST">
-                                                                                    @csrf
-                                                                                    @method('PUT')
-                                                                                    <button type="submit" class="dropdown-item font-sm py-2">
-                                                                                        <i class="fi-rs-star mr-10"></i> Jadikan Utama
-                                                                                    </button>
+                                                                                    @csrf @method('PUT')
+                                                                                    <button type="submit" class="dropdown-item py-2 border-radius-8"><i class="fi-rs-star mr-10"></i>Set Utama</button>
                                                                                 </form>
                                                                             </li>
-                                                                            <li><hr class="dropdown-divider"></li>
+                                                                            <li><hr class="dropdown-divider mx-2"></li>
                                                                             <li>
-                                                                                <form action="{{ route('buyer.addresses.destroy', $address) }}" method="POST" onsubmit="return confirm('Hapus alamat ini?');">
-                                                                                    @csrf
-                                                                                    @method('DELETE')
-                                                                                    <button type="submit" class="dropdown-item font-sm py-2 text-danger">
-                                                                                        <i class="fi-rs-trash mr-10"></i> Hapus
-                                                                                    </button>
+                                                                                <form action="{{ route('buyer.addresses.destroy', $address) }}" method="POST">
+                                                                                    @csrf @method('DELETE')
+                                                                                    <button type="submit" class="dropdown-item py-2 border-radius-8 text-danger"><i class="fi-rs-trash mr-10"></i>Hapus</button>
                                                                                 </form>
                                                                             </li>
                                                                         @endif
                                                                     </ul>
                                                                 </div>
                                                             </div>
+                                                        </div>
 
-                                                            <div class="row">
-                                                                <div class="col-md-12">
-                                                                    <p class="font-sm text-heading font-weight-bold mb-2">
-                                                                        <i class="fi-rs-phone-call mr-10 text-brand"></i> {{ $address->phone }}
-                                                                    </p>
-                                                                    
-                                                                    <p class="font-md text-muted mb-2">
-                                                                        {{ $address->address_detail }}
-                                                                    </p>
-                                                                    
-                                                                    <p class="font-sm text-muted mb-3">
-                                                                        <i class="fi-rs-marker mr-10 text-brand"></i> 
-                                                                        @if($address->village)
-                                                                            Ds/Kel. {{ $address->village->name }},
-                                                                        @endif
-                                                                        Kec. {{ $address->district?->name }}, 
-                                                                        {{ $address->regency?->name }}, 
-                                                                        {{ $address->province?->name }} 
-                                                                        @if($address->postal_code)
-                                                                            - {{ $address->postal_code }}
-                                                                        @endif
-                                                                    </p>
-
-                                                                    @if($address->notes)
-                                                                        <div class="bg-light p-3 border-radius-10">
-                                                                            <p class="font-xs text-muted mb-0">
-                                                                                <strong class="text-heading">Catatan:</strong> {{ $address->notes }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                </div>
-                                                            </div>
+                                                        <div class="mobile-actions">
+                                                            <a href="{{ route('buyer.addresses.edit', $address) }}" class="btn btn-sm btn-outline-secondary flex-grow-1 border-radius-8 py-2">Edit</a>
+                                                            @if(!$address->is_default)
+                                                                <form action="{{ route('buyer.addresses.set-default', $address) }}" method="POST" class="flex-grow-1">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="submit" class="btn btn-sm btn-outline-maroon w-100 border-radius-8 py-2">Utama</button>
+                                                                </form>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -149,23 +121,70 @@
 </div>
 
 <style>
-    .border-radius-15 { border-radius: 15px !important; }
-    .border-radius-10 { border-radius: 10px !important; }
-    .nav-link.active { font-weight: 700; color: #3BB77E !important; }
-    .text-brand { color: #3BB77E !important; }
-    .border-brand { border-color: #3BB77E !important; }
-    .bg-brand { background-color: #3BB77E !important; }
-    .btn-fill-out {
-        background-color: #3BB77E !important;
-        border: 1px solid #3BB77E !important;
+    .bg-cream { background-color: #F2EAE1; }
+    .text-maroon { color: #6A1B1B !important; }
+    .bg-maroon { background-color: #6A1B1B !important; }
+    .border-maroon { border-color: #6A1B1B !important; }
+    
+    .address-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1.5px solid #edf2f7;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    }
+    .address-card:hover {
+        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.08);
+        border-color: #6A1B1B88;
+        transform: translateY(-3px);
+    }
+    .address-card.active {
+        border-color: #6A1B1B;
+        background-color: rgba(106, 27, 27, 0.02);
+    }
+    
+    .btn-maroon {
+        background-color: #6A1B1B !important;
+        border: none !important;
         color: #fff !important;
+        font-family: 'Fira Sans', sans-serif;
+        font-weight: 600;
+        padding: 12px 25px;
+        border-radius: 12px;
     }
-    .btn-fill-out:hover {
-        background-color: #29a56c !important;
-        border-color: #29a56c !important;
+    .btn-maroon:hover {
+        background-color: #4D1313 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(106, 27, 27, 0.2);
     }
-    .card-body h5 { font-family: 'Quicksand', sans-serif; font-weight: 700; }
-    .badge.bg-brand { padding: 5px 12px; }
+
+    .address-header {
+        font-family: 'Fira Sans', sans-serif !important;
+        font-weight: 700;
+        color: #253D4E;
+    }
+
+    .mobile-actions {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .desktop-actions {
+            display: none;
+        }
+        .tab-content {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+    }
 </style>
 @endsection
 

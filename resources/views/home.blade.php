@@ -3,20 +3,24 @@
 @section('title', 'Beranda')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     :root {
-        --primary-color: #E63946;
-        --primary-dark: #C1121F;
+        --primary-color: #6A1B1B;
+        --primary-dark: #4A1212;
         --secondary-color: #F77F00;
         --accent-color: #FCBF49;
         --dark-color: #1D3557;
-        --light-bg: #F8F9FA;
-        --white: #FFFFFF;
+        --light-bg: #F2EAE1;
+        --white: #F2EAE1;
         --text-dark: #2B2D42;
         --text-light: #6C757D;
-        --border-color: #E0E0E0;
+        --border-color: #D6CDC4;
         --success-color: #06A77D;
+    }
+
+    body {
+        background-color: #F2EAE1 !important;
     }
 
     /* Hero Slider */
@@ -52,14 +56,17 @@
     }
 
     .carousel-caption h2 {
+        font-family: 'Fira Sans', sans-serif;
         font-size: 3rem;
-        font-weight: 800;
+        font-weight: 500;
         margin-bottom: 1rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
 
     .carousel-caption p {
+        font-family: 'Fira Sans', sans-serif;
         font-size: 1.2rem;
+        font-weight: 500;
         margin-bottom: 1.5rem;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
@@ -153,12 +160,12 @@
 
     /* Categories Section */
     .categories-section {
-        background: var(--white);
+        background: transparent;
         padding-bottom: 4rem;
     }
 
     .category-card {
-        background: var(--white);
+        background: #FFFFFF;
         border: 2px solid var(--border-color);
         border-radius: 20px;
         padding: 2rem 1.5rem;
@@ -173,7 +180,7 @@
 
     .category-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(230, 57, 70, 0.15);
+        box-shadow: 0 15px 40px rgba(106, 27, 27, 0.15);
         border-color: var(--primary-color);
         text-decoration: none;
         color: inherit;
@@ -212,25 +219,27 @@
 
     /* Products Section */
     .products-section {
-        background: var(--light-bg);
+        background: transparent;
         padding-bottom: 4rem;
     }
 
     .product-card {
-        background: var(--white);
-        border-radius: 20px;
+        background: #FFFFFF;
+        border-radius: 25px;
         overflow: hidden;
         transition: all 0.3s;
-        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
         text-decoration: none;
         color: inherit;
-        display: block;
+        display: flex;
+        flex-direction: column;
         height: 100%;
+        position: relative;
     }
 
     .product-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         text-decoration: none;
         color: inherit;
     }
@@ -238,60 +247,55 @@
     .product-image-wrapper {
         position: relative;
         overflow: hidden;
-        height: 280px;
-        background: var(--light-bg);
+        height: 220px;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
     }
 
     .product-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
         transition: transform 0.5s;
-    }
-
-    .product-card:hover .product-image {
-        transform: scale(1.1);
     }
 
     .product-badge {
         position: absolute;
-        top: 15px;
-        right: 15px;
-        background: var(--primary-color);
+        top: 0;
+        left: 0;
+        background: #FD6E6E;
         color: white;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .product-badge.new {
-        background: var(--success-color);
-    }
-
-    .product-badge.sale {
-        background: var(--secondary-color);
+        padding: 10px 25px;
+        border-bottom-right-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        z-index: 2;
     }
 
     .product-info {
-        padding: 1.5rem;
+        padding: 0 20px 20px 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
     }
 
-    .product-category {
-        font-size: 0.8rem;
-        color: var(--text-light);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+    .product-vendor {
+        font-size: 0.85rem;
+        color: #ADADAD;
+        margin-bottom: 5px;
+        font-weight: 400;
     }
 
     .product-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--text-dark);
-        margin-bottom: 0.75rem;
-        line-height: 1.4;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #253D4E;
+        margin-bottom: 10px;
+        line-height: 1.2;
+        min-height: 2.4em;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -301,74 +305,73 @@
     .product-rating {
         display: flex;
         align-items: center;
-        gap: 5px;
-        margin-bottom: 1rem;
+        gap: 3px;
+        margin-bottom: 5px;
     }
 
     .product-rating i {
-        color: #FFA500;
-        font-size: 0.9rem;
+        color: #FDC040;
+        font-size: 0.8rem;
     }
 
     .product-rating span {
-        font-size: 0.85rem;
-        color: var(--text-light);
+        font-size: 0.8rem;
+        color: #B6B6B6;
         margin-left: 5px;
     }
 
-    .product-price-wrapper {
+    .product-unit {
+        font-size: 0.85rem;
+        color: #B6B6B6;
+        margin-bottom: 15px;
+    }
+
+    .product-card-bottom {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
+        margin-top: auto;
     }
 
     .product-price {
         display: flex;
-        flex-direction: column;
+        align-items: baseline;
+        gap: 10px;
     }
 
     .price {
         font-size: 1.4rem;
         font-weight: 700;
-        color: var(--primary-color);
-        line-height: 1;
+        color: #801D1D;
+        margin: 0;
     }
 
     .price-old {
-        font-size: 0.9rem;
-        color: var(--text-light);
-        text-decoration: line-through;
-        margin-top: 0.25rem;
-    }
-
-    .price-discount {
         font-size: 0.85rem;
-        color: var(--success-color);
-        font-weight: 600;
+        color: #ADADAD;
+        text-decoration: line-through;
+        font-weight: 500;
     }
 
     .btn-add-cart {
-        width: 100%;
-        background: var(--primary-color);
-        color: white;
-        padding: 12px;
+        background: #F5E6E6;
+        color: #801D1D;
+        padding: 8px 18px;
         border: none;
-        border-radius: 12px;
-        font-weight: 600;
+        border-radius: 8px;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.3s;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
+        gap: 3px;
+        font-size: 0.9rem;
     }
 
     .btn-add-cart:hover {
-        background: var(--primary-dark);
+        background: #801D1D;
+        color: #FFFFFF;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
-        color: white;
     }
 
     .btn-add-cart i {
@@ -866,40 +869,44 @@
             <div class="row g-4">
                 @forelse($products as $product)
                     <div class="col-6 col-md-4 col-lg-3">
-                        <a href="{{ route('products.show', $product) }}" class="product-card">
+                        <div class="product-card">
                             <div class="product-image-wrapper">
-                                <img src="{{ $product->image_url ? asset($product->image_url) : 'https://via.placeholder.com/400x300/E63946/fff?text=' . urlencode($product->display_name) }}" 
-                                     alt="{{ $product->display_name }}" class="product-image">
-                                @if($product->created_at->isToday())
-                                    <span class="product-badge new">NEW</span>
-                                @endif
+                                <a href="{{ route('products.show', $product) }}">
+                                    <img src="{{ $product->image_url ? asset($product->image_url) : 'https://via.placeholder.com/400x300/E63946/fff?text=' . urlencode($product->display_name) }}" 
+                                         alt="{{ $product->display_name }}" class="product-image">
+                                </a>
+                                <span class="product-badge">Hot</span>
                             </div>
                             <div class="product-info">
-                                <div class="product-category">{{ $product->category->name ?? 'Produk' }}</div>
-                                <h3 class="product-name">{{ $product->display_name }}</h3>
+                                <div class="product-vendor">{{ $product->brand->name ?? 'Rasa Group' }}</div>
+                                <h3 class="product-name"><a href="{{ route('products.show', $product) }}">{{ $product->display_name }}</a></h3>
                                 <div class="product-rating">
                                     <i class="bi bi-star-fill"></i>
                                     <i class="bi bi-star-fill"></i>
                                     <i class="bi bi-star-fill"></i>
                                     <i class="bi bi-star-fill"></i>
-                                    <i class="bi bi-star-half"></i>
-                                    <span>(4.5)</span>
+                                    <i class="bi bi-star text-muted"></i>
+                                    <span>(4.0)</span>
                                 </div>
-                                <div class="product-price-wrapper">
+                                <div class="product-unit">{{ $product->unit ?? 'per botol' }}</div>
+                                
+                                <div class="product-card-bottom">
                                     <div class="product-price">
                                         <span class="price">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                        @if(isset($product->compare_price) && $product->compare_price > $product->price)
+                                            <span class="price-old">Rp {{ number_format($product->compare_price, 0, ',', '.') }}</span>
+                                        @endif
                                     </div>
+                                    <form action="{{ route('cart.store', $product) }}" method="POST" class="add-to-cart-form">
+                                        @csrf
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn-add-cart">
+                                            Add <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </form>
                                 </div>
-                                <form action="{{ route('cart.store', $product) }}" method="POST" class="add-to-cart-form">
-                                    @csrf
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn-add-cart">
-                                        <i class="bi bi-cart-plus"></i>
-                                        Tambah ke Keranjang
-                                    </button>
-                                </form>
                             </div>
-                        </a>
+                        </div>
                     </div>
                 @empty
                     <div class="col-12 text-center py-5">

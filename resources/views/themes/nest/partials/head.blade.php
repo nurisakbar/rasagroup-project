@@ -13,4 +13,5 @@
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/plugins/animate.min.css') }}" />
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/main.css?v=6.1') }}" />
 <link rel="stylesheet" href="{{ asset('rasafont/fonts.css') }}" />
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 @stack('styles')

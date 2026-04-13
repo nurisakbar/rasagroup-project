@@ -4,6 +4,136 @@
     @include('themes.nest.partials.head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
+        :root {
+            --primary-rasa: #6A1B1B;
+            --bg-cream: #F2EAE1;
+        }
+
+        body, .main, .header-area, .header-bottom, .header-middle, .header-top, .sticky-bar {
+            background-color: var(--bg-cream) !important;
+        }
+
+        /* Update header elements */
+        .categories-button-active {
+            background-color: var(--primary-rasa) !important;
+            border-radius: 5px !important;
+            color: #fff !important;
+        }
+        
+        .categories-button-active span, .categories-button-active i {
+            color: #fff !important;
+        }
+
+        .header-style-1 .search-style-2 form {
+            border: 2px solid var(--primary-rasa) !important;
+            border-radius: 5px !important;
+            background-color: #fff !important;
+        }
+
+        .text-brand {
+            color: var(--primary-rasa) !important;
+        }
+
+        .btn-brush-secondary {
+            background-color: var(--primary-rasa) !important;
+        }
+
+        .newsletter .form-subcriber button, .form-subcriber button {
+            background-color: var(--primary-rasa) !important;
+            border: 1px solid var(--primary-rasa) !important;
+        }
+
+        .header-style-1 .search-style-2 form input {
+            color: #333 !important;
+        }
+
+        .header-style-1 .search-style-2 form select {
+            color: #333 !important;
+        }
+
+        .search-style-2 form select {
+            background: transparent !important;
+        }
+
+        .header-action-icon-2 > a span.pro-count {
+            background-color: var(--primary-rasa) !important;
+        }
+
+        /* Product Price Style Overrides for Nest Theme */
+        .product-price span {
+            color: #801D1D !important;
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
+        }
+
+        .product-price span.old-price {
+            color: #ADADAD !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            text-decoration: line-through !important;
+            margin-left: 8px !important;
+        }
+
+        /* Unified Add Button Style */
+        .btn-add-cart, .add-cart .add, .add-cart button.add {
+            background: #F5E6E6 !important;
+            color: #801D1D !important;
+            padding: 8px 18px !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            font-size: 0.9rem !important;
+            transition: all 0.3s !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        .btn-add-cart:hover, .add-cart .add:hover {
+            background: #801D1D !important;
+            color: #FFFFFF !important;
+            transform: translateY(-2px);
+        }
+
+        .product-name, .product-name a, .product-cart-wrap h2, .product-cart-wrap h2 a, .product-content-wrap h2, .product-content-wrap h2 a, h6, h6 a {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 600 !important;
+            color: #253D4E !important;
+        }
+
+        /* Section Headings Overrides */
+        .section-title h3, .section-title h4, .section-title h2, h4.section-title, .icon-box-title, .newsletter-content h2, .widget-title {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 500 !important;
+            color: #253D4E !important;
+        }
+
+        .banner-img .banner-text h4, .banner-img.style-2 .banner-text h2 {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 500 !important;
+            color: #253D4E !important;
+            line-height: 1.2 !important;
+        }
+
+        /* Countdown Timer Color Style */
+        .deals-countdown, .deals-countdown span, .deals-countdown .countdown-section, .deals-countdown .countdown-amount, .deals-countdown .countdown-period {
+            color: rgba(111, 23, 21, 1) !important;
+        }
+
+        .product-category, .product-category a {
+            font-family: 'Lato', sans-serif !important;
+            font-weight: 400 !important;
+            font-size: 0.85rem !important;
+        }
+
+        .main-menu nav ul li a {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 500 !important;
+        }
+
         /* Floating WhatsApp Button Override */
         .whatsapp-float {
             position: fixed;

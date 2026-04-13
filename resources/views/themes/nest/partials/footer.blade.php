@@ -26,7 +26,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 mb-md-4 mb-xl-0">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay="0">
+                        <div class="banner-left-icon d-flex align-items-center h-100 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="banner-icon">
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-1.svg') }}" alt="" />
                             </div>
@@ -36,8 +36,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
+                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 mb-md-4 mb-xl-0">
+                        <div class="banner-left-icon d-flex align-items-center h-100 wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
                             <div class="banner-icon">
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-2.svg') }}" alt="" />
                             </div>
@@ -47,8 +47,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
+                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 mb-md-4 mb-xl-0">
+                        <div class="banner-left-icon d-flex align-items-center h-100 wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
                             <div class="banner-icon">
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-3.svg') }}" alt="" />
                             </div>
@@ -58,8 +58,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
+                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 mb-md-4 mb-xl-0">
+                        <div class="banner-left-icon d-flex align-items-center h-100 wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
                             <div class="banner-icon">
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-4.svg') }}" alt="" />
                             </div>
@@ -69,8 +69,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6">
-                        <div class="banner-left-icon d-flex align-items-center wow animate__animated animate__fadeInUp" data-wow-delay=".4s">
+                    <div class="col-lg-1-5 col-md-4 col-12 col-sm-6 mb-md-4 mb-xl-0">
+                        <div class="banner-left-icon d-flex align-items-center h-100 wow animate__animated animate__fadeInUp" data-wow-delay=".4s">
                             <div class="banner-icon">
                                 <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-5.svg') }}" alt="" />
                             </div>
@@ -126,14 +126,6 @@
                             {{-- <li><a href="{{ route('hubs.index') }}">Distributor</a></li> --}}
                             <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
                             <li><a href="#">Promo</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".4s">
-                        <h4 class="widget-title">Produk Populer</h4>
-                        <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="#">Sirup Buah</a></li>
-                            <li><a href="#">Sirup Kopi</a></li>
-                            <li><a href="#">Sirup Dessert</a></li>
                         </ul>
                     </div>
                     <div class="footer-link-widget widget-install-app col wow animate__animated animate__fadeInUp" data-wow-delay=".5s">

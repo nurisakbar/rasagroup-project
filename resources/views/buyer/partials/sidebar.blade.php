@@ -95,29 +95,32 @@
 <style>
     .dashboard-menu {
         background: #fff;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-radius: 20px;
+        padding: 30px 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        border: 1px solid #edf2f7;
     }
     .dashboard-menu .nav-link {
-        border: 1px solid #f2f2f2;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        padding: 12px 20px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        padding: 14px 20px;
         color: #253D4E;
+        font-family: 'Fira Sans', sans-serif;
         font-weight: 600;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
     }
     .dashboard-menu .nav-link:hover, .dashboard-menu .nav-link.active {
-        background-color: #3BB77E;
+        background-color: #6A1B1B !important;
         color: #fff !important;
-        border-color: #3BB77E;
+        border-color: #6A1B1B !important;
+        box-shadow: 0 8px 20px rgba(106, 27, 27, 0.2);
     }
     .dashboard-menu .nav-link i {
-        margin-right: 10px;
-        font-size: 16px;
+        margin-right: 12px;
+        font-size: 18px;
     }
     .dashboard-menu .nav-link.mode-switch {
         border: 2px dashed;
@@ -127,8 +130,10 @@
         color: #ff9800 !important;
     }
     .dashboard-menu .nav-link.distributor-mode:hover {
-        background-color: #ff9800;
+        background-color: #ff9800 !important;
         color: #fff !important;
+        border-color: #ff9800 !important;
+        box-shadow: 0 8px 20px rgba(255, 152, 0, 0.2);
     }
 
     /* Horizontal Specific Styles */

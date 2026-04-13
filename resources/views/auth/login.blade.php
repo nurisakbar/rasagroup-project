@@ -11,52 +11,52 @@
         </div>
     </div>
 </div>
-<div class="page-content pt-150 pb-150">
+<div class="page-content pt-150 pb-150" style="background-color: #F2EAE1;">
     <div class="container">
         <div class="row">
-            <div class="col-xl-8 col-lg-10 col-md-12 m-auto">
-                <div class="row">
+            <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
+                <div class="row align-items-center">
                     <div class="col-lg-6 pr-30 d-none d-lg-block">
-                        <img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="" />
-
+                        <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Login" />
                     </div>
                     <div class="col-lg-6 col-md-8">
-                        <div class="login_wrap widget-taber-content background-white">
-                            <div class="padding_eight_all bg-white">
+                        <div class="login_wrap widget-taber-content background-white p-30 border-radius-20">
+                            <div class="padding_eight_all">
                                 <div class="heading_s1">
-                                    <h1 class="mb-5">Masuk</h1>
-                                    <p class="mb-30">Belum punya akun? <a href="{{ route('register') }}">Daftar di sini</a></p>
+                                    <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Masuk</h1>
+                                    <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Belum punya akun? <a href="{{ route('register') }}" style="color: #6A1B1B; font-weight: 600;">Daftar di sini</a></p>
                                 </div>
                                 <form method="POST" action="{{ route('login') }}">
                                     @csrf
-                                    <div class="form-group">
-                                        <input type="email" required="" name="email" placeholder="Email *" value="{{ old('email') }}" autofocus />
+                                    <div class="form-group mb-20">
+                                        <input type="email" required="" name="email" placeholder="Username atau Email *" value="{{ old('email') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
                                         @error('email')
-                                            <span class="text-danger">{{ $message }}</span>
+                                            <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    <div class="form-group">
-                                        <input required="" type="password" name="password" placeholder="Kata sandi Anda *" />
+                                    <div class="form-group mb-20">
+                                        <input required="" type="password" name="password" placeholder="Kata sandi Anda *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
                                         @error('password')
-                                            <span class="text-danger">{{ $message }}</span>
+                                            <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    <div class="login_footer form-group mb-50">
+                                    <div class="login_footer form-group mb-50 d-flex justify-content-between align-items-center">
                                         <div class="chek-form">
                                             <div class="custome-checkbox">
                                                 <input class="form-check-input" type="checkbox" name="remember" id="exampleCheckbox1" value="" />
-                                                <label class="form-check-label" for="exampleCheckbox1"><span>Ingat saya</span></label>
+                                                <label class="form-check-label" for="exampleCheckbox1"><span style="color: #6A1B1B; font-weight: 500;">Ingat saya</span></label>
                                             </div>
                                         </div>
-                                        <a class="text-muted" href="{{ route('password.request') }}">Lupa kata sandi?</a>
+                                        <a class="text-muted small" href="{{ route('password.request') }}">Lupa kata sandi?</a>
                                     </div>
                                     <div class="form-group">
-                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%;">Masuk</button>
+                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 150px; background-color: #1a1a1a; color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Masuk</button>
                                     </div>
+                                    
                                     <div class="form-group text-center mt-30">
-                                        <p class="mb-10 text-muted">Atau masuk dengan</p>
-                                        <a href="{{ route('google.login') }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: #fff; color: #333; border: 1px solid #ddd; width: 100%; display: flex; align-items: center; justify-content: center; height: 64px; font-weight: 700;">
-                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" style="width: 20px; margin-right: 10px;" />
+                                        <p class="mb-10 text-muted small">Atau masuk dengan</p>
+                                        <a href="{{ route('google.login') }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: #fff; color: #333; border: 1px solid #eee; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 600; border-radius: 12px;">
+                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" style="width: 18px; margin-right: 10px;" />
                                             Masuk dengan Google
                                         </a>
                                     </div>

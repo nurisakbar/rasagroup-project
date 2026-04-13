@@ -385,74 +385,76 @@
 <style>
     /* Custom styles for checkout components */
     .card-radio-btn {
-        border: 2px solid #e9ecef;
-        border-radius: 10px;
+        border: 1.5px solid #ECECEC;
+        border-radius: 12px;
         cursor: pointer;
         transition: all 0.3s ease;
         background: #fff;
     }
     .card-radio-btn:hover {
-        border-color: #3BB77E;
+        border-color: #6A1B1B;
     }
     .card-radio-btn.active {
-        border-color: #3BB77E;
-        background-color: #f7fbf8;
+        border-color: #6A1B1B;
+        background-color: rgba(106, 27, 27, 0.05);
         position: relative;
     }
     .card-radio-btn.active::after {
-        content: '\f26b'; /* fi-rs-check */
+        content: '\f26b';
         font-family: 'uicons-regular-straight';
         position: absolute;
-        top: 5px;
-        right: 5px;
-        color: #3BB77E;
-        font-size: 12px;
+        top: 8px;
+        right: 8px;
+        color: #6A1B1B;
+        font-size: 14px;
     }
     
-    .address-card {
-        border: 1px solid #e9ecef;
-        padding: 15px;
-        border-radius: 10px;
+    .address-card, .payment-method-card {
+        border: 1.5px solid #ECECEC;
+        padding: 20px;
+        border-radius: 15px;
         transition: all 0.3s;
         cursor: pointer;
+        background: #fff;
     }
-    .address-card:hover {
-        border-color: #3BB77E;
+    .address-card:hover, .payment-method-card:hover {
+        border-color: #6A1B1B;
+        box-shadow: 0 5px 15px rgba(106, 27, 27, 0.1);
     }
-    .address-card.active {
-        border-color: #3BB77E;
-        background-color: #f7fbf8;
+    .address-card.active, .payment-method-card.active {
+        border-color: #6A1B1B;
+        background-color: rgba(106, 27, 27, 0.05);
     }
     
     .service-card {
-        padding: 5px;
+        padding: 10px;
     }
-    
-    .payment-method-card {
-        border: 1px solid #e9ecef;
-        padding: 15px;
-        border-radius: 10px;
-        transition: all 0.3s;
-        cursor: pointer;
+
+    /* Input Overrides */
+    textarea {
+        background: #f8f9fa !important;
+        border: 1px solid #ececec !important;
+        border-radius: 12px !important;
+        padding: 15px !important;
     }
-    .payment-method-card:hover {
-        border-color: #3BB77E;
+    textarea:focus {
+        border-color: #6A1B1B !important;
+        background: #fff !important;
     }
-    .payment-method-card.active {
-        border-color: #3BB77E;
-        background-color: #f7fbf8;
+
+    button#submitBtn {
+        background-color: #6A1B1B !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 18px !important;
+        font-family: 'Fira Sans', sans-serif !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
     }
-    
-    /* Scrollbar for order items */
-    .order-items-scroll::-webkit-scrollbar {
-        width: 5px;
-    }
-    .order-items-scroll::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    .order-items-scroll::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 5px;
+
+    button#submitBtn:hover {
+        background-color: #4D1313 !important;
+        transform: translateY(-2px);
     }
 </style>
 @endsection

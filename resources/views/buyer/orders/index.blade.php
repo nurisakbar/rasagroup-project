@@ -55,7 +55,7 @@
                                         $remainingCount = $order->items->count() - 1;
                                     @endphp
                                     <div class="order-card mb-20">
-                                        <div class="order-header p-20 d-flex justify-content-between align-items-center bg-light-gray">
+                                        <div class="order-header p-25 d-flex justify-content-between align-items-center">
                                             <div class="order-meta d-flex align-items-center">
                                                 <div class="mr-30">
                                                     <span class="d-block text-muted font-xs mb-1">NO. PESANAN</span>
@@ -67,14 +67,14 @@
                                                 </div>
                                                 <div>
                                                     <span class="d-block text-muted font-xs mb-1">TOTAL</span>
-                                                    <span class="fw-bold text-brand font-sm">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                                                    <span class="fw-bold text-maroon font-sm">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
                                                 </div>
                                             </div>
                                             <div class="order-status">
                                                 <span class="badge rounded-pill {{ $statusClass }} py-2 px-3 text-white font-xs">{{ $statusLabel }}</span>
                                             </div>
                                         </div>
-                                        <div class="order-body p-20">
+                                        <div class="order-body p-25">
                                             <div class="row align-items-center">
                                                 <div class="col-md-8">
                                                     @if($firstItem)
@@ -82,13 +82,13 @@
                                                             <div class="product-thumb mr-20">
                                                                 <img src="{{ $firstItem->product->image_url ?: asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" 
                                                                      alt="{{ $firstItem->product->display_name }}"
-                                                                     class="rounded" style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #eee;">
+                                                                     class="rounded-12" style="width: 75px; height: 75px; object-fit: cover; border: 1.5px solid #f1f1f1;">
                                                             </div>
                                                             <div class="product-info">
                                                                 <h6 class="mb-1 text-dark truncate-1">{{ $firstItem->product->display_name }}</h6>
-                                                                <p class="font-xs text-muted mb-0">{{ $firstItem->quantity }} item x Rp {{ number_format($firstItem->price, 0, ',', '.') }}</p>
+                                                                <p class="font-sm text-muted mb-0">{{ $firstItem->quantity }} item x Rp {{ number_format($firstItem->price, 0, ',', '.') }}</p>
                                                                 @if($remainingCount > 0)
-                                                                    <p class="font-xs text-brand mt-1 fw-bold">+{{ $remainingCount }} produk lainnya</p>
+                                                                    <p class="font-xs text-maroon mt-1 fw-bold">+{{ $remainingCount }} produk lainnya</p>
                                                                 @endif
                                                             </div>
                                                         </div>
@@ -96,11 +96,11 @@
                                                 </div>
                                                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
                                                     <div class="d-grid d-md-block gap-2">
-                                                        <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-sm btn-outline-brand rounded-pill py-2 px-4 font-sm">
+                                                        <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-sm btn-outline-maroon rounded-pill py-2 px-4 font-sm">
                                                             <i class="fi-rs-eye mr-5"></i> Lihat Detail
                                                         </a>
                                                         @if($order->order_status === 'shipped' && $order->tracking_number)
-                                                            <a href="{{ route('buyer.orders.show', $order) }}#btn-track-order" class="btn btn-sm btn-brand rounded-pill py-2 px-4 font-sm ms-md-2">
+                                                            <a href="{{ route('buyer.orders.show', $order) }}#btn-track-order" class="btn btn-sm btn-maroon rounded-pill py-2 px-4 font-sm ms-md-2">
                                                                 <i class="fi-rs-truck mr-5"></i> Lacak
                                                             </a>
                                                         @endif
@@ -135,51 +135,63 @@
 </div>
 
 <style>
-    .bg-light-gray { background-color: #f8fafc; }
-    .border-radius-10 { border-radius: 10px; }
+    .bg-light-maroon { background-color: rgba(106, 27, 27, 0.03); }
     .order-card {
         background: #fff;
-        border-radius: 12px;
-        border: 1px solid #edf2f7;
+        border-radius: 20px;
+        border: 1.5px solid #edf2f7;
         overflow: hidden;
         transition: all 0.3s ease;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.02);
     }
     .order-card:hover {
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        border-color: #3bb77e33;
-        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.08);
+        border-color: #6A1B1B88;
+        transform: translateY(-3px);
     }
     .order-header {
-        border-bottom: 1px solid #edf2f7;
+        border-bottom: 1.5px solid #edf2f7;
+        background-color: #F8F9FA !important;
     }
+    
+    .text-maroon { color: #6A1B1B !important; }
+    
+    .btn-outline-maroon {
+        color: #6A1B1B;
+        border: 1.5px solid #6A1B1B;
+        background: transparent;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-outline-maroon:hover {
+        background: #6A1B1B;
+        color: #fff;
+    }
+
+    .btn-maroon {
+        background: #6A1B1B;
+        color: #fff;
+        font-weight: 600;
+        border: none;
+    }
+    
+    .btn-maroon:hover {
+        background: #4D1313;
+        color: #fff;
+    }
+
     .product-info h6 {
-        font-size: 15px;
+        font-family: 'Fira Sans', sans-serif !important;
+        font-size: 16px;
         font-weight: 600;
         color: #253D4E;
     }
-    .btn-outline-brand {
-        color: #3BB77E;
-        border: 1px solid #3BB77E;
-        background: transparent;
-    }
-    .btn-outline-brand:hover {
-        background: #3BB77E;
-        color: #fff;
-    }
+    
     .truncate-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
-    }
-    .ms-md-2 { margin-left: 0.5rem; }
-    @media (max-width: 768px) {
-        .order-meta { flex-wrap: wrap; }
-        .order-meta > div { margin-right: 20px !important; margin-bottom: 10px; }
-        .order-header { flex-direction: column; align-items: flex-start !important; }
-        .order-status { margin-top: 15px; }
-        .ms-md-2 { margin-left: 0; margin-top: 10px; }
     }
 </style>
 @endsection

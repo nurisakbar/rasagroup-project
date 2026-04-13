@@ -4,293 +4,241 @@
 
 @push('styles')
 <style>
+    /* Global Overrides for Contact Page */
+    .pages {
+        background-color: #F2EAE1 !important;
+    }
+
+    .page-content {
+        background-color: #F2EAE1 !important;
+    }
+
     /* Hero Banner */
     .page-hero {
-        background: linear-gradient(135deg, rgba(231, 76, 60, 0.9) 0%, rgba(243, 156, 18, 0.8) 100%), 
+        background: linear-gradient(135deg, rgba(106, 27, 27, 0.95) 0%, rgba(77, 19, 19, 0.85) 100%), 
                     url('https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=1920');
         background-size: cover;
         background-position: center;
         padding: 100px 0;
         color: white;
         text-align: center;
+        border-radius: 0 0 50px 50px;
     }
     
     .page-hero h1 {
-        font-size: 3rem;
+        font-family: 'Fira Sans', sans-serif !important;
+        font-size: 3.5rem;
         font-weight: 700;
         margin-bottom: 15px;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        text-shadow: 2px 2px 15px rgba(0,0,0,0.3);
     }
     
     .page-hero p {
+        font-family: 'Lato', sans-serif !important;
         font-size: 1.2rem;
         opacity: 0.95;
     }
     
-    .breadcrumb-nav {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .breadcrumb-nav a {
-        color: white;
-        text-decoration: none;
-        opacity: 0.8;
-    }
-    
-    .breadcrumb-nav a:hover {
-        opacity: 1;
-    }
-    
-    .breadcrumb-nav span {
-        opacity: 0.6;
-    }
-    
     /* Contact Section */
     .contact-section {
-        padding: 80px 0;
+        padding: 60px 0;
     }
     
     /* Contact Info Cards */
     .contact-info-card {
         background: white;
         border-radius: 20px;
-        padding: 35px 25px;
+        padding: 40px 25px;
         text-align: center;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
         transition: all 0.3s ease;
         height: 100%;
+        border: none !important;
     }
     
     .contact-info-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 15px 45px rgba(106, 27, 27, 0.1);
     }
     
     .contact-icon {
-        width: 80px;
-        height: 80px;
-        background: var(--gradient-primary);
-        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        background: #6A1B1B !important;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 20px;
-        font-size: 2rem;
+        margin: 0 auto 25px;
+        font-size: 1.8rem;
         color: white;
     }
     
     .contact-info-card h4 {
+        font-family: 'Fira Sans', sans-serif !important;
         font-size: 1.3rem;
-        font-weight: 600;
-        color: var(--dark-color);
+        font-weight: 700;
+        color: #253D4E;
         margin-bottom: 15px;
     }
     
     .contact-info-card p {
-        color: #6c757d;
+        font-family: 'Lato', sans-serif !important;
+        color: #7E7E7E;
         margin-bottom: 5px;
         line-height: 1.7;
     }
     
     .contact-info-card a {
-        color: var(--primary-color);
+        color: #6A1B1B !important;
         text-decoration: none;
-        font-weight: 500;
-    }
-    
-    .contact-info-card a:hover {
-        text-decoration: underline;
+        font-weight: 600;
     }
     
     /* Contact Form */
     .contact-form-section {
         padding: 80px 0;
-        background: var(--light-color);
-    }
-    
-    .section-title {
-        text-align: center;
-        margin-bottom: 50px;
+        background: transparent;
     }
     
     .section-title h2 {
-        font-size: 2.5rem;
+        font-family: 'Fira Sans', sans-serif !important;
+        font-size: 2.8rem;
         font-weight: 700;
-        color: var(--dark-color);
-        margin-bottom: 15px;
+        color: #253D4E;
+        margin-bottom: 10px;
     }
     
     .section-title .divider {
-        width: 80px;
-        height: 4px;
-        background: var(--gradient-primary);
+        width: 60px;
+        height: 3px;
+        background: #6A1B1B !important;
         margin: 15px auto;
         border-radius: 2px;
     }
     
     .contact-form-card {
         background: white;
-        border-radius: 25px;
-        padding: 50px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        border-radius: 30px;
+        padding: 60px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.05);
     }
     
     .form-label {
+        font-family: 'Fira Sans', sans-serif !important;
         font-weight: 600;
-        color: var(--dark-color);
-        margin-bottom: 10px;
+        color: #253D4E;
+        margin-bottom: 8px;
     }
     
     .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 15px 20px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
+        background: #F8F9FA !important;
+        border: 1px solid #ECECEC !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        font-family: 'Lato', sans-serif !important;
+        transition: all 0.3s ease !important;
     }
     
     .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
-    }
-    
-    textarea.form-control {
-        min-height: 150px;
-        resize: vertical;
+        background: #ffffff !important;
+        border-color: #6A1B1B !important;
+        box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
     }
     
     .btn-submit {
-        background: var(--gradient-primary);
-        color: white;
+        background: #6A1B1B !important;
+        color: white !important;
         border: none;
         border-radius: 12px;
-        padding: 15px 40px;
+        padding: 18px 45px;
+        font-family: 'Fira Sans', sans-serif !important;
         font-size: 1.1rem;
-        font-weight: 600;
+        font-weight: 700;
         transition: all 0.3s ease;
     }
     
     .btn-submit:hover {
+        background-color: #4D1313 !important;
         transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
-        color: white;
+        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.3);
     }
     
     /* Map Section */
-    .map-section {
-        padding: 0;
-    }
-    
     .map-container {
-        height: 450px;
-        border-radius: 0;
+        height: 500px;
+        border-radius: 30px;
         overflow: hidden;
-    }
-    
-    .map-container iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
+        margin: 0 50px 80px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.08);
     }
     
     /* Social Section */
     .social-section {
-        padding: 80px 0;
-        background: var(--dark-color);
+        padding: 100px 0;
+        background: #6A1B1B !important;
         color: white;
         text-align: center;
+        border-radius: 50px 50px 0 0;
     }
     
     .social-section h2 {
-        font-size: 2rem;
+        font-family: 'Fira Sans', sans-serif !important;
         font-weight: 700;
-        margin-bottom: 15px;
-    }
-    
-    .social-section p {
-        opacity: 0.9;
-        margin-bottom: 30px;
-    }
-    
-    .social-links {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
+        margin-bottom: 20px;
     }
     
     .social-link {
-        width: 60px;
-        height: 60px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
+        width: 55px;
+        height: 55px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         color: white;
         text-decoration: none;
         transition: all 0.3s ease;
     }
     
     .social-link:hover {
-        background: var(--primary-color);
-        color: white;
-        transform: translateY(-5px);
+        background: white !important;
+        color: #6A1B1B !important;
+        transform: translateY(-5px) rotate(8deg);
     }
     
     /* FAQ Section */
     .faq-section {
-        padding: 80px 0;
+        padding: 100px 0;
     }
     
     .accordion-item {
         border: none;
         margin-bottom: 15px;
-        border-radius: 15px !important;
+        border-radius: 20px !important;
         overflow: hidden;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
     }
     
     .accordion-button {
+        font-family: 'Fira Sans', sans-serif !important;
         font-weight: 600;
-        color: var(--dark-color);
-        padding: 20px 25px;
-        background: white;
+        color: #253D4E !important;
+        padding: 25px !important;
+        background: white !important;
     }
     
     .accordion-button:not(.collapsed) {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: none;
-    }
-    
-    .accordion-button:focus {
-        box-shadow: none;
-    }
-    
-    .accordion-button::after {
-        background-size: 1rem;
-    }
-    
-    .accordion-button:not(.collapsed)::after {
-        filter: brightness(0) invert(1);
-    }
-    
-    .accordion-body {
-        padding: 20px 25px;
-        color: #6c757d;
-        line-height: 1.8;
+        background: #F2EAE1 !important;
+        color: #6A1B1B !important;
+        box-shadow: none !important;
     }
     
     /* Alert */
     .alert-success-custom {
-        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        background: #27ae60 !important;
         color: white;
-        border: none;
         border-radius: 15px;
         padding: 20px 25px;
     }
@@ -561,33 +509,6 @@
         </div>
     </section>
 
-    <!-- Social Section -->
-    <section class="social-section">
-        <div class="container">
-            <h2>Ikuti Kami di Media Sosial</h2>
-            <p>Dapatkan info terbaru, promo, dan konten menarik lainnya</p>
-            <div class="social-links">
-                <a href="#" class="social-link" title="Facebook">
-                    <i class="bi bi-facebook"></i>
-                </a>
-                <a href="#" class="social-link" title="Instagram">
-                    <i class="bi bi-instagram"></i>
-                </a>
-                <a href="#" class="social-link" title="Twitter">
-                    <i class="bi bi-twitter-x"></i>
-                </a>
-                <a href="#" class="social-link" title="YouTube">
-                    <i class="bi bi-youtube"></i>
-                </a>
-                <a href="#" class="social-link" title="WhatsApp">
-                    <i class="bi bi-whatsapp"></i>
-                </a>
-                <a href="#" class="social-link" title="TikTok">
-                    <i class="bi bi-tiktok"></i>
-                </a>
-            </div>
-        </div>
-    </section>
         </div>
     </main>
 @endsection

@@ -13,116 +13,163 @@
     </div>
 </div>
 
-<div class="container mb-80 mt-50">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="row">
-                <div class="col-lg-4">
-                    @include('buyer.partials.sidebar')
-                </div>
-                <div class="col-lg-8">
-                    <div class="tab-content account dashboard-content pl-50">
-                        <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="card border-0 shadow-sm border-radius-10">
-                                <div class="card-header bg-white border-bottom-0 p-4">
-                                    <h3 class="mb-0">Detail Akun</h3>
+<div class="page-content pt-50 pb-80" style="background-color: #F2EAE1;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4">
+                @include('buyer.partials.sidebar')
+            </div>
+            <div class="col-lg-8">
+                <div class="tab-content account dashboard-content">
+                    <div class="tab-pane fade show active" role="tabpanel">
+                        <div class="card border-0 shadow-sm border-radius-20 overflow-hidden" style="background-color: #ffffff;">
+                            <div class="card-header bg-white border-bottom-0 p-30 pb-0">
+                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Detail Akun</h3>
+                            </div>
+                            <div class="card-body p-30 pt-10">
+                                @if(session('success'))
+                                    <div class="alert alert-success border-radius-12 border-0 mb-30" style="background-color: #f0fff4; color: #2f855a;">
+                                        <i class="fi-rs-check mr-5"></i> {{ session('success') }}
+                                    </div>
+                                @endif
+
+                                <div class="mb-40">
+                                    <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                        <div class="d-flex justify-content-between align-items-center mb-20">
+                                            <h5 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Informasi Profil</h5>
+                                            <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm btn-outline-maroon-pill px-20">
+                                                <i class="fi-rs-edit mr-5"></i> Edit Profil
+                                            </a>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Nama Lengkap</label>
+                                                <p class="font-md fw-bold mb-0 text-maroon">{{ Auth::user()->name }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Alamat Email</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->email }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Nomor Telepon</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->phone ?? '-' }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Tipe Akun</label>
+                                                <p class="mb-0"><span class="badge rounded-pill px-3 py-2" style="background-color: #6A1B1B; color: #fff; font-weight: 600;">{{ ucfirst(Auth::user()->role) }}</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body p-4 pt-0">
-                                    @if(session('success'))
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                            <i class="fi-rs-check mr-5"></i> {{ session('success') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    @endif
-
-                                    <div class="row mb-5">
-                                        <div class="col-lg-12">
-                                            <div class="bg-light p-4 border-radius-10">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <h5 class="mb-0">Informasi Profil</h5>
-                                                    <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm btn-outline-primary rounded font-sm">
-                                                        <i class="fi-rs-edit mr-5"></i> Edit Profil
-                                                    </a>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="font-sm text-muted mb-1">Nama Lengkap</label>
-                                                        <p class="font-md fw-bold mb-0 text-brand">{{ Auth::user()->name }}</p>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="font-sm text-muted mb-1">Alamat Email</label>
-                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->email }}</p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="font-sm text-muted mb-1">Nomor Telepon</label>
-                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->phone ?? '-' }}</p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="font-sm text-muted mb-1">Tipe Akun</label>
-                                                        <p class="font-md fw-bold mb-0"><span class="badge rounded-pill bg-info-light text-info">{{ ucfirst(Auth::user()->role) }}</span></p>
-                                                    </div>
-                                                </div>
+                                
+                                <div class="mb-40">
+                                    <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                        <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Informasi Rekening Bank</h5>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="font-xs text-muted mb-1 d-block">Nama Bank</label>
+                                                <p class="font-md fw-bold mb-0 text-maroon">{{ Auth::user()->bank_name ?? '-' }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="font-xs text-muted mb-1 d-block">Nomor Rekening</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->bank_account_number ?? '-' }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="font-xs text-muted mb-1 d-block">Atas Nama</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->bank_account_name ?? '-' }}</p>
                                             </div>
                                         </div>
+                                        @if(empty(Auth::user()->bank_name))
+                                            <div class="mt-15 p-12 border-radius-10" style="background-color: #fffaf0; border: 1px solid #feebc8; color: #9c4221;">
+                                                <small><i class="fi-rs-info mr-5"></i> Anda belum melengkapi data rekening. Data ini diperlukan untuk penarikan poin.</small>
+                                            </div>
+                                        @endif
                                     </div>
-                                    
-                                    <div class="row mb-5">
-                                        <div class="col-lg-12">
-                                            <div class="bg-light p-4 border-radius-10">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <h5 class="mb-0">Informasi Rekening Bank</h5>
+                                </div>
+
+                                <div class="mt-50 pt-30 border-top">
+                                    <h4 class="mb-25" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Ubah Password</h4>
+                                    <form action="{{ route('buyer.profile.password') }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="row g-4">
+                                            <div class="col-md-12">
+                                                <div class="form-group mb-0">
+                                                    <label class="form-label-custom">Password Lama <span class="text-danger">*</span></label>
+                                                    <input required class="form-control custom-input" name="current_password" type="password" placeholder="Masukkan password saat ini">
                                                 </div>
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="font-sm text-muted mb-1">Nama Bank</label>
-                                                        <p class="font-md fw-bold mb-0 text-brand">{{ Auth::user()->bank_name ?? '-' }}</p>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="font-sm text-muted mb-1">Nomor Rekening</label>
-                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->bank_account_number ?? '-' }}</p>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="font-sm text-muted mb-1">Atas Nama</label>
-                                                        <p class="font-md fw-bold mb-0">{{ Auth::user()->bank_account_name ?? '-' }}</p>
-                                                    </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-0">
+                                                    <label class="form-label-custom">Password Baru <span class="text-danger">*</span></label>
+                                                    <input required class="form-control custom-input" name="password" type="password" placeholder="Minimal 8 karakter">
                                                 </div>
-                                                @if(empty(Auth::user()->bank_name))
-                                                    <div class="alert alert-warning border-0 p-2 mt-2">
-                                                        <small><i class="fi-rs-info mr-5"></i> Anda belum melengkapi data rekening. Data ini diperlukan untuk penarikan poin.</small>
-                                                    </div>
-                                                @endif
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-0">
+                                                    <label class="form-label-custom">Konfirmasi Password Baru <span class="text-danger">*</span></label>
+                                                    <input required class="form-control custom-input" name="password_confirmation" type="password" placeholder="Ulangi password baru">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 mt-30">
+                                                <button type="submit" class="btn btn-maroon-lg w-100">
+                                                    Simpan Password Baru
+                                                </button>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-lg-12">
-                                            <h4 class="mb-4">Ubah Password</h4>
-                                            <form action="{{ route('buyer.profile.password') }}" method="POST">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="row">
-                                                    <div class="form-group col-md-12 mb-3">
-                                                        <label>Password Lama <span class="required">*</span></label>
-                                                        <input required class="form-control" name="current_password" type="password">
-                                                    </div>
-                                                    <div class="form-group col-md-12 mb-3">
-                                                        <label>Password Baru <span class="required">*</span></label>
-                                                        <input required class="form-control" name="password" type="password">
-                                                    </div>
-                                                    <div class="form-group col-md-12 mb-4">
-                                                        <label>Konfirmasi Password Baru <span class="required">*</span></label>
-                                                        <input required class="form-control" name="password_confirmation" type="password">
-                                                    </div>
-                                                    <div class="col-md-12">
-                                                        <button type="submit" class="btn btn-fill-out submit font-weight-bold" name="submit" value="Submit">Simpan Password Baru</button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
+                                    </form>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-maroon { color: #6A1B1B !important; }
+    .btn-outline-maroon-pill {
+        color: #6A1B1B;
+        border: 1.5px solid #6A1B1B;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s;
+    }
+    .btn-outline-maroon-pill:hover { background-color: #6A1B1B; color: #fff; }
+
+    .form-label-custom { font-family: 'Fira Sans', sans-serif; font-weight: 600; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
+    .custom-input {
+        background-color: #F8F9FA !important;
+        border: 1.5px solid #ECECEC !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        transition: all 0.3s ease;
+    }
+    .custom-input:focus {
+        border-color: #6A1B1B !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
+    }
+
+    .btn-maroon-lg {
+        background-color: #6A1B1B !important;
+        color: #fff !important;
+        padding: 18px !important;
+        border-radius: 15px !important;
+        font-family: 'Fira Sans', sans-serif !important;
+        font-weight: 700 !important;
+        border: none !important;
+        transition: all 0.3s;
+    }
+    .btn-maroon-lg:hover {
+        background-color: #4D1313 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(106, 27, 27, 0.2);
+    }
+</style>
                         </div>
                     </div>
                 </div>

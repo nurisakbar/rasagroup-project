@@ -13,6 +13,14 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <style>
+            .bg-gray-100 {
+                background-color: #F2EAE1 !important;
+            }
+            .bg-white {
+                background-color: #F2EAE1 !important;
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">

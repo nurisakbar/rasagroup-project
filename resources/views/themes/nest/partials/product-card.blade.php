@@ -44,8 +44,8 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
-                        <button type="submit" class="add" style="border: none; cursor: pointer; background-color: #3BB77E; color: #ffffff;">
-                            <i class="fi-rs-shopping-cart mr-5"></i>Tambah
+                        <button type="submit" class="add">
+                            Add <i class="fi-rs-plus ml-5"></i>
                         </button>
                     </form>
                 </div>

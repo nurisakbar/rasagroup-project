@@ -62,7 +62,9 @@
                     </div>
                     <input type="hidden" name="warehouse_id" value="{{ $selectedHubId }}">
                     <div class="product-extra-link2 mt-15">
-                        <button type="submit" class="button button-add-to-cart"><i class="fi-rs-shopping-cart"></i>Tambah ke Keranjang</button>
+                        <button type="submit" class="add" style="border: none; cursor: pointer; background-color: #801D1D; color: #ffffff; border-radius: 4px; font-weight: bold; opacity: 1; transition: background-color 0.3s; padding: 10px 20px;">
+                            <i class="fi-rs-shopping-cart mr-5"></i>Add To Cart
+                        </button>
                     </div>
                 </form>
             </div>
