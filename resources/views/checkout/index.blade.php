@@ -70,7 +70,7 @@
                 <div class="mb-25">
                     <div class="d-flex justify-content-between align-items-center mb-15">
                         <h4 class="mb-0"><i class="fi-rs-marker mr-10 text-muted"></i>Alamat Pengiriman</h4>
-                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm btn-standar-outline">
                             <i class="fi-rs-plus mr-5"></i>Tambah Alamat
                         </a>
                     </div>
@@ -454,6 +454,24 @@
 
     button#submitBtn:hover {
         background-color: #4D1313 !important;
+        transform: translateY(-2px);
+    }
+    
+    .btn-standar-outline {
+        background-color: transparent !important;
+        border: 1.5px solid #6A1B1B !important;
+        color: #6A1B1B !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        padding: 8px 18px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    .btn-standar-outline:hover {
+        background-color: #6A1B1B !important;
+        color: #ffffff !important;
         transform: translateY(-2px);
     }
 </style>

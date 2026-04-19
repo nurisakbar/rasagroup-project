@@ -159,9 +159,9 @@
                                             <div class="shopping-cart-total">
                                                 <h4>Total <span>Rp {{ number_format($miniCartTotal, 0, ',', '.') }}</span></h4>
                                             </div>
-                                            <div class="shopping-cart-button">
-                                                <a href="{{ route('cart.index') }}" class="outline">Lihat Keranjang</a>
-                                                <a href="{{ route('checkout.index') }}">Selesaikan Pesanan</a>
+                                            <div class="shopping-cart-button" style="display: flex; gap: 8px; justify-content: space-between;">
+                                                <a href="{{ route('cart.index') }}" style="flex: 1; background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 800; padding: 12px; border: none; text-align: center; font-size: 14px; text-transform: capitalize;">Lihat Keranjang &rarr;</a>
+                                                <a href="{{ route('checkout.index') }}" style="flex: 1; background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 800; padding: 12px; border: none; text-align: center; font-size: 14px; text-transform: capitalize;">Selesaikan Pesanan &rarr;</a>
                                             </div>
                                         </div>
                                     </div>
@@ -362,9 +362,9 @@
                                         <div class="shopping-cart-total">
                                             <h4>Total <span>Rp {{ number_format($miniCartTotal, 0, ',', '.') }}</span></h4>
                                         </div>
-                                        <div class="shopping-cart-button">
-                                            <a href="{{ route('cart.index') }}" class="outline">Lihat Keranjang</a>
-                                            <a href="{{ route('checkout.index') }}">Checkout</a>
+                                        <div class="shopping-cart-button" style="display: flex; gap: 8px; justify-content: space-between;">
+                                            <a href="{{ route('cart.index') }}" style="flex: 1; background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 800; padding: 12px; border: none; text-align: center; font-size: 14px; text-transform: capitalize;">Lihat Keranjang &rarr;</a>
+                                            <a href="{{ route('checkout.index') }}" style="flex: 1; background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 800; padding: 12px; border: none; text-align: center; font-size: 14px; text-transform: capitalize;">Checkout &rarr;</a>
                                         </div>
                                     </div>
                                 </div>

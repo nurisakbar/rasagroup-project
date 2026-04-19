@@ -106,10 +106,10 @@
                                             </div>
 
                                             <div class="d-flex justify-content-center gap-3 mt-4">
-                                                <a href="{{ route('products.index') }}" class="btn btn-fill-out btn-lg">
+                                                <a href="{{ route('products.index') }}" class="btn btn-standar-utama">
                                                     <i class="fi-rs-shopping-bag mr-5"></i> Mulai Belanja
                                                 </a>
-                                                <a href="{{ route('buyer.dashboard') }}" class="btn btn-outline-secondary rounded btn-lg font-sm">
+                                                <a href="{{ route('buyer.dashboard') }}" class="btn btn-standar-outline">
                                                     <i class="fi-rs-arrow-left mr-5"></i> Dashboard
                                                 </a>
                                             </div>
@@ -131,7 +131,7 @@
                                             </div>
                                             
                                             <div class="mt-4">
-                                                <a href="{{ route('buyer.dashboard') }}" class="btn btn-outline-secondary rounded btn-lg font-sm">
+                                                <a href="{{ route('buyer.dashboard') }}" class="btn btn-standar-outline">
                                                     <i class="fi-rs-arrow-left mr-5"></i> Kembali ke Dashboard
                                                 </a>
                                             </div>
@@ -145,7 +145,7 @@
                                             <h3 class="text-muted mb-3">Belum Ada Pengajuan</h3>
                                             <p class="font-md text-muted mb-4">Anda belum mengajukan pendaftaran sebagai Affiliator.</p>
                                             
-                                            <a href="{{ route('buyer.driippreneur.apply') }}" class="btn btn-fill-out btn-lg">
+                                            <a href="{{ route('buyer.driippreneur.apply') }}" class="btn btn-standar-utama">
                                                 <i class="fi-rs-add mr-5"></i> Daftar Sekarang
                                             </a>
                                         </div>
@@ -165,6 +165,41 @@
     .bg-info-light { background-color: rgba(13, 202, 240, 0.1); }
     .bg-success-light { background-color: rgba(40, 167, 69, 0.1); }
     .divider { height: 1px; background-color: #f2f2f2; width: 100%; }
+    
+    .btn-standar-utama {
+        background-color: #6A1B1B !important;
+        border: none !important;
+        color: #ffffff !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        padding: 12px 25px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    .btn-standar-utama:hover {
+        background-color: #4D1313 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
+    .btn-standar-outline {
+        background-color: transparent !important;
+        border: 1.5px solid #6A1B1B !important;
+        color: #6A1B1B !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        padding: 12px 25px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    .btn-standar-outline:hover {
+        background-color: #6A1B1B !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
 </style>
 @endsection
 

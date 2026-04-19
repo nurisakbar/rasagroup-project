@@ -552,13 +552,13 @@
                 slidesToScroll: 1,
                 arrows: false,
                 fade: false,
-                asNavFor: $modal.find('.slider-nav-thumbnails'),
+                asNavFor: '#quickViewModal .slider-nav-thumbnails',
             });
 
             $modal.find('.slider-nav-thumbnails').slick({
                 slidesToShow: 4,
                 slidesToScroll: 1,
-                asNavFor: $modal.find('.product-image-slider'),
+                asNavFor: '#quickViewModal .product-image-slider',
                 dots: false,
                 focusOnSelect: true,
                 prevArrow: '<button type="button" class="slick-prev"><i class="fi-rs-arrow-small-left"></i></button>',

@@ -30,9 +30,9 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" style="background-color: rgba(22, 199, 154, 1); color: white; border: none;">
             <i class="fi-rs-check me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
@@ -137,10 +137,6 @@
                     </table>
                 </div>
                 <div class="divider-2 mb-30"></div>
-                <div class="cart-action d-flex justify-content-between">
-                    <a class="btn " href="{{ route('products.index') }}"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
-                    
-                </div>
                 <!-- Optional: Shipping Calculator Section preserved from template if needed by USER, currently placeholders -->
                 
             </div>
@@ -173,10 +169,23 @@
                             </tbody>
                         </table>
                     </div>
+                    <style>
+                        .cart-totals .btn-lanjut-belanja {
+                            background-color: transparent !important;
+                            border: 1.5px solid #6A1B1B !important;
+                            color: #6A1B1B !important;
+                            padding: 12px 25px !important;
+                        }
+                        .cart-totals .btn-lanjut-belanja:hover {
+                            background-color: #6A1B1B !important;
+                            color: #ffffff !important;
+                        }
+                    </style>
+                    <a href="{{ route('products.index') }}" class="btn w-100 mb-15 btn-lanjut-belanja text-center"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                     @auth
-                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></a>
+                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100 text-center">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></a>
                     @else
-                        <a href="{{ route('login') }}" class="btn mb-20 w-100">Login untuk Melanjutkan<i class="fi-rs-sign-in ml-15"></i></a>
+                        <a href="{{ route('login') }}" class="btn mb-20 w-100 text-center">Login untuk Melanjutkan<i class="fi-rs-sign-in ml-15"></i></a>
                     @endauth
                 </div>
             </div>

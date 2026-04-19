@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Services\WACloudService;
+use App\Services\QadWhatsAppService;
 use Illuminate\Support\Facades\Log;
 
 class WACloudHelper
@@ -17,27 +18,29 @@ class WACloudHelper
     public static function sendText(string $phone, string $message): ?array
     {
         try {
-            $waCloud = new WACloudService();
+            $qadService = app(QadWhatsAppService::class);
+            $result = $qadService->sendText($phone, $message);
             
-            if (!$waCloud->isConfigured()) {
-                Log::warning('WACloud not configured. Cannot send text message.');
-                return null;
+            if ($result['success']) {
+                Log::info('WhatsApp text message sent via QAD API', [
+                    'phone' => $phone,
+                ]);
+                return $result;
             }
 
-            // Format phone number
-            $formattedPhone = $waCloud->formatPhoneNumber($phone);
-            
-            // Send message
-            $result = $waCloud->sendTextMessage($formattedPhone, $message);
-            
-            if ($result) {
-                Log::info('WhatsApp text message sent via helper', [
-                    'phone' => $formattedPhone,
-                    'message_id' => $result['message_id'] ?? null,
-                ]);
+            Log::warning('Failed to send WhatsApp via QAD API, trying fallback to WACloud', [
+                'phone' => $phone,
+                'message' => $result['message'] ?? 'Unknown error'
+            ]);
+
+            // Fallback to old WACloud service
+            $waCloud = new WACloudService();
+            if ($waCloud->isConfigured()) {
+                $formattedPhone = $waCloud->formatPhoneNumber($phone);
+                return $waCloud->sendTextMessage($formattedPhone, $message);
             }
             
-            return $result;
+            return null;
         } catch (\Exception $e) {
             Log::error('Failed to send WhatsApp text message via helper', [
                 'phone' => $phone,
@@ -183,6 +186,9 @@ class WACloudHelper
      */
     public static function isConfigured(): bool
     {
+        $qadConfigured = app(\App\Services\QidApiService::class)->isConfigured();
+        if ($qadConfigured) return true;
+
         $waCloud = new WACloudService();
         return $waCloud->isConfigured();
     }

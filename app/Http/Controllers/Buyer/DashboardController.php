@@ -93,14 +93,14 @@ class DashboardController extends Controller
                 })
                 ->addColumn('action', function ($order) use ($type) {
                     if ($type === 'incoming') {
-                        return '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-sm btn-info text-white">
+                        return '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-sm" style="background-color: #6A1B1B; border-color: #6A1B1B; color: #fff;">
                             <i class="fi-rs-shopping-bag mr-5"></i> Kelola
                         </a>';
                     }
                     
                     $route = $order->order_type === 'distributor' ? 'distributor.orders.show' : 'buyer.orders.show';
                     
-                    return '<a href="' . route($route, $order) . '" class="btn btn-sm btn-primary">
+                    return '<a href="' . route($route, $order) . '" class="btn btn-sm" style="background-color: #6A1B1B; border-color: #6A1B1B; color: #fff;">
                         <i class="fi-rs-eye mr-5"></i> Detail
                     </a>';
                 })

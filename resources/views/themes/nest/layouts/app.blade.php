@@ -498,7 +498,7 @@
     @include('themes.nest.partials.mobile-header')
 
     <main class="main">
-        @if(session('success'))
+        @if(session('success') && !request()->routeIs('cart.index'))
             <div class="container mt-4">
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fi-rs-check-circle me-2"></i> {{ session('success') }}
@@ -507,7 +507,7 @@
             </div>
         @endif
 
-        @if(session('error'))
+        @if(session('error') && !request()->routeIs('cart.index'))
             <div class="container mt-4">
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fi-rs-cross-circle me-2"></i> {{ session('error') }}
