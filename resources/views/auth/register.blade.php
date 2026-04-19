@@ -41,13 +41,25 @@
                                         @enderror
                                     </div>
                                     <div class="form-group mb-20">
-                                        <input required="" type="password" name="password" placeholder="Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        <input type="text" required="" name="phone" placeholder="Nomor WhatsApp (Contoh: 08123456789) *" value="{{ old('phone') }}" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        @error('phone')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-20 position-relative">
+                                        <input id="password" required="" type="password" name="password" placeholder="Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 50px 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
+                                        <span class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7E7E7E;">
+                                            <i class="fi-rs-eye" id="toggleIcon1"></i>
+                                        </span>
                                         @error('password')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    <div class="form-group mb-20">
-                                        <input required="" type="password" name="password_confirmation" placeholder="Konfirmasi Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                    <div class="form-group mb-20 position-relative">
+                                        <input id="password_confirmation" required="" type="password" name="password_confirmation" placeholder="Konfirmasi Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 50px 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
+                                        <span class="password-toggle" onclick="togglePassword('password_confirmation', 'toggleIcon2')" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7E7E7E;">
+                                            <i class="fi-rs-eye" id="toggleIcon2"></i>
+                                        </span>
                                     </div>
                                     
                                     <div class="login_footer form-group mb-50">
@@ -80,3 +92,22 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePassword(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fi-rs-eye');
+            toggleIcon.classList.add('fi-rs-eye-crossed');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fi-rs-eye-crossed');
+            toggleIcon.classList.add('fi-rs-eye');
+        }
+    }
+</script>
+@endpush

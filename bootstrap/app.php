@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'warehouse' => \App\Http\Middleware\WarehouseAccess::class,
             'driippreneur' => \App\Http\Middleware\DriippreneurAccess::class,
             'distributor' => \App\Http\Middleware\DistributorAccess::class,
+            'wa.verified' => \App\Http\Middleware\EnsureWhatsAppIsVerified::class,
         ]);
         
         // Add affiliate tracking to web middleware

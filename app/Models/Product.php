@@ -141,6 +141,11 @@ class Product extends Model
         return $this->hasMany(WarehouseStock::class);
     }
 
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');
+    }
+
     public function priceLevels(): BelongsToMany
     {
         return $this->belongsToMany(PriceLevel::class, 'product_price_levels')

@@ -9,11 +9,68 @@ use App\Models\User;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
 use App\Services\RajaOngkirService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WarehouseController extends Controller
 {
+    /**
+     * Sync with QID API.
+     */
+    public function syncQid()
+    {
+        try {
+            Log::info('Starting QID Hub Synchronization...');
+            
+            $response = Http::withHeaders([
+                'Accept' => 'text/plain',
+                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
+            ])->get('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/location');
+
+            if ($response->successful()) {
+                $data = $response->json();
+                Log::info('QID API Response received', ['count' => count($data)]);
+                
+                // Debug log raw data first few items
+                Log::debug('QID Data Sample', ['data' => array_slice($data, 0, 3)]);
+                
+                $locations = isset($data['data']) ? $data['data'] : $data;
+                $synchronizedCount = 0;
+                
+                foreach ($locations as $index => $loc) {
+                    $kodeHub = $loc['location'] ?? $loc['locationID'] ?? $loc['locationid'] ?? null;
+                    $namaHub = $loc['description'] ?? $loc['locationName'] ?? $loc['locationname'] ?? null;
+                    
+                    if ($kodeHub && $namaHub) {
+                        Warehouse::updateOrCreate(
+                            ['kode_hub' => $kodeHub],
+                            [
+                                'name' => $namaHub,
+                                'slug' => Str::slug($namaHub) . '-' . strtolower($kodeHub),
+                                'description' => 'Synced from QID',
+                                'is_active' => true,
+                            ]
+                        );
+                        $synchronizedCount++;
+                    } else {
+                        Log::warning("Skipping location at index {$index} due to missing data", ['item' => $loc]);
+                    }
+                }
+                
+                Log::info("QID Synchronization finished. Total synced: {$synchronizedCount}");
+                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} Hub dari QID.");
+            }
+            
+            Log::error('QID API Failed', ['status' => $response->status(), 'body' => $response->body()]);
+            return back()->with('error', 'Gagal menghubungi server QID: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('QID Sync Exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage());
+        }
+    }
     protected $rajaOngkir;
 
     public function __construct(RajaOngkirService $rajaOngkir)
@@ -48,7 +105,11 @@ class WarehouseController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {
-                    return '<strong>' . $warehouse->name . '</strong>';
+                    $html = '<strong>' . $warehouse->name . '</strong>';
+                    if ($warehouse->kode_hub) {
+                        $html .= '<br><small class="text-muted">Kode: ' . $warehouse->kode_hub . '</small>';
+                    }
+                    return $html;
                 })
                 ->addColumn('location_info', function ($warehouse) {
                     if ($warehouse->regency && $warehouse->province) {
@@ -171,6 +232,11 @@ class WarehouseController extends Controller
     {
         $warehouse->load(['province', 'regency', 'users']);
         
+        // Sinkronisasi otomatis dari QID di balik layar jika ada kode_hub
+        if ($warehouse->kode_hub) {
+            $this->refreshStockFromQid($warehouse);
+        }
+
         // Get stocks with product information
         $query = WarehouseStock::with('product')
             ->where('warehouse_id', $warehouse->id);
@@ -179,7 +245,8 @@ class WarehouseController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('product', function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%');
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('code', 'like', '%' . $search . '%');
             });
         }
         
@@ -402,6 +469,7 @@ class WarehouseController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
+            'sub_role' => 'required|in:admin,staff',
         ]);
 
         User::create([
@@ -410,7 +478,9 @@ class WarehouseController extends Controller
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
             'role' => 'warehouse',
+            'sub_role' => $validated['sub_role'],
             'warehouse_id' => $warehouse->id,
+            'wa_verified_at' => now(), // Managers/Staff usually don't need verification if created by admin
         ]);
 
         return back()->with('success', 'User warehouse berhasil ditambahkan.');
@@ -428,5 +498,58 @@ class WarehouseController extends Controller
         $user->delete();
 
         return back()->with('success', 'User warehouse berhasil dihapus.');
+    }
+
+    /**
+     * Sinkronisasi stok dari QID secara internal (di balik layar)
+     */
+    private function refreshStockFromQid(Warehouse $warehouse)
+    {
+        try {
+            Log::info("Auto Refreshing QID Stock for Hub: {$warehouse->name} ({$warehouse->kode_hub})");
+            
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'text/plain',
+                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
+            ])->timeout(10)->post('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/all', [
+                'location' => $warehouse->kode_hub,
+                'search' => '',
+                'batch' => '',
+                'length' => 1000
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $items = $data['data'] ?? [];
+                
+                if (count($items) > 0) {
+                    foreach ($items as $item) {
+                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
+                        $qty = $item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0;
+                        
+                        if ($itemCode) {
+                            $product = Product::where('code', $itemCode)->first();
+                            if ($product) {
+                                WarehouseStock::updateOrCreate(
+                                    [
+                                        'warehouse_id' => $warehouse->id,
+                                        'product_id' => $product->id
+                                    ],
+                                    [
+                                        'stock' => $qty
+                                    ]
+                                );
+                            }
+                        }
+                    }
+                    Log::info("Auto Refresh Success for Hub {$warehouse->kode_hub}. Processed " . count($items) . " items.");
+                }
+            }
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Auto Refresh Stock Failed for Hub {$warehouse->kode_hub}: " . $e->getMessage());
+            return false;
+        }
     }
 }

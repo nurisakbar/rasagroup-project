@@ -20,7 +20,7 @@
     }
     
     .auth-header {
-        background: var(--gradient-primary);
+        background: #6A1B1B;
         padding: 40px 30px;
         text-align: center;
         color: white;
@@ -36,11 +36,13 @@
         font-size: 1.8rem;
         font-weight: 700;
         margin-bottom: 10px;
+        color: #ffffff !important;
     }
     
     .auth-header p {
         opacity: 0.9;
         margin-bottom: 0;
+        color: #ffffff !important;
     }
     
     .auth-body {
@@ -48,26 +50,26 @@
     }
     
     .btn-submit {
-        background: var(--gradient-primary);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 14px 30px;
-        font-size: 1.1rem;
-        font-weight: 600;
+        background: #6A1B1B !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 30px !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
         transition: all 0.3s ease;
     }
     
     .btn-submit:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.4);
         color: white;
     }
     
     .btn-logout {
         background: transparent;
-        border: 2px solid #dc3545;
-        color: #dc3545;
+        border: 2px solid #6A1B1B;
+        color: #6A1B1B;
         border-radius: 12px;
         padding: 14px 30px;
         font-size: 1rem;
@@ -76,7 +78,7 @@
     }
     
     .btn-logout:hover {
-        background: #dc3545;
+        background: #6A1B1B;
         color: white;
     }
     
@@ -150,13 +152,6 @@
                         @csrf
                         <button type="submit" class="btn btn-submit">
                             <i class="bi bi-envelope-arrow-up me-2"></i> Kirim Ulang Email Verifikasi
-                        </button>
-                    </form>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-logout">
-                            <i class="bi bi-box-arrow-right me-2"></i> Logout
                         </button>
                     </form>
                 </div>

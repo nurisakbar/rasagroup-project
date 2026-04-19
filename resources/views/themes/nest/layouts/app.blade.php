@@ -490,12 +490,78 @@
             font-weight: 400 !important;
             font-size: 0.85rem !important;
         }
+
+        /* Anti-Green Global Overrides */
+        :root {
+            --brand-color: #6A1B1B !important;
+            --primary-color: #6A1B1B !important;
+            --brand-color-hover: #801D1D !important;
+        }
+
+        .text-brand {
+            color: #6A1B1B !important;
+        }
+
+        .btn, .button {
+            background-color: #6A1B1B !important;
+            border-color: #6A1B1B !important;
+        }
+
+        .btn:hover, .button:hover {
+            background-color: #801D1D !important;
+            border-color: #801D1D !important;
+        }
+
+        .product-cart-wrap .product-action-1 a.action-btn:hover {
+            background-color: #6A1B1B !important;
+            color: #fff !important;
+        }
+
+        .product-cart-wrap .product-price span {
+            color: #6A1B1B !important;
+        }
+
+        .add-cart .add, .add-to-cart-form .add {
+            background-color: #6A1B1B !important;
+            color: #fff !important;
+        }
+
+        .add-cart .add:hover, .add-to-cart-form .add:hover {
+            background-color: #801D1D !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #6A1B1B !important;
+            border-color: #6A1B1B !important;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #6A1B1B !important;
+        }
     </style>
 </head>
 
 <body>
     @include('themes.nest.partials.header')
     @include('themes.nest.partials.mobile-header')
+
+    @auth
+        @if(!auth()->user()->hasVerifiedEmail())
+            <div class="container-fluid p-0">
+                <div class="alert alert-warning alert-dismissible fade show border-0 rounded-0 mb-0 py-3 text-center" role="alert" style="background-color: #fff3cd; color: #856404; position: relative; z-index: 1000;">
+                    <div class="container">
+                        <i class="fi-rs-info me-2"></i>
+                        Email Anda (<strong>{{ auth()->user()->email }}</strong>) belum diverifikasi. Silakan cek inbox Anda.
+                        <form class="d-inline ms-2" method="POST" action="{{ route('verification.send') }}">
+                            @csrf
+                            <button type="submit" class="btn-link p-0 border-0 bg-transparent text-decoration-underline font-weight-bold" style="color: #6A1B1B; cursor: pointer;">Kirim ulang email verifikasi</button>
+                        </form>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endauth
 
     <main class="main">
         @if(session('success') && !request()->routeIs('cart.index'))
@@ -574,6 +640,62 @@
                     });
                 }
             @endif
+            
+            // Handle Add to Cart Form
+            $(document).on('submit', '.add-to-cart-form', function(e) {
+                e.preventDefault();
+                
+                const form = $(this);
+                const url = form.attr('action');
+                const submitBtn = form.find('button[type="submit"]');
+                const originalBtnHtml = submitBtn.html();
+                
+                // Disable button and show loading
+                submitBtn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: form.serialize(),
+                    dataType: 'json',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message (using simple alert for now, or Toast)
+                            alert(response.message);
+                            
+                            // Update cart counts in header
+                            $('.pro-count').text(response.cart_count);
+                            
+                            // Optionally reload mini-cart content (could be more complex)
+                        } else {
+                            alert(response.error || 'Terjadi kesalahan saat menambahkan produk.');
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+                            let message = '';
+                            for (const key in errors) {
+                                message += errors[key][0] + '\n';
+                            }
+                            alert(message);
+                        } else if (xhr.status === 302) {
+                            // Handle case where back() redirect happens (non-ajax fallback)
+                            // This shouldn't normally happen with X-Requested-With
+                            window.location.reload();
+                        } else {
+                            alert('Terjadi kesalahan. Silakan coba lagi.');
+                        }
+                    },
+                    complete: function() {
+                        // Reset button
+                        submitBtn.attr('disabled', false).html(originalBtnHtml);
+                    }
+                });
+            });
         });
     </script>
     

@@ -12,10 +12,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            IndonesiaRegionsSeeder::class, // For SQLite fallback / MySQL status check
+            IndonesiaRegionsSeeder::class,
             SuperAdminSeeder::class,
             UserSeeder::class,
-            BrandCategorySeeder::class, // Must be before ProductSeeder
+        ]);
+
+        if (app()->isProduction()) {
+            return;
+        }
+
+        $this->call([
+            BrandCategorySeeder::class,
             WarehouseSeeder::class,
             ProductSeeder::class,
         ]);

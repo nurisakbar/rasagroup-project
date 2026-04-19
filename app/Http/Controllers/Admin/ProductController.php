@@ -7,10 +7,12 @@ use App\Imports\ProductsImport;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -296,7 +298,18 @@ class ProductController extends Controller
 
         $validated['created_by'] = Auth::id();
 
-        Product::create($validated);
+        $product = Product::create($validated);
+
+        // Handle multiple images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                $product->images()->create([
+                    'image_path' => $path,
+                    'sort_order' => 0,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil ditambahkan.');
@@ -347,7 +360,37 @@ class ProductController extends Controller
 
         $product->update($validated);
 
+        // Handle multiple images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                $product->images()->create([
+                    'image_path' => $path,
+                    'sort_order' => 0,
+                ]);
+            }
+        }
+
         return back()->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    /**
+     * Delete product image.
+     */
+    public function deleteImage(Product $product, ProductImage $image)
+    {
+        // Ensure image belongs to product
+        if ($image->product_id !== $product->id) {
+            return response()->json(['success' => false, 'message' => 'Image does not belong to this product.'], 403);
+        }
+
+        // Delete from storage
+        Storage::disk('public')->delete($image->image_path);
+        
+        // Delete from DB
+        $image->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function destroy(Product $product)
@@ -360,5 +403,93 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil dihapus.');
+    }
+
+    /**
+     * Sync products with QID API.
+     */
+    public function syncQid()
+    {
+        try {
+            Log::info('Starting QID Product Synchronization...');
+            
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'text/plain',
+                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
+            ])->post('https://development-qadwebapi.rasagroupoffice.com/api/master/item/list', [
+                'prodLine' => 'FG',
+                'status' => 'active'
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                Log::info('QID Product API Response received', ['count' => count($data)]);
+                
+                // Debug log raw data sample
+                Log::debug('QID Product Data Sample', ['data' => array_slice($data, 0, 3)]);
+                
+                $items = isset($data['data']) ? $data['data'] : $data;
+                $synchronizedCount = 0;
+                
+                foreach ($items as $index => $item) {
+                    $itemCode = $item['itemCode'] ?? $item['item_code'] ?? null;
+                    $itemName = $item['description'] ?? $item['item_name'] ?? null;
+                    
+                    if ($itemCode && $itemName) {
+                        // Handle Brand
+                        $brandId = null;
+                        if (!empty($item['brand'])) {
+                            $brand = Brand::firstOrCreate(
+                                ['name' => $item['brand']],
+                                ['status' => 'active']
+                            );
+                            $brandId = $brand->id;
+                        }
+
+                        // Handle Category
+                        $categoryId = null;
+                        if (!empty($item['category'])) {
+                            $category = Category::firstOrCreate(
+                                ['name' => $item['category']],
+                                ['status' => 'active']
+                            );
+                            $categoryId = $category->id;
+                        }
+
+                        // Mapping data
+                        $productData = [
+                            'name' => $itemName,
+                            'brand_id' => $brandId,
+                            'category_id' => $categoryId,
+                            'unit' => $item['uom'] ?? null,
+                            'size' => $item['sizing'] ?? null,
+                            'price' => $item['defaultPrice'] ?? 0,
+                            'status' => isset($item['status']) ? strtolower($item['status']) : 'active',
+                            'weight' => 1000, // Default weight since it's required but not in API
+                            'created_by' => Auth::id(),
+                        ];
+
+                        Product::updateOrCreate(
+                            ['code' => $itemCode],
+                            $productData
+                        );
+
+                        $synchronizedCount++;
+                    } else {
+                        Log::warning("Skipping product at index {$index} due to missing data", ['item' => $item]);
+                    }
+                }
+                
+                Log::info("QID Product Synchronization finished. Total synced: {$synchronizedCount}");
+                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} produk dari QID.");
+            }
+            
+            Log::error('QID Product API Failed', ['status' => $response->status(), 'body' => $response->body()]);
+            return back()->with('error', 'Gagal menghubungi server QID Product: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('QID Product Sync Exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Terjadi kesalahan saat sinkronisasi produk: ' . $e->getMessage());
+        }
     }
 }

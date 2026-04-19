@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\WhatsAppVerificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -60,4 +61,17 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // WhatsApp Verification
+    Route::get('verify-wa', [WhatsAppVerificationController::class, 'show'])
+        ->name('wa.verify');
+
+    Route::post('verify-wa', [WhatsAppVerificationController::class, 'verify'])
+        ->name('wa.verify.post');
+
+    Route::post('resend-wa', [WhatsAppVerificationController::class, 'resend'])
+        ->name('wa.resend');
+
+    Route::post('update-phone-wa', [WhatsAppVerificationController::class, 'updatePhone'])
+        ->name('wa.update-phone');
 });

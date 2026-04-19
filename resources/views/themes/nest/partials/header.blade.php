@@ -2,49 +2,6 @@
         <div class="mobile-promotion">
             <span>Pembukaan besar-besaran, diskon hingga <strong>15%</strong> untuk semua item. Tinggal <strong>3 hari</strong> lagi</span>
         </div>
-        <div class="header-top header-top-ptb-1 d-none d-lg-block">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-xl-3 col-lg-4">
-                        <div class="header-info">
-                            <ul>
-                                <li><a href="{{ route('about') }}">Tentang Kami</a></li>
-                                <li>
-                                    <a href="{{ route('hubs.index') }}">
-                                        <i class="fi-rs-marker mr-5"></i>
-                                        @if(session()->has('selected_hub_name'))
-                                            Hub: <span class="text-brand"><strong>{{ session('selected_hub_name') }}</strong></span>
-                                        @else
-                                            <span class="text-danger">Pilih Hub Terdekat</span>
-                                        @endif
-                                    </a>
-                                </li>
-                                <li><a href="{{ route('buyer.dashboard') }}">Akun Saya</a></li>
-                                <li><a href="{{ route('buyer.orders.index') }}">Lacak Pesanan</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-4">
-                        <div class="text-center">
-                            <div id="news-flash" class="d-inline-block">
-                                <ul>
-                                    <li>100% Secure delivery without contacting the courier</li>
-                                    <li>Supper Value Deals - Save more with coupons</li>
-                                    <li>Trendy 25silver jewelry, save up 35% off today</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4">
-                        <div class="header-info header-info-right">
-                            <ul>
-                                <li>Butuh bantuan? Hubungi kami: <strong class="text-brand" style="white-space: nowrap;"> +62 812-3456-7890</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="header-middle header-middle-ptb-1 d-none d-lg-block">
             <div class="container">
                 <div class="header-wrap">

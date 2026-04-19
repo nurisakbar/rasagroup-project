@@ -17,6 +17,7 @@ class Warehouse extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'kode_hub',
         'name',
         'slug',
         'address',

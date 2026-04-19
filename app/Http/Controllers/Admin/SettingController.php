@@ -11,10 +11,9 @@ class SettingController extends Controller
 {
     public function index()
     {
-        $driippreneurPointRate = Setting::get('driippreneur_point_rate', 1000);
         $expeditions = Expedition::all();
         
-        return view('admin.settings.index', compact('driippreneurPointRate', 'expeditions'));
+        return view('admin.settings.index', compact('expeditions'));
     }
 
     public function updateExpeditions(Request $request)
@@ -28,24 +27,5 @@ class SettingController extends Controller
         }
 
         return back()->with('success', 'Pengaturan ekspedisi berhasil diperbarui.');
-    }
-
-    public function updateDriippreneurPointRate(Request $request)
-    {
-        $request->validate([
-            'point_rate' => 'required|integer|min:0',
-        ], [
-            'point_rate.required' => 'Point rate wajib diisi.',
-            'point_rate.integer' => 'Point rate harus berupa angka.',
-            'point_rate.min' => 'Point rate minimal 0.',
-        ]);
-
-        Setting::set(
-            'driippreneur_point_rate',
-            $request->point_rate,
-            'Point yang diberikan per item untuk DRiiPPreneur saat belanja'
-        );
-
-        return back()->with('success', 'Point rate DRiiPPreneur berhasil diperbarui.');
     }
 }

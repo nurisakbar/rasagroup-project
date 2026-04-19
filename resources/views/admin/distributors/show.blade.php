@@ -96,6 +96,7 @@
                     <li class="active"><a href="#tab_info" data-toggle="tab"><i class="fa fa-info-circle"></i> Info Umum</a></li>
                     <li><a href="#tab_stock" data-toggle="tab"><i class="fa fa-cubes"></i> Monitoring Stock</a></li>
                     <li><a href="#tab_orders" data-toggle="tab"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
+                    <li><a href="#tab_staff" data-toggle="tab"><i class="fa fa-users"></i> Kelola Staff</a></li>
                     <li class="pull-right"><a href="#tab_danger" data-toggle="tab" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
                 <div class="tab-content">
@@ -110,6 +111,12 @@
                                         <th width="120">Nama Hub</th>
                                         <td><strong>{{ $distributor->warehouse->name }}</strong></td>
                                     </tr>
+                                    @if($distributor->warehouse->kode_hub)
+                                    <tr>
+                                        <th>Kode Hub</th>
+                                        <td><span class="badge bg-purple">{{ $distributor->warehouse->kode_hub }}</span></td>
+                                    </tr>
+                                    @endif
                                     <tr>
                                         <th>Lokasi</th>
                                         <td>{{ $distributor->warehouse->full_location }}</td>
@@ -307,6 +314,69 @@
                         </div>
                     </div>
 
+                    <!-- Tab: Kelola Staff -->
+                    <div class="tab-pane" id="tab_staff">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="button" class="btn btn-success btn-sm pull-right" style="margin-bottom: 15px;" data-toggle="modal" data-target="#addUserModal">
+                                    <i class="fa fa-user-plus"></i> Tambah Akun Pengelola
+                                </button>
+                                <h4 class="page-header"><i class="fa fa-users"></i> Daftar Pengelola & Staff</h4>
+                                
+                                @php
+                                    $staffList = \App\Models\User::where('warehouse_id', $distributor->warehouse_id)
+                                        ->where('role', \App\Models\User::ROLE_DISTRIBUTOR)
+                                        ->get();
+                                @endphp
+
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Email</th>
+                                            <th>Telepon</th>
+                                            <th>Level Akses</th>
+                                            <th>Tanggal Gabung</th>
+                                            <th width="50">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($staffList as $staff)
+                                        <tr>
+                                            <td><strong>{{ $staff->name }}</strong></td>
+                                            <td>{{ $staff->email }}</td>
+                                            <td>{{ $staff->phone ?? '-' }}</td>
+                                            <td>
+                                                @if($staff->sub_role === 'admin')
+                                                    <span class="label label-primary">Admin Distributor</span>
+                                                @else
+                                                    <span class="label label-default">Staff Distributor</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $staff->created_at->format('d M Y') }}</td>
+                                            <td>
+                                                @if($staff->id !== $distributor->id)
+                                                <form action="{{ route('admin.distributors.remove-user', [$distributor, $staff]) }}" method="POST" onsubmit="return confirm('Hapus akun ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">Belum ada staff tambahan.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tab: Danger Zone -->
                     <div class="tab-pane" id="tab_danger">
                         <div class="callout callout-danger">
@@ -325,6 +395,52 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('admin.distributors.add-user', $distributor) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fa fa-user-plus"></i> Tambah Staff Distributor</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sub_role">Level Akses <span class="text-danger">*</span></label>
+                            <select class="form-control" id="sub_role" name="sub_role" required>
+                                <option value="admin">Admin Distributor</option>
+                                <option value="staff">Staff Distributor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">No. Telepon</label>
+                            <input type="text" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fa fa-save"></i> Simpan Staff
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 @endsection

@@ -198,7 +198,7 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Produk "' . $product->display_name . '" berhasil ditambahkan.');
+        return back()->with('success', 'Produk "' . $product->display_name . '" berhasil ditambahkan.');
     }
 
     /**

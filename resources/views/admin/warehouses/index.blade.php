@@ -16,7 +16,13 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Daftar Hub</h3>
-                    <div class="box-tools">
+                    <div class="box-tools" style="display: flex; gap: 5px;">
+                        <form action="{{ route('admin.warehouses.sync-qid') }}" method="POST" id="sync-qid-form">
+                            @csrf
+                            <button type="button" class="btn btn-info btn-sm" onclick="confirmSyncQid()">
+                                <i class="fa fa-refresh"></i> Sinkronisasi QID
+                            </button>
+                        </form>
                         <a href="{{ route('admin.warehouses.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah Hub
                         </a>
@@ -166,7 +172,12 @@ $(function() {
         table.draw();
     });
 
-
 });
+
+function confirmSyncQid() {
+    if (confirm('Apakah Anda yakin ingin mensinkronisasi data Hub dari QID? Proses ini akan memperbarui nama dan kode hub.')) {
+        document.getElementById('sync-qid-form').submit();
+    }
+}
 </script>
 @endpush

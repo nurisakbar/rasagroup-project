@@ -54,7 +54,11 @@ class DistributorController extends Controller
                 })
                 ->addColumn('hub_info', function ($dist) {
                     if ($dist->warehouse) {
-                        return '<span class="label label-warning">' . $dist->warehouse->name . '</span>';
+                        $html = '<span class="label label-warning">' . $dist->warehouse->name . '</span>';
+                        if ($dist->warehouse->kode_hub) {
+                            $html .= '<br><small class="text-muted">' . $dist->warehouse->kode_hub . '</small>';
+                        }
+                        return $html;
                     }
                     return '<span class="text-muted">-</span>';
                 })
@@ -706,5 +710,52 @@ class DistributorController extends Controller
         }
         
         return $addedCount;
+    }
+
+    /**
+     * Add staff user to distributor.
+     */
+    public function addUser(Request $request, User $distributor)
+    {
+        if (!$distributor->isDistributor() || !$distributor->warehouse) {
+            return back()->with('error', 'Distributor atau warehouse tidak ditemukan.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'sub_role' => 'required|in:admin,staff',
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'] ?? null,
+            'role' => User::ROLE_DISTRIBUTOR,
+            'sub_role' => $validated['sub_role'],
+            'warehouse_id' => $distributor->warehouse_id,
+            'wa_verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'Staff distributor berhasil ditambahkan.');
+    }
+
+    /**
+     * Remove staff user from distributor.
+     */
+    public function removeUser(User $distributor, User $user)
+    {
+        if ($user->warehouse_id !== $distributor->warehouse_id) {
+            return back()->with('error', 'User tidak terdaftar di distributor ini.');
+        }
+
+        // Don't allow deleting the main distributor account if needed? 
+        // For now just delete.
+        $user->delete();
+
+        return back()->with('success', 'Staff distributor berhasil dihapus.');
     }
 }

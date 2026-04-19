@@ -29,11 +29,12 @@
                         <h3 class="box-title"><i class="fa fa-tag"></i> Identitas Produk</h3>
                     </div>
                     <div class="box-body">
+                        <!-- Group 1: General Info -->
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group @error('code') has-error @enderror">
-                                    <label for="code">Kode Produk (SKU)</label>
-                                    <input type="text" class="form-control" id="code" name="code" value="{{ old('code', $product->code) }}" placeholder="SKU">
+                                    <label for="code"><i class="fa fa-barcode"></i> Kode Produk (SKU)</label>
+                                    <input type="text" class="form-control" id="code" name="code" value="{{ old('code', $product->code) }}" placeholder="Contoh: FDA010-AP01">
                                     @error('code')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -41,7 +42,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group @error('brand_id') has-error @enderror">
-                                    <label for="brand_id">Brand</label>
+                                    <label for="brand_id"><i class="fa fa-bookmark"></i> Brand</label>
                                     <select class="form-control select2" id="brand_id" name="brand_id" style="width: 100%;">
                                         <option value="">-- Pilih Brand --</option>
                                         @foreach($brands as $brand)
@@ -57,7 +58,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group @error('category_id') has-error @enderror">
-                                    <label for="category_id">Kategori</label>
+                                    <label for="category_id"><i class="fa fa-folder-open"></i> Kategori</label>
                                     <select class="form-control select2" id="category_id" name="category_id" style="width: 100%;">
                                         <option value="">-- Pilih Kategori --</option>
                                         @foreach($categories as $category)
@@ -73,7 +74,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group @error('status') has-error @enderror">
-                                    <label for="status">Status <span class="text-danger">*</span></label>
+                                    <label for="status"><i class="fa fa-toggle-on"></i> Status <span class="text-danger">*</span></label>
                                     <select class="form-control" id="status" name="status" required>
                                         <option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif</option>
                                         <option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Non-Aktif</option>
@@ -86,19 +87,23 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-group @error('name') has-error @enderror">
-                                    <label for="name">Nama Produk <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $product->name) }}" placeholder="Contoh: MB Cons 1L-Coconut Milk" required>
+                                    <label for="name"><i class="fa fa-info-circle"></i> Nama Produk (QID) <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control input-lg" id="name" name="name" value="{{ old('name', $product->name) }}" placeholder="Contoh: MB Cons 1L-Coconut Milk" required style="font-weight: bold;">
                                     @error('name')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
                                 <div class="form-group @error('commercial_name') has-error @enderror">
-                                    <label for="commercial_name">Nama Komersial</label>
-                                    <input type="text" class="form-control" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name) }}" placeholder="Contoh: Coconut Milk (Tampil di website)">
+                                    <label for="commercial_name"><i class="fa fa-globe"></i> Nama Komersial (Tampil di Website)</label>
+                                    <input type="text" class="form-control" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name) }}" placeholder="Contoh: Coconut Milk">
+                                    <p class="help-block"><small>Jika dikosongkan, Nama Produk (QID) akan digunakan di website.</small></p>
                                     @error('commercial_name')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -106,85 +111,81 @@
                             </div>
                         </div>
 
+                        <hr>
+                        <!-- Group 2: Measurement & Pricing -->
                         <div class="row">
                             <div class="col-md-3">
-                                <div class="form-group @error('large_unit') has-error @enderror">
-                                    <label for="large_unit">Satuan Terbesar</label>
-                                    <input type="text" class="form-control" id="large_unit" name="large_unit" value="{{ old('large_unit', $product->large_unit ?: 'ctn') }}" placeholder="CTN">
-                                    @error('large_unit')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group @error('unit') has-error @enderror">
-                                    <label for="unit">Satuan Terkecil (UM)</label>
-                                    <select class="form-control" id="unit" name="unit">
-                                        <option value="">-- Pilih --</option>
-                                        <option value="BT" {{ old('unit', $product->unit) === 'BT' ? 'selected' : '' }}>Bottle (BT)</option>
-                                        <option value="PK" {{ old('unit', $product->unit) === 'PK' ? 'selected' : '' }}>Pack (PK)</option>
-                                        <option value="BOX" {{ old('unit', $product->unit) === 'BOX' ? 'selected' : '' }}>BOX</option>
-                                        <option value="PCS" {{ old('unit', $product->unit) === 'PCS' ? 'selected' : '' }}>Pieces (PCS)</option>
-                                        <option value="KG" {{ old('unit', $product->unit) === 'KG' ? 'selected' : '' }}>Kilogram (KG)</option>
-                                        <option value="L" {{ old('unit', $product->unit) === 'L' ? 'selected' : '' }}>Liter (L)</option>
-                                    </select>
-                                    @error('unit')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group @error('size') has-error @enderror">
-                                    <label for="size">Ukuran (Size)</label>
-                                    <input type="text" class="form-control" id="size" name="size" value="{{ old('size', $product->size) }}" placeholder="Contoh: 1 L">
-                                    @error('size')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group @error('weight') has-error @enderror">
-                                    <label for="weight">Berat (gram) <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="weight" name="weight" value="{{ old('weight', $product->weight) }}" step="1" min="1" required>
-                                        <span class="input-group-addon">g</span>
-                                    </div>
-                                    @error('weight')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
                                 <div class="form-group @error('price') has-error @enderror">
-                                    <label for="price">Harga Jual <span class="text-danger">*</span></label>
+                                    <label for="price"><i class="fa fa-money"></i> Harga Jual <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-addon">Rp</span>
-                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price', (int)$product->price) }}" step="1" min="0" placeholder="0" required>
+                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price', (int)$product->price) }}" step="1" min="0" placeholder="0" required style="font-size: 1.1em; font-weight: bold; color: #6A1B1B;">
                                     </div>
                                     @error('price')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group @error('reseller_point') has-error @enderror">
-                                    <label for="reseller_point">Poin Reseller</label>
+                                    <label for="reseller_point"><i class="fa fa-star"></i> Poin per Unit</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="reseller_point" name="reseller_point" value="{{ old('reseller_point', $product->reseller_point) }}" step="1" min="0" placeholder="0">
-                                        <span class="input-group-addon">Poin</span>
+                                        <span class="input-group-addon">PTS</span>
                                     </div>
                                     @error('reseller_point')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group @error('weight') has-error @enderror">
+                                    <label for="weight"><i class="fa fa-balance-scale"></i> Berat <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="weight" name="weight" value="{{ old('weight', $product->weight) }}" step="1" min="1" required>
+                                        <span class="input-group-addon">gram</span>
+                                    </div>
+                                    @error('weight')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group @error('unit') has-error @enderror">
+                                    <label for="unit"><i class="fa fa-cube"></i> Satuan (UoM)</label>
+                                    <input type="text" class="form-control" id="unit" name="unit" value="{{ old('unit', $product->unit) }}" placeholder="Contoh: BT">
+                                    @error('unit')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group @error('size') has-error @enderror">
+                                    <label for="size"><i class="fa fa-arrows-h"></i> Ukuran Sizing</label>
+                                    <input type="text" class="form-control" id="size" name="size" value="{{ old('size', $product->size) }}" placeholder="Contoh: 760ml">
+                                    @error('size')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group @error('large_unit') has-error @enderror">
+                                    <label for="large_unit"><i class="fa fa-th-large"></i> Satuan Besar</label>
+                                    <input type="text" class="form-control" id="large_unit" name="large_unit" value="{{ old('large_unit', $product->large_unit ?: 'CTN') }}" placeholder="Contoh: CTN">
+                                    @error('large_unit')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <!-- Group 3: Description -->
                         <div class="form-group @error('technical_description') has-error @enderror">
-                            <label for="technical_description">Deskripsi Pendek</label>
+                            <label for="technical_description"><i class="fa fa-list-alt"></i> Deskripsi Pendek / Teknis</label>
                             <textarea class="form-control" id="technical_description" name="technical_description" rows="2" placeholder="Penjelasan singkat teknis">{{ old('technical_description', $product->technical_description) }}</textarea>
                             @error('technical_description')
                                 <span class="help-block">{{ $message }}</span>
@@ -192,7 +193,7 @@
                         </div>
 
                         <div class="form-group @error('description') has-error @enderror">
-                            <label for="description">Deskripsi Lengkap</label>
+                            <label for="description"><i class="fa fa-align-left"></i> Deskripsi Produk (Website)</label>
                             <textarea class="form-control summernote" id="description" name="description" rows="4" placeholder="Tuliskan deskripsi lengkap mengenai produk ini...">{{ old('description', $product->description) }}</textarea>
                             @error('description')
                                 <span class="help-block">{{ $message }}</span>
@@ -203,7 +204,7 @@
                         <a href="{{ route('admin.products.index') }}" class="btn btn-default pull-left">
                             <i class="fa fa-arrow-left"></i> Batal
                         </a>
-                        <button type="submit" class="btn btn-primary btn-lg">
+                        <button type="submit" class="btn btn-primary btn-lg btn-maroon">
                             <i class="fa fa-save"></i> Simpan Perubahan
                         </button>
                     </div>
@@ -211,10 +212,10 @@
             </div>
 
             <div class="col-md-3">
-                <!-- Media -->
+                <!-- Media: Primary Image -->
                 <div class="box box-warning">
                     <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-image"></i> Gambar Produk</h3>
+                        <h3 class="box-title"><i class="fa fa-image"></i> Gambar Utama</h3>
                     </div>
                     <div class="box-body text-center">
                         <div class="form-group @error('image') has-error @enderror">
@@ -227,12 +228,42 @@
                             </div>
                             <input type="file" id="image" name="image" accept="image/*" class="form-control" style="display: none;">
                             <button type="button" class="btn btn-warning btn-block" onclick="document.getElementById('image').click();">
-                                <i class="fa fa-folder-open"></i> Ganti Gambar
+                                <i class="fa fa-folder-open"></i> Ganti Gambar Utama
                             </button>
                             <p class="help-block">Maksimal 2MB (JPG, PNG)</p>
                             @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media: Gallery -->
+                <div class="box box-success">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><i class="fa fa-images"></i> Galeri Produk</h3>
+                    </div>
+                    <div class="box-body">
+                        <div id="gallery-container" class="row">
+                            @foreach($product->images as $img)
+                                <div class="col-xs-6 col-md-6" id="image-row-{{ $img->id }}" style="margin-bottom: 15px;">
+                                    <div class="thumbnail" style="position: relative; margin-bottom: 5px;">
+                                        <img src="{{ $img->image_url }}" style="height: 100px; width: 100%; object-fit: cover;">
+                                        <button type="button" class="btn btn-danger btn-xs delete-gallery-img" 
+                                                data-id="{{ $img->id }}" 
+                                                data-url="{{ route('admin.products.images.destroy', [$product->id, $img->id]) }}"
+                                                style="position: absolute; top: 5px; right: 5px;">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tambah Gambar Galeri</label>
+                            <input type="file" name="images[]" multiple class="form-control" accept="image/*">
+                            <p class="help-block">Bisa pilih lebih dari satu gambar.</p>
                         </div>
                     </div>
                 </div>
@@ -303,10 +334,37 @@ $(document).ready(function() {
         }
     });
 
-    // Unit Conversion Label Helper
-    $('#small_unit').on('input', function() {
-        var val = $(this).val() || 'satuan';
-        $('#small_unit_label').text(val);
+    // Gallery Image Deletion
+    $('.delete-gallery-img').click(function() {
+        const btn = $(this);
+        const id = btn.data('id');
+        const url = btn.data('url');
+
+        if (confirm('Apakah Anda yakin ingin menghapus gambar ini?')) {
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#image-row-' + id).fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        alert('Gagal menghapus gambar: ' + (response.message || 'Error tidak diketahui'));
+                        btn.prop('disabled', false).html('<i class="fa fa-times"></i>');
+                    }
+                },
+                error: function(xhr) {
+                    alert('Terjadi kesalahan saat menghapus gambar.');
+                    btn.prop('disabled', false).html('<i class="fa fa-times"></i>');
+                }
+            });
+        }
     });
 });
 </script>

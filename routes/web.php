@@ -36,7 +36,7 @@ Route::get('/dashboard', function () {
     }
     
     return redirect()->route('buyer.dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'wa.verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Checkout Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'wa.verified'])->group(function () {
     Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [App\Http\Controllers\CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/calculate-shipping', [App\Http\Controllers\CheckoutController::class, 'calculateShipping'])->name('checkout.calculate-shipping');
@@ -83,7 +83,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Buyer Routes
-Route::prefix('buyer')->name('buyer.')->middleware('auth')->group(function () {
+Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
@@ -153,6 +153,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Products CRUD (Master Data)
         Route::post('/products/import', [App\Http\Controllers\Admin\ProductController::class, 'import'])->name('products.import');
         Route::get('/products/template', [App\Http\Controllers\Admin\ProductController::class, 'downloadTemplate'])->name('products.template');
+        Route::post('/products/sync-qid', [App\Http\Controllers\Admin\ProductController::class, 'syncQid'])->name('products.sync-qid');
+        Route::delete('/products/{product}/images/{image}', [App\Http\Controllers\Admin\ProductController::class, 'deleteImage'])->name('products.images.destroy');
         Route::resource('products', App\Http\Controllers\Admin\ProductController::class);
 
         // Sliders Management
@@ -177,6 +179,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
+        Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
+        Route::post('/warehouses/{warehouse}/sync-stock-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockQid'])->name('warehouses.sync-stock-qid');
         Route::put('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateStock'])->name('warehouses.update-stock');
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');
         Route::post('/warehouses/{warehouse}/users', [App\Http\Controllers\Admin\WarehouseController::class, 'addUser'])->name('warehouses.add-user');
@@ -229,6 +233,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/distributors/{distributor}/edit', [App\Http\Controllers\Admin\DistributorController::class, 'edit'])->name('distributors.edit');
         Route::put('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'update'])->name('distributors.update');
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
+        Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
+        Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');
         Route::delete('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'destroy'])->name('distributors.destroy');
     });
 });

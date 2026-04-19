@@ -44,7 +44,7 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
-                        <button type="submit" class="add">
+                        <button type="submit" class="add" style="background-color: #6A1B1B !important; border: none; color: #ffffff !important;">
                             Add <i class="fi-rs-plus ml-5"></i>
                         </button>
                     </form>

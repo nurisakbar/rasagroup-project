@@ -37,14 +37,14 @@ class BrandCategorySeeder extends Seeder
 
         // Seed Categories
         $categories = [
-            ['name' => 'Coconut', 'icon' => 'fa-leaf', 'description' => 'Coconut based products'],
-            ['name' => 'Aloe Vera', 'icon' => 'fa-envira', 'description' => 'Aloe vera products'],
-            ['name' => 'Juice', 'icon' => 'fa-glass', 'description' => 'Fresh juices'],
-            ['name' => 'Tea', 'icon' => 'fa-coffee', 'description' => 'Tea based drinks'],
-            ['name' => 'Coffee', 'icon' => 'fa-coffee', 'description' => 'Coffee products'],
-            ['name' => 'Water', 'icon' => 'fa-tint', 'description' => 'Water and mineral drinks'],
-            ['name' => 'Energy Drink', 'icon' => 'fa-bolt', 'description' => 'Energy drinks'],
-            ['name' => 'Syrup', 'icon' => 'fa-flask', 'description' => 'Syrups and concentrates'],
+            ['name' => 'Coconut', 'description' => 'Coconut based products'],
+            ['name' => 'Aloe Vera', 'description' => 'Aloe vera products'],
+            ['name' => 'Juice', 'description' => 'Fresh juices'],
+            ['name' => 'Tea', 'description' => 'Tea based drinks'],
+            ['name' => 'Coffee', 'description' => 'Coffee products'],
+            ['name' => 'Water', 'description' => 'Water and mineral drinks'],
+            ['name' => 'Energy Drink', 'description' => 'Energy drinks'],
+            ['name' => 'Syrup', 'description' => 'Syrups and concentrates'],
         ];
 
         foreach ($categories as $categoryData) {
@@ -53,7 +53,6 @@ class BrandCategorySeeder extends Seeder
                 [
                     'slug' => Str::slug($categoryData['name']),
                     'description' => $categoryData['description'],
-                    'icon' => $categoryData['icon'],
                     'is_active' => true,
                 ]
             );

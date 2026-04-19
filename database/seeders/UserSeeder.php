@@ -13,6 +13,25 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create Super Admin (Always created)
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'admin@rasagroup.id'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('rasagroup2024'),
+                'phone' => '081234567890',
+                'role' => User::ROLE_SUPER_ADMIN,
+                'email_verified_at' => now(),
+                'wa_verified_at' => now(),
+            ]
+        );
+        $this->command->info('Super Admin created: admin@rasagroup.id');
+
+        // Skip other users if in production
+        if (app()->isProduction()) {
+            return;
+        }
+
         // Create Agent User
         $agent = User::firstOrCreate(
             ['email' => 'agent@example.com'],
@@ -22,6 +41,7 @@ class UserSeeder extends Seeder
                 'phone' => '081234567891',
                 'role' => User::ROLE_AGENT,
                 'email_verified_at' => now(),
+                'wa_verified_at' => now(),
             ]
         );
         $this->command->info('Agent User: agent@example.com / password (ID: ' . $agent->id . ')');
@@ -42,6 +62,7 @@ class UserSeeder extends Seeder
                     'phone' => $buyer['phone'],
                     'role' => User::ROLE_BUYER,
                     'email_verified_at' => now(),
+                    'wa_verified_at' => now(),
                 ]
             );
             $this->command->info('Buyer: ' . $buyer['email'] . ' / password (ID: ' . $user->id . ')');
@@ -56,11 +77,13 @@ class UserSeeder extends Seeder
                 'phone' => '081234567895',
                 'role' => User::ROLE_DRIIPPRENEUR,
                 'email_verified_at' => now(),
+                'wa_verified_at' => now(),
             ]
         );
         $this->command->info('DRiiPPreneur: driippreneur@example.com / password (ID: ' . $driippreneur->id . ')');
 
         $this->command->info('');
         $this->command->info('All test users use password: password');
+        $this->command->info('Super Admin password: rasagroup2024');
     }
 }

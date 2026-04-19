@@ -90,6 +90,12 @@
                         <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah
                         </a>
+                        <button type="button" class="btn btn-info btn-sm btn-maroon" onclick="confirmSyncQid()">
+                            <i class="fa fa-refresh"></i> Sinkronisasi QID
+                        </button>
+                        <form id="sync-qid-form" action="{{ route('admin.products.sync-qid') }}" method="POST" style="display: none;">
+                            @csrf
+                        </form>
                     </div>
                 </div>
             </div>
@@ -262,8 +268,8 @@ $(document).ready(function() {
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[2, 'asc']],
-        pageLength: 15,
-        lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         language: {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
             search: "Cari:",
@@ -287,5 +293,11 @@ $(document).ready(function() {
         table.draw();
     });
 });
+
+function confirmSyncQid() {
+    if (confirm('Apakah Anda yakin ingin menarik data produk dari QID? Proses ini mungkin memerlukan waktu beberapa saat.')) {
+        document.getElementById('sync-qid-form').submit();
+    }
+}
 </script>
 @endpush

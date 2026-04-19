@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable, HasUuids;
 
@@ -30,6 +31,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'role',
+        'sub_role',
         'warehouse_id',
         'no_ktp',
         'no_npwp',
@@ -57,6 +59,8 @@ class User extends Authenticatable
         'google_refresh_token',
         'term_of_payment',
         'monthly_target',
+        'wa_verified_at',
+        'wa_verification_code',
     ];
 
     protected static function boot()
@@ -129,6 +133,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'wa_verified_at' => 'datetime',
             'password' => 'hashed',
             'points' => 'integer',
             'driippreneur_applied_at' => 'datetime',
