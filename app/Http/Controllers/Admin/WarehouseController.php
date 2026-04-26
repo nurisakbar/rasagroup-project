@@ -531,6 +531,7 @@ class WarehouseController extends Controller
             Log::error("Auto Refresh Stock Failed for Hub {$warehouse->kode_hub}: " . $e->getMessage());
             return false;
         }
+    }
     /**
      * Debug EkspedisiKu API Connectivity
      */
