@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class AddressController extends Controller
 {
-    protected $rajaOngkir;
+    protected $ekspedisiku;
 
-    public function __construct(\App\Services\RajaOngkirService $rajaOngkir)
+    public function __construct(\App\Services\EkspedisiKuService $ekspedisiku)
     {
-        $this->rajaOngkir = $rajaOngkir;
+        $this->ekspedisiku = $ekspedisiku;
     }
 
     /**
@@ -39,7 +39,7 @@ class AddressController extends Controller
      */
     public function create()
     {
-        $result = $this->rajaOngkir->getProvinces();
+        $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
         return view('buyer.addresses.create', compact('provinces'));
     }
@@ -53,10 +53,10 @@ class AddressController extends Controller
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
-            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
-            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
-            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:villages,id'],
+            'province_id' => ['required'],
+            'regency_id' => ['required'],
+            'district_id' => ['required'],
+            'village_id' => ['nullable'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -118,29 +118,17 @@ class AddressController extends Controller
             abort(403);
         }
 
-        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinceRes = $this->ekspedisiku->getProvinces();
         $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
-        $regencyRes = $this->rajaOngkir->getCities($address->province_id);
+        $regencyRes = $this->ekspedisiku->getRegencies($address->province_id);
         $regencies = isset($regencyRes['data']) ? $regencyRes['data'] : [];
         
-        $districtRes = $this->rajaOngkir->getDistricts($address->regency_id);
+        $districtRes = $this->ekspedisiku->getDistricts($address->regency_id);
         $districts = isset($districtRes['data']) ? $districtRes['data'] : [];
 
-        // Fetch villages from local table by mapping district name
-        $villages = [];
-        if ($address->district_id) {
-            $roDistrict = \App\Models\RajaOngkirDistrict::find($address->district_id);
-            if ($roDistrict) {
-                $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
-                if (!$localDistrict) {
-                    $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
-                }
-                if ($localDistrict) {
-                    $villages = \App\Models\Village::where('district_id', $localDistrict->id)->orderBy('name')->get();
-                }
-            }
-        }
+        $villageRes = $this->ekspedisiku->getVillages($address->district_id);
+        $villages = isset($villageRes['data']) ? $villageRes['data'] : [];
 
         return view('buyer.addresses.edit', compact('address', 'provinces', 'regencies', 'districts', 'villages'));
     }
@@ -159,10 +147,10 @@ class AddressController extends Controller
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
-            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
-            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
-            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:villages,id'],
+            'province_id' => ['required'],
+            'regency_id' => ['required'],
+            'district_id' => ['required'],
+            'village_id' => ['nullable'],
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -244,7 +232,7 @@ class AddressController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $result = $this->rajaOngkir->getCities($request->province_id);
+        $result = $this->ekspedisiku->getRegencies($request->province_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
@@ -253,38 +241,14 @@ class AddressController extends Controller
      */
     public function getDistricts(Request $request)
     {
-        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        $result = $this->ekspedisiku->getDistricts($request->regency_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
     public function getVillages(Request $request)
     {
-        $districtId = $request->district_id;
-        if (!$districtId) {
-            return response()->json([]);
-        }
-
-        // 1. Get district name from RajaOngkirDistrict
-        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
-        if (!$roDistrict) {
-            return response()->json([]);
-        }
-
-        // 2. Find matching local district by name
-        // Use where like for flexibility, or exact name
-        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
-        
-        // If not found exactly, try case-insensitive or partial
-        if (!$localDistrict) {
-            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
-        }
-
-        if ($localDistrict) {
-             $villages = \App\Models\Village::where('district_id', $localDistrict->id)->orderBy('name')->get();
-             return response()->json($villages);
-        }
-
-        return response()->json([]);
+        $result = $this->ekspedisiku->getVillages($request->district_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 }
 

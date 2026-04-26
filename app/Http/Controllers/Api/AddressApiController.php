@@ -8,6 +8,7 @@ use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
 use App\Models\Village;
+use App\Services\EkspedisiKuService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,12 @@ use Illuminate\Support\Facades\Cache;
 
 class AddressApiController extends Controller
 {
+    protected $ekspedisiku;
+
+    public function __construct(EkspedisiKuService $ekspedisiku)
+    {
+        $this->ekspedisiku = $ekspedisiku;
+    }
     /**
      * Get user ID from request or auth
      */
@@ -286,14 +293,8 @@ class AddressApiController extends Controller
      */
     public function getProvinces(): JsonResponse
     {
-        return Cache::remember('api_provinces', 86400, function () {
-            $provinces = Province::orderBy('name')->get(['id', 'name']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $provinces,
-            ]);
-        });
+        $provinces = $this->ekspedisiku->getProvinces();
+        return response()->json($provinces);
     }
 
     /**
@@ -305,21 +306,11 @@ class AddressApiController extends Controller
     public function getRegencies(Request $request): JsonResponse
     {
         $request->validate([
-            'province_id' => 'required|exists:provinces,id',
+            'province_id' => 'required',
         ]);
 
-        $cacheKey = 'api_regencies_' . $request->province_id;
-        
-        return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $regencies = Regency::where('province_id', $request->province_id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $regencies,
-            ]);
-        });
+        $regencies = $this->ekspedisiku->getRegencies($request->province_id);
+        return response()->json($regencies);
     }
 
     /**
@@ -331,21 +322,11 @@ class AddressApiController extends Controller
     public function getDistricts(Request $request): JsonResponse
     {
         $request->validate([
-            'regency_id' => 'required|exists:regencies,id',
+            'regency_id' => 'required',
         ]);
 
-        $cacheKey = 'api_districts_' . $request->regency_id;
-        
-        return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $districts = District::where('regency_id', $request->regency_id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $districts,
-            ]);
-        });
+        $districts = $this->ekspedisiku->getDistricts($request->regency_id);
+        return response()->json($districts);
     }
 
     /**
@@ -357,21 +338,11 @@ class AddressApiController extends Controller
     public function getVillages(Request $request): JsonResponse
     {
         $request->validate([
-            'district_id' => 'required|exists:districts,id',
+            'district_id' => 'required',
         ]);
 
-        $cacheKey = 'api_villages_' . $request->district_id;
-        
-        return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $villages = /* Village:: removed */where('district_id', $request->district_id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $villages,
-            ]);
-        });
+        $villages = $this->ekspedisiku->getVillages($request->district_id);
+        return response()->json($villages);
     }
 }
 

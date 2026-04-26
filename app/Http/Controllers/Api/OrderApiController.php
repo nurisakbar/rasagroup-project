@@ -414,31 +414,8 @@ class OrderApiController extends Controller
                 }
             }
 
-            // Send WhatsApp payment notification ONLY after Xendit link is ready (for xendit) or immediately (for manual transfer)
-            if ($validated['payment_method'] === 'xendit') {
-                // Always try to send payment notification with Xendit link
-                // If URL is not available, it will be handled in the helper
-                try {
-                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the checkout process
-                    \Log::error('Failed to send WhatsApp payment notification', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            } else {
-                // For manual transfer, send notification immediately
-                try {
-                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the checkout process
-                    \Log::error('Failed to send WhatsApp payment notification', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
+            // Dispatch background job to send payment notification
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 

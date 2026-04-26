@@ -120,16 +120,27 @@
                             <td>
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
-                                    @if($order->expedition)
-                                        <button type="button" class="btn btn-xs btn-info" id="btn-track-order" style="margin-left: 10px;">
-                                            <i class="fa fa-search"></i> Lacak Pengiriman
-                                        </button>
+                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                        <form action="{{ route('admin.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-warning" onclick="return confirm('Kirim request pickup ke Lion Parcel?')">
+                                                <i class="fa fa-truck"></i> Request Pickup
+                                            </button>
+                                        </form>
                                     @endif
                                     @if($order->shipped_at)
                                         <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
                                     @endif
                                 @else
                                     <span class="text-muted">Belum diisi</span>
+                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                        <form action="{{ route('admin.orders.ekspedisiku-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
+                                                <i class="fa fa-plus"></i> Buat Booking (EkspedisiKu)
+                                            </button>
+                                        </form>
+                                    @endif
                                 @endif
                             </td>
                         </tr>

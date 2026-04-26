@@ -188,6 +188,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/get-regencies', [App\Http\Controllers\Admin\WarehouseController::class, 'getRegencies'])->name('get-regencies');
         Route::get('/get-districts', [App\Http\Controllers\Admin\WarehouseController::class, 'getDistricts'])->name('get-districts');
         Route::get('/get-villages', [App\Http\Controllers\Admin\WarehouseController::class, 'getVillages'])->name('get-villages');
+        Route::get('/debug-ekspedisiku', [App\Http\Controllers\Admin\WarehouseController::class, 'debugEkspedisiku'])->name('debug-ekspedisiku');
 
         // Users Management
         Route::resource('users', App\Http\Controllers\Admin\UserController::class);
@@ -200,6 +201,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/orders/{order}/tracking', [App\Http\Controllers\Admin\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
         Route::put('/orders/{order}/payment', [App\Http\Controllers\Admin\OrderController::class, 'updatePayment'])->name('orders.update-payment');
         Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
+        Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Admin\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
+        Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Admin\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');

@@ -44,7 +44,10 @@ class WACloudService
             $response = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post("{$this->baseUrl}/messages", [
+            ])
+            ->timeout(10)
+            ->connectTimeout(5)
+            ->post("{$this->baseUrl}/messages", [
                 'device_id' => $this->deviceId,
                 'to' => $to,
                 'message_type' => 'text',

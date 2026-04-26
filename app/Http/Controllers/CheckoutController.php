@@ -19,10 +19,12 @@ use Illuminate\Support\Facades\Log;
 class CheckoutController extends Controller
 {
     protected $rajaOngkir;
+    protected $ekspedisiku;
 
-    public function __construct(\App\Services\RajaOngkirService $rajaOngkir)
+    public function __construct(\App\Services\RajaOngkirService $rajaOngkir, \App\Services\EkspedisiKuService $ekspedisiku)
     {
         $this->rajaOngkir = $rajaOngkir;
+        $this->ekspedisiku = $ekspedisiku;
     }
 
     public function index()
@@ -72,7 +74,18 @@ class CheckoutController extends Controller
             return ($cart->product->weight ?? 500) * $cart->quantity;
         });
 
-        $expeditions = Expedition::where('is_active', true)->get();
+        // Only show expeditions that are active AND available in the EkspedisiKu API
+        $courierRes = $this->ekspedisiku->getCouriers();
+        $apiCourierCodes = [];
+        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
+            foreach ($courierRes['data'] as $courier) {
+                $apiCourierCodes[] = $courier['id'];
+            }
+        }
+
+        $expeditions = Expedition::where('is_active', true)
+            ->whereIn('code', $apiCourierCodes)
+            ->get();
         $defaultExpedition = $expeditions->first();
 
         $addresses = Auth::user()->addresses()
@@ -112,6 +125,7 @@ class CheckoutController extends Controller
     $defaultService = null;
 
     // Debug logging
+    /*
     \Log::info('=== CHECKOUT DEBUG ===');
     \Log::info('Source Warehouse:', [
         'id' => $sourceWarehouse->id,
@@ -135,25 +149,35 @@ class CheckoutController extends Controller
     
     \Log::info('Total Weight:', ['weight' => $totalWeight]);
     \Log::info('Expeditions:', ['count' => $expeditions->count(), 'codes' => $expeditions->pluck('code')->toArray()]);
+    */
 
     if ($defaultAddress && $sourceWarehouse && $sourceWarehouse->district_id && $expeditions->count() > 0) {
         $courierCodes = $expeditions->pluck('code')->implode(':');
         
-        \Log::info('Calling RajaOngkir API:', [
+        \Log::info('Calling Shipping Service API:', [
             'origin' => $sourceWarehouse->district_id,
             'destination' => $defaultAddress->district_id,
             'weight' => $totalWeight,
-            'courier' => $courierCodes,
+            'courier' => $defaultExpedition->code,
         ]);
         
-        $costResult = $this->rajaOngkir->calculateCost(
-            $sourceWarehouse->district_id,
-            $defaultAddress->district_id,
-            $totalWeight,
-            $courierCodes
-        );
+        if ($defaultExpedition->code === 'lion_parcel') {
+            $costResult = $this->ekspedisiku->calculateCost(
+                $sourceWarehouse->district_id,
+                $defaultAddress->district_id,
+                $totalWeight / 1000 // EkspedisiKu expects kg
+            );
+        } else {
+            $costResult = $this->rajaOngkir->calculateCost(
+                $sourceWarehouse->district_id,
+                $defaultAddress->district_id,
+                $totalWeight,
+                $defaultExpedition->code
+            );
+        }
 
-        \Log::info('RajaOngkir Response:', [
+        \Log::info('Shipping Response:', [
+            'courier' => $defaultExpedition->code,
             'has_data' => isset($costResult['data']),
             'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
             'full_response' => $costResult,
@@ -211,7 +235,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    \Log::info('=== END CHECKOUT DEBUG ===');
+    // \Log::info('=== END CHECKOUT DEBUG ===');
     
     // Calculate discount
     $totalQuantity = $carts->sum('quantity');
@@ -253,13 +277,14 @@ class CheckoutController extends Controller
 
     public function calculateShipping(Request $request)
     {
-        $address = Address::find($request->address_id);
+        $address = Address::with(['district', 'regency', 'province'])->find($request->address_id);
         
         if (!$address || $address->user_id !== Auth::id()) {
             return response()->json(['error' => 'Alamat tidak valid'], 400);
         }
 
-        $carts = Cart::with(['product', 'warehouse'])
+        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -282,31 +307,49 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
 
-        $expedition = Expedition::find($request->expedition_id);
-        if (!$expedition) {
-            return response()->json(['error' => 'Ekspedisi tidak ditemukan'], 400);
+        $courierRes = $this->ekspedisiku->getCouriers();
+        $apiCourierCodes = [];
+        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
+            foreach ($courierRes['data'] as $courier) {
+                $apiCourierCodes[] = $courier['id'];
+            }
         }
 
-        $costResult = $this->rajaOngkir->calculateCost(
-            $sourceWarehouse->district_id,
-            $address->district_id,
-            $totalWeight,
-            $expedition->code
-        );
+        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
+        if (!$expedition) {
+            return response()->json(['error' => 'Ekspedisi tidak ditemukan atau tidak tersedia'], 400);
+        }
+
+        if ($expedition->code === 'lion_parcel') {
+            $costResult = $this->ekspedisiku->calculateCost(
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                $totalWeight / 1000
+            );
+        } else {
+            $costResult = $this->rajaOngkir->calculateCost(
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                $totalWeight,
+                $expedition->code
+            );
+        }
 
         $shippingCost = 0;
         $serviceName = $request->service_code;
         $estimatedDelivery = '-';
 
-        \Log::info('=== CALCULATE SHIPPING DEBUG ===');
+        // \Log::info('=== CALCULATE SHIPPING DEBUG ===');
         \Log::info('Request params:', [
             'expedition_id' => $request->expedition_id,
             'expedition_code' => $expedition->code,
             'service_code' => $request->service_code,
         ]);
-        \Log::info('RajaOngkir response:', [
+        \Log::info('Shipping response:', [
+            'expedition' => $expedition->code,
             'has_data' => isset($costResult['data']),
             'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
+            'data' => $costResult['data'] ?? [],
         ]);
 
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -333,21 +376,10 @@ class CheckoutController extends Controller
             }
         }
 
-        // Fallback for simulation if no results or match from RajaOngkir
-        if ($shippingCost <= 0) {
-            if ($request->service_code === 'REG') {
-                $shippingCost = 15000;
-                $serviceName = 'Layanan Reguler';
-                $estimatedDelivery = '2-3 hari';
-            } elseif ($request->service_code === 'OKE') {
-                $shippingCost = 12000;
-                $serviceName = 'Layanan Hemat';
-                $estimatedDelivery = '4-5 hari';
-            }
-        }
+        // No fallback for shipping cost anymore, we want real API data
         
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
-        \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
+        // \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
 
         // Calculate discount
         $totalQuantity = $carts->sum('quantity');
@@ -392,18 +424,26 @@ class CheckoutController extends Controller
 
     public function getExpeditionServices(Request $request)
     {
-        $expedition = Expedition::find($request->expedition_id);
-        
-        if (!$expedition) {
-            return response()->json(['error' => 'Ekspedisi tidak valid'], 400);
+        $courierRes = $this->ekspedisiku->getCouriers();
+        $apiCourierCodes = [];
+        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
+            foreach ($courierRes['data'] as $courier) {
+                $apiCourierCodes[] = $courier['id'];
+            }
         }
 
-        $address = Address::find($request->address_id);
+        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
+        
+        if (!$expedition) {
+            return response()->json(['error' => 'Ekspedisi tidak valid atau tidak tersedia'], 400);
+        }
+
+        $address = Address::with(['district', 'regency', 'province'])->find($request->address_id);
         if (!$address) {
             return response()->json(['error' => 'Alamat tidak ditemukan'], 400);
         }
 
-        $carts = Cart::with(['product', 'warehouse'])
+        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -420,12 +460,20 @@ class CheckoutController extends Controller
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
-        $costResult = $this->rajaOngkir->calculateCost(
-            $sourceWarehouse->district_id,
-            $address->district_id,
-            $totalWeight,
-            $expedition->code
-        );
+        if ($expedition->code === 'lion_parcel') {
+             $costResult = $this->ekspedisiku->calculateCost(
+                 $sourceWarehouse->district_id,
+                 $address->district_id,
+                 $totalWeight / 1000
+             );
+        } else {
+            $costResult = $this->rajaOngkir->calculateCost(
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                $totalWeight,
+                $expedition->code
+            );
+        }
 
         $services = [];
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -443,23 +491,7 @@ class CheckoutController extends Controller
             }
         }
 
-        // Add dummy services if no results from RajaOngkir for simulation
-        if (empty($services)) {
-            $services[] = [
-                'code' => 'REG',
-                'name' => 'Layanan Reguler',
-                'cost' => 15000,
-                'cost_formatted' => 'Rp 15.000',
-                'estimated_days' => '2-3 hari',
-            ];
-            $services[] = [
-                'code' => 'OKE',
-                'name' => 'Layanan Hemat',
-                'cost' => 12000,
-                'cost_formatted' => 'Rp 12.000',
-                'estimated_days' => '4-5 hari',
-            ];
-        }
+        // Removed dummy services fallback to ensure API data is the only source
 
         return response()->json([
             'expedition' => [
@@ -506,12 +538,20 @@ class CheckoutController extends Controller
         // Final sync of hub before order
         $this->syncWarehouseByAddress($address);
 
-        $expedition = Expedition::find($request->expedition_id);
-        if (!$expedition) {
-            return back()->with('error', 'Ekspedisi tidak valid.');
+        $courierRes = $this->ekspedisiku->getCouriers();
+        $apiCourierCodes = [];
+        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
+            foreach ($courierRes['data'] as $courier) {
+                $apiCourierCodes[] = $courier['id'];
+            }
         }
 
-        $carts = Cart::with(['product', 'warehouse'])
+        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
+        if (!$expedition) {
+            return back()->with('error', 'Ekspedisi tidak valid atau sudah tidak tersedia.');
+        }
+
+        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -573,12 +613,21 @@ class CheckoutController extends Controller
                 'courier_code' => $expedition->code,
                 'service_requested' => $request->expedition_service
             ]);
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight,
-                $expedition->code
-            );
+            if ($expedition->code === 'lion_parcel') {
+                $costResult = $this->ekspedisiku->calculateCost(
+                    $sourceWarehouse->district_id,
+                    $address->district_id,
+                    $totalWeight / 1000
+                );
+            } else {
+                $costResult = $this->rajaOngkir->calculateCost(
+                    $sourceWarehouse->district_id,
+                    $address->district_id,
+                    $totalWeight,
+                    $expedition->code
+                );
+            }
+
 
             if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
                 // RajaOngkir returns flat array, find matching service
@@ -825,31 +874,8 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Send WhatsApp payment notification ONLY after Xendit link is ready (for xendit) or immediately (for manual transfer)
-            if ($request->payment_method === 'xendit') {
-                // Always try to send payment notification with Xendit link
-                // If URL is not available, it will be handled in the helper
-                try {
-                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the checkout process
-                    \Log::error('Failed to send WhatsApp payment notification', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            } else {
-                // For manual transfer, send notification immediately
-                try {
-                    \App\Helpers\WACloudHelper::sendPaymentNotification($order);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the checkout process
-                    \Log::error('Failed to send WhatsApp payment notification', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
+                // Dispatch background job to send payment notification
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
@@ -950,19 +976,7 @@ class CheckoutController extends Controller
         
         // Send thank you notification if payment is paid
         if ($order->payment_status === 'paid') {
-            try {
-                Log::info('Payment is paid, sending thank you notification', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                ]);
-                \App\Helpers\WACloudHelper::sendThankYouNotification($order);
-            } catch (\Exception $e) {
-                // Log error but don't fail the page load
-                Log::error('Failed to send WhatsApp thank you notification on success page', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
         } else {
             Log::info('Payment not yet paid, skipping thank you notification', [
                 'order_id' => $order->id,

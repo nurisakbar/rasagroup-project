@@ -52,4 +52,9 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'ekspedisiku' => [
+        'token' => env('EKSPEDISIKU_TOKEN'),
+        'base_url' => env('EKSPEDISIKU_BASE_URL', 'http://localhost:8000/api'),
+    ],
+
 ];

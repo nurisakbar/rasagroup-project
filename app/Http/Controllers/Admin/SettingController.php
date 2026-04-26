@@ -9,9 +9,35 @@ use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
+    protected $ekspedisiku;
+
+    public function __construct(\App\Services\EkspedisiKuService $ekspedisiku)
+    {
+        $this->ekspedisiku = $ekspedisiku;
+    }
+
     public function index()
     {
-        $expeditions = Expedition::all();
+        // Fetch couriers from EkspedisiKu API
+        $courierRes = $this->ekspedisiku->getCouriers();
+        $apiCourierCodes = [];
+        
+        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
+            foreach ($courierRes['data'] as $courier) {
+                $apiCourierCodes[] = $courier['id'];
+                
+                \App\Models\Expedition::updateOrCreate(
+                    ['code' => $courier['id']], // Use id (e.g. lion_parcel) as code
+                    [
+                        'name' => $courier['name'],
+                        'logo' => $courier['image'] ?? null,
+                    ]
+                );
+            }
+        }
+
+        // Only show expeditions that are in the API response
+        $expeditions = Expedition::whereIn('code', $apiCourierCodes)->get();
         
         return view('admin.settings.index', compact('expeditions'));
     }

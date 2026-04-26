@@ -145,7 +145,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group @error('description') has-error @enderror">
+                        <div class="form-group @error('description') has-error @enderror" style="display: none;">
                             <label for="description">Deskripsi</label>
                             <textarea class="form-control" id="description" name="description" rows="2" placeholder="Deskripsi tambahan tentang hub">{{ old('description') }}</textarea>
                             @error('description')
@@ -267,14 +267,16 @@ $(document).ready(function() {
         
         if (provinceId) {
             $.ajax({
-                url: '{{ route("admin.get-regencies") }}',
+                url: '/api/addresses/regencies',
                 type: 'GET',
                 data: { province_id: provinceId },
-                success: function(data) {
+                success: function(res) {
                     regencySelect.html('<option value="">-- Pilih Kabupaten/Kota --</option>');
-                    $.each(data, function(index, regency) {
-                        regencySelect.append('<option value="' + regency.id + '">' + regency.name + '</option>');
-                    });
+                    if (res.success && res.data) {
+                        $.each(res.data, function(index, regency) {
+                            regencySelect.append('<option value="' + regency.id + '">' + regency.name + '</option>');
+                        });
+                    }
                     regencySelect.trigger('change');
                 },
                 error: function(xhr, status, error) {
@@ -298,14 +300,16 @@ $(document).ready(function() {
         
         if (regencyId) {
             $.ajax({
-                url: '{{ route("admin.get-districts") }}',
+                url: '/api/addresses/districts',
                 type: 'GET',
                 data: { regency_id: regencyId },
-                success: function(data) {
+                success: function(res) {
                     districtSelect.html('<option value="">-- Pilih Kecamatan --</option>');
-                    $.each(data, function(index, district) {
-                        districtSelect.append('<option value="' + district.id + '">' + district.name + '</option>');
-                    });
+                    if (res.success && res.data) {
+                        $.each(res.data, function(index, district) {
+                            districtSelect.append('<option value="' + district.id + '">' + district.name + '</option>');
+                        });
+                    }
                     districtSelect.trigger('change');
                 },
                 error: function(xhr, status, error) {
@@ -327,14 +331,16 @@ $(document).ready(function() {
         
         if (districtId) {
             $.ajax({
-                url: '{{ route("admin.get-villages") }}',
+                url: '/api/addresses/villages',
                 type: 'GET',
                 data: { district_id: districtId },
-                success: function(data) {
+                success: function(res) {
                     villageSelect.html('<option value="">-- Pilih Desa/Kelurahan --</option>');
-                    $.each(data, function(index, village) {
-                        villageSelect.append('<option value="' + village.id + '">' + village.name + '</option>');
-                    });
+                    if (res.success && res.data) {
+                        $.each(res.data, function(index, village) {
+                            villageSelect.append('<option value="' + village.id + '">' + village.name + '</option>');
+                        });
+                    }
                     villageSelect.trigger('change');
                 },
                 error: function(xhr, status, error) {

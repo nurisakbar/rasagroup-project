@@ -51,7 +51,10 @@ class QadWhatsAppService
                 'Content-Type'  => 'application/json',
                 'Accept'        => 'text/plain',
                 'Authorization' => 'Bearer ' . $token,
-            ])->post($url, [
+            ])
+            ->timeout(10) // Total request timeout
+            ->connectTimeout(5) // Connection timeout
+            ->post($url, [
                 'phone'   => $this->formatPhoneNumber($phone),
                 'message' => $message,
             ]);

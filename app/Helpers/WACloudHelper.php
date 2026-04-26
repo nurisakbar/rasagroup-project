@@ -28,17 +28,10 @@ class WACloudHelper
                 return $result;
             }
 
-            Log::warning('Failed to send WhatsApp via QAD API, trying fallback to WACloud', [
+            Log::error('Failed to send WhatsApp via QAD API', [
                 'phone' => $phone,
                 'message' => $result['message'] ?? 'Unknown error'
             ]);
-
-            // Fallback to old WACloud service
-            $waCloud = new WACloudService();
-            if ($waCloud->isConfigured()) {
-                $formattedPhone = $waCloud->formatPhoneNumber($phone);
-                return $waCloud->sendTextMessage($formattedPhone, $message);
-            }
             
             return null;
         } catch (\Exception $e) {
@@ -186,11 +179,7 @@ class WACloudHelper
      */
     public static function isConfigured(): bool
     {
-        $qadConfigured = app(\App\Services\QidApiService::class)->isConfigured();
-        if ($qadConfigured) return true;
-
-        $waCloud = new WACloudService();
-        return $waCloud->isConfigured();
+        return app(\App\Services\QidApiService::class)->isConfigured();
     }
 
     /**
@@ -202,7 +191,7 @@ class WACloudHelper
     public static function sendPaymentNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
-            Log::warning('WACloud not configured. Cannot send payment notification.');
+            Log::warning('QAD WhatsApp API not configured. Cannot send payment notification.');
             return null;
         }
 
@@ -214,7 +203,7 @@ class WACloudHelper
         }
 
         try {
-            $phone = $order->address->phone;
+            $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
             $message = self::buildPaymentMessage($order);
             
             Log::info('Sending payment notification via WhatsApp', [
@@ -255,7 +244,7 @@ class WACloudHelper
     public static function sendThankYouNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
-            Log::warning('WACloud not configured. Cannot send thank you notification.');
+            Log::warning('QAD WhatsApp API not configured. Cannot send thank you notification.');
             return null;
         }
 
@@ -267,7 +256,7 @@ class WACloudHelper
         }
 
         try {
-            $phone = $order->address->phone;
+            $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
             $message = self::buildThankYouMessage($order);
             
             Log::info('Sending thank you notification via WhatsApp', [
@@ -306,12 +295,12 @@ class WACloudHelper
     public static function sendTrackingNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
-            Log::warning('WACloud not configured. Cannot send tracking notification.');
+            Log::warning('QAD WhatsApp API not configured. Cannot send tracking notification.');
             return null;
         }
 
-        if (!$order->address || !$order->address->phone) {
-            Log::warning('Order address or phone not available for tracking notification', [
+        if ((!$order->user || !$order->user->phone) && (!$order->address || !$order->address->phone)) {
+            Log::warning('No phone number available for tracking notification', [
                 'order_id' => $order->id,
             ]);
             return null;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AddressApiController;
 use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\UserApiController;
+use App\Http\Controllers\Api\OngkirApiController;
 
 // Public routes (no authentication required)
 Route::prefix('warehouses')->group(function () {
@@ -57,4 +58,7 @@ Route::prefix('orders')->group(function () {
     Route::post('/', [OrderApiController::class, 'store'])->name('api.orders.store');
     Route::get('/{id}', [OrderApiController::class, 'show'])->name('api.orders.show');
 });
+
+// Ongkir route
+Route::get('/ongkir', [OngkirApiController::class, 'index'])->name('api.ongkir');
 

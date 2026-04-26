@@ -10,6 +10,13 @@ use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
 {
+    protected $ekspedisiku;
+
+    public function __construct(\App\Services\EkspedisiKuService $ekspedisiku)
+    {
+        $this->ekspedisiku = $ekspedisiku;
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -179,17 +186,8 @@ class OrderController extends Controller
 
         $order->update($updateData);
         
-        // Send WhatsApp notification for tracking number
-        try {
-            // Load necessary relationships
-            $order->load(['address', 'expedition']);
-            \App\Helpers\WACloudHelper::sendTrackingNotification($order);
-        } catch (\Exception $e) {
-            \Log::error('Failed to send tracking notification from Admin OrderController', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // Dispatch background job for tracking notification
+        \App\Jobs\SendWhatsAppNotification::dispatch($order, 'tracking');
 
         return back()->with('success', 'Nomor resi berhasil disimpan.');
     }
@@ -211,20 +209,10 @@ class OrderController extends Controller
 
         $order->update($updateData);
 
-        // If marked as paid, send thank you notification
+        // Dispatch background jobs for notifications
         if ($request->payment_status === 'paid') {
-            try {
-                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
-                \App\Helpers\WACloudHelper::sendThankYouNotification($order);
-                
-                // Notify warehouse/hub owner
-                \App\Helpers\WACloudHelper::notifyWarehouseOwnersAboutPayment($order);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send thank you notification or notify warehouse from Admin OrderController', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
         }
 
         return back()->with('success', 'Status pembayaran berhasil diperbarui.');
@@ -300,35 +288,16 @@ class OrderController extends Controller
         if (!empty($updateData)) {
             $order->update($updateData);
             
-            // If tracking number was updated, send WhatsApp notification
+            // Dispatch background job for tracking notification
             if (isset($updateData['tracking_number'])) {
-                try {
-                    // Load necessary relationships
-                    $order->load(['address', 'expedition']);
-                    \App\Helpers\WACloudHelper::sendTrackingNotification($order);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send tracking notification from Admin OrderController (batch update)', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'tracking');
             }
 
             $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
-            // If payment status was updated to paid, send WhatsApp notification
+            // Dispatch background jobs for notifications
             if (isset($updateData['payment_status']) && $updateData['payment_status'] === 'paid') {
-                try {
-                    $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
-                    \App\Helpers\WACloudHelper::sendThankYouNotification($order);
-                    
-                    // Notify warehouse/hub owner
-                    \App\Helpers\WACloudHelper::notifyWarehouseOwnersAboutPayment($order);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send thank you notification or notify warehouse from Admin OrderController (batch update)', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
             }
 
             return back()->with('success', $message);
@@ -343,26 +312,95 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Resi atau ekspedisi belum tersedia'], 400);
         }
 
-        $rajaOngkir = new \App\Services\RajaOngkirService();
         $code = strtolower($order->expedition->code);
-        
-        // Map courier codes if necessary (e.g., if database has 'jne' but API needs 'jne')
-        // RajaOngkir supports: jne, pos, tiki, wahana, jnt, rpx, sap, sicepat, pcp, jet, dse, first, ninja, lion, idl, rex, ide, sentral
-        
-        $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
 
-        if ($result && isset($result['data']) && !is_null($result['data'])) {
-            return response()->json(['success' => true, 'data' => $result['data']]);
+        if ($code === 'lion_parcel') {
+            $result = $this->ekspedisiku->track($order->tracking_number, $code);
+            
+            if ($result && isset($result['success']) && $result['success']) {
+                // EkspedisiKu returns tracking data in a specific format
+                // Let's assume it's already normalized or handle it here
+                return response()->json(['success' => true, 'data' => $result['data'] ?? $result['body']]);
+            }
+        } else {
+            $rajaOngkir = new \App\Services\RajaOngkirService();
+            $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
+
+            if ($result && isset($result['data']) && !is_null($result['data'])) {
+                return response()->json(['success' => true, 'data' => $result['data']]);
+            }
         }
         
-        // Check for specific error message from RajaOngkir/Komerce
-        $errorMessage = 'Gagal melacak resi via RajaOngkir';
+        // Check for specific error message
+        $errorMessage = 'Gagal melacak resi';
         if (isset($result['meta']['message'])) {
             $errorMessage .= ': ' . $result['meta']['message'];
         } elseif (isset($result['status']['description'])) {
             $errorMessage .= ': ' . $result['status']['description'];
+        } elseif (isset($result['message'])) {
+            $errorMessage .= ': ' . $result['message'];
         }
 
         return response()->json(['success' => false, 'message' => $errorMessage], 400);
+    }
+
+    public function createEkspedisikuBooking(Order $order)
+    {
+        if ($order->tracking_number) {
+            return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        try {
+            // Dispatch the job synchronously to get immediate result
+            $job = new \App\Jobs\CreateShipmentBooking($order);
+            $job->handle(app(\App\Services\EkspedisikuService::class));
+
+            // Refresh order to get updated data
+            $order->refresh();
+
+            if ($order->tracking_number) {
+                return back()->with('success', 'Booking berhasil! Nomor resi: ' . $order->tracking_number);
+            }
+
+            return back()->with('error', 'Gagal membuat booking. Silakan cek log untuk detailnya.');
+        } catch (\Exception $e) {
+            \Log::error('Admin OrderController: Manual booking error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function requestPickup(Order $order)
+    {
+        if (!$order->tracking_number) {
+            return back()->with('error', 'Pesanan belum memiliki nomor resi.');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        // Default pickup window: now to +4 hours
+        $startAt = now()->toIso8601String();
+        $endAt = now()->addHours(4)->toIso8601String();
+
+        $result = $this->ekspedisiku->requestPickup([$order->tracking_number], $startAt, $endAt);
+
+        if ($result && isset($result['success']) && $result['success']) {
+            return back()->with('success', 'Request pickup berhasil dikirim!');
+        }
+
+        $error = $result['message'] ?? 'Gagal melakukan request pickup.';
+        if (isset($result['error'])) {
+            $error .= ' (' . ($result['error']['message'] ?? json_encode($result['error'])) . ')';
+        }
+
+        return back()->with('error', $error);
     }
 }

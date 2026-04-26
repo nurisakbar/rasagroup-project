@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
-use App\Services\RajaOngkirService;
+use App\Services\EkspedisiKuService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -71,11 +71,11 @@ class WarehouseController extends Controller
             return back()->with('error', 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage());
         }
     }
-    protected $rajaOngkir;
+    protected $ekspedisiku;
 
-    public function __construct(RajaOngkirService $rajaOngkir)
+    public function __construct(EkspedisiKuService $ekspedisiku)
     {
-        $this->rajaOngkir = $rajaOngkir;
+        $this->ekspedisiku = $ekspedisiku;
     }
     /**
      * Display a listing of the resource.
@@ -166,7 +166,7 @@ class WarehouseController extends Controller
      */
     public function create()
     {
-        $result = $this->rajaOngkir->getProvinces();
+        $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
         return view('admin.warehouses.create', compact('provinces'));
     }
@@ -182,10 +182,10 @@ class WarehouseController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
-            'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
-            'district_id' => 'nullable|exists:raja_ongkir_districts,id',
-            'village_id' => 'nullable|exists:villages,id',
+            'province_id' => 'nullable',
+            'regency_id' => 'nullable',
+            'district_id' => 'nullable',
+            'village_id' => 'nullable',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
@@ -264,22 +264,23 @@ class WarehouseController extends Controller
 
     public function edit(Warehouse $warehouse)
     {
-        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinceRes = $this->ekspedisiku->getProvinces();
         $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
-        $regencies = $warehouse->province_id 
-            ? ($this->rajaOngkir->getCities($warehouse->province_id)['data'] ?? [])
-            : [];
+        $regencyRes = $warehouse->province_id 
+            ? $this->ekspedisiku->getRegencies($warehouse->province_id)
+            : null;
+        $regencies = isset($regencyRes['data']) ? $regencyRes['data'] : [];
             
-        $districts = $warehouse->regency_id
-            ? ($this->rajaOngkir->getDistricts($warehouse->regency_id)['data'] ?? [])
-            : [];
+        $districtRes = $warehouse->regency_id
+            ? $this->ekspedisiku->getDistricts($warehouse->regency_id)
+            : null;
+        $districts = isset($districtRes['data']) ? $districtRes['data'] : [];
 
-        // Fetch villages from local table by mapping district name
-        $villages = [];
-        if ($warehouse->district_id) {
-            $villages = $this->getVillages(new Request(['district_id' => $warehouse->district_id]))->getData();
-        }
+        $villageRes = $warehouse->district_id
+            ? $this->ekspedisiku->getVillages($warehouse->district_id)
+            : null;
+        $villages = isset($villageRes['data']) ? $villageRes['data'] : [];
 
         return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages'));
     }
@@ -294,10 +295,10 @@ class WarehouseController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'province_id' => 'nullable|exists:raja_ongkir_provinces,id',
-            'regency_id' => 'nullable|exists:raja_ongkir_cities,id',
-            'district_id' => 'nullable|exists:raja_ongkir_districts,id',
-            'village_id' => 'nullable|exists:villages,id',
+            'province_id' => 'nullable',
+            'regency_id' => 'nullable',
+            'district_id' => 'nullable',
+            'village_id' => 'nullable',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
@@ -416,7 +417,7 @@ class WarehouseController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $result = $this->rajaOngkir->getCities($request->province_id);
+        $result = $this->ekspedisiku->getRegencies($request->province_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
@@ -425,7 +426,7 @@ class WarehouseController extends Controller
      */
     public function getDistricts(Request $request)
     {
-        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        $result = $this->ekspedisiku->getDistricts($request->regency_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
@@ -434,29 +435,8 @@ class WarehouseController extends Controller
      */
     public function getVillages(Request $request)
     {
-        $districtId = $request->district_id;
-        if (!$districtId) {
-            return response()->json([]);
-        }
-
-        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
-        if (!$roDistrict) {
-            return response()->json([]);
-        }
-
-        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
-        if (!$localDistrict) {
-            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
-        }
-
-        if ($localDistrict) {
-            $villages = \App\Models\Village::where('district_id', $localDistrict->id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
-            return response()->json($villages);
-        }
-
-        return response()->json([]);
+        $result = $this->ekspedisiku->getVillages($request->district_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
     /**
@@ -551,5 +531,43 @@ class WarehouseController extends Controller
             Log::error("Auto Refresh Stock Failed for Hub {$warehouse->kode_hub}: " . $e->getMessage());
             return false;
         }
+    /**
+     * Debug EkspedisiKu API Connectivity
+     */
+    public function debugEkspedisiku()
+    {
+        $baseUrl = config('services.ekspedisiku.base_url');
+        $token = config('services.ekspedisiku.token');
+        
+        $results = [
+            'config' => [
+                'base_url' => $baseUrl,
+                'token_length' => strlen($token),
+                'token_prefix' => substr($token, 0, 10) . '...',
+            ],
+            'tests' => []
+        ];
+
+        // Test Provinces
+        try {
+            $start = microtime(true);
+            $response = Http::withToken($token)->timeout(10)->get("{$baseUrl}/provinces");
+            $end = microtime(true);
+            
+            $results['tests']['provinces'] = [
+                'status' => $response->status(),
+                'duration' => round($end - $start, 2) . 's',
+                'success' => $response->successful(),
+                'data_count' => isset($response->json()['data']) ? count($response->json()['data']) : 0,
+                'raw_response' => $response->successful() ? 'OK' : $response->body(),
+            ];
+        } catch (\Exception $e) {
+            $results['tests']['provinces'] = [
+                'error' => $e->getMessage(),
+                'type' => get_class($e)
+            ];
+        }
+
+        return response()->json($results);
     }
 }
