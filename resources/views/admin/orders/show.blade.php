@@ -188,6 +188,19 @@
                                             <span class="label label-default" style="margin-left: 10px;">
                                                 Pickup cancelled{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
                                             </span>
+                                        @elseif($order->ekspedisiku_pickup_status === 'cancel_failed')
+                                            <span class="label label-danger" style="margin-left: 10px;">
+                                                Cancel pickup gagal
+                                            </span>
+                                            <form action="{{ route('admin.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Retry cancel pickup untuk shipment ini?')">
+                                                    <i class="fa fa-ban"></i> Cancel Pickup
+                                                </button>
+                                            </form>
+                                            @if($order->ekspedisiku_pickup_last_error)
+                                                <br><small class="text-danger">Cancel pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
+                                            @endif
                                         @else
                                             <form action="{{ route('admin.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
                                                 @csrf
@@ -197,9 +210,6 @@
                                             </form>
                                             @if($order->ekspedisiku_pickup_status === 'failed')
                                                 <br><small class="text-danger">Pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
-                                            @endif
-                                            @if($order->ekspedisiku_pickup_status === 'cancel_failed')
-                                                <br><small class="text-danger">Cancel pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
                                             @endif
                                         @endif
                                     @endif
