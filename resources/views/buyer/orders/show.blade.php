@@ -366,30 +366,74 @@ document.addEventListener('DOMContentLoaded', function() {
                     let html = '';
                     if (result.success && result.data) {
                         const data = result.data;
-                        const status = data.delivery_status;
-                        
-                        html += '<div class="alert alert-' + (status.status == 'DELIVERED' ? 'success' : 'info') + ' border-0 bg-light mb-4">';
-                        html += '<h6 class="mb-2">Status Terakhir: ' + status.status + '</h6>';
-                        html += '<p class="font-sm mb-0">Penerima: ' + (status.pod_receiver || '-') + '<br>';
-                        html += 'Waktu: ' + (status.pod_date || '-') + ' ' + (status.pod_time || '') + '</p>';
-                        html += '</div>';
-                        
-                        html += '<div class="timeline-container px-3">';
-                        if (data.manifest && data.manifest.length > 0) {
-                            data.manifest.forEach(item => {
-                                html += '<div class="mb-4 position-relative border-start ps-4 ml-10">';
-                                html += '<span class="position-absolute translate-middle-x bg-brand rounded-circle" style="left:0; top:5px; width:12px; height:12px;"></span>';
-                                html += '<h6 class="font-sm mb-1">' + item.manifest_description + '</h6>';
-                                html += '<p class="font-xs text-muted mb-1">' + item.manifest_date + ' ' + item.manifest_time + '</p>';
-                                if (item.city_name) {
-                                    html += '<span class="font-xs"><i class="fi-rs-marker mr-5"></i>' + item.city_name + '</span>';
-                                }
-                                html += '</div>';
-                            });
+
+                        // RajaOngkir-like format
+                        if (data.delivery_status && data.manifest) {
+                            const status = data.delivery_status;
+                            html += '<div class="alert alert-' + (status.status == 'DELIVERED' ? 'success' : 'info') + ' border-0 bg-light mb-4">';
+                            html += '<h6 class="mb-2">Status Terakhir: ' + status.status + '</h6>';
+                            html += '<p class="font-sm mb-0">Penerima: ' + (status.pod_receiver || '-') + '<br>';
+                            html += 'Waktu: ' + (status.pod_date || '-') + ' ' + (status.pod_time || '') + '</p>';
+                            html += '</div>';
+
+                            html += '<div class="timeline-container px-3">';
+                            if (data.manifest && data.manifest.length > 0) {
+                                data.manifest.forEach(item => {
+                                    html += '<div class="mb-4 position-relative border-start ps-4 ml-10">';
+                                    html += '<span class="position-absolute translate-middle-x bg-brand rounded-circle" style="left:0; top:5px; width:12px; height:12px;"></span>';
+                                    html += '<h6 class="font-sm mb-1">' + item.manifest_description + '</h6>';
+                                    html += '<p class="font-xs text-muted mb-1">' + item.manifest_date + ' ' + item.manifest_time + '</p>';
+                                    if (item.city_name) {
+                                        html += '<span class="font-xs"><i class="fi-rs-marker mr-5"></i>' + item.city_name + '</span>';
+                                    }
+                                    html += '</div>';
+                                });
+                            } else {
+                                html += '<p class="text-center text-muted py-4">Tidak ada data manifest detail.</p>';
+                            }
+                            html += '</div>';
+                        } else if (data.carriers && data.carriers.length > 0) {
+                            // EkspedisiKu normalized format
+                            const carrier = data.carriers[0];
+                            const events = carrier.events || [];
+                            const latest = events.length > 0 ? events[0] : null;
+
+                            html += '<div class="alert alert-info border-0 bg-light mb-4">';
+                            html += '<h6 class="mb-2">' + (carrier.label || carrier.id || 'Tracking') + '</h6>';
+                            if (latest) {
+                                html += '<p class="font-sm mb-0">';
+                                html += 'Status: <strong>' + (latest.status || '-') + '</strong><br>';
+                                html += 'Waktu: ' + (latest.time || '-') + '<br>';
+                                html += 'Lokasi: ' + (latest.location || '-') + '<br>';
+                                html += (latest.remarks ? ('Keterangan: ' + latest.remarks) : '');
+                                html += '</p>';
+                            } else {
+                                html += '<p class="font-sm mb-0">Tidak ada event tracking.</p>';
+                            }
+                            html += '</div>';
+
+                            html += '<div class="timeline-container px-3">';
+                            if (events.length > 0) {
+                                events.forEach(item => {
+                                    html += '<div class="mb-4 position-relative border-start ps-4 ml-10">';
+                                    html += '<span class="position-absolute translate-middle-x bg-brand rounded-circle" style="left:0; top:5px; width:12px; height:12px;"></span>';
+                                    html += '<h6 class="font-sm mb-1">' + (item.status || '-') + '</h6>';
+                                    html += '<p class="font-xs text-muted mb-1">' + (item.time || '-') + '</p>';
+                                    if (item.location) {
+                                        html += '<span class="font-xs"><i class="fi-rs-marker mr-5"></i>' + item.location + '</span>';
+                                    }
+                                    if (item.remarks) {
+                                        html += '<div class="font-xs text-muted mt-1">' + item.remarks + '</div>';
+                                    }
+                                    html += '</div>';
+                                });
+                            } else {
+                                html += '<p class="text-center text-muted py-4">Tidak ada data tracking.</p>';
+                            }
+                            html += '</div>';
                         } else {
-                            html += '<p class="text-center text-muted py-4">Tidak ada data manifest detail.</p>';
+                            html = '<div class="alert alert-warning border-0 bg-light">Format data tracking tidak dikenali.</div>';
                         }
-                        html += '</div>';
                     } else {
                         html = '<div class="alert alert-warning border-0 bg-light">' + (result.message || 'Data pelacakan saat ini belum tersedia') + '</div>';
                     }

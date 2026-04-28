@@ -324,9 +324,12 @@ class OrderController extends Controller
             $result = $this->ekspedisiku->track($order->tracking_number, $code);
             
             if ($result && isset($result['success']) && $result['success']) {
-                // EkspedisiKu returns tracking data in a specific format
-                // Let's assume it's already normalized or handle it here
-                return response()->json(['success' => true, 'data' => $result['data'] ?? $result['body']]);
+                // EkspedisiKu track endpoint returns normalized payload (e.g. {success,resi,carriers,...}).
+                // Return the full payload unless it already contains a 'data' wrapper.
+                return response()->json([
+                    'success' => true,
+                    'data' => $result['data'] ?? $result,
+                ]);
             }
         } else {
             $rajaOngkir = new \App\Services\RajaOngkirService();
@@ -339,6 +342,9 @@ class OrderController extends Controller
         
         // Check for specific error message
         $errorMessage = 'Gagal melacak resi';
+        if (!isset($result) || !is_array($result)) {
+            return response()->json(['success' => false, 'message' => $errorMessage], 400);
+        }
         if (isset($result['meta']['message'])) {
             $errorMessage .= ': ' . $result['meta']['message'];
         } elseif (isset($result['status']['description'])) {
@@ -361,6 +367,12 @@ class OrderController extends Controller
         }
 
         try {
+            \Log::info('Admin OrderController: Manual booking requested', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'existing_tracking_number' => $order->tracking_number,
+                'existing_shipment_id' => $order->ekspedisiku_shipment_id,
+            ]);
             // Dispatch the job synchronously to get immediate result
             $job = new \App\Jobs\CreateShipmentBooking($order);
             $job->handle(app(\App\Services\EkspedisikuService::class));
@@ -372,7 +384,7 @@ class OrderController extends Controller
                 return back()->with('success', 'Booking berhasil! Nomor resi: ' . $order->tracking_number);
             }
 
-            return back()->with('error', 'Gagal membuat booking. Silakan cek log untuk detailnya.');
+            return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk pesan error dari Lion Parcel.');
         } catch (\Exception $e) {
             \Log::error('Admin OrderController: Manual booking error', [
                 'order_id' => $order->id,
@@ -382,23 +394,67 @@ class OrderController extends Controller
         }
     }
 
+    public function resetEkspedisikuBooking(Order $order)
+    {
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        \Log::warning('Admin OrderController: Reset booking requested', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'tracking_number' => $order->tracking_number,
+            'shipment_id' => $order->ekspedisiku_shipment_id,
+            'booking_reference' => $order->ekspedisiku_booking_reference,
+            'booking_attempt' => $order->ekspedisiku_booking_attempt,
+        ]);
+
+        $order->update([
+            'tracking_number' => null,
+            'ekspedisiku_shipment_id' => null,
+            'shipped_at' => null,
+            'order_status' => 'pending',
+            'ekspedisiku_booking_status' => null,
+            'ekspedisiku_booking_last_error' => null,
+            'ekspedisiku_pickup_requested_at' => null,
+            'ekspedisiku_pickup_status' => null,
+            'ekspedisiku_pickup_last_error' => null,
+        ]);
+
+        return back()->with('success', 'Booking Lion Parcel berhasil di-reset. Silakan buat booking ulang.');
+    }
+
     public function requestPickup(Order $order)
     {
-        if (!$order->tracking_number) {
-            return back()->with('error', 'Pesanan belum memiliki nomor resi.');
+        if (!$order->ekspedisiku_shipment_id) {
+            return back()->with('error', 'Pesanan belum memiliki shipment_id (EkspedisiKu). Buat booking dulu sampai sukses.');
         }
 
         if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
             return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
         }
 
-        // Default pickup window: now to +4 hours
-        $startAt = now()->toIso8601String();
-        $endAt = now()->addHours(4)->toIso8601String();
+        // Lion rejects pickup windows that are <= "now" on their side.
+        // Use a small buffer so it's safely in the future.
+        $startAt = now()->addMinutes(30)->toIso8601String();
+        $endAt = now()->addMinutes(30)->addHours(4)->toIso8601String();
 
-        $result = $this->ekspedisiku->requestPickup([$order->tracking_number], $startAt, $endAt);
+        \Log::info('Admin OrderController: Request pickup requested', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'shipment_id' => $order->ekspedisiku_shipment_id,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
+        ]);
+
+        $result = $this->ekspedisiku->requestPickup([$order->ekspedisiku_shipment_id], $startAt, $endAt);
 
         if ($result && isset($result['success']) && $result['success']) {
+            $order->update([
+                'ekspedisiku_pickup_requested_at' => now(),
+                'ekspedisiku_pickup_status' => 'success',
+                'ekspedisiku_pickup_last_error' => null,
+            ]);
             return back()->with('success', 'Request pickup berhasil dikirim!');
         }
 
@@ -406,6 +462,54 @@ class OrderController extends Controller
         if (isset($result['error'])) {
             $error .= ' (' . ($result['error']['message'] ?? json_encode($result['error'])) . ')';
         }
+
+        $order->update([
+            'ekspedisiku_pickup_requested_at' => now(),
+            'ekspedisiku_pickup_status' => 'failed',
+            'ekspedisiku_pickup_last_error' => $error,
+        ]);
+
+        return back()->with('error', $error);
+    }
+
+    public function cancelPickup(Order $order)
+    {
+        if (!$order->ekspedisiku_shipment_id) {
+            return back()->with('error', 'Pesanan belum memiliki shipment_id (EkspedisiKu).');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        \Log::info('Admin OrderController: Cancel pickup requested', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'shipment_id' => $order->ekspedisiku_shipment_id,
+        ]);
+
+        $result = $this->ekspedisiku->cancelPickup((string) $order->ekspedisiku_shipment_id);
+
+        if ($result && isset($result['success']) && $result['success']) {
+            $order->update([
+                'ekspedisiku_pickup_requested_at' => now(),
+                'ekspedisiku_pickup_status' => 'cancelled',
+                'ekspedisiku_pickup_last_error' => null,
+            ]);
+
+            return back()->with('success', 'Cancel pickup berhasil dikirim!');
+        }
+
+        $error = $result['message'] ?? 'Gagal melakukan cancel pickup.';
+        if (isset($result['error'])) {
+            $error .= ' (' . ($result['error']['message'] ?? json_encode($result['error'])) . ')';
+        }
+
+        $order->update([
+            'ekspedisiku_pickup_requested_at' => now(),
+            'ekspedisiku_pickup_status' => 'cancel_failed',
+            'ekspedisiku_pickup_last_error' => $error,
+        ]);
 
         return back()->with('error', $error);
     }

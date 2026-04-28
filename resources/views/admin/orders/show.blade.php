@@ -159,13 +159,49 @@
                             <td>
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
+                                    @if($order->expedition)
+                                        <a href="#" id="btn-track-order" class="btn btn-xs btn-info" style="margin-left: 10px;">
+                                            <i class="fa fa-search"></i> Lacak Resi
+                                        </a>
+                                    @endif
                                     @if($order->expedition && $order->expedition->code === 'lion_parcel')
-                                        <form action="{{ route('admin.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-xs btn-warning" onclick="return confirm('Kirim request pickup ke Lion Parcel?')">
-                                                <i class="fa fa-truck"></i> Request Pickup
-                                            </button>
-                                        </form>
+                                        @if(!$order->ekspedisiku_shipment_id)
+                                            <span class="label label-danger" style="margin-left: 10px;">shipment_id belum tersimpan</span>
+                                            <form action="{{ route('admin.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset booking/resi ini? Resi akan dikosongkan agar bisa booking ulang.')">
+                                                    <i class="fa fa-trash"></i> Reset Booking
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @if($order->ekspedisiku_pickup_status === 'success')
+                                            <span class="label label-success" style="margin-left: 10px;">
+                                                Pickup requested{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
+                                            </span>
+                                            <form action="{{ route('admin.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Cancel request pickup untuk shipment ini?')">
+                                                    <i class="fa fa-ban"></i> Cancel Pickup
+                                                </button>
+                                            </form>
+                                        @elseif($order->ekspedisiku_pickup_status === 'cancelled')
+                                            <span class="label label-default" style="margin-left: 10px;">
+                                                Pickup cancelled{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
+                                            </span>
+                                        @else
+                                            <form action="{{ route('admin.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-warning" onclick="return confirm('Kirim request pickup ke Lion Parcel?')">
+                                                    <i class="fa fa-truck"></i> Request Pickup
+                                                </button>
+                                            </form>
+                                            @if($order->ekspedisiku_pickup_status === 'failed')
+                                                <br><small class="text-danger">Pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
+                                            @endif
+                                            @if($order->ekspedisiku_pickup_status === 'cancel_failed')
+                                                <br><small class="text-danger">Cancel pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
+                                            @endif
+                                        @endif
                                     @endif
                                     @if($order->shipped_at)
                                         <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
@@ -473,37 +509,84 @@ $('#btn-track-order').click(function(e) {
             
             if (response.success && response.data) {
                 var data = response.data;
-                var status = data.delivery_status;
-                
-                // Summary Box
-                html += '<div class="row" style="margin-bottom: 20px;">';
-                html += '<div class="col-md-12">';
-                html += '<div class="callout callout-' + (status.status == 'DELIVERED' ? 'success' : 'info') + '">';
-                html += '<h4>Status: ' + status.status + '</h4>';
-                html += '<p>Penerima: <strong>' + (status.pod_receiver || '-') + '</strong></p>';
-                html += '<p>Waktu: ' + (status.pod_date || '-') + ' ' + (status.pod_time || '') + '</p>';
-                html += '</div></div></div>';
-                
-                // Timeline
-                html += '<ul class="timeline">';
-                if (data.manifest && data.manifest.length > 0) {
-                    data.manifest.forEach(function(item) {
-                        html += '<li>';
-                        html += '<i class="fa fa-truck bg-blue"></i>';
-                        html += '<div class="timeline-item">';
-                        html += '<span class="time"><i class="fa fa-clock-o"></i> ' + item.manifest_date + ' ' + item.manifest_time + '</span>';
-                        html += '<h3 class="timeline-header"><strong>' + item.manifest_description + '</strong></h3>';
-                        if (item.city_name) {
-                            html += '<div class="timeline-body"><i class="fa fa-map-marker"></i> ' + item.city_name + '</div>';
-                        }
-                        html += '</div>';
-                        html += '</li>';
-                    });
-                    html += '<li><i class="fa fa-clock-o bg-gray"></i></li>';
+
+                // If RajaOngkir-like format exists, render it.
+                if (data.delivery_status && data.manifest) {
+                    var status = data.delivery_status;
+                    html += '<div class="row" style="margin-bottom: 20px;">';
+                    html += '<div class="col-md-12">';
+                    html += '<div class="callout callout-' + (status.status == 'DELIVERED' ? 'success' : 'info') + '">';
+                    html += '<h4>Status: ' + status.status + '</h4>';
+                    html += '<p>Penerima: <strong>' + (status.pod_receiver || '-') + '</strong></p>';
+                    html += '<p>Waktu: ' + (status.pod_date || '-') + ' ' + (status.pod_time || '') + '</p>';
+                    html += '</div></div></div>';
+
+                    html += '<ul class="timeline">';
+                    if (data.manifest && data.manifest.length > 0) {
+                        data.manifest.forEach(function(item) {
+                            html += '<li>';
+                            html += '<i class="fa fa-truck bg-blue"></i>';
+                            html += '<div class="timeline-item">';
+                            html += '<span class="time"><i class="fa fa-clock-o"></i> ' + item.manifest_date + ' ' + item.manifest_time + '</span>';
+                            html += '<h3 class="timeline-header"><strong>' + item.manifest_description + '</strong></h3>';
+                            if (item.city_name) {
+                                html += '<div class="timeline-body"><i class="fa fa-map-marker"></i> ' + item.city_name + '</div>';
+                            }
+                            html += '</div>';
+                            html += '</li>';
+                        });
+                        html += '<li><i class="fa fa-clock-o bg-gray"></i></li>';
+                    } else {
+                        html += '<li><div class="timeline-item"><div class="timeline-body">Tidak ada data manifest.</div></div></li>';
+                    }
+                    html += '</ul>';
+                } else if (data.carriers && data.carriers.length > 0) {
+                    // EkspedisiKu normalized tracking format: { carriers: [ { events: [...] } ] }
+                    var carrier = data.carriers[0];
+                    var events = carrier.events || [];
+
+                    var latest = events.length > 0 ? events[0] : null;
+                    html += '<div class="row" style="margin-bottom: 20px;">';
+                    html += '<div class="col-md-12">';
+                    html += '<div class="callout callout-info">';
+                    html += '<h4>' + (carrier.label || carrier.id || 'Tracking') + '</h4>';
+                    if (latest) {
+                        html += '<p>Status: <strong>' + (latest.status || '-') + '</strong></p>';
+                        html += '<p>Waktu: ' + (latest.time || '-') + '</p>';
+                        html += '<p>Lokasi: ' + (latest.location || '-') + '</p>';
+                        html += '<p>Keterangan: ' + (latest.remarks || '-') + '</p>';
+                    } else {
+                        html += '<p>Tidak ada event tracking.</p>';
+                    }
+                    html += '</div></div></div>';
+
+                    html += '<ul class="timeline">';
+                    if (events.length > 0) {
+                        events.forEach(function(item) {
+                            html += '<li>';
+                            html += '<i class="fa fa-truck bg-blue"></i>';
+                            html += '<div class="timeline-item">';
+                            html += '<span class="time"><i class="fa fa-clock-o"></i> ' + (item.time || '-') + '</span>';
+                            html += '<h3 class="timeline-header"><strong>' + (item.status || '-') + '</strong></h3>';
+                            html += '<div class="timeline-body">';
+                            if (item.location) {
+                                html += '<div><i class="fa fa-map-marker"></i> ' + item.location + '</div>';
+                            }
+                            if (item.remarks) {
+                                html += '<div>' + item.remarks + '</div>';
+                            }
+                            html += '</div>';
+                            html += '</div>';
+                            html += '</li>';
+                        });
+                        html += '<li><i class="fa fa-clock-o bg-gray"></i></li>';
+                    } else {
+                        html += '<li><div class="timeline-item"><div class="timeline-body">Tidak ada data tracking.</div></div></li>';
+                    }
+                    html += '</ul>';
                 } else {
-                    html += '<li><div class="timeline-item"><div class="timeline-body">Tidak ada data manifest.</div></div></li>';
+                    html = '<div class="alert alert-warning">Format data tracking tidak dikenali.</div>';
                 }
-                html += '</ul>';
                 
             } else {
                 html = '<div class="alert alert-warning">Gagal mendapatkan data tracking atau data tidak ditemukan.</div>';

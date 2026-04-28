@@ -277,15 +277,25 @@ class EkspedisiKuService
             if ($response->failed()) {
                 Log::warning('EkspedisiKuService: createBooking failed', [
                     'status' => $response->status(),
-                    'response' => $response->json()
+                    'response' => $response->json(),
+                    'body' => $response->body(),
                 ]);
-                return null;
+                // Return the response body so caller can surface the error
+                return $response->json() ?? [
+                    'success' => false,
+                    'message' => 'Create booking failed',
+                    'error' => [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ],
+                ];
             }
 
             return $response->json();
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: createBooking error', [
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'payload' => $payload,
             ]);
             return null;
         }
@@ -375,6 +385,53 @@ class EkspedisiKuService
             Log::error('EkspedisiKuService: requestPickup error', [
                 'message' => $e->getMessage()
             ]);
+            return null;
+        }
+    }
+
+    /**
+     * Cancel a pickup request (Lion Parcel).
+     *
+     * @param string $shipmentId Lion shipment id (stt_id)
+     * @return array|null
+     */
+    public function cancelPickup(string $shipmentId)
+    {
+        try {
+            $payload = [
+                'shipment_id' => $shipmentId,
+            ];
+
+            Log::info('EkspedisiKuService: Cancelling pickup', [
+                'url' => "{$this->baseUrl}/pickup/cancel",
+                'payload' => $payload,
+            ]);
+
+            $response = Http::withToken($this->token)
+                ->post("{$this->baseUrl}/pickup/cancel", $payload);
+
+            Log::info('EkspedisiKuService: Cancel pickup response', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+
+            if ($response->failed()) {
+                Log::warning('EkspedisiKuService: cancelPickup failed', [
+                    'shipment_id' => $shipmentId,
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return $response->json();
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('EkspedisiKuService: cancelPickup error', [
+                'shipment_id' => $shipmentId,
+                'message' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }

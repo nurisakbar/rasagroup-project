@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -39,21 +40,38 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Resi atau ekspedisi belum tersedia'], 400);
         }
 
-        $rajaOngkir = new \App\Services\RajaOngkirService();
         $code = strtolower($order->expedition->code);
-        
-        $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
+        Log::info('Buyer OrderController: trackOrder requested', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'courier' => $code,
+            'tracking_number' => $order->tracking_number,
+        ]);
 
-        if ($result && isset($result['data']) && !is_null($result['data'])) {
-            return response()->json(['success' => true, 'data' => $result['data']]);
+        if ($code === 'lion_parcel') {
+            $ekspedisiku = app(\App\Services\EkspedisiKuService::class);
+            $result = $ekspedisiku->track($order->tracking_number, $code);
+
+            if ($result && isset($result['success']) && $result['success']) {
+                return response()->json(['success' => true, 'data' => $result['data'] ?? $result]);
+            }
+        } else {
+            $rajaOngkir = new \App\Services\RajaOngkirService();
+            $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
+
+            if ($result && isset($result['data']) && !is_null($result['data'])) {
+                return response()->json(['success' => true, 'data' => $result['data']]);
+            }
         }
-        
-        // Check for specific error message from RajaOngkir/Komerce
-        $errorMessage = 'Gagal melacak resi via RajaOngkir';
+
+        // Check for specific error message
+        $errorMessage = 'Gagal melacak resi';
         if (isset($result['meta']['message'])) {
             $errorMessage .= ': ' . $result['meta']['message'];
         } elseif (isset($result['status']['description'])) {
             $errorMessage .= ': ' . $result['status']['description'];
+        } elseif (isset($result['message'])) {
+            $errorMessage .= ': ' . $result['message'];
         }
 
         return response()->json(['success' => false, 'message' => $errorMessage], 400);

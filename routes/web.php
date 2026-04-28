@@ -202,7 +202,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/orders/{order}/payment', [App\Http\Controllers\Admin\OrderController::class, 'updatePayment'])->name('orders.update-payment');
         Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Admin\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
+        Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Admin\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Admin\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
+        Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Admin\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
 
         // Settings
