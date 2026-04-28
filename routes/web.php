@@ -203,6 +203,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Admin\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Admin\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
+        Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');

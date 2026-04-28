@@ -51,6 +51,7 @@ class Order extends Model
         'payment_proof',
         'payment_submit_note',
         'payment_submitted_at',
+        'qad_so_number',
     ];
 
     protected $casts = [

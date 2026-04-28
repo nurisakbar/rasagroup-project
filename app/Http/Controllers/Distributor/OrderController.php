@@ -530,6 +530,9 @@ class OrderController extends Controller
                 ->where('cart_type', 'distributor')
                 ->delete();
 
+            // Sync to QAD (Ensure customer is registered and SO is created)
+            \App\Jobs\SyncOrderToQad::dispatch($order);
+
             DB::commit();
 
             return redirect()->route('distributor.orders.success', $order)

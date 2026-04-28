@@ -213,6 +213,9 @@ class OrderController extends Controller
         if ($request->payment_status === 'paid') {
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+            
+            // Sync to QAD
+            \App\Jobs\SyncOrderToQad::dispatch($order);
         }
 
         return back()->with('success', 'Status pembayaran berhasil diperbarui.');
@@ -298,6 +301,9 @@ class OrderController extends Controller
             if (isset($updateData['payment_status']) && $updateData['payment_status'] === 'paid') {
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+
+                // Sync to QAD
+                \App\Jobs\SyncOrderToQad::dispatch($order);
             }
 
             return back()->with('success', $message);
@@ -402,5 +408,29 @@ class OrderController extends Controller
         }
 
         return back()->with('error', $error);
+    }
+
+    public function syncQad(Order $order)
+    {
+        try {
+            // Dispatch the job synchronously to get immediate feedback or just dispatch and tell user it's ongoing
+            // For admin UX, synchronous might be better if it's fast enough, but background is safer.
+            // Let's use dispatchSync for immediate feedback in this manual action.
+            \App\Jobs\SyncOrderToQad::dispatchSync($order);
+            
+            $order->refresh();
+            
+            if ($order->qad_so_number) {
+                return back()->with('success', 'Berhasil sinkronisasi ke QAD. No SO QAD: ' . $order->qad_so_number);
+            }
+            
+            return back()->with('error', 'Gagal sinkronisasi ke QAD. Silakan cek log untuk detailnya.');
+        } catch (\Exception $e) {
+            \Log::error('Admin OrderController: Sync QAD error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }

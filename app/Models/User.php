@@ -61,6 +61,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'monthly_target',
         'wa_verified_at',
         'wa_verification_code',
+        'qad_customer_code',
     ];
 
     protected static function boot()
@@ -272,5 +273,15 @@ class User extends Authenticatable implements MustVerifyEmail
         
         // Otherwise return regular price
         return (float) $product->price;
+    }
+
+    /**
+     * Send the email verification notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\VerifyEmailNotification);
     }
 }

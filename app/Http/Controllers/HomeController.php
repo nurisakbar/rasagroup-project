@@ -26,37 +26,37 @@ class HomeController extends Controller
         }
 
         $popularProducts = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->latest()
             ->take(10)
             ->get();
 
         $dailyBestSells = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->inRandomOrder()
             ->take(4)
             ->get();
 
         $topSelling = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->orderBy('price', 'desc')
             ->take(3)
             ->get();
 
         $trendingProducts = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->inRandomOrder()
             ->take(3)
             ->get();
 
         $recentlyAdded = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->latest()
             ->take(3)
             ->get();
 
         $topRated = (clone $baseQuery)
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'warehouseStocks'])
             ->inRandomOrder()
             ->take(3)
             ->get();
@@ -71,7 +71,7 @@ class HomeController extends Controller
         foreach($categories as $category) {
             $categoryProducts[$category->id] = (clone $baseQuery)
                 ->where('category_id', $category->id)
-                ->with(['category', 'brand'])
+                ->with(['category', 'brand', 'warehouseStocks'])
                 ->take(8)
                 ->get();
         }

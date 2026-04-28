@@ -410,6 +410,7 @@ class CheckoutController extends Controller
             'hub_changed' => $hubChanged,
             'stock_warnings' => $stockWarnings,
             'address' => [
+                'id' => $address->id,
                 'recipient_name' => $address->recipient_name,
                 'phone' => $address->phone,
                 'full_address' => $address->full_address,
@@ -860,6 +861,8 @@ class CheckoutController extends Controller
                     return back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pilih metode pembayaran lain.');
                 }
             }
+            // Sync to QAD (Customer and Sales Order)
+            \App\Jobs\SyncOrderToQad::dispatch($order);
 
             DB::commit();
 
@@ -941,6 +944,9 @@ class CheckoutController extends Controller
                         $order->update(['order_status' => 'processing']);
                     }
                     
+                    // Sync to QAD immediately on success/paid
+                    \App\Jobs\SyncOrderToQad::dispatch($order);
+                    
                     // Refresh order to get updated status
                     $order->refresh();
                     
@@ -974,6 +980,26 @@ class CheckoutController extends Controller
             ]);
         }
         
+        // If payment is paid but SO number is still empty, try to sync immediately (so user sees SO on success page).
+        // Primary path should be via Xendit webhook; this is a backup path for redirect/refresh flows.
+        if ($order->payment_status === 'paid' && empty($order->qad_so_number)) {
+            try {
+                \App\Jobs\SyncOrderToQad::dispatchSync($order);
+                $order->refresh();
+                Log::info('Checkout success: SO sync attempted', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'qad_so_number' => $order->qad_so_number,
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to sync SO to QID on success page, dispatching async', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                \App\Jobs\SyncOrderToQad::dispatch($order);
+            }
+        }
+
         // Send thank you notification if payment is paid
         if ($order->payment_status === 'paid') {
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');

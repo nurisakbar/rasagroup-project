@@ -210,6 +210,22 @@ class Product extends Model
     }
 
     /**
+     * Get current stock based on selected hub in session.
+     */
+    public function getCurrentStockAttribute(): int
+    {
+        $selectedHubId = session('selected_hub_id');
+        
+        if ($selectedHubId) {
+            $stock = $this->warehouseStocks->where('warehouse_id', $selectedHubId)->first();
+            return $stock ? $stock->stock : 0;
+        }
+
+        // If no hub selected, sum all stocks (or handle as needed)
+        return $this->warehouseStocks->sum('stock');
+    }
+
+    /**
      * Get the route key for the model.
      *
      * @return string

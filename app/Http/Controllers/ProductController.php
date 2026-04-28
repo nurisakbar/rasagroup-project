@@ -11,7 +11,7 @@ class ProductController extends Controller
     {
         $selectedHubId = session('selected_hub_id');
         
-        $query = Product::where('status', 'active');
+        $query = Product::with(['category', 'brand', 'warehouseStocks'])->where('status', 'active');
 
         // Only show products that have stock
         if ($selectedHubId) {
@@ -67,7 +67,7 @@ class ProductController extends Controller
                 $query->latest();
         }
 
-        $perPage = $request->get('per_page', 12);
+        $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage)->withQueryString();
         $categories = \App\Models\Category::where('is_active', true)->get();
 
@@ -105,7 +105,47 @@ class ProductController extends Controller
             }
         }
         
-        return view('products.show', compact('product', 'selectedHubId', 'selectedWarehouseId'));
+        // Get Related Products (Same category, excluding current product)
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('status', 'active')
+            ->take(3)
+            ->get();
+
+        // If not enough related products by category, find by name similarity
+        if ($relatedProducts->count() < 3) {
+            $moreRelated = Product::where('name', 'like', '%' . substr($product->name, 0, 5) . '%')
+                ->where('id', '!=', $product->id)
+                ->where('category_id', '!=', $product->category_id)
+                ->where('status', 'active')
+                ->take(3 - $relatedProducts->count())
+                ->get();
+            $relatedProducts = $relatedProducts->merge($moreRelated);
+        }
+
+        // Generate Dummy Reviews
+        $dummyReviews = [
+            [
+                'user' => 'Andi Wijaya',
+                'rating' => 5,
+                'date' => '12 Maret 2026',
+                'comment' => 'Produk sangat berkualitas, rasa milk dates-nya sangat terasa dan autentik. Pengiriman cepat!'
+            ],
+            [
+                'user' => 'Siti Aminah',
+                'rating' => 4,
+                'date' => '05 April 2026',
+                'comment' => 'Enak buat campuran minuman di cafe saya. Pelanggan pada suka. Reorder lagi nanti.'
+            ],
+            [
+                'user' => 'Budi Santoso',
+                'rating' => 5,
+                'date' => '20 April 2026',
+                'comment' => 'Packaging aman, tidak ada bocor. Bubuknya halus dan gampang larut.'
+            ]
+        ];
+        
+        return view('products.show', compact('product', 'selectedHubId', 'selectedWarehouseId', 'relatedProducts', 'dummyReviews'));
     }
 
     public function quickView($identifier)

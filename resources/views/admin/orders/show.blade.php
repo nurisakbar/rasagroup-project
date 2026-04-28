@@ -22,6 +22,14 @@
                     @else
                         <span class="label label-primary pull-right"><i class="fa fa-globe"></i> ONLINE</span>
                     @endif
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display: inline;">
+                            @csrf
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QAD">
+                                <i class="fa fa-refresh"></i> Sinkron QAD
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
@@ -87,6 +95,37 @@
                             <td>{{ $order->notes }}</td>
                         </tr>
                         @endif
+                    </table>
+                </div>
+            </div>
+
+            <!-- QAD Information -->
+            <div class="box box-success">
+                <div class="box-header">
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QAD (ERP)</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">QAD Customer Code</th>
+                            <td>
+                                @if($order->user->qad_customer_code)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>QAD Sales Order No.</th>
+                            <td>
+                                @if($order->qad_so_number)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </div>

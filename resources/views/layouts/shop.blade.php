@@ -269,6 +269,11 @@
                             // Update cart count in header if element exists
                             $('.pro-count.blue').text(response.cart_count);
                             $('.pro-count.white').text(response.cart_count);
+
+                            // Update mini-cart content
+                            if (response.mini_cart_html) {
+                                $('.cart-dropdown-wrap').html(response.mini_cart_html);
+                            }
                         }
                     },
                     error: function(xhr) {

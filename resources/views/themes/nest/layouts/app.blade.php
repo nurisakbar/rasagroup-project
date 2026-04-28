@@ -669,7 +669,10 @@
                             // Update cart counts in header
                             $('.pro-count').text(response.cart_count);
                             
-                            // Optionally reload mini-cart content (could be more complex)
+                            // Update mini-cart content
+                            if (response.mini_cart_html) {
+                                $('.cart-dropdown-wrap').html(response.mini_cart_html);
+                            }
                         } else {
                             alert(response.error || 'Terjadi kesalahan saat menambahkan produk.');
                         }

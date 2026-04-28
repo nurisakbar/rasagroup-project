@@ -1,4 +1,4 @@
-<div class="col-lg-1-5 col-md-4 col-12 col-sm-6">
+<div class="{{ $columnClass ?? 'col-lg-1-5 col-md-4 col-12 col-sm-6' }}">
     <div class="product-cart-wrap mb-30 wow animate__animated animate__fadeIn" data-wow-delay=".1s">
         <div class="product-img-action-wrap">
             <div class="product-img product-img-zoom">
@@ -31,6 +31,7 @@
             </div>
             <div>
                 <span class="font-small text-muted">Oleh <a href="#">{{ $product->brand->name ?? 'Tanpa Brand' }}</a></span>
+                <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
             </div>
             <div class="product-card-bottom">
                 <div class="product-price">

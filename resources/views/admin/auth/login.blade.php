@@ -114,6 +114,32 @@
     .form-control::placeholder {
       color: #a0aec0;
     }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper .form-control {
+      padding-right: 44px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #718096;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .toggle-password:focus {
+      outline: none;
+      color: #3182ce;
+    }
     
     .btn-login {
       width: 100%;
@@ -210,14 +236,19 @@
     
     <div class="form-group">
       <label class="form-label" for="password">Password</label>
-      <input 
-        type="password" 
-        id="password"
-        name="password" 
-        class="form-control" 
-        placeholder="Masukan password Anda" 
-        required
-      >
+      <div class="password-wrapper">
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-control"
+          placeholder="Masukan password Anda"
+          required
+        >
+        <button type="button" class="toggle-password" aria-label="Tampilkan password" aria-pressed="false">
+          <i class="fa fa-eye" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
     
     @if(env('CLOUDFLARE_TURNSTILE_ENABLED', 'false') === 'true')
@@ -245,6 +276,29 @@
 <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
 <!-- Bootstrap 3.4.1 -->
 <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', function() {
+    var passwordInput = document.getElementById('password');
+    var togglePasswordBtn = document.querySelector('.toggle-password');
+
+    if (!passwordInput || !togglePasswordBtn) {
+      return;
+    }
+
+    var icon = togglePasswordBtn.querySelector('i');
+
+    togglePasswordBtn.addEventListener('click', function() {
+      var showPassword = passwordInput.type === 'password';
+      passwordInput.type = showPassword ? 'text' : 'password';
+      togglePasswordBtn.setAttribute('aria-label', showPassword ? 'Sembunyikan password' : 'Tampilkan password');
+      togglePasswordBtn.setAttribute('aria-pressed', showPassword ? 'true' : 'false');
+
+      if (icon) {
+        icon.className = showPassword ? 'fa fa-eye-slash' : 'fa fa-eye';
+      }
+    });
+  });
+</script>
 
 @if(env('CLOUDFLARE_TURNSTILE_ENABLED', 'false') === 'true')
 <script>

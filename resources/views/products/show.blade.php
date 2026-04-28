@@ -1,6 +1,8 @@
 @extends('themes.nest.layouts.app')
 
 @section('title', $product->display_name)
+@section('meta_description', Str::limit(strip_tags($product->description), 160))
+@section('og_image', $product->image_url)
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -156,6 +158,7 @@
                                         <ul class="mr-50 float-start">
                                             <li class="mb-5">Brand: <span class="text-brand">{{ $product->brand->name ?? 'Unknown' }}</span></li>
                                             <li class="mb-5">Category: <span class="text-brand">{{ $product->category->name ?? 'Unknown' }}</span></li>
+                                            <li class="mb-5">Stok: <span class="text-brand">{{ $product->current_stock }}</span></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -168,7 +171,10 @@
                             <div class="tab-style3">
                                 <ul class="nav nav-tabs text-uppercase">
                                     <li class="nav-item">
-                                        <a class="nav-link active" id="Description-tab" data-bs-toggle="tab" href="#Description">Description</a>
+                                        <a class="nav-link active" id="Description-tab" data-bs-toggle="tab" href="#Description">Deskripsi</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="Reviews-tab" data-bs-toggle="tab" href="#Reviews">Ulasan ({{ count($dummyReviews) }})</a>
                                     </li>
                                 </ul>
                                 <div class="tab-content shop_info_tab entry-main-content">
@@ -177,27 +183,56 @@
                                             {!! $product->description !!}
                                         </div>
                                     </div>
+                                    <div class="tab-pane fade" id="Reviews">
+                                        <div class="comments-area">
+                                            <div class="row">
+                                                <div class="col-lg-8">
+                                                    <h4 class="mb-30">Ulasan Pelanggan</h4>
+                                                    <div class="comment-list">
+                                                        @foreach($dummyReviews as $review)
+                                                            <div class="single-comment justify-content-between d-flex mb-30">
+                                                                <div class="user justify-content-between d-flex">
+                                                                    <div class="thumb text-center">
+                                                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/blog/author-1.png') }}" alt="" />
+                                                                        <a href="#" class="font-heading text-brand">{{ $review['user'] }}</a>
+                                                                    </div>
+                                                                    <div class="desc">
+                                                                        <div class="d-flex justify-content-between mb-10">
+                                                                            <div class="d-flex align-items-center">
+                                                                                <span class="font-xs text-muted">{{ $review['date'] }} </span>
+                                                                            </div>
+                                                                            <div class="product-rate d-inline-block">
+                                                                                <div class="product-rating" style="width: {{ $review['rating'] * 20 }}%"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <p class="mb-10">{{ $review['comment'] }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Related Products (if available) -->
+                        <!-- Related Products -->
                         <div class="row mt-60">
                             <div class="col-12">
-                                <h2 class="section-title style-1 mb-30">Related products</h2>
+                                <h2 class="section-title style-1 mb-30">Produk Terkait</h2>
                             </div>
                             <div class="col-12">
                                 <div class="row related-products">
-                                     <!-- Ideally this should loop through related products if variable exists -->
-                                     @if(isset($relatedProducts) && $relatedProducts->count() > 0)
-                                        @foreach($relatedProducts as $related)
-                                            <div class="col-lg-3 col-md-4 col-12 col-sm-6">
-                                                @include('themes.nest.partials.product-card', ['product' => $related])
-                                            </div>
-                                        @endforeach
-                                     @else
-                                        <p>No related products found.</p>
-                                     @endif
+                                     @forelse($relatedProducts as $related)
+                                        @include('themes.nest.partials.product-card', ['product' => $related, 'columnClass' => 'col-lg-4 col-md-6 col-12'])
+                                     @empty
+                                        <div class="col-12">
+                                            <p class="text-muted">Tidak ada produk terkait ditemukan.</p>
+                                        </div>
+                                     @endforelse
                                 </div>
                             </div>
                         </div>
@@ -224,7 +259,8 @@
                             @endforeach
                         </ul>
                     </div>
-                    <!-- Fillter By Price -->
+                    <!-- Fillter By Price (Hidden) -->
+                    {{-- 
                     <div class="sidebar-widget price_range range mb-30">
                         <h5 class="section-title style-1 mb-30">Fill by price</h5>
                         <div class="price-filter">
@@ -237,6 +273,7 @@
                             </div>
                         </div>
                     </div>
+                    --}}
                     <!-- Product sidebar Widget -->
                     <div class="sidebar-widget product-sidebar mb-30 p-30 bg-grey border-radius-10">
                         <h5 class="section-title style-1 mb-30">New products</h5>

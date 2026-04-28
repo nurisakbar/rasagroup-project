@@ -1,6 +1,7 @@
 @extends('layouts.shop')
 
-@section('title', 'Katalog Produk')
+@section('title', 'Katalog Produk Premium')
+@section('meta_description', 'Jelajahi koleksi lengkap produk makanan dan minuman premium di Multi Citra Rasa Marketplace. Harga terbaik untuk kebutuhan ritel dan bisnis.')
 
 @section('content')
 <main class="main">
@@ -24,9 +25,9 @@
                             </div>
                             <div class="sort-by-dropdown">
                                 <ul>
-                                    <li><a class="{{ request('per_page') == 12 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 12]) }}">12</a></li>
-                                    <li><a class="{{ request('per_page') == 24 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 24]) }}">24</a></li>
-                                    <li><a class="{{ request('per_page') == 48 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 48]) }}">48</a></li>
+                                    <li><a class="{{ request('per_page', 15) == 15 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 15]) }}">15</a></li>
+                                    <li><a class="{{ request('per_page') == 25 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 25]) }}">25</a></li>
+                                    <li><a class="{{ request('per_page') == 50 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 50]) }}">50</a></li>
                                 </ul>
                             </div>
                         </div>

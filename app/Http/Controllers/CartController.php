@@ -189,12 +189,15 @@ class CartController extends Controller
         }
 
         if ($request->ajax()) {
+            $cartCount = Auth::check() 
+                ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
+                : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Produk "' . $product->display_name . '" berhasil ditambahkan.',
-                'cart_count' => Auth::check() 
-                    ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
-                    : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity')
+                'cart_count' => $cartCount,
+                'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
             ]);
         }
 

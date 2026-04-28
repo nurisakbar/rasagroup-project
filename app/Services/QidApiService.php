@@ -151,7 +151,8 @@ class QidApiService
         return [
             'Authorization' => 'Bearer ' . $this->getToken(),
             'Content-Type'  => 'application/json',
-            'Accept'        => 'application/json',
+            // Postman collection uses Accept: text/plain for these endpoints
+            'Accept'        => 'text/plain',
         ];
     }
 
@@ -257,10 +258,11 @@ class QidApiService
                 return $response->json() ?? ['raw' => $response->body()];
             }
 
-            Log::error('QidApi request error', [
-                'method'   => $method,
+            Log::error("QidApi request error", [
+                'method' => $method,
                 'endpoint' => $endpoint,
-                'status'   => $response->status(),
+                'status' => $response->status(),
+                'payload' => $data,
                 'response' => $response->body(),
             ]);
 
@@ -283,5 +285,42 @@ class QidApiService
     public function getUserInfo(): ?array
     {
         return Cache::get('qidapi_user_info');
+    }
+
+    /**
+     * Decode JWT claims without verifying signature (for capability checks/logging).
+     */
+    public function getTokenClaims(): ?array
+    {
+        $token = $this->getToken();
+        if (!$token || !str_contains($token, '.')) {
+            return null;
+        }
+
+        $parts = explode('.', $token);
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        $payload = $parts[1];
+        $payload = strtr($payload, '-_', '+/');
+        $pad = strlen($payload) % 4;
+        if ($pad) {
+            $payload .= str_repeat('=', 4 - $pad);
+        }
+
+        $json = base64_decode($payload, true);
+        if ($json === false) {
+            return null;
+        }
+
+        $claims = json_decode($json, true);
+        return is_array($claims) ? $claims : null;
+    }
+
+    public function canPosting(): bool
+    {
+        $claims = $this->getTokenClaims();
+        return (bool) ($claims['can_posting'] ?? false);
     }
 }

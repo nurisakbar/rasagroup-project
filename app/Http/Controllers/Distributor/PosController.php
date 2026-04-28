@@ -348,6 +348,9 @@ class PosController extends Controller
 
             DB::commit();
 
+            // Sync to QAD
+            \App\Jobs\SyncOrderToQad::dispatch($order);
+
             // Clear cart
             session()->forget('pos_cart');
 

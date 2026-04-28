@@ -1,5 +1,8 @@
 @extends('themes.nest.layouts.app')
 
+@section('title', 'Marketplace Produk Makanan & Minuman Berkualitas')
+@section('meta_description', 'Selamat datang di Multi Citra Rasa Marketplace. Temukan berbagai pilihan produk sirup premium, bahan baku makanan, dan kebutuhan horeca terbaik untuk bisnis Anda.')
+
 @section('content')
         <section class="popular-categories section-padding" style="display: none;">
             <div class="container wow animate__animated animate__fadeIn">

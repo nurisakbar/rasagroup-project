@@ -1,12 +1,24 @@
 <meta charset="utf-8" />
-<title>@yield('title', 'Nest - Multipurpose eCommerce HTML Template')</title>
+<title>@hasSection('title') @yield('title') | Multi Citra Rasa Marketplace @else Multi Citra Rasa Marketplace - Solusi Kebutuhan Produk Berkualitas @endif</title>
 <meta http-equiv="x-ua-compatible" content="ie=edge" />
-<meta name="description" content="@yield('meta_description', '')" />
+<meta name="description" content="@yield('meta_description', 'Multi Citra Rasa Marketplace menyediakan berbagai produk berkualitas mulai dari sirup premium, bahan makanan, hingga kebutuhan horeca dengan layanan terbaik.')" />
+<meta name="keywords" content="Multi Citra Rasa, Marketplace, Sirup Premium, Horeca, Bahan Makanan, Rasa Group" />
+<meta name="robots" content="index, follow" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta property="og:title" content="@yield('og_title', '')" />
-<meta property="og:type" content="@yield('og_type', '')" />
-<meta property="og:url" content="@yield('og_url', '')" />
-<meta property="og:image" content="@yield('og_image', '')" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="{{ url()->current() }}" />
+<meta property="og:title" content="@yield('title', 'Multi Citra Rasa Marketplace')" />
+<meta property="og:description" content="@yield('meta_description', 'Multi Citra Rasa Marketplace - Solusi Kebutuhan Produk Berkualitas')" />
+<meta property="og:image" content="@yield('og_image', asset('logorasa.png'))" />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content="{{ url()->current() }}" />
+<meta property="twitter:title" content="@yield('title', 'Multi Citra Rasa Marketplace')" />
+<meta property="twitter:description" content="@yield('meta_description', 'Multi Citra Rasa Marketplace - Solusi Kebutuhan Produk Berkualitas')" />
+<meta property="twitter:image" content="@yield('og_image', asset('logorasa.png'))" />
 <!-- Favicon -->
 <link rel="shortcut icon" type="image/x-icon" href="{{ asset('themes/nest-frontend/assets/imgs/theme/favicon.svg') }}" />
 <!-- Template CSS -->

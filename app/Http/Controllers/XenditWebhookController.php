@@ -84,6 +84,9 @@ class XenditWebhookController extends Controller
                         // Dispatch background jobs for notifications
                         \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
                         \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+
+                        // Sync to QAD
+                        \App\Jobs\SyncOrderToQad::dispatch($order);
                         break;
 
                     case 'EXPIRED':

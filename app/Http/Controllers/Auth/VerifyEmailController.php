@@ -22,6 +22,6 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
-        return redirect()->route('wa.verify');
+        return redirect()->route('verification.success');
     }
 }

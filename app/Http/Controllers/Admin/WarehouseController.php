@@ -569,6 +569,55 @@ class WarehouseController extends Controller
             ];
         }
 
+        // Test connectivity to QID API
+        $qidBaseUrl = config('qidapi.base_url');
+        $qidApi = app(\App\Services\QidApiService::class);
+        $qidToken = $qidApi->getToken();
+        
+        try {
+            $start = microtime(true);
+            $response = Http::timeout(5)->get($qidBaseUrl);
+            $end = microtime(true);
+            $results['tests']['qid_connectivity'] = [
+                'base_url' => $qidBaseUrl,
+                'status' => $response->status(),
+                'duration' => round($end - $start, 2) . 's',
+                'reachable' => true,
+                'token_valid' => !empty($qidToken),
+                'token_preview' => $qidToken ? substr($qidToken, 0, 15) . '...' : 'NONE'
+            ];
+            
+            if ($qidToken) {
+                // Test a simple master data endpoint
+                $itemStart = microtime(true);
+                $itemRes = Http::withToken($qidToken)->post("{$qidBaseUrl}/api/master/item/list", [
+                    'prodLine' => 'FG',
+                    'length' => 1
+                ]);
+                $itemEnd = microtime(true);
+                $results['tests']['qid_master_data'] = [
+                    'endpoint' => '/api/master/item/list',
+                    'status' => $itemRes->status(),
+                    'duration' => round($itemEnd - $itemStart, 2) . 's',
+                    'success' => $itemRes->successful(),
+                ];
+            }
+        } catch (\Exception $e) {
+            $results['tests']['qid_connectivity'] = [
+                'base_url' => $qidBaseUrl,
+                'error' => $e->getMessage(),
+                'reachable' => false
+            ];
+        }
+
+        // Server Environment Info
+        $results['env'] = [
+            'php_version' => PHP_VERSION,
+            'server_ip' => $_SERVER['SERVER_ADDR'] ?? 'unknown',
+            'remote_ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+        ];
+
         return response()->json($results);
     }
 }

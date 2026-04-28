@@ -51,9 +51,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Send WhatsApp Verification Code
-        $message = "Halo {$user->name}, selamat datang di Rasagroup! Kode verifikasi Anda adalah: {$waCode}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
-        $whatsappService->sendText($user->phone, $message);
+        // Dispatch WhatsApp Verification Job to queue
+        \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $waCode);
 
         return redirect(route('wa.verify', absolute: false));
     }

@@ -89,8 +89,8 @@
                                     <select class="form-control select2" id="village_id" name="village_id" style="width: 100%;">
                                         <option value="">-- Pilih Desa/Kelurahan --</option>
                                         @foreach($villages as $village)
-                                            <option value="{{ $village->id }}" {{ old('village_id', $warehouse->village_id) == $village->id ? 'selected' : '' }}>
-                                                {{ $village->name }}
+                                            <option value="{{ $village['id'] }}" {{ old('village_id', $warehouse->village_id) == $village['id'] ? 'selected' : '' }}>
+                                                {{ $village['name'] }}
                                             </option>
                                         @endforeach
                                     </select>

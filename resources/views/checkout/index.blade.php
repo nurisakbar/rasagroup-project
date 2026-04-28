@@ -85,14 +85,16 @@
                         <div class="payment_method">
                             <div class="payment_accordion" id="addressList">
                                 @foreach($addresses as $address)
-                                    <div class="payment-option mb-15 address-card {{ $address->is_default ? 'active' : '' }}" 
+                                    <div class="payment-option mb-15 address-card {{ $address->id === ($defaultAddress->id ?? '') ? 'active' : '' }}" 
                                          data-address-id="{{ $address->id }}"
+                                         data-recipient="{{ $address->recipient_name }}"
+                                         data-full-address="{{ $address->full_address }}"
                                          onclick="selectAddress('{{ $address->id }}')">
                                         <div class="custom-radio">
                                             <input class="form-check-input" type="radio" name="address_id" 
                                                    id="address{{ $address->id }}" value="{{ $address->id }}" 
-                                                   {{ $address->is_default ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="address{{ $address->id }}" data-bs-toggle="collapse" data-target="#addressType{{ $address->id }}" aria-controls="addressType{{ $address->id }}">
+                                                   {{ $address->id === ($defaultAddress->id ?? '') ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="address{{ $address->id }}">
                                                 <span class="font-weight-bold">{{ $address->label }}</span> 
                                                 @if($address->is_default)
                                                     <span class="badge bg-success ml-10">Utama</span>
@@ -491,7 +493,19 @@
         
         // Update styling
         $('.address-card').removeClass('active');
-        $('[data-address-id="' + addressId + '"]').addClass('active');
+        var selectedCard = $('[data-address-id="' + addressId + '"]');
+        selectedCard.addClass('active');
+        
+        // Update summary immediately for better UX
+        var recipient = selectedCard.data('recipient');
+        var fullAddress = selectedCard.data('full-address');
+        
+        if (recipient) {
+            $('#shippingRecipient').text(recipient).removeClass('text-danger');
+        }
+        if (fullAddress) {
+            $('#shippingAddress').text(fullAddress);
+        }
         
         // Reload services
         if (currentExpeditionId) {
@@ -632,7 +646,7 @@
                 $('#totalDisplay').text(data.total_formatted);
                 
                 // Update Address & Hub info
-                if (data.address) {
+                if (data.address && data.address.id == currentAddressId) {
                     $('#shippingRecipient').text(data.address.recipient_name).removeClass('text-danger');
                     $('#shippingAddress').text(data.address.full_address);
                 }
