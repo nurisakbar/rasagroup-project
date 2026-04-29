@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Log;
 
 class VerifyEmailNotification extends VerifyEmail
 {
@@ -17,6 +17,13 @@ class VerifyEmailNotification extends VerifyEmail
     public function toMail($notifiable)
     {
         $verificationUrl = $this->verificationUrl($notifiable);
+
+        Log::info('Building VerifyEmailNotification mail', [
+            'user_id' => method_exists($notifiable, 'getKey') ? $notifiable->getKey() : null,
+            'email' => $notifiable->email ?? null,
+            'verification_url_host' => parse_url($verificationUrl, PHP_URL_HOST),
+            'verification_url_path' => parse_url($verificationUrl, PHP_URL_PATH),
+        ]);
 
         return (new MailMessage)
             ->subject('Verifikasi Alamat Email - Rasa Group')

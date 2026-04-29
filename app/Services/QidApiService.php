@@ -18,6 +18,7 @@ class QidApiService
 
     /** Durasi cache token (menit) — sedikit di bawah masa berlaku token aslinya */
     private const TOKEN_TTL_MINUTES = 55;
+    private const SALES_ORDER_CREATE_ENDPOINT = '/api/transaction/sales-orders/create';
 
     public function __construct()
     {
@@ -233,8 +234,19 @@ class QidApiService
         }
 
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+        $isSalesOrderCreate = $this->isSalesOrderCreateEndpoint($endpoint);
 
         try {
+            if ($isSalesOrderCreate) {
+                Log::info('QidApi Sales Order Request', [
+                    'method' => strtoupper($method),
+                    'url' => $url,
+                    'payload' => $data,
+                    'payload_pretty' => $this->prettyJson($data),
+                    'retry' => $retry,
+                ]);
+            }
+
             $http = Http::withHeaders($this->authHeaders());
 
             $response = match (strtoupper($method)) {
@@ -248,6 +260,17 @@ class QidApiService
 
             // Jika 401, coba refresh token sekali lalu ulangi request
             if ($response->status() === 401 && !$retry) {
+                if ($isSalesOrderCreate) {
+                    Log::warning('QidApi Sales Order Unauthorized (retrying login)', [
+                        'method' => strtoupper($method),
+                        'url' => $url,
+                        'status' => $response->status(),
+                        'payload' => $data,
+                        'response' => $response->body(),
+                        'payload_pretty' => $this->prettyJson($data),
+                        'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                    ]);
+                }
                 Log::warning('QidApi token expired, re-authenticating...');
                 $this->logout();
                 $this->login();
@@ -255,7 +278,30 @@ class QidApiService
             }
 
             if ($response->successful()) {
+                if ($isSalesOrderCreate) {
+                    Log::info('QidApi Sales Order Response', [
+                        'method' => strtoupper($method),
+                        'url' => $url,
+                        'status' => $response->status(),
+                        'payload' => $data,
+                        'response' => $response->json() ?? $response->body(),
+                        'payload_pretty' => $this->prettyJson($data),
+                        'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                    ]);
+                }
                 return $response->json() ?? ['raw' => $response->body()];
+            }
+
+            if ($isSalesOrderCreate) {
+                Log::error('QidApi Sales Order Failed', [
+                    'method' => strtoupper($method),
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'payload' => $data,
+                    'response' => $response->body(),
+                    'payload_pretty' => $this->prettyJson($data),
+                    'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                ]);
             }
 
             Log::error("QidApi request error", [
@@ -268,6 +314,15 @@ class QidApiService
 
             return null;
         } catch (\Exception $e) {
+            if ($isSalesOrderCreate) {
+                Log::error('QidApi Sales Order Exception', [
+                    'method' => strtoupper($method),
+                    'url' => $url,
+                    'payload' => $data,
+                    'message' => $e->getMessage(),
+                    'payload_pretty' => $this->prettyJson($data),
+                ]);
+            }
             Log::error('QidApi request exception', [
                 'method'   => $method,
                 'endpoint' => $endpoint,
@@ -275,6 +330,29 @@ class QidApiService
             ]);
             return null;
         }
+    }
+
+    protected function isSalesOrderCreateEndpoint(string $endpoint): bool
+    {
+        return str_ends_with('/' . ltrim($endpoint, '/'), self::SALES_ORDER_CREATE_ENDPOINT);
+    }
+
+    protected function prettyJson(mixed $value): string
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            }
+        }
+
+        $encoded = json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if ($encoded === false) {
+            return (string) $value;
+        }
+
+        return $encoded;
     }
 
     /**

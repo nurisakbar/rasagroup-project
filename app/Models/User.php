@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -282,6 +283,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification()
     {
+        Log::info('Sending email verification notification', [
+            'user_id' => $this->getKey(),
+            'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at,
+        ]);
+
         $this->notify(new \App\Notifications\VerifyEmailNotification);
     }
 }

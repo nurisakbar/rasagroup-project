@@ -595,6 +595,22 @@ class CheckoutController extends Controller
             return back()->with('error', 'Stock tidak mencukupi di hub ' . $sourceWarehouse->name . ":\n" . implode("\n", $stockErrors));
         }
 
+        $invalidPriceItems = [];
+        foreach ($carts as $cart) {
+            $unitPrice = (float) ($cart->product->price ?? 0);
+            if ($unitPrice <= 0) {
+                $invalidPriceItems[] = $cart->product->display_name ?? $cart->product->name ?? $cart->product_id;
+            }
+        }
+
+        if (!empty($invalidPriceItems)) {
+            Log::error('Checkout store aborted: product master price is invalid (<= 0)', [
+                'user_id' => Auth::id(),
+                'invalid_items' => $invalidPriceItems,
+            ]);
+            return back()->with('error', 'Terdapat produk dengan harga 0 di master: ' . implode(', ', $invalidPriceItems) . '. Silakan perbarui harga produk terlebih dahulu.');
+        }
+
         DB::beginTransaction();
         try {
             $orderNumber = $this->generateOrderNumber();

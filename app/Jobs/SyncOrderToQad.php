@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Services\QadService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -66,7 +67,7 @@ class SyncOrderToQad implements ShouldQueue
 
         // 2. Sync Sales Order
         if (!$this->order->qad_so_number) {
-            $forceAttempt = (bool) env('QIDAPI_FORCE_SO', false);
+            $forceAttempt = (bool) config('qidapi.force_so', env('QIDAPI_FORCE_SO', true)); // Default to true if not set
             if (!$forceAttempt && !$qadService->canPosting()) {
                 Log::error('SyncOrderToQad: QID token has can_posting=false; cannot create Sales Order. Update QIDAPI credentials to a user with posting permission.', [
                     'order_id' => $this->order->id,
@@ -88,31 +89,53 @@ class SyncOrderToQad implements ShouldQueue
             return;
         }
 
-        // Prefer QID auto-numbering; keep our internal order number as PO/remarks for traceability.
-        $qidSalesOrderNumber = '';
+        // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.
+        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
+        $purchaseOrderNumber = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) $this->order->order_number));
+        $purchaseOrderNumber = substr($purchaseOrderNumber, -10);
+        if ($purchaseOrderNumber === '') {
+            $purchaseOrderNumber = $qidSalesOrderNumber;
+        }
 
-        $locationCode = $this->order->sourceWarehouse?->kode_hub ?: 'FG001';
+        // Use fixed QAD location to avoid invalid hub code mapping.
+        $locationCode = 'FG001';
         $itemUomCache = [];
 
         $lines = [];
+        $invalidPriceItems = [];
         foreach ($this->order->items as $index => $item) {
             $price = (float) ($item->price ?? 0);
             if ($price <= 0 && $item->relationLoaded('product') && $item->product) {
                 $price = (float) ($item->product->price ?? 0);
             }
             if ($price <= 0) {
-                // Dummy price fallback to avoid QID BadRequest.
-                // We still log loudly so it can be corrected in product/order pricing.
-                $dummyPrice = 1.0;
-                Log::warning('SyncOrderToQad: Using dummy price for SO line', [
+                $itemCode = $item->product->code ?? $item->product->name ?? null;
+                $qadDefaultPrice = null;
+                if ($itemCode) {
+                    $itemRes = $qadService->getItem($itemCode);
+                    $qadDefaultPrice = (float) ($itemRes['data']['defaultPrice'] ?? 0);
+                }
+
+                if ($qadDefaultPrice > 0) {
+                    $price = $qadDefaultPrice;
+                }
+            }
+
+            if ($price <= 0) {
+                $invalidPriceItems[] = [
+                    'order_item_id' => $item->id ?? null,
+                    'item_code' => $item->product?->code ?? null,
+                    'order_item_price' => (float) ($item->price ?? 0),
+                    'product_master_price' => (float) ($item->product?->price ?? 0),
+                ];
+                Log::error('SyncOrderToQad: Invalid price for SO line', [
                     'order_id' => $this->order->id,
                     'order_number' => $this->order->order_number,
                     'order_item_id' => $item->id ?? null,
                     'item_code' => $item->product?->code ?? null,
                     'original_price' => $price,
-                    'dummy_price' => $dummyPrice,
+                    'product_master_price' => (float) ($item->product?->price ?? 0),
                 ]);
-                $price = $dummyPrice;
             }
 
             $itemCode = $item->product->code ?? $item->product->name;
@@ -145,9 +168,18 @@ class SyncOrderToQad implements ShouldQueue
             ];
         }
 
+        if (!empty($invalidPriceItems)) {
+            Log::error('SyncOrderToQad: Abort create SO because one or more item prices are invalid (<= 0). Please fix product/order master pricing first.', [
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'invalid_items' => $invalidPriceItems,
+            ]);
+            return;
+        }
+
         $payload = [
             "domainCode" => "MCR",
-            "salesOrderNumber" => $qidSalesOrderNumber, // empty = auto-generate (per QID example)
+            "salesOrderNumber" => $qidSalesOrderNumber,
             "billToCustomerCode" => $user->qad_customer_code,
             "soldToCustomerCode" => $user->qad_customer_code,
             "shipToCustomerCode" => $user->qad_customer_code,
@@ -158,7 +190,7 @@ class SyncOrderToQad implements ShouldQueue
             "promiseDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
             "creditTermsCode" => "CIA",
             "remarks" => $this->order->notes ?? ("Order from Website: " . $this->order->order_number),
-            "purchaseOrderNumber" => substr($this->order->order_number, -10),
+            "purchaseOrderNumber" => $purchaseOrderNumber,
             "taxClass" => "PPN",
             "taxEnvironment" => "IDN",
             "isTaxable" => true,
@@ -169,6 +201,21 @@ class SyncOrderToQad implements ShouldQueue
             "siteCode" => "MCR",
             "salesOrderLines" => $lines
         ];
+
+        Log::info("SyncOrderToQad: Checking if Sales Order already exists in QAD", [
+            'qid_so_number' => $qidSalesOrderNumber,
+        ]);
+        $checkRes = $qadService->getSalesOrder($qidSalesOrderNumber);
+        $existingSo = $checkRes['data'] ?? null;
+
+        if ($existingSo) {
+            $soNumber = $existingSo['salesOrderNumber'] ?? $existingSo['salesOrderCode'] ?? null;
+            if ($soNumber) {
+                $this->order->update(['qad_so_number' => $soNumber]);
+                Log::info("SyncOrderToQad: Sales Order already exists in QAD, linked existing", ['qad_so' => $soNumber]);
+                return;
+            }
+        }
 
         Log::info("SyncOrderToQad: Creating Sales Order in QAD", [
             'order_id' => $this->order->id,
@@ -206,7 +253,49 @@ class SyncOrderToQad implements ShouldQueue
             $this->order->update(['qad_so_number' => $soNumber]);
             Log::info("SyncOrderToQad: Sales Order created in QAD", ['qad_so' => $soNumber]);
         } else {
+            // Handle collision by incrementing local sequence if it was a BadRequest on SO creation
+            $errorMsg = json_encode($result['error'] ?? $result);
+            if (str_contains(strtolower($errorMsg), 'badrequest') || str_contains(strtolower($errorMsg), 'exists')) {
+                Log::warning("SyncOrderToQad: Likely SO number collision or bad request, clearing local qid_sales_order_number to retry on next run", [
+                    'order_id' => $this->order->id,
+                    'error' => $errorMsg
+                ]);
+                $this->order->update(['qid_sales_order_number' => null]);
+            }
             Log::error("SyncOrderToQad: Failed to create sales order in QAD", ['order_id' => $this->order->id, 'response' => $result]);
         }
+    }
+
+    protected function getOrCreateQidSalesOrderNumber(): string
+    {
+        $existing = (string) ($this->order->qid_sales_order_number ?? '');
+        if ($existing !== '') {
+            return $existing;
+        }
+
+        $nextNumber = DB::transaction(function () {
+            $last = Order::query()
+                ->whereNotNull('qid_sales_order_number')
+                ->where('qid_sales_order_number', 'like', 'WS%')
+                ->orderByDesc('qid_sales_order_number')
+                ->lockForUpdate()
+                ->value('qid_sales_order_number');
+
+            $lastSequence = (int) preg_replace('/\D/', '', (string) $last);
+            $nextSequence = $lastSequence + 1;
+            if ($nextSequence < 100001 && $last === null) {
+                $nextSequence = 100001;
+            }
+            if ($nextSequence > 999999) {
+                $nextSequence = 1;
+            }
+
+            return 'WS' . str_pad((string) $nextSequence, 6, '0', STR_PAD_LEFT);
+        });
+
+        $this->order->update(['qid_sales_order_number' => $nextNumber]);
+        $this->order->refresh();
+
+        return $nextNumber;
     }
 }

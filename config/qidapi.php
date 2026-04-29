@@ -24,4 +24,13 @@ return [
     | ID aplikasi yang digunakan untuk login ke QidApi.
     */
     'apps_id'  => env('QIDAPI_APPS_ID', '86770460-cfd3-11ee-b044-d747f56a0d39'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Force Sales Order Creation
+    |--------------------------------------------------------------------------
+    | Set ke true untuk mencoba membuat SO meskipun token tidak memiliki
+    | permission can_posting. Berguna untuk testing/dev.
+    */
+    'force_so' => env('QIDAPI_FORCE_SO', true),
 ];

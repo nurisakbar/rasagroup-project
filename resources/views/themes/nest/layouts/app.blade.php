@@ -556,6 +556,19 @@
                             @csrf
                             <button type="submit" class="btn-link p-0 border-0 bg-transparent text-decoration-underline font-weight-bold" style="color: #6A1B1B; cursor: pointer;">Kirim ulang email verifikasi</button>
                         </form>
+
+                        @if (session('status') === 'verification-link-sent')
+                            <span class="ms-2 fw-bold" style="color: #155724;">Link verifikasi sudah dikirim ulang.</span>
+                        @endif
+
+                        @if (session('error'))
+                            <span class="ms-2 fw-bold" style="color: #721c24;">
+                                {{ session('error') }}
+                                @if (session('debug_id'))
+                                    <span class="fw-normal">(debug_id: {{ session('debug_id') }})</span>
+                                @endif
+                            </span>
+                        @endif
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 </div>

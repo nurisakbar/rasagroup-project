@@ -61,6 +61,7 @@ class Order extends Model
         'payment_submit_note',
         'payment_submitted_at',
         'qad_so_number',
+        'qid_sales_order_number',
     ];
 
     protected $casts = [
