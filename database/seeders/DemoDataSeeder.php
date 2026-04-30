@@ -17,6 +17,7 @@ use App\Models\Village;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseStockHistory;
+use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -260,9 +261,7 @@ class DemoDataSeeder extends Seeder
         $paymentMethods = ['cash', 'transfer_bank', 'qris', 'kartu_debit', 'kartu_kredit', 'manual_transfer'];
         
         $totalOrdersCreated = 0;
-        $orderNumberCounter = 1;
-        $posOrderNumberCounter = 1;
-        
+
         // Get current month start and end
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
@@ -305,25 +304,8 @@ class DemoDataSeeder extends Seeder
                     $shippingCost = rand(10000, 50000);
                 }
                 
-                // Generate order number based on type
-                $orderDate = $orderCreatedAt->format('Ymd');
-                if ($orderType === Order::TYPE_POS) {
-                    $orderNumber = 'POS-' . $orderDate . '-' . str_pad($posOrderNumberCounter++, 4, '0', STR_PAD_LEFT);
-                } else {
-                    $orderNumber = 'ORD-' . $orderDate . '-' . str_pad($orderNumberCounter++, 4, '0', STR_PAD_LEFT);
-                }
-                
-                // Ensure uniqueness
-                while (Order::where('order_number', $orderNumber)->exists()) {
-                    if ($orderType === Order::TYPE_POS) {
-                        $posOrderNumberCounter++;
-                        $orderNumber = 'POS-' . $orderDate . '-' . str_pad($posOrderNumberCounter, 4, '0', STR_PAD_LEFT);
-                    } else {
-                        $orderNumberCounter++;
-                        $orderNumber = 'ORD-' . $orderDate . '-' . str_pad($orderNumberCounter, 4, '0', STR_PAD_LEFT);
-                    }
-                }
-                
+                $orderNumber = QadWsOrderNumberGenerator::generate();
+
                 // For POS orders, use distributor warehouse as source
                 // For regular orders, use random hub
                 $sourceWarehouseId = $orderType === Order::TYPE_POS 
@@ -415,6 +397,7 @@ class DemoDataSeeder extends Seeder
                 $order = Order::create([
                     'id' => (string) Str::uuid(),
                     'order_number' => $orderNumber,
+                    'qid_sales_order_number' => $orderNumber,
                     'user_id' => $distributor->id,
                     'order_type' => $orderType,
                     'address_id' => $address?->id,

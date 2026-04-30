@@ -34,7 +34,15 @@ class CreateShipmentBooking implements ShouldQueue
      */
     public function handle(EkspedisikuService $service)
     {
-        $this->order->load(['user', 'address.district.city', 'sourceWarehouse.district.city', 'items.product', 'expedition']);
+        $this->order->load([
+            'user',
+            'address.district.city',
+            'address.regency',
+            'sourceWarehouse.district.city',
+            'sourceWarehouse.regency',
+            'items.product',
+            'expedition',
+        ]);
 
         Log::info('Processing background shipment booking', [
             'order_id' => $this->order->id,
@@ -84,6 +92,52 @@ class CreateShipmentBooking implements ShouldQueue
             );
             $cityName = preg_replace('/\s+/', ' ', $cityName);
             return trim((string) $cityName);
+        };
+
+        $extractPostalFromText = function (?string $text): string {
+            $text = (string) $text;
+            if ($text !== '' && preg_match('/\b(\d{5})\b/', $text, $m)) {
+                return $m[1];
+            }
+            return '';
+        };
+
+        $resolveWarehouseSenderPostCode = function () use ($extractPostalFromText): string {
+            $w = $this->order->sourceWarehouse;
+            if (! $w) {
+                return '';
+            }
+            foreach ([
+                $w->postal_code,
+                $w->district?->postal_code,
+                $w->regency?->postal_code,
+                $w->district?->city?->postal_code,
+            ] as $p) {
+                $p = trim((string) $p);
+                if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
+                    return $p;
+                }
+            }
+            return $extractPostalFromText($w->address);
+        };
+
+        $resolveRecipientPostCode = function () use ($extractPostalFromText): string {
+            $a = $this->order->address;
+            if (! $a) {
+                return '';
+            }
+            foreach ([
+                $a->postal_code,
+                $a->district?->postal_code,
+                $a->regency?->postal_code,
+                $a->district?->city?->postal_code,
+            ] as $p) {
+                $p = trim((string) $p);
+                if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
+                    return $p;
+                }
+            }
+            return $extractPostalFromText($a->address_detail);
         };
 
         $resolveDistrictNameFromEkspedisiKu = function (?int $districtId, ?int $cityId) use ($service): ?string {
@@ -180,6 +234,24 @@ class CreateShipmentBooking implements ShouldQueue
             ]);
         }
 
+        $senderPostCode = $resolveWarehouseSenderPostCode();
+        $recipientPostCode = $resolveRecipientPostCode();
+        if ($senderPostCode === '') {
+            $fallback = trim((string) config('services.ekspedisiku.default_sender_postal_code', ''));
+            if ($fallback !== '' && preg_match('/^\d{5}$/', $fallback)) {
+                $senderPostCode = $fallback;
+                Log::info('CreateShipmentBooking: Using configured default sender post_code', [
+                    'order_id' => $this->order->id,
+                ]);
+            }
+        }
+        if ($senderPostCode === '') {
+            Log::warning('CreateShipmentBooking: Sender post_code empty after resolve; Lion Parcel may reject booking', [
+                'order_id' => $this->order->id,
+                'warehouse_id' => $this->order->sourceWarehouse?->id,
+            ]);
+        }
+
         $payload = [
             'carrier' => $carrier,
             'shipment' => [
@@ -191,12 +263,14 @@ class CreateShipmentBooking implements ShouldQueue
                     // EkspedisiKu Postman example uses +62... for sender phone.
                     'phone' => $normalizePhoneE164Id($this->order->sourceWarehouse->phone) ?? '+628123456789',
                     'address' => $this->order->sourceWarehouse->address,
+                    'post_code' => $senderPostCode,
                 ],
                 'recipient' => [
                     'name' => $this->order->address->recipient_name,
                     'phone' => $normalizePhoneE164Id($this->order->user->phone ?? $this->order->address->phone) ?? '089999999999',
                     'address' => $this->order->address->address_detail,
                     'email' => $this->order->user->email ?? 'customer@gmail.com',
+                    'post_code' => $recipientPostCode,
                 ],
                 'package' => [
                     'service_code' => $serviceCode,
@@ -247,11 +321,16 @@ class CreateShipmentBooking implements ShouldQueue
         if ($result && isset($result['success']) && $result['success']) {
             $sttNumber = $result['data']['stt_number'] ?? null;
             $lionShipmentId = $result['data']['lion_shipment_id'] ?? null;
-            
+            // Lion v2 shipment/create often returns shipment_id only; STT/resi may appear later after pickup/print.
+            $trackingForUi = (is_string($sttNumber) && $sttNumber !== '')
+                ? $sttNumber
+                : (is_string($lionShipmentId) && $lionShipmentId !== '' ? (string) $lionShipmentId : null);
+
             Log::info('CreateShipmentBooking: Success', [
                 'order_id' => $this->order->id,
                 'stt_number' => $sttNumber,
                 'lion_shipment_id' => $lionShipmentId,
+                'tracking_number_set' => $trackingForUi,
             ]);
 
             $updates = [
@@ -261,8 +340,8 @@ class CreateShipmentBooking implements ShouldQueue
                 'ekspedisiku_booking_status' => 'success',
                 'ekspedisiku_booking_last_error' => null,
             ];
-            if ($sttNumber) {
-                $updates['tracking_number'] = $sttNumber;
+            if ($trackingForUi !== null) {
+                $updates['tracking_number'] = $trackingForUi;
             }
             if ($lionShipmentId !== null && $lionShipmentId !== '') {
                 $updates['ekspedisiku_shipment_id'] = (string) $lionShipmentId;

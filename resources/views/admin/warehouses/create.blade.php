@@ -93,6 +93,15 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('postal_code') has-error @enderror">
+                            <label for="postal_code">Kode pos (pengirim / Lion Parcel)</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ old('postal_code') }}" placeholder="Contoh: 15138" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+                            <p class="help-block">Untuk booking Lion Parcel: isi kode pos lokasi hub (biasanya 5 digit).</p>
+                            @error('postal_code')
+                                <span class="help-block text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('latitude') has-error @enderror">

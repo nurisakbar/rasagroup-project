@@ -180,6 +180,7 @@ class WarehouseController extends Controller
             // Warehouse data
             'name' => 'required|string|max:255|unique:warehouses,name',
             'address' => 'nullable|string|max:500',
+            'postal_code' => 'nullable|string|max:10|regex:/^[0-9]{0,10}$/',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
             'province_id' => 'nullable',
@@ -200,6 +201,7 @@ class WarehouseController extends Controller
         $warehouse = Warehouse::create([
             'name' => $validated['name'],
             'address' => $validated['address'] ?? null,
+            'postal_code' => $validated['postal_code'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'description' => $validated['description'] ?? null,
             'province_id' => $validated['province_id'] ?? null,
@@ -293,6 +295,7 @@ class WarehouseController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:warehouses,name,' . $warehouse->id,
             'address' => 'nullable|string|max:500',
+            'postal_code' => 'nullable|string|max:10|regex:/^[0-9]{0,10}$/',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
             'province_id' => 'nullable',

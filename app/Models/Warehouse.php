@@ -21,6 +21,7 @@ class Warehouse extends Model
         'name',
         'slug',
         'address',
+        'postal_code',
         'phone',
         'description',
         'province_id',

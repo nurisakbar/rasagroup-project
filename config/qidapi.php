@@ -33,4 +33,29 @@ return [
     | permission can_posting. Berguna untuk testing/dev.
     */
     'force_so' => env('QIDAPI_FORCE_SO', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default address fields (QAD city / zip master)
+    |--------------------------------------------------------------------------
+    | Nama kota panjang dari Raja Ongkir (mis. "KOTA ADM. JAKARTA PUSAT") sering
+    | tidak cocok dengan master QAD. Normalisasi memetakan ke nilai aman.
+    */
+    'default_customer_city' => env('QIDAPI_DEFAULT_CUSTOMER_CITY', 'Jakarta'),
+    'default_customer_zip' => env('QIDAPI_DEFAULT_CUSTOMER_ZIP', '10110'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lock alokasi nomor WS (detik)
+    |--------------------------------------------------------------------------
+    */
+    'ws_order_number_lock_seconds' => (int) env('QIDAPI_WS_ORDER_LOCK_SECONDS', 15),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Uji coba Sales Order (artisan qid:test-so-format)
+    |--------------------------------------------------------------------------
+    */
+    'test_so_customer' => env('QIDAPI_TEST_SO_CUSTOMER', 'ZH78584'),
+    'test_so_item' => env('QIDAPI_TEST_SO_ITEM', 'FMB010-MD03'),
 ];

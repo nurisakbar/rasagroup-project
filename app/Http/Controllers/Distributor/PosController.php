@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseStockHistory;
+use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -293,6 +294,7 @@ class PosController extends Controller
             // Create order
             $order = Order::create([
                 'order_number' => $orderNumber,
+                'qid_sales_order_number' => $orderNumber,
                 'user_id' => $user->id,
                 'order_type' => Order::TYPE_POS,
                 'source_warehouse_id' => $warehouse->id,
@@ -398,19 +400,6 @@ class PosController extends Controller
      */
     private function generateOrderNumber(): string
     {
-        $date = now()->format('Ymd');
-        $lastOrder = Order::where('order_type', Order::TYPE_POS)
-            ->whereDate('created_at', today())
-            ->latest()
-            ->first();
-
-        if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-
-        return 'POS-' . $date . '-' . $newNumber;
+        return QadWsOrderNumberGenerator::generate();
     }
 }

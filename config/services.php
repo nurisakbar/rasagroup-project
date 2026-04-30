@@ -55,6 +55,8 @@ return [
     'ekspedisiku' => [
         'token' => env('EKSPEDISIKU_TOKEN'),
         'base_url' => env('EKSPEDISIKU_BASE_URL', 'http://localhost:8000/api'),
+        /** Fallback kode pos pengirim (warehouse) bila tidak ada di DB; Lion Parcel wajib isi. */
+        'default_sender_postal_code' => env('EKSPEDISIKU_DEFAULT_SENDER_POSTAL', ''),
     ],
 
 ];

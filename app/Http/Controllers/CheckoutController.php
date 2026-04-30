@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Services\XenditService;
+use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -759,6 +760,7 @@ class CheckoutController extends Controller
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR, // Online order
                 'order_number' => $orderNumber,
+                'qid_sales_order_number' => $orderNumber,
                 'user_id' => Auth::id(),
                 'address_id' => $address->id,
                 'expedition_id' => $expedition->id,
@@ -1032,17 +1034,7 @@ class CheckoutController extends Controller
 
     private function generateOrderNumber(): string
     {
-        $date = now()->format('Ymd');
-        $lastOrder = Order::whereDate('created_at', today())->latest()->first();
-        
-        if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-
-        return 'ORD-' . $date . '-' . $newNumber;
+        return QadWsOrderNumberGenerator::generate();
     }
 
     private function syncWarehouseByAddress(Address $address)

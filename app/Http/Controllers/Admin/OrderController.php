@@ -380,8 +380,10 @@ class OrderController extends Controller
             // Refresh order to get updated data
             $order->refresh();
 
-            if ($order->tracking_number) {
-                return back()->with('success', 'Booking berhasil! Nomor resi: ' . $order->tracking_number);
+            if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
+                $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
+
+                return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref);
             }
 
             return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk pesan error dari Lion Parcel.');

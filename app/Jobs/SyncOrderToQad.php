@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Services\QadService;
-use Illuminate\Support\Facades\DB;
+use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -23,12 +23,15 @@ class SyncOrderToQad implements ShouldQueue
      */
     public function __construct(Order $order)
     {
+        // Pakai onConnection (bukan property) agar tidak bentrok dengan trait Queueable.
+        $this->onConnection('sync');
+
         $this->order = $order->load([
             'user',
             'items.product',
             'address.province',
             'address.regency',
-            'address.district',
+            'address.district.city',
             'sourceWarehouse',
         ]);
     }
@@ -56,10 +59,27 @@ class SyncOrderToQad implements ShouldQueue
         // 1. Ensure Customer exists in QAD
         if (!$user->qad_customer_code) {
             // Delegate to dedicated job (can be retried independently)
+            $postal = '';
+            foreach ([
+                $address->postal_code,
+                $address->district?->postal_code,
+                $address->regency?->postal_code,
+                $address->district?->city?->postal_code,
+            ] as $p) {
+                $p = trim((string) $p);
+                if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
+                    $postal = $p;
+                    break;
+                }
+            }
+            if ($postal === '' && $address->address_detail && preg_match('/\b(\d{5})\b/', (string) $address->address_detail, $m)) {
+                $postal = $m[1];
+            }
             $addressSnapshot = [
                 'city' => $address->regency?->name ?? 'Jakarta',
                 'street1' => $address->address_detail ?? $address->full_address ?? '-',
                 'street2' => trim((string) (($address->district?->name ?? '') . ' ' . ($address->regency?->name ?? ''))),
+                'postal_code' => $postal,
             ];
             \App\Jobs\SyncCustomerToQad::dispatchSync($user, $addressSnapshot);
             $user = $this->order->user->fresh();
@@ -89,16 +109,20 @@ class SyncOrderToQad implements ShouldQueue
             return;
         }
 
-        // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.
-        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
-        $purchaseOrderNumber = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) $this->order->order_number));
-        $purchaseOrderNumber = substr($purchaseOrderNumber, -10);
-        if ($purchaseOrderNumber === '') {
-            $purchaseOrderNumber = $qidSalesOrderNumber;
+        $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
+        if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
+            Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
+                'order_id' => $this->order->id,
+                'customer_code' => $user->qad_customer_code,
+                'response' => $dataRes,
+            ]);
         }
 
-        // Use fixed QAD location to avoid invalid hub code mapping.
-        $locationCode = 'FG001';
+        // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.
+        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
+
+        $lineDueDate = $this->order->created_at->copy()->startOfDay()->addDays(7)->format('Y-m-d') . 'T00:00:00.000Z';
+
         $itemUomCache = [];
 
         $lines = [];
@@ -148,23 +172,23 @@ class SyncOrderToQad implements ShouldQueue
                 $uom = $itemUomCache[$itemCode];
             }
 
+            // Sama struktur & tipe dengan payload contoh yang valid (harga integer IDR, tanpa site/location di baris).
+            $linePrice = (int) round(max(0.0, (float) $price));
             $lines[] = [
-                "salesOrderNumber" => $qidSalesOrderNumber,
-                "salesOrderLine" => $index + 1,
-                "itemCode" => $itemCode,
-                "quantityOrdered" => (int) $item->quantity,
-                "listPrice" => $price,
-                "netPrice" => $price,
-                "discountPercent" => 0,
-                "dueDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
-                "isTaxable" => true,
-                "salesAcct" => "41101",
-                "salesCC" => "",
-                "discountAcct" => "41101",
-                "discountCC" => "",
-                "unitOfMeasure" => $uom ?: "BT",
-                "siteCode" => "MCR",
-                "locationCode" => $locationCode,
+                'salesOrderNumber' => $qidSalesOrderNumber,
+                'salesOrderLine' => $index + 1,
+                'itemCode' => $itemCode,
+                'quantityOrdered' => (int) $item->quantity,
+                'unitOfMeasure' => $uom ?: 'PK',
+                'listPrice' => $linePrice,
+                'discountPercent' => 0,
+                'netPrice' => $linePrice,
+                'dueDate' => $lineDueDate,
+                'isTaxable' => true,
+                'salesAcct' => '41101',
+                'salesCC' => '',
+                'discountAcct' => '41101',
+                'discountCC' => '',
             ];
         }
 
@@ -177,36 +201,15 @@ class SyncOrderToQad implements ShouldQueue
             return;
         }
 
-        $payload = [
-            "domainCode" => "MCR",
-            "salesOrderNumber" => $qidSalesOrderNumber,
-            "billToCustomerCode" => $user->qad_customer_code,
-            "soldToCustomerCode" => $user->qad_customer_code,
-            "shipToCustomerCode" => $user->qad_customer_code,
-            "orderDate" => $this->order->created_at->format('Y-m-d') . "T00:00:00.000Z",
-            "dueDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
-            "requiredDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
-            "shipDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
-            "promiseDate" => $this->order->created_at->addDays(7)->format('Y-m-d') . "T00:00:00.000Z",
-            "creditTermsCode" => "CIA",
-            "remarks" => $this->order->notes ?? ("Order from Website: " . $this->order->order_number),
-            "purchaseOrderNumber" => $purchaseOrderNumber,
-            "taxClass" => "PPN",
-            "taxEnvironment" => "IDN",
-            "isTaxable" => true,
-            "isConfirmed" => true,
-            "salespersonCode_01" => "SLS00001",
-            "isSelfBillingEnabled" => true,
-            "currencyCode" => "IDR",
-            "siteCode" => "MCR",
-            "salesOrderLines" => $lines
-        ];
+        $orderDate = $this->order->created_at->copy()->startOfDay();
 
         Log::info("SyncOrderToQad: Checking if Sales Order already exists in QAD", [
             'qid_so_number' => $qidSalesOrderNumber,
         ]);
         $checkRes = $qadService->getSalesOrder($qidSalesOrderNumber);
-        $existingSo = $checkRes['data'] ?? null;
+        $existingSo = (is_array($checkRes) && ! ($checkRes['error']['isError'] ?? false))
+            ? ($checkRes['data'] ?? null)
+            : null;
 
         if ($existingSo) {
             $soNumber = $existingSo['salesOrderNumber'] ?? $existingSo['salesOrderCode'] ?? null;
@@ -217,53 +220,130 @@ class SyncOrderToQad implements ShouldQueue
             }
         }
 
-        Log::info("SyncOrderToQad: Creating Sales Order in QAD", [
-            'order_id' => $this->order->id,
-            'order_number' => $this->order->order_number,
-            'customer_code' => $user->qad_customer_code,
-            'payload' => $payload,
-        ]);
-        $result = $qadService->createSalesOrder($payload);
+        $result = null;
+        $soNumber = null;
 
-        // Postman collection shows `data` can be an object OR array (list) depending on endpoint/version.
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            if ($attempt > 1) {
+                Log::warning('SyncOrderToQad: Retrying Sales Order create with new WS + PO', [
+                    'order_id' => $this->order->id,
+                    'attempt' => $attempt,
+                ]);
+                $this->order->update(['qid_sales_order_number' => null]);
+                $this->order->refresh();
+                $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
+                foreach ($lines as $ix => $line) {
+                    $lines[$ix]['salesOrderNumber'] = $qidSalesOrderNumber;
+                }
+            }
+
+            $purchaseOrderNumber = $this->buildPurchaseOrderNumberForQad($attempt);
+
+            // Tanggal header sama semua seperti payload uji yang berhasil (qid:test-so-format); due baris tetap +7 hari.
+            $headerDateIso = $orderDate->format('Y-m-d') . 'T00:00:00.000Z';
+
+            // Selaras swagger SalesOrder_Create + contoh payload internal (tanpa field ekstra di header/baris).
+            $payload = [
+                'domainCode' => 'MCR',
+                'salesOrderNumber' => $qidSalesOrderNumber,
+                'billToCustomerCode' => $user->qad_customer_code,
+                'soldToCustomerCode' => $user->qad_customer_code,
+                'shipToCustomerCode' => $user->qad_customer_code,
+                'orderDate' => $headerDateIso,
+                'dueDate' => $headerDateIso,
+                'requiredDate' => $headerDateIso,
+                'shipDate' => $headerDateIso,
+                'promiseDate' => $headerDateIso,
+                'creditTermsCode' => 'CIA',
+                'remarks' => ($this->order->notes !== null && trim((string) $this->order->notes) !== '')
+                    ? (string) $this->order->notes
+                    : (string) $this->order->order_number,
+                'purchaseOrderNumber' => $purchaseOrderNumber,
+                'taxClass' => 'PPN',
+                'isTaxable' => true,
+                'salespersonCode_01' => 'SLS00001',
+                'isSelfBillingEnabled' => true,
+                'salesOrderLines' => $lines,
+            ];
+
+            Log::info('SyncOrderToQad: Creating Sales Order in QAD', [
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'customer_code' => $user->qad_customer_code,
+                'attempt' => $attempt,
+                'payload' => $payload,
+            ]);
+
+            $result = $qadService->createSalesOrder($payload);
+            $soNumber = $this->extractSalesOrderNumberFromQidResponse($result);
+
+            Log::info('SyncOrderToQad: Create SO response', [
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'attempt' => $attempt,
+                'has_result' => is_array($result) && $result !== [],
+                'result_keys' => is_array($result) ? array_keys($result) : null,
+                'extracted_so_number' => $soNumber,
+                'error_is_error' => is_array($result) ? ($result['error']['isError'] ?? null) : null,
+                'error_messages' => is_array($result) ? ($result['error']['errorMessages'] ?? null) : null,
+                'message' => is_array($result) ? ($result['message'] ?? null) : null,
+            ]);
+
+            if ($soNumber) {
+                $this->order->update(['qad_so_number' => $soNumber]);
+                Log::info('SyncOrderToQad: Sales Order created in QAD', ['qad_so' => $soNumber]);
+
+                return;
+            }
+
+            $errorMsg = json_encode(is_array($result) ? ($result['error'] ?? $result) : []);
+            $retryable = str_contains(strtolower($errorMsg), 'badrequest')
+                || str_contains(strtolower($errorMsg), 'exists')
+                || str_contains(strtolower($errorMsg), 'duplicate');
+
+            if ($retryable) {
+                $this->order->update(['qid_sales_order_number' => null]);
+                $this->order->refresh();
+            }
+
+            if ($attempt === 2 || ! $retryable) {
+                break;
+            }
+        }
+
+        Log::error('SyncOrderToQad: Failed to create sales order in QAD', [
+            'order_id' => $this->order->id,
+            'response' => $result,
+        ]);
+    }
+
+    /**
+     * Nomor PO 10 digit numerik seperti contoh sukses (2604280002): yymmdd + 4 digit unik per order/percobaan.
+     */
+    protected function buildPurchaseOrderNumberForQad(int $attempt): string
+    {
+        $ymd = $this->order->created_at->format('ymd');
+        $n = (abs(crc32((string) $this->order->id)) + $attempt * 9973) % 10000;
+
+        return $ymd . str_pad((string) $n, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected function extractSalesOrderNumberFromQidResponse(?array $result): ?string
+    {
+        if (! is_array($result) || ($result['error']['isError'] ?? false)) {
+            return null;
+        }
+
         $data = $result['data'] ?? null;
         if (is_array($data) && array_is_list($data)) {
             $data = $data[0] ?? null;
         }
 
-        $soNumber =
-            (is_array($data) ? ($data['salesOrderNumber'] ?? $data['salesOrderCode'] ?? null) : null) ??
-            $result['salesOrderNumber'] ??
-            $result['salesOrderCode'] ??
-            null;
+        $soNumber = (is_array($data) ? ($data['salesOrderNumber'] ?? $data['salesOrderCode'] ?? null) : null)
+            ?? ($result['salesOrderNumber'] ?? null)
+            ?? ($result['salesOrderCode'] ?? null);
 
-        Log::info('SyncOrderToQad: Create SO response', [
-            'order_id' => $this->order->id,
-            'order_number' => $this->order->order_number,
-            'has_result' => !empty($result),
-            'result_keys' => is_array($result) ? array_keys($result) : null,
-            'data_type' => is_array($result) ? gettype($result['data'] ?? null) : null,
-            'extracted_so_number' => $soNumber,
-            'error_is_error' => $result['error']['isError'] ?? null,
-            'error_messages' => $result['error']['errorMessages'] ?? null,
-            'message' => $result['message'] ?? null,
-        ]);
-
-        if ($result && $soNumber) {
-            $this->order->update(['qad_so_number' => $soNumber]);
-            Log::info("SyncOrderToQad: Sales Order created in QAD", ['qad_so' => $soNumber]);
-        } else {
-            // Handle collision by incrementing local sequence if it was a BadRequest on SO creation
-            $errorMsg = json_encode($result['error'] ?? $result);
-            if (str_contains(strtolower($errorMsg), 'badrequest') || str_contains(strtolower($errorMsg), 'exists')) {
-                Log::warning("SyncOrderToQad: Likely SO number collision or bad request, clearing local qid_sales_order_number to retry on next run", [
-                    'order_id' => $this->order->id,
-                    'error' => $errorMsg
-                ]);
-                $this->order->update(['qid_sales_order_number' => null]);
-            }
-            Log::error("SyncOrderToQad: Failed to create sales order in QAD", ['order_id' => $this->order->id, 'response' => $result]);
-        }
+        return is_string($soNumber) && $soNumber !== '' ? $soNumber : null;
     }
 
     protected function getOrCreateQidSalesOrderNumber(): string
@@ -273,25 +353,15 @@ class SyncOrderToQad implements ShouldQueue
             return $existing;
         }
 
-        $nextNumber = DB::transaction(function () {
-            $last = Order::query()
-                ->whereNotNull('qid_sales_order_number')
-                ->where('qid_sales_order_number', 'like', 'WS%')
-                ->orderByDesc('qid_sales_order_number')
-                ->lockForUpdate()
-                ->value('qid_sales_order_number');
+        $orderNumber = (string) ($this->order->order_number ?? '');
+        if (preg_match('/^WS\d{6}$/', $orderNumber)) {
+            $this->order->update(['qid_sales_order_number' => $orderNumber]);
+            $this->order->refresh();
 
-            $lastSequence = (int) preg_replace('/\D/', '', (string) $last);
-            $nextSequence = $lastSequence + 1;
-            if ($nextSequence < 100001 && $last === null) {
-                $nextSequence = 100001;
-            }
-            if ($nextSequence > 999999) {
-                $nextSequence = 1;
-            }
+            return $orderNumber;
+        }
 
-            return 'WS' . str_pad((string) $nextSequence, 6, '0', STR_PAD_LEFT);
-        });
+        $nextNumber = QadWsOrderNumberGenerator::generate();
 
         $this->order->update(['qid_sales_order_number' => $nextNumber]);
         $this->order->refresh();

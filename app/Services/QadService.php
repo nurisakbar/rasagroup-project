@@ -172,7 +172,7 @@ class QadService extends QidApiService
 
     public function createSalesOrder(array $payload)
     {
-        return $this->post('/api/transaction/sales-orders/create', $payload);
+        return $this->post('/api/transaction/sales-orders/create', $payload, true);
     }
 
     public function updateSalesOrder(array $payload)

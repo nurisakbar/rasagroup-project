@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Services\XenditService;
+use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -284,6 +285,7 @@ class OrderApiController extends Controller
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR,
                 'order_number' => $orderNumber,
+                'qid_sales_order_number' => $orderNumber,
                 'user_id' => $userId,
                 'address_id' => $address->id,
                 'expedition_id' => $expedition->id,
@@ -554,17 +556,7 @@ class OrderApiController extends Controller
      */
     private function generateOrderNumber(): string
     {
-        $date = now()->format('Ymd');
-        $lastOrder = Order::whereDate('created_at', today())->latest()->first();
-        
-        if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-
-        return 'ORD-' . $date . '-' . $newNumber;
+        return QadWsOrderNumberGenerator::generate();
     }
 }
 

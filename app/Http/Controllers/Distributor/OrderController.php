@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\DistributorOrderImport;
 use App\Exports\DistributorOrderTemplateExport;
+use App\Support\QadWsOrderNumberGenerator;
 
 class OrderController extends Controller
 {
@@ -493,6 +494,7 @@ class OrderController extends Controller
 
             $order = Order::create([
                 'order_number' => $orderNumber,
+                'qid_sales_order_number' => $orderNumber,
                 'user_id' => Auth::id(),
                 'order_type' => Order::TYPE_DISTRIBUTOR,
                 'address_id' => $address->id,
@@ -725,17 +727,7 @@ class OrderController extends Controller
 
     private function generateOrderNumber(): string
     {
-        $date = now()->format('Ymd');
-        $lastOrder = Order::whereDate('created_at', today())->latest()->first();
-
-        if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-
-        return 'DST-' . $date . '-' . $newNumber;
+        return QadWsOrderNumberGenerator::generate();
     }
 
     /**

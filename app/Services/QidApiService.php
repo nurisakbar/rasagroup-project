@@ -152,8 +152,8 @@ class QidApiService
         return [
             'Authorization' => 'Bearer ' . $this->getToken(),
             'Content-Type'  => 'application/json',
-            // Postman collection uses Accept: text/plain for these endpoints
-            'Accept'        => 'text/plain',
+            // Prefer JSON; some QID routes return JSON while Postman used text/plain for login only.
+            'Accept'        => 'application/json, text/plain;q=0.9',
         ];
     }
 
@@ -176,9 +176,9 @@ class QidApiService
      * @param array  $payload   Body JSON
      * @return array|null
      */
-    public function post(string $endpoint, array $payload = []): ?array
+    public function post(string $endpoint, array $payload = [], bool $returnParsedErrorBody = false): ?array
     {
-        return $this->request('POST', $endpoint, $payload);
+        return $this->request('POST', $endpoint, $payload, false, $returnParsedErrorBody);
     }
 
     /**
@@ -224,9 +224,10 @@ class QidApiService
      * @param string $endpoint Path endpoint
      * @param array  $data     Query / body payload
      * @param bool   $retry    Apakah ini percobaan ulang setelah refresh token
+     * @param bool   $returnParsedErrorBody  Jika true, kembalikan JSON body meski HTTP error (untuk create SO / parsing error QAD)
      * @return array|null
      */
-    protected function request(string $method, string $endpoint, array $data = [], bool $retry = false): ?array
+    protected function request(string $method, string $endpoint, array $data = [], bool $retry = false, bool $returnParsedErrorBody = false): ?array
     {
         if (!$this->isConfigured()) {
             Log::error('QidApi not configured. Please check QIDAPI_* env variables.');
@@ -274,7 +275,7 @@ class QidApiService
                 Log::warning('QidApi token expired, re-authenticating...');
                 $this->logout();
                 $this->login();
-                return $this->request($method, $endpoint, $data, true);
+                return $this->request($method, $endpoint, $data, true, $returnParsedErrorBody);
             }
 
             if ($response->successful()) {
@@ -311,6 +312,13 @@ class QidApiService
                 'payload' => $data,
                 'response' => $response->body(),
             ]);
+
+            if ($returnParsedErrorBody) {
+                $json = $response->json();
+                if (is_array($json)) {
+                    return $json;
+                }
+            }
 
             return null;
         } catch (\Exception $e) {
