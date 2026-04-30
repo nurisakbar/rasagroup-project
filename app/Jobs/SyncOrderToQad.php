@@ -421,6 +421,35 @@ class SyncOrderToQad implements ShouldQueue
             $user = $user->fresh();
         }
 
+        // If we still can't obtain a valid customer code, optionally fall back to an approved master.
+        if (! $user->qad_customer_code) {
+            $fallback = trim((string) config('qidapi.fallback_customer_code', ''));
+            if ($fallback !== '') {
+                $check = $qadService->getCustomer($fallback, 'MCR-CUST');
+                $valid = is_array($check)
+                    && ! ($check['error']['isError'] ?? false)
+                    && is_array($check['data'] ?? null)
+                    && ! empty($check['data']['customerCode'] ?? null);
+
+                if ($valid) {
+                    Log::warning('SyncOrderToQad: Using fallback QAD customer code because user customer sync failed', [
+                        'order_id' => $this->order->id,
+                        'user_id' => $user->id,
+                        'fallback_customer_code' => $fallback,
+                    ]);
+                    $user->update(['qad_customer_code' => $fallback]);
+                    $user->refresh();
+                } else {
+                    Log::warning('SyncOrderToQad: Fallback customer code is not valid in QAD', [
+                        'order_id' => $this->order->id,
+                        'user_id' => $user->id,
+                        'fallback_customer_code' => $fallback,
+                        'check' => $check,
+                    ]);
+                }
+            }
+        }
+
         return $user;
     }
 

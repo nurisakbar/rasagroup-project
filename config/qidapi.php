@@ -58,4 +58,14 @@ return [
     */
     'test_so_customer' => env('QIDAPI_TEST_SO_CUSTOMER', 'ZH78584'),
     'test_so_item' => env('QIDAPI_TEST_SO_ITEM', 'FMB010-MD03'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fallback customer code (approved master)
+    |--------------------------------------------------------------------------
+    | Jika create customer user gagal (BadRequest dari QAD/QidApi), sistem dapat
+    | memakai customer code yang sudah dipastikan valid di QAD agar SO tetap bisa
+    | dibuat. Kosongkan untuk menonaktifkan.
+    */
+    'fallback_customer_code' => env('QIDAPI_FALLBACK_CUSTOMER_CODE', ''),
 ];
