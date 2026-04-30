@@ -305,7 +305,37 @@ class CreateShipmentBooking implements ShouldQueue
 
         Log::info('CreateShipmentBooking: Sending payload to EkspedisiKu', [
             'order_id' => $this->order->id,
-            'payload' => $payload,
+            // Debug summary only (full payload can be large/noisy)
+            'carrier' => $payload['carrier'] ?? null,
+            'reference' => $payload['shipment']['reference'] ?? null,
+            'service_code' => $payload['shipment']['package']['service_code'] ?? null,
+            'origin' => $payload['shipment']['origin'] ?? null,
+            'destination' => $payload['shipment']['destination'] ?? null,
+            'sender_post_code' => $payload['shipment']['sender']['post_code'] ?? null,
+            'recipient_post_code' => $payload['shipment']['recipient']['post_code'] ?? null,
+            'items_count' => is_array($payload['items'] ?? null) ? count($payload['items']) : null,
+        ]);
+
+        Log::debug('CreateShipmentBooking: Payload snapshot', [
+            'order_id' => $this->order->id,
+            'shipment' => [
+                'reference' => $payload['shipment']['reference'] ?? null,
+                'sender' => [
+                    'name' => $payload['shipment']['sender']['name'] ?? null,
+                    'phone' => $payload['shipment']['sender']['phone'] ?? null,
+                    'post_code' => $payload['shipment']['sender']['post_code'] ?? null,
+                ],
+                'recipient' => [
+                    'name' => $payload['shipment']['recipient']['name'] ?? null,
+                    'phone' => $payload['shipment']['recipient']['phone'] ?? null,
+                    'post_code' => $payload['shipment']['recipient']['post_code'] ?? null,
+                ],
+                'package' => [
+                    'service_code' => $payload['shipment']['package']['service_code'] ?? null,
+                    'goods_value' => $payload['shipment']['package']['goods_value'] ?? null,
+                    'pieces' => $payload['shipment']['package']['pieces'] ?? null,
+                ],
+            ],
         ]);
 
         // Persist attempt/reference before calling upstream to avoid reusing reference on retry.
@@ -317,6 +347,16 @@ class CreateShipmentBooking implements ShouldQueue
         ]);
 
         $result = $service->createBooking($payload);
+
+        Log::debug('CreateShipmentBooking: Upstream response received', [
+            'order_id' => $this->order->id,
+            'has_result' => $result !== null,
+            'result_keys' => is_array($result) ? array_keys($result) : null,
+            'success' => is_array($result) ? ($result['success'] ?? null) : null,
+            'message' => is_array($result) ? ($result['message'] ?? null) : null,
+            'data_keys' => (is_array($result) && is_array($result['data'] ?? null)) ? array_keys($result['data']) : null,
+            'data' => (is_array($result) && is_array($result['data'] ?? null)) ? $result['data'] : null,
+        ]);
 
         if ($result && isset($result['success']) && $result['success']) {
             $data = is_array($result['data'] ?? null) ? ($result['data'] ?? []) : [];
@@ -346,6 +386,14 @@ class CreateShipmentBooking implements ShouldQueue
                 'tracking_number_set' => $trackingForUi,
             ]);
 
+            if ($lionShipmentId === null || $lionShipmentId === '') {
+                Log::warning('CreateShipmentBooking: Success but shipment_id missing in response data', [
+                    'order_id' => $this->order->id,
+                    'data_keys' => array_keys($data),
+                    'data' => $data,
+                ]);
+            }
+
             $updates = [
                 'order_status' => 'processing', // Payment confirmed, now processing for shipment
                 'shipped_at' => now(),
@@ -360,6 +408,16 @@ class CreateShipmentBooking implements ShouldQueue
                 $updates['ekspedisiku_shipment_id'] = (string) $lionShipmentId;
             }
             $this->order->update($updates);
+
+            $this->order->refresh();
+            Log::debug('CreateShipmentBooking: Order updated after success', [
+                'order_id' => $this->order->id,
+                'ekspedisiku_booking_status' => $this->order->ekspedisiku_booking_status,
+                'ekspedisiku_shipment_id' => $this->order->ekspedisiku_shipment_id,
+                'tracking_number' => $this->order->tracking_number,
+                'booking_reference' => $this->order->ekspedisiku_booking_reference,
+                'booking_attempt' => $this->order->ekspedisiku_booking_attempt,
+            ]);
         } else {
             $err = null;
             if (is_array($result)) {

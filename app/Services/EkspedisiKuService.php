@@ -271,6 +271,15 @@ class EkspedisiKuService
     public function createBooking(array $payload)
     {
         try {
+            Log::debug('EkspedisiKuService: createBooking request', [
+                'url' => "{$this->baseUrl}/shipments",
+                'carrier' => $payload['carrier'] ?? null,
+                'reference' => $payload['shipment']['reference'] ?? null,
+                'service_code' => $payload['shipment']['package']['service_code'] ?? null,
+                'origin' => $payload['shipment']['origin'] ?? null,
+                'destination' => $payload['shipment']['destination'] ?? null,
+            ]);
+
             $response = Http::withToken($this->token)
                 ->post("{$this->baseUrl}/shipments", $payload);
 
@@ -291,11 +300,23 @@ class EkspedisiKuService
                 ];
             }
 
-            return $response->json();
+            $json = $response->json();
+            Log::debug('EkspedisiKuService: createBooking success', [
+                'status' => $response->status(),
+                'result_keys' => is_array($json) ? array_keys($json) : null,
+                'success' => is_array($json) ? ($json['success'] ?? null) : null,
+                'message' => is_array($json) ? ($json['message'] ?? null) : null,
+                'data_keys' => (is_array($json) && is_array($json['data'] ?? null)) ? array_keys($json['data']) : null,
+                'data' => (is_array($json) && is_array($json['data'] ?? null)) ? $json['data'] : null,
+            ]);
+
+            return $json;
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: createBooking error', [
                 'message' => $e->getMessage(),
-                'payload' => $payload,
+                // Avoid logging full payload here (already logged in job); keep it small.
+                'carrier' => $payload['carrier'] ?? null,
+                'reference' => $payload['shipment']['reference'] ?? null,
             ]);
             return null;
         }

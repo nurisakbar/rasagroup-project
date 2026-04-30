@@ -380,6 +380,16 @@ class OrderController extends Controller
             // Refresh order to get updated data
             $order->refresh();
 
+            \Log::debug('Admin OrderController: Manual booking finished', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'booking_status' => $order->ekspedisiku_booking_status,
+                'shipment_id' => $order->ekspedisiku_shipment_id,
+                'tracking_number' => $order->tracking_number,
+                'booking_reference' => $order->ekspedisiku_booking_reference,
+                'booking_attempt' => $order->ekspedisiku_booking_attempt,
+            ]);
+
             if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
                 $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
 
