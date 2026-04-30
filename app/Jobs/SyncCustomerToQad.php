@@ -292,18 +292,10 @@ class SyncCustomerToQad implements ShouldQueue
             return 'Surabaya';
         }
 
-        $stripped = preg_replace(
-            '/^(KOTA\s+(ADM\.?\s*)?|KAB\.?\s*|KABUPATEN\s+)/u',
-            '',
-            $u
-        );
-        $stripped = trim((string) $stripped);
-
-        if ($stripped === '') {
-            return $default;
-        }
-
-        return mb_convert_case(mb_strtolower($stripped, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+        // QAD/QidApi environment ini terlihat hanya menerima label kota tertentu.
+        // Untuk menghindari BadRequest pada city yang tidak dikenali (mis. "Aceh Barat"),
+        // fallback ke default city yang dipastikan ada di master QAD (config).
+        return $default;
     }
 
     private function sanitizeStreet(string $line): string
