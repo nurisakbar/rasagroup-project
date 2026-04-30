@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Address;
 use App\Models\Order;
+use App\Models\User;
 use App\Services\QadService;
 use App\Support\QadBusinessRelationHeadOffice;
 use App\Support\QadWsOrderNumberGenerator;
@@ -58,12 +59,14 @@ class SyncOrderToQad implements ShouldQueue
             'has_qad_so_number' => !empty($this->order->qad_so_number),
         ]);
 
-        // 1. Ensure Customer exists in QAD
-        if (!$user->qad_customer_code) {
-            // Delegate to dedicated job (can be retried independently)
-            $addressSnapshot = $this->buildOrderAddressSnapshot($address);
-            \App\Jobs\SyncCustomerToQad::dispatchSync($user, $addressSnapshot);
-            $user = $this->order->user->fresh();
+        // 1. Ensure Customer exists in QAD (and the code is valid)
+        $user = $this->ensureQadCustomerReady($qadService, $user, $address, false);
+        if (!$user || !$user->qad_customer_code) {
+            Log::error('SyncOrderToQad: Cannot sync because user has no valid QAD customer code after customer sync', [
+                'order_id' => $this->order->id,
+                'user_id' => $this->order->user_id,
+            ]);
+            return;
         }
 
         // 2. Sync Sales Order
@@ -82,7 +85,7 @@ class SyncOrderToQad implements ShouldQueue
         }
     }
 
-    protected function syncSalesOrder(QadService $qadService, $user)
+    protected function syncSalesOrder(QadService $qadService, User $user): void
     {
         $user->refresh(); // Get updated qad_customer_code
         if (!$user->qad_customer_code) {
@@ -293,6 +296,22 @@ class SyncOrderToQad implements ShouldQueue
                 || str_contains(strtolower($errorMsg), 'duplicate');
 
             if ($retryable) {
+                // BadRequest sering terjadi jika master customer belum valid di sisi QAD.
+                // Flow: re-issue customer terlebih dulu, baru create SO ulang.
+                $orderAddress = $this->order->address;
+                if ($orderAddress) {
+                    $refreshedUser = $this->ensureQadCustomerReady($qadService, $user, $orderAddress, true);
+                    if ($refreshedUser && $refreshedUser->qad_customer_code) {
+                        $user = $refreshedUser;
+                    } else {
+                        Log::error('SyncOrderToQad: Retryable SO error but could not re-issue valid customer code', [
+                            'order_id' => $this->order->id,
+                            'user_id' => $this->order->user_id,
+                        ]);
+                        break;
+                    }
+                }
+
                 $this->order->update(['qid_sales_order_number' => null]);
                 $this->order->refresh();
             }
@@ -358,6 +377,51 @@ class SyncOrderToQad implements ShouldQueue
         $this->order->refresh();
 
         return $nextNumber;
+    }
+
+    protected function ensureQadCustomerReady(QadService $qadService, User $user, Address $address, bool $forceReissue): ?User
+    {
+        $user = $user->fresh();
+        if (! $user) {
+            return null;
+        }
+
+        if ($forceReissue) {
+            Log::warning('SyncOrderToQad: Forcing QAD customer re-issue before SO retry', [
+                'order_id' => $this->order->id,
+                'user_id' => $user->id,
+                'previous_qad_customer_code' => $user->qad_customer_code,
+            ]);
+            $user->update(['qad_customer_code' => null]);
+            $user->refresh();
+        }
+
+        if ($user->qad_customer_code) {
+            $check = $qadService->getCustomer((string) $user->qad_customer_code, 'MCR-CUST');
+            $valid = is_array($check)
+                && ! ($check['error']['isError'] ?? false)
+                && is_array($check['data'] ?? null)
+                && ! empty($check['data']['customerCode'] ?? null);
+
+            if (! $valid) {
+                Log::warning('SyncOrderToQad: Existing qad_customer_code is not valid in QAD, clearing and re-syncing', [
+                    'order_id' => $this->order->id,
+                    'user_id' => $user->id,
+                    'qad_customer_code' => $user->qad_customer_code,
+                    'check' => $check,
+                ]);
+                $user->update(['qad_customer_code' => null]);
+                $user->refresh();
+            }
+        }
+
+        if (! $user->qad_customer_code) {
+            $addressSnapshot = $this->buildOrderAddressSnapshot($address);
+            \App\Jobs\SyncCustomerToQad::dispatchSync($user, $addressSnapshot);
+            $user = $user->fresh();
+        }
+
+        return $user;
     }
 
     /**

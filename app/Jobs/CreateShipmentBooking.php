@@ -319,8 +319,21 @@ class CreateShipmentBooking implements ShouldQueue
         $result = $service->createBooking($payload);
 
         if ($result && isset($result['success']) && $result['success']) {
-            $sttNumber = $result['data']['stt_number'] ?? null;
-            $lionShipmentId = $result['data']['lion_shipment_id'] ?? null;
+            $data = is_array($result['data'] ?? null) ? ($result['data'] ?? []) : [];
+
+            // EkspedisiKu/Lion response variants seen in the wild:
+            // - shipment_id (Lion middleware)
+            // - lion_shipment_id (legacy naming)
+            // - stt_no / stt_number (resi)
+            $sttNumber = $data['stt_number']
+                ?? $data['stt_no']
+                ?? $data['sttNo']
+                ?? null;
+
+            $lionShipmentId = $data['lion_shipment_id']
+                ?? $data['shipment_id']
+                ?? $data['shipmentId']
+                ?? null;
             // Lion v2 shipment/create often returns shipment_id only; STT/resi may appear later after pickup/print.
             $trackingForUi = (is_string($sttNumber) && $sttNumber !== '')
                 ? $sttNumber
