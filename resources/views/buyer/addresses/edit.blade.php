@@ -120,10 +120,10 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div id="village_container" style="{{ $address->village_id ? '' : 'display: none;' }}">
+                                        <div id="village_container">
                                             <label class="form-label-custom">Kelurahan/Desa</label>
                                             <div class="custom_select_wrapper position-relative">
-                                                <select class="form-control select-active" id="village_id" name="village_id">
+                                                <select class="form-control select-active" id="village_id" name="village_id" {{ (is_array($villages) && count($villages) > 0) ? '' : 'disabled' }}>
                                                     <option value="">Pilih Desa</option>
                                                     @foreach($villages as $village)
                                                             @php
@@ -222,7 +222,29 @@
         box-shadow: 0 10px 20px rgba(106, 27, 27, 0.2);
     }
 
-    .loading-overlay-new { position: absolute; right: 15px; top: 18px; display: none; z-index: 10; }
+    /* Normalizing widths for Select2 + wrappers (samakan dengan create page) */
+    .form-control,
+    .custom-input,
+    .custom-textarea,
+    .custom_select_wrapper,
+    .select2-container,
+    .select2-selection--single {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
+
+    /* Loading overlay aligned vertically center */
+    .loading-overlay-new {
+        position: absolute;
+        right: 15px;
+        top: 0;
+        height: 100%;
+        display: none;
+        align-items: center;
+        z-index: 10;
+        pointer-events: none;
+    }
     .text-maroon { color: #6A1B1B !important; }
 
     /* Select2 Skinning */
@@ -238,6 +260,22 @@
         color: #253D4E !important;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow { height: 52px !important; }
+
+    /* Force wrapper-scoped render/arrow alignment */
+    .custom_select_wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 52px !important;
+        padding-left: 15px !important;
+        font-size: 14px !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        width: 100%;
+    }
+
+    .custom_select_wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 52px !important;
+        right: 12px !important;
+    }
     
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
         background-color: #6A1B1B !important;
