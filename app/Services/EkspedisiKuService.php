@@ -322,6 +322,37 @@ class EkspedisiKuService
         }
     }
 
+    public function getShipment(string|int $shipmentId): ?array
+    {
+        try {
+            $url = "{$this->baseUrl}/shipments/{$shipmentId}";
+            Log::debug('EkspedisiKuService: getShipment request', [
+                'url' => $url,
+                'shipment_id' => (string) $shipmentId,
+            ]);
+
+            $response = Http::withToken($this->token)->get($url);
+
+            if ($response->failed()) {
+                Log::warning('EkspedisiKuService: getShipment failed', [
+                    'shipment_id' => (string) $shipmentId,
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                    'body' => $response->body(),
+                ]);
+                return $response->json();
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('EkspedisiKuService: getShipment error', [
+                'shipment_id' => (string) $shipmentId,
+                'message' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
     /**
      * Track a shipment
      * 

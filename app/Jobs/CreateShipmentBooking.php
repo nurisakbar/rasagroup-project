@@ -376,22 +376,25 @@ class CreateShipmentBooking implements ShouldQueue
                 ?? null;
 
             // Some EkspedisiKu implementations only return internal id + stt_number on create.
-            // For Lion pickup we need the Lion shipment_id; try to resolve it via track endpoint.
-            if (($lionShipmentId === null || $lionShipmentId === '') && is_string($sttNumber) && $sttNumber !== '') {
-                $track = $service->track($sttNumber, $carrier);
-                $resolved = $this->extractLionShipmentIdFromTrackResponse($track);
+            // For Lion pickup we need the Lion shipment_id; resolve it from EkspedisiKu shipment detail.
+            if (($lionShipmentId === null || $lionShipmentId === '') && isset($data['id'])) {
+                $detail = $service->getShipment((string) $data['id']);
+                $resolved = data_get($detail, 'data.lion_shipment_id')
+                    ?? data_get($detail, 'data.shipment_id')
+                    ?? data_get($detail, 'data.shipmentId');
+
                 if (is_string($resolved) && $resolved !== '') {
                     $lionShipmentId = $resolved;
-                    Log::info('CreateShipmentBooking: Resolved lion shipment_id via track', [
+                    Log::info('CreateShipmentBooking: Resolved lion shipment_id via getShipment', [
                         'order_id' => $this->order->id,
-                        'stt_number' => $sttNumber,
+                        'shipment_internal_id' => (string) $data['id'],
                         'lion_shipment_id' => $lionShipmentId,
                     ]);
                 } else {
-                    Log::warning('CreateShipmentBooking: Could not resolve lion shipment_id via track', [
+                    Log::warning('CreateShipmentBooking: Could not resolve lion shipment_id via getShipment', [
                         'order_id' => $this->order->id,
-                        'stt_number' => $sttNumber,
-                        'track' => $track,
+                        'shipment_internal_id' => (string) $data['id'],
+                        'detail' => $detail,
                     ]);
                 }
             }
@@ -460,37 +463,4 @@ class CreateShipmentBooking implements ShouldQueue
         }
     }
 
-    protected function extractLionShipmentIdFromTrackResponse(?array $track): ?string
-    {
-        if (! is_array($track)) {
-            return null;
-        }
-
-        // Possible shapes:
-        // - { success, data: { shipment_id } }
-        // - { data: { shipment_id } }
-        // - Lion middleware: { stts: [ { shipment_id } ] }
-        // - { data: { stts: [ { shipment_id } ] } }
-        $shipmentId = null;
-
-        $shipmentId = $track['data']['shipment_id']
-            ?? $track['data']['shipmentId']
-            ?? $track['shipment_id']
-            ?? $track['shipmentId']
-            ?? null;
-
-        if (is_string($shipmentId) && $shipmentId !== '') {
-            return $shipmentId;
-        }
-
-        $stts = $track['data']['stts'] ?? $track['stts'] ?? null;
-        if (is_array($stts) && isset($stts[0]) && is_array($stts[0])) {
-            $shipmentId = $stts[0]['shipment_id'] ?? $stts[0]['shipmentId'] ?? null;
-            if (is_string($shipmentId) && $shipmentId !== '') {
-                return $shipmentId;
-            }
-        }
-
-        return null;
-    }
 }
