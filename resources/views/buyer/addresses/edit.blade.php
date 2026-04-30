@@ -126,7 +126,13 @@
                                                 <select class="form-control select-active" id="village_id" name="village_id">
                                                     <option value="">Pilih Desa</option>
                                                     @foreach($villages as $village)
-                                                        <option value="{{ $village->id }}" {{ old('village_id', $address->village_id) == $village->id ? 'selected' : '' }}>{{ $village->name }}</option>
+                                                            @php
+                                                                $villageId = is_array($village) ? ($village['id'] ?? null) : ($village->id ?? null);
+                                                                $villageName = is_array($village) ? ($village['name'] ?? null) : ($village->name ?? null);
+                                                            @endphp
+                                                            @if($villageId)
+                                                                <option value="{{ $villageId }}" {{ old('village_id', $address->village_id) == $villageId ? 'selected' : '' }}>{{ $villageName }}</option>
+                                                            @endif
                                                     @endforeach
                                                 </select>
                                                 <div class="loading-overlay-new" id="village_loading"><div class="spinner-border spinner-border-sm text-maroon"></div></div>
