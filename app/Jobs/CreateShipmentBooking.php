@@ -374,6 +374,27 @@ class CreateShipmentBooking implements ShouldQueue
                 ?? $data['shipment_id']
                 ?? $data['shipmentId']
                 ?? null;
+
+            // Some EkspedisiKu implementations only return internal id + stt_number on create.
+            // For Lion pickup we need the Lion shipment_id; try to resolve it via track endpoint.
+            if (($lionShipmentId === null || $lionShipmentId === '') && is_string($sttNumber) && $sttNumber !== '') {
+                $track = $service->track($sttNumber, $carrier);
+                $resolved = $this->extractLionShipmentIdFromTrackResponse($track);
+                if (is_string($resolved) && $resolved !== '') {
+                    $lionShipmentId = $resolved;
+                    Log::info('CreateShipmentBooking: Resolved lion shipment_id via track', [
+                        'order_id' => $this->order->id,
+                        'stt_number' => $sttNumber,
+                        'lion_shipment_id' => $lionShipmentId,
+                    ]);
+                } else {
+                    Log::warning('CreateShipmentBooking: Could not resolve lion shipment_id via track', [
+                        'order_id' => $this->order->id,
+                        'stt_number' => $sttNumber,
+                        'track' => $track,
+                    ]);
+                }
+            }
             // Lion v2 shipment/create often returns shipment_id only; STT/resi may appear later after pickup/print.
             $trackingForUi = (is_string($sttNumber) && $sttNumber !== '')
                 ? $sttNumber
@@ -437,5 +458,39 @@ class CreateShipmentBooking implements ShouldQueue
                 'ekspedisiku_booking_last_error' => $err,
             ]);
         }
+    }
+
+    protected function extractLionShipmentIdFromTrackResponse(?array $track): ?string
+    {
+        if (! is_array($track)) {
+            return null;
+        }
+
+        // Possible shapes:
+        // - { success, data: { shipment_id } }
+        // - { data: { shipment_id } }
+        // - Lion middleware: { stts: [ { shipment_id } ] }
+        // - { data: { stts: [ { shipment_id } ] } }
+        $shipmentId = null;
+
+        $shipmentId = $track['data']['shipment_id']
+            ?? $track['data']['shipmentId']
+            ?? $track['shipment_id']
+            ?? $track['shipmentId']
+            ?? null;
+
+        if (is_string($shipmentId) && $shipmentId !== '') {
+            return $shipmentId;
+        }
+
+        $stts = $track['data']['stts'] ?? $track['stts'] ?? null;
+        if (is_array($stts) && isset($stts[0]) && is_array($stts[0])) {
+            $shipmentId = $stts[0]['shipment_id'] ?? $stts[0]['shipmentId'] ?? null;
+            if (is_string($shipmentId) && $shipmentId !== '') {
+                return $shipmentId;
+            }
+        }
+
+        return null;
     }
 }
