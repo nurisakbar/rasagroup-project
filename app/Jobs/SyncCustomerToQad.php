@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Services\QadService;
+use App\Support\QadBusinessRelationHeadOffice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -71,6 +72,7 @@ class SyncCustomerToQad implements ShouldQueue
                 'qad_customer_code' => $createdCode,
             ]);
             $this->ensureCustomerData($qadService, $createdCode);
+            QadBusinessRelationHeadOffice::patch($qadService, $user->fresh(), $createdCode, $this->addressSnapshot);
 
             return;
         }
@@ -84,6 +86,7 @@ class SyncCustomerToQad implements ShouldQueue
                 'qad_customer_code' => $existsCode,
             ]);
             $this->ensureCustomerData($qadService, $existsCode);
+            QadBusinessRelationHeadOffice::patch($qadService, $user->fresh(), $existsCode, $this->addressSnapshot);
 
             return;
         }

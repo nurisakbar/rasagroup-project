@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Services\QadService;
+use App\Support\QadBusinessRelationHeadOffice;
 use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -59,28 +61,7 @@ class SyncOrderToQad implements ShouldQueue
         // 1. Ensure Customer exists in QAD
         if (!$user->qad_customer_code) {
             // Delegate to dedicated job (can be retried independently)
-            $postal = '';
-            foreach ([
-                $address->postal_code,
-                $address->district?->postal_code,
-                $address->regency?->postal_code,
-                $address->district?->city?->postal_code,
-            ] as $p) {
-                $p = trim((string) $p);
-                if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
-                    $postal = $p;
-                    break;
-                }
-            }
-            if ($postal === '' && $address->address_detail && preg_match('/\b(\d{5})\b/', (string) $address->address_detail, $m)) {
-                $postal = $m[1];
-            }
-            $addressSnapshot = [
-                'city' => $address->regency?->name ?? 'Jakarta',
-                'street1' => $address->address_detail ?? $address->full_address ?? '-',
-                'street2' => trim((string) (($address->district?->name ?? '') . ' ' . ($address->regency?->name ?? ''))),
-                'postal_code' => $postal,
-            ];
+            $addressSnapshot = $this->buildOrderAddressSnapshot($address);
             \App\Jobs\SyncCustomerToQad::dispatchSync($user, $addressSnapshot);
             $user = $this->order->user->fresh();
         }
@@ -107,6 +88,16 @@ class SyncOrderToQad implements ShouldQueue
         if (!$user->qad_customer_code) {
             Log::error("SyncOrderToQad: Cannot sync SO because user has no QAD customer code", ['order_id' => $this->order->id]);
             return;
+        }
+
+        $orderAddress = $this->order->address;
+        if ($orderAddress) {
+            QadBusinessRelationHeadOffice::patch(
+                $qadService,
+                $user,
+                $user->qad_customer_code,
+                $this->buildOrderAddressSnapshot($orderAddress)
+            );
         }
 
         $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
@@ -367,5 +358,35 @@ class SyncOrderToQad implements ShouldQueue
         $this->order->refresh();
 
         return $nextNumber;
+    }
+
+    /**
+     * @return array{city: string, street1: string, street2: string, postal_code: string}
+     */
+    protected function buildOrderAddressSnapshot(Address $address): array
+    {
+        $postal = '';
+        foreach ([
+            $address->postal_code,
+            $address->district?->postal_code,
+            $address->regency?->postal_code,
+            $address->district?->city?->postal_code,
+        ] as $p) {
+            $p = trim((string) $p);
+            if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
+                $postal = $p;
+                break;
+            }
+        }
+        if ($postal === '' && $address->address_detail && preg_match('/\b(\d{5})\b/', (string) $address->address_detail, $m)) {
+            $postal = $m[1];
+        }
+
+        return [
+            'city' => $address->regency?->name ?? 'Jakarta',
+            'street1' => $address->address_detail ?? $address->full_address ?? '-',
+            'street2' => trim((string) (($address->district?->name ?? '') . ' ' . ($address->regency?->name ?? ''))),
+            'postal_code' => $postal,
+        ];
     }
 }
