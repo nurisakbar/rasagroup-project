@@ -38,6 +38,16 @@
             color: var(--primary-rasa) !important;
         }
 
+        footer .hotline p {
+            color: var(--primary-rasa) !important;
+        }
+        footer .mobile-social-icon a {
+            background-color: var(--primary-rasa) !important;
+        }
+        footer .mobile-social-icon a:hover {
+            background-color: var(--btn-rasa-hover) !important;
+        }
+
         .btn-brush-secondary {
             background-color: var(--primary-rasa) !important;
         }
@@ -76,6 +86,11 @@
             font-weight: 500 !important;
             text-decoration: line-through !important;
             margin-left: 8px !important;
+        }
+
+        .product-cart-wrap .product-badges span.new,
+        .vendor-wrap .product-badges.product-badges-position span.new {
+            background-color: var(--btn-rasa) !important;
         }
 
         /* Unified Add Button Style */
@@ -300,6 +315,7 @@
     </div>
 
     @include('themes.nest.partials.scripts')
+    @include('themes.nest.partials.shop-toast')
 
     <script>
         $(document).ready(function() {
@@ -320,7 +336,7 @@
                             },
                             success: function(response) {
                                 if (response.success && response.is_new) {
-                                    alert("Lokasi Terdeteksi! Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.");
+                                    showShopToast("Lokasi terdeteksi! Kami memilih '" + response.hub.name + "' sebagai hub terdekat.", 'success');
                                     window.location.reload();
                                 }
                             }
@@ -346,7 +362,7 @@
                     data: data,
                     success: function(response) {
                         if (response.success) {
-                            alert(response.message);
+                            showShopToast(response.message, 'success');
                             
                             // Update cart count in header if element exists
                             $('.pro-count.blue').text(response.cart_count);
@@ -367,14 +383,20 @@
                         }
 
                         let errorMsg = "Terjadi kesalahan saat menambahkan ke keranjang.";
+                        const body = xhr.responseJSON || {};
                         if (xhr.status === 422) {
-                            const errors = xhr.responseJSON.errors;
-                            errorMsg = Object.values(errors).flat()[0];
-                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                            errorMsg = xhr.responseJSON.error;
+                            if (body.errors) {
+                                errorMsg = Object.values(body.errors).flat()[0];
+                            } else if (body.error) {
+                                errorMsg = body.error;
+                            } else if (body.message) {
+                                errorMsg = body.message;
+                            }
+                        } else if (body.error) {
+                            errorMsg = body.error;
                         }
                         
-                        alert(errorMsg);
+                        showShopToast(errorMsg, 'error');
                     }
                 });
             });

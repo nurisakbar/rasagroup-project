@@ -285,6 +285,7 @@ class ProductController extends Controller
             'size' => 'nullable|string|max:50',
             'unit' => 'nullable|string|max:20',
             'large_unit' => 'nullable|string|max:50',
+            'units_per_large' => 'nullable|integer|min:2|max:999999',
             'price' => 'required|numeric|min:0',
             'weight' => 'required|integer|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -294,6 +295,10 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
             $validated['image'] = $imagePath;
+        }
+
+        if (empty($validated['large_unit'])) {
+            $validated['units_per_large'] = null;
         }
 
         $validated['created_by'] = Auth::id();
@@ -342,6 +347,7 @@ class ProductController extends Controller
             'size' => 'nullable|string|max:50',
             'unit' => 'nullable|string|max:20',
             'large_unit' => 'nullable|string|max:50',
+            'units_per_large' => 'nullable|integer|min:2|max:999999',
             'price' => 'required|numeric|min:0',
             'weight' => 'required|integer|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -356,6 +362,10 @@ class ProductController extends Controller
             $validated['image'] = $imagePath;
         } else {
             unset($validated['image']);
+        }
+
+        if (empty($validated['large_unit'])) {
+            $validated['units_per_large'] = null;
         }
 
         $product->update($validated);

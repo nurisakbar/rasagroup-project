@@ -11,19 +11,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $selectedHubId = session('selected_hub_id');
-        
         $baseQuery = Product::where('status', 'active');
-        
-        if ($selectedHubId) {
-            $baseQuery->whereHas('warehouseStocks', function($q) use ($selectedHubId) {
-                $q->where('warehouse_id', $selectedHubId)->where('stock', '>', 0);
-            });
-        } else {
-            $baseQuery->whereHas('warehouseStocks', function($q) {
-                $q->where('stock', '>', 0);
-            });
-        }
 
         $popularProducts = (clone $baseQuery)
             ->with(['category', 'brand', 'warehouseStocks'])

@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: rasagroup/app
-    container_name: ${APP_CONTAINER_NAME:-rasagroup-app}
+    container_name: ${APP_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-app}
     restart: unless-stopped
     tty: true
     env_file:
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: docker/nginx/Dockerfile
     image: rasagroup/web
-    container_name: ${WEB_CONTAINER_NAME:-rasagroup-web}
+    container_name: ${WEB_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-web}
     restart: unless-stopped
     tty: true
     # Host 80/443 dipakai domain lain: map ke port bebas (mis. 18080) lalu terminate TLS di nginx host.
@@ -40,7 +40,7 @@ services:
   # MySQL Service
   db:
     image: mysql:8.0
-    container_name: ${DB_CONTAINER_NAME:-rasagroup-db}
+    container_name: ${DB_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-db}
     restart: unless-stopped
     tty: true
     # Port host: hindari bentrok dengan MySQL yang sudah jalan di server (3306).
@@ -63,7 +63,7 @@ services:
   # phpMyAdmin (akses dari host: PHPMYADMIN_PORT → HTTP di container)
   phpmyadmin:
     image: phpmyadmin:5-apache
-    container_name: ${PHPMYADMIN_CONTAINER_NAME:-rasagroup-phpmyadmin}
+    container_name: ${PHPMYADMIN_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-phpmyadmin}
     restart: unless-stopped
     depends_on:
       - db
@@ -79,7 +79,7 @@ services:
   # Redis Service
   redis:
     image: redis:alpine
-    container_name: ${REDIS_CONTAINER_NAME:-rasagroup-redis}
+    container_name: ${REDIS_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-redis}
     restart: unless-stopped
     tty: true
     ports:

@@ -8,6 +8,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class CartController extends Controller
 {
@@ -89,9 +90,22 @@ class CartController extends Controller
         $request->validate([
             'quantity' => 'required|integer|min:1',
             'warehouse_id' => 'required',
+            'uom' => ['nullable', Rule::in(['base', 'large'])],
         ], [
             'warehouse_id.required' => 'Pilih hub pengirim terlebih dahulu.',
         ]);
+
+        $uom = $request->input('uom', 'base');
+        if ($uom === 'large' && ! $product->hasDualUnitOrdering()) {
+            $uom = 'base';
+        }
+
+        $baseQuantity = $product->orderedQuantityToBase((int) $request->quantity, $uom);
+        if ($baseQuantity < 1) {
+            return $request->ajax()
+                ? response()->json(['error' => 'Jumlah tidak valid.'], 422)
+                : back()->with('error', 'Jumlah tidak valid.');
+        }
 
         $warehouse = Warehouse::where('id', $request->warehouse_id)
             ->orWhere('slug', $request->warehouse_id)
@@ -111,8 +125,13 @@ class CartController extends Controller
 
         $availableStock = $stock ? $stock->stock : 0;
 
-        if ($request->quantity > $availableStock) {
-            return back()->with('error', "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} unit.");
+        if ($baseQuantity > $availableStock) {
+            $unitLabel = $product->unit ?: 'unit';
+            return $request->ajax()
+                ? response()->json([
+                    'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
+                ], 422)
+                : back()->with('error', "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.");
         }
 
         if (Auth::check()) {
@@ -135,9 +154,11 @@ class CartController extends Controller
                 ->first();
 
             if ($cart) {
-                $newQuantity = $cart->quantity + $request->quantity;
+                $newQuantity = $cart->quantity + $baseQuantity;
                 if ($newQuantity > $availableStock) {
-                    return back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
+                    return $request->ajax()
+                        ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
+                        : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
                 }
                 $cart->quantity = $newQuantity;
                 $cart->save();
@@ -147,7 +168,7 @@ class CartController extends Controller
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
                     'cart_type' => 'regular',
-                    'quantity' => $request->quantity,
+                    'quantity' => $baseQuantity,
                 ]);
             }
         } else {
@@ -171,9 +192,11 @@ class CartController extends Controller
                 ->first();
 
             if ($cart) {
-                $newQuantity = $cart->quantity + $request->quantity;
+                $newQuantity = $cart->quantity + $baseQuantity;
                 if ($newQuantity > $availableStock) {
-                    return back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
+                    return $request->ajax()
+                        ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
+                        : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
                 }
                 $cart->quantity = $newQuantity;
                 $cart->save();
@@ -183,7 +206,7 @@ class CartController extends Controller
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
                     'cart_type' => 'regular',
-                    'quantity' => $request->quantity,
+                    'quantity' => $baseQuantity,
                 ]);
             }
         }
@@ -312,10 +335,9 @@ class CartController extends Controller
             }
         }
         
-        // Otherwise, return all warehouses with stock > 0
+        // Semua hub aktif yang punya baris stok untuk produk ini (termasuk stok 0)
         $stocks = WarehouseStock::with(['warehouse.province', 'warehouse.regency'])
             ->where('product_id', $product->id)
-            ->where('stock', '>', 0)
             ->whereHas('warehouse', function ($q) {
                 $q->where('is_active', true);
             })

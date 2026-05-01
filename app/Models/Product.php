@@ -29,6 +29,7 @@ class Product extends Model
         'size',
         'unit',
         'large_unit',
+        'units_per_large',
         'price',
         'reseller_point',
         'weight',
@@ -41,6 +42,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'reseller_point' => 'integer',
         'weight' => 'integer',
+        'units_per_large' => 'integer',
     ];
 
     /**
@@ -233,5 +235,41 @@ class Product extends Model
     public function getRouteKeyName()
     {
         return request()->is('admin/*') ? 'id' : 'slug';
+    }
+
+    /**
+     * Produk bisa dipesan dalam satuan kecil (UoM) atau satuan besar bila konversi diisi.
+     */
+    public function hasDualUnitOrdering(): bool
+    {
+        return filled($this->unit)
+            && filled($this->large_unit)
+            && (int) ($this->units_per_large ?? 0) > 1;
+    }
+
+    /**
+     * Jumlah isi satuan besar dalam satuan UoM kecil (stok & harga mengacu ke satuan kecil).
+     */
+    public function unitsPerLargeEffective(): int
+    {
+        return $this->hasDualUnitOrdering() ? (int) $this->units_per_large : 1;
+    }
+
+    /**
+     * Konversi qty yang diinput user (per satuan besar atau kecil) ke qty basis (satuan kecil).
+     *
+     * @param  string  $uom  'base' | 'large'
+     */
+    public function orderedQuantityToBase(int $orderedQty, string $uom): int
+    {
+        if ($orderedQty < 1) {
+            return 0;
+        }
+
+        if ($uom === 'large' && $this->hasDualUnitOrdering()) {
+            return $orderedQty * $this->unitsPerLargeEffective();
+        }
+
+        return $orderedQty;
     }
 }

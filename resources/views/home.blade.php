@@ -966,6 +966,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    if (data.message) {
+                        showShopToast(data.message, 'success');
+                    }
                     button.innerHTML = '<i class="bi bi-check-circle"></i> Ditambahkan!';
                     button.style.background = 'var(--success-color)';
                     
@@ -981,14 +984,14 @@
                         button.disabled = false;
                     }, 2000);
                 } else {
-                    alert('Gagal menambahkan produk: ' + (data.message || 'Silakan login terlebih dahulu'));
+                    showShopToast('Gagal menambahkan produk: ' + (data.message || 'Silakan login terlebih dahulu'), 'error');
                     button.innerHTML = originalText;
                     button.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan. Silakan coba lagi.');
+                showShopToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
                 button.innerHTML = originalText;
                 button.disabled = false;
             });

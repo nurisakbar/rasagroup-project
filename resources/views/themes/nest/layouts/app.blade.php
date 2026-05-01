@@ -43,6 +43,16 @@
             color: var(--primary-rasa) !important;
         }
 
+        footer .hotline p {
+            color: var(--primary-rasa) !important;
+        }
+        footer .mobile-social-icon a {
+            background-color: var(--primary-rasa) !important;
+        }
+        footer .mobile-social-icon a:hover {
+            background-color: var(--btn-rasa-hover) !important;
+        }
+
         .btn-brush-secondary {
             background-color: var(--primary-rasa) !important;
         }
@@ -68,6 +78,11 @@
             font-weight: 500 !important;
             text-decoration: line-through !important;
             margin-left: 8px !important;
+        }
+
+        .product-cart-wrap .product-badges span.new,
+        .vendor-wrap .product-badges.product-badges-position span.new {
+            background-color: var(--btn-rasa) !important;
         }
 
         /* ------------------------------------------------------------------ */
@@ -134,13 +149,76 @@
             font-family: 'Lato', sans-serif !important;
         }
 
-        /* Product Detail Controls Overrides */
-        .detail-qty {
-            max-width: 120px !important;
-            border: 1.5px solid #6A1B1B !important;
-            border-radius: 8px !important;
-            padding: 5px 10px !important;
+        /* Product detail: qty + tombol — border maroon, sejajar tinggi */
+        .detail-extralink {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .detail-extralink > div {
+            display: block !important;
+            vertical-align: unset !important;
+        }
+
+        .detail-extralink .detail-qty {
+            max-width: 128px !important;
+            min-height: 48px !important;
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 4px !important;
+            margin: 0 6px 0 0 !important;
+            padding: 0 10px !important;
+            background: #fff !important;
+            border: 2px solid var(--primary-rasa) !important;
+            border-radius: 12px !important;
+            color: var(--primary-rasa) !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
             position: relative !important;
+        }
+
+        .detail-extralink .qty-val {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 600 !important;
+            color: var(--primary-rasa) !important;
+            border: none !important;
+            text-align: center !important;
+            width: auto !important;
+            flex: 1 1 auto !important;
+            min-width: 1.5rem !important;
+            max-width: 3rem !important;
+            padding: 0 !important;
+            background: transparent !important;
+            line-height: 1.2 !important;
+            -moz-appearance: textfield !important;
+        }
+
+        .detail-extralink .qty-val::-webkit-outer-spin-button,
+        .detail-extralink .qty-val::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+
+        .detail-extralink .qty-up,
+        .detail-extralink .qty-down {
+            color: var(--primary-rasa) !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
+            padding: 8px 4px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+        }
+
+        .detail-extralink .qty-up:hover,
+        .detail-extralink .qty-down:hover {
+            color: var(--btn-rasa-hover) !important;
         }
 
         .qty-val {
@@ -164,9 +242,16 @@
             font-size: 18px !important;
         }
 
-        .button-add-to-cart i, .btn-buy i, button.add i {
-            margin-right: 8px !important;
-            font-size: 18px !important;
+        /* Halaman detail produk: pakai tombol standar (btn), hindari style lama .button Nest */
+        .product-extra-link2 .btn.button-add-to-cart {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 48px !important;
+            line-height: 1.25 !important;
+            height: auto !important;
+            padding: 12px 28px !important;
+            vertical-align: middle !important;
         }
 
         /* Countdown Timer Color Style */
@@ -507,6 +592,28 @@
             font-weight: 500 !important;
         }
 
+        /* Tab label home (Produk Populer, dll.): maroon, hover hitam */
+        .nav-tabs.links .nav-link {
+            color: var(--primary-rasa) !important;
+        }
+
+        .nav-tabs.links .nav-link.active {
+            color: var(--primary-rasa) !important;
+        }
+
+        .nav-tabs.links .nav-link:hover,
+        .nav-tabs.links .nav-link:focus-visible {
+            color: #000000 !important;
+            background: none !important;
+            background-color: transparent !important;
+            transform: none !important;
+        }
+
+        .nav-tabs.links .nav-link.active:hover,
+        .nav-tabs.links .nav-link.active:focus-visible {
+            color: #000000 !important;
+        }
+
         .product-name, .product-name a, .product-cart-wrap h2, .product-cart-wrap h2 a, .product-content-wrap h2, .product-content-wrap h2 a, h6, h6 a {
             font-family: 'Fira Sans', sans-serif !important;
             font-weight: 600 !important;
@@ -698,8 +805,8 @@
         .main-categori-wrap .categories-dropdown-wrap.categories-dropdown-active-large {
             box-sizing: border-box !important;
             width: 502.23px !important;
-            height: 412.15px !important;
-            padding: 26px 30px !important;
+            height: auto !important;
+            padding: 26px 30px 22px !important;
             background: #FFFFFF !important;
             border: 1px solid #D0B3AD !important;
             box-shadow: 20px 20px 40px rgba(24, 24, 24, 0.07) !important;
@@ -772,8 +879,10 @@
 
         /* Bottom link (More) */
         .main-categori-wrap .categories-dropdown-wrap .more_categories {
-            margin-top: 18px !important;
-            padding-top: 18px !important;
+            margin-top: 12px !important;
+            padding-top: 14px !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
             border-top: 1px solid #D0B3AD !important;
             justify-content: center !important;
         }
@@ -880,6 +989,7 @@
     @include('themes.nest.partials.modals')
     @include('themes.nest.partials.preloader')
     @include('themes.nest.partials.scripts')
+    @include('themes.nest.partials.shop-toast')
 
     <script>
         $(document).ready(function() {
@@ -900,8 +1010,7 @@
                             },
                             success: function(response) {
                                 if (response.success && response.is_new) {
-                                if (response.success && response.is_new) {
-                                    alert("Lokasi Terdeteksi! Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.");
+                                    showShopToast("Lokasi terdeteksi! Kami memilih '" + response.hub.name + "' sebagai hub terdekat.", 'success');
                                     window.location.reload();
                                 }
                             }
@@ -937,8 +1046,7 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            // Show success message (using simple alert for now, or Toast)
-                            alert(response.message);
+                            showShopToast(response.message, 'success');
                             
                             // Update cart counts in header
                             $('.pro-count').text(response.cart_count);
@@ -948,23 +1056,29 @@
                                 $('.cart-dropdown-wrap').html(response.mini_cart_html);
                             }
                         } else {
-                            alert(response.error || 'Terjadi kesalahan saat menambahkan produk.');
+                            showShopToast(response.error || 'Terjadi kesalahan saat menambahkan produk.', 'error');
                         }
                     },
                     error: function(xhr) {
                         if (xhr.status === 422) {
-                            const errors = xhr.responseJSON.errors;
+                            const body = xhr.responseJSON || {};
                             let message = '';
-                            for (const key in errors) {
-                                message += errors[key][0] + '\n';
+                            if (body.errors) {
+                                for (const key in body.errors) {
+                                    message += body.errors[key][0] + ' ';
+                                }
+                            } else if (body.error) {
+                                message = body.error;
+                            } else if (body.message) {
+                                message = body.message;
                             }
-                            alert(message);
+                            showShopToast(message.trim() || 'Validasi gagal.', 'error');
                         } else if (xhr.status === 302) {
                             // Handle case where back() redirect happens (non-ajax fallback)
                             // This shouldn't normally happen with X-Requested-With
                             window.location.reload();
                         } else {
-                            alert('Terjadi kesalahan. Silakan coba lagi.');
+                            showShopToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
                         }
                     },
                     complete: function() {

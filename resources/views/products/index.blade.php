@@ -3,12 +3,22 @@
 @section('title', 'Katalog Produk Premium')
 @section('meta_description', 'Jelajahi koleksi lengkap produk makanan dan minuman premium di Multi Citra Rasa Marketplace. Harga terbaik untuk kebutuhan ritel dan bisnis.')
 
+@php
+    $catalogUrl = function (array $replace) {
+        $q = array_merge(request()->except(array_keys($replace)), $replace);
+        if (array_key_exists('sort', $replace) || array_key_exists('per_page', $replace)) {
+            unset($q['page']);
+        }
+        return route('products.index', $q);
+    };
+@endphp
+
 @section('content')
     <div class="page-header mt-30 mb-50">
         <div class="container">
             <div class="archive-header">
                 <div class="row align-items-center">
-                    <div class="col-xl-3">
+                    <div class="col-xl-6">
                         <h1 class="mb-15">Katalog Produk</h1>
                         <div class="breadcrumb">
                             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Halaman Utama</a>
@@ -38,9 +48,9 @@
                             </div>
                             <div class="sort-by-dropdown">
                                 <ul>
-                                    <li><a class="{{ request('per_page', 15) == 15 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 15]) }}">15</a></li>
-                                    <li><a class="{{ request('per_page') == 25 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 25]) }}">25</a></li>
-                                    <li><a class="{{ request('per_page') == 50 ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['per_page' => 50]) }}">50</a></li>
+                                    <li><a class="{{ request('per_page', 15) == 15 ? 'active' : '' }}" href="{{ $catalogUrl(['per_page' => 15]) }}">15</a></li>
+                                    <li><a class="{{ request('per_page') == 25 ? 'active' : '' }}" href="{{ $catalogUrl(['per_page' => 25]) }}">25</a></li>
+                                    <li><a class="{{ request('per_page') == 50 ? 'active' : '' }}" href="{{ $catalogUrl(['per_page' => 50]) }}">50</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -63,10 +73,10 @@
                             </div>
                             <div class="sort-by-dropdown">
                                 <ul>
-                                    <li><a class="{{ !request('sort') || request('sort') == 'latest' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'latest']) }}">Terbaru</a></li>
-                                    <li><a class="{{ request('sort') == 'price_low' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'price_low']) }}">Harga Terendah</a></li>
-                                    <li><a class="{{ request('sort') == 'price_high' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'price_high']) }}">Harga Tertinggi</a></li>
-                                    <li><a class="{{ request('sort') == 'name' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'name']) }}">Nama A-Z</a></li>
+                                    <li><a class="{{ !request('sort') || request('sort') == 'latest' ? 'active' : '' }}" href="{{ $catalogUrl(['sort' => 'latest']) }}">Terbaru</a></li>
+                                    <li><a class="{{ request('sort') == 'price_low' ? 'active' : '' }}" href="{{ $catalogUrl(['sort' => 'price_low']) }}">Harga Terendah</a></li>
+                                    <li><a class="{{ request('sort') == 'price_high' ? 'active' : '' }}" href="{{ $catalogUrl(['sort' => 'price_high']) }}">Harga Tertinggi</a></li>
+                                    <li><a class="{{ request('sort') == 'name' ? 'active' : '' }}" href="{{ $catalogUrl(['sort' => 'name']) }}">Nama A-Z</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -96,3 +106,32 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+<style>
+    /* Dropdown sort/tampilkan di atas grid produk (tema Nest z-index: 99 sering tertutup kartu) */
+    .shop-product-fillter {
+        position: relative;
+        z-index: 100;
+    }
+    .shop-product-fillter .sort-by-cover {
+        position: relative;
+        z-index: 101;
+    }
+    .shop-product-fillter .sort-by-dropdown {
+        z-index: 102;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+    $(function () {
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.sort-by-product-area').length) {
+                $('.shop-product-fillter .sort-by-cover').removeClass('show');
+            }
+        });
+    });
+</script>
+@endpush

@@ -119,6 +119,12 @@
                                     <td><span class="label label-warning">{{ $product->large_unit }}</span></td>
                                 </tr>
                                 @endif
+                                @if($product->units_per_large)
+                                <tr>
+                                    <th>Isi per satuan besar</th>
+                                    <td>{{ $product->units_per_large }} {{ $product->unit ?? 'UoM' }}</td>
+                                </tr>
+                                @endif
                             </table>
                         </div>
                         <div class="col-md-6">

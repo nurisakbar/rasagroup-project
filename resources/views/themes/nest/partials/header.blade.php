@@ -23,7 +23,8 @@
                                         <option value="{{ $cat->slug }}" {{ $selectedCategory === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari produk..." />
+                                <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
+                                <button type="submit" aria-label="Cari produk"><i class="fi-rs-search"></i></button>
                             </form>
                         </div>
                         <div class="header-action-right">

@@ -179,6 +179,16 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group @error('units_per_large') has-error @enderror">
+                                    <label for="units_per_large"><i class="fa fa-exchange"></i> Isi per satuan besar</label>
+                                    <input type="number" class="form-control" id="units_per_large" name="units_per_large" value="{{ old('units_per_large') }}" min="2" step="1" placeholder="Contoh: 12">
+                                    <p class="help-block text-muted small mb-0">Jumlah satuan UoM dalam 1 satuan besar. Kosongkan jika tidak dipakai.</p>
+                                    @error('units_per_large')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <hr>

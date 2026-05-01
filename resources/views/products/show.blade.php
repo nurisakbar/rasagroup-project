@@ -49,7 +49,7 @@
                                     @if(isset($product->compare_price) && $product->compare_price > $product->price)
                                         <span class="stock-status out-stock"> Sale Off </span>
                                     @endif
-                                    <h2 class="title-detail">{{ $product->display_name }}</h2>
+                                    <h2 class="title-detail product-detail-title">{{ $product->display_name }}</h2>
                                     
                                     <!-- Rating -->
                                     <div class="product-detail-rating">
@@ -62,15 +62,34 @@
                                     </div>
                                     
                                     <!-- Price -->
-                                    <div class="clearfix product-price-cover">
-                                        <div class="product-price primary-color float-left">
-                                            <span class="current-price text-brand">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                    <div class="product-detail-price-block mb-3">
+                                        <div class="product-price primary-color">
+                                            <span class="current-price text-brand product-detail-price-amount">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
                                             @if(isset($product->compare_price) && $product->compare_price > $product->price)
-                                                <span>
-                                                    <span class="save-price font-md color3 ml-15">{{ round((($product->compare_price - $product->price)/$product->compare_price)*100) }}% Off</span>
-                                                    <span class="old-price font-md ml-15">Rp {{ number_format($product->compare_price, 0, ',', '.') }}</span>
-                                                </span>
+                                                <div class="product-detail-price-promo mt-2">
+                                                    <span class="save-price font-md color3">{{ round((($product->compare_price - $product->price)/$product->compare_price)*100) }}% Off</span>
+                                                    <span class="old-price font-md ms-2">Rp {{ number_format($product->compare_price, 0, ',', '.') }}</span>
+                                                </div>
                                             @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="product-detail-stock-below-price mb-3">
+                                        <span class="product-detail-stock-below-label">Stok</span>
+                                        <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
+                                        @if($product->unit)
+                                            <span class="product-detail-stock-below-unit text-muted">{{ $product->unit }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="product-detail-brand-category mb-30">
+                                        <div class="product-detail-meta-card">
+                                            <span class="product-detail-meta-label">Brand</span>
+                                            <span class="product-detail-meta-value">{{ $product->brand->name ?? '—' }}</span>
+                                        </div>
+                                        <div class="product-detail-meta-card">
+                                            <span class="product-detail-meta-label">Kategori</span>
+                                            <span class="product-detail-meta-value">{{ $product->category->name ?? '—' }}</span>
                                         </div>
                                     </div>
                                     
@@ -132,35 +151,54 @@
                                     <form action="{{ route('cart.store', $product) }}" method="POST" id="add-to-cart-form">
                                         @csrf
                                         <input type="hidden" name="warehouse_id" id="selected-warehouse-id" value="{{ $selectedWarehouseId ?? '' }}">
-                                        
-                                        <div class="detail-extralink mb-50">
+                                        <input type="hidden" name="uom" id="uom-field" value="base">
+
+                                        @if($product->hasDualUnitOrdering())
+                                            <div class="product-uom-picker-wrap mb-3">
+                                                <div class="product-uom-picker" role="radiogroup" aria-labelledby="product-uom-heading">
+                                                    <span id="product-uom-heading" class="product-uom-picker-title">Satuan pembelian</span>
+                                                    <div class="product-uom-cards">
+                                                        <label class="product-uom-card" data-uom-card="base" for="product-uom-base">
+                                                            <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-base" value="base" checked autocomplete="off">
+                                                            <span class="product-uom-card-face">
+                                                                <span class="product-uom-card-radio" aria-hidden="true"></span>
+                                                                <span class="product-uom-card-row">
+                                                                    <span class="product-uom-card-name">UoM</span>
+                                                                    <span class="product-uom-card-chip">{{ $product->unit }}</span>
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                        <label class="product-uom-card" data-uom-card="large" for="product-uom-large" aria-label="Beli per {{ $product->large_unit }}">
+                                                            <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-large" value="large" autocomplete="off">
+                                                            <span class="product-uom-card-face">
+                                                                <span class="product-uom-card-radio" aria-hidden="true"></span>
+                                                                <span class="product-uom-card-row product-uom-card-row--solo-chip">
+                                                                    <span class="product-uom-card-chip product-uom-card-chip--outline">{{ $product->large_unit }}</span>
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <div class="detail-extralink mb-50 product-detail-cart-row product-detail-qty-cta">
                                             <div class="detail-qty border radius">
                                                 <a href="#" class="qty-down" onclick="decreaseQty(); return false;"><i class="fi-rs-angle-small-down"></i></a>
-                                                <input type="text" name="quantity" id="quantity" class="qty-val" value="1" min="1">
+                                                <input type="text" name="quantity" id="quantity" class="qty-val" value="1" min="1" inputmode="numeric" title="Jumlah menurut satuan yang dipilih">
                                                 <a href="#" class="qty-up" onclick="increaseQty(); return false;"><i class="fi-rs-angle-small-up"></i></a>
                                             </div>
-                                            <div class="product-extra-link2">
-                                                <button type="submit" class="button button-add-to-cart" id="add-to-cart-btn" {{ !$selectedWarehouseId ? 'disabled' : '' }}>
+                                            <div class="product-extra-link2 product-detail-cta-wrap">
+                                                <button type="submit" class="btn button-add-to-cart product-add-cart-btn" id="add-to-cart-btn" {{ !$selectedWarehouseId ? 'disabled' : '' }}>
                                                     <i class="fi-rs-shopping-cart"></i> {{ $selectedWarehouseId ? 'Tambah ke Keranjang' : 'Pilih Hub Terlebih Dahulu' }}
                                                 </button>
                                             </div>
                                         </div>
-                                        <div>
-                                            <small class="text-muted" id="max-stock-hint"></small>
-                                        </div>
-                                        <div class="form-group mt-3">
-                                            <label>Subtotal: </label>
-                                            <span id="subtotal" class="text-brand h4">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                        <div class="form-group mt-3 product-detail-subtotal-row">
+                                            <span class="product-detail-subtotal-label">Subtotal</span>
+                                            <span id="subtotal" class="text-brand product-detail-subtotal-amount">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
                                         </div>
                                     </form>
-
-                                    <div class="font-xs">
-                                        <ul class="mr-50 float-start">
-                                            <li class="mb-5">Brand: <span class="text-brand">{{ $product->brand->name ?? 'Unknown' }}</span></li>
-                                            <li class="mb-5">Category: <span class="text-brand">{{ $product->category->name ?? 'Unknown' }}</span></li>
-                                            <li class="mb-5">Stok: <span class="text-brand">{{ $product->current_stock }}</span></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <!-- Detail Info -->
                             </div>
@@ -303,49 +341,125 @@
     const price = {{ $product->price }};
     let selectedStock = 0;
     let selectedWarehouseId = null;
-    
-    function updateSubtotal() {
-        const qty = parseInt(document.getElementById('quantity').value) || 1;
-        const subtotal = price * qty;
-        document.getElementById('subtotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+    const hasDualUom = @json($product->hasDualUnitOrdering());
+    const unitsPerLarge = {{ (int) ($product->units_per_large ?? 0) }};
+    let uomMode = 'base';
+    const baseUnitLabel = @json($product->unit ?: 'unit');
+    const largeUnitLabel = @json($product->large_unit ?: '');
+
+    function getMaxOrderQty() {
+        if (selectedStock <= 0) {
+            return 0;
+        }
+        if (!hasDualUom || uomMode === 'base') {
+            return selectedStock;
+        }
+        return Math.floor(selectedStock / unitsPerLarge);
     }
-    
+
+    function getBaseQty() {
+        const qty = parseInt(document.getElementById('quantity').value, 10) || 1;
+        if (hasDualUom && uomMode === 'large') {
+            return qty * unitsPerLarge;
+        }
+        return qty;
+    }
+
+    function updateQtyUomHint() {
+        const el = document.getElementById('qty-uom-hint');
+        if (!el) {
+            return;
+        }
+        if (!hasDualUom) {
+            el.textContent = '';
+            return;
+        }
+        const q = parseInt(document.getElementById('quantity').value, 10) || 1;
+        if (uomMode === 'large') {
+            const base = q * unitsPerLarge;
+            el.textContent = `Setara ${base} ${baseUnitLabel} di keranjang (stok dihitung per ${baseUnitLabel}).`;
+        } else {
+            el.textContent = `Jumlah dalam ${baseUnitLabel}.`;
+        }
+    }
+
+    function refreshUomUi() {
+        if (!hasDualUom) {
+            return;
+        }
+        const largeRadio = document.getElementById('product-uom-large');
+        const maxLarge = selectedStock > 0 ? Math.floor(selectedStock / unitsPerLarge) : 0;
+        if (largeRadio) {
+            largeRadio.disabled = maxLarge < 1;
+            const largeCard = document.querySelector('[data-uom-card="large"]');
+            if (largeCard) {
+                largeCard.classList.toggle('product-uom-card--disabled', maxLarge < 1);
+            }
+            if (maxLarge < 1 && uomMode === 'large') {
+                const baseRadio = document.getElementById('product-uom-base');
+                if (baseRadio) {
+                    baseRadio.checked = true;
+                }
+                uomMode = 'base';
+                const uomField = document.getElementById('uom-field');
+                if (uomField) {
+                    uomField.value = 'base';
+                }
+            }
+        }
+        updateQtyUomHint();
+    }
+
+    function updateSubtotal() {
+        const subtotal = price * getBaseQty();
+        document.getElementById('subtotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+        updateQtyUomHint();
+    }
+
     function increaseQty() {
         const input = document.getElementById('quantity');
-        let newVal = parseInt(input.value) + 1;
-        if (selectedStock > 0 && newVal > selectedStock) {
-            newVal = selectedStock;
+        const maxOrder = getMaxOrderQty();
+        if (maxOrder < 1) {
+            return;
         }
-        input.value = newVal;
+        let newVal = parseInt(input.value, 10) + 1;
+        if (newVal > maxOrder) {
+            newVal = maxOrder;
+        }
+        input.value = Math.max(1, newVal);
         updateSubtotal();
     }
-    
+
     function decreaseQty() {
         const input = document.getElementById('quantity');
-        if (parseInt(input.value) > 1) {
-            input.value = parseInt(input.value) - 1;
+        if (parseInt(input.value, 10) > 1) {
+            input.value = parseInt(input.value, 10) - 1;
             updateSubtotal();
         }
     }
-    
+
     document.getElementById('quantity').addEventListener('change', function() {
-        if (this.value < 1) this.value = 1;
-        if (selectedStock > 0 && this.value > selectedStock) {
-            this.value = selectedStock;
+        let v = parseInt(this.value, 10) || 1;
+        if (v < 1) {
+            v = 1;
         }
+        const maxOrder = getMaxOrderQty();
+        if (maxOrder > 0 && v > maxOrder) {
+            v = maxOrder;
+        }
+        this.value = Math.max(1, v);
         updateSubtotal();
     });
 
     function selectHub(warehouseId, warehouseName, stock) {
         selectedWarehouseId = warehouseId;
         selectedStock = stock;
-        
+
         const warehouseInput = document.getElementById('selected-warehouse-id');
         if (warehouseInput) {
             warehouseInput.value = warehouseId;
         }
-        
-        // Update UI (only if hub-option elements exist)
+
         const hubOptions = document.querySelectorAll('.hub-option');
         if (hubOptions.length > 0) {
             hubOptions.forEach(el => {
@@ -356,26 +470,42 @@
                 selectedOption.classList.add('selected');
             }
         }
-        
-        // Enable button
+
         const btn = document.getElementById('add-to-cart-btn');
         if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fi-rs-shopping-cart me-2"></i> Tambah ke Keranjang';
+            if (stock < 1) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fi-rs-cross-circle"></i> Stok tidak tersedia';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fi-rs-shopping-cart"></i> Tambah ke Keranjang';
+            }
         }
-        
-        // Update max stock hint
+
         const maxStockHint = document.getElementById('max-stock-hint');
         if (maxStockHint) {
-            maxStockHint.textContent = `Stock tersedia: ${stock} unit`;
+            let hint = stock < 1
+                ? `Stok habis (0 ${baseUnitLabel})`
+                : `Stok tersedia: ${stock} ${baseUnitLabel}`;
+            if (hasDualUom && unitsPerLarge > 1) {
+                const maxLarge = Math.floor(stock / unitsPerLarge);
+                hint += ` (maks. ${maxLarge} ${largeUnitLabel} jika order per ${largeUnitLabel})`;
+            }
+            maxStockHint.textContent = hint;
         }
-        
-        // Validate quantity
+
         const qtyInput = document.getElementById('quantity');
-        if (qtyInput && parseInt(qtyInput.value) > stock) {
-            qtyInput.value = stock;
+        if (qtyInput) {
+            const maxOrder = getMaxOrderQty();
+            if (maxOrder > 0 && parseInt(qtyInput.value, 10) > maxOrder) {
+                qtyInput.value = Math.max(1, maxOrder);
+            }
+            if (maxOrder < 1) {
+                qtyInput.value = 1;
+            }
             updateSubtotal();
         }
+        refreshUomUi();
     }
 
     function loadHubStock() {
@@ -436,7 +566,7 @@
                         
                         if (targetStock.stock > 0) {
                             stockBadge.className = 'badge bg-success';
-                            stockBadge.textContent = `${targetStock.stock} unit`;
+                            stockBadge.textContent = `${targetStock.stock} ${baseUnitLabel}`;
                             infoEl.classList.remove('d-none');
                             selectHub(targetStock.warehouse_id, targetStock.warehouse_name, targetStock.stock);
                         } else {
@@ -479,6 +609,7 @@
                 if (data.stocks && data.stocks.length > 0) {
                     let html = '<div class="row g-2">';
                     data.stocks.forEach(stock => {
+                        const badgeClass = Number(stock.stock) > 0 ? 'bg-success' : 'bg-secondary';
                         html += `
                             <div class="col-12">
                                 <div class="hub-option p-3" data-warehouse-id="${stock.warehouse_id}" onclick="selectHub('${stock.warehouse_id}', '${stock.warehouse_name}', ${stock.stock})" style="cursor: pointer; border: 2px solid #e9ecef; border-radius: 10px; transition: all 0.2s;">
@@ -489,7 +620,7 @@
                                             <small class="text-muted"><i class="fi-rs-marker me-1"></i>${stock.warehouse_location}</small>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-success">${stock.stock} unit</span>
+                                            <span class="badge ${badgeClass}">${stock.stock} ${baseUnitLabel}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -523,7 +654,7 @@
         e.preventDefault();
         
         if (!selectedWarehouseId) {
-            alert("Silakan pilih hub pengirim terlebih dahulu.");
+            showShopToast('Silakan pilih hub pengirim terlebih dahulu.', 'warning');
             return false;
         }
 
@@ -535,13 +666,17 @@
             url: url,
             type: 'POST',
             data: data,
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
                 if (response.success) {
-                    alert(response.message);
+                    showShopToast(response.message, 'success');
                     
-                    // Update cart count in header
                     $('.pro-count.blue').text(response.cart_count);
                     $('.pro-count.white').text(response.cart_count);
+                    if (response.mini_cart_html) {
+                        $('.cart-dropdown-wrap').html(response.mini_cart_html);
+                    }
                 }
             },
             error: function(xhr) {
@@ -553,19 +688,45 @@
                 }
 
                 let errorMsg = "Terjadi kesalahan saat menambahkan ke keranjang.";
+                const body = xhr.responseJSON || {};
                 if (xhr.status === 422) {
-                    const errors = xhr.responseJSON.errors;
-                    errorMsg = Object.values(errors).flat()[0];
-                } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMsg = xhr.responseJSON.error;
+                    if (body.errors) {
+                        errorMsg = Object.values(body.errors).flat()[0];
+                    } else if (body.error) {
+                        errorMsg = body.error;
+                    } else if (body.message) {
+                        errorMsg = body.message;
+                    }
+                } else if (body.error) {
+                    errorMsg = body.error;
                 }
                 
-                alert(errorMsg);
+                showShopToast(errorMsg, 'error');
             }
         });
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name="uom_pick"]').forEach(function(r) {
+            r.addEventListener('change', function() {
+                uomMode = this.value;
+                const uomField = document.getElementById('uom-field');
+                if (uomField) {
+                    uomField.value = uomMode;
+                }
+                const maxOrder = getMaxOrderQty();
+                const qtyInput = document.getElementById('quantity');
+                if (qtyInput) {
+                    if (maxOrder > 0 && parseInt(qtyInput.value, 10) > maxOrder) {
+                        qtyInput.value = Math.max(1, maxOrder);
+                    }
+                    if (maxOrder < 1) {
+                        qtyInput.value = 1;
+                    }
+                }
+                updateSubtotal();
+            });
+        });
         loadHubStock();
     });
 </script>
@@ -573,6 +734,253 @@
 
 @push('styles')
 <style>
+    .product-detail-cart-row {
+        align-items: center !important;
+    }
+    .detail-info .product-detail-title.title-detail {
+        font-family: 'Fira Sans', sans-serif;
+        font-size: 35px !important;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: #253D4E;
+    }
+    .product-detail-price-block .product-detail-price-amount {
+        font-family: 'Fira Sans', sans-serif;
+        font-size: 30px !important;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: #6A1B1B !important;
+    }
+    .product-detail-stock-below-price {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.35rem 0.5rem;
+        font-family: 'Fira Sans', sans-serif;
+    }
+    .product-detail-stock-below-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #8B7355;
+    }
+    .product-detail-stock-below-value {
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+    .product-detail-stock-below-unit {
+        font-size: 0.9375rem;
+    }
+    .product-detail-price-block .float-left,
+    .product-detail-price-block .clearfix {
+        float: none !important;
+    }
+    .product-detail-brand-category {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1rem;
+    }
+    .product-detail-meta-card {
+        flex: 1 1 140px;
+        min-width: min(100%, 160px);
+        padding: 0.65rem 0.9rem;
+        background: #fff;
+        border: 1px solid #E8DDD4;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(24, 24, 24, 0.04);
+    }
+    .product-detail-meta-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8B7355;
+        margin-bottom: 0.2rem;
+        font-family: 'Fira Sans', sans-serif;
+    }
+    .product-detail-meta-value {
+        display: block;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #253D4E;
+        font-family: 'Fira Sans', sans-serif;
+        line-height: 1.25;
+    }
+    .product-detail-qty-cta {
+        width: 100%;
+    }
+    .product-detail-qty-cta .product-detail-cta-wrap {
+        flex: 1 1 200px;
+        min-width: min(100%, 220px);
+    }
+    .product-detail-qty-cta .product-add-cart-btn {
+        width: 100%;
+        min-width: 0 !important;
+    }
+    .product-detail-subtotal-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+    .product-detail-subtotal-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-family: 'Fira Sans', sans-serif;
+    }
+    .product-detail-subtotal-amount {
+        font-family: 'Fira Sans', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #6A1B1B !important;
+        letter-spacing: -0.02em;
+    }
+    .product-uom-picker {
+        background: #faf8f6;
+        border-radius: 12px;
+        border: 1px solid #E8DDD4;
+        padding: 0.75rem 0.75rem 0.85rem;
+    }
+    .product-uom-picker-title {
+        font-family: 'Fira Sans', sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #253D4E;
+        display: block;
+        margin-bottom: 0.65rem;
+        letter-spacing: -0.01em;
+    }
+    .product-uom-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+    .product-uom-card {
+        margin: 0;
+        cursor: pointer;
+        display: block;
+    }
+    .product-uom-card-input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+    }
+    .product-uom-card-face {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.7rem 0.85rem;
+        border-radius: 10px;
+        border: 2px solid #E5E0D8;
+        background: #fff;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        min-height: 3rem;
+    }
+    .product-uom-card:hover .product-uom-card-face {
+        border-color: #C4A8A4;
+        box-shadow: 0 4px 14px rgba(106, 27, 27, 0.08);
+    }
+    .product-uom-card-input:focus-visible + .product-uom-card-face {
+        outline: 2px solid #6A1B1B;
+        outline-offset: 2px;
+    }
+    .product-uom-card-input:not(:checked) + .product-uom-card-face {
+        background: #f5f3f0;
+    }
+    .product-uom-card-input:checked + .product-uom-card-face {
+        border-color: #6A1B1B;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(106, 27, 27, 0.1);
+    }
+    .product-uom-card-input:checked + .product-uom-card-face .product-uom-card-radio {
+        border-color: #6A1B1B;
+        background: #6A1B1B;
+        box-shadow: inset 0 0 0 3px #fff;
+    }
+    .product-uom-card-radio {
+        flex-shrink: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 50%;
+        border: 2px solid #B8B2A8;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .product-uom-card-row {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
+        font-family: 'Fira Sans', sans-serif;
+    }
+    .product-uom-card-row--solo-chip .product-uom-card-chip {
+        font-size: 0.75rem;
+        padding: 0.22rem 0.5rem;
+    }
+    .product-uom-card-name {
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: #253D4E;
+    }
+    .product-uom-card-chip {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.18rem 0.42rem;
+        border-radius: 6px;
+        background: rgba(106, 27, 27, 0.12);
+        color: #6A1B1B;
+    }
+    .product-uom-card-chip--outline {
+        background: #fff;
+        border: 1px solid #D0B3AD;
+        color: #5c4a48;
+    }
+    .product-uom-card--disabled {
+        pointer-events: none;
+    }
+    .product-uom-card--disabled .product-uom-card-face {
+        opacity: 0.55;
+        cursor: not-allowed;
+        background: #f5f3f0;
+    }
+    .product-uom-card--disabled:hover .product-uom-card-face {
+        border-color: #E5E0D8;
+        box-shadow: none;
+    }
+    @media (min-width: 520px) {
+        .product-uom-cards {
+            flex-direction: row;
+            align-items: stretch;
+        }
+        .product-uom-card {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+    .product-add-cart-btn {
+        width: 100%;
+    }
+    @media (min-width: 576px) {
+        .product-add-cart-btn {
+            width: auto;
+            min-width: 220px;
+        }
+        .product-detail-qty-cta .product-add-cart-btn {
+            width: 100%;
+            min-width: 0 !important;
+        }
+    }
     .hub-option:hover {
         border-color: var(--primary-color) !important;
         background: #fff5f5;

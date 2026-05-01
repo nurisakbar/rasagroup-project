@@ -17,7 +17,9 @@ class HubController extends Controller
         $query = Warehouse::with(['province', 'regency'])
             ->where('is_active', true)
             ->withCount(['stocks as products_count' => function ($q) {
-                $q->where('stock', '>', 0);
+                $q->whereHas('product', function ($p) {
+                    $p->where('status', 'active');
+                });
             }])
             ->withSum('stocks', 'stock');
 
@@ -63,10 +65,9 @@ class HubController extends Controller
 
         $warehouse->load(['province', 'regency', 'stocks.product']);
 
-        // Get products with stock - filter out stocks with invalid products
+        // Produk di hub (termasuk stok 0) — hanya produk aktif
         $productsWithStock = $warehouse->stocks()
             ->with(['product.brand', 'product.category'])
-            ->where('stock', '>', 0)
             ->whereHas('product', function($query) {
                 $query->where('status', 'active');
             })
@@ -80,7 +81,6 @@ class HubController extends Controller
         
         // Count total valid stocks for info
         $totalValidStocksCount = $warehouse->stocks()
-            ->where('stock', '>', 0)
             ->whereHas('product', function($query) {
                 $query->where('status', 'active');
             })
@@ -110,7 +110,9 @@ class HubController extends Controller
         $query = Warehouse::with(['province', 'regency'])
             ->where('is_active', true)
             ->withCount(['stocks as products_count' => function ($q) {
-                $q->where('stock', '>', 0);
+                $q->whereHas('product', function ($p) {
+                    $p->where('status', 'active');
+                });
             }]);
 
         // Priority: same regency > same province > other

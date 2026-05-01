@@ -13,37 +13,38 @@ class ProductController extends Controller
         
         $query = Product::with(['category', 'brand', 'warehouseStocks'])->where('status', 'active');
 
-        // Only show products that have stock
         if ($selectedHubId) {
-            $query->whereHas('warehouseStocks', function($q) use ($selectedHubId) {
-                $q->where('warehouse_id', $selectedHubId)
-                  ->where('stock', '>', 0);
-            });
-            
-            // Eager load the stock for the current hub
-            $query->with(['warehouseStocks' => function($q) use ($selectedHubId) {
+            $query->with(['warehouseStocks' => function ($q) use ($selectedHubId) {
                 $q->where('warehouse_id', $selectedHubId);
             }]);
-        } else {
-            $query->whereHas('warehouseStocks', function($q) {
-                $q->where('stock', '>', 0);
+        }
+
+        if ($request->filled('search')) {
+            $keyword = trim($request->input('search'));
+            $like = '%' . addcslashes($keyword, '%_\\') . '%';
+
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('commercial_name', 'like', $like)
+                    ->orWhere('code', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhere('technical_description', 'like', $like)
+                    ->orWhereHas('brand', function ($b) use ($like) {
+                        $b->where('name', 'like', $like);
+                    })
+                    ->orWhereHas('category', function ($c) use ($like) {
+                        $c->where('name', 'like', $like);
+                    });
             });
         }
 
-        if ($request->has('search') && $request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('commercial_name', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        if ($request->has('category') && $request->category) {
+        if ($request->filled('category')) {
             $query->whereHas('category', function($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        if ($request->has('brand') && $request->brand) {
+        if ($request->filled('brand')) {
             $query->whereHas('brand', function($q) use ($request) {
                 $q->where('slug', $request->brand);
             });
@@ -57,20 +58,25 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Sort
+        // Sort (valid values: latest, price_low, price_high, name)
         $sort = $request->get('sort', 'latest');
+        if (! in_array($sort, ['latest', 'price_low', 'price_high', 'name'], true)) {
+            $sort = 'latest';
+        }
         switch ($sort) {
             case 'price_low':
-                $query->orderBy('price', 'asc');
+                $query->orderBy('price', 'asc')->orderBy('created_at', 'desc');
                 break;
             case 'price_high':
-                $query->orderBy('price', 'desc');
+                $query->orderBy('price', 'desc')->orderBy('created_at', 'desc');
                 break;
             case 'name':
-                $query->orderByRaw('COALESCE(commercial_name, name) asc');
+                $query->orderByRaw('COALESCE(commercial_name, name) asc')->orderBy('created_at', 'desc');
                 break;
+            case 'latest':
             default:
                 $query->latest();
+                break;
         }
 
         $perPage = $request->get('per_page', 15);
@@ -97,20 +103,7 @@ class ProductController extends Controller
 
         $selectedHubId = session('selected_hub_id');
         $selectedWarehouseId = $request->query('warehouse_id', $selectedHubId);
-        
-        // Ensure the product is available in the selected hub
-        if ($selectedWarehouseId) {
-            $hasStock = $product->warehouseStocks()
-                ->where('warehouse_id', $selectedWarehouseId)
-                ->where('stock', '>', 0)
-                ->exists();
-                
-            if (!$hasStock && $selectedWarehouseId == $selectedHubId) {
-                // If no stock in session-selected hub, we still show the product but let them choose another hub
-                $selectedWarehouseId = null;
-            }
-        }
-        
+
         // Get Related Products (Same category, excluding current product)
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
