@@ -221,6 +221,9 @@
             <li class="{{ request()->routeIs('admin.price-levels.*') ? 'active' : '' }}">
               <a href="{{ route('admin.price-levels.index') }}"><i class="fa fa-tags"></i> LEVEL HARGA</a>
             </li>
+            <li class="{{ request()->routeIs('admin.menus.*') ? 'active' : '' }}">
+              <a href="{{ route('admin.menus.index') }}"><i class="fa fa-list"></i> MENU</a>
+            </li>
           </ul>
         </li>
         

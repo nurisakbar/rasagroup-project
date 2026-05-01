@@ -97,7 +97,7 @@
                             </div>
                             <ul class="contact-infor">
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>Jl. Rasa Manis No. 123, Jakarta Selatan</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon:</strong><span>0813-1234-5678</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon:</strong><span><a href="tel:+628118003357" class="text-decoration-none text-heading">+62 811-8003-357</a></span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email:</strong><span>info@rasagroup.com</span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Jam Kerja:</strong><span>08:00 - 17:00, Senin - Sabtu</span></li>
                             </ul>
@@ -158,7 +158,7 @@
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex mr-30">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p>0813-1234-5678<span>Layanan Pelanggan</span></p>
+                        <p><a href="tel:+628118003357" class="text-decoration-none" style="color: inherit;">+62 811-8003-357</a><span>Layanan Pelanggan</span></p>
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">

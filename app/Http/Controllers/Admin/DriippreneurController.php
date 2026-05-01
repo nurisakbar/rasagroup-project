@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Jobs\SendDriippreneurStatusJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
@@ -119,6 +120,8 @@ class DriippreneurController extends Controller
             'driippreneur_rejection_reason' => null,
         ]);
 
+        SendDriippreneurStatusJob::dispatch($driippreneur);
+
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json(['success' => 'Aplikasi DRiiPPreneur berhasil disetujui.']);
         }
@@ -144,6 +147,8 @@ class DriippreneurController extends Controller
             'driippreneur_rejected_at' => now(),
             'driippreneur_rejection_reason' => $request->input('rejection_reason'),
         ]);
+
+        SendDriippreneurStatusJob::dispatch($driippreneur);
 
         return back()->with('success', 'Aplikasi DRiiPPreneur ditolak.');
     }

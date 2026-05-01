@@ -208,6 +208,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Admin\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
 
+        // Menus Management
+        Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);
+
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');

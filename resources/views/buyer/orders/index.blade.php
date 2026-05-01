@@ -55,6 +55,7 @@
                                         $remainingCount = $order->items->count() - 1;
                                     @endphp
                                     <div class="order-card mb-20">
+                                        <a href="{{ route('buyer.orders.show', $order) }}" class="stretched-link order-card-stretched-link" aria-label="Lihat detail pesanan #{{ $order->order_number }}"></a>
                                         <div class="order-header p-25 d-flex justify-content-between align-items-center">
                                             <div class="order-meta d-flex align-items-center">
                                                 <div class="mr-30">
@@ -138,6 +139,7 @@
     .bg-light-maroon { background-color: rgba(106, 27, 27, 0.03); }
     .order-card {
         background: #fff;
+        position: relative;
         border-radius: 20px;
         border: 1.5px solid #edf2f7;
         overflow: hidden;
@@ -152,6 +154,15 @@
     .order-header {
         border-bottom: 1.5px solid #edf2f7;
         background-color: #F8F9FA !important;
+        position: relative;
+        z-index: 2;
+    }
+    .order-body {
+        position: relative;
+        z-index: 2;
+    }
+    .order-card-stretched-link {
+        z-index: 1;
     }
     
     .text-maroon { color: #6A1B1B !important; }

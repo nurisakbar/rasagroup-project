@@ -750,5 +750,95 @@ class WACloudHelper
             ],
         ];
     }
+    /**
+     * Send DRiiPPreneur status notification (Approved/Rejected)
+     * 
+     * @param \App\Models\User $user Driippreneur user
+     * @return array|null
+     */
+    public static function sendDriippreneurStatusNotification(\App\Models\User $user): ?array
+    {
+        if (!self::isConfigured()) {
+            Log::warning('QAD WhatsApp API not configured. Cannot send DRiiPPreneur status notification.');
+            return null;
+        }
+
+        if (!$user->phone) {
+            Log::warning('Driippreneur phone not available', [
+                'user_id' => $user->id,
+            ]);
+            return null;
+        }
+
+        try {
+            $message = self::buildDriippreneurStatusMessage($user);
+            
+            Log::info('Sending DRiiPPreneur status notification via WhatsApp', [
+                'user_id' => $user->id,
+                'phone' => $user->phone,
+                'status' => $user->driippreneur_status,
+            ]);
+            
+            $result = self::sendText($user->phone, $message);
+            
+            if ($result) {
+                Log::info('DRiiPPreneur status notification sent via WhatsApp', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                    'message_id' => $result['message_id'] ?? null,
+                ]);
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to send DRiiPPreneur status notification via WhatsApp', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Build DRiiPPreneur status notification message
+     * 
+     * @param \App\Models\User $user Driippreneur user
+     * @return string
+     */
+    private static function buildDriippreneurStatusMessage(\App\Models\User $user): string
+    {
+        if ($user->driippreneur_status === 'approved') {
+            $message = "🎉 *Selamat, Akun Affiliator Anda Disetujui!*\n\n";
+            $message .= "Halo *{$user->name}*,\n\n";
+            $message .= "Kabar gembira! Permohonan Anda untuk menjadi *Affiliator Rasa Group (DRiiPPreneur)* telah disetujui.\n\n";
+            $message .= "Sekarang Anda sudah bisa mulai berbagi link affiliasi dan mendapatkan poin dari setiap transaksi yang berhasil.\n\n";
+            $message .= "🚀 *Apa langkah selanjutnya?*\n";
+            $message .= "1. Login ke akun Anda di website/aplikasi Rasa Group\n";
+            $message .= "2. Buka menu 'Affiliasi' atau 'Dashboard DRiiPPreneur'\n";
+            $message .= "3. Bagikan link produk atau kode referral Anda kepada rekan-rekan\n\n";
+            $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+            $message .= "📞 *Butuh Bantuan?*\n";
+            $message .= "Jika ada pertanyaan seputar program affiliasi, jangan ragu untuk menghubungi tim support kami.\n";
+            $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+            $message .= "Mari tumbuh sukses bersama Rasa Group! 🙏";
+        } else {
+            $message = "📢 *Update Status Aplikasi Affiliator*\n\n";
+            $message .= "Halo *{$user->name}*,\n\n";
+            $message .= "Kami ingin menginformasikan bahwa saat ini permohonan Anda untuk menjadi *Affiliator Rasa Group (DRiiPPreneur)* belum dapat kami setujui.\n\n";
+            
+            if ($user->driippreneur_rejection_reason) {
+                $message .= "*Alasan:* {$user->driippreneur_rejection_reason}\n\n";
+            }
+            
+            $message .= "Terima kasih telah tertarik dengan program kami. Anda masih bisa melengkapi data yang kurang dan mencoba mengajukan kembali di kemudian hari.\n\n";
+            $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+            $message .= "📞 *Butuh Bantuan?*\n";
+            $message .= "Hubungi kami jika Anda memiliki pertanyaan lebih lanjut.\n";
+            $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+            $message .= "Terima kasih, tim Rasa Group.";
+        }
+        
+        return $message;
+    }
 }
 

@@ -13,39 +13,15 @@
     </div>
 </div>
 
-<div class="container mb-80 mt-50">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="row">
-                <div class="col-lg-4">
-                    <div class="dashboard-menu">
-                        <ul class="nav flex-column" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.dashboard') }}"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.orders.index') }}"><i class="fi-rs-shopping-bag mr-10"></i>Pesanan Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.addresses.index') }}"><i class="fi-rs-marker mr-10"></i>Alamat Saya</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('buyer.profile') }}"><i class="fi-rs-user mr-10"></i>Detail Akun</a>
-                            </li>
-                            <li class="nav-item">
-                                <form method="POST" action="{{ route('logout') }}" id="logout-form-apply">
-                                    @csrf
-                                    <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-apply').submit();">
-                                        <i class="fi-rs-sign-out mr-10"></i>Keluar
-                                    </a>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-8">
-                    <div class="tab-content account dashboard-content pl-50">
-                        <div class="tab-pane fade show active" role="tabpanel">
+<div class="page-content pt-50 pb-80" style="background-color: #F2EAE1;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4">
+                @include('buyer.partials.sidebar')
+            </div>
+            <div class="col-lg-8">
+                <div class="tab-content account dashboard-content">
+                    <div class="tab-pane fade show active" role="tabpanel">
                             <!-- Info Banner -->
                             <div class="card border-0 bg-brand-light border-radius-10 mb-4">
                                 <div class="card-body p-4">
@@ -80,24 +56,6 @@
                                     <form action="{{ route('buyer.driippreneur.apply') }}" method="POST" enctype="multipart/form-data">
                                         @csrf
 
-                                        <h5 class="mb-3">Informasi Akun</h5>
-                                        <div class="row mb-4">
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Nama Lengkap</label>
-                                                <input type="text" class="form-control" value="{{ $user->name }}" disabled>
-                                            </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Email</label>
-                                                <input type="email" class="form-control" value="{{ $user->email }}" disabled>
-                                            </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>No. HP</label>
-                                                <input type="text" class="form-control" value="{{ $user->phone ?? '-' }}" disabled>
-                                            </div>
-                                        </div>
-
-                                        <div class="divider mb-4"></div>
-
                                         <h5 class="mb-3">Dokumen Verifikasi</h5>
                                         
                                         <div class="form-group mb-3">
@@ -116,7 +74,7 @@
                                                     <div class="camera-overlay"></div>
                                                 </div>
                                                 <div class="mt-2 text-center">
-                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="ktp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                    <button type="button" class="btn btn-sm btn-standar-utama snap-btn" data-target="ktp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
                                                 </div>
                                             </div>
                                             
@@ -128,7 +86,7 @@
                                             </div>
 
                                             <div id="ktp-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
-                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="ktp">
+                                                <button type="button" class="btn btn-standar-utama start-camera-btn" data-target="ktp">
                                                     <i class="fi-rs-camera mr-5"></i> Buka Kamera KTP
                                                 </button>
                                             </div>
@@ -154,7 +112,7 @@
                                                     <div class="camera-overlay"></div>
                                                 </div>
                                                 <div class="mt-2 text-center">
-                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="npwp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                    <button type="button" class="btn btn-sm btn-standar-utama snap-btn" data-target="npwp"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
                                                 </div>
                                             </div>
                                             
@@ -166,7 +124,7 @@
                                             </div>
 
                                             <div id="npwp-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
-                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="npwp">
+                                                <button type="button" class="btn btn-standar-utama start-camera-btn" data-target="npwp">
                                                     <i class="fi-rs-camera mr-5"></i> Buka Kamera NPWP
                                                 </button>
                                             </div>
@@ -184,7 +142,7 @@
                                                     <div class="camera-overlay"></div>
                                                 </div>
                                                 <div class="mt-2 text-center">
-                                                    <button type="button" class="btn btn-sm btn-brand snap-btn" data-target="selfie"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
+                                                    <button type="button" class="btn btn-sm btn-standar-utama snap-btn" data-target="selfie"><i class="fi-rs-camera mr-5"></i>Ambil Foto</button>
                                                 </div>
                                             </div>
                                             
@@ -196,7 +154,7 @@
                                             </div>
 
                                             <div id="selfie-init-container" class="text-center p-4 border-dashed border-radius-10 mb-2">
-                                                <button type="button" class="btn btn-brand start-camera-btn" data-target="selfie">
+                                                <button type="button" class="btn btn-standar-utama start-camera-btn" data-target="selfie">
                                                     <i class="fi-rs-camera mr-5"></i> Buka Kamera Selfie
                                                 </button>
                                             </div>
@@ -208,38 +166,6 @@
 
                                         <div class="divider mb-4"></div>
 
-                                        <h5 class="mb-3">Informasi Rekening Bank</h5>
-
-                                        <div class="row">
-                                            <div class="form-group col-md-12 mb-3">
-                                                <label>Nama Bank <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('bank_name') is-invalid @enderror" 
-                                                       name="bank_name" 
-                                                       value="{{ old('bank_name') }}" 
-                                                       placeholder="Contoh: BCA, Mandiri, BNI, dll"
-                                                       required>
-                                            </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Nomor Rekening <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('bank_account_number') is-invalid @enderror" 
-                                                       name="bank_account_number" 
-                                                       value="{{ old('bank_account_number') }}" 
-                                                       placeholder="Masukkan nomor rekening Anda"
-                                                       required>
-                                            </div>
-                                            <div class="form-group col-md-6 mb-3">
-                                                <label>Atas Nama <span class="required">*</span></label>
-                                                <input type="text" 
-                                                       class="form-control @error('bank_account_name') is-invalid @enderror" 
-                                                       name="bank_account_name" 
-                                                       value="{{ old('bank_account_name') }}" 
-                                                       placeholder="Masukkan nama pemilik rekening"
-                                                       required>
-                                            </div>
-                                        </div>
-
                                         <div class="alert alert-info border-0 bg-info-light mb-4">
                                             <p class="font-sm mb-0">
                                                 <i class="fi-rs-info mr-5"></i> 
@@ -248,10 +174,10 @@
                                         </div>
 
                                         <div class="col-md-12">
-                                            <button type="submit" class="btn btn-fill-out submit font-weight-bold">
+                                            <button type="submit" class="btn btn-standar-utama submit font-weight-bold">
                                                 <i class="fi-rs-paper-plane mr-5"></i> Kirim Pengajuan
                                             </button>
-                                            <a href="{{ route('buyer.dashboard') }}" class="btn btn-outline-secondary rounded ml-10 font-sm">
+                                            <a href="{{ route('buyer.dashboard') }}" class="btn btn-standar-outline rounded ml-10 font-sm">
                                                 Kembali
                                             </a>
                                         </div>
@@ -289,7 +215,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>

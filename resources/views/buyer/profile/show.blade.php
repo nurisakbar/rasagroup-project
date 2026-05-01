@@ -37,7 +37,7 @@
                                     <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                         <div class="d-flex justify-content-between align-items-center mb-20">
                                             <h5 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Informasi Profil</h5>
-                                            <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                            <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm rounded-pill buyer-btn-maroon-outline">
                                                 <i class="fi-rs-edit mr-5"></i> Edit Profil
                                             </a>
                                         </div>
@@ -154,14 +154,17 @@
         background-color: #fff !important;
         box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
     }
+    .buyer-btn-maroon-outline {
+        color: #6A1B1B !important;
+        border: 2px solid #6A1B1B !important;
+        background: transparent !important;
+        font-weight: 600;
+    }
+    .buyer-btn-maroon-outline:hover {
+        background: #6A1B1B !important;
+        color: #fff !important;
+    }
 </style>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @endsection
 

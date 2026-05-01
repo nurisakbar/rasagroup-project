@@ -1,15 +1,15 @@
-@extends('layouts.shop')
+@extends('themes.nest.layouts.app')
 
 @section('title', 'Kontak')
 
 @push('styles')
 <style>
     /* Global Overrides for Contact Page */
-    .pages {
+    .contact-page {
         background-color: #F2EAE1 !important;
     }
 
-    .page-content {
+    .contact-page .page-content {
         background-color: #F2EAE1 !important;
     }
 
@@ -260,7 +260,7 @@
 @endpush
 
 @section('content')
-    <main class="main pages">
+    <div class="contact-page pages">
         <div class="page-header breadcrumb-wrap">
             <div class="container">
                 <div class="breadcrumb">
@@ -291,8 +291,7 @@
                             <i class="bi bi-telephone"></i>
                         </div>
                         <h4>Telepon</h4>
-                        <p><a href="tel:+628123456789">+62 812-3456-7890</a></p>
-                        <p><a href="tel:+622112345678">(021) 1234-5678</a></p>
+                        <p><a href="tel:+628118003357">+62 811-8003-357</a></p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -510,6 +509,6 @@
     </section>
 
         </div>
-    </main>
+    </div>
 @endsection
 

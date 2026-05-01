@@ -153,6 +153,11 @@
                             <i class="fa fa-times-circle"></i> Aplikasi ditolak.
                         </div>
                     @endif
+
+                    <hr>
+                    <a href="{{ route('admin.driippreneurs.index') }}" class="btn btn-default btn-block">
+                        <i class="fa fa-arrow-left"></i> Kembali ke Daftar
+                    </a>
                 </div>
             </div>
         </div>

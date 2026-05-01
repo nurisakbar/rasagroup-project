@@ -3,6 +3,7 @@
 
 <head>
     @include('themes.nest.partials.head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         :root {
             --primary-rasa: #6A1B1B;
@@ -39,12 +40,37 @@
             background-color: #fff !important;
         }
 
+        .header-style-1 .search-style-2 form input {
+            color: #333 !important;
+        }
+
+        .header-style-1 .search-style-2 form select {
+            color: #333 !important;
+        }
+
+        .search-style-2 form select {
+            background: transparent !important;
+        }
+
         .text-brand {
             color: var(--primary-rasa) !important;
         }
 
+        /* Breadcrumb links: maroon, hover black */
+        .breadcrumb-wrap .breadcrumb a {
+            color: var(--primary-rasa) !important;
+            font-weight: 700;
+        }
+        .breadcrumb-wrap .breadcrumb a:hover {
+            color: #000 !important;
+        }
+
         footer .hotline p {
             color: var(--primary-rasa) !important;
+        }
+        footer .hotline p span {
+            display: inline !important;
+            margin-left: 0.5rem;
         }
         footer .mobile-social-icon a {
             background-color: var(--primary-rasa) !important;
@@ -137,6 +163,84 @@
         .btn.disabled {
             opacity: 0.7 !important;
             box-shadow: none !important;
+        }
+
+        /* Outline / CTA helpers (halaman yang sebelumnya memakai layouts.shop) */
+        .btn.btn-outline-rasa,
+        a.btn.btn-outline-rasa,
+        button.btn.btn-outline-rasa {
+            background: transparent !important;
+            color: var(--btn-rasa) !important;
+            border: 1.5px solid var(--btn-rasa) !important;
+            box-shadow: none !important;
+        }
+
+        .btn.btn-outline-rasa:hover,
+        a.btn.btn-outline-rasa:hover,
+        button.btn.btn-outline-rasa:hover {
+            background-color: var(--btn-rasa) !important;
+            color: #ffffff !important;
+            border-color: var(--btn-rasa) !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+        }
+
+        .btn-standar-utama {
+            background: linear-gradient(135deg, #6A1B1B 0%, #4D1313 100%) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            padding: 12px 22px !important;
+            box-shadow: 0 10px 22px rgba(106, 27, 27, 0.18) !important;
+            transition: all 0.25s ease !important;
+        }
+        .btn-standar-utama:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(106, 27, 27, 0.22) !important;
+            color: #fff !important;
+        }
+        .btn-standar-outline {
+            background: transparent !important;
+            color: #6A1B1B !important;
+            border: 2px solid #6A1B1B !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            padding: 10px 20px !important;
+            transition: all 0.25s ease !important;
+        }
+        .btn-standar-outline:hover {
+            background: #6A1B1B !important;
+            color: #fff !important;
+            box-shadow: 0 10px 22px rgba(106, 27, 27, 0.18) !important;
+        }
+
+        .btn-add-cart, .add-cart .add, .add-cart button.add {
+            background: #F5E6E6 !important;
+            color: #801D1D !important;
+            padding: 8px 18px !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            font-size: 0.9rem !important;
+            transition: all 0.3s !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        .btn-add-cart:hover, .add-cart .add:hover {
+            background: #801D1D !important;
+            color: #FFFFFF !important;
+            transform: translateY(-2px);
+        }
+
+        /* Area akun buyer: font mengikuti isi halaman, bukan paksa Fira di setiap child */
+        .account,
+        .account * {
+            font-family: inherit !important;
         }
 
         /* Slider Typography Overrides */
@@ -908,6 +1012,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 
 <body>
@@ -946,6 +1051,7 @@
     @endauth
 
     <main class="main">
+        @if(!View::hasSection('hide_layout_alerts'))
         @if(session('success') && !request()->routeIs('cart.index'))
             <div class="container mt-4">
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -981,12 +1087,45 @@
                 </div>
             </div>
         @endif
+        @endif
 
         @yield('content')
     </main>
 
     @include('themes.nest.partials.footer')
     @include('themes.nest.partials.modals')
+
+    <div class="whatsapp-float">
+        <a href="https://wa.me/628118003357" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+            <i class="bi bi-whatsapp me-2"></i> Chat Kami
+        </a>
+    </div>
+    <style>
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+        .whatsapp-btn {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #6A1B1B 0%, #4a1212 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(106, 27, 27, 0.35);
+            transition: all 0.3s ease;
+        }
+        .whatsapp-btn:hover {
+            transform: scale(1.05);
+            color: white;
+            background: linear-gradient(135deg, #7d2424 0%, #5c1818 100%);
+        }
+    </style>
+
     @include('themes.nest.partials.preloader')
     @include('themes.nest.partials.scripts')
     @include('themes.nest.partials.shop-toast')
@@ -1060,6 +1199,13 @@
                         }
                     },
                     error: function(xhr) {
+                        if (xhr.status === 401) {
+                            if (confirm("Silakan masuk terlebih dahulu untuk belanja. Masuk sekarang?")) {
+                                window.location.href = '{{ route("login") }}';
+                            }
+                            submitBtn.attr('disabled', false).html(originalBtnHtml);
+                            return;
+                        }
                         if (xhr.status === 422) {
                             const body = xhr.responseJSON || {};
                             let message = '';
