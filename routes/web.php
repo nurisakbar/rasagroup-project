@@ -138,8 +138,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Admin Protected Routes
-    Route::middleware(['auth', 'agent'])->group(function () {
+    Route::middleware(['auth:admin', 'agent'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/logout', [App\Http\Controllers\Admin\Auth\AdminLoginController::class, 'destroy'])->name('logout');
 
         // Master Data - Brands
         Route::resource('brands', App\Http\Controllers\Admin\BrandController::class)->except(['show']);

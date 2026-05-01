@@ -879,8 +879,9 @@ class CheckoutController extends Controller
                     return back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pilih metode pembayaran lain.');
                 }
             }
-            // Sync to QAD (Customer and Sales Order)
-            \App\Jobs\SyncOrderToQad::dispatch($order);
+            // QAD sync (customer + SO) should only run after payment is PAID/SETTLED.
+            // For Xendit, this is handled by the webhook (and success-page backup).
+            // This prevents creating QAD customers for users who haven't completed a purchase.
 
             DB::commit();
 
@@ -915,7 +916,24 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
-        $order->load('items.product', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
+        $order->load('user', 'items.product', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
+
+        // Ensure QAD customer exists for this user (guest-safe, async).
+        // This runs when a real purchase flow reaches the success page,
+        // so we can create customer data in QAD even before SO sync.
+        try {
+            $user = $order->user;
+            $address = $order->address;
+            if ($user && empty($user->qad_customer_code) && $address) {
+                $snapshot = $this->buildQadAddressSnapshot($address);
+                \App\Jobs\SyncCustomerToQad::dispatch($user, $snapshot);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Checkout success: failed to dispatch SyncCustomerToQad', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
         
         // Send thank you notification if payment is already paid
         // This handles the case where user accesses success page after payment
@@ -1030,6 +1048,36 @@ class CheckoutController extends Controller
         }
         
         return view('checkout.success', compact('order'));
+    }
+
+    /**
+     * @return array{city: string, street1: string, street2: string, postal_code: string}
+     */
+    private function buildQadAddressSnapshot(Address $address): array
+    {
+        $postal = '';
+        foreach ([
+            $address->postal_code,
+            $address->district?->postal_code,
+            $address->regency?->postal_code,
+            $address->district?->city?->postal_code,
+        ] as $p) {
+            $p = trim((string) $p);
+            if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
+                $postal = $p;
+                break;
+            }
+        }
+        if ($postal === '' && $address->address_detail && preg_match('/\b(\d{5})\b/', (string) $address->address_detail, $m)) {
+            $postal = $m[1];
+        }
+
+        return [
+            'city' => $address->regency?->name ?? 'Jakarta',
+            'street1' => $address->address_detail ?? $address->full_address ?? '-',
+            'street2' => trim((string) (($address->district?->name ?? '') . ' ' . ($address->regency?->name ?? ''))),
+            'postal_code' => $postal,
+        ];
     }
 
     private function generateOrderNumber(): string

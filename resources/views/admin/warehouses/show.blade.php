@@ -16,13 +16,13 @@
             <div class="nav-tabs-custom">
                 <ul class="nav nav-tabs">
                     <li class="{{ !request('tab') || request('tab') == 'info' ? 'active' : '' }}">
-                        <a href="#tab_info" data-toggle="tab"><i class="fa fa-info-circle"></i> Informasi Hub</a>
+                        <a href="{{ route('admin.warehouses.show', [$warehouse, 'tab' => 'info']) }}"><i class="fa fa-info-circle"></i> Informasi Hub</a>
                     </li>
                     <li class="{{ request('tab') == 'stock' ? 'active' : '' }}">
-                        <a href="#tab_stock" data-toggle="tab"><i class="fa fa-cubes"></i> Informasi Stock</a>
+                        <a href="{{ route('admin.warehouses.show', [$warehouse, 'tab' => 'stock']) }}"><i class="fa fa-cubes"></i> Informasi Stock</a>
                     </li>
                     <li class="{{ request('tab') == 'staff' ? 'active' : '' }}">
-                        <a href="#tab_staff" data-toggle="tab"><i class="fa fa-users"></i> Staff</a>
+                        <a href="{{ route('admin.warehouses.show', [$warehouse, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Staff</a>
                     </li>
                     <li class="pull-right">
                         <a href="{{ route('admin.warehouses.index') }}" class="text-muted" style="padding: 10px 15px;"><i class="fa fa-arrow-left"></i> Kembali</a>
@@ -136,7 +136,6 @@
                                         <th>Kode Produk</th>
                                         <th>Harga</th>
                                         <th width="120" class="text-center">Stock QID</th>
-                                        <th width="100" class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -168,45 +167,7 @@
                                                     <span class="badge bg-green" style="font-size: 14px; padding: 5px 10px;">{{ number_format($stock->stock) }}</span>
                                                 @endif
                                             </td>
-                                            <td class="text-center">
-                                                <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#updateStockModal{{ $stock->id }}" title="Detail/Update">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <form action="{{ route('admin.warehouses.remove-stock', [$warehouse, $stock]) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus produk ini dari daftar stok hub?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>
-                                                </form>
-                                            </td>
                                         </tr>
-
-                                        <!-- Update Stock Modal -->
-                                        <div class="modal fade" id="updateStockModal{{ $stock->id }}" tabindex="-1" role="dialog">
-                                            <div class="modal-dialog modal-sm" role="document">
-                                                <div class="modal-content">
-                                                    <form action="{{ route('admin.warehouses.update-stock', [$warehouse, $stock]) }}" method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-header">
-                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                            <h4 class="modal-title">Koreksi Stok</h4>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p><strong>{{ $stock->product->name }}</strong></p>
-                                                            <div class="form-group">
-                                                                <label>Jumlah Stok</label>
-                                                                <input type="number" class="form-control" name="stock" value="{{ $stock->stock }}" min="0" required>
-                                                                <p class="help-block">Data QID terakhir: {{ number_format($stock->stock) }}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Batal</button>
-                                                            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
                                     @empty
                                         <tr>
                                             <td colspan="6" class="text-center">

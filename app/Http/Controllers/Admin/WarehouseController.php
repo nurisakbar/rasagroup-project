@@ -22,8 +22,9 @@ class WarehouseController extends Controller
      */
     public function syncQid()
     {
+        set_time_limit(600); // 10 minutes to handle many hubs and stocks
         try {
-            Log::info('Starting QID Hub Synchronization...');
+            Log::info('Starting QID Hub & Stock Bulk Synchronization...');
             
             $response = Http::withHeaders([
                 'Accept' => 'text/plain',
@@ -45,7 +46,7 @@ class WarehouseController extends Controller
                     $namaHub = $loc['description'] ?? $loc['locationName'] ?? $loc['locationname'] ?? null;
                     
                     if ($kodeHub && $namaHub) {
-                        Warehouse::updateOrCreate(
+                        $warehouse = Warehouse::updateOrCreate(
                             ['kode_hub' => $kodeHub],
                             [
                                 'name' => $namaHub,
@@ -54,6 +55,10 @@ class WarehouseController extends Controller
                                 'is_active' => true,
                             ]
                         );
+                        
+                        // Sekalian sinkronisasi stock untuk hub ini
+                        $this->refreshStockFromQid($warehouse);
+                        
                         $synchronizedCount++;
                     } else {
                         Log::warning("Skipping location at index {$index} due to missing data", ['item' => $loc]);
@@ -61,7 +66,7 @@ class WarehouseController extends Controller
                 }
                 
                 Log::info("QID Synchronization finished. Total synced: {$synchronizedCount}");
-                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} Hub dari QID.");
+                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} Hub dan Stock dari QID.");
             }
             
             Log::error('QID API Failed', ['status' => $response->status(), 'body' => $response->body()]);
@@ -144,12 +149,6 @@ class WarehouseController extends Controller
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i>
                         </a>
-                        <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
-                            ' . csrf_field() . method_field('DELETE') . '
-                            <button type="submit" class="btn btn-danger btn-xs" title="Hapus">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </form>
                     ';
                 })
                 ->rawColumns(['name_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
@@ -235,7 +234,7 @@ class WarehouseController extends Controller
         $warehouse->load(['province', 'regency', 'users']);
         
         // Sinkronisasi otomatis dari QID di balik layar jika ada kode_hub
-        if ($warehouse->kode_hub) {
+        if ($warehouse->kode_hub && !session('success') && !session('error')) {
             $this->refreshStockFromQid($warehouse);
         }
 
@@ -470,6 +469,24 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Sinkronisasi stok QID secara manual (triggered by button)
+     */
+    public function syncStockQid(Warehouse $warehouse)
+    {
+        if (!$warehouse->kode_hub) {
+            return back()->with('error', 'Hub ini tidak memiliki Kode Hub QID.');
+        }
+
+        $result = $this->refreshStockFromQid($warehouse);
+
+        if ($result['success']) {
+            return back()->with('success', "Berhasil mensinkronisasi " . $result['count'] . " item stok dari QID.");
+        }
+
+        return back()->with('error', "Gagal mensinkronisasi stok dari QID: " . $result['message']);
+    }
+
+    /**
      * Remove user from warehouse.
      */
     public function removeUser(Warehouse $warehouse, User $user)
@@ -489,22 +506,29 @@ class WarehouseController extends Controller
     private function refreshStockFromQid(Warehouse $warehouse)
     {
         try {
-            Log::info("Auto Refreshing QID Stock for Hub: {$warehouse->name} ({$warehouse->kode_hub})");
+            $payload = [
+                'location' => $warehouse->kode_hub,
+                'search' => '',
+                'batch' => '',
+                'length' => 1000
+            ];
+            
+            Log::info("Auto Refreshing QID Stock for Hub: {$warehouse->name} ({$warehouse->kode_hub})", ['payload' => $payload]);
             
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'text/plain',
                 'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
-            ])->timeout(10)->post('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/all', [
-                'location' => $warehouse->kode_hub,
-                'search' => '',
-                'batch' => '',
-                'length' => 1000
-            ]);
+            ])->timeout(10)->post('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/all', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
                 $items = $data['data'] ?? [];
+                $processedCount = 0;
+                $skippedCount = 0;
+                $productNotFoundCount = 0;
+                
+                Log::debug("QID Response Meta", ['data_count' => count($items), 'first_item' => $items[0] ?? 'EMPTY']);
                 
                 if (count($items) > 0) {
                     foreach ($items as $item) {
@@ -523,16 +547,41 @@ class WarehouseController extends Controller
                                         'stock' => $qty
                                     ]
                                 );
+                                $processedCount++;
+                            } else {
+                                $productNotFoundCount++;
+                                if ($productNotFoundCount <= 10) {
+                                    Log::warning("Product not found in local DB for QID itemCode: {$itemCode}");
+                                }
                             }
+                        } else {
+                            $skippedCount++;
                         }
                     }
-                    Log::info("Auto Refresh Success for Hub {$warehouse->kode_hub}. Processed " . count($items) . " items.");
+                    
+                    Log::info("Auto Refresh Success for Hub {$warehouse->kode_hub}", [
+                        'total_items_received' => count($items),
+                        'processed' => $processedCount,
+                        'product_not_found' => $productNotFoundCount,
+                        'skipped' => $skippedCount
+                    ]);
+                    
+                    return [
+                        'success' => true, 
+                        'count' => $processedCount, 
+                        'message' => "Berhasil memproses {$processedCount} item. (Ada {$productNotFoundCount} item dari QID yang kodenya tidak terdaftar di website)"
+                    ];
                 }
+                
+                Log::warning("No items found in QID response for Hub {$warehouse->kode_hub}. Raw response: " . substr($response->body(), 0, 500));
+                return ['success' => true, 'count' => 0, 'message' => 'QID mengembalikan 0 item untuk lokasi ini.'];
             }
-            return true;
+            
+            Log::error("QID API Error for Hub {$warehouse->kode_hub}", ['status' => $response->status(), 'body' => $response->body()]);
+            return ['success' => false, 'count' => 0, 'message' => 'Gagal menghubungi QID (Server Response: ' . $response->status() . ')'];
         } catch (\Exception $e) {
-            Log::error("Auto Refresh Stock Failed for Hub {$warehouse->kode_hub}: " . $e->getMessage());
-            return false;
+            Log::error("Auto Refresh Stock Exception for Hub {$warehouse->kode_hub}: " . $e->getMessage(), ['trace' => substr($e->getTraceAsString(), 0, 1000)]);
+            return ['success' => false, 'count' => 0, 'message' => 'Terjadi kesalahan teknis: ' . $e->getMessage()];
         }
     }
     /**

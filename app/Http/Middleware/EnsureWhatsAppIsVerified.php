@@ -15,10 +15,19 @@ class EnsureWhatsAppIsVerified
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && ! $request->user()->wa_verified_at) {
-            return $request->expectsJson()
-                    ? abort(403, 'Your WhatsApp number is not verified.')
-                    : redirect()->route('wa.verify');
+        $user = $request->user();
+
+        if ($user) {
+            // Bypass verification for admin and distributor
+            if ($user->isSuperAdmin() || $user->isDistributor()) {
+                return $next($request);
+            }
+
+            if (! $user->wa_verified_at) {
+                return $request->expectsJson()
+                        ? abort(403, 'Your WhatsApp number is not verified.')
+                        : redirect()->route('wa.verify');
+            }
         }
 
         return $next($request);

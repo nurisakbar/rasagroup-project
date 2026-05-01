@@ -12,21 +12,18 @@
                     </div>
                     <div class="header-right">
                         <div class="search-style-2">
-                            <form action="#">
-                                <select class="select-active">
-                                    <option>Semua Kategori</option>
-                                    <option>Milks and Dairies</option>
-                                    <option>Wines & Alcohol</option>
-                                    <option>Clothing & Beauty</option>
-                                    <option>Pet Foods & Toy</option>
-                                    <option>Fast food</option>
-                                    <option>Baking material</option>
-                                    <option>Vegetables</option>
-                                    <option>Fresh Seafood</option>
-                                    <option>Noodles & Rice</option>
-                                    <option>Ice cream</option>
+                            @php
+                                $headerCategories = \App\Models\Category::active()->orderBy('name')->get(['name', 'slug']);
+                                $selectedCategory = request('category');
+                            @endphp
+                            <form action="{{ route('products.index') }}" method="GET">
+                                <select class="select-active" name="category">
+                                    <option value="" {{ $selectedCategory ? '' : 'selected' }}>Semua Kategori</option>
+                                    @foreach($headerCategories as $cat)
+                                        <option value="{{ $cat->slug }}" {{ $selectedCategory === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                    @endforeach
                                 </select>
-                                <input type="text" placeholder="Cari produk..." />
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari produk..." />
                             </form>
                         </div>
                         <div class="header-action-right">
@@ -133,33 +130,40 @@
 
                         <div class="main-categori-wrap d-none d-lg-block">
                             <a class="categories-button-active" href="#" style="white-space: nowrap;">
-                                <span class="fi-rs-apps"></span> <span class="et">Jelajahi</span> Semua Kategori
+                                <span class="fi-rs-apps"></span> <span class="et">Jelajahi</span> Semua Brand
                                 <i class="fi-rs-angle-down"></i>
                             </a>
                             <div class="categories-dropdown-wrap categories-dropdown-active-large font-heading">
                                 <div class="d-flex categori-dropdown-inner">
+                                    @php
+                                        $allBrands = \App\Models\Brand::active()->get();
+                                        $count = $allBrands->count();
+                                        $half = ceil($count / 2);
+                                        $col1 = $allBrands->take($half);
+                                        $col2 = $allBrands->skip($half);
+                                    @endphp
                                     <ul>
-                                        @foreach(\App\Models\Category::take(5)->get() as $category)
+                                        @foreach($col1 as $brand)
                                             <li>
-                                                <a href="{{ route('hubs.index', ['category' => $category->slug]) }}">
-                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
-                                                    {{ $category->name }}
+                                                <a class="{{ request('brand') === $brand->slug ? 'rg-brand-active' : '' }}" href="{{ route('products.index', ['brand' => $brand->slug]) }}">
+                                                    <img src="{{ $brand->logo_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
+                                                    {{ $brand->name }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                     <ul class="end">
-                                        @foreach(\App\Models\Category::skip(5)->take(5)->get() as $category)
+                                        @foreach($col2 as $brand)
                                             <li>
-                                                <a href="{{ route('hubs.index', ['category' => $category->slug]) }}">
-                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-6.svg') }}" alt="" />
-                                                    {{ $category->name }}
+                                                <a class="{{ request('brand') === $brand->slug ? 'rg-brand-active' : '' }}" href="{{ route('products.index', ['brand' => $brand->slug]) }}">
+                                                    <img src="{{ $brand->logo_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-6.svg') }}" alt="" />
+                                                    {{ $brand->name }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                 </div>
-                                <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua...</span></div>
+                                <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua Brand...</span></div>
                             </div>
                         </div>
                         <div class="main-menu main-menu-padding-1 main-menu-lh-2 d-none d-lg-block font-heading">

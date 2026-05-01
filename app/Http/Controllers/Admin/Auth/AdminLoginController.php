@@ -28,12 +28,14 @@ class AdminLoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            
+            $user = Auth::guard('admin')->user();
 
             // Check if user is agent or super_admin
-            if (!in_array(Auth::user()->role, ['agent', 'super_admin'])) {
-                Auth::logout();
+            if (!in_array($user->role, ['agent', 'super_admin'])) {
+                Auth::guard('admin')->logout();
                 return back()->withErrors([
                     'email' => 'Anda tidak memiliki akses sebagai admin.',
                 ])->onlyInput('email');
@@ -45,5 +47,14 @@ class AdminLoginController extends Controller
         return back()->withErrors([
             'email' => 'Email atau password yang Anda masukkan salah.',
         ])->onlyInput('email');
+    }
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::guard('admin')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login');
     }
 }

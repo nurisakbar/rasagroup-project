@@ -96,11 +96,11 @@
                                                 </div>
                                                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
                                                     <div class="d-grid d-md-block gap-2">
-                                                        <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-sm btn-outline-maroon rounded-pill py-2 px-4 font-sm">
+                                                        <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-sm btn-outline rounded-pill">
                                                             <i class="fi-rs-eye mr-5"></i> Lihat Detail
                                                         </a>
                                                         @if($order->order_status === 'shipped' && $order->tracking_number)
-                                                            <a href="{{ route('buyer.orders.show', $order) }}#btn-track-order" class="btn btn-sm btn-maroon rounded-pill py-2 px-4 font-sm ms-md-2">
+                                                            <a href="{{ route('buyer.orders.show', $order) }}#btn-track-order" class="btn btn-sm rounded-pill ms-md-2">
                                                                 <i class="fi-rs-truck mr-5"></i> Lacak
                                                             </a>
                                                         @endif
@@ -116,7 +116,7 @@
                                         </div>
                                         <h4 class="mb-2">Belum Ada Pesanan</h4>
                                         <p class="text-muted mb-4 px-5">Mulai perjalanan belanja Anda dan temukan berbagai produk berkualitas kami.</p>
-                                        <a href="{{ route('products.index') }}" class="btn btn-brand rounded-pill px-5">
+                                        <a href="{{ route('products.index') }}" class="btn rounded-pill">
                                             <i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja
                                         </a>
                                     </div>
@@ -155,33 +155,8 @@
     }
     
     .text-maroon { color: #6A1B1B !important; }
-    
-    .btn-outline-maroon {
-        color: #6A1B1B;
-        border: 1.5px solid #6A1B1B;
-        background: transparent;
-        font-weight: 600;
-        transition: all 0.3s;
-    }
-    .btn-outline-maroon:hover {
-        background: #6A1B1B;
-        color: #fff;
-    }
-
-    .btn-maroon {
-        background: #6A1B1B;
-        color: #fff;
-        font-weight: 600;
-        border: none;
-    }
-    
-    .btn-maroon:hover {
-        background: #4D1313;
-        color: #fff;
-    }
 
     .product-info h6 {
-        font-family: 'Fira Sans', sans-serif !important;
         font-size: 16px;
         font-weight: 600;
         color: #253D4E;

@@ -51,6 +51,7 @@ class AddressController extends Controller
     {
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:50'],
+            'store_name' => ['nullable', 'string', 'max:150', 'required_if:label,Toko'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'province_id' => ['required'],
@@ -83,6 +84,7 @@ class AddressController extends Controller
 
         $address = $user->addresses()->create([
             'label' => $validated['label'],
+            'store_name' => $validated['store_name'] ?? null,
             'recipient_name' => $validated['recipient_name'],
             'phone' => $validated['phone'],
             'province_id' => $validated['province_id'],
@@ -145,6 +147,7 @@ class AddressController extends Controller
 
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:50'],
+            'store_name' => ['nullable', 'string', 'max:150', 'required_if:label,Toko'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'province_id' => ['required'],
@@ -166,6 +169,7 @@ class AddressController extends Controller
 
         $address->update([
             'label' => $validated['label'],
+            'store_name' => $validated['store_name'] ?? null,
             'recipient_name' => $validated['recipient_name'],
             'phone' => $validated['phone'],
             'province_id' => $validated['province_id'],

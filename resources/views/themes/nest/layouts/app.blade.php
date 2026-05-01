@@ -7,10 +7,19 @@
         :root {
             --primary-rasa: #6A1B1B;
             --bg-cream: #F2EAE1;
+            /* Button theme (from Figma screenshot) */
+            --btn-rasa: rgba(111, 23, 21, 1);
+            --btn-rasa-hover: rgba(138, 90, 87, 1);
+            --btn-rasa-shadow: 0 18px 35px rgba(24, 24, 24, 0.12);
         }
 
         body, .main, .header-area, .header-bottom, .header-middle, .header-top, .sticky-bar {
             background-color: var(--bg-cream) !important;
+            font-family: 'Fira Sans', sans-serif !important;
+        }
+
+        h1, h2, h3, h4, h5, h6, .font-heading, .main-menu nav ul li a, .btn, button {
+            font-family: 'Fira Sans', sans-serif !important;
         }
 
         /* Update header elements */
@@ -61,28 +70,58 @@
             margin-left: 8px !important;
         }
 
-        /* Unified Add Button Style */
-        .btn-add-cart, .add-cart .add, .add-cart button.add {
-            background: #F5E6E6 !important;
-            color: #801D1D !important;
-            padding: 8px 18px !important;
+        /* ------------------------------------------------------------------ */
+        /* Global button theme (apply to all primary buttons)                  */
+        /* ------------------------------------------------------------------ */
+        .btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        a.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        button.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        input[type="submit"].btn,
+        .button-add-to-cart,
+        .btn-buy,
+        .add-cart .add,
+        .add-cart button.add,
+        .add-to-cart-form .add {
+            background-color: var(--btn-rasa) !important;
+            color: #ffffff !important;
             border: none !important;
-            border-radius: 8px !important;
-            font-weight: 700 !important;
-            font-size: 0.9rem !important;
-            transition: all 0.3s !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 5px !important;
-            width: auto !important;
-            height: auto !important;
+            border-radius: 12px !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 600 !important;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease !important;
         }
 
-        .btn-add-cart:hover, .add-cart .add:hover {
-            background: #801D1D !important;
-            color: #FFFFFF !important;
-            transform: translateY(-2px);
+        .btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        a.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        button.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        input[type="submit"].btn:hover,
+        .button-add-to-cart:hover,
+        .btn-buy:hover,
+        .add-cart .add:hover,
+        .add-cart button.add:hover,
+        .add-to-cart-form .add:hover {
+            background-color: var(--btn-rasa-hover) !important;
+            color: #ffffff !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+            transform: none !important;
+        }
+
+        .btn:focus,
+        button.btn:focus,
+        .button-add-to-cart:focus,
+        .btn-buy:focus,
+        .add-cart .add:focus,
+        .add-to-cart-form .add:focus {
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(111, 23, 21, 0.18), var(--btn-rasa-shadow) !important;
+        }
+
+        .btn:disabled,
+        button.btn:disabled,
+        .btn.disabled {
+            opacity: 0.7 !important;
+            box-shadow: none !important;
         }
 
         /* Slider Typography Overrides */
@@ -119,24 +158,10 @@
             font-size: 14px !important;
         }
 
-        .button-add-to-cart, .btn-buy, button.add, .product-extra-link2 button {
-            background-color: #6A1B1B !important;
-            border: none !important;
-            border-radius: 8px !important;
-            color: #ffffff !important;
-            padding: 12px 30px !important;
-            font-family: 'Fira Sans', sans-serif !important;
-            font-weight: 600 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .button-add-to-cart:hover, .btn-buy:hover, button.add:hover, .product-extra-link2 button:hover {
-            background-color: #4D1313 !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+        /* Keep icon spacing for CTA buttons */
+        .button-add-to-cart i, .btn-buy i, button.add i {
+            margin-right: 8px !important;
+            font-size: 18px !important;
         }
 
         .button-add-to-cart i, .btn-buy i, button.add i {
@@ -432,6 +457,16 @@
         .main-menu nav ul li a {
             font-family: 'Fira Sans', sans-serif !important;
             font-weight: 500 !important;
+            color: rgba(111, 23, 21, 1) !important;
+        }
+
+        .main-menu nav ul li a:hover {
+            color: rgba(79, 12, 10, 1) !important; /* darker on hover */
+        }
+
+        .main-menu nav ul li a.active,
+        .main-menu nav ul li a.active:hover {
+            color: rgba(111, 23, 21, 1) !important;
         }
 
         /* Banner Styling Overrides */
@@ -538,6 +573,231 @@
         .alert-warning {
             border-left: 4px solid #6A1B1B !important;
         }
+
+        /* Custom Brand Dropdown Styling */
+        .categories-dropdown-wrap.categories-dropdown-active-large {
+            padding: 30px !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+            width: 500px !important; /* Ensure enough width for 2 columns */
+            background: #fff !important;
+            border: 1px solid #F2EAE1 !important;
+        }
+
+        /* Force 2-column layout like screenshot (cards grid) */
+        .categories-dropdown-wrap .categori-dropdown-inner {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 18px !important;
+            align-items: start !important;
+        }
+
+        .categories-dropdown-wrap .categori-dropdown-inner ul {
+            width: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .categories-dropdown-wrap ul li {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: none !important;
+            list-style: none !important;
+        }
+
+        .categories-dropdown-wrap ul li a {
+            border: 1px solid #F2EAE1 !important;
+            border-radius: 12px !important;
+            padding: 15px 20px !important;
+            margin: 0 0 15px 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 700 !important;
+            color: #253D4E !important;
+            background: #fff !important;
+            height: 70px !important;
+            line-height: 1.2 !important;
+            width: 100% !important;
+        }
+
+        .categories-dropdown-wrap ul li a:hover {
+            border-color: #6A1B1B !important;
+            color: #6A1B1B !important;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(106, 27, 27, 0.08) !important;
+            background: #fff !important;
+        }
+
+        /* Active brand (matches screenshot selected card) */
+        .categories-dropdown-wrap ul li a.rg-brand-active {
+            border-color: #6A1B1B !important;
+            box-shadow: 0 10px 20px rgba(106, 27, 27, 0.06) !important;
+        }
+
+        .categories-dropdown-wrap ul li a img {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            margin-right: 15px !important;
+            object-fit: contain !important;
+            border-radius: 0 !important;
+        }
+
+        .categories-dropdown-wrap .more_categories {
+            padding-top: 20px !important;
+            border-top: 1px solid #F2EAE1 !important;
+            margin-top: 5px !important;
+            text-align: center !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        /* Plus icon circle like screenshot */
+        .categories-dropdown-wrap .more_categories .icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 3px solid #6A1B1B;
+            position: relative;
+            display: inline-block;
+        }
+        .categories-dropdown-wrap .more_categories .icon::before,
+        .categories-dropdown-wrap .more_categories .icon::after {
+            content: "";
+            position: absolute;
+            background: #6A1B1B;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 2px;
+        }
+        .categories-dropdown-wrap .more_categories .icon::before { width: 14px; height: 3px; }
+        .categories-dropdown-wrap .more_categories .icon::after { width: 3px; height: 14px; }
+
+        .categories-dropdown-wrap .more_categories .heading-sm-1 {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 700 !important;
+            color: #7E7E7E !important;
+            font-size: 16px !important;
+        }
+
+        .categories-dropdown-wrap .more_categories i {
+            font-size: 20px !important;
+            color: #6A1B1B !important;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Brand dropdown (match Figma spec shared by user)                     */
+        /* ------------------------------------------------------------------ */
+        .main-categori-wrap .categories-dropdown-wrap.categories-dropdown-active-large {
+            box-sizing: border-box !important;
+            width: 502.23px !important;
+            height: 412.15px !important;
+            padding: 26px 30px !important;
+            background: #FFFFFF !important;
+            border: 1px solid #D0B3AD !important;
+            box-shadow: 20px 20px 40px rgba(24, 24, 24, 0.07) !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner {
+            display: grid !important;
+            grid-template-columns: 211.5px 211.5px !important;
+            column-gap: 18px !important;
+            row-gap: 15px !important;
+            align-items: start !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul {
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: auto !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li {
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li a {
+            box-sizing: border-box !important;
+            width: 211.5px !important;
+            height: 48px !important;
+            background: #FFFFFF !important;
+            border: 1px solid #F2F3F4 !important;
+            border-radius: 5px !important;
+            padding: 0 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            margin: 0 !important;
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
+            letter-spacing: -0.0004em !important;
+            color: #1D1D1D !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li a:hover {
+            border-color: #D0B3AD !important;
+            box-shadow: 5px 5px 15px rgba(24, 24, 24, 0.05) !important;
+            transform: none !important;
+        }
+
+        /* Selected item (Figma: border #D0B3AD + shadow) */
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li a.rg-brand-active {
+            border-color: #D0B3AD !important;
+            box-shadow: 5px 5px 15px rgba(24, 24, 24, 0.05) !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li a img {
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            margin-right: 0 !important;
+            object-fit: contain !important;
+            display: block !important;
+        }
+
+        /* Bottom link (More) */
+        .main-categori-wrap .categories-dropdown-wrap .more_categories {
+            margin-top: 18px !important;
+            padding-top: 18px !important;
+            border-top: 1px solid #D0B3AD !important;
+            justify-content: center !important;
+        }
+
+        .main-categori-wrap .categories-dropdown-wrap .more_categories .heading-sm-1 {
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            color: #7E7E7E !important;
+        }
+
+        /* Keep responsive fallback */
+        @media (max-width: 992px) {
+            .main-categori-wrap .categories-dropdown-wrap.categories-dropdown-active-large {
+                width: 92vw !important;
+                height: auto !important;
+            }
+            .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            .main-categori-wrap .categories-dropdown-wrap .categori-dropdown-inner ul li a {
+                width: 100% !important;
+            }
+        }
     </style>
 </head>
 
@@ -639,6 +899,7 @@
                                 _token: '{{ csrf_token() }}'
                             },
                             success: function(response) {
+                                if (response.success && response.is_new) {
                                 if (response.success && response.is_new) {
                                     alert("Lokasi Terdeteksi! Kami telah memilih '" + response.hub.name + "' sebagai Hub terdekat Anda untuk kenyamanan belanja.");
                                     window.location.reload();

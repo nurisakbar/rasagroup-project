@@ -391,9 +391,12 @@ class OrderController extends Controller
             ]);
 
             if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
+                // Also trigger QAD sync automatically
+                \App\Jobs\SyncOrderToQad::dispatch($order);
+
                 $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
 
-                return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref);
+                return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref . '. Sinkronisasi ke QAD juga telah dijadwalkan.');
             }
 
             return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk pesan error dari Lion Parcel.');
@@ -529,24 +532,16 @@ class OrderController extends Controller
     public function syncQad(Order $order)
     {
         try {
-            // Dispatch the job synchronously to get immediate feedback or just dispatch and tell user it's ongoing
-            // For admin UX, synchronous might be better if it's fast enough, but background is safer.
-            // Let's use dispatchSync for immediate feedback in this manual action.
-            \App\Jobs\SyncOrderToQad::dispatchSync($order);
+            // Dispatch the job to the background queue to avoid timeouts
+            \App\Jobs\SyncOrderToQad::dispatch($order);
             
-            $order->refresh();
-            
-            if ($order->qad_so_number) {
-                return back()->with('success', 'Berhasil sinkronisasi ke QAD. No SO QAD: ' . $order->qad_so_number);
-            }
-            
-            return back()->with('error', 'Gagal sinkronisasi ke QAD. Silakan cek log untuk detailnya.');
+            return back()->with('success', 'Permintaan sinkronisasi telah dikirim ke sistem (antrian). Silakan refresh halaman dalam beberapa saat untuk melihat hasilnya.');
         } catch (\Exception $e) {
             \Log::error('Admin OrderController: Sync QAD error', [
                 'order_id' => $order->id,
                 'message' => $e->getMessage()
             ]);
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memulai sinkronisasi: ' . $e->getMessage());
         }
     }
 }

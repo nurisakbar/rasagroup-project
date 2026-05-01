@@ -61,28 +61,33 @@
                         </form>
 
                         <div class="text-center mt-30">
-                            <p class="text-muted">Tidak menerima kode atau nomor salah?</p>
+                            <p class="text-muted mb-15">Tidak menerima kode atau nomor salah?</p>
                             <div class="d-flex flex-column align-items-center gap-3">
-                                <div class="d-flex justify-content-center gap-3">
+                                <div class="d-flex justify-content-center gap-2 flex-wrap" id="wa-actions">
                                     <form method="POST" action="{{ route('wa.resend') }}">
                                         @csrf
-                                        <button type="submit" class="btn-link font-weight-bold border-0 bg-transparent" style="color: #6A1B1B;">Kirim Ulang Kode</button>
+                                        <button type="submit" class="btn rg-wa-btn rg-wa-btn-outline">
+                                            Kirim Kode Baru
+                                        </button>
                                     </form>
-                                    <span class="text-muted">|</span>
-                                    <button type="button" class="btn-link text-muted border-0 bg-transparent" onclick="togglePhoneForm()">Ubah Nomor HP</button>
+                                    <button type="button" class="btn rg-wa-btn rg-wa-btn-muted" onclick="togglePhoneForm()">
+                                        Ubah Nomor HP
+                                    </button>
                                 </div>
                                 
-                                <form method="POST" action="{{ route('wa.update-phone') }}" id="update-phone-form" class="mt-20 d-none" style="width: 100%;">
+                                <form method="POST" action="{{ route('wa.update-phone') }}" id="update-phone-form" class="mt-10 d-none" style="width: 100%;">
                                     @csrf
                                     <div class="form-group">
                                         <input type="text" name="phone" class="form-control" placeholder="Contoh: 08123456789" value="{{ auth()->user()->phone }}" required style="border-radius: 12px; height: 50px;">
                                     </div>
-                                    <button type="submit" class="btn btn-sm mt-10" style="border-radius: 8px; background-color: #6A1B1B; color: white;">Simpan & Kirim Kode Baru</button>
-                                </form>
-
-                                <form method="POST" action="{{ route('logout') }}" class="mt-10">
-                                    @csrf
-                                    <button type="submit" class="btn-link text-muted border-0 bg-transparent small">Logout</button>
+                                    <div class="d-flex gap-2 flex-wrap mt-10">
+                                        <button type="submit" class="btn rg-wa-btn rg-wa-btn-primary" style="flex: 1 1 220px;">
+                                            Simpan & Kirim Kode Baru
+                                        </button>
+                                        <button type="button" class="btn rg-wa-btn rg-wa-btn-muted" style="flex: 1 1 140px;" onclick="togglePhoneForm(false)">
+                                            Batal
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -118,6 +123,49 @@
             height: 50px;
             font-size: 1.2rem;
         }
+    }
+
+    .rg-wa-btn {
+        border-radius: 12px !important;
+        height: 46px;
+        padding: 10px 18px;
+        font-weight: 700;
+        line-height: 1;
+        transition: all 0.2s ease;
+    }
+
+    .rg-wa-btn-primary {
+        background: #6A1B1B !important;
+        color: #ffffff !important;
+        border: none !important;
+    }
+
+    .rg-wa-btn-primary:hover {
+        filter: brightness(0.92);
+        transform: translateY(-1px);
+    }
+
+    .rg-wa-btn-outline {
+        background: transparent !important;
+        color: #6A1B1B !important;
+        border: 2px solid #6A1B1B !important;
+    }
+
+    .rg-wa-btn-outline:hover {
+        background: #6A1B1B !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+    }
+
+    .rg-wa-btn-muted {
+        background: #f1f3f5 !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .rg-wa-btn-muted:hover {
+        background: #e9ecef !important;
+        transform: translateY(-1px);
     }
 </style>
 @endpush
@@ -173,7 +221,17 @@
 
     function togglePhoneForm() {
         const form = document.getElementById('update-phone-form');
+        const actions = document.getElementById('wa-actions');
+
+        // If explicitly passed false, always hide.
+        if (arguments.length && arguments[0] === false) {
+            form.classList.add('d-none');
+            actions.classList.remove('d-none');
+            return;
+        }
+
         form.classList.toggle('d-none');
+        actions.classList.toggle('d-none');
     }
 </script>
 @endpush

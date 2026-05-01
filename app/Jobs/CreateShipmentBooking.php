@@ -245,6 +245,16 @@ class CreateShipmentBooking implements ShouldQueue
                 ]);
             }
         }
+        if ($recipientPostCode === '') {
+            // Try to use a general default for recipient if missing, to avoid UPSTREAM_ERROR from carriers.
+            // Better to have a slightly wrong postal code (for the city) than no postal code at all which blocks the order.
+            $fallback = trim((string) config('services.ekspedisiku.default_recipient_postal_code', '10110')); 
+            $recipientPostCode = $fallback;
+            Log::warning('CreateShipmentBooking: Recipient post_code empty; using fallback', [
+                'order_id' => $this->order->id,
+                'fallback' => $fallback,
+            ]);
+        }
         if ($senderPostCode === '') {
             Log::warning('CreateShipmentBooking: Sender post_code empty after resolve; Lion Parcel may reject booking', [
                 'order_id' => $this->order->id,

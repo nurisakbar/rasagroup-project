@@ -31,6 +31,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'phone',
+        'date_of_birth',
+        'occupation',
         'role',
         'sub_role',
         'warehouse_id',
@@ -63,6 +65,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'wa_verified_at',
         'wa_verification_code',
         'qad_customer_code',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'wa_verified_at' => 'datetime',
+        'driippreneur_applied_at' => 'datetime',
+        'date_of_birth' => 'date',
     ];
 
     protected static function boot()

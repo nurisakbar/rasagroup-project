@@ -3,23 +3,39 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class VerifyEmailController extends Controller
 {
     /**
-     * Mark the authenticated user's email address as verified.
+     * Verify a user's email address from a signed URL.
+     *
+     * This endpoint must work for guest users (no session).
      */
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
+    public function __invoke(Request $request, string $id, string $hash): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        /** @var \App\Models\User|null $user */
+        $user = User::query()->find($id);
+
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Link verifikasi tidak valid.');
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
+        $expectedHash = sha1($user->getEmailForVerification());
+
+        if (!hash_equals($expectedHash, (string) $hash)) {
+            return redirect()->route('login')->with('error', 'Link verifikasi tidak valid.');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('verification.success')->with('status', 'Email Anda sudah terverifikasi.');
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
         }
 
         return redirect()->route('verification.success');

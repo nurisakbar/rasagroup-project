@@ -1,14 +1,27 @@
-@extends('layouts.shop')
+@extends('themes.nest.layouts.app')
 
 @section('title', 'Katalog Produk Premium')
 @section('meta_description', 'Jelajahi koleksi lengkap produk makanan dan minuman premium di Multi Citra Rasa Marketplace. Harga terbaik untuk kebutuhan ritel dan bisnis.')
 
 @section('content')
-<main class="main">
-
+    <div class="page-header mt-30 mb-50">
+        <div class="container">
+            <div class="archive-header">
+                <div class="row align-items-center">
+                    <div class="col-xl-3">
+                        <h1 class="mb-15">Katalog Produk</h1>
+                        <div class="breadcrumb">
+                            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Halaman Utama</a>
+                            <span></span> Katalog
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container mb-30">
         <div class="row">
-            <div class="col-12">
+            <div class="col-lg-12">
                 <div class="shop-product-fillter">
                     <div class="totall-product">
                         <p>Kami menemukan <strong class="text-brand">{{ $products->total() }}</strong> produk untuk Anda!</p>
@@ -82,5 +95,4 @@
             </div>
         </div>
     </div>
-</main>
 @endsection

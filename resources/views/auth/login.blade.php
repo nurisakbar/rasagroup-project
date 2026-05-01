@@ -53,12 +53,12 @@
                                         <a class="text-muted small" href="{{ route('password.request') }}">Lupa kata sandi?</a>
                                     </div>
                                     <div class="form-group">
-                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 150px; background-color: #1a1a1a; color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Masuk</button>
+                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%; background-color: rgba(111, 23, 21, 1); color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Masuk</button>
                                     </div>
                                     
                                     <div class="form-group text-center mt-30">
                                         <p class="mb-10 text-muted small">Atau masuk dengan</p>
-                                        <a href="{{ route('google.login') }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: #fff; color: #333; border: 1px solid #eee; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 600; border-radius: 12px;">
+                                        <a href="{{ route('google.login') }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: rgba(111, 23, 21, 1); color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 700; border-radius: 12px;">
                                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" style="width: 18px; margin-right: 10px;" />
                                             Masuk dengan Google
                                         </a>

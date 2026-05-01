@@ -379,7 +379,7 @@
         </section>
         <!--End hero slider-->
 
-        <section class="section-padding mb-30">
+        <section class="section-padding mb-30" style="display: none;">
             <div class="container">
                 <div class="row">
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">

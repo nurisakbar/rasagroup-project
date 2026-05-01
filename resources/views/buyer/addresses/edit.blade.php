@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<div class="page-content pt-50 pb-80" style="background-color: #F2EAE1;">
+<div class="page-content account pt-50 pb-80" style="background-color: #F2EAE1;">
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
@@ -25,7 +25,7 @@
                     <div class="card-header bg-white border-bottom p-30">
                         <div class="d-flex justify-content-between align-items-center">
                             <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Edit Alamat</h3>
-                            <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill font-sm">
+                            <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-rasa rounded-pill">
                                 <i class="fi-rs-arrow-left mr-5"></i> Kembali
                             </a>
                         </div>
@@ -55,6 +55,21 @@
                                             <input type="radio" name="label" class="btn-check" id="label-{{ $icon }}" value="{{ $label }}" {{ old('label', $address->label) == $label ? 'checked' : '' }}>
                                             <label class="btn btn-outline-maroon-pill px-4 py-2" for="label-{{ $icon }}"><i class="fi-rs-{{ $icon }} mr-5"></i> {{ $label }}</label>
                                         @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-10" id="store_name_container" style="display: none;">
+                                    <div class="col-md-12">
+                                        <div class="form-group mb-0">
+                                            <label class="form-label-custom">Nama Toko</label>
+                                            <div class="input-with-icon">
+                                                <i class="fi-rs-shop icon-field"></i>
+                                                <input type="text" class="form-control custom-input px-40" name="store_name" value="{{ old('store_name', $address->store_name) }}" placeholder="Contoh: Toko Sumber Rasa">
+                                            </div>
+                                            @error('store_name')
+                                                <span class="text-danger small d-block mt-10">{{ $message }}</span>
+                                            @enderror
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -161,7 +176,7 @@
                                 </label>
                             </div>
 
-                            <button type="submit" class="btn btn-maroon-lg w-100" id="btnSubmit">
+                            <button type="submit" class="btn w-100" id="btnSubmit">
                                 <span id="btnText">Simpan Perubahan Alamat</span>
                                 <span id="btnLoading" style="display: none;"><i class="fi-rs-refresh spin mr-5"></i> Menyimpan...</span>
                             </button>
@@ -204,22 +219,6 @@
         background-color: #6A1B1B !important;
         color: #fff !important;
         border-color: #6A1B1B !important;
-    }
-
-    .btn-maroon-lg {
-        background-color: #6A1B1B !important;
-        color: #fff !important;
-        padding: 18px !important;
-        border-radius: 15px !important;
-        font-family: 'Fira Sans', sans-serif !important;
-        font-weight: 700 !important;
-        border: none !important;
-        transition: all 0.3s;
-    }
-    .btn-maroon-lg:hover {
-        background-color: #4D1313 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(106, 27, 27, 0.2);
     }
 
     /* Normalizing widths for Select2 + wrappers (samakan dengan create page) */
@@ -443,6 +442,34 @@ $(document).ready(function() {
         }
     });
 });
+</script>
+@endpush
+
+@push('scripts')
+<script>
+    (function () {
+        function toggleStoreField() {
+            const selected = document.querySelector('input[name="label"]:checked');
+            const container = document.getElementById('store_name_container');
+            if (!container) return;
+
+            const isStore = selected && selected.value === 'Toko';
+            container.style.display = isStore ? '' : 'none';
+
+            const input = container.querySelector('input[name="store_name"]');
+            if (input) {
+                input.required = !!isStore;
+                if (!isStore) input.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input[name="label"]').forEach((el) => {
+                el.addEventListener('change', toggleStoreField);
+            });
+            toggleStoreField();
+        });
+    })();
 </script>
 @endpush
 @endsection

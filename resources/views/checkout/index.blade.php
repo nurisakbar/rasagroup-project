@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<div class="container mb-80 mt-50">
+<div class="container mb-80 mt-50 checkout-page">
     <div class="row">
         <div class="col-lg-8 mb-40">
             <h3 class="heading-2 mb-10">Checkout</h3>
@@ -103,8 +103,8 @@
                                         </div>
                                         <div class="payment-content pl-20 mt-10" style="display: block;">
                                             <p class="font-weight-bold">{{ $address->recipient_name }} | {{ $address->phone }}</p>
-                                            <p class="text-muted">{{ $address->address_detail }}</p>
-                                            <p class="text-muted text-small">
+                                            <p class="checkout-address-detail">{{ $address->address_detail }}</p>
+                                            <p class="checkout-address-location text-small">
                                                 {{ $address->village?->name }}, Kec. {{ $address->district?->name }}<br>
                                                 {{ $address->regency?->name }}, {{ $address->province?->name }} 
                                                 @if($address->postal_code) {{ $address->postal_code }} @endif
@@ -426,6 +426,39 @@
     .address-card.active, .payment-method-card.active {
         border-color: #6A1B1B;
         background-color: rgba(106, 27, 27, 0.05);
+    }
+
+    /* Improve muted text contrast on checkout page only */
+    .checkout-page .text-muted,
+    .checkout-page small.text-muted,
+    .checkout-page .font-xs.text-muted,
+    .checkout-page .font-sm.text-muted,
+    .checkout-page .font-small.text-muted {
+        color: #5f6b7a !important;
+        font-weight: 500;
+    }
+
+    .checkout-page .text-body {
+        color: #253D4E;
+    }
+
+    /* Address text contrast on cream background */
+    .checkout-address-detail {
+        color: #253D4E;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .checkout-address-location {
+        color: #5f6b7a;
+        font-weight: 500;
+        margin-bottom: 0;
+    }
+
+    /* Summary panel shipping address */
+    #shippingAddress {
+        color: #5f6b7a !important;
+        font-weight: 500;
     }
     
     .service-card {

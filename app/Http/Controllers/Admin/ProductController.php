@@ -467,7 +467,7 @@ class ProductController extends Controller
                             'price' => $item['defaultPrice'] ?? 0,
                             'status' => isset($item['status']) ? strtolower($item['status']) : 'active',
                             'weight' => 1000, // Default weight since it's required but not in API
-                            'created_by' => Auth::id(),
+                            'created_by' => Auth::id() ?? \App\Models\User::where('role', 'super_admin')->first()?->id,
                         ];
 
                         Product::updateOrCreate(

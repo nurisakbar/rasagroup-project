@@ -22,18 +22,18 @@
                         <div class="mb-30">
                             <i class="fi-rs-check-circle" style="font-size: 80px; color: #6A1B1B;"></i>
                         </div>
-                        <h2 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Pesanan Berhasil Dibuat!</h2>
-                        <p class="font-lg mb-40" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Terima kasih atas pembelian Anda. Pesanan Anda sedang kami proses dengan cinta.</p>
+                        <h2 class="mb-20" style="font-weight: 700; color: #253D4E;">Pesanan Berhasil Dibuat!</h2>
+                        <p class="text-muted mb-40">Terima kasih atas pembelian Anda. Pesanan Anda sedang kami proses.</p>
                         
                         <div class="mb-40 p-30 border-radius-20" style="background-color: #F8F9FA; border: 1.5px dashed #ECECEC;">
                             <div class="row align-items-center">
                                 <div class="col-md-6 text-md-start text-center mb-md-0 mb-3">
                                     <span class="font-md d-block mb-1" style="color: #7E7E7E;">Nomor Pesanan</span>
-                                    <h4 style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B; margin: 0;">{{ $order->order_number }}</h4>
+                                    <h4 style="font-weight: 700; color: #6A1B1B; margin: 0;">{{ $order->order_number }}</h4>
                                 </div>
                                 <div class="col-md-6 text-md-end text-center">
                                     <span class="font-md d-block mb-1" style="color: #7E7E7E;">Total Pembayaran</span>
-                                    <h4 style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B; margin: 0;">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
+                                    <h4 style="font-weight: 700; color: #6A1B1B; margin: 0;">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -42,10 +42,10 @@
                             <!-- Shipping Address -->
                             <div class="col-md-6">
                                 <div class="p-25 h-100 border-radius-20" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;"><i class="fi-rs-marker mr-10 text-muted"></i>Alamat Kirim</h5>
+                                    <h5 class="mb-15" style="font-weight: 700; color: #253D4E;"><i class="fi-rs-marker mr-10 text-muted"></i>Alamat Kirim</h5>
                                     @if($order->address)
                                         <strong class="d-block mb-2" style="color: #253D4E;">{{ $order->address->recipient_name }}</strong>
-                                        <p style="font-family: 'Lato', sans-serif; color: #7E7E7E; font-size: 14px; line-height: 1.6; margin: 0;">
+                                        <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0;">
                                             {{ $order->address->phone }}<br>
                                             {{ $order->address->address_detail }}<br>
                                             {{ $order->address->village?->name }}, Kec. {{ $order->address->district?->name }}<br>
@@ -58,10 +58,10 @@
                             <!-- Shipping Method -->
                             <div class="col-md-6">
                                 <div class="p-25 h-100 border-radius-20" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;"><i class="fi-rs-truck-side mr-10 text-muted"></i>Pengiriman</h5>
+                                    <h5 class="mb-15" style="font-weight: 700; color: #253D4E;"><i class="fi-rs-truck-side mr-10 text-muted"></i>Pengiriman</h5>
                                     @if($order->expedition)
                                         <strong class="d-block mb-2" style="color: #253D4E;">{{ $order->expedition->name }}</strong>
-                                        <p style="font-family: 'Lato', sans-serif; color: #7E7E7E; font-size: 14px; line-height: 1.6; margin: 0;">
+                                        <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0;">
                                             Layanan: {{ $order->expedition_service }}<br>
                                             Estimasi: {{ $order->expedition->estimated_delivery }}
                                         </p>
@@ -72,7 +72,7 @@
 
                         <!-- Payment Information -->
                         <div class="text-start mb-50">
-                            <h4 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Instruksi Pembayaran</h4>
+                            <h4 class="mb-20" style="font-weight: 700; color: #253D4E;">Instruksi Pembayaran</h4>
                             @if($order->payment_method === 'manual_transfer')
                                 <div class="p-30 border-radius-20" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1);">
                                     <h6 class="mb-20" style="color: #6A1B1B;"><i class="fi-rs-info mr-10"></i>Silakan transfer ke salah satu rekening:</h6>
@@ -99,17 +99,17 @@
                                     <div class="p-30 border-radius-20 text-center" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1);">
                                         <h6 class="mb-15" style="color: #6A1B1B;"><i class="fi-rs-credit-card mr-10"></i>Selesaikan Pembayaran</h6>
                                         <p class="mb-25">Silakan klik tombol di bawah untuk membayar melalui Xendit.</p>
-                                        <a href="{{ $order->xendit_invoice_url }}" class="btn btn-heading" style="background-color: #6A1B1B; color: #ffffff; border-radius: 12px; padding: 15px 35px; font-weight: 700;" target="_blank">Bayar Sekarang</a>
+                                        <a href="{{ $order->xendit_invoice_url }}" class="btn" target="_blank">Bayar Sekarang</a>
                                     </div>
                                 @endif
                             @endif
                         </div>
 
                         <div class="d-flex flex-wrap justify-content-center gap-3">
-                            <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-outline-heading" style="border: 2px solid #6A1B1B; color: #6A1B1B; background: transparent; border-radius: 12px; padding: 18px 35px; font-weight: 700; min-width: 200px;">
+                            <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-outline-rasa" style="min-width: 200px;">
                                 <i class="fi-rs-file-text mr-10"></i>Detail Pesanan
                             </a>
-                            <a href="{{ route('products.index') }}" class="btn btn-heading" style="background-color: #1a1a1a; color: #ffffff; border-radius: 12px; padding: 18px 35px; font-weight: 700; min-width: 200px; border: none;">
+                            <a href="{{ route('products.index') }}" class="btn" style="min-width: 200px;">
                                 <i class="fi-rs-shopping-bag mr-10"></i>Lanjut Belanja
                             </a>
                         </div>

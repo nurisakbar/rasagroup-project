@@ -45,6 +45,18 @@
                                             <input type="text" name="phone" id="phone" class="form-control custom-input" value="{{ old('phone', Auth::user()->phone) }}" placeholder="081234567890">
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-20">
+                                            <label class="form-label-custom">Tanggal Lahir</label>
+                                            <input type="date" name="date_of_birth" id="date_of_birth" class="form-control custom-input" value="{{ old('date_of_birth', optional(Auth::user()->date_of_birth)->format('Y-m-d')) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-20">
+                                            <label class="form-label-custom">Pekerjaan</label>
+                                            <input type="text" name="occupation" id="occupation" class="form-control custom-input" value="{{ old('occupation', Auth::user()->occupation) }}" placeholder="Contoh: Karyawan Swasta">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -74,7 +86,7 @@
                             </div>
 
                             <div class="mt-30 pt-30 border-top">
-                                <button type="submit" class="btn btn-maroon-lg w-100">
+                                <button type="submit" class="btn w-100">
                                     Simpan Perubahan
                                 </button>
                             </div>
@@ -99,22 +111,6 @@
         border-color: #6A1B1B !important;
         background-color: #fff !important;
         box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
-    }
-
-    .btn-maroon-lg {
-        background-color: #6A1B1B !important;
-        color: #fff !important;
-        padding: 18px !important;
-        border-radius: 15px !important;
-        font-family: 'Fira Sans', sans-serif !important;
-        font-weight: 700 !important;
-        border: none !important;
-        transition: all 0.3s;
-    }
-    .btn-maroon-lg:hover {
-        background-color: #4D1313 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(106, 27, 27, 0.2);
     }
 </style>
 @endsection

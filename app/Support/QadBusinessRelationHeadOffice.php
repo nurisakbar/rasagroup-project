@@ -85,8 +85,18 @@ final class QadBusinessRelationHeadOffice
             return 'Surabaya';
         }
 
-        // Konsisten dengan SyncCustomerToQad: fallback agar tidak memicu BadRequest pada master kota QAD.
-        return $default;
+        $stripped = preg_replace(
+            '/^(KOTA\s+(ADM\.?\s*)?|KAB\.?\s*|KABUPATEN\s+)/u',
+            '',
+            $u
+        );
+        $stripped = trim((string) $stripped);
+
+        if ($stripped === '') {
+            return $default;
+        }
+
+        return mb_convert_case(mb_strtolower($stripped, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
     }
 
     private static function sanitizeStreet(string $line): string

@@ -53,5 +53,18 @@ class Brand extends Model
     {
         return $query->where('is_active', true);
     }
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        if (filter_var($this->logo, FILTER_VALIDATE_URL)) {
+            return $this->logo;
+        }
+
+        return asset('storage/' . $this->logo);
+    }
 }
 

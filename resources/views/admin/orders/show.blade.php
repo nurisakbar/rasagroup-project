@@ -23,9 +23,9 @@
                         <span class="label label-primary pull-right"><i class="fa fa-globe"></i> ONLINE</span>
                     @endif
                     <div class="pull-right" style="margin-right: 10px;">
-                        <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display: inline;">
+                        <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
                             @csrf
-                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QAD">
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QAD" onclick="return confirm('Sinkronkan pesanan ini ke QAD? Proses akan berjalan di background.')">
                                 <i class="fa fa-refresh"></i> Sinkron QAD
                             </button>
                         </form>

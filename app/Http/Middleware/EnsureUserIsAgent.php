@@ -16,11 +16,11 @@ class EnsureUserIsAgent
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
+        if (!Auth::guard('admin')->check()) {
             return redirect()->route('admin.login');
         }
 
-        if (!in_array(Auth::user()->role, ['agent', 'super_admin'])) {
+        if (!in_array(Auth::guard('admin')->user()->role, ['agent', 'super_admin'])) {
             abort(403, 'Unauthorized access. Admin only.');
         }
 

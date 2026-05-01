@@ -18,7 +18,14 @@ class WhatsAppVerificationController extends Controller
 
     public function show(Request $request)
     {
-        return $request->user()->wa_verified_at
+        $user = $request->user();
+
+        // Bypass for admin and distributor
+        if ($user->isSuperAdmin() || $user->isDistributor()) {
+            return redirect()->intended(route('dashboard'));
+        }
+
+        return $user->wa_verified_at
             ? redirect()->intended(route('dashboard'))
             : view('auth.verify-wa');
     }

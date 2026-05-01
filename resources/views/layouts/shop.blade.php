@@ -7,6 +7,10 @@
         :root {
             --primary-rasa: #6A1B1B;
             --bg-cream: #F2EAE1;
+            /* Button theme */
+            --btn-rasa: rgba(111, 23, 21, 1);
+            --btn-rasa-hover: rgba(138, 90, 87, 1);
+            --btn-rasa-shadow: 0 18px 35px rgba(24, 24, 24, 0.12);
         }
 
         body, .main, .header-area, .header-bottom, .header-middle, .header-top, .sticky-bar {
@@ -98,6 +102,78 @@
             transform: translateY(-2px);
         }
 
+        /* ------------------------------------------------------------------ */
+        /* Global button theme (apply to all primary buttons)                  */
+        /* ------------------------------------------------------------------ */
+        .btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        a.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        button.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default),
+        input[type="submit"].btn,
+        .button-add-to-cart,
+        .btn-buy,
+        .add-cart .add,
+        .add-cart button.add,
+        .add-to-cart-form .add {
+            background-color: var(--btn-rasa) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 12px !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+            font-weight: 600 !important;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease !important;
+        }
+
+        .btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        a.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        button.btn:not(.btn-link):not(.btn-outline):not(.btn-outline-secondary):not(.btn-outline-default):hover,
+        input[type="submit"].btn:hover,
+        .button-add-to-cart:hover,
+        .btn-buy:hover,
+        .add-cart .add:hover,
+        .add-cart button.add:hover,
+        .add-to-cart-form .add:hover {
+            background-color: var(--btn-rasa-hover) !important;
+            color: #ffffff !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+            transform: none !important;
+        }
+
+        .btn:focus,
+        button.btn:focus,
+        .button-add-to-cart:focus,
+        .btn-buy:focus,
+        .add-cart .add:focus,
+        .add-to-cart-form .add:focus {
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(111, 23, 21, 0.18), var(--btn-rasa-shadow) !important;
+        }
+
+        .btn:disabled,
+        button.btn:disabled,
+        .btn.disabled {
+            opacity: 0.7 !important;
+            box-shadow: none !important;
+        }
+
+        /* Outline button in Rasa color (avoid Nest's green secondary). */
+        .btn.btn-outline-rasa,
+        a.btn.btn-outline-rasa,
+        button.btn.btn-outline-rasa {
+            background: transparent !important;
+            color: var(--btn-rasa) !important;
+            border: 1.5px solid var(--btn-rasa) !important;
+            box-shadow: none !important;
+        }
+
+        .btn.btn-outline-rasa:hover,
+        a.btn.btn-outline-rasa:hover,
+        button.btn.btn-outline-rasa:hover {
+            background-color: var(--btn-rasa) !important;
+            color: #ffffff !important;
+            border-color: var(--btn-rasa) !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+        }
+
         .product-name, .product-name a, .product-cart-wrap h2, .product-cart-wrap h2 a, .product-content-wrap h2, .product-content-wrap h2 a, h6, h6 a {
             font-family: 'Fira Sans', sans-serif !important;
             font-weight: 600 !important;
@@ -116,6 +192,12 @@
             font-weight: 500 !important;
             color: #253D4E !important;
             line-height: 1.2 !important;
+        }
+
+        /* Buyer account pages: use standard theme font (no custom fonts). */
+        .account,
+        .account * {
+            font-family: inherit !important;
         }
 
         /* Countdown Timer Color Style */

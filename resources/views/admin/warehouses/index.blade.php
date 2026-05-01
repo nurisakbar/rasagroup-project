@@ -20,12 +20,9 @@
                         <form action="{{ route('admin.warehouses.sync-qid') }}" method="POST" id="sync-qid-form">
                             @csrf
                             <button type="button" class="btn btn-info btn-sm" onclick="confirmSyncQid()">
-                                <i class="fa fa-refresh"></i> Sinkronisasi QID
+                                <i class="fa fa-refresh"></i> Sinkronisasi Hub & Stock
                             </button>
                         </form>
-                        <a href="{{ route('admin.warehouses.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fa fa-plus"></i> Tambah Hub
-                        </a>
                     </div>
                 </div>
                 <!-- Filter -->
@@ -84,6 +81,21 @@
                 <!-- /.box-body -->
             </div>
             <!-- /.box -->
+        </div>
+    </div>
+    
+    <!-- Sync Loading Modal -->
+    <div class="modal fade" id="syncModal" tabindex="-1" role="dialog" aria-labelledby="syncModalLabel" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-sm" role="document" style="top: 25%;">
+            <div class="modal-content text-center" style="border-radius: 10px; padding: 20px;">
+                <div class="modal-body">
+                    <div style="margin-bottom: 20px;">
+                        <i class="fa fa-refresh fa-spin fa-3x text-info"></i>
+                    </div>
+                    <h4 style="font-weight: 600;">Sinkronisasi Sedang Berjalan</h4>
+                    <p class="text-muted">Harap tunggu, sistem sedang mengambil data Hub dan Stock dari QID untuk seluruh lokasi. Proses ini mungkin memakan waktu beberapa menit.</p>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -175,9 +187,21 @@ $(function() {
 });
 
 function confirmSyncQid() {
-    if (confirm('Apakah Anda yakin ingin mensinkronisasi data Hub dari QID? Proses ini akan memperbarui nama dan kode hub.')) {
-        document.getElementById('sync-qid-form').submit();
-    }
+    swal({
+        title: "Konfirmasi Sinkronisasi",
+        text: "Apakah Anda yakin ingin mensinkronisasi data Hub dan Stock dari QID? Proses ini akan memperbarui data seluruh hub beserta stok produknya langsung dari server QID.",
+        type: "info",
+        showCancelButton: true,
+        confirmButtonColor: "#3c8dbc",
+        confirmButtonText: "Ya, Sinkronkan!",
+        cancelButtonText: "Batal",
+        closeOnConfirm: true
+    }, function() {
+        $('#syncModal').modal('show');
+        setTimeout(function() {
+            document.getElementById('sync-qid-form').submit();
+        }, 500);
+    });
 }
 </script>
 @endpush

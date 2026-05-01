@@ -37,7 +37,7 @@
                                     <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                         <div class="d-flex justify-content-between align-items-center mb-20">
                                             <h5 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Informasi Profil</h5>
-                                            <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm btn-outline-maroon-pill px-20">
+                                            <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
                                                 <i class="fi-rs-edit mr-5"></i> Edit Profil
                                             </a>
                                         </div>
@@ -53,6 +53,16 @@
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Nomor Telepon</label>
                                                 <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->phone ?? '-' }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Tanggal Lahir</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">
+                                                    {{ Auth::user()->date_of_birth ? Auth::user()->date_of_birth->format('d M Y') : '-' }}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="font-xs text-muted mb-1 d-block">Pekerjaan</label>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->occupation ?: '-' }}</p>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Tipe Akun</label>
@@ -112,7 +122,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-12 mt-30">
-                                                <button type="submit" class="btn btn-maroon-lg w-100">
+                                                <button type="submit" class="btn w-100">
                                                     Simpan Password Baru
                                                 </button>
                                             </div>
@@ -130,15 +140,6 @@
 
 <style>
     .text-maroon { color: #6A1B1B !important; }
-    .btn-outline-maroon-pill {
-        color: #6A1B1B;
-        border: 1.5px solid #6A1B1B;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 13px;
-        transition: all 0.3s;
-    }
-    .btn-outline-maroon-pill:hover { background-color: #6A1B1B; color: #fff; }
 
     .form-label-custom { font-family: 'Fira Sans', sans-serif; font-weight: 600; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
     .custom-input {
@@ -152,22 +153,6 @@
         border-color: #6A1B1B !important;
         background-color: #fff !important;
         box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
-    }
-
-    .btn-maroon-lg {
-        background-color: #6A1B1B !important;
-        color: #fff !important;
-        padding: 18px !important;
-        border-radius: 15px !important;
-        font-family: 'Fira Sans', sans-serif !important;
-        font-weight: 700 !important;
-        border: none !important;
-        transition: all 0.3s;
-    }
-    .btn-maroon-lg:hover {
-        background-color: #4D1313 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(106, 27, 27, 0.2);
     }
 </style>
                         </div>

@@ -40,17 +40,19 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// Email verification link should work even for guest users (no session).
+// The URL is protected by `signed` middleware + throttling.
+Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::get('verified-success', function () {
+    return view('auth.verified-success');
+})->name('verification.success');
+
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
-
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
-    Route::get('verified-success', function () {
-        return view('auth.verified-success');
-    })->name('verification.success');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')

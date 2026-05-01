@@ -24,6 +24,39 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css">
   
+  <style>
+    :root {
+      --rasa-maroon: rgba(111, 23, 21, 1);
+      --rasa-maroon-dark: rgba(89, 18, 17, 1);
+    }
+
+    /* Override AdminLTE skin-blue header to Rasa maroon */
+    .skin-blue .main-header .navbar,
+    .skin-blue .main-header .logo {
+      background-color: var(--rasa-maroon) !important;
+    }
+
+    .skin-blue .main-header .logo:hover,
+    .skin-blue .main-header .navbar .sidebar-toggle:hover {
+      background-color: var(--rasa-maroon-dark) !important;
+    }
+
+    .skin-blue .main-header .navbar .nav > li > a:hover,
+    .skin-blue .main-header .navbar .nav > li > a:active,
+    .skin-blue .main-header .navbar .nav > li > a:focus,
+    .skin-blue .main-header .navbar .nav .open > a,
+    .skin-blue .main-header .navbar .nav .open > a:hover,
+    .skin-blue .main-header .navbar .nav .open > a:focus,
+    .skin-blue .main-header .navbar .nav > .active > a {
+      background: rgba(0, 0, 0, 0.12) !important;
+      color: #fff !important;
+    }
+
+    .skin-blue .main-header li.user-header {
+      background-color: var(--rasa-maroon) !important;
+    }
+  </style>
+
   @stack('styles')
   
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->

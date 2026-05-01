@@ -43,6 +43,12 @@ class ProductController extends Controller
             });
         }
 
+        if ($request->has('brand') && $request->brand) {
+            $query->whereHas('brand', function($q) use ($request) {
+                $q->where('slug', $request->brand);
+            });
+        }
+
         // Filter by price range
         if ($request->has('min_price') && $request->min_price) {
             $query->where('price', '>=', $request->min_price);
