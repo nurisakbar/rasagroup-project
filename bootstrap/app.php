@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Di belakang nginx host yang terminate TLS (X-Forwarded-Proto).
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'agent' => \App\Http\Middleware\EnsureUserIsAgent::class,
             'warehouse' => \App\Http\Middleware\WarehouseAccess::class,
