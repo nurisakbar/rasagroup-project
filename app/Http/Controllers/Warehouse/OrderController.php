@@ -4,11 +4,31 @@ namespace App\Http\Controllers\Warehouse;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
 {
+    protected $ekspedisiku;
+
+    public function __construct(\App\Services\EkspedisiKuService $ekspedisiku)
+    {
+        $this->ekspedisiku = $ekspedisiku;
+    }
+
+    /**
+     * Pastikan pesanan berasal dari warehouse user yang sedang login.
+     */
+    private function authorizeWarehouseOrder(Order $order): void
+    {
+        $warehouse = auth()->user()->warehouse;
+        if (!$warehouse || $order->source_warehouse_id !== $warehouse->id) {
+            abort(403, 'Akses ditolak.');
+        }
+    }
+
     /**
      * Display orders list for warehouse.
      */
@@ -158,10 +178,7 @@ class OrderController extends Controller
         $user = auth()->user();
         $warehouse = $user->warehouse;
 
-        // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
-            abort(403, 'Akses ditolak.');
-        }
+        $this->authorizeWarehouseOrder($order);
 
         $order->load(['user', 'expedition', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse']);
 
@@ -176,10 +193,7 @@ class OrderController extends Controller
         $user = auth()->user();
         $warehouse = $user->warehouse;
 
-        // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
-            abort(403, 'Akses ditolak.');
-        }
+        $this->authorizeWarehouseOrder($order);
 
         $request->validate([
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
@@ -252,6 +266,229 @@ class OrderController extends Controller
         }
 
         return back()->with('info', 'Tidak ada perubahan yang disimpan.');
+    }
+
+    /**
+     * Antrekan sinkronisasi pesanan ke QID (QAD).
+     */
+    /**
+     * Debug JSON: endpoint + payload + response create SO ke QID (dry run default).
+     */
+    public function debugQidSalesOrder(Request $request, Order $order): JsonResponse
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        $qad = app(\App\Services\QadService::class);
+        if (! $qad->isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'QID API belum dikonfigurasi (QIDAPI_* di .env).',
+            ], 422);
+        }
+
+        $execute = $request->boolean('execute', false);
+        $job = new \App\Jobs\SyncOrderToQad($order);
+        $payload = $job->debugSalesOrderToQid($qad, $execute);
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Debug JSON: endpoint + payload + response request pickup EkspedisiKu (dry run default).
+     */
+    public function debugRequestPickup(Request $request, Order $order): JsonResponse
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if (! $order->ekspedisiku_shipment_id) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Belum ada shipment_id. Buat booking Lion terlebih dahulu.',
+            ], 422);
+        }
+
+        if (! $order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Ekspedisi bukan Lion Parcel.',
+            ], 422);
+        }
+
+        $execute = $request->boolean('execute', false);
+        $startAt = now()->addMinutes(30)->toIso8601String();
+        $endAt = now()->addMinutes(30)->addHours(4)->toIso8601String();
+
+        $trace = $this->ekspedisiku->requestPickupDebug(
+            [(string) $order->ekspedisiku_shipment_id],
+            $startAt,
+            $endAt,
+            $execute
+        );
+
+        return response()->json(array_merge($trace, [
+            'pickup_window' => ['start_at' => $startAt, 'end_at' => $endAt],
+        ]));
+    }
+
+    public function syncQad(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        try {
+            \App\Jobs\SyncOrderToQad::dispatch($order);
+
+            return back()->with('success', 'Permintaan sinkronisasi telah dikirim ke sistem (antrian). Silakan refresh halaman dalam beberapa saat untuk melihat hasilnya.');
+        } catch (\Exception $e) {
+            Log::error('Warehouse OrderController: Sync QAD error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan saat memulai sinkronisasi: ' . $e->getMessage());
+        }
+    }
+
+    public function createEkspedisikuBooking(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if ($order->tracking_number) {
+            return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        try {
+            Log::info('Warehouse OrderController: Manual booking requested', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+
+            $job = new \App\Jobs\CreateShipmentBooking($order);
+            $job->handle(app(\App\Services\EkspedisiKuService::class));
+
+            $order->refresh();
+
+            if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
+                \App\Jobs\SyncOrderToQad::dispatch($order);
+                $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
+
+                return back()->with('success', 'Booking berhasil! Referensi / resi: ' . $ref . '. Sinkronisasi QID dijadwalkan.');
+            }
+
+            return back()->with('error', 'Gagal membuat booking. Cek log EkspedisiKu / CreateShipmentBooking.');
+        } catch (\Exception $e) {
+            Log::error('Warehouse OrderController: Manual booking error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function resetEkspedisikuBooking(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        $order->update([
+            'tracking_number' => null,
+            'ekspedisiku_shipment_id' => null,
+            'shipped_at' => null,
+            'order_status' => 'pending',
+            'ekspedisiku_booking_status' => null,
+            'ekspedisiku_booking_last_error' => null,
+            'ekspedisiku_pickup_requested_at' => null,
+            'ekspedisiku_pickup_status' => null,
+            'ekspedisiku_pickup_last_error' => null,
+        ]);
+
+        return back()->with('success', 'Booking Lion Parcel di-reset. Silakan buat booking ulang.');
+    }
+
+    public function requestPickup(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if (!$order->ekspedisiku_shipment_id) {
+            return back()->with('error', 'Belum ada shipment_id. Buat booking Lion Parcel terlebih dahulu.');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        $startAt = now()->addMinutes(30)->toIso8601String();
+        $endAt = now()->addMinutes(30)->addHours(4)->toIso8601String();
+
+        $result = $this->ekspedisiku->requestPickup([$order->ekspedisiku_shipment_id], $startAt, $endAt);
+
+        if ($result && isset($result['success']) && $result['success']) {
+            $order->update([
+                'ekspedisiku_pickup_requested_at' => now(),
+                'ekspedisiku_pickup_status' => 'success',
+                'ekspedisiku_pickup_last_error' => null,
+            ]);
+
+            return back()->with('success', 'Request pickup berhasil dikirim.');
+        }
+
+        $error = $result['message'] ?? 'Gagal request pickup.';
+        if (isset($result['error'])) {
+            $error .= ' (' . ($result['error']['message'] ?? json_encode($result['error'])) . ')';
+        }
+
+        $order->update([
+            'ekspedisiku_pickup_requested_at' => now(),
+            'ekspedisiku_pickup_status' => 'failed',
+            'ekspedisiku_pickup_last_error' => $error,
+        ]);
+
+        return back()->with('error', $error);
+    }
+
+    public function cancelPickup(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if (!$order->ekspedisiku_shipment_id) {
+            return back()->with('error', 'Belum ada shipment_id.');
+        }
+
+        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
+            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        }
+
+        $result = $this->ekspedisiku->cancelPickup((string) $order->ekspedisiku_shipment_id);
+
+        if ($result && isset($result['success']) && $result['success']) {
+            $order->update([
+                'ekspedisiku_pickup_requested_at' => now(),
+                'ekspedisiku_pickup_status' => 'cancelled',
+                'ekspedisiku_pickup_last_error' => null,
+            ]);
+
+            return back()->with('success', 'Cancel pickup berhasil.');
+        }
+
+        $error = $result['message'] ?? 'Gagal cancel pickup.';
+        if (isset($result['error'])) {
+            $error .= ' (' . ($result['error']['message'] ?? json_encode($result['error'])) . ')';
+        }
+
+        $order->update([
+            'ekspedisiku_pickup_requested_at' => now(),
+            'ekspedisiku_pickup_status' => 'cancel_failed',
+            'ekspedisiku_pickup_last_error' => $error,
+        ]);
+
+        return back()->with('error', $error);
     }
 }
 

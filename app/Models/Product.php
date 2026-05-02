@@ -143,6 +143,25 @@ class Product extends Model
         return $this->hasMany(WarehouseStock::class);
     }
 
+    /**
+     * Urutkan: produk dengan stok > 0 di depan (sesuai hub terpilih di session, atau total semua gudang).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeOrderByInStockFirst($query, ?string $warehouseId = null): void
+    {
+        if ($warehouseId) {
+            $query->orderByRaw(
+                '(SELECT CASE WHEN COALESCE(SUM(ws.stock), 0) > 0 THEN 1 ELSE 0 END FROM warehouse_stocks ws WHERE ws.product_id = products.id AND ws.warehouse_id = ?) DESC',
+                [$warehouseId]
+            );
+        } else {
+            $query->orderByRaw(
+                '(SELECT CASE WHEN COALESCE(SUM(ws.stock), 0) > 0 THEN 1 ELSE 0 END FROM warehouse_stocks ws WHERE ws.product_id = products.id) DESC'
+            );
+        }
+    }
+
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');

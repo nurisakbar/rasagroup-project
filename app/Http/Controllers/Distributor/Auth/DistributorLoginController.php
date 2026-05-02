@@ -35,7 +35,7 @@ class DistributorLoginController extends Controller
                 if ($user->isDistributorApproved() && $user->warehouse_id) {
                     // User was approved but role might not be updated - this shouldn't happen but handle it
                     $request->session()->regenerate();
-                    return redirect()->intended(route('distributor.dashboard'));
+                    return redirect()->intended(route('buyer.dashboard'));
                 }
 
                 Auth::logout();
@@ -53,7 +53,7 @@ class DistributorLoginController extends Controller
             }
 
             $request->session()->regenerate();
-            return redirect()->intended(route('distributor.dashboard'));
+            return redirect()->intended(route('buyer.dashboard'));
         }
 
         return back()->withErrors([

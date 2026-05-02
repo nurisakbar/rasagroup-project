@@ -44,12 +44,53 @@
             color: #333 !important;
         }
 
-        .header-style-1 .search-style-2 form select {
-            color: #333 !important;
+        .header-style-1 .search-style-2 form.rg-search-no-category input {
+            border-radius: 5px !important;
+            margin-left: 0 !important;
+            padding-left: 20px !important;
+            max-width: none !important;
         }
 
-        .search-style-2 form select {
-            background: transparent !important;
+        /* Tombol cari header: ganti hijau Nest → maroon, termasuk hover/focus */
+        .header-style-1 .search-style-2 form button {
+            color: var(--primary-rasa) !important;
+            background-color: transparent !important;
+        }
+        .header-style-1 .search-style-2 form button:hover,
+        .header-style-1 .search-style-2 form button:focus,
+        .header-style-1 .search-style-2 form button:focus-visible {
+            color: var(--btn-rasa-hover) !important;
+            background-color: transparent !important;
+        }
+        .header-style-1 .search-style-2 form button i {
+            color: inherit !important;
+        }
+
+        /* Page header: banner maroon + teks putih (ganti bg ilustrasi Nest pada .archive-header) */
+        .rg-archive-header-maroon .archive-header {
+            background: var(--primary-rasa, #6a1b1b) !important;
+            background-image: none !important;
+            border-radius: 20px;
+        }
+        .rg-archive-header-maroon .archive-header h1 {
+            color: #fff !important;
+        }
+        .rg-archive-header-maroon .archive-header .breadcrumb {
+            color: #fff !important;
+        }
+        .rg-archive-header-maroon .archive-header .breadcrumb a {
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+        .rg-archive-header-maroon .archive-header .breadcrumb a:hover {
+            color: #fff !important;
+        }
+        .rg-archive-header-maroon .archive-header .breadcrumb span {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
+        @media (max-width: 767px) {
+            .rg-archive-header-maroon .archive-header {
+                padding: 36px 24px !important;
+            }
         }
 
         .text-brand {

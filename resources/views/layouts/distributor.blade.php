@@ -27,7 +27,7 @@
   <!-- Main Header -->
   <header class="main-header">
     <!-- Logo -->
-    <a href="{{ route('distributor.dashboard') }}" class="logo">
+    <a href="{{ route('home') }}" class="logo">
       <span class="logo-mini"><b>D</b>S</span>
       <span class="logo-lg"><b>Distributor</b></span>
     </a>
@@ -93,9 +93,9 @@
       <!-- Sidebar Menu -->
       <ul class="sidebar-menu" data-widget="tree">
         <li class="header">MAIN MENU</li>
-        <li class="{{ request()->routeIs('distributor.dashboard') ? 'active' : '' }}">
-          <a href="{{ route('distributor.dashboard') }}">
-            <i class="fa fa-dashboard"></i> <span>DASHBOARD</span>
+        <li class="{{ request()->routeIs('buyer.dashboard') ? 'active' : '' }}">
+          <a href="{{ route('buyer.dashboard') }}">
+            <i class="fa fa-user"></i> <span>AKUN &amp; BELANJA</span>
           </a>
         </li>
         <li class="{{ request()->routeIs('distributor.stock.*') ? 'active' : '' }}">
@@ -116,7 +116,7 @@
         </li>
         <li class="{{ request()->routeIs('distributor.orders.history') || request()->routeIs('distributor.orders.show') ? 'active' : '' }}">
           <a href="{{ route('distributor.orders.history') }}">
-            <i class="fa fa-history"></i> <span>RIWAYAT ORDER</span>
+            <i class="fa fa-history"></i> <span>RIWAYAT PEMBELIAN KE PUSAT</span>
           </a>
         </li>
         <li class="{{ request()->routeIs('distributor.pos.*') ? 'active' : '' }}">
@@ -126,8 +126,8 @@
         </li>
         <li class="header">NAVIGASI</li>
         <li>
-          <a href="{{ route('buyer.dashboard') }}">
-            <i class="fa fa-arrow-left"></i> <span>PANEL BUYER (TOKO)</span>
+          <a href="{{ route('home') }}">
+            <i class="fa fa-shopping-bag"></i> <span>TOKO ONLINE</span>
           </a>
         </li>
       </ul>
@@ -142,7 +142,7 @@
         <small>@yield('page-description', 'Distributor Panel')</small>
       </h1>
       <ol class="breadcrumb">
-        <li><a href="{{ route('distributor.dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="{{ route('home') }}"><i class="fa fa-home"></i> Toko</a></li>
         @yield('breadcrumb')
       </ol>
     </section>

@@ -64,7 +64,7 @@
                                                     <th width="50">Produk</th>
                                                     <th>Nama Produk</th>
                                                     <th>Price</th>
-                                                    <th>Stock</th>
+                                                    <th>Stok</th>
                                                     <th class="text-end">Aksi</th>
                                                 </tr>
                                             </thead>
@@ -124,15 +124,23 @@
     #stock-table_wrapper .row:first-child { display: none; }
     #stock-table thead th { border-top: 0; border-bottom: 1px solid #f2f2f2; color: #253D4E; font-weight: 700; padding-bottom: 15px; }
     #stock-table tbody td { vertical-align: middle; padding: 15px 0; border-top: 0; border-bottom: 1px solid #f2f2f2; }
+    #stock-table tbody tr { transition: background-color 0.15s ease; cursor: default; }
+    #stock-table tbody tr:hover { background-color: rgba(37, 61, 78, 0.06); }
+    #stock-table tbody tr.stock-row-low { background-color: rgba(106, 27, 27, 0.07); }
+    #stock-table tbody tr.stock-row-low:hover { background-color: rgba(106, 27, 27, 0.13); }
     .page-link { border-radius: 5px !important; margin: 0 3px; color: #253D4E; border-color: #f2f2f2; font-size: 13px; }
     .page-item.active .page-link { background-color: #3BB77E; border-color: #3BB77E; color: #fff; }
     
     .dash-tabs .nav-link { 
-        background-color: #f7f8f9; color: #253D4E; border-radius: 30px; padding: 8px 20px; font-weight: 600; font-size: 13px; margin-right: 10px; border: 1px solid #f2f2f2; 
+        background-color: #f7f8f9; color: #253D4E; border-radius: 30px; padding: 8px 20px; font-weight: 600; font-size: 13px; margin-right: 10px; border: 1px solid #f2f2f2;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
+    .dash-tabs .nav-link:hover:not(.active) { background-color: #eceff1; border-color: #dde1e4; color: #1a2f3d; }
     .dash-tabs .nav-link.active { background-color: #3BB77E; color: #fff; border-color: #3BB77E; }
     
     .badge.bg-red { background-color: #fd3d11 !important; color: white; }
+    .badge.badge-stock-low-maroon { background-color: #6A1B1B !important; color: #fff !important; }
+    .text-stock-low-maroon { color: #6A1B1B !important; font-weight: 600; }
     .badge.bg-yellow { background-color: #ffc107 !important; color: #212529; }
     .badge.bg-green { background-color: #3bb77e !important; color: white; }
 </style>

@@ -126,6 +126,10 @@
                                         <td>{{ $distributor->warehouse->address ?? '-' }}</td>
                                     </tr>
                                     <tr>
+                                        <th>Kode Pos</th>
+                                        <td>{{ $distributor->warehouse->postal_code ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
                                         <th>Telepon</th>
                                         <td>{{ $distributor->warehouse->phone ?? '-' }}</td>
                                     </tr>

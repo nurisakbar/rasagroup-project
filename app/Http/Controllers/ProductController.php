@@ -58,6 +58,8 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
+        $query->orderByInStockFirst($selectedHubId);
+
         // Sort (valid values: latest, price_low, price_high, name)
         $sort = $request->get('sort', 'latest');
         if (! in_array($sort, ['latest', 'price_low', 'price_high', 'name'], true)) {

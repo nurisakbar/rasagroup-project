@@ -158,12 +158,11 @@
                                                 <div class="product-uom-picker" role="radiogroup" aria-labelledby="product-uom-heading">
                                                     <span id="product-uom-heading" class="product-uom-picker-title">Satuan pembelian</span>
                                                     <div class="product-uom-cards">
-                                                        <label class="product-uom-card" data-uom-card="base" for="product-uom-base">
+                                                        <label class="product-uom-card" data-uom-card="base" for="product-uom-base" aria-label="Beli per {{ $product->unit }}">
                                                             <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-base" value="base" checked autocomplete="off">
                                                             <span class="product-uom-card-face">
                                                                 <span class="product-uom-card-radio" aria-hidden="true"></span>
-                                                                <span class="product-uom-card-row">
-                                                                    <span class="product-uom-card-name">UoM</span>
+                                                                <span class="product-uom-card-row product-uom-card-row--solo-chip">
                                                                     <span class="product-uom-card-chip">{{ $product->unit }}</span>
                                                                 </span>
                                                             </span>

@@ -27,9 +27,6 @@ class ProfileController extends Controller
             'phone' => 'nullable|string|max:20',
             'date_of_birth' => 'nullable|date|before_or_equal:today',
             'occupation' => 'nullable|string|max:120',
-            'bank_name' => 'nullable|string|max:100',
-            'bank_account_number' => 'nullable|string|max:50',
-            'bank_account_name' => 'nullable|string|max:100',
         ]);
 
         Auth::user()->update($validated);

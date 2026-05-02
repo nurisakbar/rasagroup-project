@@ -71,31 +71,49 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="mb-40">
-                                    <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
-                                        <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Informasi Rekening Bank</h5>
-                                        <div class="row g-3">
-                                            <div class="col-md-4">
-                                                <label class="font-xs text-muted mb-1 d-block">Nama Bank</label>
-                                                <p class="font-md fw-bold mb-0 text-maroon">{{ Auth::user()->bank_name ?? '-' }}</p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="font-xs text-muted mb-1 d-block">Nomor Rekening</label>
-                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->bank_account_number ?? '-' }}</p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="font-xs text-muted mb-1 d-block">Atas Nama</label>
-                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->bank_account_name ?? '-' }}</p>
+
+                                @if(Auth::user()->isDistributor())
+                                    @php
+                                        Auth::user()->loadMissing(['warehouse.province', 'warehouse.regency', 'warehouse.district']);
+                                        $hub = Auth::user()->warehouse;
+                                    @endphp
+                                    @if($hub)
+                                        <div class="mb-40">
+                                            <div class="p-25 border-radius-15" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
+                                                <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">
+                                                    <i class="fi-rs-building mr-5"></i> Hub distributor
+                                                </h5>
+                                                <p class="font-xs text-muted mb-20">Lokasi hub dari admin (untuk stok &amp; pesanan masuk). Untuk alamat pengiriman belanja, kelola di menu <a href="{{ route('buyer.addresses.index') }}" class="text-brand fw-bold">Alamat</a>.</p>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label class="font-xs text-muted mb-1 d-block">Nama hub</label>
+                                                        <p class="font-md fw-bold mb-0 text-maroon">{{ $hub->name }}</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="font-xs text-muted mb-1 d-block">Wilayah</label>
+                                                        <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ $hub->full_location ?: '—' }}</p>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <label class="font-xs text-muted mb-1 d-block">Alamat hub</label>
+                                                        <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ $hub->address ?: '—' }}</p>
+                                                    </div>
+                                                    @if($hub->postal_code)
+                                                        <div class="col-md-6">
+                                                            <label class="font-xs text-muted mb-1 d-block">Kode pos</label>
+                                                            <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ $hub->postal_code }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if($hub->phone)
+                                                        <div class="col-md-6">
+                                                            <label class="font-xs text-muted mb-1 d-block">Telepon hub</label>
+                                                            <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ $hub->phone }}</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
-                                        @if(empty(Auth::user()->bank_name))
-                                            <div class="mt-15 p-12 border-radius-10" style="background-color: #fffaf0; border: 1px solid #feebc8; color: #9c4221;">
-                                                <small><i class="fi-rs-info mr-5"></i> Anda belum melengkapi data rekening. Data ini diperlukan untuk penarikan poin.</small>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
+                                    @endif
+                                @endif
 
                                 <div class="mt-50 pt-30 border-top">
                                     <h4 class="mb-25" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Ubah Password</h4>

@@ -95,12 +95,6 @@
         font-weight: 600;
     }
     
-    /* Contact Form */
-    .contact-form-section {
-        padding: 80px 0;
-        background: transparent;
-    }
-    
     .section-title h2 {
         font-family: 'Fira Sans', sans-serif !important;
         font-size: 2.8rem;
@@ -117,53 +111,6 @@
         border-radius: 2px;
     }
     
-    .contact-form-card {
-        background: white;
-        border-radius: 30px;
-        padding: 60px;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.05);
-    }
-    
-    .form-label {
-        font-family: 'Fira Sans', sans-serif !important;
-        font-weight: 600;
-        color: #253D4E;
-        margin-bottom: 8px;
-    }
-    
-    .form-control {
-        background: #F8F9FA !important;
-        border: 1px solid #ECECEC !important;
-        border-radius: 12px !important;
-        padding: 15px 20px !important;
-        font-family: 'Lato', sans-serif !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .form-control:focus {
-        background: #ffffff !important;
-        border-color: #6A1B1B !important;
-        box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
-    }
-    
-    .btn-submit {
-        background: #6A1B1B !important;
-        color: white !important;
-        border: none;
-        border-radius: 12px;
-        padding: 18px 45px;
-        font-family: 'Fira Sans', sans-serif !important;
-        font-size: 1.1rem;
-        font-weight: 700;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-submit:hover {
-        background-color: #4D1313 !important;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.3);
-    }
-    
     /* Map Section */
     .map-container {
         height: 500px;
@@ -171,6 +118,13 @@
         overflow: hidden;
         margin: 0 50px 80px;
         box-shadow: 0 15px 50px rgba(0,0,0,0.08);
+    }
+    
+    .map-container iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
     }
     
     /* Social Section */
@@ -235,14 +189,6 @@
         box-shadow: none !important;
     }
     
-    /* Alert */
-    .alert-success-custom {
-        background: #27ae60 !important;
-        color: white;
-        border-radius: 15px;
-        padding: 20px 25px;
-    }
-    
     @media (max-width: 768px) {
         .page-hero h1 {
             font-size: 2rem;
@@ -251,21 +197,24 @@
         .section-title h2 {
             font-size: 1.8rem;
         }
-        
-        .contact-form-card {
-            padding: 30px 20px;
-        }
     }
 </style>
 @endpush
 
 @section('content')
     <div class="contact-page pages">
-        <div class="page-header breadcrumb-wrap">
+        <div class="page-header mt-30 mb-75 rg-archive-header-maroon">
             <div class="container">
-                <div class="breadcrumb">
-                    <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
-                    <span></span> Hubungi Kami
+                <div class="archive-header">
+                    <div class="row align-items-center">
+                        <div class="col-xl-12">
+                            <h1 class="mb-15">Hubungi Kami</h1>
+                            <div class="breadcrumb">
+                                <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Halaman Utama</a>
+                                <span></span> Hubungi Kami
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -281,8 +230,9 @@
                             <i class="bi bi-geo-alt"></i>
                         </div>
                         <h4>Alamat</h4>
-                        <p>Jl. Rasa Manis No. 123</p>
-                        <p>Jakarta Selatan, Indonesia 12345</p>
+                        <p><strong>Rasa Group Headquarters</strong></p>
+                        <p>Cikarang–Cibitung, Kabupaten Bekasi, Jawa Barat</p>
+                        <p class="mb-0"><a href="https://www.google.com/maps/place/Rasa+Group+Headquarters/@-6.3163819,107.1104067,17z/data=!3m1!4b1!4m6!3m5!1s0x2e699bde0142aab3:0x3b89b0730a884347!8m2!3d-6.3163819!4d107.1104067!16s%2Fg%2F11vb0rtyjl?entry=ttu" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -315,113 +265,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Contact Form -->
-    <section class="contact-form-section">
-        <div class="container">
-            <div class="section-title">
-                <h2>Kirim Pesan</h2>
-                <div class="divider"></div>
-                <p class="text-muted">Ada pertanyaan atau ingin berkolaborasi? Isi form di bawah ini</p>
-            </div>
-            
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="contact-form-card">
-                        @if(session('success'))
-                            <div class="alert alert-success-custom mb-4">
-                                <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
-                            </div>
-                        @endif
-                        
-                        <form action="{{ route('contact.send') }}" method="POST">
-                            @csrf
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <label for="name" class="form-label">
-                                        <i class="bi bi-person me-1"></i> Nama Lengkap
-                                    </label>
-                                    <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                           id="name" name="name" value="{{ old('name') }}" 
-                                           placeholder="Masukkan nama lengkap" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label">
-                                        <i class="bi bi-envelope me-1"></i> Email
-                                    </label>
-                                    <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                                           id="email" name="email" value="{{ old('email') }}" 
-                                           placeholder="Masukkan email" required>
-                                    @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="phone" class="form-label">
-                                        <i class="bi bi-telephone me-1"></i> No. Telepon
-                                    </label>
-                                    <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                           id="phone" name="phone" value="{{ old('phone') }}" 
-                                           placeholder="Contoh: 08123456789">
-                                    @error('phone')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="subject" class="form-label">
-                                        <i class="bi bi-tag me-1"></i> Subjek
-                                    </label>
-                                    <select class="form-control @error('subject') is-invalid @enderror" 
-                                            id="subject" name="subject" required>
-                                        <option value="">-- Pilih Subjek --</option>
-                                        <option value="Pertanyaan Umum" {{ old('subject') == 'Pertanyaan Umum' ? 'selected' : '' }}>Pertanyaan Umum</option>
-                                        <option value="Pemesanan" {{ old('subject') == 'Pemesanan' ? 'selected' : '' }}>Pemesanan</option>
-                                        <option value="Kerjasama" {{ old('subject') == 'Kerjasama' ? 'selected' : '' }}>Kerjasama / Partnership</option>
-                                        <option value="Komplain" {{ old('subject') == 'Komplain' ? 'selected' : '' }}>Komplain</option>
-                                        <option value="Lainnya" {{ old('subject') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                                    </select>
-                                    @error('subject')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-12">
-                                    <label for="message" class="form-label">
-                                        <i class="bi bi-chat-text me-1"></i> Pesan
-                                    </label>
-                                    <textarea class="form-control @error('message') is-invalid @enderror" 
-                                              id="message" name="message" rows="5" 
-                                              placeholder="Tulis pesan Anda di sini..." required>{{ old('message') }}</textarea>
-                                    @error('message')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-12 text-center">
-                                    <button type="submit" class="btn btn-submit">
-                                        <i class="bi bi-send me-2"></i> Kirim Pesan
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Map Section -->
-    <section class="map-section">
-        <div class="map-container">
-            <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.2904453128064!2d106.82646307486942!3d-6.224751793773457!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f3e97e44fa45%3A0x7d06c08ee4e0a9d4!2sMonumen%20Nasional!5e0!3m2!1sid!2sid!4v1703142000000!5m2!1sid!2sid" 
-                allowfullscreen="" 
-                loading="lazy" 
-                referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
         </div>
     </section>
 
@@ -505,6 +348,18 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="map-container">
+            <iframe
+                title="Peta Rasa Group Headquarters"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.598327932857!2d107.10783177538464!3d-6.316376561811204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e699bde0142aab3%3A0x3b89b0730a884347!2sRasa%20Group%20Headquarters!5e0!3m2!1sid!2sid!4v1777757273799!5m2!1sid!2sid"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
     </section>
 

@@ -389,8 +389,82 @@ class EkspedisiKuService
     }
 
     /**
+     * Trace request pickup: endpoint, payload, status HTTP, body (tanpa mengubah order).
+     *
+     * @param  bool  $executeRequest  false = hanya tampilkan endpoint + payload
+     * @return array<string, mixed>
+     */
+    public function requestPickupDebug(array $shipmentIds, $startAt, $endAt, bool $executeRequest = true): array
+    {
+        $endpoint = rtrim((string) $this->baseUrl, '/') . '/pickup';
+        $payload = [
+            'pickup' => [
+                'shipment_ids' => $shipmentIds,
+                'start_at' => $startAt,
+                'end_at' => $endAt,
+            ],
+        ];
+
+        $base = [
+            'ok' => true,
+            'endpoint' => $endpoint,
+            'method' => 'POST',
+            'headers_note' => 'Authorization: Bearer <token>, Timezone: +07:00',
+            'payload' => $payload,
+        ];
+
+        if (! $executeRequest) {
+            return $base + [
+                'dry_run' => true,
+                'http_status' => null,
+                'response' => null,
+                'response_raw' => null,
+                'note' => 'Dry run: tidak ada HTTP POST ke EkspedisiKu.',
+            ];
+        }
+
+        try {
+            Log::info('EkspedisiKuService: Requesting pickup (debug)', [
+                'url' => $endpoint,
+                'payload' => $payload,
+            ]);
+
+            $response = Http::withToken($this->token)
+                ->withHeaders([
+                    'Timezone' => '+07:00',
+                ])
+                ->post($endpoint, $payload);
+
+            Log::info('EkspedisiKuService: Pickup response (debug)', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+
+            return $base + [
+                'dry_run' => false,
+                'http_status' => $response->status(),
+                'response' => $response->json(),
+                'response_raw' => $response->body(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('EkspedisiKuService: requestPickupDebug error', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return $base + [
+                'ok' => false,
+                'dry_run' => false,
+                'error' => $e->getMessage(),
+                'http_status' => null,
+                'response' => null,
+                'response_raw' => null,
+            ];
+        }
+    }
+
+    /**
      * Request pickup
-     * 
+     *
      * @param array $shipmentIds
      * @param string $startAt
      * @param string $endAt

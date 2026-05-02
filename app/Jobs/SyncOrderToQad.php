@@ -90,43 +90,19 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
     }
 
-    protected function syncSalesOrder(QadService $qadService, User $user): void
+    /**
+     * Bangun baris salesOrderLines untuk payload QID (satu panggilan getItem per itemCode).
+     *
+     * @return array{ok: true, lines: array<int, array<string, mixed>>}|array{ok: false, invalid_items: array<int, array<string, mixed>>}
+     */
+    protected function buildSalesOrderLinesForPayload(QadService $qadService, string $qidSalesOrderNumber): array
     {
-        $user->refresh(); // Get updated qad_customer_code
-        if (!$user->qad_customer_code) {
-            Log::error("SyncOrderToQad: Cannot sync SO because user has no QAD customer code", ['order_id' => $this->order->id]);
-            return;
-        }
-
-        $orderAddress = $this->order->address;
-        if ($orderAddress) {
-            QadBusinessRelationHeadOffice::patch(
-                $qadService,
-                $user,
-                $user->qad_customer_code,
-                $this->buildOrderAddressSnapshot($orderAddress)
-            );
-        }
-
-        $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
-        if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
-            Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
-                'order_id' => $this->order->id,
-                'customer_code' => $user->qad_customer_code,
-                'response' => $dataRes,
-            ]);
-        }
-
-        // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.
-        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
-
         $lineDueDate = $this->order->created_at->copy()->startOfDay()->addDays(7)->format('Y-m-d') . 'T00:00:00.000Z';
 
-        /** Satu panggilan getItem per itemCode: UOM & defaultPrice dari master QID (bukan prioritas DB lokal). */
         $itemMasterCache = [];
-
         $lines = [];
         $invalidPriceItems = [];
+
         foreach ($this->order->items as $index => $item) {
             $itemCode = $item->product->code ?? $item->product->name ?? null;
             $qadMaster = ['uom' => null, 'defaultPrice' => 0.0];
@@ -173,14 +149,12 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 ]);
             }
 
-            // UOM: master QID dulu, lalu kolom produk lokal, terakhir PK.
             $uom = $qadMaster['uom'] ?? null;
             if (! $uom && $item->product?->unit) {
                 $uom = trim((string) $item->product->unit);
             }
             $uom = $uom ?: 'PK';
 
-            // Sama struktur & tipe dengan payload contoh yang valid (harga integer IDR, tanpa site/location di baris).
             $linePrice = (int) round(max(0.0, (float) $price));
             $lines[] = [
                 'salesOrderNumber' => $qidSalesOrderNumber,
@@ -200,14 +174,54 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             ];
         }
 
-        if (!empty($invalidPriceItems)) {
+        if (! empty($invalidPriceItems)) {
+            return ['ok' => false, 'invalid_items' => $invalidPriceItems];
+        }
+
+        return ['ok' => true, 'lines' => $lines];
+    }
+
+    protected function syncSalesOrder(QadService $qadService, User $user): void
+    {
+        $user->refresh(); // Get updated qad_customer_code
+        if (!$user->qad_customer_code) {
+            Log::error("SyncOrderToQad: Cannot sync SO because user has no QAD customer code", ['order_id' => $this->order->id]);
+            return;
+        }
+
+        $orderAddress = $this->order->address;
+        if ($orderAddress) {
+            QadBusinessRelationHeadOffice::patch(
+                $qadService,
+                $user,
+                $user->qad_customer_code,
+                $this->buildOrderAddressSnapshot($orderAddress)
+            );
+        }
+
+        $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
+        if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
+            Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
+                'order_id' => $this->order->id,
+                'customer_code' => $user->qad_customer_code,
+                'response' => $dataRes,
+            ]);
+        }
+
+        // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.
+        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
+
+        $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);
+        if (! $linesBuild['ok']) {
             Log::error('SyncOrderToQad: Abort create SO because one or more item prices are invalid (<= 0). Please fix product/order master pricing first.', [
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
-                'invalid_items' => $invalidPriceItems,
+                'invalid_items' => $linesBuild['invalid_items'],
             ]);
+
             return;
         }
+        $lines = $linesBuild['lines'];
 
         $orderDate = $this->order->created_at->copy()->startOfDay();
 
@@ -435,6 +449,137 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         return $user;
+    }
+
+    /**
+     * Debug: endpoint, payload, dan respons POST create sales order ke QID (sama alur percobaan ke-1 sync).
+     * Tidak mengubah database meskipun API sukses (gunakan tombol Sinkron QID untuk menyimpan qad_so_number).
+     *
+     * @return array<string, mixed>
+     */
+    public function debugSalesOrderToQid(QadService $qadService, bool $executeRequest): array
+    {
+        $this->order->refresh();
+        $this->order->load([
+            'user',
+            'items.product',
+            'address.province',
+            'address.regency',
+            'address.district.city',
+            'sourceWarehouse',
+        ]);
+
+        $user = $this->order->user;
+        $address = $this->order->address;
+        if (! $user || ! $address) {
+            return ['ok' => false, 'error' => 'User atau alamat pesanan tidak ada.'];
+        }
+
+        $user = $this->ensureQadCustomerReady($qadService, $user, $address);
+        if (! $user || ! $user->qad_customer_code) {
+            return ['ok' => false, 'error' => 'Customer QAD tidak siap (kode pelanggan kosong setelah sync).'];
+        }
+
+        $user->refresh();
+
+        $orderAddress = $this->order->address;
+        if ($orderAddress) {
+            QadBusinessRelationHeadOffice::patch(
+                $qadService,
+                $user,
+                $user->qad_customer_code,
+                $this->buildOrderAddressSnapshot($orderAddress)
+            );
+        }
+
+        $createCustomerDataResponse = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
+
+        $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
+        $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);
+        if (! $linesBuild['ok']) {
+            return [
+                'ok' => false,
+                'error' => 'Harga salah satu baris tidak valid (<= 0).',
+                'invalid_items' => $linesBuild['invalid_items'],
+            ];
+        }
+        $lines = $linesBuild['lines'];
+
+        $checkRes = $qadService->getSalesOrder($qidSalesOrderNumber);
+        $existingSo = (is_array($checkRes) && ! ($checkRes['error']['isError'] ?? false))
+            ? ($checkRes['data'] ?? null)
+            : null;
+
+        $orderDate = $this->order->created_at->copy()->startOfDay();
+        $headerDateIso = $orderDate->format('Y-m-d') . 'T00:00:00.000Z';
+        $attempt = 1;
+        $purchaseOrderNumber = $this->buildPurchaseOrderNumberForQad($attempt);
+
+        $payload = [
+            'domainCode' => 'MCR',
+            'salesOrderNumber' => $qidSalesOrderNumber,
+            'billToCustomerCode' => $user->qad_customer_code,
+            'soldToCustomerCode' => $user->qad_customer_code,
+            'shipToCustomerCode' => $user->qad_customer_code,
+            'orderDate' => $headerDateIso,
+            'dueDate' => $headerDateIso,
+            'requiredDate' => $headerDateIso,
+            'shipDate' => $headerDateIso,
+            'promiseDate' => $headerDateIso,
+            'creditTermsCode' => 'CIA',
+            'remarks' => ($this->order->notes !== null && trim((string) $this->order->notes) !== '')
+                ? (string) $this->order->notes
+                : (string) $this->order->order_number,
+            'purchaseOrderNumber' => $purchaseOrderNumber,
+            'taxClass' => 'PPN',
+            'isTaxable' => true,
+            'salespersonCode_01' => 'SLS00001',
+            'isSelfBillingEnabled' => true,
+            'salesOrderLines' => $lines,
+        ];
+
+        $endpoint = rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create';
+
+        $base = [
+            'ok' => true,
+            'qid_sales_order_number' => $qidSalesOrderNumber,
+            'customer_code' => $user->qad_customer_code,
+            'create_customer_data_response' => $createCustomerDataResponse,
+            'endpoint' => $endpoint,
+            'method' => 'POST',
+            'payload' => $payload,
+        ];
+
+        if ($existingSo) {
+            $soNumber = $existingSo['salesOrderNumber'] ?? $existingSo['salesOrderCode'] ?? null;
+
+            return $base + [
+                'skipped_http' => true,
+                'note' => 'Sales order dengan nomor ini sudah ditemukan di QAD (getSalesOrder). POST create tidak dijalankan.',
+                'existing_sales_order' => $soNumber,
+                'get_sales_order_check' => $checkRes,
+                'response' => null,
+                'dry_run' => ! $executeRequest,
+            ];
+        }
+
+        if (! $executeRequest) {
+            return $base + [
+                'dry_run' => true,
+                'response' => null,
+                'note' => 'Dry run: payload siap; centang "Jalankan POST" untuk memanggil API sungguhan.',
+            ];
+        }
+
+        $result = $qadService->createSalesOrder($payload);
+        $extracted = $this->extractSalesOrderNumberFromQidResponse($result);
+
+        return $base + [
+            'dry_run' => false,
+            'response' => $result,
+            'extracted_so_number' => $extracted,
+            'note' => 'POST dijalankan; database order tidak diubah dari debug ini.',
+        ];
     }
 
     /**

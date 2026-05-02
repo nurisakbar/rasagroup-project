@@ -28,6 +28,17 @@
                                 <p class="text-muted font-sm">Dapatkan poin dengan mengajak orang lain berbelanja di platform kami.</p>
                             </div>
                             <div class="card-body p-30 pt-10">
+                                @if(session('success'))
+                                    <div class="alert alert-success border-0 mb-30" style="border-radius: 12px;" role="alert">
+                                        <i class="fi-rs-check mr-5"></i>{{ session('success') }}
+                                    </div>
+                                @endif
+                                @if(session('error'))
+                                    <div class="alert alert-danger border-0 mb-30" style="border-radius: 12px;" role="alert">
+                                        <i class="fi-rs-cross-circle mr-5"></i>{{ session('error') }}
+                                    </div>
+                                @endif
+
                                 <div class="row align-items-center p-30 border-radius-15 mb-40" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                     <div class="col-md-7">
                                         <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">Kode Afiliasi Anda</h5>
@@ -63,6 +74,19 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                @unless($user->isDistributor())
+                                <div class="p-30 border-radius-15 mb-40 buyer-affiliate-bank" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                    <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-bank mr-5"></i> Informasi Rekening Bank</h5>
+                                    <p class="font-sm text-muted mb-20">Data ini digunakan untuk pengajuan penarikan poin afiliasi.</p>
+                                    <form action="{{ route('buyer.affiliate.bank.update') }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        @include('buyer.partials.bank-account-fields')
+                                        <button type="submit" class="btn btn-maroon mt-10">Simpan rekening</button>
+                                    </form>
+                                </div>
+                                @endunless
 
                                 <div class="row g-4 mb-40">
                                     <div class="col-md-12">
@@ -160,17 +184,75 @@
     @media (min-width: 768px) {
         .border-start-md { border-left: 1.5px solid #ECECEC !important; }
     }
+
+    /* Select2: container default inline-block — paksa full width kolom */
+    .buyer-affiliate-bank .select2-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .buyer-affiliate-bank .form-label-affiliate-bank {
+        font-weight: 600;
+        color: #253D4E;
+        margin-bottom: 8px;
+        font-size: 14px;
+        display: block;
+    }
+    .buyer-affiliate-bank .custom-input-affiliate-bank {
+        background-color: #fff !important;
+        border: 1.5px solid #ECECEC !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .buyer-affiliate-bank .custom-input-affiliate-bank:focus {
+        border-color: #6A1B1B !important;
+        box-shadow: 0 0 0 3px rgba(106, 27, 27, 0.08) !important;
+        outline: none;
+    }
+    .buyer-affiliate-bank .select2-container--default .select2-selection--single {
+        height: auto !important;
+        min-height: 48px;
+        padding: 10px 14px !important;
+        border: 1.5px solid #ECECEC !important;
+        border-radius: 12px !important;
+        background-color: #fff !important;
+    }
+    .buyer-affiliate-bank .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.4 !important;
+        padding-left: 0 !important;
+        color: #253D4E;
+    }
+    .buyer-affiliate-bank .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 46px !important;
+        right: 10px !important;
+    }
+
+    /*
+     * Select2 memakai input[type=search]. WebKit/Blink menambahkan kontrol hijau (ikon cari).
+     * Hilangkan agar tampilan netral seperti input teks biasa.
+     */
+    .buyer-affiliate-bank .select2-dropdown .select2-search__field {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-image: none !important;
+    }
+    .buyer-affiliate-bank .select2-dropdown .select2-search__field::-webkit-search-decoration,
+    .buyer-affiliate-bank .select2-dropdown .select2-search__field::-webkit-search-cancel-button,
+    .buyer-affiliate-bank .select2-dropdown .select2-search__field::-webkit-search-results-button,
+    .buyer-affiliate-bank .select2-dropdown .select2-search__field::-webkit-search-results-decoration {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
 </style>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
     .bg-brand-light { background-color: rgba(59, 183, 126, 0.08); }
     .border-radius-10 { border-radius: 10px !important; }
@@ -183,8 +265,22 @@
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
     $(document).ready(function() {
+        var $bankWrap = $('.buyer-affiliate-bank');
+        if ($bankWrap.length && $.fn.select2) {
+            $bankWrap.find('select.select2-bank-affiliate').each(function () {
+                var $sel = $(this);
+                $sel.select2({
+                    placeholder: $sel.data('placeholder') || 'Pilih bank',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $bankWrap
+                });
+            });
+        }
+
         var clipboard = new ClipboardJS('.btn-copy');
         
         clipboard.on('success', function(e) {

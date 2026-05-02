@@ -2,7 +2,7 @@
 
 @section('content')
     <main class="main">
-        <div class="page-header mt-30 mb-75">
+        <div class="page-header mt-30 mb-75 rg-archive-header-maroon">
             <div class="container">
                 <div class="archive-header">
                     <div class="row align-items-center">

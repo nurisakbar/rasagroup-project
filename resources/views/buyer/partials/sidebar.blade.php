@@ -20,7 +20,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.stock.*') ? 'active' : '' }}" href="{{ route('distributor.stock.index') }}">
-                    <i class="fi-rs-box {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Stok
+                    <i class="fi-rs-box {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Kelola Stock
                 </a>
             </li>
             <li class="nav-item">
@@ -34,8 +34,13 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
-                    <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat
+                <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
+                    <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat pembelian ke pusat
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('distributor.profile') || Route::is('buyer.profile') || Route::is('buyer.profile.edit') || Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('distributor.profile') }}">
+                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil
                 </a>
             </li>
             @if(!$isDistributor)

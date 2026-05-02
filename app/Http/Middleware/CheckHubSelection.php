@@ -38,7 +38,8 @@ class CheckHubSelection
             $request->is('promo*') || 
             $request->is('hubs*') || 
             $request->routeIs('hubs.*') ||
-            $request->routeIs('cart.product-stock')) {
+            $request->routeIs('cart.product-stock') ||
+            $request->routeIs('cart.product-redirect')) {
             return $next($request);
         }
 

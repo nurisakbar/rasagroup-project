@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
 Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
-Route::post('/contact', [App\Http\Controllers\PageController::class, 'sendContact'])->name('contact.send');
 Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 Route::get('/saluran-informasi', [App\Http\Controllers\InformationChannelController::class, 'index'])->name('information-channels.index');
 Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannelController::class, 'show'])->name('information-channels.show');
@@ -67,6 +66,10 @@ Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name
 Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
 Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 Route::get('/cart/product-stock/{product}', [App\Http\Controllers\CartController::class, 'getProductStock'])->name('cart.product-stock');
+// Buka /cart/{slug} di browser (GET) bukan endpoint keranjang — hanya POST yang menambah item. Alihkan ke halaman produk.
+Route::get('/cart/{product}', function (\App\Models\Product $product) {
+    return redirect()->route('products.show', $product);
+})->name('cart.product-redirect');
 Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
 Route::middleware('auth')->group(function () {
     Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
@@ -124,6 +127,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified'])->gro
 
     // Affiliate
     Route::get('/affiliate', [App\Http\Controllers\Buyer\AffiliateController::class, 'index'])->name('affiliate.index');
+    Route::put('/affiliate/bank', [App\Http\Controllers\Buyer\AffiliateController::class, 'updateBank'])->name('affiliate.bank.update');
 });
 
 // Log Viewer Route (Access via /logs)
@@ -275,6 +279,13 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         Route::get('/orders', [App\Http\Controllers\Warehouse\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'update'])->name('orders.update');
+        Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
+        Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');
+        Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
+        Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
+        Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Warehouse\OrderController::class, 'syncQad'])->name('orders.sync-qad');
+        Route::post('/orders/{order}/debug-qid-sales-order', [App\Http\Controllers\Warehouse\OrderController::class, 'debugQidSalesOrder'])->name('orders.debug-qid-sales-order');
+        Route::post('/orders/{order}/debug-request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'debugRequestPickup'])->name('orders.debug-request-pickup');
 
         // Hub Profile/Settings
         Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
@@ -323,7 +334,12 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
 
     // Distributor Protected Routes
     Route::middleware(['auth', 'distributor'])->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Distributor\DashboardController::class, 'index'])->name('dashboard');
+        // Dashboard panel dinonaktifkan: distributor memakai toko online + buyer dashboard
+        Route::get('/dashboard', function () {
+            return redirect()->route('buyer.dashboard');
+        })->name('dashboard');
+
+        Route::get('/profile', [App\Http\Controllers\Distributor\ProfileController::class, 'index'])->name('profile');
         
         // Stock Management
         Route::get('/stock', [App\Http\Controllers\Distributor\StockController::class, 'index'])->name('stock.index');

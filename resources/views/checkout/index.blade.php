@@ -220,6 +220,20 @@
                                 </div>
                             </div>
 
+                            @if(Auth::user()->isDistributor() && (int) (Auth::user()->term_of_payment ?? 0) > 0)
+                            <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('term_of_payment')" id="card-tot">
+                                <div class="custom-radio">
+                                    <input class="form-check-input" type="radio" name="payment_method" value="term_of_payment" id="payTot">
+                                    <label class="form-check-label" for="payTot">
+                                        <strong>TOT (Term of Payment)</strong>
+                                    </label>
+                                </div>
+                                <div class="payment-content pl-20 mt-10" style="display: block;">
+                                    <p class="font-sm text-muted mb-0">Pembayaran dengan tempo <strong>{{ (int) Auth::user()->term_of_payment }}</strong> hari sesuai kesepakatan distributor. Tidak melalui pembayaran online otomatis.</p>
+                                </div>
+                            </div>
+                            @endif
+
 
                         </div>
                     </div>
@@ -761,6 +775,7 @@
         var cardId = '';
         if(method === 'xendit') cardId = 'card-xendit';
         else if(method === 'manual_transfer') cardId = 'card-transfer';
+        else if(method === 'term_of_payment') cardId = 'card-tot';
         else if(method === 'cod') cardId = 'card-cod';
         
         if(cardId) {

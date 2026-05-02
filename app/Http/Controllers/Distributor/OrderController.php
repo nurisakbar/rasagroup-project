@@ -565,12 +565,13 @@ class OrderController extends Controller
     public function history(Request $request)
     {
         $user = Auth::user();
+        // Restok ke pusat (distributor) + belanja toko online (regular) — keduanya pembelian distributor
         $query = Order::where('user_id', $user->id)
-            ->where('order_type', Order::TYPE_DISTRIBUTOR)
+            ->whereIn('order_type', [Order::TYPE_DISTRIBUTOR, Order::TYPE_REGULAR])
             ->with(['items.product', 'expedition']);
 
-        $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', now()->endOfMonth()->format('Y-m-d'));
+        $dateFrom = $request->input('date_from', now()->subMonths(12)->format('Y-m-d'));
+        $dateTo = $request->input('date_to', now()->format('Y-m-d'));
 
         if ($request->filled('status')) {
             $query->where('order_status', $request->status);
@@ -584,7 +585,7 @@ class OrderController extends Controller
         // Calculate Monthly Target Progress
         $monthlyTarget = $user->monthly_target ?? 0;
         $totalSpentThisMonth = Order::where('user_id', $user->id)
-            ->where('order_type', Order::TYPE_DISTRIBUTOR)
+            ->whereIn('order_type', [Order::TYPE_DISTRIBUTOR, Order::TYPE_REGULAR])
             ->whereNotIn('order_status', ['cancelled'])
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)

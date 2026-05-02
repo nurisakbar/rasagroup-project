@@ -75,7 +75,7 @@ class StockController extends Controller
                 })
                 ->addColumn('stock_badge', function ($stock) {
                     if ($stock->stock <= 10) {
-                        return '<span class="badge bg-red" style="font-size: 14px;">' . number_format($stock->stock) . '</span><br><small class="text-red"><i class="fa fa-warning"></i> Stock rendah!</small>';
+                        return '<span class="badge badge-stock-low-maroon" style="font-size: 14px;">' . number_format($stock->stock) . '</span><br><small class="text-stock-low-maroon"><i class="fa fa-warning"></i> Stock rendah!</small>';
                     } elseif ($stock->stock <= 50) {
                         return '<span class="badge bg-yellow" style="font-size: 14px;">' . number_format($stock->stock) . '</span>';
                     } else {
@@ -109,6 +109,7 @@ class StockController extends Controller
                           ->orWhere('code', 'like', "%{$keyword}%");
                     });
                 })
+                ->setRowClass(fn (WarehouseStock $stock) => $stock->stock <= 10 ? 'stock-row-low' : '')
                 ->rawColumns(['product_image', 'product_name', 'product_brand', 'stock_badge', 'action'])
                 ->make(true);
         }

@@ -25,7 +25,7 @@ class PosController extends Controller
         $warehouse = $user->warehouse;
 
         if (!$warehouse) {
-            return redirect()->route('distributor.dashboard')
+            return redirect()->route('buyer.dashboard')
                 ->with('error', 'Anda tidak memiliki warehouse yang terkait.');
         }
 

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -520,11 +521,17 @@ class CheckoutController extends Controller
             return redirect()->route('login');
         }
 
+        $user = Auth::user();
+        $allowedPayments = ['xendit', 'manual_transfer'];
+        if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
+            $allowedPayments[] = 'term_of_payment';
+        }
+
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
-            'payment_method' => 'required|string',
+            'payment_method' => ['required', 'string', Rule::in($allowedPayments)],
         ]);
 
         // Verify address belongs to user
@@ -708,7 +715,6 @@ class CheckoutController extends Controller
 
             // Calculate points for DRiiPPreneur based on product reseller_point
             $pointsEarned = 0;
-            $user = Auth::user();
             if ($user->isDriippreneurApproved()) {
                 foreach ($carts as $cart) {
                     $pointsEarned += ($cart->product->reseller_point ?? 0) * $cart->quantity;
@@ -757,6 +763,12 @@ class CheckoutController extends Controller
                 ];
             }
 
+            $orderNotes = $request->notes;
+            if ($request->payment_method === 'term_of_payment' && $user->term_of_payment) {
+                $totPrefix = 'TOT: pembayaran tempo ' . (int) $user->term_of_payment . ' hari.';
+                $orderNotes = trim($totPrefix . (filled($orderNotes) ? ' | ' . $orderNotes : ''));
+            }
+
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR, // Online order
                 'order_number' => $orderNumber,
@@ -775,7 +787,7 @@ class CheckoutController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
-                'notes' => $request->notes,
+                'notes' => $orderNotes,
                 'points_earned' => $pointsEarned,
                 'points_credited' => false,
                 'affiliate_id' => $affiliateId,
@@ -808,7 +820,9 @@ class CheckoutController extends Controller
 
             // Handle Xendit payment first (to get invoice URL)
             $xenditInvoiceUrl = null;
-            if ($request->payment_method === 'xendit') {
+            if ($request->payment_method === 'term_of_payment') {
+                // TOT/TOP: tidak membuat invoice Xendit; pesanan menunggu pembayaran sesuai tempo
+            } elseif ($request->payment_method === 'xendit') {
                 $xenditService = new XenditService();
                 $customer = [
                     'name' => $user->name,

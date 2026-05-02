@@ -14,7 +14,7 @@
 @endphp
 
 @section('content')
-    <div class="page-header mt-30 mb-50">
+    <div class="page-header mt-30 mb-50 rg-archive-header-maroon">
         <div class="container">
             <div class="archive-header">
                 <div class="row align-items-center">
@@ -30,6 +30,24 @@
         </div>
     </div>
     <div class="container mb-30">
+        <div class="section-title style-2 shop-category-tabs mb-30">
+            <ul class="nav nav-tabs links flex-wrap text-uppercase mb-0" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a
+                        class="nav-link {{ ! request()->filled('category') ? 'active' : '' }}"
+                        href="{{ route('products.index', request()->except(['page', 'category'])) }}"
+                    >Semua</a>
+                </li>
+                @foreach($categories as $category)
+                    <li class="nav-item" role="presentation">
+                        <a
+                            class="nav-link {{ request('category') === $category->slug ? 'active' : '' }}"
+                            href="{{ route('products.index', array_merge(request()->except(['page', 'category']), ['category' => $category->slug])) }}"
+                        >{{ $category->name }}</a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
         <div class="row">
             <div class="col-lg-12">
                 <div class="shop-product-fillter">

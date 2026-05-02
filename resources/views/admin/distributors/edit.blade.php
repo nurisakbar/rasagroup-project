@@ -111,6 +111,18 @@
 
                         <div class="row">
                             <div class="col-md-6">
+                                <div class="form-group @error('postal_code') has-error @enderror">
+                                    <label for="postal_code">Kode Pos</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ old('postal_code', $distributor->warehouse->postal_code ?? '') }}" placeholder="Contoh: 12345" maxlength="10">
+                                    @error('postal_code')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="form-group @error('latitude') has-error @enderror">
                                     <label for="latitude">Latitude</label>
                                     <input type="text" class="form-control" id="latitude" name="latitude" value="{{ old('latitude', $distributor->warehouse->latitude ?? '') }}" placeholder="Contoh: -6.123456">

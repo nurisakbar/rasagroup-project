@@ -13,9 +13,6 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if ($user->isDistributor()) {
-            return redirect()->route('distributor.dashboard');
-        }
 
         $totalOrders = Order::where('user_id', $user->id)->count();
         $pendingOrders = Order::where('user_id', $user->id)->where('order_status', 'pending')->count();

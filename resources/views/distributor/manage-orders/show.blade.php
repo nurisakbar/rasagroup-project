@@ -5,7 +5,7 @@
 @section('page-description', 'Detail informasi pesanan')
 
 @section('breadcrumb')
-    <li><a href="{{ route('distributor.dashboard') }}">Dashboard</a></li>
+    <li><a href="{{ route('home') }}">Toko</a></li>
     <li><a href="{{ route('distributor.manage-orders.index') }}">Kelola Pesanan</a></li>
     <li class="active">Detail</li>
 @endsection

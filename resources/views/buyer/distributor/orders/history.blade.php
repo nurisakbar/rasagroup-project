@@ -25,10 +25,16 @@
                         <div class="tab-pane fade show active" role="tabpanel">
                             <div class="card border-0 shadow-sm border-radius-10">
                                 <div class="card-header bg-white border-bottom p-4">
-                                    <h3 class="mb-0">Riwayat Order Produk ke Pusat</h3>
-                                    <p class="text-muted font-sm">Daftar pesanan restok yang Anda buat ke pusat.</p>
+                                    <h3 class="mb-0">Riwayat pembelian</h3>
+                                    <p class="text-muted font-sm">Pesanan restok ke pusat dan pembelian melalui toko online (keranjang reguler).</p>
                                 </div>
                                 <div class="card-body p-4">
+                                    <div class="mb-3">
+                                        <a href="{{ route('distributor.profile') }}" class="font-sm text-brand fw-bold">
+                                            <i class="fi-rs-user mr-5"></i>Profil distributor &amp; hub
+                                        </a>
+                                    </div>
+
                                     @if($monthlyTarget > 0)
                                         <div class="mb-4 p-3 border-radius-10" style="background-color: #f7fef9; border: 1px solid #3BB77E;">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -119,7 +125,11 @@
                                                             <span class="badge {{ $paymentClass }}">{{ ucfirst($order->payment_status) }}</span>
                                                         </td>
                                                         <td class="text-end pr-10">
-                                                            <a href="{{ route('distributor.orders.show', $order) }}" class="btn-small d-block">Detail</a>
+                                                            @if($order->order_type === \App\Models\Order::TYPE_DISTRIBUTOR)
+                                                                <a href="{{ route('distributor.orders.show', $order) }}" class="btn-small d-block">Detail</a>
+                                                            @else
+                                                                <a href="{{ route('buyer.orders.show', $order) }}" class="btn-small d-block">Detail</a>
+                                                            @endif
                                                         </td>
                                                     </tr>
                                                 @empty

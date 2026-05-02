@@ -5,7 +5,7 @@
 @section('page-description', 'Kelola pesanan yang masuk ke hub Anda')
 
 @section('breadcrumb')
-    <li><a href="{{ route('distributor.dashboard') }}">Dashboard</a></li>
+    <li><a href="{{ route('home') }}">Toko</a></li>
     <li class="active">Kelola Pesanan</li>
 @endsection
 

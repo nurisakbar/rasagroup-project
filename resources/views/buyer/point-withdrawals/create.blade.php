@@ -83,7 +83,7 @@
                                                 <p class="font-weight-bold mb-0">{{ $user->bank_account_name }}</p>
                                             </div>
                                             <div class="col-md-12 mt-2">
-                                                <small class="text-muted font-xs italic text-info">* Informasi rekening diambil dari data yang Anda daftarkan di profil.</small>
+                                                <small class="text-muted font-xs italic text-info">* Informasi rekening sesuai data di halaman <a href="{{ route('buyer.affiliate.index') }}" class="text-brand font-weight-bold">Program Afiliasi</a>. Ubah data rekening di sana jika perlu.</small>
                                             </div>
                                         </div>
 

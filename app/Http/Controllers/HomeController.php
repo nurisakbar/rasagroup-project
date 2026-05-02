@@ -11,18 +11,13 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $baseQuery = Product::where('status', 'active');
+        $selectedHubId = session('selected_hub_id');
+        $baseQuery = Product::where('status', 'active')->orderByInStockFirst($selectedHubId);
 
         $popularProducts = (clone $baseQuery)
             ->with(['category', 'brand', 'warehouseStocks'])
             ->latest()
             ->take(10)
-            ->get();
-
-        $dailyBestSells = (clone $baseQuery)
-            ->with(['category', 'brand', 'warehouseStocks'])
-            ->inRandomOrder()
-            ->take(4)
             ->get();
 
         $topSelling = (clone $baseQuery)
@@ -60,6 +55,7 @@ class HomeController extends Controller
             $categoryProducts[$category->id] = (clone $baseQuery)
                 ->where('category_id', $category->id)
                 ->with(['category', 'brand', 'warehouseStocks'])
+                ->latest()
                 ->take(8)
                 ->get();
         }
@@ -72,7 +68,6 @@ class HomeController extends Controller
 
         return view('themes.nest.home.index', compact(
             'popularProducts', 
-            'dailyBestSells', 
             'topSelling', 
             'trendingProducts', 
             'recentlyAdded', 

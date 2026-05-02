@@ -19,6 +19,14 @@
                     @if($order->order_type === 'distributor')
                         <span class="label label-warning pull-right">ORDER DISTRIBUTOR</span>
                     @endif
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <form action="{{ route('warehouse.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
+                            @csrf
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QID / QAD" onclick="return confirm('Sinkronkan pesanan ini ke QID/QAD? Proses akan berjalan di background.')">
+                                <i class="fa fa-refresh"></i> Sinkron QID
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
@@ -79,6 +87,85 @@
                 </div>
             </div>
 
+            <!-- QAD / QID Information -->
+            <div class="box box-success">
+                <div class="box-header">
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QID / QAD (ERP)</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">QAD Customer Code</th>
+                            <td>
+                                @if($order->user->qad_customer_code)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>No. Sales Order QID</th>
+                            <td>
+                                @if($order->qid_sales_order_number)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qid_sales_order_number }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>QAD Sales Order No.</th>
+                            <td>
+                                @if($order->qad_so_number)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            @php
+                $canWarehouseDebugPickup = $order->expedition
+                    && $order->expedition->code === 'lion_parcel'
+                    && $order->ekspedisiku_shipment_id;
+            @endphp
+            <!-- Debug QID / EkspedisiKu (warehouse) -->
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-bug"></i> Debug integrasi</h3>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted small" style="margin-bottom: 12px;">
+                        Menampilkan <strong>endpoint</strong>, <strong>payload</strong>, dan <strong>response</strong>.
+                        Secara default hanya menyusun payload (dry run); centang untuk memanggil API sungguhan.
+                    </p>
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label class="checkbox-inline" style="font-weight: normal;">
+                            <input type="checkbox" id="warehouseDebugQidExecute"> Jalankan POST create sales order ke QID
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-default btn-sm" id="warehouseBtnDebugQidSo">
+                        <i class="fa fa-code"></i> Debug Sales Order (QID)
+                    </button>
+                    <hr style="margin: 12px 0;">
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label class="checkbox-inline" style="font-weight: normal;">
+                            <input type="checkbox" id="warehouseDebugPickupExecute" @if(!$canWarehouseDebugPickup) disabled @endif> Jalankan POST request pickup (EkspedisiKu)
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-default btn-sm" id="warehouseBtnDebugPickup" @if(!$canWarehouseDebugPickup) disabled title="Perlu Lion Parcel + shipment_id" @endif>
+                        <i class="fa fa-truck"></i> Debug Request Pickup
+                    </button>
+                    @if(!$canWarehouseDebugPickup)
+                        <p class="text-muted small" style="margin-top: 8px; margin-bottom: 0;">Pickup debug aktif setelah booking Lion sukses (ada <code>shipment_id</code>).</p>
+                    @endif
+                </div>
+            </div>
+
             <!-- Shipping Information -->
             <div class="box box-info">
                 <div class="box-header">
@@ -108,11 +195,68 @@
                             <td>
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
+                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                        @if(!$order->ekspedisiku_shipment_id)
+                                            <span class="label label-danger" style="margin-left: 10px;">shipment_id belum tersimpan</span>
+                                            <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset booking/resi ini? Resi akan dikosongkan agar bisa booking ulang.')">
+                                                    <i class="fa fa-trash"></i> Reset Booking
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @if($order->ekspedisiku_pickup_status === 'success')
+                                            <span class="label label-success" style="margin-left: 10px;">
+                                                Pickup requested{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
+                                            </span>
+                                            <form action="{{ route('warehouse.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Cancel request pickup untuk shipment ini?')">
+                                                    <i class="fa fa-ban"></i> Cancel Pickup
+                                                </button>
+                                            </form>
+                                        @elseif($order->ekspedisiku_pickup_status === 'cancelled')
+                                            <span class="label label-default" style="margin-left: 10px;">
+                                                Pickup cancelled{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
+                                            </span>
+                                        @elseif($order->ekspedisiku_pickup_status === 'cancel_failed')
+                                            <span class="label label-danger" style="margin-left: 10px;">
+                                                Cancel pickup gagal
+                                            </span>
+                                            <form action="{{ route('warehouse.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Retry cancel pickup untuk shipment ini?')">
+                                                    <i class="fa fa-ban"></i> Cancel Pickup
+                                                </button>
+                                            </form>
+                                            @if($order->ekspedisiku_pickup_last_error)
+                                                <br><small class="text-danger">Cancel pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
+                                            @endif
+                                        @else
+                                            <form action="{{ route('warehouse.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-warning" onclick="return confirm('Kirim request pickup ke Lion Parcel?')">
+                                                    <i class="fa fa-truck"></i> Request Pickup
+                                                </button>
+                                            </form>
+                                            @if($order->ekspedisiku_pickup_status === 'failed')
+                                                <br><small class="text-danger">Pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
+                                            @endif
+                                        @endif
+                                    @endif
                                     @if($order->shipped_at)
                                         <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
                                     @endif
                                 @else
                                     <span class="text-muted">Belum diisi</span>
+                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                        <form action="{{ route('warehouse.orders.ekspedisiku-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
+                                                <i class="fa fa-plus"></i> Buat Booking (EkspedisiKu)
+                                            </button>
+                                        </form>
+                                    @endif
                                 @endif
                             </td>
                         </tr>
@@ -407,6 +551,23 @@
             </a>
         </div>
     </div>
+
+    <div class="modal fade" id="warehouseIntegrationDebugModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document" style="width: 92%; max-width: 1000px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"><i class="fa fa-bug"></i> Hasil debug</h4>
+                </div>
+                <div class="modal-body">
+                    <pre id="warehouseIntegrationDebugPre" style="max-height: 72vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 0;"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -442,6 +603,50 @@ $(document).ready(function() {
             alert('Tidak ada perubahan yang dilakukan. Silakan ubah setidaknya satu field sebelum menyimpan.');
             return false;
         }
+    });
+
+    var warehouseDebugCsrf = $('meta[name="csrf-token"]').attr('content');
+    function warehouseShowDebugModal(obj) {
+        $('#warehouseIntegrationDebugPre').text(JSON.stringify(obj, null, 2));
+        $('#warehouseIntegrationDebugModal').modal('show');
+    }
+    function warehouseDebugPost(url, execute, btn) {
+        var $btn = $(btn);
+        $btn.prop('disabled', true);
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': warehouseDebugCsrf,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ execute: !!execute })
+        })
+        .then(function (r) {
+            return r.json().then(function (data) {
+                warehouseShowDebugModal({ http_status: r.status, body: data });
+            });
+        })
+        .catch(function (e) {
+            warehouseShowDebugModal({ error: String(e) });
+        })
+        .finally(function () {
+            $btn.prop('disabled', false);
+        });
+    }
+    $('#warehouseBtnDebugQidSo').on('click', function () {
+        warehouseDebugPost(
+            @json(route('warehouse.orders.debug-qid-sales-order', $order)),
+            $('#warehouseDebugQidExecute').is(':checked'),
+            this
+        );
+    });
+    $('#warehouseBtnDebugPickup').on('click', function () {
+        warehouseDebugPost(
+            @json(route('warehouse.orders.debug-request-pickup', $order)),
+            $('#warehouseDebugPickupExecute').is(':checked'),
+            this
+        );
     });
 });
 </script>

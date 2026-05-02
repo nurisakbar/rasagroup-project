@@ -1,14 +1,22 @@
 @extends('themes.nest.layouts.app')
 
 @section('content')
-    <div class="page-header breadcrumb-wrap">
-        <div class="container">
-            <div class="breadcrumb">
-                <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
-                <span></span> Promo
+    <main class="main">
+        <div class="page-header mt-30 mb-75 rg-archive-header-maroon">
+            <div class="container">
+                <div class="archive-header">
+                    <div class="row align-items-center">
+                        <div class="col-xl-12">
+                            <h1 class="mb-15">Promo</h1>
+                            <div class="breadcrumb">
+                                <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Halaman Utama</a>
+                                <span></span> Promo
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
     <div class="page-content pt-50 pb-50">
         <div class="container">
             <div class="row">
@@ -68,4 +76,5 @@
             </div>
         </div>
     </div>
+    </main>
 @endsection

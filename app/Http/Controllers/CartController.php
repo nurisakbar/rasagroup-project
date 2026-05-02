@@ -8,7 +8,9 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -86,22 +88,49 @@ class CartController extends Controller
 
     public function store(Request $request, Product $product)
     {
-
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'warehouse_id' => 'required',
-            'uom' => ['nullable', Rule::in(['base', 'large'])],
-        ], [
-            'warehouse_id.required' => 'Pilih hub pengirim terlebih dahulu.',
+        $this->logCartStore('store: begin', [
+            'product_id' => $product->id,
+            'product_slug' => $product->slug,
+            'ajax' => $request->ajax(),
+            'expects_json' => $request->expectsJson(),
+            'auth_id' => Auth::id(),
+            'session_prefix' => substr((string) session()->getId(), 0, 10),
+            'selected_hub_session' => session('selected_hub_id'),
+            'input' => $request->only(['quantity', 'warehouse_id', 'uom']),
         ]);
+
+        try {
+            $request->validate([
+                'quantity' => 'required|integer|min:1',
+                'warehouse_id' => 'required',
+                'uom' => ['nullable', Rule::in(['base', 'large'])],
+            ], [
+                'warehouse_id.required' => 'Pilih hub pengirim terlebih dahulu.',
+            ]);
+        } catch (ValidationException $e) {
+            $this->logCartStore('store: validation failed', [
+                'errors' => $e->errors(),
+                'product_id' => $product->id,
+            ]);
+            throw $e;
+        }
 
         $uom = $request->input('uom', 'base');
         if ($uom === 'large' && ! $product->hasDualUnitOrdering()) {
             $uom = 'base';
+            $this->logCartStore('store: uom forced to base (no dual unit)', ['product_id' => $product->id]);
         }
 
         $baseQuantity = $product->orderedQuantityToBase((int) $request->quantity, $uom);
+        $this->logCartStore('store: quantity computed', [
+            'requested_qty' => (int) $request->quantity,
+            'uom' => $uom,
+            'base_quantity' => $baseQuantity,
+        ]);
+
         if ($baseQuantity < 1) {
+            $this->logCartStore('store: abort invalid base quantity', ['base_quantity' => $baseQuantity]);
+
             return $request->ajax()
                 ? response()->json(['error' => 'Jumlah tidak valid.'], 422)
                 : back()->with('error', 'Jumlah tidak valid.');
@@ -112,11 +141,21 @@ class CartController extends Controller
             ->first();
 
         if (!$warehouse || !$warehouse->is_active) {
+            $this->logCartStore('store: abort warehouse missing or inactive', [
+                'warehouse_id_input' => $request->warehouse_id,
+                'resolved_id' => $warehouse?->id,
+                'is_active' => $warehouse?->is_active,
+            ]);
+
             return back()->with('error', 'Hub tidak valid atau tidak tersedia.');
         }
 
         $warehouseId = $warehouse->id;
 
+        $this->logCartStore('store: warehouse resolved', [
+            'warehouse_id' => $warehouseId,
+            'warehouse_name' => $warehouse->name,
+        ]);
 
         // Check stock availability
         $stock = WarehouseStock::where('warehouse_id', $warehouseId)
@@ -127,6 +166,12 @@ class CartController extends Controller
 
         if ($baseQuantity > $availableStock) {
             $unitLabel = $product->unit ?: 'unit';
+            $this->logCartStore('store: abort insufficient stock', [
+                'base_quantity' => $baseQuantity,
+                'available_stock' => $availableStock,
+                'warehouse_id' => $warehouseId,
+            ]);
+
             return $request->ajax()
                 ? response()->json([
                     'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
@@ -143,6 +188,11 @@ class CartController extends Controller
                 ->first();
 
             if ($existingCart) {
+                $this->logCartStore('store: abort mixed warehouse (auth)', [
+                    'existing_warehouse_id' => $existingCart->warehouse_id,
+                    'requested_warehouse_id' => $warehouseId,
+                ]);
+
                 return back()->with('error', 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.');
             }
 
@@ -156,18 +206,32 @@ class CartController extends Controller
             if ($cart) {
                 $newQuantity = $cart->quantity + $baseQuantity;
                 if ($newQuantity > $availableStock) {
+                    $this->logCartStore('store: abort merge exceeds stock (auth)', [
+                        'cart_id' => $cart->id,
+                        'new_quantity' => $newQuantity,
+                        'available_stock' => $availableStock,
+                    ]);
+
                     return $request->ajax()
                         ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
                         : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
                 }
                 $cart->quantity = $newQuantity;
                 $cart->save();
+                $this->logCartStore('store: updated line (auth)', [
+                    'cart_id' => $cart->id,
+                    'new_quantity' => $newQuantity,
+                ]);
             } else {
                 Cart::create([
                     'user_id' => Auth::id(),
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
                     'cart_type' => 'regular',
+                    'quantity' => $baseQuantity,
+                ]);
+                $this->logCartStore('store: created line (auth)', [
+                    'warehouse_id' => $warehouseId,
                     'quantity' => $baseQuantity,
                 ]);
             }
@@ -182,6 +246,11 @@ class CartController extends Controller
                 ->first();
 
             if ($existingCart) {
+                $this->logCartStore('store: abort mixed warehouse (guest)', [
+                    'existing_warehouse_id' => $existingCart->warehouse_id,
+                    'requested_warehouse_id' => $warehouseId,
+                ]);
+
                 return back()->with('error', 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.');
             }
 
@@ -194,12 +263,22 @@ class CartController extends Controller
             if ($cart) {
                 $newQuantity = $cart->quantity + $baseQuantity;
                 if ($newQuantity > $availableStock) {
+                    $this->logCartStore('store: abort merge exceeds stock (guest)', [
+                        'cart_id' => $cart->id,
+                        'new_quantity' => $newQuantity,
+                        'available_stock' => $availableStock,
+                    ]);
+
                     return $request->ajax()
                         ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
                         : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
                 }
                 $cart->quantity = $newQuantity;
                 $cart->save();
+                $this->logCartStore('store: updated line (guest)', [
+                    'cart_id' => $cart->id,
+                    'new_quantity' => $newQuantity,
+                ]);
             } else {
                 Cart::create([
                     'session_id' => $sessionId,
@@ -208,8 +287,18 @@ class CartController extends Controller
                     'cart_type' => 'regular',
                     'quantity' => $baseQuantity,
                 ]);
+                $this->logCartStore('store: created line (guest)', [
+                    'warehouse_id' => $warehouseId,
+                    'quantity' => $baseQuantity,
+                ]);
             }
         }
+
+        $this->logCartStore('store: success', [
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouseId,
+            'response' => $request->ajax() ? 'json' : 'redirect_back',
+        ]);
 
         if ($request->ajax()) {
             $cartCount = Auth::check() 
@@ -225,6 +314,25 @@ class CartController extends Controller
         }
 
         return back()->with('success', 'Produk "' . $product->display_name . '" berhasil ditambahkan.');
+    }
+
+    /**
+     * Log debug alur tambah ke keranjang. File: storage/logs/cart-debug.log
+     * Aktif jika LOG_CART_DEBUG=true atau APP_ENV=local.
+     */
+    private function logCartStore(string $message, array $context = []): void
+    {
+        $flag = env('LOG_CART_DEBUG');
+        if ($flag === null) {
+            $enabled = app()->environment('local');
+        } else {
+            $enabled = filter_var($flag, FILTER_VALIDATE_BOOLEAN);
+        }
+        if (! $enabled) {
+            return;
+        }
+
+        Log::channel('cart_debug')->info($message, $context);
     }
 
     /**

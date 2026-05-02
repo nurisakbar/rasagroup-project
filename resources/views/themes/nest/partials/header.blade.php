@@ -12,17 +12,7 @@
                     </div>
                     <div class="header-right">
                         <div class="search-style-2">
-                            @php
-                                $headerCategories = \App\Models\Category::active()->orderBy('name')->get(['name', 'slug']);
-                                $selectedCategory = request('category');
-                            @endphp
-                            <form action="{{ route('products.index') }}" method="GET">
-                                <select class="select-active" name="category">
-                                    <option value="" {{ $selectedCategory ? '' : 'selected' }}>Semua Kategori</option>
-                                    @foreach($headerCategories as $cat)
-                                        <option value="{{ $cat->slug }}" {{ $selectedCategory === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                    @endforeach
-                                </select>
+                            <form class="rg-search-no-category" action="{{ route('products.index') }}" method="GET">
                                 <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
                                 <button type="submit" aria-label="Cari produk"><i class="fi-rs-search"></i></button>
                             </form>

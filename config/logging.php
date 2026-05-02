@@ -138,6 +138,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+         * Keranjang — debug POST /cart/{product} (aktifkan LOG_CART_DEBUG=true atau otomatis di local).
+         */
+        'cart_debug' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/cart-debug.log'),
+            'level' => env('LOG_CART_DEBUG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

@@ -34,4 +34,25 @@ class AffiliateController extends Controller
 
         return view('buyer.affiliate.index', compact('user', 'referralOrders', 'totalReferralPoints'));
     }
+
+    /**
+     * Simpan data rekening untuk penarikan poin afiliasi (bukan distributor).
+     */
+    public function updateBank(Request $request)
+    {
+        $user = Auth::user();
+        if ($user->isDistributor()) {
+            return redirect()->route('buyer.affiliate.index')->with('error', 'Akun distributor tidak mengelola rekening di halaman ini.');
+        }
+
+        $validated = $request->validate([
+            'bank_name' => 'nullable|string|max:100',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_account_name' => 'nullable|string|max:100',
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->route('buyer.affiliate.index')->with('success', 'Data rekening berhasil diperbarui.');
+    }
 }
