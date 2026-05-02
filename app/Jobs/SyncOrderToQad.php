@@ -88,17 +88,15 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         if (!$this->order->qad_so_number) {
             $forceAttempt = (bool) config('qidapi.force_so', env('QIDAPI_FORCE_SO', true)); // Default to true if not set
             if (!$forceAttempt && !$qadService->canPosting()) {
-                if (config('qidapi.debug_so_log')) {
-                    Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                        'phase' => 'skipped_can_posting',
-                        'order_id' => $this->order->id,
-                        'order_number' => $this->order->order_number,
-                        'qid_username' => $qadService->getUserInfo()['username'] ?? null,
-                        'force_attempt' => $forceAttempt,
-                        'can_posting' => false,
-                        'token_claims' => $qadService->getTokenClaims(),
-                    ]);
-                }
+                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                    'phase' => 'skipped_can_posting',
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
+                    'force_attempt' => $forceAttempt,
+                    'can_posting' => false,
+                    'token_claims' => $qadService->getTokenClaims(),
+                ]);
                 Log::error('SyncOrderToQad: QID token has can_posting=false; cannot create Sales Order. Update QIDAPI credentials to a user with posting permission.', [
                     'order_id' => $this->order->id,
                     'order_number' => $this->order->order_number,
@@ -294,19 +292,17 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'payload' => $payload,
             ]);
 
-            if (config('qidapi.debug_so_log')) {
-                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                    'phase' => 'job_before_http_create',
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'customer_code' => $user->qad_customer_code,
-                    'attempt' => $attempt,
-                    'method' => 'POST',
-                    'endpoint' => rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create',
-                    'endpoint_path' => '/api/transaction/sales-orders/create',
-                    'payload' => $payload,
-                ]);
-            }
+            Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                'phase' => 'job_before_http_create',
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'customer_code' => $user->qad_customer_code,
+                'attempt' => $attempt,
+                'method' => 'POST',
+                'endpoint' => rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create',
+                'endpoint_path' => '/api/transaction/sales-orders/create',
+                'payload' => $payload,
+            ]);
 
             $result = $qadService->createSalesOrder($payload);
             $soNumber = $this->extractSalesOrderNumberFromQidResponse($result);
@@ -323,16 +319,14 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'message' => is_array($result) ? ($result['message'] ?? null) : null,
             ]);
 
-            if (config('qidapi.debug_so_log')) {
-                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                    'phase' => 'job_after_http_create',
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'attempt' => $attempt,
-                    'response' => $result,
-                    'extracted_so_number' => $soNumber,
-                ]);
-            }
+            Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                'phase' => 'job_after_http_create',
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'attempt' => $attempt,
+                'response' => $result,
+                'extracted_so_number' => $soNumber,
+            ]);
 
             if ($soNumber) {
                 $this->order->update(['qad_so_number' => $soNumber]);

@@ -359,15 +359,10 @@ class QidApiService
     }
 
     /**
-     * Debug Sales Order: endpoint lengkap, payload, response → channel `qid_sales_order`.
-     * Aktifkan dengan QIDAPI_SO_DEBUG_LOG=true (config qidapi.debug_so_log).
+     * Log trace Sales Order: endpoint, payload, response → channel `qid_sales_order`.
      */
     protected function logSalesOrderDebug(string $phase, array $context): void
     {
-        if (! config('qidapi.debug_so_log')) {
-            return;
-        }
-
         Log::channel('qid_sales_order')->debug('QID Sales Order API', array_merge(
             ['phase' => $phase],
             $context

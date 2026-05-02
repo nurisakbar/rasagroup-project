@@ -128,8 +128,7 @@ return [
         ],
 
         /*
-         * QID API — pembuatan Sales Order (endpoint, payload, response).
-         * Aktifkan lewat config/qidapi.php → debug_so_log / env QIDAPI_SO_DEBUG_LOG.
+         * QID API — trace pembuatan Sales Order (endpoint, payload, response).
          */
         'qid_sales_order' => [
             'driver' => 'daily',
