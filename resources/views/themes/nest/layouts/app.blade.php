@@ -111,6 +111,87 @@
             background-color: var(--btn-rasa) !important;
         }
 
+        /* Kartu produk (rg-*): tinggi seragam, gambar dalam kotak tetap, harga+tombol sejajar */
+        .rg-product-col {
+            display: flex;
+        }
+
+        .rg-product-card.product-cart-wrap {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 100%;
+        }
+
+        .rg-product-card .rg-product-media.product-img-action-wrap {
+            flex-shrink: 0;
+        }
+
+        .rg-product-card .rg-product-media .product-img.product-img-zoom {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rg-product-card .rg-product-media .product-img-zoom > a {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: relative !important;
+            width: 100% !important;
+            min-height: 220px !important;
+            height: 220px !important;
+            overflow: hidden;
+        }
+
+        .rg-product-card .rg-product-img.default-img {
+            position: relative !important;
+            z-index: 1;
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: 220px !important;
+            object-fit: contain !important;
+        }
+
+        .rg-product-card .rg-product-img.hover-img {
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            margin: auto !important;
+            z-index: 2;
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: 220px !important;
+            object-fit: contain !important;
+        }
+
+        .rg-product-card .rg-product-body.product-content-wrap {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .rg-product-card .rg-product-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.35;
+            min-height: 2.7em;
+            margin-bottom: 0.35rem !important;
+        }
+
+        .rg-product-card .rg-product-footer.product-card-bottom {
+            margin-top: auto;
+            align-items: flex-end;
+        }
+
         /* ------------------------------------------------------------------ */
         /* Global button theme (apply to all primary buttons)                  */
         /* ------------------------------------------------------------------ */
