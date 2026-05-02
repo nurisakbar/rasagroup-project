@@ -67,13 +67,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'qad_customer_code',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'wa_verified_at' => 'datetime',
-        'driippreneur_applied_at' => 'datetime',
-        'date_of_birth' => 'date',
-    ];
-
     protected static function boot()
     {
         parent::boot();
@@ -148,6 +141,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'points' => 'integer',
             'driippreneur_applied_at' => 'datetime',
+            'date_of_birth' => 'date',
         ];
     }
 
