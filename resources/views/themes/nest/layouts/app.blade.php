@@ -111,7 +111,12 @@
             background-color: var(--btn-rasa) !important;
         }
 
-        /* Kartu produk (rg-*): tinggi seragam, gambar dalam kotak tetap, harga+tombol sejajar */
+        /* Kartu produk (rg-*): kotak gambar kompak, jarak antar baris + dalam kartu lebih lega */
+        .row.product-grid,
+        .row.product-grid-4 {
+            row-gap: 2rem;
+        }
+
         .rg-product-col {
             display: flex;
         }
@@ -122,10 +127,16 @@
             width: 100%;
             flex: 1 1 auto;
             min-height: 100%;
+            margin-bottom: 0 !important;
+        }
+
+        .rg-product-col {
+            margin-bottom: 2rem !important;
         }
 
         .rg-product-card .rg-product-media.product-img-action-wrap {
             flex-shrink: 0;
+            padding: 16px 18px 0 18px !important;
         }
 
         .rg-product-card .rg-product-media .product-img.product-img-zoom {
@@ -140,8 +151,8 @@
             justify-content: center !important;
             position: relative !important;
             width: 100% !important;
-            min-height: 220px !important;
-            height: 220px !important;
+            min-height: 168px !important;
+            height: 168px !important;
             overflow: hidden;
         }
 
@@ -151,7 +162,7 @@
             width: auto !important;
             max-width: 100% !important;
             height: auto !important;
-            max-height: 220px !important;
+            max-height: 168px !important;
             object-fit: contain !important;
         }
 
@@ -166,7 +177,7 @@
             width: auto !important;
             max-width: 100% !important;
             height: auto !important;
-            max-height: 220px !important;
+            max-height: 168px !important;
             object-fit: contain !important;
         }
 
@@ -175,6 +186,12 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
+            gap: 0.4rem;
+            padding: 0.35rem 18px 14px 18px !important;
+        }
+
+        .rg-product-card .rg-product-body .product-category {
+            margin-bottom: 0 !important;
         }
 
         .rg-product-card .rg-product-title {
@@ -182,14 +199,24 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.35;
-            min-height: 2.7em;
-            margin-bottom: 0.35rem !important;
+            line-height: 1.32;
+            min-height: calc(1.32em * 2);
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        .rg-product-card .rg-product-body .product-rate-cover {
+            margin-bottom: 0 !important;
+        }
+
+        .rg-product-card .rg-product-body > div:not(.rg-product-footer) {
+            line-height: 1.45;
         }
 
         .rg-product-card .rg-product-footer.product-card-bottom {
-            margin-top: auto;
+            margin-top: auto !important;
             align-items: flex-end;
+            padding-top: 0.65rem !important;
         }
 
         /* ------------------------------------------------------------------ */
