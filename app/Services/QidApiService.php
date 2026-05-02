@@ -239,12 +239,13 @@ class QidApiService
 
         try {
             if ($isSalesOrderCreate) {
-                Log::info('QidApi Sales Order Request', [
+                $this->logSalesOrderDebug('request', [
                     'method' => strtoupper($method),
-                    'url' => $url,
+                    'endpoint' => $url,
+                    'endpoint_path' => $endpoint,
                     'payload' => $data,
-                    'payload_pretty' => $this->prettyJson($data),
-                    'retry' => $retry,
+                    'payload_json' => $this->prettyJson($data),
+                    'retry_after_token_refresh' => $retry,
                 ]);
             }
 
@@ -262,14 +263,15 @@ class QidApiService
             // Jika 401, coba refresh token sekali lalu ulangi request
             if ($response->status() === 401 && !$retry) {
                 if ($isSalesOrderCreate) {
-                    Log::warning('QidApi Sales Order Unauthorized (retrying login)', [
+                    $this->logSalesOrderDebug('unauthorized_retry', [
                         'method' => strtoupper($method),
-                        'url' => $url,
-                        'status' => $response->status(),
+                        'endpoint' => $url,
+                        'endpoint_path' => $endpoint,
+                        'http_status' => $response->status(),
                         'payload' => $data,
-                        'response' => $response->body(),
-                        'payload_pretty' => $this->prettyJson($data),
-                        'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                        'payload_json' => $this->prettyJson($data),
+                        'response_body' => $response->body(),
+                        'response_json' => $this->prettyJson($response->json() ?? $response->body()),
                     ]);
                 }
                 Log::warning('QidApi token expired, re-authenticating...');
@@ -280,28 +282,38 @@ class QidApiService
 
             if ($response->successful()) {
                 if ($isSalesOrderCreate) {
-                    Log::info('QidApi Sales Order Response', [
+                    $parsed = $response->json();
+                    $this->logSalesOrderDebug('response_success', [
                         'method' => strtoupper($method),
-                        'url' => $url,
-                        'status' => $response->status(),
+                        'endpoint' => $url,
+                        'endpoint_path' => $endpoint,
+                        'http_status' => $response->status(),
                         'payload' => $data,
-                        'response' => $response->json() ?? $response->body(),
-                        'payload_pretty' => $this->prettyJson($data),
-                        'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                        'payload_json' => $this->prettyJson($data),
+                        'response' => $parsed ?? $response->body(),
+                        'response_json' => $this->prettyJson($parsed ?? $response->body()),
                     ]);
                 }
                 return $response->json() ?? ['raw' => $response->body()];
             }
 
             if ($isSalesOrderCreate) {
-                Log::error('QidApi Sales Order Failed', [
+                $parsedErr = $response->json();
+                $this->logSalesOrderDebug('response_error', [
                     'method' => strtoupper($method),
-                    'url' => $url,
-                    'status' => $response->status(),
+                    'endpoint' => $url,
+                    'endpoint_path' => $endpoint,
+                    'http_status' => $response->status(),
                     'payload' => $data,
-                    'response' => $response->body(),
-                    'payload_pretty' => $this->prettyJson($data),
-                    'response_pretty' => $this->prettyJson($response->json() ?? $response->body()),
+                    'payload_json' => $this->prettyJson($data),
+                    'response_body' => $response->body(),
+                    'response' => $parsedErr ?? null,
+                    'response_json' => $this->prettyJson($parsedErr ?? $response->body()),
+                ]);
+                Log::warning('QidApi Sales Order HTTP error', [
+                    'method' => strtoupper($method),
+                    'endpoint' => $url,
+                    'http_status' => $response->status(),
                 ]);
             }
 
@@ -323,12 +335,18 @@ class QidApiService
             return null;
         } catch (\Exception $e) {
             if ($isSalesOrderCreate) {
-                Log::error('QidApi Sales Order Exception', [
+                $this->logSalesOrderDebug('exception', [
                     'method' => strtoupper($method),
-                    'url' => $url,
+                    'endpoint' => $url,
+                    'endpoint_path' => $endpoint,
                     'payload' => $data,
+                    'payload_json' => $this->prettyJson($data),
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]);
+                Log::warning('QidApi Sales Order exception', [
+                    'endpoint' => $url,
                     'message' => $e->getMessage(),
-                    'payload_pretty' => $this->prettyJson($data),
                 ]);
             }
             Log::error('QidApi request exception', [
@@ -338,6 +356,22 @@ class QidApiService
             ]);
             return null;
         }
+    }
+
+    /**
+     * Debug Sales Order: endpoint lengkap, payload, response → channel `qid_sales_order`.
+     * Aktifkan dengan QIDAPI_SO_DEBUG_LOG=true (config qidapi.debug_so_log).
+     */
+    protected function logSalesOrderDebug(string $phase, array $context): void
+    {
+        if (! config('qidapi.debug_so_log')) {
+            return;
+        }
+
+        Log::channel('qid_sales_order')->debug('QID Sales Order API', array_merge(
+            ['phase' => $phase],
+            $context
+        ));
     }
 
     protected function isSalesOrderCreateEndpoint(string $endpoint): bool

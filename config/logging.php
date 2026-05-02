@@ -127,6 +127,18 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        /*
+         * QID API — pembuatan Sales Order (endpoint, payload, response).
+         * Aktifkan lewat config/qidapi.php → debug_so_log / env QIDAPI_SO_DEBUG_LOG.
+         */
+        'qid_sales_order' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/qid-sales-order.log'),
+            'level' => 'debug',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

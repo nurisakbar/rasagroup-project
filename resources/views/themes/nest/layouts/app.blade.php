@@ -884,9 +884,85 @@
             background-color: #801D1D !important;
         }
 
+        /* Pagination: sama seperti tombol utama (warna + hover + radius) */
+        .pagination-area .page-link,
+        .pagination .page-link {
+            border-radius: 12px !important;
+            font-family: 'Fira Sans', sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 42px !important;
+            height: 42px !important;
+            padding: 0 12px !important;
+            line-height: 1.2 !important;
+            width: auto !important;
+            box-sizing: border-box !important;
+            background-color: #ffffff !important;
+            color: var(--btn-rasa) !important;
+            border: 1.5px solid var(--btn-rasa) !important;
+            box-shadow: none !important;
+        }
+
+        .pagination-area .page-item.active .page-link,
         .pagination .page-item.active .page-link {
-            background-color: #6A1B1B !important;
-            border-color: #6A1B1B !important;
+            background-color: var(--btn-rasa) !important;
+            color: #ffffff !important;
+            border-color: var(--btn-rasa) !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+        }
+
+        .pagination-area .page-item:not(.disabled):not(.active) a.page-link:hover,
+        .pagination .page-item:not(.disabled):not(.active) a.page-link:hover {
+            background-color: var(--btn-rasa-hover) !important;
+            color: #ffffff !important;
+            border-color: var(--btn-rasa-hover) !important;
+            box-shadow: var(--btn-rasa-shadow) !important;
+        }
+
+        .pagination-area .page-item.disabled .page-link,
+        .pagination .page-item.disabled .page-link {
+            background-color: #f0ece8 !important;
+            color: #9a9490 !important;
+            border-color: #dcd6d0 !important;
+            box-shadow: none !important;
+            opacity: 1 !important;
+            cursor: not-allowed !important;
+        }
+
+        .pagination-area .page-item.disabled:hover .page-link,
+        .pagination .page-item.disabled:hover .page-link {
+            background-color: #f0ece8 !important;
+            color: #9a9490 !important;
+            border-color: #dcd6d0 !important;
+            box-shadow: none !important;
+        }
+
+        .pagination-area .page-link.dot,
+        .pagination .page-link.dot {
+            background-color: transparent !important;
+            border: none !important;
+            color: #7e7e7e !important;
+            min-width: auto !important;
+            padding: 0 6px !important;
+            cursor: default !important;
+            box-shadow: none !important;
+        }
+
+        .pagination-area .page-item:first-child .page-link,
+        .pagination-area .page-item:last-child .page-link,
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            border-radius: 12px !important;
+        }
+
+        .pagination-area .page-item a.page-link:focus-visible,
+        .pagination .page-item a.page-link:focus-visible {
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(111, 23, 21, 0.18), var(--btn-rasa-shadow) !important;
         }
 
         .alert-warning {

@@ -36,6 +36,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Debug log Sales Order (endpoint + payload + response)
+    |--------------------------------------------------------------------------
+    | Menulis ke channel log `qid_sales_order` (storage/logs/qid-sales-order*.log).
+    | Matikan di production jika tidak perlu: QIDAPI_SO_DEBUG_LOG=false
+    */
+    'debug_so_log' => env('QIDAPI_SO_DEBUG_LOG', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default address fields (QAD city / zip master)
     |--------------------------------------------------------------------------
     | Nama kota panjang dari Raja Ongkir (mis. "KOTA ADM. JAKARTA PUSAT") sering
