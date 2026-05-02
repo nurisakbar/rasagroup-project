@@ -1244,37 +1244,6 @@
     @include('themes.nest.partials.header')
     @include('themes.nest.partials.mobile-header')
 
-    @auth
-        @if(!auth()->user()->hasVerifiedEmail())
-            <div class="container-fluid p-0">
-                <div class="alert alert-warning alert-dismissible fade show border-0 rounded-0 mb-0 py-3 text-center" role="alert" style="background-color: #fff3cd; color: #856404; position: relative; z-index: 1000;">
-                    <div class="container">
-                        <i class="fi-rs-info me-2"></i>
-                        Email Anda (<strong>{{ auth()->user()->email }}</strong>) belum diverifikasi. Silakan cek inbox Anda.
-                        <form class="d-inline ms-2" method="POST" action="{{ route('verification.send') }}">
-                            @csrf
-                            <button type="submit" class="btn-link p-0 border-0 bg-transparent text-decoration-underline font-weight-bold" style="color: #6A1B1B; cursor: pointer;">Kirim ulang email verifikasi</button>
-                        </form>
-
-                        @if (session('status') === 'verification-link-sent')
-                            <span class="ms-2 fw-bold" style="color: #155724;">Link verifikasi sudah dikirim ulang.</span>
-                        @endif
-
-                        @if (session('error'))
-                            <span class="ms-2 fw-bold" style="color: #721c24;">
-                                {{ session('error') }}
-                                @if (session('debug_id'))
-                                    <span class="fw-normal">(debug_id: {{ session('debug_id') }})</span>
-                                @endif
-                            </span>
-                        @endif
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                </div>
-            </div>
-        @endif
-    @endauth
-
     <main class="main">
         @if(!View::hasSection('hide_layout_alerts'))
         @if(session('success') && !request()->routeIs('cart.index'))

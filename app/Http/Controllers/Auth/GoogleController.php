@@ -16,10 +16,19 @@ class GoogleController extends Controller
     /**
      * Redirect the user to the Google authentication page.
      *
+     * Query intent:
+     * - login  = hanya izinkan akun yang sudah ada (halaman masuk)
+     * - register = boleh buat akun baru (halaman daftar)
+     *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
+        $intent = $request->query('intent');
+        $intent = $intent === 'register' ? 'register' : 'login';
+
+        session(['google_oauth_intent' => $intent]);
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -32,11 +41,14 @@ class GoogleController extends Controller
     {
         try {
             $sessionId = session()->getId();
+            $intent = session()->pull('google_oauth_intent', 'login');
+
             $user = Socialite::driver('google')->user();
-            
-            $findUser = User::where('google_id', $user->id)
-                ->orWhere('email', $user->email)
-                ->first();
+
+            $findUser = User::where(function ($q) use ($user) {
+                $q->where('google_id', $user->id)
+                    ->orWhere('email', $user->email);
+            })->first();
 
             if ($findUser) {
                 // Update google_id in case it was empty but email matched
@@ -55,23 +67,31 @@ class GoogleController extends Controller
 
                 Auth::login($findUser);
                 \App\Models\Cart::mergeSessionCartToUser($findUser->id, $sessionId);
-                return redirect()->intended('dashboard');
-            } else {
-                $newUser = User::create([
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'google_id' => $user->id,
-                    'google_token' => $user->token,
-                    'google_refresh_token' => $user->refreshToken,
-                    'password' => bcrypt(Str::random(16)),
-                    'role' => User::ROLE_BUYER,
-                    'email_verified_at' => now(), // Google emails are already verified
-                ]);
 
-                Auth::login($newUser);
-                \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
                 return redirect()->intended('dashboard');
             }
+
+            if ($intent !== 'register') {
+                return redirect()
+                    ->route('login')
+                    ->with('error', 'Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu, lalu Anda bisa masuk dengan Google.');
+            }
+
+            $newUser = User::create([
+                'name' => $user->name,
+                'email' => $user->email,
+                'google_id' => $user->id,
+                'google_token' => $user->token,
+                'google_refresh_token' => $user->refreshToken,
+                'password' => bcrypt(Str::random(16)),
+                'role' => User::ROLE_BUYER,
+                'email_verified_at' => now(), // Google emails are already verified
+            ]);
+
+            Auth::login($newUser);
+            \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
+
+            return redirect()->intended('dashboard');
         } catch (Exception $e) {
             return redirect('login')->with('error', 'Something went wrong while logging in with Google: ' . $e->getMessage());
         }

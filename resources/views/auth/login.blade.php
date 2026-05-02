@@ -26,6 +26,11 @@
                                     <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Masuk</h1>
                                     <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Belum punya akun? <a href="{{ route('register') }}" style="color: #6A1B1B; font-weight: 600;">Daftar di sini</a></p>
                                 </div>
+                                @if (session('error'))
+                                    <div class="alert alert-danger border-0 mb-20" style="border-radius: 12px;" role="alert">
+                                        {{ session('error') }}
+                                    </div>
+                                @endif
                                 <form method="POST" action="{{ route('login') }}">
                                     @csrf
                                     <div class="form-group mb-20">
@@ -58,7 +63,7 @@
                                     
                                     <div class="form-group text-center mt-30">
                                         <p class="mb-10 text-muted small">Atau masuk dengan</p>
-                                        <a href="{{ route('google.login') }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: rgba(111, 23, 21, 1); color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 700; border-radius: 12px;">
+                                        <a href="{{ route('google.login', ['intent' => 'login']) }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: rgba(111, 23, 21, 1); color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 700; border-radius: 12px;">
                                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" style="width: 18px; margin-right: 10px;" />
                                             Masuk dengan Google
                                         </a>

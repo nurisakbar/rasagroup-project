@@ -48,7 +48,30 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Alamat Email</label>
-                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->email }}</p>
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-0">
+                                                    <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->email }}</p>
+                                                    @if(Auth::user()->hasVerifiedEmail())
+                                                        <span class="badge rounded-pill px-2 py-1 font-xs" style="background-color: #e6fffa; color: #276749; font-weight: 600; border: 1px solid #9ae6b4;">
+                                                            <i class="fi-rs-check me-1"></i>Terverifikasi
+                                                        </span>
+                                                    @else
+                                                        <span class="badge rounded-pill px-2 py-1 font-xs" style="background-color: #fff8e6; color: #975a16; font-weight: 600; border: 1px solid #fbd38d;">
+                                                            Belum diverifikasi
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                @unless(Auth::user()->hasVerifiedEmail())
+                                                    <p class="font-xs text-muted mt-2 mb-2">Silakan cek inbox (dan folder spam) untuk link verifikasi.</p>
+                                                    <form method="POST" action="{{ route('verification.send') }}" class="d-flex flex-wrap align-items-center gap-2">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm rounded-pill font-xs px-3 py-2 buyer-btn-maroon-outline">
+                                                            Kirim ulang email verifikasi
+                                                        </button>
+                                                        @if (session('status') === 'verification-link-sent')
+                                                            <span class="font-xs fw-bold text-success"><i class="fi-rs-check me-1"></i>Link verifikasi sudah dikirim ulang.</span>
+                                                        @endif
+                                                    </form>
+                                                @endunless
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Nomor Telepon</label>

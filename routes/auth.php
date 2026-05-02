@@ -72,6 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::get('verify-wa', [WhatsAppVerificationController::class, 'show'])
         ->name('wa.verify');
 
+    Route::get('verify-wa/success', [WhatsAppVerificationController::class, 'success'])
+        ->name('wa.verify.success');
+
     Route::post('verify-wa', [WhatsAppVerificationController::class, 'verify'])
         ->name('wa.verify.post');
 

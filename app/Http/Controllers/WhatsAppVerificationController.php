@@ -26,8 +26,26 @@ class WhatsAppVerificationController extends Controller
         }
 
         return $user->wa_verified_at
-            ? redirect()->intended(route('dashboard'))
+            ? redirect()->route('wa.verify.success')
             : view('auth.verify-wa');
+    }
+
+    /**
+     * Halaman konfirmasi setelah nomor WhatsApp berhasil diverifikasi.
+     */
+    public function success(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->isSuperAdmin() || $user->isDistributor()) {
+            return redirect()->intended(route('dashboard'));
+        }
+
+        if (! $user->wa_verified_at) {
+            return redirect()->route('wa.verify');
+        }
+
+        return view('auth.verify-wa-success');
     }
 
     public function verify(Request $request)
@@ -44,7 +62,7 @@ class WhatsAppVerificationController extends Controller
                 'wa_verification_code' => null,
             ]);
 
-            return redirect()->intended(route('dashboard'))->with('success', 'Nomor WhatsApp berhasil diverifikasi.');
+            return redirect()->route('wa.verify.success');
         }
 
         return back()->withErrors(['code' => 'Kode verifikasi tidak valid.']);
