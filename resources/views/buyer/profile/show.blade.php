@@ -33,6 +33,36 @@
                                     </div>
                                 @endif
 
+                                @php
+                                    $user = Auth::user();
+                                    $profileMissing = [];
+                                    if (empty($user->phone)) {
+                                        $profileMissing[] = 'nomor telepon';
+                                    }
+                                    if (empty($user->date_of_birth)) {
+                                        $profileMissing[] = 'tanggal lahir';
+                                    }
+                                    if (empty(trim((string) $user->occupation))) {
+                                        $profileMissing[] = 'pekerjaan';
+                                    }
+                                @endphp
+                                @if(count($profileMissing))
+                                    <div class="alert border-radius-12 border-0 mb-30 buyer-profile-incomplete-alert" role="alert">
+                                        <div class="d-flex flex-wrap align-items-start gap-3">
+                                            <span class="buyer-profile-incomplete-icon flex-shrink-0"><i class="fi-rs-info"></i></span>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <strong class="d-block mb-1" style="color: #744210;">Profil belum lengkap</strong>
+                                                <p class="mb-2 font-sm" style="color: #5c4a2a;">
+                                                    Mohon lengkapi: {{ implode(', ', $profileMissing) }}.
+                                                </p>
+                                                <a href="{{ route('buyer.profile.edit') }}" class="btn btn-sm rounded-pill buyer-btn-maroon-outline">
+                                                    <i class="fi-rs-edit mr-5"></i> Lengkapi di Edit Profil
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="mb-40">
                                     <div class="p-25 border-radius-15" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                         <div class="d-flex justify-content-between align-items-center mb-20">
@@ -75,21 +105,33 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Nomor Telepon</label>
-                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->phone ?? '-' }}</p>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">
+                                                    @if($user->phone)
+                                                        {{ $user->phone }}
+                                                    @else
+                                                        <span class="font-sm fw-semibold" style="color: #975a16;">Belum diisi</span>
+                                                    @endif
+                                                </p>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Tanggal Lahir</label>
                                                 <p class="font-md fw-bold mb-0" style="color: #253D4E;">
-                                                    {{ Auth::user()->date_of_birth ? Auth::user()->date_of_birth->format('d M Y') : '-' }}
+                                                    @if($user->date_of_birth)
+                                                        {{ $user->date_of_birth->format('d M Y') }}
+                                                    @else
+                                                        <span class="font-sm fw-semibold" style="color: #975a16;">Belum diisi</span>
+                                                    @endif
                                                 </p>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="font-xs text-muted mb-1 d-block">Pekerjaan</label>
-                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">{{ Auth::user()->occupation ?: '-' }}</p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="font-xs text-muted mb-1 d-block">Tipe Akun</label>
-                                                <p class="mb-0"><span class="badge rounded-pill px-3 py-2" style="background-color: #6A1B1B; color: #fff; font-weight: 600;">{{ ucfirst(Auth::user()->role) }}</span></p>
+                                                <p class="font-md fw-bold mb-0" style="color: #253D4E;">
+                                                    @if(filled(trim((string) $user->occupation)))
+                                                        {{ $user->occupation }}
+                                                    @else
+                                                        <span class="font-sm fw-semibold" style="color: #975a16;">Belum diisi</span>
+                                                    @endif
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -180,6 +222,22 @@
 </div>
 
 <style>
+    .buyer-profile-incomplete-alert {
+        background: linear-gradient(135deg, #fff8e6 0%, #fff3cd 100%);
+        border: 1px solid #f6d365 !important;
+        color: #5c4a2a;
+    }
+    .buyer-profile-incomplete-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: rgba(106, 27, 27, 0.12);
+        color: #6A1B1B;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
     .text-maroon { color: #6A1B1B !important; }
 
     .form-label-custom { font-family: 'Fira Sans', sans-serif; font-weight: 600; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
