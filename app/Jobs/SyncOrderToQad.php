@@ -84,14 +84,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // 2. Sync Sales Order (can_posting dicek di syncSalesOrder setelah payload jadi, supaya log berisi endpoint + payload)
+        // 2. Sync Sales Order (selalu kirim payload ke QID; keberhasilan bergantung hak posting di QAD / respons API)
         if (!$this->order->qad_so_number) {
-            $forceAttempt = (bool) config('qidapi.force_so', env('QIDAPI_FORCE_SO', true)); // Default to true if not set
-            $this->syncSalesOrder($qadService, $user, $forceAttempt);
+            $this->syncSalesOrder($qadService, $user);
         }
     }
 
-    protected function syncSalesOrder(QadService $qadService, User $user, bool $forceAttempt = false): void
+    protected function syncSalesOrder(QadService $qadService, User $user): void
     {
         $user->refresh(); // Get updated qad_customer_code
         if (!$user->qad_customer_code) {
@@ -277,32 +276,6 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
             $createEndpointUrl = rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create';
             $createEndpointPath = '/api/transaction/sales-orders/create';
-
-            if (!$forceAttempt && !$qadService->canPosting()) {
-                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                    'phase' => 'skipped_can_posting',
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
-                    'force_attempt' => $forceAttempt,
-                    'can_posting' => false,
-                    'method' => 'POST',
-                    'endpoint' => $createEndpointUrl,
-                    'endpoint_path' => $createEndpointPath,
-                    'payload' => $payload,
-                    'response' => null,
-                    'note' => 'HTTP request was not sent: JWT can_posting=false. Set QIDAPI_FORCE_SO=true to call the API anyway, or use a QID user with posting permission.',
-                    'token_claims' => $qadService->getTokenClaims(),
-                ]);
-                Log::error('SyncOrderToQad: QID token has can_posting=false; cannot create Sales Order. Update QIDAPI credentials to a user with posting permission.', [
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
-                    'force_attempt' => $forceAttempt,
-                ]);
-
-                return;
-            }
 
             Log::info('SyncOrderToQad: Creating Sales Order in QAD', [
                 'order_id' => $this->order->id,

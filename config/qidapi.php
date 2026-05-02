@@ -27,15 +27,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Force Sales Order Creation
-    |--------------------------------------------------------------------------
-    | Set ke true untuk mencoba membuat SO meskipun token tidak memiliki
-    | permission can_posting. Berguna untuk testing/dev.
-    */
-    'force_so' => env('QIDAPI_FORCE_SO', false),
-
-    /*
-    |--------------------------------------------------------------------------
     | Default address fields (QAD city / zip master)
     |--------------------------------------------------------------------------
     | Nama kota panjang dari Raja Ongkir (mis. "KOTA ADM. JAKARTA PUSAT") sering
