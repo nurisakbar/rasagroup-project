@@ -30,6 +30,11 @@
                                 </ul>
                             </div>
                         @endif
+                        @if (session('warning'))
+                            <div class="alert border-radius-12 border-0 mb-30" role="alert" style="background-color: #fff8e6; border: 1px solid #f6d365 !important; color: #744210;">
+                                <i class="fi-rs-info mr-5"></i>{{ session('warning') }}
+                            </div>
+                        @endif
                         <form action="{{ route('buyer.profile.update') }}" method="POST">
                             @csrf
                             @method('PUT')

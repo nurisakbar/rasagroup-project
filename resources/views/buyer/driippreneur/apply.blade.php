@@ -56,6 +56,12 @@
                                     <form action="{{ route('buyer.driippreneur.apply') }}" method="POST" enctype="multipart/form-data">
                                         @csrf
 
+                                        <div class="mb-4 pb-3 border-bottom buyer-affiliate-bank driippreneur-apply-bank">
+                                            <h5 class="mb-2"><i class="fi-rs-bank mr-5 text-brand"></i> Rekening penarikan poin</h5>
+                                            <p class="font-sm text-muted mb-3">Diisi sebagai bagian pendaftaran Affiliator (transfer penarikan poin nanti). Anda masih bisa mengubahnya nanti di halaman Afiliasi jika perlu.</p>
+                                            @include('buyer.partials.bank-account-fields', ['formIdPrefix' => 'driipapply'])
+                                        </div>
+
                                         <h5 class="mb-3">Dokumen Verifikasi</h5>
                                         
                                         <div class="form-group mb-3">
@@ -239,6 +245,24 @@
         pointer-events: none;
         box-shadow: inset 0 0 0 50px rgba(0,0,0,0.1);
     }
+    .driippreneur-apply-bank .select2-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .driippreneur-apply-bank .form-label-affiliate-bank {
+        font-weight: 600;
+        color: #253D4E;
+        margin-bottom: 8px;
+        font-size: 14px;
+        display: block;
+    }
+    .driippreneur-apply-bank .custom-input-affiliate-bank {
+        background-color: #fff !important;
+        border: 1.5px solid #ECECEC !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+    }
 </style>
 
 <script>
@@ -341,5 +365,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+@endpush
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var wrap = document.querySelector('.driippreneur-apply-bank');
+        if (!wrap || typeof jQuery === 'undefined' || !jQuery.fn.select2) {
+            return;
+        }
+        jQuery(wrap).find('select.select2-bank-affiliate').each(function () {
+            var $sel = jQuery(this);
+            $sel.select2({
+                placeholder: $sel.data('placeholder') || 'Pilih bank',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: jQuery(wrap),
+            });
+        });
+    });
+</script>
+@endpush
 
 

@@ -53,10 +53,11 @@ class PointWithdrawalController extends Controller
                 ->with('error', 'Anda masih memiliki request penarikan yang pending. Harap tunggu hingga request tersebut diproses.');
         }
 
-        // Check if user has bank information
-        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
-            return redirect()->route('buyer.dashboard')
-                ->with('error', 'Silakan lengkapi informasi rekening bank Anda di profil sebelum melakukan penarikan poin.');
+        if (! $user->hasAffiliateBankDetails()) {
+            return redirect()
+                ->route('buyer.affiliate.index')
+                ->withFragment('affiliate-bank-section')
+                ->with('error', 'Lengkapi nama bank, nomor rekening, dan atas nama di halaman Afiliasi sebelum menarik poin.');
         }
 
         return view('buyer.point-withdrawals.create', compact('user'));
@@ -93,10 +94,11 @@ class PointWithdrawalController extends Controller
             'amount.min' => 'Jumlah poin minimal 1.',
         ]);
 
-        // Check if user has bank information
-        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
-            return redirect()->route('buyer.dashboard')
-                ->with('error', 'Silakan lengkapi informasi rekening bank Anda di profil sebelum melakukan penarikan poin.');
+        if (! $user->hasAffiliateBankDetails()) {
+            return redirect()
+                ->route('buyer.affiliate.index')
+                ->withFragment('affiliate-bank-section')
+                ->with('error', 'Lengkapi nama bank, nomor rekening, dan atas nama di halaman Afiliasi sebelum menarik poin.');
         }
 
         // Check if user has enough points

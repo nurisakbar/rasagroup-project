@@ -38,6 +38,11 @@
                                         <i class="fi-rs-cross-circle mr-5"></i>{{ session('error') }}
                                     </div>
                                 @endif
+                                @if(session('warning'))
+                                    <div class="alert border-0 mb-30" style="border-radius: 12px; background-color: #fff8e6; border: 1px solid #f6d365 !important; color: #744210;" role="alert">
+                                        <i class="fi-rs-info mr-5"></i>{{ session('warning') }}
+                                    </div>
+                                @endif
 
                                 <div class="row align-items-center p-30 border-radius-15 mb-40" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                     <div class="col-md-7">
@@ -76,9 +81,9 @@
                                 </div>
 
                                 @unless($user->isDistributor())
-                                <div class="p-30 border-radius-15 mb-40 buyer-affiliate-bank" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                <div id="affiliate-bank-section" class="p-30 border-radius-15 mb-40 buyer-affiliate-bank" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                     <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-bank mr-5"></i> Informasi Rekening Bank</h5>
-                                    <p class="font-sm text-muted mb-20">Data ini digunakan untuk pengajuan penarikan poin afiliasi.</p>
+                                    <p class="font-sm text-muted mb-20">Untuk transfer penarikan poin. Nomor rekening pertama kali Anda isi saat mendaftar Affiliator; perbarui di sini jika ada perubahan.</p>
                                     <form action="{{ route('buyer.affiliate.bank.update') }}" method="POST">
                                         @csrf
                                         @method('PUT')

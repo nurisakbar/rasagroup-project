@@ -21,12 +21,6 @@ class DriippreneurApplicationController extends Controller
                 ->with('error', 'Anda tidak dapat mendaftar sebagai DRiiPPreneur.');
         }
 
-        // Bank info is managed in profile, not in this form
-        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
-            return redirect()->route('buyer.profile.edit')
-                ->with('warning', 'Lengkapi informasi rekening bank di Profil terlebih dahulu sebelum mendaftar sebagai Affiliator.');
-        }
-
         return view('buyer.driippreneur.apply', compact('user'));
     }
 
@@ -44,12 +38,18 @@ class DriippreneurApplicationController extends Controller
         }
 
         $validated = $request->validate([
+            'bank_name' => ['required', 'string', 'max:100'],
+            'bank_account_number' => ['required', 'string', 'max:50'],
+            'bank_account_name' => ['required', 'string', 'max:100'],
             'no_ktp' => ['required', 'string', 'size:16', 'regex:/^[0-9]+$/'],
             'no_npwp' => ['required', 'string', 'min:15', 'max:20'],
             'ktp_file' => [$request->filled('ktp_base64') ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'npwp_file' => [$request->filled('npwp_base64') ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'selfie_file' => [$request->filled('selfie_base64') ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ], [
+            'bank_name.required' => 'Nama bank wajib diisi.',
+            'bank_account_number.required' => 'Nomor rekening wajib diisi.',
+            'bank_account_name.required' => 'Atas nama rekening wajib diisi.',
             'no_ktp.required' => 'Nomor KTP wajib diisi.',
             'no_ktp.size' => 'Nomor KTP harus 16 digit.',
             'no_ktp.regex' => 'Nomor KTP hanya boleh berisi angka.',
@@ -66,10 +66,9 @@ class DriippreneurApplicationController extends Controller
             'selfie_file.max' => 'Ukuran file Selfie maksimal 2MB.',
         ]);
 
-        // Ensure bank info is present on profile (not submitted from form)
-        if (empty($user->bank_name) || empty($user->bank_account_number) || empty($user->bank_account_name)) {
-            return back()->with('error', 'Informasi rekening bank belum lengkap. Silakan lengkapi di Profil terlebih dahulu.');
-        }
+        $bankName = trim($validated['bank_name']);
+        $bankNumber = trim($validated['bank_account_number']);
+        $bankAccountName = trim($validated['bank_account_name']);
 
         $ktpPath = null;
         if ($request->filled('ktp_base64')) {
@@ -105,6 +104,9 @@ class DriippreneurApplicationController extends Controller
         }
 
         $user->update([
+            'bank_name' => $bankName,
+            'bank_account_number' => $bankNumber,
+            'bank_account_name' => $bankAccountName,
             'no_ktp' => $validated['no_ktp'],
             'no_npwp' => $validated['no_npwp'],
             'ktp_file' => $ktpPath,

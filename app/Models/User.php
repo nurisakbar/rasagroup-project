@@ -225,6 +225,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === self::ROLE_BUYER;
     }
 
+    /**
+     * Rekening bank untuk penarikan poin afiliasi / syarat daftar Affiliator (bukan data distributor).
+     */
+    public function hasAffiliateBankDetails(): bool
+    {
+        return filled(trim((string) $this->bank_name))
+            && filled(trim((string) $this->bank_account_number))
+            && filled(trim((string) $this->bank_account_name));
+    }
+
     public function canApplyAsDistributor(): bool
     {
         return $this->role === self::ROLE_BUYER && empty($this->distributor_status);
