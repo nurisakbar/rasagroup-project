@@ -17,7 +17,8 @@ class TestQidSalesOrderFormat extends Command
         {--ws= : salesOrderNumber; jika kosong diisi WS acak 961000–979999}
         {--remarks= : Teks remarks (default mirip contoh ORD-…)}
         {--po= : purchaseOrderNumber; jika kosong diisi unik numerik 10 digit}
-        {--date= : Tanggal order Y-m-d (default hari ini)}';
+        {--date= : Tanggal order Y-m-d (default hari ini)}
+        {--uom=PK : unitOfMeasure baris (sync order pakai UOM dari master item, mis. BT)}';
 
     protected $description = 'Uji create Sales Order QID dengan format payload minimal (contoh WS000001 + ZH + FMB010-MD03 + PK)';
 
@@ -42,6 +43,7 @@ class TestQidSalesOrderFormat extends Command
         $lineDueIso = $day->copy()->addDays(7)->format('Y-m-d') . 'T00:00:00.000Z';
 
         $remarks = (string) ($this->option('remarks') ?: ('ORD-' . $day->format('Ymd') . '-TEST'));
+        $uom = (string) ($this->option('uom') ?: 'PK');
         $po = $this->option('po');
         if (! $po) {
             $po = substr(preg_replace('/\D/', '', (string) microtime(true)), -10);
@@ -72,7 +74,7 @@ class TestQidSalesOrderFormat extends Command
                     'salesOrderLine' => 1,
                     'itemCode' => $item,
                     'quantityOrdered' => 1,
-                    'unitOfMeasure' => 'PK',
+                    'unitOfMeasure' => $uom,
                     'listPrice' => 111000,
                     'discountPercent' => 0,
                     'netPrice' => 111000,

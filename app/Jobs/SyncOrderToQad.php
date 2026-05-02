@@ -123,26 +123,38 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
         $lineDueDate = $this->order->created_at->copy()->startOfDay()->addDays(7)->format('Y-m-d') . 'T00:00:00.000Z';
 
-        $itemUomCache = [];
+        /** Satu panggilan getItem per itemCode: UOM & defaultPrice dari master QID (bukan prioritas DB lokal). */
+        $itemMasterCache = [];
 
         $lines = [];
         $invalidPriceItems = [];
         foreach ($this->order->items as $index => $item) {
+            $itemCode = $item->product->code ?? $item->product->name ?? null;
+            $qadMaster = ['uom' => null, 'defaultPrice' => 0.0];
+            if ($itemCode !== null && $itemCode !== '') {
+                if (! array_key_exists($itemCode, $itemMasterCache)) {
+                    $itemRes = $qadService->getItem($itemCode);
+                    if (is_array($itemRes) && ! ($itemRes['error']['isError'] ?? false)) {
+                        $data = $itemRes['data'] ?? [];
+                        $uomRaw = $data['uom'] ?? $data['unitOfMeasure'] ?? $data['stockUom'] ?? null;
+                        $uomOk = is_string($uomRaw) ? trim($uomRaw) : '';
+                        $itemMasterCache[$itemCode] = [
+                            'uom' => $uomOk !== '' ? $uomOk : null,
+                            'defaultPrice' => (float) ($data['defaultPrice'] ?? 0),
+                        ];
+                    } else {
+                        $itemMasterCache[$itemCode] = ['uom' => null, 'defaultPrice' => 0.0];
+                    }
+                }
+                $qadMaster = $itemMasterCache[$itemCode];
+            }
+
             $price = (float) ($item->price ?? 0);
             if ($price <= 0 && $item->relationLoaded('product') && $item->product) {
                 $price = (float) ($item->product->price ?? 0);
             }
-            if ($price <= 0) {
-                $itemCode = $item->product->code ?? $item->product->name ?? null;
-                $qadDefaultPrice = null;
-                if ($itemCode) {
-                    $itemRes = $qadService->getItem($itemCode);
-                    $qadDefaultPrice = (float) ($itemRes['data']['defaultPrice'] ?? 0);
-                }
-
-                if ($qadDefaultPrice > 0) {
-                    $price = $qadDefaultPrice;
-                }
+            if ($price <= 0 && $qadMaster['defaultPrice'] > 0) {
+                $price = $qadMaster['defaultPrice'];
             }
 
             if ($price <= 0) {
@@ -162,15 +174,12 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 ]);
             }
 
-            $itemCode = $item->product->code ?? $item->product->name;
-            $uom = $item->product->unit ?? null;
-            if (!$uom && $itemCode) {
-                if (!array_key_exists($itemCode, $itemUomCache)) {
-                    $itemRes = $qadService->getItem($itemCode);
-                    $itemUomCache[$itemCode] = $itemRes['data']['uom'] ?? null;
-                }
-                $uom = $itemUomCache[$itemCode];
+            // UOM: master QID dulu, lalu kolom produk lokal, terakhir PK.
+            $uom = $qadMaster['uom'] ?? null;
+            if (! $uom && $item->product?->unit) {
+                $uom = trim((string) $item->product->unit);
             }
+            $uom = $uom ?: 'PK';
 
             // Sama struktur & tipe dengan payload contoh yang valid (harga integer IDR, tanpa site/location di baris).
             $linePrice = (int) round(max(0.0, (float) $price));
@@ -179,7 +188,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'salesOrderLine' => $index + 1,
                 'itemCode' => $itemCode,
                 'quantityOrdered' => (int) $item->quantity,
-                'unitOfMeasure' => $uom ?: 'PK',
+                'unitOfMeasure' => $uom,
                 'listPrice' => $linePrice,
                 'discountPercent' => 0,
                 'netPrice' => $linePrice,

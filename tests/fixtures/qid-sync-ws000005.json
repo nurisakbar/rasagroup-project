@@ -1,0 +1,37 @@
+{
+    "domainCode": "MCR",
+    "salesOrderNumber": "WS000005",
+    "billToCustomerCode": "ZH35531",
+    "soldToCustomerCode": "ZH35531",
+    "shipToCustomerCode": "ZH35531",
+    "orderDate": "2026-05-02T00:00:00.000Z",
+    "dueDate": "2026-05-02T00:00:00.000Z",
+    "requiredDate": "2026-05-02T00:00:00.000Z",
+    "shipDate": "2026-05-02T00:00:00.000Z",
+    "promiseDate": "2026-05-02T00:00:00.000Z",
+    "creditTermsCode": "CIA",
+    "remarks": "WS000005",
+    "purchaseOrderNumber": "2605022198",
+    "taxClass": "PPN",
+    "isTaxable": true,
+    "salespersonCode_01": "SLS00001",
+    "isSelfBillingEnabled": true,
+    "salesOrderLines": [
+        {
+            "salesOrderNumber": "WS000005",
+            "salesOrderLine": 1,
+            "itemCode": "FDA010-GV01",
+            "quantityOrdered": 1,
+            "unitOfMeasure": "BT",
+            "listPrice": 111000,
+            "discountPercent": 0,
+            "netPrice": 111000,
+            "dueDate": "2026-05-09T00:00:00.000Z",
+            "isTaxable": true,
+            "salesAcct": "41101",
+            "salesCC": "",
+            "discountAcct": "41101",
+            "discountCC": ""
+        }
+    ]
+}
