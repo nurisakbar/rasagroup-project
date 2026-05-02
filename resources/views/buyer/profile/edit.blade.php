@@ -20,6 +20,16 @@
                         </div>
                     </div>
                     <div class="card-body p-30 p-md-40">
+                        @if ($errors->any())
+                            <div class="alert border-radius-12 border-0 mb-30" role="alert" style="background-color: #fff5f5; border: 1px solid #feb2b2 !important; color: #742a2a;">
+                                <strong class="d-block mb-2">Periksa kembali data berikut:</strong>
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         <form action="{{ route('buyer.profile.update') }}" method="POST">
                             @csrf
                             @method('PUT')
