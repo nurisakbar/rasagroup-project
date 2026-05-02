@@ -537,6 +537,19 @@ class OrderController extends Controller
 
             DB::commit();
 
+            $order->refresh();
+            $order->load([
+                'user',
+                'address.village',
+                'address.district',
+                'address.regency',
+                'address.province',
+                'items.product',
+                'expedition',
+                'sourceWarehouse',
+            ]);
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
+
             return redirect()->route('distributor.orders.success', $order)
                 ->with('success', 'Pesanan berhasil dibuat.');
         } catch (\Exception $e) {

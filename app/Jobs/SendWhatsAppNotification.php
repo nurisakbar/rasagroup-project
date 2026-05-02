@@ -45,7 +45,16 @@ class SendWhatsAppNotification implements ShouldQueue
     public function handle()
     {
         // Ensure relationships are loaded for notification helpers
-        $this->order->load(['user', 'address']);
+        $this->order->load([
+            'user',
+            'address.village',
+            'address.district',
+            'address.regency',
+            'address.province',
+            'items.product',
+            'expedition',
+            'sourceWarehouse',
+        ]);
 
         Log::info('Processing background WhatsApp notification', [
             'order_id' => $this->order->id,
@@ -65,6 +74,9 @@ class SendWhatsAppNotification implements ShouldQueue
                     break;
                 case 'warehouse_notification':
                     WACloudHelper::notifyWarehouseOwnersAboutPayment($this->order);
+                    break;
+                case 'warehouse_new_order':
+                    WACloudHelper::notifyWarehouseOwnersAboutNewOrder($this->order);
                     break;
                 default:
                     Log::warning('Unknown notification type in background job', [

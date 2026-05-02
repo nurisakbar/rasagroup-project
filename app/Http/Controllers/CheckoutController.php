@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Jobs\ProcessCheckoutSuccessJob;
 use App\Services\XenditService;
 use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Http\Request;
@@ -902,16 +903,26 @@ class CheckoutController extends Controller
             // Load relationships for notification (after commit to ensure data is saved)
             if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
                 $order->refresh();
-                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                $order->load([
+                    'user',
+                    'address.village',
+                    'address.district',
+                    'address.regency',
+                    'address.province',
+                    'items.product',
+                    'expedition',
+                    'sourceWarehouse',
+                ]);
             } else {
-                // Ensure address relationships are loaded
-                if ($order->address && (!$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
-                    $order->address->load(['district', 'regency', 'province']);
+                if ($order->address && (! $order->address->relationLoaded('village') || ! $order->address->relationLoaded('district') || ! $order->address->relationLoaded('regency') || ! $order->address->relationLoaded('province'))) {
+                    $order->address->load(['village', 'district', 'regency', 'province']);
                 }
+                $order->loadMissing(['user', 'sourceWarehouse']);
             }
 
                 // Dispatch background job to send payment notification
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
@@ -930,168 +941,29 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
-        $order->load('user', 'items.product', 'address.district', 'address.regency', 'address.province', 'expedition', 'sourceWarehouse');
+        $order->load([
+            'user',
+            'items.product',
+            'address.district',
+            'address.regency',
+            'address.province',
+            'expedition',
+            'sourceWarehouse.province',
+            'sourceWarehouse.regency',
+            'sourceWarehouse.district',
+        ]);
 
-        // Ensure QAD customer exists for this user (guest-safe, async).
-        // This runs when a real purchase flow reaches the success page,
-        // so we can create customer data in QAD even before SO sync.
-        try {
-            $user = $order->user;
-            $address = $order->address;
-            if ($user && empty($user->qad_customer_code) && $address) {
-                $snapshot = $this->buildQadAddressSnapshot($address);
-                \App\Jobs\SyncCustomerToQad::dispatch($user, $snapshot);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Checkout success: failed to dispatch SyncCustomerToQad', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-        
-        // Send thank you notification if payment is already paid
-        // This handles the case where user accesses success page after payment
-        // For Xendit: webhook should handle this, but we also check here as backup
-        // For manual transfer: notification should be sent after checkout, but we check here too
-        
         Log::info('Checkout success page accessed', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method,
         ]);
-        
-        // For Xendit: Check payment status from Xendit API if invoice ID exists
-        if ($order->payment_method === 'xendit' && $order->xendit_invoice_id && $order->payment_status !== 'paid') {
-            Log::info('Verifying payment status from Xendit API', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'invoice_id' => $order->xendit_invoice_id,
-                'current_payment_status' => $order->payment_status,
-            ]);
-            
-            try {
-                // Verify payment status from Xendit API
-                $xenditService = new XenditService();
-                $invoiceDetails = $xenditService->getInvoice($order->xendit_invoice_id);
-                
-                Log::info('Xendit API response received', [
-                    'order_id' => $order->id,
-                    'invoice_id' => $order->xendit_invoice_id,
-                    'has_response' => !empty($invoiceDetails),
-                    'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
-                ]);
-                
-                if ($invoiceDetails && isset($invoiceDetails['status']) && ($invoiceDetails['status'] === 'PAID' || $invoiceDetails['status'] === 'SETTLED')) {
-                    // Update order status if payment is actually paid
-                    $order->update([
-                        'payment_status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
-                    
-                    // Auto update order status to processing if still pending
-                    if ($order->order_status === 'pending') {
-                        $order->update(['order_status' => 'processing']);
-                    }
-                    
-                    // Sync to QAD immediately on success/paid
-                    \App\Jobs\SyncOrderToQad::dispatch($order);
-                    
-                    // Refresh order to get updated status
-                    $order->refresh();
-                    
-                    Log::info('Payment status updated from Xendit API', [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                        'invoice_status' => $invoiceDetails['status'],
-                        'new_payment_status' => $order->payment_status,
-                    ]);
-                } else {
-                    Log::info('Payment not yet paid in Xendit', [
-                        'order_id' => $order->id,
-                        'invoice_id' => $order->xendit_invoice_id,
-                        'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to verify payment status from Xendit', [
-                    'order_id' => $order->id,
-                    'invoice_id' => $order->xendit_invoice_id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            }
-        } else {
-            Log::info('Skipping Xendit verification', [
-                'order_id' => $order->id,
-                'payment_method' => $order->payment_method,
-                'has_invoice_id' => !empty($order->xendit_invoice_id),
-                'payment_status' => $order->payment_status,
-            ]);
-        }
-        
-        // If payment is paid but SO number is still empty, try to sync immediately (so user sees SO on success page).
-        // Primary path should be via Xendit webhook; this is a backup path for redirect/refresh flows.
-        if ($order->payment_status === 'paid' && empty($order->qad_so_number)) {
-            try {
-                \App\Jobs\SyncOrderToQad::dispatchSync($order);
-                $order->refresh();
-                Log::info('Checkout success: SO sync attempted', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'qad_so_number' => $order->qad_so_number,
-                ]);
-            } catch (\Throwable $e) {
-                Log::warning('Failed to sync SO to QID on success page, dispatching async', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-                \App\Jobs\SyncOrderToQad::dispatch($order);
-            }
-        }
 
-        // Send thank you notification if payment is paid
-        if ($order->payment_status === 'paid') {
-            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
-        } else {
-            Log::info('Payment not yet paid, skipping thank you notification', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'payment_status' => $order->payment_status,
-            ]);
-        }
-        
+        // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).
+        ProcessCheckoutSuccessJob::dispatch((string) $order->id)->afterResponse();
+
         return view('checkout.success', compact('order'));
-    }
-
-    /**
-     * @return array{city: string, street1: string, street2: string, postal_code: string}
-     */
-    private function buildQadAddressSnapshot(Address $address): array
-    {
-        $postal = '';
-        foreach ([
-            $address->postal_code,
-            $address->district?->postal_code,
-            $address->regency?->postal_code,
-            $address->district?->city?->postal_code,
-        ] as $p) {
-            $p = trim((string) $p);
-            if ($p !== '' && preg_match('/^\d{5}$/', $p)) {
-                $postal = $p;
-                break;
-            }
-        }
-        if ($postal === '' && $address->address_detail && preg_match('/\b(\d{5})\b/', (string) $address->address_detail, $m)) {
-            $postal = $m[1];
-        }
-
-        return [
-            'city' => $address->regency?->name ?? 'Jakarta',
-            'street1' => $address->address_detail ?? $address->full_address ?? '-',
-            'street2' => trim((string) (($address->district?->name ?? '') . ' ' . ($address->regency?->name ?? ''))),
-            'postal_code' => $postal,
-        ];
     }
 
     private function generateOrderNumber(): string

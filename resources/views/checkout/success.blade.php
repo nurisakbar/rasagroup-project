@@ -38,6 +38,39 @@
                             </div>
                         </div>
 
+                        @if($order->sourceWarehouse)
+                            @php $hub = $order->sourceWarehouse; @endphp
+                            <div class="mb-40 p-25 border-radius-20 text-start" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
+                                <h5 class="mb-15" style="font-weight: 700; color: #6A1B1B;">
+                                    <i class="fi-rs-shop mr-10"></i>Barang dikirim dari
+                                </h5>
+                                <p class="text-muted font-sm mb-15">Pesanan Anda diproses dan dikirim dari hub berikut (stok diambil dari lokasi ini).</p>
+                                <strong class="d-block mb-2" style="color: #253D4E; font-size: 1.05rem;">{{ $hub->name }}</strong>
+                                @if($hub->kode_hub)
+                                    <span class="d-inline-block mb-10 font-xs text-muted">Kode hub: <strong style="color: #253D4E;">{{ $hub->kode_hub }}</strong></span>
+                                @endif
+                                @if($hub->address)
+                                    <p class="text-muted mb-5" style="font-size: 14px; line-height: 1.6; margin: 0;">
+                                        {{ $hub->address }}
+                                    </p>
+                                @endif
+                                <p class="text-muted mb-0" style="font-size: 14px; line-height: 1.6;">
+                                    @if($hub->district)
+                                        Kec. {{ $hub->district->name }},
+                                    @endif
+                                    {{ $hub->full_location }}
+                                    @if($hub->postal_code)
+                                        &nbsp;{{ $hub->postal_code }}
+                                    @endif
+                                </p>
+                                @if($hub->phone)
+                                    <p class="mt-10 mb-0 font-sm text-muted">
+                                        <i class="fi-rs-headset mr-5"></i>Hub: {{ $hub->phone }}
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
+
                         <div class="row text-start mb-40 g-4">
                             <!-- Shipping Address -->
                             <div class="col-md-6">

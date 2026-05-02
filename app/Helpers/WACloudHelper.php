@@ -366,37 +366,209 @@ class WACloudHelper
         }
 
         try {
-            // Find all users associated with this warehouse
-            $warehouseOwners = \App\Models\User::where('warehouse_id', $order->source_warehouse_id)
-                ->whereIn('role', ['warehouse', 'distributor'])
-                ->get();
-
-            if ($warehouseOwners->isEmpty()) {
-                Log::info('No owners found for warehouse to notify', [
-                    'warehouse_id' => $order->source_warehouse_id,
-                    'order_id' => $order->id,
-                ]);
-                return;
-            }
+            $order->loadMissing([
+                'items.product',
+                'address.village',
+                'address.district',
+                'address.regency',
+                'address.province',
+                'expedition',
+                'sourceWarehouse',
+            ]);
 
             $message = self::buildWarehouseOrderNotificationMessage($order);
-
-            foreach ($warehouseOwners as $owner) {
-                if ($owner->phone) {
-                    Log::info('Sending new order notification to warehouse owner', [
-                        'order_id' => $order->id,
-                        'owner_id' => $owner->id,
-                        'phone' => $owner->phone,
-                    ]);
-                    self::sendText($owner->phone, $message);
-                }
-            }
+            self::deliverWarehouseStaffWhatsApp($order, $message, 'warehouse_payment');
         } catch (\Exception $e) {
             Log::error('Failed to notify warehouse owners about payment', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Kabari pemilik hub / staf warehouse & distributor terkait bahwa ada pesanan baru masuk
+     * (belum tentu lunas — untuk checkout marketplace & pesanan distributor).
+     */
+    public static function notifyWarehouseOwnersAboutNewOrder(\App\Models\Order $order): void
+    {
+        if (! self::isConfigured()) {
+            Log::warning('WACloud not configured. Cannot notify warehouse owners (new order).');
+
+            return;
+        }
+
+        if (! $order->source_warehouse_id) {
+            Log::warning('Order has no source warehouse (new order notify skipped)', [
+                'order_id' => $order->id,
+            ]);
+
+            return;
+        }
+
+        // Penjualan POS: tidak kirim WA "pesanan baru" ke staf hub (bukan alur inbound).
+        if ($order->order_type === \App\Models\Order::TYPE_POS) {
+            return;
+        }
+
+        try {
+            $order->loadMissing([
+                'items.product',
+                'address.village',
+                'address.district',
+                'address.regency',
+                'address.province',
+                'expedition',
+                'sourceWarehouse',
+                'user',
+            ]);
+
+            $message = self::buildWarehouseNewOrderNotificationMessage($order);
+            self::deliverWarehouseStaffWhatsApp($order, $message, 'warehouse_new_order');
+        } catch (\Exception $e) {
+            Log::error('Failed to notify warehouse owners about new order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @param  'warehouse_payment'|'warehouse_new_order'  $context
+     */
+    private static function deliverWarehouseStaffWhatsApp(\App\Models\Order $order, string $message, string $context): void
+    {
+        $warehouseOwners = \App\Models\User::where('warehouse_id', $order->source_warehouse_id)
+            ->whereIn('role', ['warehouse', 'distributor'])
+            ->get();
+
+        $sentTo = [];
+
+        foreach ($warehouseOwners as $owner) {
+            if (! $owner->phone) {
+                continue;
+            }
+            $key = preg_replace('/\D+/', '', (string) $owner->phone);
+            if ($key === '' || isset($sentTo[$key])) {
+                continue;
+            }
+            Log::info('Sending WhatsApp to warehouse staff', [
+                'context' => $context,
+                'order_id' => $order->id,
+                'owner_id' => $owner->id,
+                'phone' => $owner->phone,
+            ]);
+            self::sendText($owner->phone, $message);
+            $sentTo[$key] = true;
+        }
+
+        $warehouse = $order->sourceWarehouse ?? \App\Models\Warehouse::find($order->source_warehouse_id);
+        if ($warehouse && $warehouse->phone) {
+            $key = preg_replace('/\D+/', '', (string) $warehouse->phone);
+            if ($key !== '' && ! isset($sentTo[$key])) {
+                Log::info('Sending WhatsApp to hub contact number', [
+                    'context' => $context,
+                    'order_id' => $order->id,
+                    'warehouse_id' => $warehouse->id,
+                    'phone' => $warehouse->phone,
+                ]);
+                self::sendText($warehouse->phone, $message);
+                $sentTo[$key] = true;
+            }
+        }
+
+        if ($warehouseOwners->isEmpty() && (! $warehouse || ! $warehouse->phone)) {
+            Log::info('No warehouse staff or hub phone to notify', [
+                'context' => $context,
+                'warehouse_id' => $order->source_warehouse_id,
+                'order_id' => $order->id,
+            ]);
+        }
+    }
+
+    private static function buildWarehouseNewOrderNotificationMessage(\App\Models\Order $order): string
+    {
+        $hubName = $order->sourceWarehouse?->name ?? 'Hub Anda';
+        $paymentStatus = match ($order->payment_status) {
+            'paid' => 'Sudah dibayar',
+            'pending' => 'Menunggu pembayaran',
+            'failed' => 'Pembayaran gagal',
+            'refunded' => 'Dikembalikan',
+            default => (string) $order->payment_status,
+        };
+
+        $methodLabel = match ($order->payment_method) {
+            'xendit' => 'Pembayaran online (Xendit)',
+            'manual_transfer' => 'Transfer bank manual',
+            'term_of_payment' => 'Term of payment / tempo',
+            default => ucfirst(str_replace('_', ' ', (string) $order->payment_method)),
+        };
+
+        $orderTypeLabel = $order->order_type === \App\Models\Order::TYPE_DISTRIBUTOR
+            ? 'Pesanan distributor'
+            : 'Pesanan online';
+
+        $message = "📥 *PESANAN BARU MASUK*\n\n";
+        $message .= "Halo, ada pesanan baru untuk *{$hubName}*.\n\n";
+        $message .= "📋 *Ringkasan:*\n";
+        $message .= "Jenis: {$orderTypeLabel}\n";
+        $message .= "No. Pesanan: *#{$order->order_number}*\n";
+        $message .= 'Tanggal: ' . $order->created_at->format('d/m/Y H:i') . "\n";
+        $message .= "Status bayar: *{$paymentStatus}*\n";
+        $message .= "Metode: {$methodLabel}\n";
+        $message .= 'Total: Rp ' . number_format((float) $order->total_amount, 0, ',', '.') . "\n\n";
+
+        if ($order->items && $order->items->count() > 0) {
+            $message .= "🛍️ *Item:*\n";
+            foreach ($order->items as $item) {
+                $productName = $item->product ? $item->product->name : 'Produk';
+                $message .= "• {$productName} (Qty: {$item->quantity})\n";
+            }
+            $message .= "\n";
+        }
+
+        $message .= '🚚 *Kurir:* ' . ($order->expedition ? $order->expedition->name : '-') . ' (' . ($order->expedition_service ?: '-') . ")\n\n";
+
+        $message .= "📍 *Pemesan / tujuan:*\n";
+        if ($order->user) {
+            $message .= "{$order->user->name}\n";
+        }
+        if ($order->address) {
+            $message .= "{$order->address->recipient_name}\n";
+            $message .= "{$order->address->phone}\n";
+            $message .= "{$order->address->address_detail}\n";
+            $parts = [];
+            if ($order->address->village) {
+                $parts[] = $order->address->village->name;
+            }
+            if ($order->address->district) {
+                $parts[] = 'Kec. ' . $order->address->district->name;
+            }
+            if ($order->address->regency) {
+                $parts[] = $order->address->regency->name;
+            }
+            if ($order->address->province) {
+                $parts[] = $order->address->province->name;
+            }
+            if ($order->address->postal_code) {
+                $parts[] = (string) $order->address->postal_code;
+            }
+            if ($parts !== []) {
+                $message .= implode(', ', $parts) . "\n";
+            }
+        }
+        $message .= "\n";
+
+        if ($order->notes) {
+            $message .= '📝 *Catatan pemesan:* ' . $order->notes . "\n\n";
+        }
+
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $message .= "Silakan cek *dashboard Warehouse / Distributor* untuk memproses pesanan.\n";
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+        $message .= 'Tim Rasa Group.';
+
+        return $message;
     }
 
     /**
@@ -550,12 +722,17 @@ class WACloudHelper
         if ($order->address) {
             $message .= "{$order->address->recipient_name}\n";
             $message .= "{$order->address->phone}\n";
-            $message .= "{$order->address->city_name}, {$order->address->province_name}\n\n";
+            $message .= "{$order->address->address_detail}\n";
+            $addrParts = array_filter([
+                $order->address->regency?->name,
+                $order->address->province?->name,
+            ]);
+            $message .= ($addrParts !== [] ? implode(', ', $addrParts) : '-') . "\n\n";
         } else {
             $message .= "Lihat detail di dashboard\n\n";
         }
-        
-        $message .= "📝 *Catatan:* {$order->notes}\n\n";
+
+        $message .= '📝 *Catatan:* ' . ($order->notes ?: '-') . "\n\n";
         
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
         $message .= "Silakan login ke dashboard Warehouse Anda untuk memproses pesanan ini.\n";

@@ -408,16 +408,27 @@ class OrderApiController extends Controller
             // Load relationships for notification (after commit to ensure data is saved)
             if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
                 $order->refresh();
-                $order->load(['address.district', 'address.regency', 'address.province', 'items.product', 'expedition']);
+                $order->load([
+                    'user',
+                    'address.village',
+                    'address.district',
+                    'address.regency',
+                    'address.province',
+                    'items.product',
+                    'expedition',
+                    'sourceWarehouse',
+                ]);
             } else {
                 // Ensure address relationships are loaded
-                if ($order->address && (!$order->address->relationLoaded('district') || !$order->address->relationLoaded('regency') || !$order->address->relationLoaded('province'))) {
-                    $order->address->load(['district', 'regency', 'province']);
+                if ($order->address && (! $order->address->relationLoaded('village') || ! $order->address->relationLoaded('district') || ! $order->address->relationLoaded('regency') || ! $order->address->relationLoaded('province'))) {
+                    $order->address->load(['village', 'district', 'regency', 'province']);
                 }
+                $order->loadMissing(['user', 'sourceWarehouse']);
             }
 
             // Dispatch background job to send payment notification
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
+            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
