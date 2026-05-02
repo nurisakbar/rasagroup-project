@@ -84,32 +84,14 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // 2. Sync Sales Order
+        // 2. Sync Sales Order (can_posting dicek di syncSalesOrder setelah payload jadi, supaya log berisi endpoint + payload)
         if (!$this->order->qad_so_number) {
             $forceAttempt = (bool) config('qidapi.force_so', env('QIDAPI_FORCE_SO', true)); // Default to true if not set
-            if (!$forceAttempt && !$qadService->canPosting()) {
-                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                    'phase' => 'skipped_can_posting',
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
-                    'force_attempt' => $forceAttempt,
-                    'can_posting' => false,
-                    'token_claims' => $qadService->getTokenClaims(),
-                ]);
-                Log::error('SyncOrderToQad: QID token has can_posting=false; cannot create Sales Order. Update QIDAPI credentials to a user with posting permission.', [
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
-                    'force_attempt' => $forceAttempt,
-                ]);
-                return;
-            }
-            $this->syncSalesOrder($qadService, $user);
+            $this->syncSalesOrder($qadService, $user, $forceAttempt);
         }
     }
 
-    protected function syncSalesOrder(QadService $qadService, User $user): void
+    protected function syncSalesOrder(QadService $qadService, User $user, bool $forceAttempt = false): void
     {
         $user->refresh(); // Get updated qad_customer_code
         if (!$user->qad_customer_code) {
@@ -284,6 +266,35 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'salesOrderLines' => $lines,
             ];
 
+            $createEndpointUrl = rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create';
+            $createEndpointPath = '/api/transaction/sales-orders/create';
+
+            if (!$forceAttempt && !$qadService->canPosting()) {
+                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                    'phase' => 'skipped_can_posting',
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
+                    'force_attempt' => $forceAttempt,
+                    'can_posting' => false,
+                    'method' => 'POST',
+                    'endpoint' => $createEndpointUrl,
+                    'endpoint_path' => $createEndpointPath,
+                    'payload' => $payload,
+                    'response' => null,
+                    'note' => 'HTTP request was not sent: JWT can_posting=false. Set QIDAPI_FORCE_SO=true to call the API anyway, or use a QID user with posting permission.',
+                    'token_claims' => $qadService->getTokenClaims(),
+                ]);
+                Log::error('SyncOrderToQad: QID token has can_posting=false; cannot create Sales Order. Update QIDAPI credentials to a user with posting permission.', [
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'qid_username' => $qadService->getUserInfo()['username'] ?? null,
+                    'force_attempt' => $forceAttempt,
+                ]);
+
+                return;
+            }
+
             Log::info('SyncOrderToQad: Creating Sales Order in QAD', [
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
@@ -299,8 +310,8 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'customer_code' => $user->qad_customer_code,
                 'attempt' => $attempt,
                 'method' => 'POST',
-                'endpoint' => rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create',
-                'endpoint_path' => '/api/transaction/sales-orders/create',
+                'endpoint' => $createEndpointUrl,
+                'endpoint_path' => $createEndpointPath,
                 'payload' => $payload,
             ]);
 
