@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Slider extends Model
@@ -26,7 +25,8 @@ class Slider extends Model
     ];
 
     /**
-     * URL gambar (storage relatif, atau URL absolut).
+     * URL gambar untuk tampilan: path relatif ke domain saat ini (bukan APP_URL / localhost),
+     * atau URL absolut jika sudah disimpan lengkap di database.
      */
     public function getImageUrlAttribute(): ?string
     {
@@ -37,7 +37,10 @@ class Slider extends Model
             return $this->image;
         }
 
-        return Storage::disk('public')->url($this->image);
+        $path = str_replace('\\', '/', $this->image);
+        $path = ltrim($path, '/');
+
+        return '/storage/' . $path;
     }
 
     /**
@@ -52,15 +55,25 @@ class Slider extends Model
         return 'background-image: url(' . e($this->image_url) . ')';
     }
 
+    /**
+     * Link tombol: path relatif ke host yang dipakai pengunjung (bukan url() dari APP_URL).
+     */
     public function resolvedLink(): ?string
     {
         if (!$this->link) {
             return null;
         }
-        if (Str::startsWith($this->link, ['http://', 'https://', '//'])) {
-            return $this->link;
+        $link = trim($this->link);
+        if (Str::startsWith($link, ['http://', 'https://', '//'])) {
+            return $link;
+        }
+        if (Str::startsWith($link, ['mailto:', 'tel:', '#'])) {
+            return $link;
+        }
+        if (str_starts_with($link, '?')) {
+            return $link;
         }
 
-        return url($this->link);
+        return '/' . ltrim($link, '/');
     }
 }

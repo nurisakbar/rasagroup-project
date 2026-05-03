@@ -11,52 +11,6 @@
             }
         </style>
 
-        {{-- Hero slider: data dari tabel sliders (Admin → Slider), urutan sort_order --}}
-        <section class="home-slider position-relative mb-30">
-            <div class="container">
-                <div class="home-slide-cover mt-30">
-                    <div class="hero-slider-1 style-4 dot-style-1 dot-style-1-position-1">
-                        @forelse($sliders as $slider)
-                            @php
-                                $slideStyle = $slider->heroSlideStyle();
-                                if ($slideStyle === '') {
-                                    $slideStyle = 'background-image: url(' . asset('themes/nest-frontend/assets/imgs/slider/slider-1.png') . ')';
-                                }
-                                $slideLink = $slider->resolvedLink();
-                            @endphp
-                            <div class="single-hero-slider single-animation-wrap" style="{{ $slideStyle }}">
-                                <div class="slider-content">
-                                    @if(filled($slider->title))
-                                        <h1 class="display-2 mb-40">{!! nl2br(e($slider->title)) !!}</h1>
-                                    @endif
-                                    @if(filled($slider->description))
-                                        <p class="mb-65">{{ $slider->description }}</p>
-                                    @endif
-                                    @if($slideLink)
-                                        <div class="form-subcriber d-flex">
-                                            <a href="{{ $slideLink }}" class="btn">Belanja Sekarang</a>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
-                            <div class="single-hero-slider single-animation-wrap" style="background-color: #e8f4f1; background-image: url({{ asset('themes/nest-frontend/assets/imgs/slider/slider-2.png') }});">
-                                <div class="slider-content">
-                                    <h1 class="display-2 mb-40">Selamat datang</h1>
-                                    <p class="mb-65">Tambahkan slide promosi dari menu <strong>Admin → Slider</strong> (aktif &amp; urutan tampil).</p>
-                                    <div class="form-subcriber d-flex flex-wrap align-items-center" style="gap: 12px;">
-                                        <a href="{{ route('hubs.index') }}" class="btn">Pilih hub</a>
-                                        <a href="{{ route('products.index') }}" class="btn btn-brush btn-xs">Lihat produk</a>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforelse
-                    </div>
-                    <div class="slider-arrow hero-slider-1-arrow"></div>
-                </div>
-            </div>
-        </section>
-
         <section class="popular-categories section-padding" style="display: none;">
             <div class="container wow animate__animated animate__fadeIn">
                 <div class="section-title">
@@ -202,6 +156,52 @@
             </div>
         </section>
         <!--End Menu Hari Ini-->
+
+        {{-- Slider promosi: data sliders (Admin → Slider), urutan sort_order — tetap di bawah seperti layout asli Nest --}}
+        <section class="home-slider position-relative mb-30">
+            <div class="container">
+                <div class="home-slide-cover mt-30">
+                    <div class="hero-slider-1 style-4 dot-style-1 dot-style-1-position-1">
+                        @forelse($sliders as $slider)
+                            @php
+                                $slideStyle = $slider->heroSlideStyle();
+                                if ($slideStyle === '') {
+                                    $slideStyle = 'background-image: url(' . asset('themes/nest-frontend/assets/imgs/slider/slider-1.png') . ')';
+                                }
+                                $slideLink = $slider->resolvedLink();
+                            @endphp
+                            <div class="single-hero-slider single-animation-wrap" style="{{ $slideStyle }}">
+                                <div class="slider-content">
+                                    @if(filled($slider->title))
+                                        <h1 class="display-2 mb-40">{!! nl2br(e($slider->title)) !!}</h1>
+                                    @endif
+                                    @if(filled($slider->description))
+                                        <p class="mb-65">{{ $slider->description }}</p>
+                                    @endif
+                                    @if($slideLink)
+                                        <div class="form-subcriber d-flex">
+                                            <a href="{{ $slideLink }}" class="btn">Belanja Sekarang</a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="single-hero-slider single-animation-wrap" style="background-color: #e8f4f1; background-image: url({{ asset('themes/nest-frontend/assets/imgs/slider/slider-2.png') }});">
+                                <div class="slider-content">
+                                    <h1 class="display-2 mb-40">Selamat datang</h1>
+                                    <p class="mb-65">Tambahkan slide promosi dari menu <strong>Admin → Slider</strong> (aktif &amp; urutan tampil).</p>
+                                    <div class="form-subcriber d-flex flex-wrap align-items-center" style="gap: 12px;">
+                                        <a href="{{ route('hubs.index') }}" class="btn">Pilih hub</a>
+                                        <a href="{{ route('products.index') }}" class="btn btn-brush btn-xs">Lihat produk</a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforelse
+                    </div>
+                    <div class="slider-arrow hero-slider-1-arrow"></div>
+                </div>
+            </div>
+        </section>
 
         <section class="section-padding mb-30" style="display: none;">
             <div class="container">
