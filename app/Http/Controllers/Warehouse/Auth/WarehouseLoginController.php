@@ -39,7 +39,16 @@ class WarehouseLoginController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route('warehouse.dashboard'));
+            // Jangan ikut url.intended ke admin/pembeli — hanya deep-link dalam panel warehouse.
+            $intended = $request->session()->pull('url.intended');
+            if (is_string($intended) && $intended !== '') {
+                $path = parse_url($intended, PHP_URL_PATH) ?? '';
+                if ($path !== '' && str_starts_with($path, '/warehouse')) {
+                    return redirect()->to($intended);
+                }
+            }
+
+            return redirect()->route('warehouse.dashboard');
         }
 
         return back()->withErrors([

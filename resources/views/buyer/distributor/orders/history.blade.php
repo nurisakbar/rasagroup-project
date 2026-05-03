@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Riwayat Order Produk')
+@section('title', 'Riwayat Pembelian')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> <a href="{{ route('buyer.dashboard') }}">Akun Saya</a>
-            <span></span> Riwayat Order Produk
+            <span></span> Riwayat Pembelian
         </div>
     </div>
 </div>
@@ -25,7 +25,7 @@
                         <div class="tab-pane fade show active" role="tabpanel">
                             <div class="card border-0 shadow-sm border-radius-10">
                                 <div class="card-header bg-white border-bottom p-4">
-                                    <h3 class="mb-0">Riwayat pembelian</h3>
+                                    <h3 class="mb-0">Riwayat Pembelian</h3>
                                     <p class="text-muted font-sm">Pesanan restok ke pusat dan pembelian melalui toko online (keranjang reguler).</p>
                                 </div>
                                 <div class="card-body p-4">

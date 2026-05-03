@@ -125,35 +125,51 @@ class Warehouse extends Model
     }
 
     /**
-     * Find the best warehouse for a given address
+     * Find the best warehouse for a given address.
+     *
+     * @param  string|null  $excludeWarehouseId  Mis. hub distributor sendiri — tidak dipilih untuk pengiriman belanja.
      */
-    public static function findBestHubForAddress(Address $address)
+    public static function findBestHubForAddress(Address $address, ?string $excludeWarehouseId = null): ?self
     {
+        $exclude = $excludeWarehouseId;
+
         // 1. Try Same District
         if ($address->district_id) {
             $hub = self::where('is_active', true)
+                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
                 ->where('district_id', $address->district_id)
                 ->first();
-            if ($hub) return $hub;
+            if ($hub) {
+                return $hub;
+            }
         }
 
         // 2. Try Same Regency
         if ($address->regency_id) {
             $hub = self::where('is_active', true)
+                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
                 ->where('regency_id', $address->regency_id)
                 ->first();
-            if ($hub) return $hub;
+            if ($hub) {
+                return $hub;
+            }
         }
-        
+
         // 3. Try Same Province
         if ($address->province_id) {
             $hub = self::where('is_active', true)
+                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
                 ->where('province_id', $address->province_id)
                 ->first();
-            if ($hub) return $hub;
+            if ($hub) {
+                return $hub;
+            }
         }
-        
-        // 4. Fallback to any active hub
-        return self::where('is_active', true)->first();
+
+        // 4. Fallback: any active hub (respect exclusion; hindari fallback ke hub sendiri distributor)
+        return self::where('is_active', true)
+            ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+            ->orderBy('name')
+            ->first();
     }
 }

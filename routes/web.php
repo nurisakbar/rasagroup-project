@@ -250,6 +250,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'show'])->name('distributors.show');
         Route::get('/distributors/{distributor}/edit', [App\Http\Controllers\Admin\DistributorController::class, 'edit'])->name('distributors.edit');
         Route::put('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'update'])->name('distributors.update');
+        Route::post('/distributors/{distributor}/documents', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'store'])->name('distributors.documents.store');
+        Route::put('/distributors/{distributor}/documents/{document}', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'update'])->name('distributors.documents.update');
+        Route::delete('/distributors/{distributor}/documents/{document}', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'destroy'])->name('distributors.documents.destroy');
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
         Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');

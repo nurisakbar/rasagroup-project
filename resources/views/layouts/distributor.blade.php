@@ -121,7 +121,7 @@
         </li>
         <li class="{{ request()->routeIs('distributor.pos.*') ? 'active' : '' }}">
           <a href="{{ route('distributor.pos.index') }}">
-            <i class="fa fa-cash-register"></i> <span>POINT OF SALES</span>
+            <i class="fa fa-cash-register"></i> <span>Point Of Sales</span>
           </a>
         </li>
         <li class="header">NAVIGASI</li>

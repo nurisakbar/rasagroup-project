@@ -56,12 +56,13 @@ class CheckHubSelection
                     'selected_hub_name' => $hubName,
                     'selected_hub_slug' => $hubSlug
                 ]);
-                
-                return $next($request);
             }
+        }
 
+        $request->user()?->forgetOwnHubShoppingSelectionIfSet();
+
+        if (!session()->has('selected_hub_id')) {
             // 4. Force redirect for "action" routes (Cart, Checkout, Buyer Profile, etc.)
-            // We only redirect if they are NOT on a whitelisted browsing route
             return redirect()->route('hubs.index')->with('info', 'Silakan pilih Hub/Distributor terdekat untuk melihat ketersediaan barang dan mulai berbelanja.');
         }
 

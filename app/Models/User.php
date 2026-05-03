@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -185,6 +186,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Order::class);
     }
 
+    public function distributorDocuments(): HasMany
+    {
+        return $this->hasMany(DistributorDocument::class);
+    }
+
     public function carts(): HasMany
     {
         return $this->hasMany(Cart::class);
@@ -273,6 +279,37 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isDriippreneurRejected(): bool
     {
         return $this->driippreneur_status === 'rejected';
+    }
+
+    /**
+     * Warehouse ID yang tidak boleh dipakai sebagai hub belanja (restock dari pusat lain).
+     * Hanya berlaku untuk akun distributor yang terikat ke sebuah hub.
+     */
+    public function distributorShoppingExcludedWarehouseId(): ?string
+    {
+        if ($this->isDistributor() && filled($this->warehouse_id)) {
+            return (string) $this->warehouse_id;
+        }
+
+        return null;
+    }
+
+    /**
+     * Hapus pilihan hub belanja dari session + cookie jika mengarah ke warehouse distributor sendiri.
+     */
+    public function forgetOwnHubShoppingSelectionIfSet(): void
+    {
+        $exclude = $this->distributorShoppingExcludedWarehouseId();
+        if (!$exclude || !session()->has('selected_hub_id')) {
+            return;
+        }
+        if ((string) session('selected_hub_id') !== $exclude) {
+            return;
+        }
+        session()->forget(['selected_hub_id', 'selected_hub_name', 'selected_hub_slug']);
+        foreach (['selected_hub_id', 'selected_hub_name', 'selected_hub_slug'] as $name) {
+            Cookie::queue(Cookie::forget($name));
+        }
     }
 
     /**

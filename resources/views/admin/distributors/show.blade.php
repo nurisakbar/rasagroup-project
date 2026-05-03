@@ -96,6 +96,7 @@
                     <li class="active"><a href="#tab_info" data-toggle="tab"><i class="fa fa-info-circle"></i> Info Umum</a></li>
                     <li><a href="#tab_stock" data-toggle="tab"><i class="fa fa-cubes"></i> Monitoring Stock</a></li>
                     <li><a href="#tab_orders" data-toggle="tab"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
+                    <li><a href="#tab_dokumen" data-toggle="tab"><i class="fa fa-file-text"></i> Dokumen</a></li>
                     <li><a href="#tab_staff" data-toggle="tab"><i class="fa fa-users"></i> Kelola Staff</a></li>
                     <li class="pull-right"><a href="#tab_danger" data-toggle="tab" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
@@ -318,6 +319,31 @@
                         </div>
                     </div>
 
+                    <!-- Tab: Dokumen -->
+                    <div class="tab-pane" id="tab_dokumen">
+                        <div class="row" style="margin-bottom: 15px;">
+                            <div class="col-md-12 text-right">
+                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalTambahDokumen">
+                                    <i class="fa fa-plus"></i> Tambah dokumen
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="documents-table" class="table table-bordered table-striped table-hover" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th width="4%">No</th>
+                                        <th>Nama dokumen</th>
+                                        <th>Keterangan</th>
+                                        <th width="12%">Diperbarui</th>
+                                        <th width="120">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Tab: Kelola Staff -->
                     <div class="tab-pane" id="tab_staff">
                         <div class="row">
@@ -399,6 +425,75 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal: Tambah dokumen -->
+    <div class="modal fade" id="modalTambahDokumen" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('admin.distributors.documents.store', $distributor) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fa fa-file-text"></i> Tambah dokumen</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nama dokumen <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_dokumen" class="form-control" required maxlength="255" value="{{ old('nama_dokumen') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <textarea name="keterangan" class="form-control" rows="3" maxlength="5000" placeholder="Opsional">{{ old('keterangan') }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Berkas <span class="text-danger">*</span></label>
+                            <input type="file" name="file" class="form-control" required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar">
+                            <p class="help-block small">Maks. 10 MB. PDF, Office, gambar, ZIP/RAR.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit dokumen -->
+    <div class="modal fade" id="modalEditDokumen" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="formEditDokumen" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fa fa-edit"></i> Ubah dokumen</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nama dokumen <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_dokumen" id="edit_doc_nama" class="form-control" required maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <textarea name="keterangan" id="edit_doc_keterangan" class="form-control" rows="3" maxlength="5000"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Ganti berkas</label>
+                            <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar">
+                            <p class="help-block small">Kosongkan jika tidak mengganti file.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning"><i class="fa fa-save"></i> Perbarui</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -577,6 +672,45 @@ $(document).ready(function() {
 
     $('#filter-order-status, #filter-payment-status').change(function() {
         ordersTable.draw();
+    });
+
+    // Dokumen distributor
+    var documentsTable = $('#documents-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.distributors.show', $distributor) }}",
+            data: function(d) {
+                d.type = 'documents';
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'nama_display', name: 'nama_dokumen' },
+            { data: 'keterangan_display', name: 'keterangan', orderable: false },
+            { data: 'updated_display', name: 'updated_at' },
+            { data: 'action', orderable: false, searchable: false }
+        ],
+        order: [[3, 'desc']],
+        pageLength: 10,
+        language: {
+            processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ data",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            infoEmpty: "Tidak ada dokumen",
+            zeroRecords: "Tidak ada data",
+            emptyTable: "Belum ada dokumen",
+            paginate: { first: "Pertama", previous: "Sebelumnya", next: "Selanjutnya", last: "Terakhir" }
+        }
+    });
+
+    $(document).on('click', '.btn-edit-distributor-doc', function() {
+        var $btn = $(this);
+        $('#formEditDokumen').attr('action', $btn.attr('data-update-url'));
+        $('#edit_doc_nama').val($btn.attr('data-nama'));
+        $('#edit_doc_keterangan').val($btn.attr('data-keterangan'));
+        $('#modalEditDokumen').modal('show');
     });
 });
 </script>

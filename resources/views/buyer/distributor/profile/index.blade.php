@@ -43,7 +43,7 @@
                                             <i class="fi-rs-marker mr-5"></i>Kelola alamat
                                         </a>
                                         <a href="{{ route('distributor.orders.history') }}" class="btn btn-sm rounded-pill" style="border: 2px solid #3BB77E; color: #3BB77E; background: #fff; font-weight: 600;">
-                                            <i class="fi-rs-history mr-5"></i>Riwayat pembelian ke pusat
+                                            <i class="fi-rs-history mr-5"></i>Riwayat Pembelian
                                         </a>
                                     </div>
 

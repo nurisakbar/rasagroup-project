@@ -243,8 +243,10 @@ class OrderController extends Controller
 
         $provinces = \App\Models\Province::orderBy('name')->get();
 
-        // Get all active warehouses (hubs) for distributor to choose from
+        // Get all active warehouses (hubs) kecuali hub distributor sendiri (restock dari pusat lain)
+        $excludeOwnHub = Auth::user()->distributorShoppingExcludedWarehouseId();
         $warehouses = \App\Models\Warehouse::where('is_active', true)
+            ->when($excludeOwnHub, fn ($q) => $q->where('id', '!=', $excludeOwnHub))
             ->with(['province', 'regency'])
             ->orderBy('name')
             ->get();
@@ -437,6 +439,12 @@ class OrderController extends Controller
             return back()->with('error', 'Alamat tidak valid.');
         }
 
+        $user = Auth::user();
+        $excludeOwnHub = $user->distributorShoppingExcludedWarehouseId();
+        if ($excludeOwnHub && (string) $request->source_warehouse_id === $excludeOwnHub) {
+            return back()->with('error', 'Hub sumber tidak boleh hub Anda sendiri. Pilih hub pusat lain.');
+        }
+
         $expedition = Expedition::find($request->expedition_id);
         if (!$expedition) {
             return back()->with('error', 'Ekspedisi tidak valid.');
@@ -455,7 +463,6 @@ class OrderController extends Controller
         DB::beginTransaction();
         try {
             $orderNumber = $this->generateOrderNumber();
-            $user = Auth::user();
             $subtotal = $carts->sum(function ($cart) use ($user) {
                 return $user->getProductPrice($cart->product) * $cart->quantity;
             });

@@ -230,6 +230,15 @@ class CartController extends Controller
 
         $warehouseId = $warehouse->id;
 
+        $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        if ($excludeOwn && (string) $warehouseId === $excludeOwn) {
+            $msg = 'Sebagai distributor, Anda tidak dapat memilih hub sendiri sebagai sumber pembelian. Pilih hub lain.';
+
+            return $request->ajax()
+                ? response()->json(['error' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
         $this->logCartStore('store: warehouse resolved', [
             'warehouse_id' => $warehouseId,
             'warehouse_name' => $warehouse->name,
@@ -528,6 +537,14 @@ class CartController extends Controller
                         'stocks' => []
                     ], 404);
                 }
+
+                $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
+                if ($excludeOwn && (string) $warehouse->id === $excludeOwn) {
+                    return response()->json([
+                        'error' => 'Hub ini tidak tersedia untuk pembelian sebagai distributor.',
+                        'stocks' => [],
+                    ], 422);
+                }
                 
                 // Then check for stock record
                 $stock = WarehouseStock::where('product_id', $product->id)
@@ -570,6 +587,10 @@ class CartController extends Controller
                 $q->where('is_active', true);
             })
             ->get();
+
+        if ($excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId()) {
+            $stocks = $stocks->filter(fn ($s) => (string) $s->warehouse_id !== $excludeOwn)->values();
+        }
 
         return response()->json([
             'stocks' => $stocks->map(function ($stock) {

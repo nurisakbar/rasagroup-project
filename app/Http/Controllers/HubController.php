@@ -6,6 +6,7 @@ use App\Models\RajaOngkirCity;
 use App\Models\RajaOngkirProvince;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HubController extends Controller
 {
@@ -14,8 +15,13 @@ class HubController extends Controller
      */
     public function index(Request $request)
     {
+        Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
+
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+
         $query = Warehouse::with(['province', 'regency'])
             ->where('is_active', true)
+            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->withCount(['stocks as products_count' => function ($q) {
                 $q->whereHas('product', function ($p) {
                     $p->where('status', 'active');
@@ -46,7 +52,8 @@ class HubController extends Controller
 
         $activeHubQuery = Warehouse::query()
             ->where('is_active', true)
-            ->whereNotNull('province_id');
+            ->whereNotNull('province_id')
+            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId));
 
         $provinceIdsWithHubs = (clone $activeHubQuery)->distinct()->pluck('province_id');
 
@@ -61,6 +68,7 @@ class HubController extends Controller
             $regencyIdsWithHubs = Warehouse::query()
                 ->where('is_active', true)
                 ->where('province_id', $request->province_id)
+                ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
                 ->whereNotNull('regency_id')
                 ->distinct()
                 ->pluck('regency_id');
@@ -83,6 +91,11 @@ class HubController extends Controller
     public function show(Warehouse $warehouse)
     {
         if (!$warehouse->is_active) {
+            abort(404);
+        }
+
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        if ($excludeHubId && (string) $warehouse->id === $excludeHubId) {
             abort(404);
         }
 
@@ -266,6 +279,11 @@ class HubController extends Controller
         ]);
 
         $warehouse = Warehouse::find($request->warehouse_id);
+
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        if ($excludeHubId && (string) $warehouse->id === $excludeHubId) {
+            return back()->with('error', 'Sebagai distributor, Anda tidak dapat memilih hub sendiri sebagai lokasi belanja.');
+        }
         
         // Store in session
         session([
@@ -296,9 +314,11 @@ class HubController extends Controller
         $lng = $request->longitude;
 
         // Get all active hubs with coordinates
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
         $hubs = Warehouse::where('is_active', true)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
+            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->get();
 
         if ($hubs->isEmpty()) {

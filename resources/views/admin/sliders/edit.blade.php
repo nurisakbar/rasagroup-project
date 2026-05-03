@@ -46,9 +46,9 @@
 
                         <div class="form-group @error('image') has-error @enderror">
                             <label for="image">Gambar Slider</label>
-                            @if($slider->image)
+                            @if($slider->image_url)
                                 <div style="margin-bottom: 10px;">
-                                    <img src="{{ asset('storage/' . $slider->image) }}" alt="{{ $slider->title }}" style="max-height: 100px; border-radius: 5px; border: 1px solid #ddd; padding: 2px;">
+                                    <img src="{{ $slider->image_url }}" alt="{{ $slider->title }}" style="max-height: 100px; border-radius: 5px; border: 1px solid #ddd; padding: 2px;">
                                 </div>
                             @endif
                             <input type="file" class="form-control" id="image" name="image">

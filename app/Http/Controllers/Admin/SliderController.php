@@ -18,8 +18,8 @@ class SliderController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('image_display', function ($slider) {
-                    if ($slider->image) {
-                        return '<img src="' . asset('storage/' . $slider->image) . '" style="height: 50px; width: 100px; object-fit: cover; border-radius: 5px;" alt="' . $slider->title . '">';
+                    if ($slider->image_url) {
+                        return '<img src="' . e($slider->image_url) . '" style="height: 50px; width: 100px; object-fit: cover; border-radius: 5px;" alt="' . e($slider->title) . '">';
                     }
                     return '-';
                 })

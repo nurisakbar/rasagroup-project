@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
-        
+
         $query = Product::with(['category', 'brand', 'warehouseStocks'])->where('status', 'active');
 
         if ($selectedHubId) {
@@ -103,8 +105,14 @@ class ProductController extends Controller
             abort(404);
         }
 
+        Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
         $selectedWarehouseId = $request->query('warehouse_id', $selectedHubId);
+
+        $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        if ($excludeOwn && $selectedWarehouseId && (string) $selectedWarehouseId === $excludeOwn) {
+            $selectedWarehouseId = null;
+        }
 
         // Get Related Products (Same category, excluding current product)
         $relatedProducts = Product::where('category_id', $product->category_id)
@@ -155,6 +163,7 @@ class ProductController extends Controller
             ->orWhere('id', $identifier)
             ->firstOrFail();
             
+        Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
         return view('themes.nest.partials.quick-view-content', compact('product', 'selectedHubId'))->render();
     }

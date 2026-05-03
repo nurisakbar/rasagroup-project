@@ -36,6 +36,8 @@ class CheckoutController extends Controller
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
+        Auth::user()->loadMissing('priceLevel');
+
         $carts = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
@@ -68,14 +70,6 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')
                 ->with('error', 'Data lokasi hub pengirim belum lengkap. Silakan hubungi administrator untuk melengkapi data lokasi hub (Provinsi, Kota, dan Kecamatan).');
         }
-
-        $subtotal = $carts->sum(function ($cart) {
-            return $cart->product->price * $cart->quantity;
-        });
-
-        $totalWeight = $carts->sum(function ($cart) {
-            return ($cart->product->weight ?? 500) * $cart->quantity;
-        });
 
         // Only show expeditions that are active AND available in the EkspedisiKu API
         $courierRes = $this->ekspedisiku->getCouriers();
@@ -115,6 +109,17 @@ class CheckoutController extends Controller
                 }
             }
         }
+
+        $totalWeight = $carts->sum(function ($cart) {
+            return ($cart->product->weight ?? 500) * $cart->quantity;
+        });
+
+        $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
+        $retailSubtotal = $pricing['retail_subtotal'];
+        $distributorPriceDiscount = $pricing['distributor_price_discount'];
+        $subtotal = $pricing['subtotal_after_distributor'];
+        $priceLevelName = $pricing['price_level_name'];
+        $showDistributorPricing = $pricing['show_distributor_pricing'];
 
         // Check if default address has district_id
         if ($defaultAddress && !$defaultAddress->district_id) {
@@ -262,6 +267,10 @@ class CheckoutController extends Controller
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
+        'retailSubtotal',
+        'distributorPriceDiscount',
+        'priceLevelName',
+        'showDistributorPricing',
         'shippingCost', 
         'discountAmount',
         'discountPercent',
@@ -287,21 +296,31 @@ class CheckoutController extends Controller
         }
 
         $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
-
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
-        
+
+        // Re-detect best Hub based on selected address
+        $syncResult = $this->syncWarehouseByAddress($address) ?? [];
+        if (!empty($syncResult['hub_changed'])) {
+            $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+                ->where('user_id', Auth::id())
+                ->where('cart_type', 'regular')
+                ->get();
+        }
+
         $totalWeight = $carts->sum(function ($cart) {
             return ($cart->product->weight ?? 500) * $cart->quantity;
         });
-        
-        $subtotal = $carts->sum(function ($cart) {
-            return $cart->product->price * $cart->quantity;
-        });
 
-        // Re-detect best Hub based on selected address
-        $syncResult = $this->syncWarehouseByAddress($address);
+        Auth::user()->loadMissing('priceLevel');
+        $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
+        $retailSubtotal = $pricing['retail_subtotal'];
+        $distributorPriceDiscount = $pricing['distributor_price_discount'];
+        $subtotal = $pricing['subtotal_after_distributor'];
+        $showDistributorPricing = $pricing['show_distributor_pricing'];
+        $priceLevelName = $pricing['price_level_name'];
+
         $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
         $hubChanged = $syncResult['hub_changed'] ?? false;
         $stockWarnings = $syncResult['stock_warnings'] ?? [];
@@ -401,6 +420,12 @@ class CheckoutController extends Controller
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            'retail_subtotal' => $retailSubtotal,
+            'retail_subtotal_formatted' => 'Rp ' . number_format($retailSubtotal, 0, ',', '.'),
+            'distributor_price_discount' => $distributorPriceDiscount,
+            'distributor_price_discount_formatted' => 'Rp ' . number_format($distributorPriceDiscount, 0, ',', '.'),
+            'show_distributor_pricing' => $showDistributorPricing,
+            'price_level_name' => $priceLevelName,
             'discount_amount' => $discountAmount,
             'discount_amount_formatted' => 'Rp ' . number_format($discountAmount, 0, ',', '.'),
             'discount_percent' => $discountPercent,
@@ -607,9 +632,9 @@ class CheckoutController extends Controller
         DB::beginTransaction();
         try {
             $orderNumber = $this->generateOrderNumber();
-            $subtotal = $carts->sum(function ($cart) {
-                return $cart->product->price * $cart->quantity;
-            });
+            $user->loadMissing('priceLevel');
+            $pricing = $this->cartPricingBreakdown($user, $carts);
+            $subtotal = $pricing['subtotal_after_distributor'];
 
             $totalWeight = $carts->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -723,10 +748,11 @@ class CheckoutController extends Controller
             // Prepare items for Xendit invoice
             $xenditItems = [];
             foreach ($carts as $cart) {
+                $lineUnit = $user->getProductPrice($cart->product);
                 $xenditItems[] = [
                     'name' => $cart->product->display_name,
                     'quantity' => $cart->quantity,
-                    'price' => $cart->product->price,
+                    'price' => $lineUnit,
                 ];
             }
             
@@ -783,14 +809,15 @@ class CheckoutController extends Controller
             $order->load('address');
 
             foreach ($carts as $cart) {
+                $lineUnit = $user->getProductPrice($cart->product);
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
                     'order_uom' => $cart->order_uom,
                     'quantity_ordered' => $cart->quantity_ordered,
-                    'price' => $cart->product->price,
-                    'subtotal' => $cart->product->price * $cart->quantity,
+                    'price' => $lineUnit,
+                    'subtotal' => $lineUnit * $cart->quantity,
                 ]);
 
                 // Reduce stock from warehouse
@@ -974,13 +1001,55 @@ class CheckoutController extends Controller
         return QadWsOrderNumberGenerator::generate();
     }
 
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\Cart>  $carts
+     * @return array{
+     *     retail_subtotal: float,
+     *     distributor_price_discount: float,
+     *     subtotal_after_distributor: float,
+     *     price_level_name: ?string,
+     *     show_distributor_pricing: bool
+     * }
+     */
+    private function cartPricingBreakdown(User $user, $carts): array
+    {
+        $retailSubtotal = (float) $carts->sum(function ($cart) {
+            return (float) $cart->product->price * (int) $cart->quantity;
+        });
+
+        $user->loadMissing('priceLevel');
+
+        $subtotalAfterDistributor = $retailSubtotal;
+        $distributorPriceDiscount = 0.0;
+        $priceLevelName = null;
+
+        if ($user->isDistributor() && $user->priceLevel) {
+            $priceLevelName = $user->priceLevel->name;
+            $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user) {
+                return $user->getProductPrice($cart->product) * (int) $cart->quantity;
+            });
+            $distributorPriceDiscount = max(0.0, $retailSubtotal - $subtotalAfterDistributor);
+        }
+
+        return [
+            'retail_subtotal' => $retailSubtotal,
+            'distributor_price_discount' => $distributorPriceDiscount,
+            'subtotal_after_distributor' => $subtotalAfterDistributor,
+            'price_level_name' => $priceLevelName,
+            'show_distributor_pricing' => $user->isDistributor()
+                && $user->priceLevel !== null
+                && $distributorPriceDiscount > 0,
+        ];
+    }
+
     private function syncWarehouseByAddress(Address $address)
     {
         $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
         if ($carts->isEmpty()) return null;
         
         $currentWarehouseId = $carts->first()->warehouse_id;
-        $bestHub = Warehouse::findBestHubForAddress($address);
+        $excludeOwnHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        $bestHub = Warehouse::findBestHubForAddress($address, $excludeOwnHubId);
         
         $hubChanged = false;
         if ($bestHub && $bestHub->id !== $currentWarehouseId) {

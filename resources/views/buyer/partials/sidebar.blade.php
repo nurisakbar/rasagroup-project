@@ -7,12 +7,6 @@
 <div class="dashboard-menu {{ $layout === 'horizontal' ? 'dashboard-menu-horizontal mb-4' : '' }}">
     <ul class="nav {{ $layout === 'horizontal' ? 'flex-row' : 'flex-column' }}" role="tablist">
         @if($isDistributorPage)
-            {{-- DISTRIBUTOR MODE MENUS --}}
-            @if($layout === 'vertical')
-                <li class="nav-item">
-                    <span class="ps-3 font-xs text-muted text-uppercase fw-bold mb-2 d-block">Distributor Mode</span>
-                </li>
-            @endif
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.manage-orders.*') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">
                     <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>{{ $layout === 'horizontal' ? 'Pesanan Masuk' : 'Pesanan Masuk' }}
@@ -25,21 +19,27 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.pos.*') ? 'active' : '' }}" href="{{ route('distributor.pos.index') }}">
-                    <i class="fi-rs-computer {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>POS
+                    <i class="fi-rs-computer {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Point Of Sales
                 </a>
             </li>
-            <li class="nav-item">
+            {{-- Restock: disembunyikan dari menu; rute tetap ada (distributor.orders.products / cart / checkout). --}}
+            <li class="nav-item distributor-sidebar-restock">
                 <a class="nav-link {{ Route::is('distributor.orders.products') || Route::is('distributor.orders.cart') || Route::is('distributor.orders.checkout') ? 'active' : '' }}" href="{{ route('distributor.orders.products') }}">
                     <i class="fi-rs-shopping-cart-check {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Restock
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
-                    <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat pembelian ke pusat
+                <a class="nav-link {{ Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('buyer.addresses.index') }}">
+                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat pengiriman
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.profile') || Route::is('buyer.profile') || Route::is('buyer.profile.edit') || Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('distributor.profile') }}">
+                <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
+                    <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat Pembelian
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('distributor.profile') || Route::is('buyer.profile') || Route::is('buyer.profile.edit') ? 'active' : '' }}" href="{{ route('distributor.profile') }}">
                     <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil
                 </a>
             </li>
@@ -156,5 +156,9 @@
         margin-bottom: 0 !important;
         padding: 10px 18px;
         font-size: 13px;
+    }
+
+    .distributor-sidebar-restock {
+        display: none !important;
     }
 </style>

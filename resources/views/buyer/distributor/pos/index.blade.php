@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Point of Sales')
+@section('title', 'Point Of Sales')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> <a href="{{ route('buyer.dashboard') }}">Akun Saya</a>
-            <span></span> POS (Penjualan Toko)
+            <span></span> Point Of Sales (Penjualan Toko)
         </div>
     </div>
 </div>

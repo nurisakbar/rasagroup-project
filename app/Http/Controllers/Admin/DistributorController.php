@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DistributorDocument;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\PriceLevel;
@@ -474,6 +475,49 @@ class DistributorController extends Controller
                     </a>';
                 })
                 ->rawColumns(['order_number_display', 'customer_info', 'order_status_badge', 'payment_status_badge', 'action'])
+                ->make(true);
+        }
+
+        if ($request->ajax() && $request->get('type') === 'documents') {
+            if (! $distributor->isDistributor()) {
+                abort(404);
+            }
+
+            $query = DistributorDocument::query()
+                ->where('user_id', $distributor->id);
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('nama_display', function (DistributorDocument $doc) {
+                    return '<strong>'.e($doc->nama_dokumen).'</strong>';
+                })
+                ->addColumn('keterangan_display', function (DistributorDocument $doc) {
+                    $t = $doc->keterangan ?? '';
+
+                    return '<span class="text-muted">'.e(Str::limit(strip_tags($t), 100)).'</span>';
+                })
+                ->addColumn('updated_display', function (DistributorDocument $doc) {
+                    return $doc->updated_at->format('d/m/Y H:i');
+                })
+                ->addColumn('action', function (DistributorDocument $doc) use ($distributor) {
+                    $fileUrl = $doc->file_url ?? '#';
+                    $viewBtn = '<a href="'.e($fileUrl).'" target="_blank" rel="noopener" class="btn btn-info btn-xs" title="Lihat berkas"><i class="fa fa-eye"></i></a>';
+                    $updateUrl = route('admin.distributors.documents.update', [$distributor, $doc]);
+                    $namaEsc = htmlspecialchars($doc->nama_dokumen, ENT_QUOTES, 'UTF-8');
+                    $ketPlain = preg_replace('/\s+/u', ' ', trim((string) ($doc->keterangan ?? '')));
+                    $ketEsc = htmlspecialchars($ketPlain, ENT_QUOTES, 'UTF-8');
+                    $editBtn = '<button type="button" class="btn btn-warning btn-xs btn-edit-distributor-doc" '
+                        .'data-update-url="'.e($updateUrl).'" '
+                        .'data-nama="'.$namaEsc.'" '
+                        .'data-keterangan="'.$ketEsc.'" '
+                        .'title="Ubah"><i class="fa fa-edit"></i></button>';
+                    $delForm = '<form action="'.e(route('admin.distributors.documents.destroy', [$distributor, $doc])).'" method="POST" style="display:inline-block;margin-left:4px;" onsubmit="return confirm(\'Hapus dokumen ini? (soft delete)\');">'
+                        .csrf_field().method_field('DELETE')
+                        .'<button type="submit" class="btn btn-danger btn-xs" title="Hapus"><i class="fa fa-trash"></i></button></form>';
+
+                    return $viewBtn.' '.$editBtn.' '.$delForm;
+                })
+                ->rawColumns(['nama_display', 'keterangan_display', 'action'])
                 ->make(true);
         }
 

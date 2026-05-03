@@ -274,16 +274,21 @@
                             <table class="table no-border">
                                 <tbody>
                                     @foreach($carts as $cart)
+                                        @php
+                                            $checkoutUser = Auth::user();
+                                            $unitPrice = $checkoutUser->getProductPrice($cart->product);
+                                            $retailUnit = (float) $cart->product->price;
+                                        @endphp
                                         <tr>
                                             <td class="image product-thumbnail"><img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="#" style="width: 50px; border-radius: 10px;"></td>
                                             <td>
                                                 <h6 class="w-160 mb-5"><a href="{{ route('products.show', $cart->product) }}" class="text-heading">{{ Str::limit($cart->product->name . ($cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : ''), 30) }}</a></h6>
                                                 <div class="product-rate-cover">
-                                                    <span class="font-small text-muted">{{ $cart->quantity }} x Rp {{ number_format($cart->product->price, 0, ',', '.') }}</span>
+                                                    <span class="font-small text-muted">{{ $cart->quantity }} x @if($checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit)<span class="text-decoration-line-through me-5">Rp {{ number_format($retailUnit, 0, ',', '.') }}</span>@endif Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <h5 class="text-end text-brand">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }}</h5>
+                                                <h5 class="text-end text-brand">Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}</h5>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -297,20 +302,28 @@
                     <div class="table-responsive order_table checkout">
                         <table class="table no-border">
                             <tbody>
+                                <tr id="distributorRetailRow" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
+                                    <td class="cart_total_label">
+                                        <h6 class="text-muted">Subtotal katalog (referensi)</h6>
+                                    </td>
+                                    <td class="cart_total_amount">
+                                        <h5 class="text-muted text-end" id="retailSubtotalDisplay">Rp {{ number_format($retailSubtotal ?? $subtotal, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
+                                <tr id="distributorDiscountRow" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
+                                    <td class="cart_total_label">
+                                        <h6 class="text-muted mb-0">Potongan distributor <span id="distributorLevelLabel">@if(!empty($priceLevelName))({{ $priceLevelName }})@endif</span></h6>
+                                    </td>
+                                    <td class="cart_total_amount">
+                                        <h5 class="text-danger text-end" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount ?? 0, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td class="cart_total_label">
                                         <h6 class="text-muted">Subtotal</h6>
                                     </td>
                                     <td class="cart_total_amount">
                                         <h5 class="text-brand text-end" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="cart_total_label">
-                                        <h6 class="text-muted">Total Berat</h6>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <p class="text-muted text-end" id="totalWeightDisplay">{{ number_format($totalWeight / 1000, 1) }} kg</p>
                                     </td>
                                 </tr>
                                 <tr id="discountRow" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
@@ -327,14 +340,17 @@
                                         <small class="text-muted d-block" id="expeditionInfo">{{ $defaultExpedition?->name ?? '-' }} - {{ $defaultService['name'] ?? 'Reguler' }}</small>
                                     </td>
                                     <td class="cart_total_amount">
-                                        <h5 class="text-brand text-end" id="shippingCostDisplay">
-                                            @if($shippingCost > 0)
-                                                Rp {{ number_format($shippingCost, 0, ',', '.') }}
-                                            @else
-                                                -
-                                            @endif
-                                        </h5>
-                                        <small class="text-muted d-block text-end" id="estimatedDelivery">
+                                        <div class="d-flex flex-wrap justify-content-end align-items-baseline gap-3">
+                                            <h5 class="text-brand text-end mb-0" id="shippingCostDisplay">
+                                                @if($shippingCost > 0)
+                                                    Rp {{ number_format($shippingCost, 0, ',', '.') }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </h5>
+                                            <span class="text-muted text-end" id="totalWeightDisplay">{{ number_format($totalWeight / 1000, 1) }} kg</span>
+                                        </div>
+                                        <small class="text-muted d-block text-end mt-5" id="estimatedDelivery">
                                              @if($defaultService)
                                                 Estimasi: {{ $defaultService['estimated_days'] }}
                                             @endif
@@ -528,6 +544,7 @@
 
 @push('scripts')
 <script>
+    window.checkoutTotalWithoutShipping = {{ (float) ($subtotal - $discountAmount) }};
     var currentAddressId = '{{ $defaultAddress?->id ?? '' }}';
     var currentExpeditionId = '{{ $defaultExpedition?->id ?? '' }}';
     var currentServiceCode = '{{ $defaultService["code"] ?? "" }}';
@@ -641,7 +658,7 @@
                 } else {
                      // Reset shipping displays if no services
                     $('#shippingCostDisplay').text('-');
-                    $('#totalDisplay').text('Rp {{ number_format($subtotal, 0, ',', '.') }}'); // Reset to subtotal
+                    $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID')); // Subtotal − potongan tier (tanpa ongkir)
                     $('#estimatedDelivery').text('-');
                 }
             },
@@ -691,6 +708,26 @@
                 // Update displays
                 $('#shippingCostDisplay').text(data.shipping_cost_formatted);
                 $('#totalDisplay').text(data.total_formatted);
+                $('#subtotalDisplay').text(data.subtotal_formatted);
+                if (data.total_weight_formatted) {
+                    $('#totalWeightDisplay').text(data.total_weight_formatted);
+                }
+                window.checkoutTotalWithoutShipping = parseFloat(data.subtotal) - parseFloat(data.discount_amount);
+
+                if (data.show_distributor_pricing) {
+                    $('#distributorRetailRow').show();
+                    $('#distributorDiscountRow').show();
+                    $('#retailSubtotalDisplay').text(data.retail_subtotal_formatted);
+                    $('#distributorDiscountDisplay').text('-' + data.distributor_price_discount_formatted);
+                    if (data.price_level_name) {
+                        $('#distributorLevelLabel').text('(' + data.price_level_name + ')');
+                    } else {
+                        $('#distributorLevelLabel').text('');
+                    }
+                } else {
+                    $('#distributorRetailRow').hide();
+                    $('#distributorDiscountRow').hide();
+                }
                 
                 // Update Address & Hub info
                 if (data.address && data.address.id == currentAddressId) {
