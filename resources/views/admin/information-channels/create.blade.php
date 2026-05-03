@@ -23,7 +23,7 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">Form Tambah Saluran Informasi</h3>
                 </div>
-                <form action="{{ route('admin.information-channels.store') }}" method="POST">
+                <form action="{{ route('admin.information-channels.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="box-body">
                         <div class="form-group @error('title') has-error @enderror">
@@ -72,6 +72,15 @@
                             <label for="description">Deskripsi</label>
                             <textarea class="form-control summernote" id="description" name="description" rows="5">{{ old('description') }}</textarea>
                             @error('description')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group @error('image') has-error @enderror">
+                            <label for="image">Gambar sampul</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+                            <p class="help-block"><small>Opsional. JPEG, PNG, GIF, atau WebP, maks. 2 MB. Tampil di daftar &amp; halaman detail saluran informasi.</small></p>
+                            @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>

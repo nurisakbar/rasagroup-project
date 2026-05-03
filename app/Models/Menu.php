@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicMediaUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -86,15 +87,7 @@ class Menu extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        if (!$this->gambar) {
-            return null;
-        }
-
-        if (filter_var($this->gambar, FILTER_VALIDATE_URL)) {
-            return $this->gambar;
-        }
-
-        return '/storage/' . $this->gambar;
+        return PublicMediaUrl::resolve($this->gambar);
     }
 
     protected static function boot()

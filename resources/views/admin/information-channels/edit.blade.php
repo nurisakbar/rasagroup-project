@@ -23,7 +23,7 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">Form Edit Saluran Informasi</h3>
                 </div>
-                <form action="{{ route('admin.information-channels.update', $channel) }}" method="POST">
+                <form action="{{ route('admin.information-channels.update', $channel) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="box-body">
@@ -73,6 +73,24 @@
                             <label for="description">Deskripsi</label>
                             <textarea class="form-control summernote" id="description" name="description" rows="5">{{ old('description', $channel->description) }}</textarea>
                             @error('description')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        @if($channel->image_url)
+                            <div class="form-group">
+                                <label>Gambar saat ini</label>
+                                <div>
+                                    <img src="{{ $channel->image_url }}" alt="" class="img-thumbnail" style="max-height: 160px;">
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="form-group @error('image') has-error @enderror">
+                            <label for="image">Ganti gambar sampul</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+                            <p class="help-block"><small>Kosongkan jika tidak ingin mengganti. Maks. 2 MB.</small></p>
+                            @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>

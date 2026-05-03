@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,30 +30,15 @@ class Promo extends Model
      */
     public function getImageUrlAttribute(): ?string
     {
-        if (!$this->image) {
-            return null;
-        }
-
-        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
-            return $this->image;
-        }
-
-        if (str_starts_with($this->image, 'themes/')) {
-            return asset($this->image);
-        }
-
-        return Storage::disk('public')->url($this->image);
+        return PublicMediaUrl::resolve($this->image);
     }
 
     /** Hapus file disk hanya untuk gambar yang disimpan di storage/public. */
     public function deleteStoredImageFile(): void
     {
-        if (!$this->image || filter_var($this->image, FILTER_VALIDATE_URL)) {
-            return;
+        $path = PublicMediaUrl::storagePathForDelete($this->image);
+        if ($path) {
+            Storage::disk('public')->delete($path);
         }
-        if (str_starts_with($this->image, 'themes/')) {
-            return;
-        }
-        Storage::disk('public')->delete($this->image);
     }
 }

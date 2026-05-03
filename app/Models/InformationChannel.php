@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -71,18 +72,14 @@ class InformationChannel extends Model
      */
     public function getImageUrlAttribute(): ?string
     {
-        if (!$this->image) {
-            return null;
-        }
+        return PublicMediaUrl::resolve($this->image);
+    }
 
-        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
-            return $this->image;
+    public function deleteStoredImageFile(): void
+    {
+        $path = PublicMediaUrl::storagePathForDelete($this->image);
+        if ($path) {
+            Storage::disk('public')->delete($path);
         }
-
-        if (str_starts_with($this->image, 'themes/')) {
-            return asset($this->image);
-        }
-
-        return Storage::disk('public')->url($this->image);
     }
 }

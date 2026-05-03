@@ -108,12 +108,17 @@ class InformationChannelController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'target_audience' => 'required|in:all,distributor,customer',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('information-channels', 'public');
+        }
 
         InformationChannel::create($validated);
 
@@ -137,12 +142,18 @@ class InformationChannelController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'target_audience' => 'required|in:all,distributor,customer',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+
+        if ($request->hasFile('image')) {
+            $informationChannel->deleteStoredImageFile();
+            $validated['image'] = $request->file('image')->store('information-channels', 'public');
+        }
 
         $informationChannel->update($validated);
 
@@ -154,6 +165,7 @@ class InformationChannelController extends Controller
      */
     public function destroy(InformationChannel $informationChannel)
     {
+        $informationChannel->deleteStoredImageFile();
         $informationChannel->delete();
 
         return redirect()->route('admin.information-channels.index')
