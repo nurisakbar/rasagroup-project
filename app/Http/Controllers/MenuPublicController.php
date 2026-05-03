@@ -13,22 +13,17 @@ class MenuPublicController extends Controller
     /**
      * Daftar menu paket yang aktif & dalam jadwal tampil.
      */
-    public function index(Request $request): View
+    public function index(): View
     {
-        $base = Menu::query()
+        $menus = Menu::query()
             ->where('status_aktif', true)
             ->currentlyVisible()
             ->with(['details.product'])
-            ->withCount('details');
+            ->withCount('details')
+            ->orderBy('nama_menu')
+            ->paginate(12);
 
-        $q = trim((string) $request->get('q', ''));
-        if ($q !== '') {
-            $base->where('nama_menu', 'like', '%'.$q.'%');
-        }
-
-        $menus = (clone $base)->orderBy('nama_menu')->paginate(12)->withQueryString();
-
-        return view('themes.nest.menu.index', compact('menus', 'q'));
+        return view('themes.nest.menu.index', compact('menus'));
     }
 
     /**

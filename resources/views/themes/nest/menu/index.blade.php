@@ -22,31 +22,10 @@
 
     <div class="page-content pt-50 pb-50">
         <div class="container">
-            <div class="row mb-40">
-                <div class="col-lg-8 col-md-7">
-                    <div class="section-title style-2 wow animate__animated animate__fadeIn mb-0">
-                        <h3>Daftar paket</h3>
-                        <p class="mb-0">{{ $menus->total() }} menu tersedia.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-5 mt-30 mt-md-0">
-                    <form action="{{ route('menus.index') }}" method="GET" class="d-flex w-100 align-items-stretch">
-                        <input type="text" name="q" value="{{ $q }}" class="form-control mr-10 flex-grow-1" placeholder="Cari nama menu…" />
-                        <button type="submit" class="btn btn-default" aria-label="Cari"><i class="fi-rs-search"></i></button>
-                    </form>
-                </div>
-            </div>
-
             @if($menus->isEmpty())
                 <div class="row">
                     <div class="col-12 text-center py-5">
-                        <p class="text-muted font-lg">
-                            @if($q !== '')
-                                Tidak ada menu yang cocok dengan pencarian tersebut.
-                            @else
-                                Belum ada menu yang ditampilkan saat ini. Silakan kembali lagi nanti.
-                            @endif
-                        </p>
+                        <p class="text-muted font-lg">Belum ada menu yang ditampilkan saat ini. Silakan kembali lagi nanti.</p>
                         <a href="{{ route('home') }}" class="btn btn-sm mt-20">Kembali ke beranda <i class="fi-rs-arrow-small-right"></i></a>
                     </div>
                 </div>
@@ -56,6 +35,7 @@
                         @include('themes.nest.partials.menu-card', [
                             'menu' => $menu,
                             'delay' => $loop->first ? '0' : '.' . min($loop->index % 5, 4) . 's',
+                            'columnClass' => 'col-xl-3 col-lg-4 col-md-6 mb-50',
                         ])
                     @endforeach
                 </div>
