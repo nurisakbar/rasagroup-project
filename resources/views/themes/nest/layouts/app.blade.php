@@ -916,6 +916,35 @@
             color: #6A1B1B !important;
         }
 
+        /* Menu paket: beranda (Menu Hari Ini) + /menus — gambar kartu tinggi seragam (timpa main.css Nest) */
+        .product-cart-wrap.style-2.rg-menu-hari-ini-card .product-img-action-wrap {
+            overflow: hidden !important;
+            border-radius: 15px 15px 0 0 !important;
+            max-height: none !important;
+        }
+        .product-cart-wrap.style-2.rg-menu-hari-ini-card .rg-menu-hari-ini-card__media,
+        .product-cart-wrap.style-2.rg-menu-hari-ini-card .rg-menu-hari-ini-card__media-link {
+            display: block !important;
+            width: 100% !important;
+            height: 230px !important;
+        }
+        .product-cart-wrap.style-2.rg-menu-hari-ini-card .product-img-action-wrap img,
+        .product-cart-wrap.style-2.rg-menu-hari-ini-card .rg-menu-hari-ini-card__media img {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: none !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+            border-radius: 15px !important;
+        }
+        @media (max-width: 575px) {
+            .product-cart-wrap.style-2.rg-menu-hari-ini-card .rg-menu-hari-ini-card__media,
+            .product-cart-wrap.style-2.rg-menu-hari-ini-card .rg-menu-hari-ini-card__media-link {
+                height: 200px !important;
+            }
+        }
+
         .add-cart .add, .add-to-cart-form .add {
             background-color: #6A1B1B !important;
             color: #fff !important;

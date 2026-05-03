@@ -1,20 +1,16 @@
 {{-- Sama struktur dengan kartu "Penawaran Hari Ini" di home (product-cart-wrap style-2). Variabel: $menu, $delay (optional) --}}
 @php
     $delay = $delay ?? '0';
-    $img = $menu->image_url
-        ? (\Illuminate\Support\Str::startsWith($menu->image_url, ['http://', 'https://'])
-            ? $menu->image_url
-            : url($menu->image_url))
-        : asset('themes/nest-frontend/assets/imgs/banner/banner-5.png');
+    $img = $menu->image_url ?: asset('themes/nest-frontend/assets/imgs/banner/banner-5.png');
     $total = $menu->bundledPrice();
     $detailUrl = route('menus.show', $menu->slug);
 @endphp
 <div class="col-xl-3 col-lg-4 col-md-6">
-    <div class="product-cart-wrap style-2 position-relative wow animate__animated animate__fadeInUp" data-wow-delay="{{ $delay }}">
+    <div class="product-cart-wrap style-2 rg-menu-hari-ini-card position-relative wow animate__animated animate__fadeInUp" data-wow-delay="{{ $delay }}">
         <div class="product-img-action-wrap">
-            <div class="product-img">
-                <a href="{{ $detailUrl }}" class="position-relative z-2">
-                    <img src="{{ $img }}" alt="{{ $menu->nama_menu }}" />
+            <div class="product-img rg-menu-hari-ini-card__media">
+                <a href="{{ $detailUrl }}" class="position-relative z-2 rg-menu-hari-ini-card__media-link">
+                    <img src="{{ $img }}" alt="{{ $menu->nama_menu }}" loading="lazy" />
                 </a>
             </div>
         </div>
