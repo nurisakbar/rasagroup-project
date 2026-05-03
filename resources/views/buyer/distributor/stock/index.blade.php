@@ -39,6 +39,15 @@
                                     </div>
                                 </div>
                                 <div class="card-body p-4">
+                                    <div class="d-flex flex-column flex-md-row flex-md-wrap align-items-stretch align-items-md-center justify-content-between gap-3 mb-4">
+                                        <div class="flex-grow-1 distributor-stock-search">
+                                            <label for="stock-search-input" class="form-label font-sm fw-bold text-muted mb-1">Cari produk</label>
+                                            <div class="input-group input-group-distributor-search">
+                                                <span class="input-group-text border-end-0 bg-white"><i class="fi-rs-search text-muted"></i></span>
+                                                <input type="search" id="stock-search-input" class="form-control border-start-0" placeholder="Nama atau kode produk..." autocomplete="off" aria-label="Cari produk">
+                                            </div>
+                                        </div>
+                                    </div>
                                     <!-- Filter Tabs -->
                                     <div class="nav-tabs-wrap mb-4">
                                         <ul class="nav nav-pills dash-tabs" id="stock-filter-tabs">
@@ -129,20 +138,34 @@
     #stock-table tbody tr.stock-row-low { background-color: rgba(106, 27, 27, 0.07); }
     #stock-table tbody tr.stock-row-low:hover { background-color: rgba(106, 27, 27, 0.13); }
     .page-link { border-radius: 5px !important; margin: 0 3px; color: #253D4E; border-color: #f2f2f2; font-size: 13px; }
-    .page-item.active .page-link { background-color: #3BB77E; border-color: #3BB77E; color: #fff; }
+    .page-item.active .page-link { background-color: #6A1B1B; border-color: #6A1B1B; color: #fff; }
     
     .dash-tabs .nav-link { 
         background-color: #f7f8f9; color: #253D4E; border-radius: 30px; padding: 8px 20px; font-weight: 600; font-size: 13px; margin-right: 10px; border: 1px solid #f2f2f2;
         transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
     .dash-tabs .nav-link:hover:not(.active) { background-color: #eceff1; border-color: #dde1e4; color: #1a2f3d; }
-    .dash-tabs .nav-link.active { background-color: #3BB77E; color: #fff; border-color: #3BB77E; }
+    .dash-tabs .nav-link.active { background-color: #6A1B1B; color: #fff; border-color: #6A1B1B; }
     
     .badge.bg-red { background-color: #fd3d11 !important; color: white; }
     .badge.badge-stock-low-maroon { background-color: #6A1B1B !important; color: #fff !important; }
     .text-stock-low-maroon { color: #6A1B1B !important; font-weight: 600; }
     .badge.bg-yellow { background-color: #ffc107 !important; color: #212529; }
     .badge.bg-green { background-color: #3bb77e !important; color: white; }
+
+    .input-group-distributor-search .form-control:focus {
+        border-color: rgba(106, 27, 27, 0.35);
+        box-shadow: 0 0 0 3px rgba(106, 27, 27, 0.08);
+    }
+    .input-group-distributor-search .input-group-text {
+        border-color: #ececec;
+        border-radius: 12px 0 0 12px;
+    }
+    .input-group-distributor-search .form-control {
+        border-color: #ececec;
+        border-radius: 0 12px 12px 0;
+        min-height: 44px;
+    }
 </style>
 @endpush
 
@@ -153,6 +176,7 @@
 <script>
 $(document).ready(function() {
     var stockFilter = '';
+    var searchDebounce;
 
     var table = $('#stock-table').DataTable({
         processing: true,
@@ -187,6 +211,14 @@ $(document).ready(function() {
         $(this).addClass('active');
         stockFilter = $(this).data('filter');
         table.draw();
+    });
+
+    $('#stock-search-input').on('keyup input', function() {
+        var val = $(this).val();
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function() {
+            table.search(val).draw();
+        }, 280);
     });
 
     // Handle modal trigger

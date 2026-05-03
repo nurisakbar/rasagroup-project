@@ -53,7 +53,15 @@
                 </div>
             </div>
             <div class="detail-extralink mb-30">
-                <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST">
+                <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST"
+                    @if($product->hasDualUnitOrdering())
+                        data-dual-uom="1"
+                        data-product-name="{{ $product->display_name }}"
+                        data-unit-label="{{ $product->unit }}"
+                        data-large-unit-label="{{ $product->large_unit }}"
+                        data-units-per-large="{{ (int) $product->units_per_large }}"
+                    @endif
+                >
                     @csrf
                     <div class="detail-qty border radius">
                         <a href="#" class="qty-down"><i class="fi-rs-angle-small-down"></i></a>
@@ -61,6 +69,9 @@
                         <a href="#" class="qty-up"><i class="fi-rs-angle-small-up"></i></a>
                     </div>
                     <input type="hidden" name="warehouse_id" value="{{ $selectedHubId }}">
+                    @if($product->hasDualUnitOrdering())
+                        <input type="hidden" name="uom" value="base" class="js-cart-uom-field">
+                    @endif
                     <div class="product-extra-link2 mt-15">
                         <button type="submit" class="btn button-add-to-cart">
                             <i class="fi-rs-shopping-cart"></i> Tambah ke Keranjang

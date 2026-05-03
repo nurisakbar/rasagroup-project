@@ -523,6 +523,8 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
+                    'order_uom' => $cart->order_uom,
+                    'quantity_ordered' => $cart->quantity_ordered,
                     'price' => $productPrice,
                     'subtotal' => $productPrice * $cart->quantity,
                 ]);

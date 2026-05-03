@@ -15,7 +15,18 @@
         </div>
         <div class="shopping-cart-title">
             <h4><a href="{{ route('products.show', $cartItem->product) }}">{{ Str::limit($cartItem->product->display_name, 15) }}</a></h4>
-            <h4><span>{{ $cartItem->quantity }} × </span>Rp {{ number_format($cartItem->product->price, 0, ',', '.') }}</h4>
+            <h4>
+                <span>
+                    @if($cartItem->showsLargeUnitInCart())
+                        {{ $cartItem->cartQuantityInputValue() }} {{ $cartItem->cartQuantityUnitLabel() }}
+                        <span class="text-muted font-xs">({{ number_format($cartItem->quantity) }} {{ $cartItem->product->unit }})</span>
+                    @else
+                        {{ $cartItem->quantity }}@if($cartItem->product->unit) {{ $cartItem->product->unit }}@endif
+                    @endif
+                    ×
+                </span>
+                Rp {{ number_format($cartItem->displayUnitPrice(), 0, ',', '.') }}
+            </h4>
         </div>
         <div class="shopping-cart-delete">
             <form action="{{ route('cart.destroy', $cartItem) }}" method="POST" class="delete-cart-item-form">

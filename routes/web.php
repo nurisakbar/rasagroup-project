@@ -4,6 +4,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/menus', [App\Http\Controllers\MenuPublicController::class, 'index'])->name('menus.index');
+Route::get('/menu/{slug}', [App\Http\Controllers\MenuPublicController::class, 'show'])->name('menus.show');
+Route::post('/menu/{slug}/add-composition-to-cart', [App\Http\Controllers\MenuPublicController::class, 'addCompositionToCart'])->name('menus.add-composition-to-cart');
 Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
 Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
 Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
@@ -83,6 +86,7 @@ Route::middleware(['auth', 'wa.verified'])->group(function () {
     Route::get('/checkout/calculate-shipping', [App\Http\Controllers\CheckoutController::class, 'calculateShipping'])->name('checkout.calculate-shipping');
     Route::get('/checkout/expedition-services', [App\Http\Controllers\CheckoutController::class, 'getExpeditionServices'])->name('checkout.expedition-services');
     Route::get('/checkout/success/{order}', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/success/{order}/payment-status', [App\Http\Controllers\CheckoutController::class, 'successPaymentStatus'])->name('checkout.success.payment-status');
 });
 
 // Buyer Routes

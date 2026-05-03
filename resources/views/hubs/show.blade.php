@@ -3,78 +3,45 @@
 @section('title', $warehouse->name . ' - ' . config('app.name'))
 
 @section('content')
-<div class="page-header breadcrumb-wrap">
+<div class="page-header mt-30 mb-50 rg-archive-header-maroon">
     <div class="container">
-        <div class="breadcrumb">
-            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
-            <span></span> <a href="{{ route('hubs.index') }}">Hub & Distributor</a>
-            <span></span> {{ $warehouse->name }}
+        <div class="archive-header">
+            <div class="row align-items-start">
+                <div class="col-xl-8">
+                    <p class="font-sm mb-10 text-uppercase" style="color: rgba(255,255,255,0.85); letter-spacing: 0.06em;">Hub &amp; Distributor</p>
+                    <h1 class="mb-15">{{ $warehouse->name }}</h1>
+                    <p class="font-md mb-15" style="color: rgba(255,255,255,0.92);">{{ $warehouse->full_location }}</p>
+                    <p class="font-sm mb-20" style="color: rgba(255,255,255,0.88); max-width: 720px;">{{ Str::limit($warehouse->description ?? 'Hub resmi kami yang menyediakan berbagai produk berkualitas untuk kebutuhan Anda di wilayah ini.', 220) }}</p>
+                    <div class="breadcrumb">
+                        <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+                        <span></span> <a href="{{ route('hubs.index') }}">Hub &amp; Distributor</a>
+                        <span></span> {{ $warehouse->name }}
+                    </div>
+                </div>
+                <div class="col-xl-4 text-xl-end mt-30 mt-xl-0">
+                    <ul class="list-unstyled font-sm text-start text-xl-end mb-20" style="color: rgba(255,255,255,0.92);">
+                        <li class="mb-15">
+                            <strong>Alamat</strong><br>
+                            <span class="font-xs">{{ $warehouse->address ?? $warehouse->full_location }}</span>
+                        </li>
+                        @if($warehouse->phone)
+                        <li>
+                            <strong>Telepon</strong><br>
+                            {{ $warehouse->phone }}
+                        </li>
+                        @endif
+                    </ul>
+                    <form action="{{ route('hubs.select') }}" method="POST" class="d-inline-block w-100 text-xl-end">
+                        @csrf
+                        <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
+                        <button type="submit" class="btn btn-standar-utama btn-sm">Pilih Hub Ini <i class="fi-rs-check"></i></button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 <div class="container mb-30">
-    <div class="archive-header-3 mt-30 mb-80" style="background-image: url({{ asset('themes/nest-frontend/assets/imgs/vendor/vendor-header-bg.png') }})">
-        <div class="archive-header-3-inner">
-            <div class="vendor-logo mr-50">
-                <img src="{{ asset('themes/nest-frontend/assets/imgs/vendor/vendor-17.png') }}" alt="{{ $warehouse->name }}" />
-            </div>
-            <div class="vendor-content">
-                <div class="product-category">
-                    <span class="text-muted">Hub & Distributor</span>
-                </div>
-                <h3 class="mb-5 text-white"><a href="#" class="text-white">{{ $warehouse->name }}</a></h3>
-                <div class="product-rate-cover mb-15">
-                    <div class="product-rate d-inline-block">
-                        <div class="product-rating" style="width: 100%"></div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-lg-4">
-                        <div class="vendor-des mb-15">
-                            <p class="font-sm text-white">{{ Str::limit($warehouse->description ?? 'Hub resmi kami yang menyediakan berbagai produk berkualitas untuk kebutuhan Anda di wilayah ini.', 150) }}</p>
-                        </div>
-                    </div>
-                    <div class="col-lg-3">
-                        <div class="vendor-info text-white mb-15">
-                            <ul class="font-sm">
-                                <li><img class="mr-5" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>{{ $warehouse->address ?? $warehouse->full_location }}</span></li>
-                                @if($warehouse->phone)
-                                <li><img class="mr-5" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon:</strong><span>{{ $warehouse->phone }}</span></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="follow-social">
-                            <h6 class="mb-15 text-white">Hubungi Kami</h6>
-                            <ul class="social-network mb-20">
-                                <li class="hover-up">
-                                    <a href="#">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/social-tw.svg') }}" alt="" />
-                                    </a>
-                                </li>
-                                <li class="hover-up">
-                                    <a href="#">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/social-fb.svg') }}" alt="" />
-                                    </a>
-                                </li>
-                                <li class="hover-up">
-                                    <a href="#">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/social-insta.svg') }}" alt="" />
-                                    </a>
-                                </li>
-                            </ul>
-                            <form action="{{ route('hubs.select') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
-                                <button type="submit" class="btn btn-sm btn-light text-brand">Pilih Hub Ini <i class="fi-rs-check"></i></button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="row flex-row-reverse">
         <div class="col-lg-4-5">
             <div class="shop-product-fillter">

@@ -157,6 +157,14 @@
                                 <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua Brand...</span></div>
                             </div>
                         </div>
+                        @php
+                            $distributorMainMenuUrl = ! auth()->check()
+                                ? route('login')
+                                : (auth()->user()->isDistributor()
+                                    ? route('buyer.dashboard')
+                                    : route('buyer.distributor.apply'));
+                            $distributorMainMenuActive = request()->routeIs('buyer.dashboard') || request()->routeIs('buyer.distributor.apply');
+                        @endphp
                         <div class="main-menu main-menu-padding-1 main-menu-lh-2 d-none d-lg-block font-heading">
                             <nav>
                                 <ul>
@@ -168,6 +176,9 @@
                                     </li>
                                     <li>
                                         <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">Promo</a>
+                                    </li>
+                                    <li>
+                                        <a class="{{ request()->routeIs('menus.*') ? 'active' : '' }}" href="{{ route('menus.index') }}">Menu Paket</a>
                                     </li>
                                     {{-- <li>
                                         <a class="{{ request()->routeIs('hubs.*') ? 'active' : '' }}" href="{{ route('hubs.index') }}">Distributor</a>
@@ -181,7 +192,7 @@
                                     @auth
                                         @if(Auth::user()->isDistributor())
                                             <li>
-                                                <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                                <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
                                             </li>
                                         @elseif(Auth::user()->isDriippreneur())
                                             <li>
@@ -192,7 +203,7 @@
                                                 <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
                                             </li>
                                             <li>
-                                                <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                                <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
                                             </li>
                                         @endif
                                     @else
@@ -200,7 +211,7 @@
                                             <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
                                         </li>
                                         <li>
-                                            <a class="{{ request()->routeIs('distributor.manage-orders.index') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">Distributor</a>
+                                            <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
                                         </li>
                                     @endauth
                                 </ul>

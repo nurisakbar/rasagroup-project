@@ -84,29 +84,22 @@
                         </thead>
                         <tbody>
                             @foreach($carts as $cart)
-                                <tr class="pt-30">
+                                <tr class="pt-30" data-cart-row="{{ $cart->id }}">
                                     <td class="custome-checkbox pl-30">
                                         <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox{{ $loop->iteration }}" value="">
                                         <label class="form-check-label" for="exampleCheckbox{{ $loop->iteration }}"></label>
                                     </td>
-                                    <td class="image product-thumbnail pt-40">
+                                    <td class="image product-thumbnail pt-40 pr-15">
                                         <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="#" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
                                     </td>
-                                    <td class="product-des product-name">
+                                    <td class="product-des product-name pl-15">
                                         <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }} {{ $cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : '' }}</a></h6>
-                                        <div class="product-rate-cover">
-                                            <div class="product-rate d-inline-block">
-                                                <div class="product-rating" style="width:90%">
-                                                </div>
-                                            </div>
-                                            <span class="font-small ml-5 text-muted"> (4.0)</span>
-                                        </div>
                                         @if($cart->product->weight)
                                         <small class="text-muted">Berat: {{ $cart->product->formatted_weight }}</small>
                                         @endif
                                     </td>
                                     <td class="price" data-title="Harga">
-                                        <h4 class="text-body">Rp {{ number_format($cart->product->price, 0, ',', '.') }} </h4>
+                                        <h4 class="text-body js-cart-unit-price">Rp {{ number_format($cart->displayUnitPrice(), 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="text-center detail-info" data-title="Jumlah">
                                         <div class="detail-extralink mr-15">
@@ -115,14 +108,16 @@
                                                 @method('PUT')
                                                 <div class="detail-qty border radius">
                                                     <a href="#" class="qty-down"><i class="fi-rs-angle-small-down"></i></a>
-                                                    <input type="text" name="quantity" class="qty-val" value="{{ $cart->quantity }}" min="1">
+                                                    <input type="text" name="quantity" class="qty-val" value="{{ $cart->cartQuantityInputValue() }}" min="1" inputmode="numeric" title="Jumlah dalam {{ $cart->cartQuantityUnitLabel() }}">
                                                     <a href="#" class="qty-up"><i class="fi-rs-angle-small-up"></i></a>
                                                 </div>
                                             </form>
+                                            <span class="d-block font-xs text-muted mt-5">{{ $cart->cartQuantityUnitLabel() }}</span>
+                                            <span class="d-block font-xs text-muted js-cart-base-equiv" style="{{ $cart->showsLargeUnitInCart() ? '' : 'display:none;' }}">@if($cart->showsLargeUnitInCart())(= {{ number_format($cart->quantity) }} {{ $cart->product->unit }})@endif</span>
                                         </div>
                                     </td>
                                     <td class="price" data-title="Subtotal">
-                                        <h4 class="text-brand">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
+                                        <h4 class="text-brand js-cart-line-subtotal">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="action text-center" data-title="Hapus">
                                         <form action="{{ route('cart.destroy', $cart) }}" method="POST">
@@ -150,7 +145,7 @@
                                         <h6 class="text-muted">Subtotal</h6>
                                     </td>
                                     <td class="cart_total_amount">
-                                        <h4 class="text-brand text-end">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                        <h4 class="text-brand text-end js-cart-page-total">Rp {{ number_format($total, 0, ',', '.') }}</h4>
                                     </td>
                                 </tr>
                                 <tr>
@@ -163,7 +158,7 @@
                                         <h6 class="text-muted">Total</h6>
                                     </td>
                                     <td class="cart_total_amount">
-                                        <h4 class="text-brand text-end">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                        <h4 class="text-brand text-end js-cart-page-total">Rp {{ number_format($total, 0, ',', '.') }}</h4>
                                     </td>
                                 </tr>
                             </tbody>
@@ -196,22 +191,134 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        // Auto-submit form when quantity changes via buttons
-        $('.qty-up, .qty-down').on('click', function(e) {
-            e.preventDefault();
-            // The shop.js handles the increment/decrement visual
-            // We need to wait a tiny bit for the input value to update, then submit
-            var form = $(this).closest('form');
-            setTimeout(function() {
-                form.submit();
-            }, 300); // Increased delay slightly to ensure value update
-        });
+    (function () {
+        function csrfToken() {
+            var m = document.querySelector('meta[name="csrf-token"]');
+            return m ? m.getAttribute('content') : '';
+        }
 
-        // Also submit on manual input change
-        $('.qty-val').on('change', function() {
-            $(this).closest('form').submit();
+        function updateCartQtyAjax(form, input) {
+            var action = form.getAttribute('action');
+            var qty = parseInt(String(input.value).replace(/\D/g, ''), 10);
+            if (!qty || qty < 1) {
+                qty = 1;
+                input.value = 1;
+            }
+            var body = '_token=' + encodeURIComponent(csrfToken()) + '&quantity=' + encodeURIComponent(qty);
+            var row = form.closest('tr');
+            if (row) {
+                row.classList.add('opacity-50');
+            }
+            fetch(action, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken()
+                },
+                body: body,
+                credentials: 'same-origin'
+            })
+                .then(function (r) {
+                    return r.json().then(function (j) {
+                        return { ok: r.ok, status: r.status, body: j };
+                    });
+                })
+                .then(function (res) {
+                    if (row) {
+                        row.classList.remove('opacity-50');
+                    }
+                    if (!res.ok || !res.body.success) {
+                        var msg = (res.body && (res.body.message || res.body.error)) || 'Gagal memperbarui keranjang.';
+                        if (res.body && res.body.errors) {
+                            var parts = [];
+                            Object.keys(res.body.errors).forEach(function (k) {
+                                parts.push(res.body.errors[k][0]);
+                            });
+                            if (parts.length) {
+                                msg = parts.join(' ');
+                            }
+                        }
+                        if (typeof window.showShopToast === 'function') {
+                            window.showShopToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+                        return;
+                    }
+                    var line = res.body.line;
+                    input.value = line.quantity_input;
+                    if (row) {
+                        var unitEl = row.querySelector('.js-cart-unit-price');
+                        if (unitEl && line.display_unit_price_formatted) {
+                            unitEl.textContent = line.display_unit_price_formatted;
+                        }
+                        var subEl = row.querySelector('.js-cart-line-subtotal');
+                        if (subEl && line.line_subtotal_formatted) {
+                            subEl.textContent = line.line_subtotal_formatted;
+                        }
+                        var eq = row.querySelector('.js-cart-base-equiv');
+                        if (eq) {
+                            if (line.shows_base_equiv && line.base_equiv_formatted) {
+                                eq.textContent = line.base_equiv_formatted;
+                                eq.style.display = 'block';
+                            } else {
+                                eq.textContent = '';
+                                eq.style.display = 'none';
+                            }
+                        }
+                    }
+                    document.querySelectorAll('.js-cart-page-total').forEach(function (el) {
+                        el.textContent = res.body.cart_total_formatted;
+                    });
+                    if (typeof res.body.cart_count !== 'undefined' && window.jQuery) {
+                        window.jQuery('.header-action-icon-2 .mini-cart-icon .pro-count').text(res.body.cart_count);
+                    }
+                    if (res.body.mini_cart_html && window.jQuery) {
+                        window.jQuery('.cart-dropdown-wrap.cart-dropdown-hm2:not(.account-dropdown)').html(res.body.mini_cart_html);
+                    }
+                })
+                .catch(function () {
+                    if (row) {
+                        row.classList.remove('opacity-50');
+                    }
+                    if (typeof window.showShopToast === 'function') {
+                        window.showShopToast('Koneksi gagal. Coba lagi.', 'error');
+                    } else {
+                        alert('Koneksi gagal.');
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.cart-update-form').forEach(function (form) {
+                var input = form.querySelector('.qty-val');
+                if (!input) {
+                    return;
+                }
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    updateCartQtyAjax(form, input);
+                });
+                form.querySelectorAll('.qty-up, .qty-down').forEach(function (btn) {
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var v = parseInt(String(input.value).replace(/\D/g, ''), 10) || 1;
+                        if (btn.classList.contains('qty-up')) {
+                            v += 1;
+                        } else {
+                            v = Math.max(1, v - 1);
+                        }
+                        input.value = v;
+                        updateCartQtyAjax(form, input);
+                    });
+                });
+                input.addEventListener('change', function () {
+                    updateCartQtyAjax(form, input);
+                });
+            });
         });
-    });
+    })();
 </script>
 @endpush

@@ -4,36 +4,25 @@
 
 @section('content')
     <main class="main pages">
-        <div class="page-header breadcrumb-wrap">
+        <div class="page-header mt-30 mb-50 rg-archive-header-maroon">
             <div class="container">
-                <div class="breadcrumb">
-                    <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
-                    <span></span> Distributor
-                </div>
-            </div>
-        </div>
-        <div class="page-content pt-50">
-<div class="container mb-30">
-    <div class="archive-header-3 mt-30 mb-80" style="background-image: url({{ asset('themes/nest-frontend/assets/imgs/vendor/vendor-header-bg.png') }})">
-        <div class="archive-header-3-inner">
-            <div class="vendor-logo mr-50">
-                <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="Hubs" />
-            </div>
-            <div class="vendor-content">
-                <div class="product-category">
-                    <span class="text-muted">Network</span>
-                </div>
-                <h3 class="mb-5 text-white"><a href="#" class="text-white">Hub & Distributor</a></h3>
-                <div class="row">
-                    <div class="col-lg-7">
-                        <div class="vendor-des mb-15">
-                            <p class="font-sm text-white">Temukan lokasi Hub atau Distributor resmi kami di seluruh wilayah Indonesia. Kami hadir lebih dekat untuk memastikan produk sampai ke tangan Anda dengan kualitas terbaik dan waktu pengiriman yang lebih efisien.</p>
+                <div class="archive-header">
+                    <div class="row align-items-center">
+                        <div class="col-xl-12">
+                            <p class="font-sm mb-10 text-uppercase" style="color: rgba(255,255,255,0.85); letter-spacing: 0.06em;">Network</p>
+                            <h1 class="mb-15">Hub &amp; Distributor</h1>
+                            <p class="font-md mb-20" style="color: rgba(255,255,255,0.92); max-width: 760px;">Temukan lokasi Hub atau Distributor resmi kami di seluruh wilayah Indonesia. Kami hadir lebih dekat untuk memastikan produk sampai ke tangan Anda dengan kualitas terbaik dan waktu pengiriman yang lebih efisien.</p>
+                            <div class="breadcrumb">
+                                <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+                                <span></span> Hub &amp; Distributor
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        <div class="page-content pt-30 pb-50">
+<div class="container mb-30">
     <div class="row flex-row-reverse">
         <div class="col-lg-4-5">
             <div class="shop-product-fillter">
@@ -42,7 +31,7 @@
                 </div>
                 <div class="sort-by-product-area">
                     <div class="sort-by-cover mr-10">
-                        <button type="button" class="btn btn-xs btn-outline-primary" id="btn-detect-location">
+                        <button type="button" class="btn btn-xs btn-standar-outline" id="btn-detect-location">
                             <i class="fi-rs-location mr-5"></i> Deteksi Hub Terdekat
                         </button>
                     </div>
@@ -77,7 +66,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-xs w-100">Terapkan Filter</button>
+                                <button type="submit" class="btn btn-sm w-100 btn-standar-utama">Terapkan Filter</button>
                             </form>
                         </div>
                     </div>
@@ -124,7 +113,7 @@
                                 </ul>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ route('hubs.show', $warehouse) }}" class="btn btn-xs btn-outline-primary">Detail <i class="fi-rs-arrow-small-right"></i></a>
+                                <a href="{{ route('hubs.show', $warehouse) }}" class="btn btn-xs btn-standar-outline">Detail <i class="fi-rs-arrow-small-right"></i></a>
                                 <form action="{{ route('hubs.select') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
@@ -166,7 +155,7 @@
             <div class="sidebar-widget widget-category-2 mb-30">
                 <h5 class="section-title style-1 mb-30">Filter Wilayah</h5>
                 <ul>
-                    @foreach($provinces->take(10) as $prov)
+                    @foreach($provinces as $prov)
                     <li>
                         <a href="{{ route('hubs.index', ['province_id' => $prov->id]) }}">
                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />{{ $prov->name }}

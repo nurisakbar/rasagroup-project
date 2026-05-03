@@ -14,20 +14,32 @@ use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
-    public function index()
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Cart>
+     */
+    protected function currentRegularCarts()
     {
         if (Auth::check()) {
-            $carts = Cart::with(['product', 'warehouse'])
+            return Cart::with(['product', 'warehouse'])
                 ->where('user_id', Auth::id())
                 ->where('cart_type', 'regular')
                 ->get();
-        } else {
-            $sessionId = session()->getId();
-            $carts = Cart::with(['product', 'warehouse'])
-                ->where('session_id', $sessionId)
-                ->where('cart_type', 'regular')
-                ->get();
         }
+
+        return Cart::with(['product', 'warehouse'])
+            ->where('session_id', session()->getId())
+            ->where('cart_type', 'regular')
+            ->get();
+    }
+
+    protected function wantsJsonCartUpdate(Request $request): bool
+    {
+        return $request->ajax() || $request->wantsJson();
+    }
+
+    public function index()
+    {
+        $carts = $this->currentRegularCarts();
 
         $total = $carts->sum(function ($cart) {
             return $cart->product->price * $cart->quantity;
@@ -53,23 +65,89 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Check stock availability if warehouse is set
+        $cart->load('product');
+        $product = $cart->product;
+        $qtyInput = (int) $request->quantity;
+        $newBaseQty = ($cart->showsLargeUnitInCart() && $product && $product->hasDualUnitOrdering())
+            ? $product->orderedQuantityToBase($qtyInput, 'large')
+            : $qtyInput;
+
+        // Check stock availability if warehouse is set (stok selalu per satuan terkecil)
         if ($cart->warehouse_id) {
             $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
                 ->where('product_id', $cart->product_id)
                 ->first();
-            
-            $availableStock = $stock ? $stock->stock : 0;
-            
-            if ($request->quantity > $availableStock) {
-                return back()->with('error', "Stock tidak mencukupi. Tersedia: {$availableStock} unit.");
+
+            $availableStock = $stock ? (int) $stock->stock : 0;
+
+            if ($newBaseQty > $availableStock) {
+                if ($cart->showsLargeUnitInCart() && $product && $product->hasDualUnitOrdering()) {
+                    $per = max(1, $product->unitsPerLargeEffective());
+                    $maxLarge = intdiv($availableStock, $per);
+                    $msg = "Stock tidak mencukupi. Maksimal {$maxLarge} {$product->large_unit} (tersedia {$availableStock} {$product->unit}).";
+
+                    if ($this->wantsJsonCartUpdate($request)) {
+                        return response()->json(['success' => false, 'message' => $msg], 422);
+                    }
+
+                    return back()->with('error', $msg);
+                }
+
+                $msg = "Stock tidak mencukupi. Tersedia: {$availableStock} unit.";
+
+                if ($this->wantsJsonCartUpdate($request)) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+
+                return back()->with('error', $msg);
             }
         }
 
-        $cart->quantity = $request->quantity;
+        $cart->quantity = $newBaseQty;
+        $cart->syncOrderedMetadataFromBaseQuantity();
         $cart->save();
 
+        if ($this->wantsJsonCartUpdate($request)) {
+            return $this->cartQuantityUpdateJsonResponse($cart);
+        }
+
         return back()->with('success', 'Keranjang diperbarui.');
+    }
+
+    protected function cartQuantityUpdateJsonResponse(Cart $cart): \Illuminate\Http\JsonResponse
+    {
+        $cart->refresh()->load('product');
+        $carts = $this->currentRegularCarts();
+        $total = $carts->sum(function ($c) {
+            return $c->product->price * $c->quantity;
+        });
+
+        $product = $cart->product;
+        $lineSubtotal = (float) ($product->price * $cart->quantity);
+        $cartCountSum = (int) $carts->sum('quantity');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Keranjang diperbarui.',
+            'cart_count' => $cartCountSum,
+            'line' => [
+                'id' => $cart->id,
+                'quantity_input' => $cart->cartQuantityInputValue(),
+                'quantity_unit_label' => $cart->cartQuantityUnitLabel(),
+                'display_unit_price' => (float) $cart->displayUnitPrice(),
+                'display_unit_price_formatted' => 'Rp '.number_format($cart->displayUnitPrice(), 0, ',', '.'),
+                'line_subtotal' => $lineSubtotal,
+                'line_subtotal_formatted' => 'Rp '.number_format($lineSubtotal, 0, ',', '.'),
+                'quantity_base' => (int) $cart->quantity,
+                'shows_base_equiv' => $cart->showsLargeUnitInCart(),
+                'base_equiv_formatted' => $cart->showsLargeUnitInCart() && $product
+                    ? '(= '.number_format($cart->quantity).' '.$product->unit.')'
+                    : null,
+            ],
+            'cart_total' => (float) $total,
+            'cart_total_formatted' => 'Rp '.number_format($total, 0, ',', '.'),
+            'mini_cart_html' => view('themes.nest.partials.mini-cart')->render(),
+        ]);
     }
 
     public function destroy(Cart $cart)
@@ -157,141 +235,23 @@ class CartController extends Controller
             'warehouse_name' => $warehouse->name,
         ]);
 
-        // Check stock availability
-        $stock = WarehouseStock::where('warehouse_id', $warehouseId)
-            ->where('product_id', $product->id)
-            ->first();
-
-        $availableStock = $stock ? $stock->stock : 0;
-
-        if ($baseQuantity > $availableStock) {
-            $unitLabel = $product->unit ?: 'unit';
-            $this->logCartStore('store: abort insufficient stock', [
-                'base_quantity' => $baseQuantity,
-                'available_stock' => $availableStock,
-                'warehouse_id' => $warehouseId,
+        $merge = $this->mergeRegularCartLine(
+            $product,
+            $warehouse,
+            $baseQuantity,
+            false,
+            $uom,
+            (int) $request->quantity
+        );
+        if (! $merge['ok']) {
+            $this->logCartStore('store: merge failed', [
+                'error' => $merge['error'],
+                'product_id' => $product->id,
             ]);
 
             return $request->ajax()
-                ? response()->json([
-                    'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
-                ], 422)
-                : back()->with('error', "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.");
-        }
-
-        if (Auth::check()) {
-            // Check if cart has items from different warehouse
-            $existingCart = Cart::where('user_id', Auth::id())
-                ->where('cart_type', 'regular')
-                ->whereNotNull('warehouse_id')
-                ->where('warehouse_id', '!=', $warehouseId)
-                ->first();
-
-            if ($existingCart) {
-                $this->logCartStore('store: abort mixed warehouse (auth)', [
-                    'existing_warehouse_id' => $existingCart->warehouse_id,
-                    'requested_warehouse_id' => $warehouseId,
-                ]);
-
-                return back()->with('error', 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.');
-            }
-
-            // Check if same product from same warehouse exists
-            $cart = Cart::where('user_id', Auth::id())
-                ->where('product_id', $product->id)
-                ->where('warehouse_id', $warehouseId)
-                ->where('cart_type', 'regular')
-                ->first();
-
-            if ($cart) {
-                $newQuantity = $cart->quantity + $baseQuantity;
-                if ($newQuantity > $availableStock) {
-                    $this->logCartStore('store: abort merge exceeds stock (auth)', [
-                        'cart_id' => $cart->id,
-                        'new_quantity' => $newQuantity,
-                        'available_stock' => $availableStock,
-                    ]);
-
-                    return $request->ajax()
-                        ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
-                        : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
-                }
-                $cart->quantity = $newQuantity;
-                $cart->save();
-                $this->logCartStore('store: updated line (auth)', [
-                    'cart_id' => $cart->id,
-                    'new_quantity' => $newQuantity,
-                ]);
-            } else {
-                Cart::create([
-                    'user_id' => Auth::id(),
-                    'product_id' => $product->id,
-                    'warehouse_id' => $warehouseId,
-                    'cart_type' => 'regular',
-                    'quantity' => $baseQuantity,
-                ]);
-                $this->logCartStore('store: created line (auth)', [
-                    'warehouse_id' => $warehouseId,
-                    'quantity' => $baseQuantity,
-                ]);
-            }
-        } else {
-            $sessionId = session()->getId();
-            
-            // Check if cart has items from different warehouse
-            $existingCart = Cart::where('session_id', $sessionId)
-                ->where('cart_type', 'regular')
-                ->whereNotNull('warehouse_id')
-                ->where('warehouse_id', '!=', $warehouseId)
-                ->first();
-
-            if ($existingCart) {
-                $this->logCartStore('store: abort mixed warehouse (guest)', [
-                    'existing_warehouse_id' => $existingCart->warehouse_id,
-                    'requested_warehouse_id' => $warehouseId,
-                ]);
-
-                return back()->with('error', 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.');
-            }
-
-            $cart = Cart::where('session_id', $sessionId)
-                ->where('product_id', $product->id)
-                ->where('warehouse_id', $warehouseId)
-                ->where('cart_type', 'regular')
-                ->first();
-
-            if ($cart) {
-                $newQuantity = $cart->quantity + $baseQuantity;
-                if ($newQuantity > $availableStock) {
-                    $this->logCartStore('store: abort merge exceeds stock (guest)', [
-                        'cart_id' => $cart->id,
-                        'new_quantity' => $newQuantity,
-                        'available_stock' => $availableStock,
-                    ]);
-
-                    return $request->ajax()
-                        ? response()->json(['error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit."], 422)
-                        : back()->with('error', "Total quantity melebihi stock. Tersedia: {$availableStock} unit.");
-                }
-                $cart->quantity = $newQuantity;
-                $cart->save();
-                $this->logCartStore('store: updated line (guest)', [
-                    'cart_id' => $cart->id,
-                    'new_quantity' => $newQuantity,
-                ]);
-            } else {
-                Cart::create([
-                    'session_id' => $sessionId,
-                    'product_id' => $product->id,
-                    'warehouse_id' => $warehouseId,
-                    'cart_type' => 'regular',
-                    'quantity' => $baseQuantity,
-                ]);
-                $this->logCartStore('store: created line (guest)', [
-                    'warehouse_id' => $warehouseId,
-                    'quantity' => $baseQuantity,
-                ]);
-            }
+                ? response()->json(['error' => $merge['error']], 422)
+                : back()->with('error', $merge['error']);
         }
 
         $this->logCartStore('store: success', [
@@ -314,6 +274,166 @@ class CartController extends Controller
         }
 
         return back()->with('success', 'Produk "' . $product->display_name . '" berhasil ditambahkan.');
+    }
+
+    /**
+     * Gabungkan baris keranjang reguler (auth/guest) dengan aturan stok & satu warehouse.
+     *
+     * @param  bool  $capToStock  true: tambahkan min(requested, sisa stok); 0 stok = lewati tanpa error
+     * @param  string|null  $orderUom  Satuan input: base|large (default base)
+     * @param  int|null  $quantityOrdered  Jumlah menurut satuan input (increment baris ini); null = pakai konversi dari toAdd (basis)
+     * @param  string|null  $cartOwnerUserId  Paksa keranjang user (mis. API); null = pakai Auth::id() / sesi
+     * @param  string|null  $guestSessionId  Paksa session_id tamu; null = session saat ini
+     * @return array{ok: bool, error: ?string, added: int, partial?: bool}
+     */
+    public function mergeRegularCartLine(
+        Product $product,
+        Warehouse $warehouse,
+        int $requestedBaseQty,
+        bool $capToStock = false,
+        ?string $orderUom = null,
+        ?int $quantityOrdered = null,
+        ?string $cartOwnerUserId = null,
+        ?string $guestSessionId = null
+    ): array {
+        $warehouseId = $warehouse->id;
+
+        $stock = WarehouseStock::where('warehouse_id', $warehouseId)
+            ->where('product_id', $product->id)
+            ->first();
+
+        $availableStock = (int) ($stock ? $stock->stock : 0);
+        $unitLabel = $product->unit ?: 'unit';
+
+        $incomingUom = ($orderUom === 'large') ? 'large' : 'base';
+        $effectiveUserId = $cartOwnerUserId ?? (Auth::check() ? Auth::id() : null);
+        $effectiveSessionId = ($effectiveUserId === null)
+            ? ($guestSessionId ?? session()->getId())
+            : null;
+
+        if ($effectiveUserId !== null) {
+            $existingCart = Cart::with('warehouse')
+                ->where('user_id', $effectiveUserId)
+                ->where('cart_type', 'regular')
+                ->whereNotNull('warehouse_id')
+                ->where('warehouse_id', '!=', $warehouseId)
+                ->first();
+
+            if ($existingCart) {
+                return [
+                    'ok' => false,
+                    'error' => 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.',
+                    'added' => 0,
+                ];
+            }
+
+            $cart = Cart::where('user_id', $effectiveUserId)
+                ->where('product_id', $product->id)
+                ->where('warehouse_id', $warehouseId)
+                ->where('cart_type', 'regular')
+                ->first();
+        } else {
+            $existingCart = Cart::with('warehouse')
+                ->where('session_id', $effectiveSessionId)
+                ->where('cart_type', 'regular')
+                ->whereNotNull('warehouse_id')
+                ->where('warehouse_id', '!=', $warehouseId)
+                ->first();
+
+            if ($existingCart) {
+                return [
+                    'ok' => false,
+                    'error' => 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.',
+                    'added' => 0,
+                ];
+            }
+
+            $cart = Cart::where('session_id', $effectiveSessionId)
+                ->where('product_id', $product->id)
+                ->where('warehouse_id', $warehouseId)
+                ->where('cart_type', 'regular')
+                ->first();
+        }
+
+        $existingQty = $cart ? (int) $cart->quantity : 0;
+        $room = max(0, $availableStock - $existingQty);
+        $toAdd = $capToStock ? min($requestedBaseQty, $room) : $requestedBaseQty;
+
+        if (! $capToStock) {
+            if ($toAdd < 1) {
+                return ['ok' => false, 'error' => 'Jumlah tidak valid.', 'added' => 0];
+            }
+            if ($toAdd > $room) {
+                if ($existingQty > 0) {
+                    return [
+                        'ok' => false,
+                        'error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit.",
+                        'added' => 0,
+                    ];
+                }
+
+                return [
+                    'ok' => false,
+                    'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
+                    'added' => 0,
+                ];
+            }
+        } elseif ($toAdd < 1) {
+            return ['ok' => true, 'error' => null, 'added' => 0];
+        }
+
+        if ($cart) {
+            [$newUom, $newOrd] = Cart::computeMergedOrderUom(
+                $cart->order_uom,
+                $cart->quantity_ordered,
+                $existingQty,
+                $incomingUom,
+                $quantityOrdered,
+                $toAdd
+            );
+            $cart->quantity = $existingQty + $toAdd;
+            $cart->order_uom = $newUom;
+            $cart->quantity_ordered = $newOrd;
+            $cart->save();
+        } else {
+            [$newUom, $newOrd] = $this->initialCartOrderUomPair($incomingUom, $quantityOrdered, $toAdd);
+            $payload = [
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouseId,
+                'cart_type' => 'regular',
+                'quantity' => $toAdd,
+                'order_uom' => $newUom,
+                'quantity_ordered' => $newOrd,
+            ];
+            if ($effectiveUserId !== null) {
+                Cart::create(array_merge($payload, ['user_id' => $effectiveUserId]));
+            } else {
+                Cart::create(array_merge($payload, ['session_id' => $effectiveSessionId]));
+            }
+        }
+
+        return [
+            'ok' => true,
+            'error' => null,
+            'added' => $toAdd,
+            'partial' => $capToStock && $toAdd < $requestedBaseQty,
+        ];
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?int}
+     */
+    private function initialCartOrderUomPair(string $incomingUom, ?int $quantityOrdered, int $toAddBase): array
+    {
+        if ($incomingUom === 'large') {
+            if ($quantityOrdered === null || $quantityOrdered < 1) {
+                return ['base', $toAddBase];
+            }
+
+            return ['large', $quantityOrdered];
+        }
+
+        return ['base', $quantityOrdered ?? $toAddBase];
     }
 
     /**

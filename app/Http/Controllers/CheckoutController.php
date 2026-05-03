@@ -787,6 +787,8 @@ class CheckoutController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
+                    'order_uom' => $cart->order_uom,
+                    'quantity_ordered' => $cart->quantity_ordered,
                     'price' => $cart->product->price,
                     'subtotal' => $cart->product->price * $cart->quantity,
                 ]);
@@ -948,6 +950,23 @@ class CheckoutController extends Controller
         ProcessCheckoutSuccessJob::dispatch((string) $order->id)->afterResponse();
 
         return view('checkout.success', compact('order'));
+    }
+
+    /**
+     * Status pembayaran untuk halaman checkout/success (polling realtime).
+     */
+    public function successPaymentStatus(Order $order)
+    {
+        abort_unless($order->user_id === Auth::id(), 403);
+
+        $order->refresh();
+
+        return response()->json([
+            'payment_status' => $order->payment_status,
+            'order_status' => $order->order_status,
+            'payment_method' => $order->payment_method,
+            'xendit_invoice_url' => $order->xendit_invoice_url,
+        ]);
     }
 
     private function generateOrderNumber(): string

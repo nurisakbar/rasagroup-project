@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Promo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class PromoController extends Controller
@@ -19,8 +18,8 @@ class PromoController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('image', function ($promo) {
-                    if ($promo->image) {
-                        return '<img src="' . asset('storage/' . $promo->image) . '" class="img-thumbnail" style="height: 50px;">';
+                    if ($promo->image_url) {
+                        return '<img src="' . e($promo->image_url) . '" class="img-thumbnail" style="height: 50px;">';
                     }
                     return '<span class="label label-default">No Image</span>';
                 })
@@ -28,7 +27,7 @@ class PromoController extends Controller
                     return 'Rp ' . number_format($promo->harga, 0, ',', '.');
                 })
                 ->addColumn('masa_berlaku', function ($promo) {
-                    return $promo->awal->format('d/m/Y') . ' - ' . $promo->akhir->format('d/m/Y');
+                    return $promo->awal->format('d/m/Y H:i') . ' - ' . $promo->akhir->format('d/m/Y H:i');
                 })
                 ->addColumn('action', function ($promo) {
                     $editUrl = route('admin.promos.edit', $promo);
@@ -63,7 +62,6 @@ class PromoController extends Controller
         $validated = $request->validate([
             'kode_promo' => 'required|string|max:50|unique:promos,kode_promo',
             'judul_promo' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:promos,slug',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'deskripsi' => 'nullable|string',
             'harga' => 'required|numeric|min:0',
@@ -71,9 +69,7 @@ class PromoController extends Controller
             'akhir' => 'required|date|after_or_equal:awal',
         ]);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['judul_promo']);
-        }
+        $validated['slug'] = $this->uniquePromoSlug($validated['judul_promo']);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('promos', 'public');
@@ -95,7 +91,6 @@ class PromoController extends Controller
         $validated = $request->validate([
             'kode_promo' => 'required|string|max:50|unique:promos,kode_promo,' . $promo->id,
             'judul_promo' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:promos,slug,' . $promo->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'deskripsi' => 'nullable|string',
             'harga' => 'required|numeric|min:0',
@@ -103,14 +98,10 @@ class PromoController extends Controller
             'akhir' => 'required|date|after_or_equal:awal',
         ]);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['judul_promo']);
-        }
+        $validated['slug'] = $this->uniquePromoSlug($validated['judul_promo'], $promo->id);
 
         if ($request->hasFile('image')) {
-            if ($promo->image) {
-                Storage::disk('public')->delete($promo->image);
-            }
+            $promo->deleteStoredImageFile();
             $validated['image'] = $request->file('image')->store('promos', 'public');
         }
 
@@ -122,13 +113,32 @@ class PromoController extends Controller
 
     public function destroy(Promo $promo)
     {
-        if ($promo->image) {
-            Storage::disk('public')->delete($promo->image);
-        }
-        
+        $promo->deleteStoredImageFile();
         $promo->delete();
 
         return redirect()->route('admin.promos.index')
             ->with('success', 'Promo berhasil dihapus.');
+    }
+
+    /**
+     * Slug URL dari judul; unik di tabel (suffix -1, -2, … bila bentrok).
+     */
+    private function uniquePromoSlug(string $judul, ?string $exceptPromoId = null): string
+    {
+        $slug = Str::slug($judul);
+        if ($slug === '') {
+            $slug = 'promo';
+        }
+        $original = $slug;
+        $n = 1;
+        while (Promo::query()
+            ->where('slug', $slug)
+            ->when($exceptPromoId, fn ($q) => $q->where('id', '!=', $exceptPromoId))
+            ->exists()) {
+            $slug = $original.'-'.$n;
+            $n++;
+        }
+
+        return $slug;
     }
 }

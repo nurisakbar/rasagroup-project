@@ -38,6 +38,11 @@
                             <div class="single-content">
                                 <div class="row">
                                     <div class="col-xl-10 col-lg-12 m-auto">
+                                        @if($channel->image_url)
+                                            <figure class="single-thumbnail mb-40 border-radius-15 overflow-hidden">
+                                                <img src="{{ $channel->image_url }}" alt="{{ $channel->title }}" class="w-100" style="max-height: 420px; object-fit: cover;" loading="lazy" />
+                                            </figure>
+                                        @endif
                                         <div class="entry-main-content">
                                             {!! $channel->description !!}
                                         </div>

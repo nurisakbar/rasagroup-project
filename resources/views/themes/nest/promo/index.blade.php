@@ -29,11 +29,11 @@
                         @forelse($promos as $promo)
                             <div class="col-lg-4 col-md-6 mb-30 wow animate__animated animate__fadeInUp" data-wow-delay="{{ $loop->index * 0.1 }}s">
                                 <div class="product-cart-wrap style-2">
-                                    @if($promo->image)
+                                    @if($promo->image_url)
                                         <div class="product-img-action-wrap">
                                             <div class="product-img">
                                                 <a href="{{ route('promo.show', $promo->slug) }}">
-                                                    <img src="{{ asset('storage/' . $promo->image) }}" alt="{{ $promo->judul_promo }}" style="width: 100%; height: 200px; object-fit: cover;" />
+                                                    <img src="{{ $promo->image_url }}" alt="{{ $promo->judul_promo }}" style="width: 100%; height: 200px; object-fit: cover;" />
                                                 </a>
                                             </div>
                                         </div>
@@ -54,7 +54,7 @@
                                             </div>
                                             <div class="mt-15">
                                                 <span class="font-xs text-muted">
-                                                    <i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y') }} - {{ $promo->akhir->format('d M Y') }}
+                                                    <i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y H:i') }} - {{ $promo->akhir->format('d M Y H:i') }}
                                                 </span>
                                             </div>
                                         </div>

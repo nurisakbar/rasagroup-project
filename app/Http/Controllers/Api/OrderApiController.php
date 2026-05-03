@@ -308,6 +308,8 @@ class OrderApiController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
+                    'order_uom' => $cart->order_uom,
+                    'quantity_ordered' => $cart->quantity_ordered,
                     'price' => $cart->product->price,
                     'subtotal' => $cart->product->price * $cart->quantity,
                 ]);

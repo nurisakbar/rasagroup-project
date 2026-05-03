@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
             BrandCategorySeeder::class,
             WarehouseSeeder::class,
             ProductSeeder::class,
+            MenuDummySeeder::class,
+            PromoDummySeeder::class,
+            InformationChannelDummySeeder::class,
         ]);
     }
 }

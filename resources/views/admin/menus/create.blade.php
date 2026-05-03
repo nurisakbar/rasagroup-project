@@ -11,24 +11,8 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('adminlte/plugins/select2/select2.min.css') }}">
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+@include('admin.menus.partials.form-styles')
 <style>
-    .select2-container--default .select2-selection--single {
-        border-radius: 0;
-        border-color: #d2d6de;
-        height: 34px;
-    }
-    .image-preview {
-        width: 100%;
-        max-height: 200px;
-        object-fit: cover;
-        border-radius: 8px;
-        border: 2px dashed #ddd;
-        padding: 5px;
-        display: none;
-        margin-bottom: 10px;
-    }
-    .note-editable { background: #fff !important; }
-    .box { border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 3px solid var(--rasa-maroon); }
     .btn-primary { background-color: var(--rasa-maroon); border-color: var(--rasa-maroon-dark); }
     .btn-primary:hover { background-color: var(--rasa-maroon-dark); border-color: var(--rasa-maroon-dark); }
 </style>
@@ -37,15 +21,16 @@
 @section('content')
     <form action="{{ route('admin.menus.store') }}" method="POST" id="menu-form" enctype="multipart/form-data">
         @csrf
+
         <div class="row">
-            <div class="col-md-5">
-                <div class="box box-solid">
+            <div class="col-md-7">
+                <div class="box box-primary">
                     <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-info-circle text-maroon"></i> Informasi Utama</h3>
+                        <h3 class="box-title"><i class="fa fa-align-left"></i> Informasi menu</h3>
                     </div>
                     <div class="box-body">
                         <div class="form-group @error('nama_menu') has-error @enderror">
-                            <label for="nama_menu">Nama Menu <span class="text-danger">*</span></label>
+                            <label for="nama_menu">Nama menu <span class="text-danger">*</span></label>
                             <input type="text" name="nama_menu" id="nama_menu" class="form-control input-lg" value="{{ old('nama_menu') }}" required placeholder="Contoh: Menu Paket Hemat">
                             @error('nama_menu')
                                 <span class="help-block">{{ $message }}</span>
@@ -59,56 +44,73 @@
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
+                    </div>
+                </div>
+            </div>
 
+            <div class="col-md-5">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><i class="fa fa-photo"></i> Media &amp; pengaturan</h3>
+                    </div>
+                    <div class="box-body">
                         <div class="form-group @error('gambar') has-error @enderror">
-                            <label for="gambar">Gambar Menu</label>
-                            <img id="preview" class="image-preview">
+                            <label for="gambar">Gambar menu</label>
+                            <img id="preview" class="img-responsive" style="display: none; max-height: 200px; margin-bottom: 10px; border: 1px solid #ddd; padding: 3px;" alt="">
                             <input type="file" name="gambar" id="gambar" class="form-control" accept="image/*" onchange="previewImage(this)">
-                            <p class="help-block"><i class="fa fa-info-circle"></i> Format: JPG, PNG, GIF. Max: 2MB</p>
+                            <p class="help-block"><small>JPG, PNG, GIF · Maks. 2MB</small></p>
                             @error('gambar')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
 
+                        <hr>
+
                         <div class="form-group">
-                            <label>Status</label>
                             <div class="checkbox">
-                                <label class="text-bold">
-                                    <input type="checkbox" name="status_aktif" value="1" {{ old('status_aktif', '1') == '1' ? 'checked' : '' }}> 
-                                    <span class="text-success">Aktifkan Menu Ini</span>
+                                <label>
+                                    <input type="checkbox" name="status_aktif" value="1" {{ old('status_aktif', '1') == '1' ? 'checked' : '' }}>
+                                    Menu aktif
                                 </label>
                             </div>
+                            <p class="help-block"><small>Nonaktifkan untuk menyembunyikan menu dari tampilan publik.</small></p>
                         </div>
+
+                        <hr>
+
+                        @include('admin.menus.partials.display-window-fields', ['menu' => null])
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-7">
-                <div class="box box-solid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-primary">
                     <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-cubes text-maroon"></i> Detail Item Menu</h3>
-                        <div class="box-tools">
-                            <button type="button" class="btn btn-success btn-sm btn-flat" id="add-item">
-                                <i class="fa fa-plus"></i> Tambah Item
+                        <h3 class="box-title"><i class="fa fa-cubes"></i> Komposisi produk</h3>
+                        <div class="box-tools pull-right">
+                            <button type="button" class="btn btn-success btn-sm" id="add-item">
+                                <i class="fa fa-plus"></i> Tambah item
                             </button>
                         </div>
                     </div>
-                    <div class="box-body no-padding">
-                        <table class="table table-striped" id="details-table">
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-bordered table-hover" id="details-table">
                             <thead>
-                                <tr class="bg-gray">
-                                    <th style="padding-left: 15px;">Produk <span class="text-danger">*</span></th>
-                                    <th width="120px">Jumlah <span class="text-danger">*</span></th>
-                                    <th width="50px"></th>
+                                <tr>
+                                    <th>Produk <span class="text-danger">*</span></th>
+                                    <th width="130">Jumlah <span class="text-danger">*</span></th>
+                                    <th width="56"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if(old('details'))
                                     @foreach(old('details') as $index => $detail)
                                         <tr class="item-row">
-                                            <td style="padding-left: 15px;">
+                                            <td>
                                                 <select name="details[{{ $index }}][product_id]" class="form-control select2" required style="width: 100%;">
-                                                    <option value="">Pilih Produk</option>
+                                                    <option value="">Pilih produk</option>
                                                     @foreach($products as $product)
                                                         <option value="{{ $product->id }}" {{ $detail['product_id'] == $product->id ? 'selected' : '' }}>
                                                             {{ $product->full_name }}
@@ -120,15 +122,15 @@
                                                 <input type="number" name="details[{{ $index }}][jumlah]" class="form-control text-center" value="{{ $detail['jumlah'] }}" min="1" required>
                                             </td>
                                             <td class="text-center">
-                                                <button type="button" class="btn btn-link text-danger remove-item"><i class="fa fa-times-circle fa-lg"></i></button>
+                                                <button type="button" class="btn btn-link text-danger remove-item p-0" title="Hapus baris"><i class="fa fa-times-circle fa-lg"></i></button>
                                             </td>
                                         </tr>
                                     @endforeach
                                 @else
                                     <tr class="item-row">
-                                        <td style="padding-left: 15px;">
+                                        <td>
                                             <select name="details[0][product_id]" class="form-control select2" required style="width: 100%;">
-                                                <option value="">Pilih Produk</option>
+                                                <option value="">Pilih produk</option>
                                                 @foreach($products as $product)
                                                     <option value="{{ $product->id }}">{{ $product->full_name }}</option>
                                                 @endforeach
@@ -138,27 +140,27 @@
                                             <input type="number" name="details[0][jumlah]" class="form-control text-center" value="1" min="1" required>
                                         </td>
                                         <td class="text-center">
-                                            <button type="button" class="btn btn-link text-danger remove-item"><i class="fa fa-times-circle fa-lg"></i></button>
+                                            <button type="button" class="btn btn-link text-danger remove-item p-0" title="Hapus baris"><i class="fa fa-times-circle fa-lg"></i></button>
                                         </td>
                                     </tr>
                                 @endif
                             </tbody>
                         </table>
-                        @error('details')
-                            <div class="pad text-danger"><i class="fa fa-exclamation-triangle"></i> {{ $message }}</div>
-                        @enderror
                     </div>
+                    @error('details')
+                        <div class="box-body text-danger"><i class="fa fa-exclamation-triangle"></i> {{ $message }}</div>
+                    @enderror
                     <div class="box-footer">
-                        <p class="text-muted small"><i class="fa fa-info-circle"></i> Pastikan semua item produk telah benar sebelum menyimpan.</p>
+                        <p class="text-muted small mb-0"><i class="fa fa-info-circle"></i> Pastikan produk dan jumlah sudah benar sebelum menyimpan.</p>
                     </div>
-                </div>
-
-                <div class="text-right">
-                    <a href="{{ route('admin.menus.index') }}" class="btn btn-default btn-lg">Batal</a>
-                    <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-save"></i> Simpan Menu</button>
                 </div>
             </div>
         </div>
+
+        <p class="text-right">
+            <a href="{{ route('admin.menus.index') }}" class="btn btn-default">Batal</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Simpan menu</button>
+        </p>
     </form>
 @endsection
 
@@ -170,7 +172,7 @@ $(document).ready(function() {
     $('.select2').select2();
 
     $('.summernote').summernote({
-        height: 250,
+        height: 220,
         toolbar: [
             ['style', ['style']],
             ['font', ['bold', 'underline', 'clear']],
@@ -186,9 +188,9 @@ $(document).ready(function() {
     $('#add-item').click(function() {
         let newRow = `
             <tr class="item-row">
-                <td style="padding-left: 15px;">
+                <td>
                     <select name="details[${rowIndex}][product_id]" class="form-control select2" required style="width: 100%;">
-                        <option value="">Pilih Produk</option>
+                        <option value="">Pilih produk</option>
                         @foreach($products as $product)
                             <option value="{{ $product->id }}">{{ $product->full_name }}</option>
                         @endforeach
@@ -198,11 +200,11 @@ $(document).ready(function() {
                     <input type="number" name="details[${rowIndex}][jumlah]" class="form-control text-center" value="1" min="1" required>
                 </td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-link text-danger remove-item"><i class="fa fa-times-circle fa-lg"></i></button>
+                    <button type="button" class="btn btn-link text-danger remove-item p-0" title="Hapus baris"><i class="fa fa-times-circle fa-lg"></i></button>
                 </td>
             </tr>
         `;
-        
+
         let $newRow = $(newRow);
         $('#details-table tbody').append($newRow);
         $newRow.find('.select2').select2();

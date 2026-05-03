@@ -94,328 +94,64 @@
                 </div>
             </div>
         </section>
-        <section class="section-padding pb-5">
+        <section id="penawaran-hari-ini" class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
                     <h3 class="">Penawaran Hari Ini</h3>
-                    <a class="show-all" href="shop-grid-right.html">
+                    <a class="show-all" href="{{ route('promo.index') }}">
                         Semua Penawaran
                         <i class="fi-rs-angle-right"></i>
                     </a>
                 </div>
-                <div class="row">
-                    <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay="0">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-5.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2025/12/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Seeds of Change Organic Quinoa, Brown, & Red Rice</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 90%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (4.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">NestFood</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 32.850</span>
-                                            <span class="old-price">Rp 33.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                @if($homePromos->isEmpty())
+                    <p class="text-muted font-md text-center py-40 mb-0">Belum ada penawaran aktif saat ini.</p>
+                @else
+                    <div class="row">
+                        @foreach($homePromos as $promo)
+                            @php
+                                $idx = $loop->index;
+                                $colClass = 'col-xl-3 col-lg-4 col-md-6';
+                                if ($idx === 2) {
+                                    $colClass .= ' d-none d-lg-block';
+                                }
+                                if ($idx === 3) {
+                                    $colClass .= ' d-none d-xl-block';
+                                }
+                                $delay = $idx === 0 ? '0' : '.' . min($idx, 3) . 's';
+                            @endphp
+                            @include('themes.nest.partials.promo-deal-card', [
+                                'promo' => $promo,
+                                'delay' => $delay,
+                                'colClass' => $colClass,
+                            ])
+                        @endforeach
                     </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-6.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2026/04/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Perdue Simply Smart Organics Gluten Free</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 90%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (4.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Old El Paso</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 24.850</span>
-                                            <span class="old-price">Rp 26.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 d-none d-lg-block">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-7.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2027/03/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Signature Wood-Fired Mushroom and Caramelized</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 80%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (3.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Progresso</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 12.850</span>
-                                            <span class="old-price">Rp 13.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 d-none d-xl-block">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-8.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2025/02/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Simply Lemonade with Raspberry Juice</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 80%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (3.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Yoplait</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 15.850</span>
-                                            <span class="old-price">Rp 16.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @endif
             </div>
         </section>
         <!--End Deals-->
 
-        <section class="section-padding pb-5">
+        <section id="menu-hari-ini" class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
                     <h3 class="">Menu Hari Ini</h3>
-                    <a class="show-all" href="shop-grid-right.html">
-                        Semua Menu
+                    <a class="show-all" href="{{ route('menus.index') }}">
+                        Semua menu
                         <i class="fi-rs-angle-right"></i>
                     </a>
                 </div>
-                <div class="row">
-                    <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay="0">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-5.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2025/12/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Seeds of Change Organic Quinoa, Brown, & Red Rice</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 90%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (4.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">NestFood</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 32.850</span>
-                                            <span class="old-price">Rp 33.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                @if($todayMenus->isEmpty())
+                    <p class="text-muted font-md text-center py-40 mb-0">Belum ada menu untuk ditampilkan saat ini.</p>
+                @else
+                    <div class="row">
+                        @foreach($todayMenus as $menu)
+                            @include('themes.nest.partials.menu-card', [
+                                'menu' => $menu,
+                                'delay' => $loop->first ? '0' : '.' . min($loop->index, 4) . 's',
+                            ])
+                        @endforeach
                     </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".1s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-6.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2026/04/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Perdue Simply Smart Organics Gluten Free</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 90%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (4.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Old El Paso</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 24.850</span>
-                                            <span class="old-price">Rp 26.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 d-none d-lg-block">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-7.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2027/03/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Signature Wood-Fired Mushroom and Caramelized</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 80%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (3.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Progresso</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 12.850</span>
-                                            <span class="old-price">Rp 13.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 d-none d-xl-block">
-                        <div class="product-cart-wrap style-2 wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img">
-                                    <a href="shop-product-right.html">
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/banner/banner-8.png') }}" alt="" />
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-content-wrap">
-                                <div class="deals-countdown-wrap">
-                                    <div class="deals-countdown" data-countdown="2025/02/25 00:00:00"></div>
-                                </div>
-                                <div class="deals-content">
-                                    <h2><a href="shop-product-right.html">Simply Lemonade with Raspberry Juice</a></h2>
-                                    <div class="product-rate-cover">
-                                        <div class="product-rate d-inline-block">
-                                            <div class="product-rating" style="width: 80%"></div>
-                                        </div>
-                                        <span class="font-small ml-5 text-muted"> (3.0)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-small text-muted">By <a href="vendor-details-1.html">Yoplait</a></span>
-                                    </div>
-                                    <div class="product-card-bottom">
-                                        <div class="product-price">
-                                            <span>Rp 15.850</span>
-                                            <span class="old-price">Rp 16.800</span>
-                                        </div>
-                                        <div class="add-cart">
-                                            <a class="add" href="{{ route('cart.index') }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @endif
             </div>
         </section>
         <!--End Menu Hari Ini-->

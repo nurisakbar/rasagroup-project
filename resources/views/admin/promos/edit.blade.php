@@ -38,24 +38,17 @@
                         <div class="form-group @error('judul_promo') has-error @enderror">
                             <label for="judul_promo">Judul Promo</label>
                             <input type="text" class="form-control" id="judul_promo" name="judul_promo" value="{{ old('judul_promo', $promo->judul_promo) }}">
+                            <p class="help-block"><small>Slug URL diperbarui otomatis dari judul saat menyimpan.</small></p>
                             @error('judul_promo')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('slug') has-error @enderror">
-                            <label for="slug">Slug</label>
-                            <input type="text" class="form-control" id="slug" name="slug" value="{{ old('slug', $promo->slug) }}">
-                            @error('slug')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
 
                         <div class="form-group @error('image') has-error @enderror">
                             <label for="image">Gambar Promo</label>
-                            @if($promo->image)
+                            @if($promo->image_url)
                                 <div class="mb-10">
-                                    <img src="{{ asset('storage/' . $promo->image) }}" class="img-thumbnail" style="height: 100px; display: block; margin-bottom: 10px;">
+                                    <img src="{{ $promo->image_url }}" class="img-thumbnail" style="height: 100px; display: block; margin-bottom: 10px;">
                                 </div>
                             @endif
                             <input type="file" class="form-control" id="image" name="image" accept="image/*">
@@ -87,8 +80,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('awal') has-error @enderror">
-                                    <label for="awal">Tanggal Awal</label>
-                                    <input type="date" class="form-control" id="awal" name="awal" value="{{ old('awal', $promo->awal->format('Y-m-d')) }}">
+                                    <label for="awal">Mulai (tanggal &amp; jam)</label>
+                                    <input type="datetime-local" class="form-control" id="awal" name="awal" step="60" value="{{ old('awal', $promo->awal->format('Y-m-d\TH:i')) }}">
                                     @error('awal')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -96,8 +89,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group @error('akhir') has-error @enderror">
-                                    <label for="akhir">Tanggal Akhir</label>
-                                    <input type="date" class="form-control" id="akhir" name="akhir" value="{{ old('akhir', $promo->akhir->format('Y-m-d')) }}">
+                                    <label for="akhir">Berakhir (tanggal &amp; jam)</label>
+                                    <input type="datetime-local" class="form-control" id="akhir" name="akhir" step="60" value="{{ old('akhir', $promo->akhir->format('Y-m-d\TH:i')) }}">
                                     @error('akhir')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -131,16 +124,6 @@
                     ['insert', ['link', 'picture', 'video']],
                     ['view', ['fullscreen', 'codeview', 'help']]
                 ]
-            });
-
-            $('#judul_promo').on('blur', function() {
-                if ($('#slug').val() == '') {
-                    var title = $(this).val();
-                    var slug = title.toLowerCase()
-                        .replace(/[^\w ]+/g, '')
-                        .replace(/ +/g, '-');
-                    $('#slug').val(slug);
-                }
             });
         });
     </script>

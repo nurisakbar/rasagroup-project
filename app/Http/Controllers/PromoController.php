@@ -9,8 +9,10 @@ class PromoController extends Controller
 {
     public function index()
     {
-        $promos = Promo::where('akhir', '>=', now()->toDateString())
-            ->orderBy('akhir', 'asc')
+        $promos = Promo::query()
+            ->where('awal', '<=', now())
+            ->where('akhir', '>=', now())
+            ->orderBy('akhir')
             ->get();
 
         return view('themes.nest.promo.index', compact('promos'));

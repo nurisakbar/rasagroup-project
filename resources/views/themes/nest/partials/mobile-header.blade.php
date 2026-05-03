@@ -22,26 +22,33 @@
                 </div>
                 <div class="mobile-menu-wrap mobile-header-border">
                     <!-- mobile menu start -->
+                    @php
+                        $distributorMainMenuUrl = ! auth()->check()
+                            ? route('login')
+                            : (auth()->user()->isDistributor()
+                                ? route('buyer.dashboard')
+                                : route('buyer.distributor.apply'));
+                    @endphp
                     <nav>
                         <ul class="mobile-menu font-heading">
                             <li><a href="{{ route('home') }}">Halaman Utama</a></li>
                             <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
                             <li><a href="{{ route('promo.index') }}">Promo</a></li>
-                            <li><a href="{{ route('hubs.index') }}">Distributor</a></li>
+                            <li><a href="{{ route('menus.index') }}">Menu Paket</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
                             <li><a href="{{ route('information-channels.index') }}">Saluran Informasi</a></li>
                             @auth
                                 @if(Auth::user()->isDistributor())
-                                    <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                                    <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
                                 @elseif(Auth::user()->isDriippreneur())
                                     <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
                                 @else
                                     <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                                    <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                                    <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
                                 @endif
                             @else
                                 <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                                <li><a href="{{ route('distributor.manage-orders.index') }}">Distributor</a></li>
+                                <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
                             @endauth
 
 

@@ -174,7 +174,8 @@
                             <div class="col-md-3">
                                 <div class="form-group @error('large_unit') has-error @enderror">
                                     <label for="large_unit"><i class="fa fa-th-large"></i> Satuan Besar</label>
-                                    <input type="text" class="form-control" id="large_unit" name="large_unit" value="{{ old('large_unit', $product->large_unit ?: 'CTN') }}" placeholder="Contoh: CTN">
+                                    <input type="text" class="form-control" id="large_unit" name="large_unit" value="{{ old('large_unit', $product->large_unit) }}" placeholder="Contoh: CTN" autocomplete="off">
+                                    <p class="help-block text-muted small mb-0">Isi hanya jika menjual per satuan besar (karton/dus). Kosong = etalase hanya satuan kecil. Nilai di sini harus tersimpan (Simpan) agar pemilih satuan besar/kecil muncul di website.</p>
                                     @error('large_unit')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -184,7 +185,7 @@
                                 <div class="form-group @error('units_per_large') has-error @enderror">
                                     <label for="units_per_large"><i class="fa fa-exchange"></i> Isi per satuan besar</label>
                                     <input type="number" class="form-control" id="units_per_large" name="units_per_large" value="{{ old('units_per_large', $product->units_per_large) }}" min="2" step="1" placeholder="Contoh: 12 (per CTN)">
-                                    <p class="help-block text-muted small mb-0">Jumlah satuan UoM dalam 1 satuan besar. Kosongkan jika tidak dipakai di etalase.</p>
+                                    <p class="help-block text-muted small mb-0">Jumlah satuan kecil dalam 1 satuan besar. Jika satuan besar dikosongkan, isian ini akan dihapus saat simpan.</p>
                                     @error('units_per_large')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror

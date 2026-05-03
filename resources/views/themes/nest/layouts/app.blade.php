@@ -1357,18 +1357,16 @@
                 }
             @endif
             
-            // Handle Add to Cart Form
-            $(document).on('submit', '.add-to-cart-form', function(e) {
-                e.preventDefault();
-                
-                const form = $(this);
+            // Add to cart (AJAX) — dipakai juga setelah pilih satuan di modal
+            function performAddToCartAjax(form) {
+                form = $(form);
                 const url = form.attr('action');
                 const submitBtn = form.find('button[type="submit"]');
-                const originalBtnHtml = submitBtn.html();
-                
-                // Disable button and show loading
+                const originalBtnHtml = submitBtn.attr('data-original-add-html') || submitBtn.html();
+                submitBtn.attr('data-original-add-html', originalBtnHtml);
+
                 submitBtn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                
+
                 $.ajax({
                     url: url,
                     type: 'POST',
@@ -1380,11 +1378,7 @@
                     success: function(response) {
                         if (response.success) {
                             showShopToast(response.message, 'success');
-                            
-                            // Update cart counts in header
                             $('.pro-count').text(response.cart_count);
-                            
-                            // Update mini-cart content
                             if (response.mini_cart_html) {
                                 $('.cart-dropdown-wrap').html(response.mini_cart_html);
                             }
@@ -1414,18 +1408,71 @@
                             }
                             showShopToast(message.trim() || 'Validasi gagal.', 'error');
                         } else if (xhr.status === 302) {
-                            // Handle case where back() redirect happens (non-ajax fallback)
-                            // This shouldn't normally happen with X-Requested-With
                             window.location.reload();
                         } else {
                             showShopToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
                         }
                     },
                     complete: function() {
-                        // Reset button
                         submitBtn.attr('disabled', false).html(originalBtnHtml);
                     }
                 });
+            }
+
+            function closeChooseCartUomModal() {
+                var el = document.getElementById('modalChooseCartUom');
+                if (el && typeof bootstrap !== 'undefined') {
+                    var inst = bootstrap.Modal.getInstance(el);
+                    if (inst) {
+                        inst.hide();
+                    }
+                }
+            }
+
+            $(document).on('submit', '.add-to-cart-form', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                if (form.attr('data-dual-uom') === '1') {
+                    var unitLabel = form.attr('data-unit-label') || 'satuan kecil';
+                    var largeLabel = form.attr('data-large-unit-label') || 'satuan besar';
+                    var n = form.attr('data-units-per-large') || '';
+                    $('#modalChooseCartUom').data('pending-form', form);
+                    $('#modalChooseCartUomProduct').text(form.attr('data-product-name') || '');
+                    $('#modalChooseCartUomBase').text('Satuan terkecil (' + unitLabel + ')');
+                    var largeText = 'Satuan terbesar — 1 ' + largeLabel;
+                    if (n) {
+                        largeText += ' = ' + n + ' ' + unitLabel;
+                    }
+                    $('#modalChooseCartUomLarge').text(largeText);
+                    var modalEl = document.getElementById('modalChooseCartUom');
+                    if (modalEl && typeof bootstrap !== 'undefined') {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    } else {
+                        performAddToCartAjax(form);
+                    }
+                    return;
+                }
+                performAddToCartAjax(form);
+            });
+
+            $('#modalChooseCartUomBase').on('click', function() {
+                var form = $('#modalChooseCartUom').data('pending-form');
+                if (!form || !form.length) {
+                    return;
+                }
+                form.find('.js-cart-uom-field').val('base');
+                closeChooseCartUomModal();
+                performAddToCartAjax(form);
+            });
+
+            $('#modalChooseCartUomLarge').on('click', function() {
+                var form = $('#modalChooseCartUom').data('pending-form');
+                if (!form || !form.length) {
+                    return;
+                }
+                form.find('.js-cart-uom-field').val('large');
+                closeChooseCartUomModal();
+                performAddToCartAjax(form);
             });
         });
     </script>

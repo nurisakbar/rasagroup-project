@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Product;
@@ -10,6 +11,7 @@ use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class CartApiController extends Controller
 {
@@ -78,6 +80,8 @@ class CartApiController extends Controller
                     'name' => $cart->warehouse->name,
                 ] : null,
                 'quantity' => $cart->quantity,
+                'order_uom' => $cart->order_uom,
+                'quantity_ordered' => $cart->quantity_ordered,
                 'subtotal' => (float) ($cart->product->price * $cart->quantity),
             ];
         });
@@ -106,66 +110,42 @@ class CartApiController extends Controller
             'product_id' => 'required|exists:products,id',
             'warehouse_id' => 'required|exists:warehouses,id',
             'quantity' => 'required|integer|min:1',
+            'uom' => ['nullable', Rule::in(['base', 'large'])],
         ]);
 
         $userId = $this->getUserId($request) ?? $validated['user_id'];
         $product = Product::findOrFail($validated['product_id']);
         $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
 
-        // Check stock availability
-        $stock = WarehouseStock::where('warehouse_id', $warehouse->id)
-            ->where('product_id', $product->id)
-            ->first();
-        
-        $availableStock = $stock ? $stock->stock : 0;
-        
-        if ($validated['quantity'] > $availableStock) {
+        $uom = $validated['uom'] ?? 'base';
+        if ($uom === 'large' && ! $product->hasDualUnitOrdering()) {
+            $uom = 'base';
+        }
+
+        $baseQty = $product->orderedQuantityToBase((int) $validated['quantity'], $uom);
+        $merge = app(CartController::class)->mergeRegularCartLine(
+            $product,
+            $warehouse,
+            $baseQty,
+            false,
+            $uom,
+            (int) $validated['quantity'],
+            $userId,
+            null
+        );
+
+        if (! $merge['ok']) {
             return response()->json([
                 'success' => false,
-                'message' => "Stock tidak mencukupi. Tersedia: {$availableStock} unit.",
+                'message' => $merge['error'],
             ], 400);
         }
 
-        // Check if cart has items from different warehouse
-        $existingCart = Cart::where('user_id', $userId)
-            ->where('cart_type', 'regular')
-            ->whereNotNull('warehouse_id')
-            ->where('warehouse_id', '!=', $warehouse->id)
-            ->first();
-
-        if ($existingCart) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.',
-            ], 400);
-        }
-
-        // Check if same product from same warehouse exists
         $cart = Cart::where('user_id', $userId)
             ->where('product_id', $product->id)
             ->where('warehouse_id', $warehouse->id)
             ->where('cart_type', 'regular')
-            ->first();
-
-        if ($cart) {
-            $newQuantity = $cart->quantity + $validated['quantity'];
-            if ($newQuantity > $availableStock) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit.",
-                ], 400);
-            }
-            $cart->quantity = $newQuantity;
-            $cart->save();
-        } else {
-            $cart = Cart::create([
-                'user_id' => $userId,
-                'product_id' => $product->id,
-                'warehouse_id' => $warehouse->id,
-                'cart_type' => 'regular',
-                'quantity' => $validated['quantity'],
-            ]);
-        }
+            ->firstOrFail();
 
         $cart->load(['product.brand', 'product.category', 'warehouse']);
 
@@ -184,6 +164,8 @@ class CartApiController extends Controller
                     'name' => $cart->warehouse->name,
                 ],
                 'quantity' => $cart->quantity,
+                'order_uom' => $cart->order_uom,
+                'quantity_ordered' => $cart->quantity_ordered,
                 'subtotal' => (float) ($cart->product->price * $cart->quantity),
             ],
         ], 201);
@@ -225,7 +207,8 @@ class CartApiController extends Controller
             }
         }
 
-        $cart->quantity = $validated['quantity'];
+        $cart->quantity = (int) $validated['quantity'];
+        $cart->syncOrderedMetadataFromBaseQuantity();
         $cart->save();
         $cart->load(['product', 'warehouse']);
 
@@ -235,6 +218,8 @@ class CartApiController extends Controller
             'data' => [
                 'id' => $cart->id,
                 'quantity' => $cart->quantity,
+                'order_uom' => $cart->order_uom,
+                'quantity_ordered' => $cart->quantity_ordered,
                 'subtotal' => (float) ($cart->product->price * $cart->quantity),
             ],
         ]);

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class InformationChannel extends Model
@@ -18,6 +19,7 @@ class InformationChannel extends Model
         'title',
         'slug',
         'description',
+        'image',
         'target_audience',
         'start_date',
         'end_date',
@@ -62,5 +64,25 @@ class InformationChannel extends Model
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * URL gambar sampul: path `themes/...`, file di storage/public, atau URL absolut.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        if (str_starts_with($this->image, 'themes/')) {
+            return asset($this->image);
+        }
+
+        return Storage::disk('public')->url($this->image);
     }
 }

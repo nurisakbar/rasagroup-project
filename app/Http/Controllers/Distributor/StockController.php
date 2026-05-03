@@ -41,6 +41,19 @@ class StockController extends Controller
             }
 
             return DataTables::of($query)
+                ->filter(function ($query) use ($request) {
+                    $keyword = $request->input('search.value');
+                    if ($keyword === null || trim((string) $keyword) === '') {
+                        return;
+                    }
+                    $kw = trim((string) $keyword);
+                    $query->whereHas('product', function ($q) use ($kw) {
+                        $q->where(function ($inner) use ($kw) {
+                            $inner->where('name', 'like', '%'.$kw.'%')
+                                ->orWhere('code', 'like', '%'.$kw.'%');
+                        });
+                    });
+                }, false)
                 ->addIndexColumn()
                 ->addColumn('product_image', function ($stock) {
                     if ($stock->product && $stock->product->image_url) {
@@ -102,12 +115,6 @@ class StockController extends Controller
                     </a>';
                     
                     return '<div class="d-flex justify-content-end gap-2">' . $updateBtn . ' ' . $historyBtn . '</div>';
-                })
-                ->filterColumn('product_name', function ($query, $keyword) {
-                    $query->whereHas('product', function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%")
-                          ->orWhere('code', 'like', "%{$keyword}%");
-                    });
                 })
                 ->setRowClass(fn (WarehouseStock $stock) => $stock->stock <= 10 ? 'stock-row-low' : '')
                 ->rawColumns(['product_image', 'product_name', 'product_brand', 'stock_badge', 'action'])

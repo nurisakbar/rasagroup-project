@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Province;
-use App\Models\Regency;
+use App\Models\RajaOngkirCity;
+use App\Models\RajaOngkirProvince;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 
@@ -43,12 +43,35 @@ class HubController extends Controller
         }
 
         $warehouses = $query->orderBy('name')->get();
-        
-        $provinces = Province::orderBy('name')->get();
+
+        $activeHubQuery = Warehouse::query()
+            ->where('is_active', true)
+            ->whereNotNull('province_id');
+
+        $provinceIdsWithHubs = (clone $activeHubQuery)->distinct()->pluck('province_id');
+
+        $provinces = RajaOngkirProvince::query()
+            ->whereIn('id', $provinceIdsWithHubs)
+            ->orderBy('name')
+            ->get();
+
         $regencies = collect();
-        
-        if ($request->filled('province_id')) {
-            $regencies = Regency::where('province_id', $request->province_id)->orderBy('name')->get();
+        if ($request->filled('province_id')
+            && $provinces->contains(fn (RajaOngkirProvince $p) => (string) $p->id === (string) $request->province_id)) {
+            $regencyIdsWithHubs = Warehouse::query()
+                ->where('is_active', true)
+                ->where('province_id', $request->province_id)
+                ->whereNotNull('regency_id')
+                ->distinct()
+                ->pluck('regency_id');
+
+            if ($regencyIdsWithHubs->isNotEmpty()) {
+                $regencies = RajaOngkirCity::query()
+                    ->where('province_id', $request->province_id)
+                    ->whereIn('id', $regencyIdsWithHubs)
+                    ->orderBy('name')
+                    ->get();
+            }
         }
 
         return view('hubs.index', compact('warehouses', 'provinces', 'regencies'));
@@ -95,10 +118,38 @@ class HubController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $regencies = Regency::where('province_id', $request->province_id)
+        $request->validate([
+            'province_id' => 'required',
+        ]);
+
+        $provinceId = $request->province_id;
+
+        $hasHubs = Warehouse::query()
+            ->where('is_active', true)
+            ->where('province_id', $provinceId)
+            ->exists();
+
+        if (! $hasHubs) {
+            return response()->json([]);
+        }
+
+        $regencyIdsWithHubs = Warehouse::query()
+            ->where('is_active', true)
+            ->where('province_id', $provinceId)
+            ->whereNotNull('regency_id')
+            ->distinct()
+            ->pluck('regency_id');
+
+        if ($regencyIdsWithHubs->isEmpty()) {
+            return response()->json([]);
+        }
+
+        $regencies = RajaOngkirCity::query()
+            ->where('province_id', $provinceId)
+            ->whereIn('id', $regencyIdsWithHubs)
             ->orderBy('name')
             ->get(['id', 'name']);
-            
+
         return response()->json($regencies);
     }
 

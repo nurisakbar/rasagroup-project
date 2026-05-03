@@ -30,7 +30,7 @@
                                         <h2 class="mb-10">{{ $promo->judul_promo }}</h2>
                                         <div class="single-header-meta">
                                             <div class="entry-meta meta-1 font-xxs color-grey mt-10 pb-10">
-                                                <span class="post-on"><i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y') }} - {{ $promo->akhir->format('d M Y') }}</span>
+                                                <span class="post-on"><i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y H:i') }} - {{ $promo->akhir->format('d M Y H:i') }}</span>
                                                 <span class="hit-count has-dot">Kode Promo: <strong class="text-brand">{{ $promo->kode_promo }}</strong></span>
                                             </div>
                                         </div>
@@ -38,9 +38,9 @@
                                 </div>
                             </div>
                             
-                            @if($promo->image)
+                            @if($promo->image_url)
                                 <figure class="single-thumbnail w-100 m-auto mt-30 mb-50">
-                                    <img src="{{ asset('storage/' . $promo->image) }}" alt="{{ $promo->judul_promo }}" style="max-height: 500px; width: 100%; object-fit: contain; border-radius: 15px;">
+                                    <img src="{{ $promo->image_url }}" alt="{{ $promo->judul_promo }}" style="max-height: 500px; width: 100%; object-fit: contain; border-radius: 15px;">
                                 </figure>
                             @endif
 

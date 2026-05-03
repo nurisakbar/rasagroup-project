@@ -210,7 +210,7 @@
                                                                     </div>
                                                                 </td>
                                                                 <td class="py-3 text-center font-sm" data-label="Harga">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                                                                <td class="py-3 text-center font-sm" data-label="Jumlah">{{ $item->quantity }}</td>
+                                                                <td class="py-3 text-center font-sm" data-label="Jumlah">{{ $item->orderedQuantityDescription() }}</td>
                                                                 <td class="pe-4 py-3 text-end fw-bold text-brand" data-label="Subtotal">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                                             </tr>
                                                         @endforeach

@@ -41,10 +41,21 @@
                     @endif
                 </div>
                 <div class="add-cart">
-                    <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST">
+                    <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST"
+                        @if($product->hasDualUnitOrdering())
+                            data-dual-uom="1"
+                            data-product-name="{{ $product->display_name }}"
+                            data-unit-label="{{ $product->unit }}"
+                            data-large-unit-label="{{ $product->large_unit }}"
+                            data-units-per-large="{{ (int) $product->units_per_large }}"
+                        @endif
+                    >
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
+                        @if($product->hasDualUnitOrdering())
+                            <input type="hidden" name="uom" value="base" class="js-cart-uom-field">
+                        @endif
                         <button type="submit" class="add">
                             Add <i class="fi-rs-plus ml-5"></i>
                         </button>

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Menu;
+use App\Models\Promo;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Slider;
@@ -66,6 +68,21 @@ class HomeController extends Controller
 
         $activePopups = WebsitePopup::where('is_active', true)->latest()->get();
 
+        $todayMenus = Menu::query()
+            ->where('status_aktif', true)
+            ->currentlyVisible()
+            ->with(['details.product'])
+            ->orderBy('nama_menu')
+            ->take(4)
+            ->get();
+
+        $homePromos = Promo::query()
+            ->where('awal', '<=', now())
+            ->where('akhir', '>=', now())
+            ->orderBy('akhir')
+            ->take(4)
+            ->get();
+
         return view('themes.nest.home.index', compact(
             'popularProducts', 
             'topSelling', 
@@ -75,7 +92,9 @@ class HomeController extends Controller
             'categories', 
             'categoryProducts', 
             'sliders',
-            'activePopups'
+            'activePopups',
+            'todayMenus',
+            'homePromos'
         ));
     }
 }

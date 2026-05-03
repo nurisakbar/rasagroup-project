@@ -79,6 +79,8 @@ class MenuController extends Controller
             'deskripsi' => 'nullable|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'status_aktif' => 'nullable',
+            'tampil_mulai' => 'nullable|required_with:tampil_sampai|date',
+            'tampil_sampai' => 'nullable|required_with:tampil_mulai|date|after_or_equal:tampil_mulai',
             'details' => 'required|array|min:1',
             'details.*.product_id' => 'required|exists:products,id',
             'details.*.jumlah' => 'required|integer|min:1',
@@ -90,6 +92,8 @@ class MenuController extends Controller
                 'nama_menu' => $request->nama_menu,
                 'deskripsi' => $request->deskripsi,
                 'status_aktif' => $request->has('status_aktif'),
+                'tampil_mulai' => $request->filled('tampil_mulai') ? $request->tampil_mulai : null,
+                'tampil_sampai' => $request->filled('tampil_sampai') ? $request->tampil_sampai : null,
             ];
 
             if ($request->hasFile('gambar')) {
@@ -128,6 +132,8 @@ class MenuController extends Controller
             'deskripsi' => 'nullable|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'status_aktif' => 'nullable',
+            'tampil_mulai' => 'nullable|required_with:tampil_sampai|date',
+            'tampil_sampai' => 'nullable|required_with:tampil_mulai|date|after_or_equal:tampil_mulai',
             'details' => 'required|array|min:1',
             'details.*.product_id' => 'required|exists:products,id',
             'details.*.jumlah' => 'required|integer|min:1',
@@ -139,6 +145,8 @@ class MenuController extends Controller
                 'nama_menu' => $request->nama_menu,
                 'deskripsi' => $request->deskripsi,
                 'status_aktif' => $request->has('status_aktif'),
+                'tampil_mulai' => $request->filled('tampil_mulai') ? $request->tampil_mulai : null,
+                'tampil_sampai' => $request->filled('tampil_sampai') ? $request->tampil_sampai : null,
             ];
 
             if ($request->hasFile('gambar')) {
