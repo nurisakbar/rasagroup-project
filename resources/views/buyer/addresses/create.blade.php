@@ -43,6 +43,9 @@
 
                         <form action="{{ route('buyer.addresses.store') }}" method="POST" id="addressForm">
                             @csrf
+                            @if((isset($redirectToCheckout) && $redirectToCheckout) || old('redirect_to_checkout'))
+                                <input type="hidden" name="redirect_to_checkout" value="1">
+                            @endif
 
                             <div class="mb-40">
                                 <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-user mr-10"></i> Informasi Penerima</h5>

@@ -167,4 +167,35 @@ class ProductController extends Controller
         $selectedHubId = session('selected_hub_id');
         return view('themes.nest.partials.quick-view-content', compact('product', 'selectedHubId'))->render();
     }
+    public function searchSuggestions(Request $request)
+    {
+        $keyword = trim($request->input('q'));
+        if (empty($keyword)) {
+            return response()->json([]);
+        }
+
+        $like = '%' . addcslashes($keyword, '%_\\') . '%';
+
+        $products = Product::where('status', 'active')
+            ->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('commercial_name', 'like', $like)
+                    ->orWhere('code', 'like', $like);
+            })
+            ->take(8)
+            ->get();
+
+        $suggestions = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->display_name,
+                'slug' => $product->slug,
+                'price' => number_format($product->price, 0, ',', '.'),
+                'image' => $product->image_url,
+                'url' => route('products.show', $product->slug),
+            ];
+        });
+
+        return response()->json($suggestions);
+    }
 }

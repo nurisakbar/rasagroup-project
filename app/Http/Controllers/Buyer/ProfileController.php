@@ -70,4 +70,50 @@ class ProfileController extends Controller
 
         return redirect()->route('buyer.profile')->with('success', 'Password berhasil diubah.');
     }
+
+    public function operationalHours()
+    {
+        $user = Auth::user();
+        
+        if (!$user->isDistributor()) {
+            abort(403, 'Akses khusus Distributor.');
+        }
+
+        if ($user->operationalHours()->count() === 0) {
+            $user->generateDefaultOperationalHours();
+        }
+
+        $operationalHours = $user->operationalHours;
+
+        return view('buyer.profile.operational-hours', compact('operationalHours'));
+    }
+
+    public function updateOperationalHours(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user->isDistributor()) {
+            abort(403, 'Akses khusus Distributor.');
+        }
+
+        $request->validate([
+            'hours' => 'required|array|size:7',
+            'hours.*.is_open' => 'required|boolean',
+            'hours.*.open_time' => 'required|date_format:H:i',
+            'hours.*.close_time' => 'required|date_format:H:i|after:hours.*.open_time',
+        ]);
+
+        foreach ($request->hours as $day => $data) {
+            $user->operationalHours()->updateOrCreate(
+                ['day' => $day],
+                [
+                    'is_open' => $data['is_open'],
+                    'open_time' => $data['open_time'],
+                    'close_time' => $data['close_time'],
+                ]
+            );
+        }
+
+        return back()->with('success', 'Jadwal operasional berhasil diperbarui.');
+    }
 }

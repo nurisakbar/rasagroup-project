@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\WarehouseStock;
 
 class Cart extends Model
 {
@@ -156,6 +157,24 @@ class Cart extends Model
         return (float) $product->price;
     }
 
+    /**
+     * Get sisa stock produk di hub terkait.
+     */
+    public function currentStock(): int
+    {
+        if ($this->relationLoaded('warehouseStock')) {
+            return (int) ($this->warehouseStock->stock ?? 0);
+        }
+
+        if (!$this->warehouse_id) {
+            return 0;
+        }
+        
+        return (int) WarehouseStock::where('warehouse_id', $this->warehouse_id)
+            ->where('product_id', $this->product_id)
+            ->value('stock');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -169,6 +188,12 @@ class Cart extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function warehouseStock(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseStock::class, 'product_id', 'product_id')
+            ->where('warehouse_id', $this->warehouse_id);
     }
 
     /**

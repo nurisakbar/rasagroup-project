@@ -90,7 +90,9 @@ class CheckoutController extends Controller
             ->orderByDesc('is_default')
             ->get();
 
-        $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
+        $defaultAddress = $addresses->where('id', request('address_id'))->first() 
+            ?? $addresses->firstWhere('is_default', true) 
+            ?? $addresses->first();
 
         // Re-detect best Hub based on default address
         if ($defaultAddress) {
@@ -1049,9 +1051,10 @@ class CheckoutController extends Controller
         
         $currentWarehouseId = $carts->first()->warehouse_id;
         $excludeOwnHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        // Auto-sync hub disabled to respect manual user selection from modal
+        /*
         $bestHub = Warehouse::findBestHubForAddress($address, $excludeOwnHubId);
         
-        $hubChanged = false;
         if ($bestHub && $bestHub->id !== $currentWarehouseId) {
             $hubChanged = true;
             Cart::where('user_id', Auth::id())
@@ -1060,6 +1063,11 @@ class CheckoutController extends Controller
             
             session(['selected_hub_id' => $bestHub->id]);
         }
+        */
+        
+        // Keep the current hub as the one selected by user
+        $bestHub = null; 
+        $hubChanged = false;
         
         // Always check stocks in the (new or current) warehouse
         $stockWarnings = [];

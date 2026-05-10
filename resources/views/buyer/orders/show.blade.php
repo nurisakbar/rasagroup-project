@@ -24,33 +24,38 @@
                 <div class="col-lg-8">
                     <div class="tab-content account dashboard-content pl-50">
                         <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-                                <div>
-                                    <a href="{{ route('buyer.orders.index') }}" class="text-brand font-sm fw-bold mb-2 d-inline-block">
-                                        <i class="fi-rs-arrow-left mr-5"></i> Kembali ke Daftar Pesanan
-                                    </a>
+                            <div class="mb-4">
+                                <a href="{{ route('buyer.orders.index') }}" class="text-brand font-sm fw-bold mb-10 d-inline-block">
+                                    <i class="fi-rs-arrow-left mr-5"></i> Kembali ke Daftar Pesanan
+                                </a>
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
-                                </div>
-                                <div class="badge-group">
-                                    @php
-                                        $statusClass = match($order->order_status) {
-                                            'pending' => 'bg-warning',
-                                            'processing' => 'bg-info',
-                                            'shipped' => 'bg-primary',
-                                            'delivered' => 'bg-success',
-                                            'cancelled' => 'bg-danger',
-                                            default => 'bg-secondary',
-                                        };
-                                        $statusLabel = match($order->order_status) {
-                                            'pending' => 'Menunggu Pembayaran',
-                                            'processing' => 'Sedang Diproses',
-                                            'shipped' => 'Dalam Pengiriman',
-                                            'delivered' => 'Selesai',
-                                            'cancelled' => 'Dibatalkan',
-                                            default => ucfirst($order->order_status),
-                                        };
-                                    @endphp
-                                    <span class="badge rounded-pill {{ $statusClass }} px-4 py-2 text-white font-sm">{{ $statusLabel }}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-sm btn-brand rounded font-sm px-3 py-2" style="white-space: nowrap; min-width: max-content;">
+                                            <i class="fi-rs-download mr-5"></i> Download Invoice
+                                        </a>
+                                        <div class="badge-group">
+                                            @php
+                                                $statusClass = match($order->order_status) {
+                                                    'pending' => 'bg-warning',
+                                                    'processing' => 'bg-info',
+                                                    'shipped' => 'bg-primary',
+                                                    'delivered' => 'bg-success',
+                                                    'cancelled' => 'bg-danger',
+                                                    default => 'bg-secondary',
+                                                };
+                                                $statusLabel = match($order->order_status) {
+                                                    'pending' => 'Menunggu Pembayaran',
+                                                    'processing' => 'Sedang Diproses',
+                                                    'shipped' => 'Dalam Pengiriman',
+                                                    'delivered' => 'Selesai',
+                                                    'cancelled' => 'Dibatalkan',
+                                                    default => ucfirst($order->order_status),
+                                                };
+                                            @endphp
+                                            <span class="badge rounded-pill {{ $statusClass }} px-3 py-2 text-white font-sm" style="white-space: nowrap;">{{ $statusLabel }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

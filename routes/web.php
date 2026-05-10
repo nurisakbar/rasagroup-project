@@ -50,6 +50,7 @@ require __DIR__.'/auth.php';
 
 // Public Routes
 Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+Route::get('/products/search-suggestions', [App\Http\Controllers\ProductController::class, 'searchSuggestions'])->name('products.search-suggestions');
 Route::get('/products/quick-view/{product}', [App\Http\Controllers\ProductController::class, 'quickView'])->name('products.quick-view');
 Route::get('/products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
 Route::get('/promo', [App\Http\Controllers\PromoController::class, 'index'])->name('promo.index');
@@ -57,6 +58,7 @@ Route::get('/promo/{slug}', [App\Http\Controllers\PromoController::class, 'show'
 
 // Hub & Distributor Routes
 Route::get('/hubs', [App\Http\Controllers\HubController::class, 'index'])->name('hubs.index');
+Route::get('/hubs/search-ajax', [App\Http\Controllers\HubController::class, 'searchAjax'])->name('hubs.search-ajax');
 Route::get('/hubs/get-regencies', [App\Http\Controllers\HubController::class, 'getRegencies'])->name('hubs.get-regencies');
 Route::get('/hubs/nearby', [App\Http\Controllers\HubController::class, 'getNearbyHubs'])->name('hubs.nearby');
 Route::get('/hubs/check-stock', [App\Http\Controllers\HubController::class, 'checkStock'])->name('hubs.check-stock');
@@ -94,11 +96,14 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified'])->gro
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/invoice', [App\Http\Controllers\Buyer\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
     Route::get('/orders/{order}/track', [App\Http\Controllers\Buyer\OrderController::class, 'trackOrder'])->name('orders.track');
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::get('/profile/operational-hours', [App\Http\Controllers\Buyer\ProfileController::class, 'operationalHours'])->name('profile.operational-hours');
+    Route::put('/profile/operational-hours', [App\Http\Controllers\Buyer\ProfileController::class, 'updateOperationalHours'])->name('profile.operational-hours.update');
     
     // Address Management
     Route::get('/addresses', [App\Http\Controllers\Buyer\AddressController::class, 'index'])->name('addresses.index');
@@ -194,6 +199,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');
         Route::post('/warehouses/{warehouse}/users', [App\Http\Controllers\Admin\WarehouseController::class, 'addUser'])->name('warehouses.add-user');
         Route::delete('/warehouses/{warehouse}/users/{user}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeUser'])->name('warehouses.remove-user');
+        Route::post('/warehouses/{warehouse}/operational-hours/generate', [App\Http\Controllers\Admin\WarehouseController::class, 'generateOperationalHours'])->name('warehouses.operational-hours.generate');
         Route::get('/get-regencies', [App\Http\Controllers\Admin\WarehouseController::class, 'getRegencies'])->name('get-regencies');
         Route::get('/get-districts', [App\Http\Controllers\Admin\WarehouseController::class, 'getDistricts'])->name('get-districts');
         Route::get('/get-villages', [App\Http\Controllers\Admin\WarehouseController::class, 'getVillages'])->name('get-villages');
@@ -297,6 +303,8 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         // Hub Profile/Settings
         Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile/operational-hours', [App\Http\Controllers\Warehouse\ProfileController::class, 'operationalHours'])->name('profile.operational-hours');
+        Route::put('/profile/operational-hours', [App\Http\Controllers\Warehouse\ProfileController::class, 'updateOperationalHours'])->name('profile.operational-hours.update');
     });
 });
 

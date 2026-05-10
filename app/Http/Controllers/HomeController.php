@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Menu;
 use App\Models\Promo;
 use App\Models\Product;
@@ -49,13 +50,19 @@ class HomeController extends Controller
         $categories = Category::where('is_active', true)
             ->withCount('products')
             ->take(10)
-            ->get(); // Limit categories for tabs
+            ->get();
 
-        // Get products for each category for the tabs
-        $categoryProducts = [];
-        foreach($categories as $category) {
-            $categoryProducts[$category->id] = (clone $baseQuery)
-                ->where('category_id', $category->id)
+        $brands = Brand::where('is_active', true)
+            ->withCount('products')
+            ->orderBy('name')
+            ->take(10)
+            ->get(); // Limit brands for tabs
+
+        // Get products for each brand for the tabs
+        $brandProducts = [];
+        foreach($brands as $brand) {
+            $brandProducts[$brand->id] = (clone $baseQuery)
+                ->where('brand_id', $brand->id)
                 ->with(['category', 'brand', 'warehouseStocks'])
                 ->latest()
                 ->take(8)
@@ -89,8 +96,9 @@ class HomeController extends Controller
             'trendingProducts', 
             'recentlyAdded', 
             'topRated', 
-            'categories', 
-            'categoryProducts', 
+            'categories',
+            'brands', 
+            'brandProducts', 
             'sliders',
             'activePopups',
             'todayMenus',

@@ -55,9 +55,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active text-uppercase" id="nav-tab-one" data-bs-toggle="tab" data-bs-target="#tab-one" type="button" role="tab" aria-controls="tab-one" aria-selected="true">{{ mb_strtoupper('Semua', 'UTF-8') }}</button>
                         </li>
-                        @foreach($categories as $index => $category)
+                        @foreach($brands as $index => $brand)
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link text-uppercase" id="nav-tab-{{ $category->id }}" data-bs-toggle="tab" data-bs-target="#tab-cat-{{ $category->id }}" type="button" role="tab" aria-controls="tab-cat-{{ $category->id }}" aria-selected="false">{{ mb_strtoupper($category->name, 'UTF-8') }}</button>
+                                <button class="nav-link text-uppercase" id="nav-tab-{{ $brand->id }}" data-bs-toggle="tab" data-bs-target="#tab-brand-{{ $brand->id }}" type="button" role="tab" aria-controls="tab-brand-{{ $brand->id }}" aria-selected="false">{{ mb_strtoupper($brand->name, 'UTF-8') }}</button>
                             </li>
                         @endforeach
                     </ul>
@@ -73,18 +73,18 @@
                         <!--End product-grid-4-->
                     </div>
                     <!--En tab one-->
-                    @foreach($categories as $category)
-                        <div class="tab-pane fade" id="tab-cat-{{ $category->id }}" role="tabpanel" aria-labelledby="tab-cat-{{ $category->id }}">
+                    @foreach($brands as $brand)
+                        <div class="tab-pane fade" id="tab-brand-{{ $brand->id }}" role="tabpanel" aria-labelledby="tab-brand-{{ $brand->id }}">
                             <div class="row product-grid-4">
-                                @if(isset($categoryProducts[$category->id]))
-                                    @foreach($categoryProducts[$category->id] as $product)
+                                @if(isset($brandProducts[$brand->id]))
+                                    @foreach($brandProducts[$brand->id] as $product)
                                         @include('themes.nest.partials.product-card', compact('product'))
                                     @endforeach
                                 @endif
                             </div>
                             <!--End product-grid-4-->
                         </div>
-                        <!--En tab category-->
+                        <!--En tab brand-->
                     @endforeach
                 </div>
                 <!--End tab-content-->

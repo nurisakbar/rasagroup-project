@@ -71,6 +71,10 @@ class WhatsAppVerificationController extends Controller
     public function resend(Request $request)
     {
         $user = $request->user();
+
+        if (!$user->phone) {
+            return back()->with('error', 'Nomor WhatsApp belum terdaftar. Silakan masukkan nomor WhatsApp Anda.');
+        }
         
         // Generate new code if not exists
         if (!$user->wa_verification_code) {

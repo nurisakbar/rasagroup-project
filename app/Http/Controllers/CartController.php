@@ -41,12 +41,24 @@ class CartController extends Controller
     {
         $carts = $this->currentRegularCarts();
 
+        // Get the warehouse for this cart (all items should be from same warehouse)
+        $cartWarehouse = $carts->first()?->warehouse;
+
+        if ($cartWarehouse) {
+            $productIds = $carts->pluck('product_id')->toArray();
+            $stocks = WarehouseStock::where('warehouse_id', $cartWarehouse->id)
+                ->whereIn('product_id', $productIds)
+                ->get()
+                ->keyBy('product_id');
+
+            foreach ($carts as $cart) {
+                $cart->setRelation('warehouseStock', $stocks->get($cart->product_id));
+            }
+        }
+
         $total = $carts->sum(function ($cart) {
             return $cart->product->price * $cart->quantity;
         });
-
-        // Get the warehouse for this cart (all items should be from same warehouse)
-        $cartWarehouse = $carts->first()?->warehouse;
 
         return view('cart.index', compact('carts', 'total', 'cartWarehouse'));
     }

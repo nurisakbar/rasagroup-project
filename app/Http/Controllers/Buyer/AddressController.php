@@ -37,11 +37,12 @@ class AddressController extends Controller
     /**
      * Show the form for creating a new address.
      */
-    public function create()
+    public function create(Request $request)
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        return view('buyer.addresses.create', compact('provinces'));
+        $redirectToCheckout = $request->query('origin') === 'checkout';
+        return view('buyer.addresses.create', compact('provinces', 'redirectToCheckout'));
     }
 
     /**
@@ -104,6 +105,11 @@ class AddressController extends Controller
                 'message' => 'Alamat berhasil ditambahkan.',
                 'address' => $address,
             ]);
+        }
+
+        if ($request->has('redirect_to_checkout')) {
+            return redirect()->route('checkout.index', ['address_id' => $address->id])
+                ->with('success', 'Alamat berhasil ditambahkan dan dipilih.');
         }
 
         return redirect()->route('buyer.addresses.index')

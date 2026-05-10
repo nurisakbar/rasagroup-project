@@ -1355,35 +1355,64 @@
 
     <script>
         $(document).ready(function() {
-            // Automatic Hub Detection
+            // Manual Hub Selection Modal Logic
             @if(!session()->has('selected_hub_id'))
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
+                const hubModalEl = document.getElementById('modalHubSelection');
+                const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
+                hubModal.show();
 
-                        $.ajax({
-                            url: '{{ route("hubs.detect-nearest") }}',
-                            type: 'POST',
-                            data: {
-                                latitude: lat,
-                                longitude: lng,
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                if (response.success && response.is_new) {
-                                    showShopToast("Lokasi terdeteksi! Kami memilih '" + response.hub.name + "' sebagai hub terdekat.", 'success');
-                                    window.location.reload();
-                                }
+                const hubSearchInput = $('#hubSearchInput');
+                const hubResults = $('#hubResults');
+
+                hubSearchInput.on('input', function() {
+                    const query = $(this).val();
+                    if (query.length < 2) {
+                        hubResults.empty();
+                        return;
+                    }
+
+                    hubResults.html('<div class="text-center p-3"><div class="spinner-border text-brand" role="status"></div></div>');
+
+                    $.ajax({
+                        url: '{{ route("hubs.search-ajax") }}',
+                        type: 'GET',
+                        data: { q: query },
+                        success: function(response) {
+                            hubResults.empty();
+                            if (response.length === 0) {
+                                hubResults.html('<p class="text-center p-3 text-muted">Tidak ditemukan Hub/Distributor di wilayah tersebut.</p>');
+                                return;
                             }
-                        });
-                    }, function(error) {
-                        console.warn("Geolocation access denied or failed:", error);
-                    }, {
-                        timeout: 10000,
-                        enableHighAccuracy: true
+
+                            response.forEach(function(hub) {
+                                const item = $(`
+                                    <div class="hub-result-item p-3 border-bottom cursor-pointer hover-up" data-id="${hub.id}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 text-brand">${hub.name}</h6>
+                                                <small class="text-muted"><i class="fi-rs-marker mr-5"></i>${hub.location}</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-fill-out py-1 px-3">Pilih</button>
+                                        </div>
+                                    </div>
+                                `);
+                                hubResults.append(item);
+                            });
+                        }
                     });
-                }
+                });
+
+                $(document).on('click', '.hub-result-item', function() {
+                    const hubId = $(this).data('id');
+                    const form = $(`
+                        <form action="{{ route('hubs.select') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="warehouse_id" value="${hubId}">
+                        </form>
+                    `);
+                    $('body').append(form);
+                    form.submit();
+                });
             @endif
             
             // Add to cart (AJAX) — dipakai juga setelah pilih satuan di modal
@@ -1506,6 +1535,44 @@
         });
     </script>
     
+    <!-- Hub Selection Modal -->
+    <div class="modal fade custom-modal" id="modalHubSelection" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalHubSelectionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeHubModal" style="{{ !session()->has('selected_hub_id') ? 'display:none;' : '' }}"></button>
+                </div>
+                <div class="modal-body p-40">
+                    <div class="text-center mb-30">
+                        <h3 class="mb-10">Pilih Lokasi Pengiriman</h3>
+                        <p class="text-muted">Masukkan nama Kota atau Kabupaten Anda untuk menemukan Hub/Distributor terdekat.</p>
+                    </div>
+                    <div class="form-group mb-20">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fi-rs-search"></i></span>
+                            <input type="text" id="hubSearchInput" class="form-control border-start-0" placeholder="Ketik nama kabupaten... (contoh: Tangerang, Bekasi)" autocomplete="off">
+                        </div>
+                    </div>
+                    <div id="hubResults" class="overflow-auto" style="max-height: 300px; border: 1px solid #ececec; border-radius: 10px;">
+                        <p class="text-center p-4 text-muted font-sm">Hasil pencarian akan muncul di sini</p>
+                    </div>
+                    <div class="mt-20 text-center">
+                        <small class="text-muted">Pemilihan lokasi membantu kami menyesuaikan stok dan biaya pengiriman.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .hub-result-item:hover {
+            background-color: #f7f8f9;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
+
     @stack('scripts')
 </body>
 

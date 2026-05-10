@@ -50,46 +50,40 @@ class GoogleController extends Controller
                     ->orWhere('email', $user->email);
             })->first();
 
-            if ($findUser) {
-                // Update google_id in case it was empty but email matched
-                if (empty($findUser->google_id)) {
-                    $findUser->update([
-                        'google_id' => $user->id,
-                        'google_token' => $user->token,
-                        'google_refresh_token' => $user->refreshToken,
-                    ]);
-                } else {
-                    $findUser->update([
-                        'google_token' => $user->token,
-                        'google_refresh_token' => $user->refreshToken,
-                    ]);
-                }
+            if (!$findUser) {
+                $newUser = User::create([
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'google_id' => $user->id,
+                    'google_token' => $user->token,
+                    'google_refresh_token' => $user->refreshToken,
+                    'password' => bcrypt(Str::random(16)),
+                    'role' => User::ROLE_BUYER,
+                    'email_verified_at' => now(), // Google emails are already verified
+                ]);
 
-                Auth::login($findUser);
-                \App\Models\Cart::mergeSessionCartToUser($findUser->id, $sessionId);
+                Auth::login($newUser);
+                \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
 
                 return redirect()->intended('dashboard');
             }
 
-            if ($intent !== 'register') {
-                return redirect()
-                    ->route('login')
-                    ->with('error', 'Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu, lalu Anda bisa masuk dengan Google.');
+            // Existing user found
+            if (empty($findUser->google_id)) {
+                $findUser->update([
+                    'google_id' => $user->id,
+                    'google_token' => $user->token,
+                    'google_refresh_token' => $user->refreshToken,
+                ]);
+            } else {
+                $findUser->update([
+                    'google_token' => $user->token,
+                    'google_refresh_token' => $user->refreshToken,
+                ]);
             }
 
-            $newUser = User::create([
-                'name' => $user->name,
-                'email' => $user->email,
-                'google_id' => $user->id,
-                'google_token' => $user->token,
-                'google_refresh_token' => $user->refreshToken,
-                'password' => bcrypt(Str::random(16)),
-                'role' => User::ROLE_BUYER,
-                'email_verified_at' => now(), // Google emails are already verified
-            ]);
-
-            Auth::login($newUser);
-            \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
+            Auth::login($findUser);
+            \App\Models\Cart::mergeSessionCartToUser($findUser->id, $sessionId);
 
             return redirect()->intended('dashboard');
         } catch (Exception $e) {

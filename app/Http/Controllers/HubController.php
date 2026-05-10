@@ -44,7 +44,10 @@ class HubController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%");
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('regency', function ($rq) use ($search) {
+                        $rq->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -398,6 +401,47 @@ class HubController extends Controller
         $distance = $earthRadius * $c;
 
         return $distance;
+    }
+
+    /**
+     * Search hubs for modal (AJAX)
+     */
+    public function searchAjax(Request $request)
+    {
+        $search = $request->query('q');
+        
+        if (empty($search) || strlen($search) < 2) {
+            return response()->json([]);
+        }
+
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+
+        $hubs = Warehouse::with(['province', 'regency'])
+            ->where('is_active', true)
+            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('regency', function ($rq) use ($search) {
+                        $rq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('province', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->limit(10)
+            ->get();
+
+        return response()->json($hubs->map(function ($h) {
+            return [
+                'id' => $h->id,
+                'name' => $h->name,
+                'location' => $h->full_location,
+                'province' => $h->province?->name,
+                'regency' => $h->regency?->name,
+                'slug' => $h->slug,
+            ];
+        }));
     }
 }
 

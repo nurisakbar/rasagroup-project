@@ -501,6 +501,15 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Generate default operational hours for warehouse.
+     */
+    public function generateOperationalHours(Warehouse $warehouse)
+    {
+        $warehouse->generateDefaultOperationalHours();
+        return back()->with('success', 'Jadwal operasional default berhasil dibuat.');
+    }
+
+    /**
      * Sinkronisasi stok dari QID secara internal (di balik layar)
      */
     private function refreshStockFromQid(Warehouse $warehouse)

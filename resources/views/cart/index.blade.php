@@ -94,9 +94,15 @@
                                     </td>
                                     <td class="product-des product-name pl-15">
                                         <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }} {{ $cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : '' }}</a></h6>
-                                        @if($cart->product->weight)
-                                        <small class="text-muted">Berat: {{ $cart->product->formatted_weight }}</small>
-                                        @endif
+                                        <div class="product-meta mt-5">
+                                            <small style="color: #253D4E; font-size: 13px;">
+                                                @if($cart->product->weight)
+                                                    Berat: {{ $cart->product->formatted_weight }}
+                                                @endif
+                                                @if($cart->product->weight) <span class="mx-2">|</span> @endif
+                                                Sisa Stock: {{ number_format($cart->currentStock()) }} {{ $cart->product->unit }}
+                                            </small>
+                                        </div>
                                     </td>
                                     <td class="price" data-title="Harga">
                                         <h4 class="text-body js-cart-unit-price">Rp {{ number_format($cart->displayUnitPrice(), 0, ',', '.') }} </h4>

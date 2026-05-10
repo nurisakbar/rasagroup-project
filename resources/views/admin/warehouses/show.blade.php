@@ -24,6 +24,9 @@
                     <li class="{{ request('tab') == 'staff' ? 'active' : '' }}">
                         <a href="{{ route('admin.warehouses.show', [$warehouse, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Staff</a>
                     </li>
+                    <li class="{{ request('tab') == 'operational_hours' ? 'active' : '' }}">
+                        <a href="{{ route('admin.warehouses.show', [$warehouse, 'tab' => 'operational_hours']) }}"><i class="fa fa-clock-o"></i> Jadwal Operasional</a>
+                    </li>
                     <li class="pull-right">
                         <a href="{{ route('admin.warehouses.index') }}" class="text-muted" style="padding: 10px 15px;"><i class="fa fa-arrow-left"></i> Kembali</a>
                     </li>
@@ -244,6 +247,55 @@
                                         @endforelse
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: JADWAL OPERASIONAL -->
+                    <div class="tab-pane {{ request('tab') == 'operational_hours' ? 'active' : '' }}" id="tab_operational_hours">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 class="page-header">Jadwal Operasional Hub</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr class="bg-gray">
+                                                <th width="150">Hari</th>
+                                                <th width="120">Status</th>
+                                                <th>Jam Buka</th>
+                                                <th>Jam Tutup</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($warehouse->operationalHours as $hour)
+                                                <tr>
+                                                    <td><strong>{{ $hour->day_name }}</strong></td>
+                                                    <td>
+                                                        @if($hour->is_open)
+                                                            <span class="label label-success">Buka</span>
+                                                        @else
+                                                            <span class="label label-danger">Tutup</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $hour->is_open ? $hour->open_time->format('H:i') : '-' }}</td>
+                                                    <td>{{ $hour->is_open ? $hour->close_time->format('H:i') : '-' }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="4" class="text-center">
+                                                        <div class="p-5">
+                                                            <p>Belum ada data jadwal operasional untuk hub ini.</p>
+                                                            <form action="{{ route('admin.warehouses.operational-hours.generate', $warehouse) }}" method="POST" style="display: inline;">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-primary btn-sm">Generate Default (08:00 - 20:00)</button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

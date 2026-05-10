@@ -7,6 +7,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
 {
@@ -28,6 +29,19 @@ class OrderController extends Controller
 
         $order->load(['items.product', 'sourceWarehouse.province', 'sourceWarehouse.regency', 'expedition']);
         return view('buyer.orders.show', compact('order'));
+    }
+    
+    public function downloadInvoice(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $order->load(['items.product', 'user', 'sourceWarehouse.province', 'sourceWarehouse.regency', 'expedition']);
+        
+        $pdf = Pdf::loadView('buyer.orders.invoice', compact('order'));
+        
+        return $pdf->download('invoice-' . $order->order_number . '.pdf');
     }
 
     public function trackOrder(Order $order)

@@ -11,11 +11,12 @@
                         </a>
                     </div>
                     <div class="header-right">
-                        <div class="search-style-2">
+                        <div class="search-style-2 position-relative">
                             <form class="rg-search-no-category" action="{{ route('products.index') }}" method="GET">
                                 <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
                                 <button type="submit" aria-label="Cari produk"><i class="fi-rs-search"></i></button>
                             </form>
+                            <div id="search-suggestions" class="search-suggestions-wrap d-none"></div>
                         </div>
                         <div class="header-action-right">
                             <div class="header-action-2">
@@ -121,40 +122,40 @@
 
                         <div class="main-categori-wrap d-none d-lg-block">
                             <a class="categories-button-active" href="#" style="white-space: nowrap;">
-                                <span class="fi-rs-apps"></span> <span class="et">Jelajahi</span> Semua Brand
+                                <span class="fi-rs-apps"></span> <span class="et">Jelajahi</span> Semua Kategori
                                 <i class="fi-rs-angle-down"></i>
                             </a>
                             <div class="categories-dropdown-wrap categories-dropdown-active-large font-heading">
                                 <div class="d-flex categori-dropdown-inner">
                                     @php
-                                        $allBrands = \App\Models\Brand::active()->get();
-                                        $count = $allBrands->count();
+                                        $allCategories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
+                                        $count = $allCategories->count();
                                         $half = ceil($count / 2);
-                                        $col1 = $allBrands->take($half);
-                                        $col2 = $allBrands->skip($half);
+                                        $col1 = $allCategories->take($half);
+                                        $col2 = $allCategories->skip($half);
                                     @endphp
                                     <ul>
-                                        @foreach($col1 as $brand)
+                                        @foreach($col1 as $category)
                                             <li>
-                                                <a class="{{ request('brand') === $brand->slug ? 'rg-brand-active' : '' }}" href="{{ route('products.index', ['brand' => $brand->slug]) }}">
-                                                    <img src="{{ $brand->logo_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
-                                                    {{ $brand->name }}
+                                                <a class="{{ request('category') === $category->slug ? 'rg-category-active' : '' }}" href="{{ route('products.index', ['category' => $category->slug]) }}">
+                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
+                                                    {{ $category->name }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                     <ul class="end">
-                                        @foreach($col2 as $brand)
+                                        @foreach($col2 as $category)
                                             <li>
-                                                <a class="{{ request('brand') === $brand->slug ? 'rg-brand-active' : '' }}" href="{{ route('products.index', ['brand' => $brand->slug]) }}">
-                                                    <img src="{{ $brand->logo_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-6.svg') }}" alt="" />
-                                                    {{ $brand->name }}
+                                                <a class="{{ request('category') === $category->slug ? 'rg-category-active' : '' }}" href="{{ route('products.index', ['category' => $category->slug]) }}">
+                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-6.svg') }}" alt="" />
+                                                    {{ $category->name }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                 </div>
-                                <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua Brand...</span></div>
+                                <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua Kategori...</span></div>
                             </div>
                         </div>
                         @php
@@ -251,4 +252,139 @@
                 </div>
             </div>
         </div>
-    </header>
+    <style>
+        .search-suggestions-wrap {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e2e2e2;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            z-index: 9999;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f1f1;
+            transition: all 0.2s;
+            text-decoration: none !important;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .suggestion-item:hover {
+            background: #f9f9f9;
+        }
+        .suggestion-img {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 15px;
+            border: 1px solid #eee;
+        }
+        .suggestion-info {
+            flex: 1;
+        }
+        .suggestion-name {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #253D4E;
+            margin-bottom: 2px;
+        }
+        .suggestion-price {
+            display: block;
+            font-size: 13px;
+            color: #3BB77E;
+            font-weight: 700;
+        }
+        .suggestion-loading {
+            padding: 15px;
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+        }
+        .suggestion-empty {
+            padding: 15px;
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[name="search"]');
+            const suggestionsWrap = document.getElementById('search-suggestions');
+            let debounceTimer;
+
+            if (searchInput && suggestionsWrap) {
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    
+                    clearTimeout(debounceTimer);
+                    if (query.length < 2) {
+                        suggestionsWrap.classList.add('d-none');
+                        return;
+                    }
+
+                    debounceTimer = setTimeout(() => {
+                        fetchSuggestions(query);
+                    }, 300);
+                });
+
+                // Hide suggestions when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !suggestionsWrap.contains(e.target)) {
+                        suggestionsWrap.classList.add('d-none');
+                    }
+                });
+
+                // Show suggestions when clicking input if not empty
+                searchInput.addEventListener('focus', function() {
+                    if (this.value.trim().length >= 2 && suggestionsWrap.innerHTML !== '') {
+                        suggestionsWrap.classList.remove('d-none');
+                    }
+                });
+            }
+
+            function fetchSuggestions(query) {
+                suggestionsWrap.innerHTML = '<div class="suggestion-loading"><i class="fi-rs-refresh mr-5"></i> Mencari...</div>';
+                suggestionsWrap.classList.remove('d-none');
+
+                fetch(`{{ route('products.search-suggestions') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            suggestionsWrap.innerHTML = '<div class="suggestion-empty">Produk tidak ditemukan.</div>';
+                            return;
+                        }
+
+                        let html = '';
+                        data.forEach(product => {
+                            html += `
+                                <a href="${product.url}" class="suggestion-item">
+                                    <img src="${product.image}" class="suggestion-img" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                                    <div class="suggestion-info">
+                                        <span class="suggestion-name">${product.name}</span>
+                                        <span class="suggestion-price">Rp ${product.price}</span>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                        suggestionsWrap.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching suggestions:', error);
+                        suggestionsWrap.classList.add('d-none');
+                    });
+            }
+        });
+    </script>
+</header>

@@ -20,7 +20,11 @@
                         <div class="heading_s1 text-center">
                             <i class="fi-rs-smartphone display-1 mb-20 text-brand"></i>
                             <h1 class="mb-5">Verifikasi WhatsApp</h1>
-                            <p class="mb-30">Kami telah mengirimkan kode verifikasi 6 digit ke nomor WhatsApp Anda: <strong>{{ auth()->user()->phone }}</strong></p>
+                            @if(auth()->user()->phone)
+                                <p class="mb-30">Kami telah mengirimkan kode verifikasi 6 digit ke nomor WhatsApp Anda: <strong>{{ auth()->user()->phone }}</strong></p>
+                            @else
+                                <p class="mb-30 text-danger">Anda belum mendaftarkan nomor WhatsApp. Silakan masukkan nomor WhatsApp Anda di bawah ini untuk memulai verifikasi.</p>
+                            @endif
                         </div>
                         
                         @if (session('status') == 'verification-link-sent')
@@ -37,6 +41,7 @@
                             </div>
                         @endif
 
+                        @if(auth()->user()->phone)
                         <form method="POST" action="{{ route('wa.verify.post') }}" id="otp-form">
                             @csrf
                             <input type="hidden" name="code" id="verification_code">
@@ -59,10 +64,12 @@
                                 <button type="submit" class="btn btn-heading btn-block hover-up" style="width: 100%; background-color: #6A1B1B; color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Verifikasi Sekarang</button>
                             </div>
                         </form>
+                        @endif
 
                         <div class="text-center mt-30">
                             <p class="text-muted mb-15">Tidak menerima kode atau nomor salah?</p>
                             <div class="d-flex flex-column align-items-center gap-3">
+                                @if(auth()->user()->phone)
                                 <div class="d-flex justify-content-center gap-2 flex-wrap" id="wa-actions">
                                     <form method="POST" action="{{ route('wa.resend') }}">
                                         @csrf
@@ -74,8 +81,9 @@
                                         Ubah Nomor HP
                                     </button>
                                 </div>
+                                @endif
                                 
-                                <form method="POST" action="{{ route('wa.update-phone') }}" id="update-phone-form" class="mt-10 d-none" style="width: 100%;">
+                                <form method="POST" action="{{ route('wa.update-phone') }}" id="update-phone-form" class="mt-10 {{ auth()->user()->phone ? 'd-none' : '' }}" style="width: 100%;">
                                     @csrf
                                     <div class="form-group">
                                         <input type="text" name="phone" class="form-control" placeholder="Contoh: 08123456789" value="{{ auth()->user()->phone }}" required style="border-radius: 12px; height: 50px;">

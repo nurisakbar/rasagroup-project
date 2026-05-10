@@ -34,6 +34,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.profile.operational-hours') ? 'active' : '' }}" href="{{ route('buyer.profile.operational-hours') }}">
+                    <i class="fi-rs-clock {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Jadwal Operasional
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
                     <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat Pembelian
                 </a>
@@ -58,6 +63,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ Route::is('cart.index') ? 'active' : '' }}" href="{{ route('cart.index') }}">
+                    <i class="fi-rs-shopping-cart {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Keranjang Belanja
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.orders.*') ? 'active' : '' }}" href="{{ route('buyer.orders.index') }}">
                     <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Pesanan
                 </a>
@@ -67,6 +77,13 @@
                     <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat
                 </a>
             </li>
+            @if($isDistributor)
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.profile.operational-hours') ? 'active' : '' }}" href="{{ route('buyer.profile.operational-hours') }}">
+                    <i class="fi-rs-clock {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Jadwal Operasional
+                </a>
+            </li>
+            @endif
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.profile') ? 'active' : '' }}" href="{{ route('buyer.profile') }}">
                     <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil

@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\HasOperationalHours;
 
 class Warehouse extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasOperationalHours;
 
     protected $keyType = 'string';
     public $incrementing = false;

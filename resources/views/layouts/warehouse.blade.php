@@ -107,9 +107,14 @@
           </a>
         </li>
         <li class="header">SETTING</li>
-        <li class="{{ request()->routeIs('warehouse.profile*') ? 'active' : '' }}">
+        <li class="{{ request()->routeIs('warehouse.profile') ? 'active' : '' }}">
           <a href="{{ route('warehouse.profile') }}">
-            <i class="fa fa-user"></i> <span>PENGATURAN HUB</span>
+            <i class="fa fa-building"></i> <span>INFORMASI HUB</span>
+          </a>
+        </li>
+        <li class="{{ request()->routeIs('warehouse.profile.operational-hours') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.profile.operational-hours') }}">
+            <i class="fa fa-clock-o"></i> <span>JADWAL OPERASIONAL</span>
           </a>
         </li>
       </ul>

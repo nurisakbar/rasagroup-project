@@ -51,4 +51,52 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Informasi Hub berhasil diperbarui.');
     }
+
+    public function operationalHours()
+    {
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+
+        if (!$warehouse) {
+            return back()->with('error', 'Anda tidak terasosiasi dengan Warehouse/Hub manapun.');
+        }
+
+        if ($warehouse->operationalHours()->count() === 0) {
+            $warehouse->generateDefaultOperationalHours();
+        }
+
+        $operationalHours = $warehouse->operationalHours;
+
+        return view('warehouse.profile.operational-hours', compact('warehouse', 'operationalHours'));
+    }
+
+    public function updateOperationalHours(Request $request)
+    {
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+
+        if (!$warehouse) {
+            return back()->with('error', 'Anda tidak memiliki otoritas untuk memperbarui Hub.');
+        }
+
+        $request->validate([
+            'hours' => 'required|array|size:7',
+            'hours.*.is_open' => 'required|boolean',
+            'hours.*.open_time' => 'required|date_format:H:i',
+            'hours.*.close_time' => 'required|date_format:H:i|after:hours.*.open_time',
+        ]);
+
+        foreach ($request->hours as $day => $data) {
+            $warehouse->operationalHours()->updateOrCreate(
+                ['day' => $day],
+                [
+                    'is_open' => $data['is_open'],
+                    'open_time' => $data['open_time'],
+                    'close_time' => $data['close_time'],
+                ]
+            );
+        }
+
+        return back()->with('success', 'Jadwal operasional Hub berhasil diperbarui.');
+    }
 }

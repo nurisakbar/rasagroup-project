@@ -70,7 +70,7 @@
                 <div class="mb-25">
                     <div class="d-flex justify-content-between align-items-center mb-15">
                         <h4 class="mb-0"><i class="fi-rs-marker mr-10 text-muted"></i>Alamat Pengiriman</h4>
-                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm btn-standar-outline">
+                        <a href="{{ route('buyer.addresses.create', ['origin' => 'checkout']) }}" class="btn btn-sm btn-standar-outline">
                             <i class="fi-rs-plus mr-5"></i>Tambah Alamat
                         </a>
                     </div>
@@ -79,7 +79,7 @@
                         <div class="alert alert-warning mb-0">
                             <i class="fi-rs-info mr-10"></i> 
                             Anda belum memiliki alamat pengiriman. 
-                            <a href="{{ route('buyer.addresses.create') }}" class="alert-link">Tambah alamat</a> terlebih dahulu.
+                            <a href="{{ route('buyer.addresses.create', ['origin' => 'checkout']) }}" class="alert-link">Tambah alamat</a> terlebih dahulu.
                         </div>
                     @else
                         <div class="payment_method">
