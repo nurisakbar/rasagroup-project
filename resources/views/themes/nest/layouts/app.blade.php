@@ -1347,6 +1347,41 @@
             color: white;
             background: linear-gradient(135deg, #7d2424 0%, #5c1818 100%);
         }
+
+        /* Product Grid Qty Selector & Add Button */
+        .add-cart .add {
+            background-color: #fff !important;
+            border: 1px solid #FD6E3E !important;
+            color: #FD6E3E !important;
+            padding: 6px 20px !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            transition: all 0.3s ease;
+        }
+        .add-cart .add:hover {
+            background-color: #FD6E3E !important;
+            color: #fff !important;
+        }
+        .product-qty-selector i {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .product-qty-selector i:hover {
+            background-color: #FD6E3E !important;
+            color: #fff !important;
+            border-color: #FD6E3E !important;
+        }
+        .product-qty-selector a:active i {
+            transform: scale(0.85);
+        }
+        .product-qty-selector .qty-val-grid {
+            user-select: none;
+            margin: 0 10px;
+        }
     </style>
 
     @include('themes.nest.partials.preloader')
@@ -1356,29 +1391,37 @@
     <script>
         $(document).ready(function() {
             // Manual Hub Selection Modal Logic
+            const hubModalEl = document.getElementById('modalHubSelection');
+            const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
+            
             @if(!session()->has('selected_hub_id'))
-                const hubModalEl = document.getElementById('modalHubSelection');
-                const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
                 hubModal.show();
+            @endif
 
-                const hubSearchInput = $('#hubSearchInput');
-                const hubResults = $('#hubResults');
+            const hubSearchInput = $('#hubSearchInput');
+            const hubResults = $('#hubResults');
 
-                hubSearchInput.on('input', function() {
-                    const query = $(this).val();
-                    if (query.length < 2) {
+            // Quick select for popular cities
+            $('.quick-city-btn').on('click', function() {
+                const city = $(this).data('city');
+                hubSearchInput.val(city).trigger('input');
+            });
+
+            hubSearchInput.on('input', function() {
+                const query = $(this).val();
+                if (query.length < 3) {
+                    hubResults.html('<div class="p-40 text-center"><p class="text-muted">Mulai mengetik untuk mencari Hub terdekat...</p></div>');
+                    return;
+                }
+
+                hubResults.html('<div class="text-center p-3"><div class="spinner-border text-brand" role="status"></div></div>');
+
+                $.ajax({
+                    url: '{{ route("hubs.search-ajax") }}',
+                    type: 'GET',
+                    data: { q: query },
+                    success: function(response) {
                         hubResults.empty();
-                        return;
-                    }
-
-                    hubResults.html('<div class="text-center p-3"><div class="spinner-border text-brand" role="status"></div></div>');
-
-                    $.ajax({
-                        url: '{{ route("hubs.search-ajax") }}',
-                        type: 'GET',
-                        data: { q: query },
-                        success: function(response) {
-                            hubResults.empty();
                             if (response.length === 0) {
                                 hubResults.html('<p class="text-center p-3 text-muted">Tidak ditemukan Hub/Distributor di wilayah tersebut.</p>');
                                 return;
@@ -1404,16 +1447,28 @@
 
                 $(document).on('click', '.hub-result-item', function() {
                     const hubId = $(this).data('id');
+                    const hubName = $(this).find('strong').text();
+                    
+                    // Check if cart is not empty (pro-count > 0)
+                    const cartCount = parseInt($('.pro-count.blue').first().text()) || 0;
+                    
+                    if (cartCount > 0) {
+                        const confirmMsg = `Mengubah lokasi pengiriman ke "${hubName}" akan mengosongkan keranjang belanja Anda saat ini. Lanjutkan?`;
+                        if (!confirm(confirmMsg)) {
+                            return;
+                        }
+                    }
+
                     const form = $(`
                         <form action="{{ route('hubs.select') }}" method="POST">
                             @csrf
                             <input type="hidden" name="warehouse_id" value="${hubId}">
+                            <input type="hidden" name="clear_cart" value="1">
                         </form>
                     `);
                     $('body').append(form);
                     form.submit();
                 });
-            @endif
             
             // Add to cart (AJAX) — dipakai juga setelah pilih satuan di modal
             function performAddToCartAjax(form) {
@@ -1436,6 +1491,19 @@
                     success: function(response) {
                         if (response.success) {
                             showShopToast(response.message, 'success');
+                            
+                            // Interactive grid qty selector transition
+                            const formId = form.attr('id');
+                            if (formId && formId.startsWith('add-form-')) {
+                                const slug = formId.replace('add-form-', '');
+                                const qtySelector = $('#qty-selector-' + slug);
+                                if (qtySelector.length) {
+                                    form.addClass('d-none');
+                                    qtySelector.removeClass('d-none');
+                                    $('#qty-val-' + slug).text(response.line.quantity_input);
+                                }
+                            }
+
                             $('.pro-count').text(response.cart_count);
                             if (response.mini_cart_html) {
                                 $('.cart-dropdown-wrap').html(response.mini_cart_html);
@@ -1489,75 +1557,113 @@
 
             $(document).on('submit', '.add-to-cart-form', function(e) {
                 e.preventDefault();
-                const form = $(this);
-                if (form.attr('data-dual-uom') === '1') {
-                    var unitLabel = form.attr('data-unit-label') || 'satuan kecil';
-                    var largeLabel = form.attr('data-large-unit-label') || 'satuan besar';
-                    var n = form.attr('data-units-per-large') || '';
-                    $('#modalChooseCartUom').data('pending-form', form);
-                    $('#modalChooseCartUomProduct').text(form.attr('data-product-name') || '');
-                    $('#modalChooseCartUomBase').text('Satuan terkecil (' + unitLabel + ')');
-                    var largeText = 'Satuan terbesar — 1 ' + largeLabel;
-                    if (n) {
-                        largeText += ' = ' + n + ' ' + unitLabel;
-                    }
-                    $('#modalChooseCartUomLarge').text(largeText);
-                    var modalEl = document.getElementById('modalChooseCartUom');
-                    if (modalEl && typeof bootstrap !== 'undefined') {
-                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-                    } else {
-                        performAddToCartAjax(form);
-                    }
-                    return;
-                }
-                performAddToCartAjax(form);
+                performAddToCartAjax(this);
             });
 
-            $('#modalChooseCartUomBase').on('click', function() {
-                var form = $('#modalChooseCartUom').data('pending-form');
-                if (!form || !form.length) {
-                    return;
-                }
-                form.find('.js-cart-uom-field').val('base');
-                closeChooseCartUomModal();
-                performAddToCartAjax(form);
-            });
 
-            $('#modalChooseCartUomLarge').on('click', function() {
-                var form = $('#modalChooseCartUom').data('pending-form');
-                if (!form || !form.length) {
+            // Grid Qty Selector Handlers (+ / -)
+            $(document).on('click', '.qty-up-grid, .qty-down-grid', function() {
+                const btn = $(this);
+                
+                // If we're on the cart page inside the update form, skip global handler
+                if (btn.closest('.cart-update-form').length) {
                     return;
                 }
-                form.find('.js-cart-uom-field').val('large');
-                closeChooseCartUomModal();
-                performAddToCartAjax(form);
+
+                const slug = btn.data('slug');
+                const action = btn.hasClass('qty-up-grid') ? 'plus' : 'minus';
+                const qtyValEl = $('#qty-val-' + slug);
+                const oldVal = qtyValEl.text();
+                const container = btn.closest('.product-qty-selector');
+                const buttons = container.find('a');
+
+                if (btn.hasClass('disabled')) return;
+                buttons.addClass('disabled').css('opacity', '0.5');
+                
+                $.ajax({
+                    url: '{{ route("cart.update-quantity", ":slug") }}'.replace(':slug', slug),
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        action: action
+                    },
+                    success: function(response) {
+                        buttons.removeClass('disabled').css('opacity', '1');
+                        if (response.success) {
+                            if (response.line.quantity_input <= 0) {
+                                $('#qty-selector-' + slug).addClass('d-none');
+                                $('#add-form-' + slug).removeClass('d-none');
+                            } else {
+                                $('#qty-val-' + slug).text(response.line.quantity_input);
+                            }
+                            
+                            $('.pro-count.blue').text(response.cart_count);
+                            $('.pro-count.white').text(response.cart_count);
+                            if (response.mini_cart_html) {
+                                $('.cart-dropdown-wrap').html(response.mini_cart_html);
+                            }
+                        } else {
+                            qtyValEl.text(oldVal);
+                            showShopToast(response.message || 'Gagal memperbarui jumlah.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                         buttons.removeClass('disabled').css('opacity', '1');
+                         qtyValEl.text(oldVal);
+                         const body = xhr.responseJSON || {};
+                         showShopToast(body.message || 'Gagal memperbarui jumlah.', 'error');
+                    }
+                });
             });
         });
     </script>
     
     <!-- Hub Selection Modal -->
     <div class="modal fade custom-modal" id="modalHubSelection" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalHubSelectionLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeHubModal" style="{{ !session()->has('selected_hub_id') ? 'display:none;' : '' }}"></button>
                 </div>
                 <div class="modal-body p-40">
                     <div class="text-center mb-30">
+                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="location" class="mb-15" style="width: 50px;">
                         <h3 class="mb-10">Pilih Lokasi Pengiriman</h3>
-                        <p class="text-muted">Masukkan nama Kota atau Kabupaten Anda untuk menemukan Hub/Distributor terdekat.</p>
+                        <p class="text-muted">Tentukan Hub pengiriman untuk melihat ketersediaan stok dan biaya ongkir yang akurat.</p>
                     </div>
-                    <div class="form-group mb-20">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fi-rs-search"></i></span>
-                            <input type="text" id="hubSearchInput" class="form-control border-start-0" placeholder="Ketik nama kabupaten... (contoh: Tangerang, Bekasi)" autocomplete="off">
+
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            <div class="form-group mb-30">
+                                <div class="input-group input-group-lg hub-search-wrap">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fi-rs-search"></i></span>
+                                    <input type="text" id="hubSearchInput" class="form-control border-start-0 font-md" placeholder="Cari Kota atau Kabupaten Anda..." autocomplete="off">
+                                </div>
+                            </div>
+
+                            <div class="mb-30">
+                                <h6 class="mb-15 font-sm text-muted text-uppercase" style="letter-spacing: 1px;">Wilayah Populer</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Jakarta">Jakarta</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Tangerang">Tangerang</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Bekasi">Bekasi</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Depok">Depok</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Bogor">Bogor</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Bandung">Bandung</button>
+                                    <button class="btn btn-xs btn-standar-outline quick-city-btn" data-city="Surabaya">Surabaya</button>
+                                </div>
+                            </div>
+
+                            <div id="hubResults" class="overflow-auto custom-scrollbar" style="max-height: 350px; border: 1px solid #eee; border-radius: 12px; background: #fafafa;">
+                                <div class="p-40 text-center">
+                                    <p class="text-muted">Mulai mengetik untuk mencari Hub terdekat...</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-30 text-center">
+                                <p class="font-sm text-muted">Tidak menemukan wilayah Anda? <br> Hubungi CS kami untuk bantuan pengiriman manual.</p>
+                            </div>
                         </div>
-                    </div>
-                    <div id="hubResults" class="overflow-auto" style="max-height: 300px; border: 1px solid #ececec; border-radius: 10px;">
-                        <p class="text-center p-4 text-muted font-sm">Hasil pencarian akan muncul di sini</p>
-                    </div>
-                    <div class="mt-20 text-center">
-                        <small class="text-muted">Pemilihan lokasi membantu kami menyesuaikan stok dan biaya pengiriman.</small>
                     </div>
                 </div>
             </div>
@@ -1565,11 +1671,93 @@
     </div>
 
     <style>
-        .hub-result-item:hover {
-            background-color: #f7f8f9;
+        .location-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            color: #253D4E;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.3s ease;
         }
-        .cursor-pointer {
-            cursor: pointer;
+        .location-btn:hover {
+            border-color: var(--primary-rasa);
+            color: var(--primary-rasa);
+        }
+        .location-btn i {
+            color: var(--primary-rasa);
+            font-size: 16px;
+        }
+        .hub-search-wrap .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+        .hub-result-item {
+            transition: all 0.2s ease;
+            background: #fff;
+            margin: 8px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .hub-result-item:hover {
+            border-color: var(--primary-rasa);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .quick-city-btn {
+            border-radius: 20px !important;
+            padding: 8px 18px !important;
+            font-weight: 500 !important;
+            background: #fff !important;
+            white-space: nowrap;
+        }
+        .quick-city-btn:hover {
+            background: var(--primary-rasa) !important;
+            color: #fff !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            #modalHubSelection .modal-body {
+                padding: 25px 15px !important;
+            }
+            #modalHubSelection h3 {
+                font-size: 18px !important;
+            }
+            #modalHubSelection p {
+                font-size: 13px !important;
+            }
+            .quick-city-btn {
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+            }
+            .hub-search-wrap .input-group-text, 
+            .hub-search-wrap .form-control {
+                font-size: 14px !important;
+                height: 45px !important;
+            }
+            .hub-result-item {
+                margin: 5px 0 !important;
+            }
+            .hub-result-item h6 {
+                font-size: 14px !important;
+            }
+            .location-btn span {
+                display: none; /* Sembunyikan teks di mobile jika terlalu sempit */
+            }
+            .location-btn {
+                padding: 8px !important;
+            }
         }
     </style>
 

@@ -76,9 +76,12 @@ Route::get('/cart/{product}', function (\App\Models\Product $product) {
     return redirect()->route('products.show', $product);
 })->name('cart.product-redirect');
 Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
+Route::post('/cart/update-quantity/{product}', [App\Http\Controllers\CartController::class, 'updateQuantityByProduct'])->name('cart.update-quantity');
+Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/{cart}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
+
 Route::middleware('auth')->group(function () {
-    Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/{cart}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
+    // Other auth routes...
 });
 
 // Checkout Routes

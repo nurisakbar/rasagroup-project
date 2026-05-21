@@ -205,7 +205,16 @@ class CartController extends Controller
             throw $e;
         }
 
-        $uom = $request->input('uom', 'base');
+        // Determine default UOM based on user role
+        $isDistributor = auth()->check() && auth()->user()->isDistributor();
+        $defaultUom = $isDistributor ? 'large' : 'base';
+        $uom = $request->input('uom', $defaultUom);
+
+        // Force distributors to buy in large unit if product supports it
+        if ($isDistributor && $product->hasDualUnitOrdering()) {
+            $uom = 'large';
+        }
+
         if ($uom === 'large' && ! $product->hasDualUnitOrdering()) {
             $uom = 'base';
             $this->logCartStore('store: uom forced to base (no dual unit)', ['product_id' => $product->id]);
@@ -286,10 +295,17 @@ class CartController extends Controller
                 ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
                 : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
 
+            $currentCart = Auth::check()
+                ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->where('product_id', $product->id)->first()
+                : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->where('product_id', $product->id)->first();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Produk "' . $product->display_name . '" berhasil ditambahkan.',
                 'cart_count' => $cartCount,
+                'line' => [
+                    'quantity_input' => $currentCart ? $currentCart->cartQuantityInputValue() : 1,
+                ],
                 'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
             ]);
         }
@@ -613,6 +629,73 @@ class CartController extends Controller
                     'stock' => $stock->stock,
                 ];
             }),
+        ]);
+    }
+
+    public function updateQuantityByProduct(Request $request, Product $product)
+    {
+        $action = $request->input('action'); // plus or minus
+        $warehouseId = session('selected_hub_id');
+
+        $cart = Auth::check()
+            ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->where('product_id', $product->id)->first()
+            : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->where('product_id', $product->id)->first();
+
+        if (!$cart) {
+            if ($action === 'plus') {
+                return $this->store($request, $product);
+            }
+            return response()->json(['success' => false, 'message' => 'Produk tidak ada di keranjang.'], 404);
+        }
+
+        $currentOrd = (int) ($cart->quantity_ordered ?? 1);
+        $uom = $cart->order_uom ?: 'base';
+
+        if ($action === 'plus') {
+            $newOrd = $currentOrd + 1;
+        } else {
+            $newOrd = $currentOrd - 1;
+        }
+
+        if ($newOrd <= 0) {
+            $cart->delete();
+            $cartCount = Auth::check() 
+                ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
+                : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk dihapus dari keranjang.',
+                'cart_count' => (int) $cartCount,
+                'line' => ['quantity_input' => 0],
+                'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
+            ]);
+        }
+
+        // Validate stock
+        $baseNeeded = $product->orderedQuantityToBase($newOrd, $uom);
+        $stock = $product->warehouseStocks()
+            ->where('warehouse_id', $cart->warehouse_id)
+            ->first();
+
+        if (!$stock || $stock->stock < $baseNeeded) {
+            return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi.'], 422);
+        }
+
+        $cart->quantity = $baseNeeded;
+        $cart->quantity_ordered = $newOrd;
+        $cart->save();
+
+        $cartCount = Auth::check() 
+            ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
+            : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Keranjang diperbarui.',
+            'cart_count' => (int) $cartCount,
+            'line' => ['quantity_input' => $newOrd],
+            'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
         ]);
     }
 }

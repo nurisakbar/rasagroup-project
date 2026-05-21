@@ -21,24 +21,10 @@
                         <div class="header-action-right">
                             <div class="header-action-2">
                                 <div class="search-location">
-                                    <form action="#">
-                                        <select class="select-active">
-                                            <option>Lokasi Anda</option>
-                                            <option>Alabama</option>
-                                            <option>Alaska</option>
-                                            <option>Arizona</option>
-                                            <option>Delaware</option>
-                                            <option>Florida</option>
-                                            <option>Georgia</option>
-                                            <option>Hawaii</option>
-                                            <option>Indiana</option>
-                                            <option>Maryland</option>
-                                            <option>Nevada</option>
-                                            <option>New Jersey</option>
-                                            <option>New Mexico</option>
-                                            <option>New York</option>
-                                        </select>
-                                    </form>
+                                    <a href="javascript:void(0)" class="location-btn" data-bs-toggle="modal" data-bs-target="#modalHubSelection">
+                                        <i class="fi-rs-marker mr-5"></i>
+                                        <span class="lable">{{ session('selected_hub_name', 'Pilih Lokasi') }}</span>
+                                    </a>
                                 </div>
                                 {{-- <div class="header-action-icon-2">
                                     <a href="shop-compare.html">

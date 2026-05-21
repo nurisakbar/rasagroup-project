@@ -41,7 +41,25 @@
                     @endif
                 </div>
                 <div class="add-cart">
-                    <form class="add-to-cart-form" action="{{ route('cart.store', $product->slug) }}" method="POST"
+                    @php
+                        $inCartQty = isset($cartItemMap) ? ($cartItemMap[$product->id] ?? 0) : 0;
+                    @endphp
+                    
+                    <!-- Quantity Selector -->
+                    <div class="product-qty-selector {{ $inCartQty > 0 ? '' : 'd-none' }}" id="qty-selector-{{ $product->slug }}">
+                        <div class="d-flex align-items-center justify-content-between" style="min-width: 100px;">
+                            <a href="javascript:void(0)" class="qty-down-grid" data-slug="{{ $product->slug }}">
+                                <i class="fi-rs-minus" style="font-size: 14px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 4px;"></i>
+                            </a>
+                            <span class="qty-val-grid fw-bold" id="qty-val-{{ $product->slug }}" style="font-size: 16px; color: #253D4E; min-width: 25px; text-align: center;">{{ $inCartQty }}</span>
+                            <a href="javascript:void(0)" class="qty-up-grid" data-slug="{{ $product->slug }}">
+                                <i class="fi-rs-plus" style="font-size: 14px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 4px;"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Add Button Form -->
+                    <form class="add-to-cart-form {{ $inCartQty > 0 ? 'd-none' : '' }}" id="add-form-{{ $product->slug }}" action="{{ route('cart.store', $product->slug) }}" method="POST"
                         @if($product->hasDualUnitOrdering())
                             data-dual-uom="1"
                             data-product-name="{{ $product->display_name }}"
@@ -51,13 +69,13 @@
                         @endif
                     >
                         @csrf
-                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="quantity" value="1" class="js-qty-input">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
                         @if($product->hasDualUnitOrdering())
-                            <input type="hidden" name="uom" value="base" class="js-cart-uom-field">
+                            <input type="hidden" name="uom" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}" class="js-cart-uom-field">
                         @endif
                         <button type="submit" class="add">
-                            Add <i class="fi-rs-plus ml-5"></i>
+                            Add
                         </button>
                     </form>
                 </div>

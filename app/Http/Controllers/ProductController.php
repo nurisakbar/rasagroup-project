@@ -85,9 +85,26 @@ class ProductController extends Controller
 
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage)->withQueryString();
-        $categories = \App\Models\Category::where('is_active', true)->get();
+        $brands = \App\Models\Brand::where('is_active', true)->get();
 
-        return view('products.index', compact('products', 'selectedHubId', 'categories'));
+        // Get current cart items to show qty selector in grid if already added
+        $cartItemMap = [];
+        if (Auth::check() || session()->getId()) {
+            $cartItems = \App\Models\Cart::where('cart_type', 'regular')
+                ->where(function($q) {
+                    if (Auth::check()) {
+                        $q->where('user_id', Auth::id());
+                    } else {
+                        $q->where('session_id', session()->getId());
+                    }
+                })->get();
+            
+            foreach ($cartItems as $item) {
+                $cartItemMap[$item->product_id] = $item->cartQuantityInputValue();
+            }
+        }
+
+        return view('products.index', compact('products', 'selectedHubId', 'brands', 'cartItemMap'));
     }
 
     public function show(Request $request, $identifier)

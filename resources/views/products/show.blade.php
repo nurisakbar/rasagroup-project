@@ -64,7 +64,8 @@
                                     <!-- Price -->
                                     <div class="product-detail-price-block mb-3">
                                         <div class="product-price primary-color">
-                                            <span class="current-price text-brand product-detail-price-amount">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                            <span class="current-price text-brand product-detail-price-amount" id="display-price">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                            <span class="text-muted font-sm" id="display-unit-label">/ {{ $product->unit }}</span>
                                             @if(isset($product->compare_price) && $product->compare_price > $product->price)
                                                 <div class="product-detail-price-promo mt-2">
                                                     <span class="save-price font-md color3">{{ round((($product->compare_price - $product->price)/$product->compare_price)*100) }}% Off</span>
@@ -78,7 +79,7 @@
                                         <span class="product-detail-stock-below-label">Stok</span>
                                         <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
                                         @if($product->unit)
-                                            <span class="product-detail-stock-below-unit text-muted">{{ $product->unit }}</span>
+                                            <span class="product-detail-stock-below-unit text-muted" id="stock-unit-label">{{ $product->unit }}</span>
                                         @endif
                                     </div>
 
@@ -151,24 +152,26 @@
                                     <form action="{{ route('cart.store', $product) }}" method="POST" id="add-to-cart-form">
                                         @csrf
                                         <input type="hidden" name="warehouse_id" id="selected-warehouse-id" value="{{ $selectedWarehouseId ?? '' }}">
-                                        <input type="hidden" name="uom" id="uom-field" value="base">
+                                        <input type="hidden" name="uom" id="uom-field" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}">
 
                                         @if($product->hasDualUnitOrdering())
                                             <div class="product-uom-picker-wrap mb-3">
                                                 <div class="product-uom-picker" role="radiogroup" aria-labelledby="product-uom-heading">
                                                     <span id="product-uom-heading" class="product-uom-picker-title">Satuan pembelian</span>
                                                     <div class="product-uom-cards">
-                                                        <label class="product-uom-card" data-uom-card="base" for="product-uom-base" aria-label="Beli per {{ $product->unit }}">
-                                                            <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-base" value="base" checked autocomplete="off">
-                                                            <span class="product-uom-card-face">
-                                                                <span class="product-uom-card-radio" aria-hidden="true"></span>
-                                                                <span class="product-uom-card-row product-uom-card-row--solo-chip">
-                                                                    <span class="product-uom-card-chip">{{ $product->unit }}</span>
+                                                        @if(!auth()->check() || !auth()->user()->isDistributor())
+                                                            <label class="product-uom-card" data-uom-card="base" for="product-uom-base" aria-label="Beli per {{ $product->unit }}">
+                                                                <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-base" value="base" checked autocomplete="off">
+                                                                <span class="product-uom-card-face">
+                                                                    <span class="product-uom-card-radio" aria-hidden="true"></span>
+                                                                    <span class="product-uom-card-row product-uom-card-row--solo-chip">
+                                                                        <span class="product-uom-card-chip">{{ $product->unit }}</span>
+                                                                    </span>
                                                                 </span>
-                                                            </span>
-                                                        </label>
+                                                            </label>
+                                                        @endif
                                                         <label class="product-uom-card" data-uom-card="large" for="product-uom-large" aria-label="Beli per {{ $product->large_unit }}">
-                                                            <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-large" value="large" autocomplete="off">
+                                                            <input class="product-uom-card-input" type="radio" name="uom_pick" id="product-uom-large" value="large" {{ (auth()->check() && auth()->user()->isDistributor()) ? 'checked' : '' }} autocomplete="off">
                                                             <span class="product-uom-card-face">
                                                                 <span class="product-uom-card-radio" aria-hidden="true"></span>
                                                                 <span class="product-uom-card-row product-uom-card-row--solo-chip">
@@ -342,7 +345,7 @@
     let selectedWarehouseId = null;
     const hasDualUom = @json($product->hasDualUnitOrdering());
     const unitsPerLarge = {{ (int) ($product->units_per_large ?? 0) }};
-    let uomMode = 'base';
+    let uomMode = '{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}';
     const baseUnitLabel = @json($product->unit ?: 'unit');
     const largeUnitLabel = @json($product->large_unit ?: '');
 
@@ -410,8 +413,24 @@
     }
 
     function updateSubtotal() {
-        const subtotal = price * getBaseQty();
+        const baseQty = getBaseQty();
+        const subtotal = price * baseQty;
         document.getElementById('subtotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+        
+        // Update display price and unit label
+        const displayPriceEl = document.getElementById('display-price');
+        const displayUnitEl = document.getElementById('display-unit-label');
+        if (displayPriceEl && displayUnitEl) {
+            let unitPrice = price;
+            let unitLabel = baseUnitLabel;
+            if (hasDualUom && uomMode === 'large') {
+                unitPrice = price * unitsPerLarge;
+                unitLabel = largeUnitLabel;
+            }
+            displayPriceEl.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(unitPrice);
+            displayUnitEl.textContent = '/ ' + unitLabel;
+        }
+
         updateQtyUomHint();
     }
 

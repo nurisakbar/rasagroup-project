@@ -201,6 +201,9 @@ class Cart extends Model
      */
     public static function mergeSessionCartToUser($userId, $sessionId): void
     {
+        $user = User::find($userId);
+        $isDistributor = $user && $user->isDistributor();
+
         $sessionCarts = self::where('session_id', $sessionId)
             ->where('cart_type', 'regular')
             ->get();
@@ -219,8 +222,10 @@ class Cart extends Model
             if ($userCart) {
                 $userBaseBefore = (int) $userCart->quantity;
                 $userCart->quantity = $userBaseBefore + (int) $sessionCart->quantity;
+                
                 $sUom = $sessionCart->order_uom ?? 'base';
                 $sOrd = $sessionCart->quantity_ordered ?? ($sUom === 'base' ? (int) $sessionCart->quantity : null);
+                
                 [$u, $o] = self::computeMergedOrderUom(
                     $userCart->order_uom,
                     $userCart->quantity_ordered,
@@ -229,14 +234,29 @@ class Cart extends Model
                     $sOrd,
                     (int) $sessionCart->quantity
                 );
+                
                 $userCart->order_uom = $u;
                 $userCart->quantity_ordered = $o;
+
+                // Force large UOM for distributors if product supports it
+                if ($isDistributor && $userCart->product && $userCart->product->hasDualUnitOrdering()) {
+                    $userCart->order_uom = 'large';
+                    $userCart->syncOrderedMetadataFromBaseQuantity();
+                }
+
                 $userCart->save();
                 $sessionCart->delete();
             } else {
                 // Transfer cart to user
                 $sessionCart->user_id = $userId;
                 $sessionCart->session_id = null;
+
+                // Force large UOM for distributors if product supports it
+                if ($isDistributor && $sessionCart->product && $sessionCart->product->hasDualUnitOrdering()) {
+                    $sessionCart->order_uom = 'large';
+                    $sessionCart->syncOrderedMetadataFromBaseQuantity();
+                }
+
                 $sessionCart->save();
             }
         }

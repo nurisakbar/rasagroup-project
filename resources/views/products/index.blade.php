@@ -34,16 +34,16 @@
             <ul class="nav nav-tabs links flex-wrap text-uppercase mb-0" role="tablist">
                 <li class="nav-item" role="presentation">
                     <a
-                        class="nav-link {{ ! request()->filled('category') ? 'active' : '' }}"
-                        href="{{ route('products.index', request()->except(['page', 'category'])) }}"
+                        class="nav-link {{ ! request()->filled('brand') ? 'active' : '' }}"
+                        href="{{ route('products.index', request()->except(['page', 'brand'])) }}"
                     >Semua</a>
                 </li>
-                @foreach($categories as $category)
+                @foreach($brands as $brand)
                     <li class="nav-item" role="presentation">
                         <a
-                            class="nav-link {{ request('category') === $category->slug ? 'active' : '' }}"
-                            href="{{ route('products.index', array_merge(request()->except(['page', 'category']), ['category' => $category->slug])) }}"
-                        >{{ $category->name }}</a>
+                            class="nav-link {{ request('brand') === $brand->slug ? 'active' : '' }}"
+                            href="{{ route('products.index', array_merge(request()->except(['page', 'brand']), ['brand' => $brand->slug])) }}"
+                        >{{ $brand->name }}</a>
                     </li>
                 @endforeach
             </ul>

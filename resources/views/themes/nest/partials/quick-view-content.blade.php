@@ -70,7 +70,7 @@
                     </div>
                     <input type="hidden" name="warehouse_id" value="{{ $selectedHubId }}">
                     @if($product->hasDualUnitOrdering())
-                        <input type="hidden" name="uom" value="base" class="js-cart-uom-field">
+                        <input type="hidden" name="uom" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}" class="js-cart-uom-field">
                     @endif
                     <div class="product-extra-link2 mt-15">
                         <button type="submit" class="btn button-add-to-cart">

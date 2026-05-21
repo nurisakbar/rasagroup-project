@@ -112,10 +112,14 @@
                                             <form action="{{ route('cart.update', $cart) }}" method="POST" class="cart-update-form">
                                                 @csrf
                                                 @method('PUT')
-                                                <div class="detail-qty border radius">
-                                                    <a href="#" class="qty-down"><i class="fi-rs-angle-small-down"></i></a>
-                                                    <input type="text" name="quantity" class="qty-val" value="{{ $cart->cartQuantityInputValue() }}" min="1" inputmode="numeric" title="Jumlah dalam {{ $cart->cartQuantityUnitLabel() }}">
-                                                    <a href="#" class="qty-up"><i class="fi-rs-angle-small-up"></i></a>
+                                                <div class="product-qty-selector d-flex align-items-center justify-content-center" style="min-width: 100px;">
+                                                    <a href="#" class="qty-down-grid qty-down" data-slug="{{ $cart->product->slug }}">
+                                                        <i class="fi-rs-minus" style="font-size: 10px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 5px;"></i>
+                                                    </a>
+                                                    <input type="text" name="quantity" class="qty-val fw-bold" value="{{ $cart->cartQuantityInputValue() }}" min="1" inputmode="numeric" style="border: none; width: 45px; text-align: center; background: transparent; font-size: 16px; color: #253D4E;">
+                                                    <a href="#" class="qty-up-grid qty-up" data-slug="{{ $cart->product->slug }}">
+                                                        <i class="fi-rs-plus" style="font-size: 10px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 5px;"></i>
+                                                    </a>
                                                 </div>
                                             </form>
                                             <span class="d-block font-xs text-muted mt-5">{{ $cart->cartQuantityUnitLabel() }}</span>
@@ -232,10 +236,12 @@
                     });
                 })
                 .then(function (res) {
+                    var originalVal = input.getAttribute('data-original-val') || input.value;
                     if (row) {
                         row.classList.remove('opacity-50');
                     }
                     if (!res.ok || !res.body.success) {
+                        input.value = originalVal;
                         var msg = (res.body && (res.body.message || res.body.error)) || 'Gagal memperbarui keranjang.';
                         if (res.body && res.body.errors) {
                             var parts = [];
@@ -310,6 +316,7 @@
                 form.querySelectorAll('.qty-up, .qty-down').forEach(function (btn) {
                     btn.addEventListener('click', function (e) {
                         e.preventDefault();
+                        input.setAttribute('data-original-val', input.value);
                         var v = parseInt(String(input.value).replace(/\D/g, ''), 10) || 1;
                         if (btn.classList.contains('qty-up')) {
                             v += 1;
@@ -321,6 +328,7 @@
                     });
                 });
                 input.addEventListener('change', function () {
+                    input.setAttribute('data-original-val', input.value);
                     updateCartQtyAjax(form, input);
                 });
             });
