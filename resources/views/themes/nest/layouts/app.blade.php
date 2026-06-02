@@ -1394,9 +1394,9 @@
             const hubModalEl = document.getElementById('modalHubSelection');
             const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
             
-            @if(!session()->has('selected_hub_id'))
-                hubModal.show();
-            @endif
+            // @if(!session()->has('selected_hub_id'))
+            //     hubModal.show();
+            // @endif
 
             const hubSearchInput = $('#hubSearchInput');
             const hubResults = $('#hubResults');
@@ -1473,6 +1473,17 @@
             // Add to cart (AJAX) — dipakai juga setelah pilih satuan di modal
             function performAddToCartAjax(form) {
                 form = $(form);
+                
+                const warehouseId = form.find('input[name="warehouse_id"]').val();
+                if (!warehouseId || warehouseId.trim() === '') {
+                    const hubModalEl = document.getElementById('modalHubSelection');
+                    if (hubModalEl) {
+                        const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
+                        hubModal.show();
+                    }
+                    return;
+                }
+
                 const url = form.attr('action');
                 const submitBtn = form.find('button[type="submit"]');
                 const originalBtnHtml = submitBtn.attr('data-original-add-html') || submitBtn.html();

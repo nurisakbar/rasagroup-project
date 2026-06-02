@@ -66,19 +66,21 @@ Route::post('/hubs/detect-nearest', [App\Http\Controllers\HubController::class, 
 Route::post('/hubs/select', [App\Http\Controllers\HubController::class, 'select'])->name('hubs.select');
 Route::get('/hubs/{warehouse}', [App\Http\Controllers\HubController::class, 'show'])->name('hubs.show');
 
-// Cart Routes (both guest and auth)
-Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
-Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
+// Cart Routes
 Route::get('/cart/product-stock/{product}', [App\Http\Controllers\CartController::class, 'getProductStock'])->name('cart.product-stock');
-// Buka /cart/{slug} di browser (GET) bukan endpoint keranjang — hanya POST yang menambah item. Alihkan ke halaman produk.
 Route::get('/cart/{product}', function (\App\Models\Product $product) {
     return redirect()->route('products.show', $product);
 })->name('cart.product-redirect');
-Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
-Route::post('/cart/update-quantity/{product}', [App\Http\Controllers\CartController::class, 'updateQuantityByProduct'])->name('cart.update-quantity');
-Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/{cart}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
+
+Route::middleware(['auth', 'wa.verified'])->group(function () {
+    Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
+    Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
+    Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
+    Route::post('/cart/update-quantity/{product}', [App\Http\Controllers\CartController::class, 'updateQuantityByProduct'])->name('cart.update-quantity');
+    Route::put('/cart/{cart}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/{cart}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
+});
 
 Route::middleware('auth')->group(function () {
     // Other auth routes...
