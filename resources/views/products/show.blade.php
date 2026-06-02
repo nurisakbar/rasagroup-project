@@ -29,15 +29,28 @@
                                         <figure class="border-radius-10">
                                             <img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}';" />
                                         </figure>
-                                        <!-- Duplicate figures if you want slider effect with same image -->
-                                        <figure class="border-radius-10">
-                                            <img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}';" />
-                                        </figure>
+                                        @foreach($product->images as $img)
+                                            <figure class="border-radius-10">
+                                                @if($img->is_video)
+                                                    <video src="{{ $img->image_url }}" autoplay muted loop playsinline style="width: 100%; height: auto; border-radius: 10px; pointer-events: none;"></video>
+                                                @else
+                                                    <img src="{{ $img->image_url }}" alt="{{ $product->display_name }}" />
+                                                @endif
+                                            </figure>
+                                        @endforeach
                                     </div>
                                     <!-- THUMBNAILS -->
                                     <div class="slider-nav-thumbnails">
                                         <div><img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}" alt="product image" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}';" /></div>
-                                        <div><img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}" alt="product image" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}';" /></div>
+                                        @foreach($product->images as $img)
+                                            <div>
+                                                @if($img->is_video)
+                                                    <video src="{{ $img->image_url }}" autoplay muted loop playsinline style="width: 100%; height: 100px; object-fit: cover; border-radius: 10px; pointer-events: none;"></video>
+                                                @else
+                                                    <img src="{{ $img->image_url }}" alt="product image" />
+                                                @endif
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                                 <!-- End Gallery -->
@@ -75,13 +88,15 @@
                                         </div>
                                     </div>
 
-                                    <div class="product-detail-stock-below-price mb-3">
-                                        <span class="product-detail-stock-below-label">Stok</span>
-                                        <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
-                                        @if($product->unit)
-                                            <span class="product-detail-stock-below-unit text-muted" id="stock-unit-label">{{ $product->unit }}</span>
-                                        @endif
-                                    </div>
+                                    @if($selectedWarehouseId)
+                                        <div class="product-detail-stock-below-price mb-3">
+                                            <span class="product-detail-stock-below-label">Stok</span>
+                                            <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
+                                            @if($product->unit)
+                                                <span class="product-detail-stock-below-unit text-muted" id="stock-unit-label">{{ $product->unit }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
 
                                     <div class="product-detail-brand-category mb-30">
                                         <div class="product-detail-meta-card">

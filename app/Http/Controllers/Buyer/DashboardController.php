@@ -14,6 +14,10 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        if ($user->addresses()->count() === 0) {
+            return redirect()->route('buyer.addresses.create');
+        }
+
         $totalOrders = Order::where('user_id', $user->id)->count();
         $pendingOrders = Order::where('user_id', $user->id)->where('order_status', 'pending')->count();
 

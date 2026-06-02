@@ -142,6 +142,13 @@
                     </table>
                 </div>
                 <div class="divider-2 mb-30"></div>
+                <div class="cart-action text-end">
+                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Kosongkan keranjang? Semua item akan dihapus.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger"><i class="fi-rs-trash mr-5"></i>Kosongkan Keranjang</button>
+                    </form>
+                </div>
                 <!-- Optional: Shipping Calculator Section preserved from template if needed by USER, currently placeholders -->
                 
             </div>

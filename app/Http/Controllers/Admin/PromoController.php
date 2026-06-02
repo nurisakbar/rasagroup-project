@@ -29,6 +29,20 @@ class PromoController extends Controller
                 ->addColumn('masa_berlaku', function ($promo) {
                     return $promo->awal->format('d/m/Y H:i') . ' - ' . $promo->akhir->format('d/m/Y H:i');
                 })
+                ->addColumn('target_audience', function ($promo) {
+                    $badges = [
+                        'umum' => 'label-info',
+                        'affiliator' => 'label-primary',
+                        'distributor' => 'label-success',
+                    ];
+                    $audiences = is_array($promo->target_audience) ? $promo->target_audience : [];
+                    $labels = [];
+                    foreach ($audiences as $aud) {
+                        $class = $badges[$aud] ?? 'label-default';
+                        $labels[] = '<span class="label ' . $class . '">' . ucfirst($aud) . '</span>';
+                    }
+                    return implode(' ', $labels);
+                })
                 ->addColumn('action', function ($promo) {
                     $editUrl = route('admin.promos.edit', $promo);
                     $deleteUrl = route('admin.promos.destroy', $promo);
@@ -45,7 +59,7 @@ class PromoController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['image', 'action'])
+                ->rawColumns(['image', 'target_audience', 'action'])
                 ->make(true);
         }
 
@@ -67,6 +81,8 @@ class PromoController extends Controller
             'harga' => 'required|numeric|min:0',
             'awal' => 'required|date',
             'akhir' => 'required|date|after_or_equal:awal',
+            'target_audience' => 'required|array|min:1',
+            'target_audience.*' => 'in:umum,affiliator,distributor',
         ]);
 
         $validated['slug'] = $this->uniquePromoSlug($validated['judul_promo']);
@@ -96,6 +112,8 @@ class PromoController extends Controller
             'harga' => 'required|numeric|min:0',
             'awal' => 'required|date',
             'akhir' => 'required|date|after_or_equal:awal',
+            'target_audience' => 'required|array|min:1',
+            'target_audience.*' => 'in:umum,affiliator,distributor',
         ]);
 
         $validated['slug'] = $this->uniquePromoSlug($validated['judul_promo'], $promo->id);

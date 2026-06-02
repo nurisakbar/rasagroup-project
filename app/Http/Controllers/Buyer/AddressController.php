@@ -260,5 +260,95 @@ class AddressController extends Controller
         $result = $this->ekspedisiku->getVillages($request->district_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
+
+    /**
+     * Select address for shopping session (AJAX).
+     */
+    public function selectForShopping(Request $request)
+    {
+        $request->validate([
+            'address_id' => 'required|string|exists:addresses,id'
+        ]);
+
+        $address = Address::where('id', $request->address_id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $hub = $this->applyAddressForShopping($address);
+
+        if (!$hub) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada hub yang aktif saat ini.'
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alamat pengiriman dan hub terdekat berhasil dipilih.',
+            'hub' => $hub->name
+        ]);
+    }
+
+    /**
+     * Helper to apply an address to the current shopping session and find the nearest hub.
+     */
+    public function applyAddressForShopping(Address $address)
+    {
+        session(['selected_shipping_address_id' => $address->id]);
+
+        $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        
+        $query = \App\Models\Warehouse::where('is_active', true)
+            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId));
+
+        // Priority 1: Same regency
+        $hub = (clone $query)->where('regency_id', $address->regency_id)
+            ->withCount(['stocks as products_count' => function ($q) {
+                $q->whereHas('product', function ($p) {
+                    $p->where('status', 'active');
+                });
+            }])
+            ->orderByDesc('products_count')
+            ->first();
+
+        // Priority 2: Same province
+        if (!$hub) {
+            $hub = (clone $query)->where('province_id', $address->province_id)
+                ->withCount(['stocks as products_count' => function ($q) {
+                    $q->whereHas('product', function ($p) {
+                        $p->where('status', 'active');
+                    });
+                }])
+                ->orderByDesc('products_count')
+                ->first();
+        }
+
+        // Priority 3: Any active hub (fallback)
+        if (!$hub) {
+            $hub = (clone $query)
+                ->withCount(['stocks as products_count' => function ($q) {
+                    $q->whereHas('product', function ($p) {
+                        $p->where('status', 'active');
+                    });
+                }])
+                ->orderByDesc('products_count')
+                ->first();
+        }
+
+        if ($hub) {
+            session([
+                'selected_hub_id' => $hub->id,
+                'selected_hub_name' => $hub->name,
+                'selected_hub_slug' => $hub->slug
+            ]);
+            
+            cookie()->queue('selected_hub_id', $hub->id, 60 * 24 * 30);
+            cookie()->queue('selected_hub_name', $hub->name, 60 * 24 * 30);
+            cookie()->queue('selected_hub_slug', $hub->slug, 60 * 24 * 30);
+        }
+
+        return $hub;
+    }
 }
 

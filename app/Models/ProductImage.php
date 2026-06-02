@@ -33,4 +33,10 @@ class ProductImage extends Model
 
         return asset('storage/' . $this->image_path);
     }
+
+    public function getIsVideoAttribute(): bool
+    {
+        $ext = strtolower(pathinfo($this->image_path, PATHINFO_EXTENSION));
+        return in_array($ext, ['mp4', 'webm', 'ogg', 'mov']);
+    }
 }

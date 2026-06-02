@@ -53,8 +53,8 @@
                                 <div class="form-group mb-25">
                                     <label class="form-label-custom">Simpan Alamat Sebagai</label>
                                     <div class="d-flex flex-wrap gap-2 mb-3 label-selector">
-                                        @foreach(['Rumah' => 'home', 'Kantor' => 'briefcase', 'Toko' => 'shop', 'Lainnya' => 'marker'] as $label => $icon)
-                                            <input type="radio" name="label" class="btn-check" id="label-{{ $icon }}" value="{{ $label }}" {{ old('label', 'Rumah') == $label ? 'checked' : '' }}>
+                                        @foreach(['Toko' => 'shop', 'Rumah' => 'home', 'Kantor' => 'briefcase', 'Lainnya' => 'marker'] as $label => $icon)
+                                            <input type="radio" name="label" class="btn-check" id="label-{{ $icon }}" value="{{ $label }}" {{ old('label', 'Toko') == $label ? 'checked' : '' }}>
                                             <label class="btn btn-outline-maroon-pill px-4 py-2" for="label-{{ $icon }}"><i class="fi-rs-{{ $icon }} mr-5"></i> {{ $label }}</label>
                                         @endforeach
                                     </div>

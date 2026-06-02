@@ -20,12 +20,12 @@
                         </div>
                         <div class="header-action-right">
                             <div class="header-action-2">
-                                <div class="search-location">
+                                {{-- <div class="search-location">
                                     <a href="javascript:void(0)" class="location-btn" data-bs-toggle="modal" data-bs-target="#modalHubSelection">
                                         <i class="fi-rs-marker mr-5"></i>
                                         <span class="lable">{{ session('selected_hub_name', 'Pilih Lokasi') }}</span>
                                     </a>
-                                </div>
+                                </div> --}}
                                 {{-- <div class="header-action-icon-2">
                                     <a href="shop-compare.html">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-compare.svg') }}" />

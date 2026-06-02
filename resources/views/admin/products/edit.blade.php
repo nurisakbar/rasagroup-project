@@ -223,6 +223,13 @@
             </div>
 
             <div class="col-md-3">
+                <!-- Action: View in Web -->
+                <div style="margin-bottom: 15px;">
+                    <a href="{{ route('products.show', $product->slug ?: $product->id) }}" target="_blank" class="btn btn-info btn-block btn-lg" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <i class="fa fa-external-link"></i> Lihat Produk di Web
+                    </a>
+                </div>
+
                 <!-- Media: Primary Image -->
                 <div class="box box-warning">
                     <div class="box-header with-border">
@@ -259,7 +266,11 @@
                             @foreach($product->images as $img)
                                 <div class="col-xs-6 col-md-6" id="image-row-{{ $img->id }}" style="margin-bottom: 15px;">
                                     <div class="thumbnail" style="position: relative; margin-bottom: 5px;">
-                                        <img src="{{ $img->image_url }}" style="height: 100px; width: 100%; object-fit: cover;">
+                                        @if($img->is_video)
+                                            <video src="{{ $img->image_url }}" style="height: 100px; width: 100%; object-fit: cover;" controls></video>
+                                        @else
+                                            <img src="{{ $img->image_url }}" style="height: 100px; width: 100%; object-fit: cover;">
+                                        @endif
                                         <button type="button" class="btn btn-danger btn-xs delete-gallery-img" 
                                                 data-id="{{ $img->id }}" 
                                                 data-url="{{ route('admin.products.images.destroy', [$product->id, $img->id]) }}"
@@ -272,9 +283,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label>Tambah Gambar Galeri</label>
-                            <input type="file" name="images[]" multiple class="form-control" accept="image/*">
-                            <p class="help-block">Bisa pilih lebih dari satu gambar.</p>
+                            <label>Tambah Gambar/Video Galeri</label>
+                            <input type="file" id="gallery-input" name="images[]" multiple accept="image/*,video/mp4,video/webm" style="display: none;">
+                            <button type="button" class="btn btn-success btn-block" onclick="document.getElementById('gallery-input').click();">
+                                <i class="fa fa-folder-open"></i> Pilih Banyak File sekaligus
+                            </button>
+                            <p class="help-block mt-2">Bisa pilih lebih dari satu gambar atau video (mp4, webm). Maksimal 10MB/file.</p>
+                            <div id="gallery-preview-container" class="row" style="margin-top: 15px;"></div>
                         </div>
                     </div>
                 </div>
@@ -374,6 +389,37 @@ $(document).ready(function() {
                     alert('Terjadi kesalahan saat menghapus gambar.');
                     btn.prop('disabled', false).html('<i class="fa fa-times"></i>');
                 }
+            });
+        }
+    });
+
+    // Gallery Preview logic
+    $('#gallery-input').change(function() {
+        const container = $('#gallery-preview-container');
+        container.empty();
+        
+        if (this.files && this.files.length > 0) {
+            Array.from(this.files).forEach(file => {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let isVideo = file.type.startsWith('video/');
+                    let mediaHtml = isVideo 
+                        ? `<video src="${e.target.result}" style="height: 100px; width: 100%; object-fit: cover;" controls></video>`
+                        : `<img src="${e.target.result}" style="height: 100px; width: 100%; object-fit: cover;">`;
+                        
+                    let col = $(`
+                        <div class="col-xs-6 col-md-6" style="margin-bottom: 15px;">
+                            <div class="thumbnail" style="position: relative; margin-bottom: 5px;">
+                                ${mediaHtml}
+                                <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 5px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${file.name}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    container.append(col);
+                }
+                reader.readAsDataURL(file);
             });
         }
     });

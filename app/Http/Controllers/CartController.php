@@ -186,16 +186,36 @@ class CartController extends Controller
             'auth_id' => Auth::id(),
             'session_prefix' => substr((string) session()->getId(), 0, 10),
             'selected_hub_session' => session('selected_hub_id'),
-            'input' => $request->only(['quantity', 'warehouse_id', 'uom']),
+            'input' => $request->only(['quantity', 'uom']),
         ]);
+
+        if (!Auth::check()) {
+            return $request->ajax()
+                ? response()->json(['error' => 'Silakan masuk terlebih dahulu untuk belanja.'], 401)
+                : redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk belanja.');
+        }
+
+        if (!session()->has('selected_shipping_address_id') || !session()->has('selected_hub_id')) {
+            $address = \App\Models\Address::where('user_id', Auth::id())->where('is_default', true)->first();
+            if (!$address) {
+                $address = \App\Models\Address::where('user_id', Auth::id())->first();
+            }
+
+            if ($address) {
+                app(\App\Http\Controllers\Buyer\AddressController::class)->applyAddressForShopping($address);
+            }
+
+            if (!session()->has('selected_shipping_address_id') || !session()->has('selected_hub_id')) {
+                return $request->ajax()
+                    ? response()->json(['error' => 'Pilih alamat pengiriman terlebih dahulu.', 'needs_address' => true], 428)
+                    : back()->with('error', 'Pilih alamat pengiriman terlebih dahulu.');
+            }
+        }
 
         try {
             $request->validate([
                 'quantity' => 'required|integer|min:1',
-                'warehouse_id' => 'required',
                 'uom' => ['nullable', Rule::in(['base', 'large'])],
-            ], [
-                'warehouse_id.required' => 'Pilih hub pengirim terlebih dahulu.',
             ]);
         } catch (ValidationException $e) {
             $this->logCartStore('store: validation failed', [
@@ -235,13 +255,14 @@ class CartController extends Controller
                 : back()->with('error', 'Jumlah tidak valid.');
         }
 
-        $warehouse = Warehouse::where('id', $request->warehouse_id)
-            ->orWhere('slug', $request->warehouse_id)
+        $sessionWarehouseId = session('selected_hub_id');
+        $warehouse = Warehouse::where('id', $sessionWarehouseId)
+            ->orWhere('slug', $sessionWarehouseId)
             ->first();
 
         if (!$warehouse || !$warehouse->is_active) {
             $this->logCartStore('store: abort warehouse missing or inactive', [
-                'warehouse_id_input' => $request->warehouse_id,
+                'warehouse_id_input' => $sessionWarehouseId,
                 'resolved_id' => $warehouse?->id,
                 'is_active' => $warehouse?->is_active,
             ]);

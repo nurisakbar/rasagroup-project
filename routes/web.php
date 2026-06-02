@@ -118,6 +118,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified'])->gro
     Route::put('/addresses/{address}', [App\Http\Controllers\Buyer\AddressController::class, 'update'])->name('addresses.update');
     Route::delete('/addresses/{address}', [App\Http\Controllers\Buyer\AddressController::class, 'destroy'])->name('addresses.destroy');
     Route::put('/addresses/{address}/set-default', [App\Http\Controllers\Buyer\AddressController::class, 'setDefault'])->name('addresses.set-default');
+    Route::post('/addresses/select-for-shopping', [App\Http\Controllers\Buyer\AddressController::class, 'selectForShopping'])->name('addresses.select-for-shopping');
     Route::get('/addresses/get-regencies', [App\Http\Controllers\Buyer\AddressController::class, 'getRegencies'])->name('addresses.get-regencies');
     Route::get('/addresses/get-districts', [App\Http\Controllers\Buyer\AddressController::class, 'getDistricts'])->name('addresses.get-districts');
     Route::get('/addresses/get-villages', [App\Http\Controllers\Buyer\AddressController::class, 'getVillages'])->name('addresses.get-villages');

@@ -43,6 +43,21 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('target_audience') has-error @enderror">
+                            <label for="target_audience">Target Audiens</label>
+                            @php
+                                $selectedAudiences = is_array(old('target_audience')) ? old('target_audience') : ['umum'];
+                            @endphp
+                            <select class="form-control select2" id="target_audience" name="target_audience[]" multiple="multiple" data-placeholder="Pilih target audiens">
+                                <option value="umum" {{ in_array('umum', $selectedAudiences) ? 'selected' : '' }}>Umum</option>
+                                <option value="affiliator" {{ in_array('affiliator', $selectedAudiences) ? 'selected' : '' }}>Affiliator</option>
+                                <option value="distributor" {{ in_array('distributor', $selectedAudiences) ? 'selected' : '' }}>Distributor</option>
+                            </select>
+                            @error('target_audience')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="form-group @error('image') has-error @enderror">
                             <label for="image">Gambar Promo</label>
                             <input type="file" class="form-control" id="image" name="image" accept="image/*">

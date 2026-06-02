@@ -17,12 +17,14 @@ class Promo extends Model
         'harga',
         'awal',
         'akhir',
+        'target_audience',
     ];
 
     protected $casts = [
         'awal' => 'datetime',
         'akhir' => 'datetime',
         'harga' => 'decimal:2',
+        'target_audience' => 'array',
     ];
 
     /**

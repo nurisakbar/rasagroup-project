@@ -1474,16 +1474,6 @@
             function performAddToCartAjax(form) {
                 form = $(form);
                 
-                const warehouseId = form.find('input[name="warehouse_id"]').val();
-                if (!warehouseId || warehouseId.trim() === '') {
-                    const hubModalEl = document.getElementById('modalHubSelection');
-                    if (hubModalEl) {
-                        const hubModal = bootstrap.Modal.getOrCreateInstance(hubModalEl);
-                        hubModal.show();
-                    }
-                    return;
-                }
-
                 const url = form.attr('action');
                 const submitBtn = form.find('button[type="submit"]');
                 const originalBtnHtml = submitBtn.attr('data-original-add-html') || submitBtn.html();
@@ -1525,10 +1515,23 @@
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            if (confirm("Silakan masuk terlebih dahulu untuk belanja. Masuk sekarang?")) {
-                                window.location.href = '{{ route("login") }}';
-                            }
+                            window.location.href = '{{ route("login") }}';
+                            return;
+                        }
+                        if (xhr.status === 428) {
+                            // Needs shipping address
                             submitBtn.attr('disabled', false).html(originalBtnHtml);
+                            
+                            // Save form reference globally to retry after picking address
+                            window.pendingCartForm = form;
+                            
+                            const addressModalEl = document.getElementById('modalAddressSelection');
+                            if (addressModalEl) {
+                                const addressModal = bootstrap.Modal.getOrCreateInstance(addressModalEl);
+                                addressModal.show();
+                            } else {
+                                showShopToast('Pilih alamat pengiriman terlebih dahulu.', 'warning');
+                            }
                             return;
                         }
                         if (xhr.status === 422) {
@@ -1621,6 +1624,10 @@
                     error: function(xhr) {
                          buttons.removeClass('disabled').css('opacity', '1');
                          qtyValEl.text(oldVal);
+                         if (xhr.status === 401) {
+                             window.location.href = '{{ route("login") }}';
+                             return;
+                         }
                          const body = xhr.responseJSON || {};
                          showShopToast(body.message || 'Gagal memperbarui jumlah.', 'error');
                     }
@@ -1771,6 +1778,100 @@
             }
         }
     </style>
+
+    <!-- Address Selection Modal -->
+    <div class="modal fade custom-modal" id="modalAddressSelection" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalAddressSelectionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeAddressModal"></button>
+                </div>
+                <div class="modal-body p-40">
+                    <div class="text-center mb-30">
+                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="location" class="mb-15" style="width: 50px;">
+                        <h3 class="mb-10">Pilih Alamat Pengiriman</h3>
+                        <p class="text-muted">Pilih alamat pengiriman Anda untuk menambahkan produk ke keranjang.</p>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            @auth
+                                @php
+                                    $buyerAddresses = \App\Models\Address::where('user_id', Auth::id())->get();
+                                @endphp
+                                @if($buyerAddresses->isEmpty())
+                                    <div class="text-center">
+                                        <p class="mb-3">Anda belum memiliki alamat pengiriman.</p>
+                                        <a href="{{ route('buyer.addresses.create', ['origin' => 'cart']) }}" class="btn btn-sm btn-brand">Tambah Alamat Baru</a>
+                                    </div>
+                                @else
+                                    <div class="list-group">
+                                        @foreach($buyerAddresses as $addr)
+                                            <button type="button" class="list-group-item list-group-item-action address-select-btn" data-id="{{ $addr->id }}">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">{{ $addr->label }} {{ $addr->is_default ? '(Utama)' : '' }}</h6>
+                                                </div>
+                                                <p class="mb-1 font-sm">{{ $addr->recipient_name }} - {{ $addr->phone }}</p>
+                                                <small class="text-muted">{{ $addr->full_address }}</small>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ route('buyer.addresses.create', ['origin' => 'cart']) }}" class="btn btn-sm btn-outline-brand">Tambah Alamat Lain</a>
+                                    </div>
+                                @endif
+                            @endauth
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            $('.address-select-btn').on('click', function(e) {
+                e.preventDefault();
+                const addressId = $(this).data('id');
+                const btn = $(this);
+                
+                btn.addClass('active').siblings().removeClass('active');
+                
+                $.ajax({
+                    url: '{{ route("buyer.addresses.select-for-shopping") }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        address_id: addressId
+                    },
+                    success: function(res) {
+                        if (res.success) {
+                            showShopToast(res.message, 'success');
+                            
+                            // Close modal
+                            const addressModalEl = document.getElementById('modalAddressSelection');
+                            const addressModal = bootstrap.Modal.getInstance(addressModalEl);
+                            if (addressModal) {
+                                addressModal.hide();
+                            }
+                            
+                            // Retry adding to cart
+                            if (window.pendingCartForm) {
+                                performAddToCartAjax(window.pendingCartForm);
+                                window.pendingCartForm = null;
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.removeClass('active');
+                        showShopToast(xhr.responseJSON?.message || 'Gagal memilih alamat.', 'error');
+                    }
+                });
+            });
+        });
+    </script>
 
     @stack('scripts')
 </body>

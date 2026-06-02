@@ -31,7 +31,9 @@
             </div>
             <div>
                 <span class="font-small text-muted">Oleh <a href="#">{{ $product->brand->name ?? 'Tanpa Brand' }}</a></span>
-                <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
+                @if(session('selected_hub_id'))
+                    <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
+                @endif
             </div>
             <div class="product-card-bottom rg-product-footer">
                 <div class="product-price">
