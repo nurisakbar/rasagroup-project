@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Address;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -185,28 +187,21 @@ class EkspedisiKuService
     }
 
     /**
-     * Calculate shipping cost using EkspedisiKu API
-     * 
-     * @param string $origin Origin name (e.g. "Jakarta")
-     * @param string $destination Destination name (e.g. "Bandung")
-     * @param int $weight Weight in kg
-     * @return array|null
+     * Calculate shipping cost using EkspedisiKu API.
+     *
+     * Lion Parcel uses GET /ongkir with district IDs.
+     * Lalamove uses POST /rates with pickup/dropoff coordinates (pass warehouse + address in $options).
+     *
+     * @param  array{warehouse?: Warehouse, address?: Address}  $options
+     * @return array{data: array<int, array<string, mixed>>}|null
      */
-    public function calculateCost($originId, $destinationId, $weight, $courier = 'lion_parcel')
+    public function calculateCost($originId, $destinationId, $weight, $courier = 'lion_parcel', array $options = [])
     {
-        try {
-            /*
-            Log::info('EkspedisiKuService: Requesting cost', [
-                'url' => "{$this->baseUrl}/ongkir",
-                'params' => [
-                    'origin' => $originId,
-                    'destination' => $destinationId,
-                    'weight' => $weight,
-                    'courier' => $courier,
-                ]
-            ]);
-            */
+        if ($courier === 'lalamove') {
+            return $this->calculateLalamoveCost($options, $weight);
+        }
 
+        try {
             $response = Http::withToken($this->token)
                 ->get("{$this->baseUrl}/ongkir", [
                     'origin' => $originId,
@@ -215,51 +210,151 @@ class EkspedisiKuService
                     'courier' => $courier,
                 ]);
 
-            /*
-            Log::info('EkspedisiKuService: Received response', [
-                'status' => $response->status(),
-                'body' => $response->json()
-            ]);
-            */
-
             if ($response->failed()) {
                 Log::warning('EkspedisiKuService: calculateCost failed', [
                     'origin' => $originId,
                     'destination' => $destinationId,
                     'weight' => $weight,
+                    'courier' => $courier,
                     'status' => $response->status(),
-                    'response' => $response->json()
+                    'response' => $response->json(),
                 ]);
+
                 return null;
             }
 
             $result = $response->json();
-            
-            // Normalize to RajaOngkir format
-            $normalizedData = [];
-            if (isset($result['rates']) && isset($result['rates']['services'])) {
-                $carrier = $result['rates'];
-                foreach ($carrier['services'] as $service) {
-                    $normalizedData[] = [
-                        'code' => $carrier['id'], // e.g. lion_parcel
-                        'name' => $carrier['label'], // e.g. Lion Parcel
-                        'service' => $service['code'], // e.g. REGPACK
-                        'description' => $service['name'], // e.g. Regular Package
-                        'cost' => $service['price'],
-                        'etd' => $service['etd'],
-                    ];
-                }
-            }
 
-            return ['data' => $normalizedData];
+            return ['data' => $this->normalizeOngkirRates($result)];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: calculateCost error', [
                 'origin' => $originId,
                 'destination' => $destinationId,
-                'message' => $e->getMessage()
+                'courier' => $courier,
+                'message' => $e->getMessage(),
             ]);
+
             return null;
         }
+    }
+
+    /**
+     * @param  array{warehouse?: Warehouse, address?: Address}  $options
+     * @return array{data: array<int, array<string, mixed>>}|null
+     */
+    protected function calculateLalamoveCost(array $options, $weight): ?array
+    {
+        $warehouse = $options['warehouse'] ?? null;
+        $address = $options['address'] ?? null;
+
+        if (! $warehouse instanceof Warehouse || ! $address instanceof Address) {
+            Log::warning('EkspedisiKuService: lalamove requires warehouse and address context');
+
+            return null;
+        }
+
+        $resolver = app(ShippingLocationResolver::class);
+        $pickup = $resolver->resolvePickup($warehouse);
+        $dropoff = $resolver->resolveDropoff($address);
+
+        if ($pickup === null || $dropoff === null) {
+            Log::warning('EkspedisiKuService: could not resolve coordinates for lalamove', [
+                'warehouse_id' => $warehouse->id,
+                'address_id' => $address->id,
+                'has_pickup' => $pickup !== null,
+                'has_dropoff' => $dropoff !== null,
+            ]);
+
+            return null;
+        }
+
+        try {
+            $payload = [
+                'pickup' => $pickup,
+                'dropoff' => $dropoff,
+                'weight' => max(1, (float) $weight),
+                'service_type' => (string) config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE'),
+            ];
+
+            $response = Http::withToken($this->token)
+                ->acceptJson()
+                ->post("{$this->baseUrl}/rates", $payload);
+
+            if ($response->failed()) {
+                Log::warning('EkspedisiKuService: lalamove rates failed', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                    'pickup' => $pickup,
+                    'dropoff' => $dropoff,
+                ]);
+
+                return null;
+            }
+
+            $result = $response->json();
+            $carrier = collect($result['carriers'] ?? [])->firstWhere('id', 'lalamove');
+
+            if (! is_array($carrier) || (int) ($carrier['status'] ?? 0) !== 200) {
+                Log::warning('EkspedisiKuService: lalamove unavailable', [
+                    'status' => $carrier['status'] ?? null,
+                    'message' => $carrier['message'] ?? null,
+                    'lalamove' => $carrier['lalamove'] ?? null,
+                ]);
+
+                return ['data' => []];
+            }
+
+            $normalizedData = [];
+            foreach ($carrier['services'] ?? [] as $service) {
+                if (! is_array($service)) {
+                    continue;
+                }
+
+                $normalizedData[] = [
+                    'code' => 'lalamove',
+                    'name' => (string) ($carrier['label'] ?? 'Lalamove'),
+                    'service' => (string) ($service['code'] ?? config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE')),
+                    'description' => (string) ($service['name'] ?? 'Lalamove'),
+                    'cost' => $service['price'] ?? 0,
+                    'etd' => $service['etd'] ?? null,
+                    'quotation_id' => $service['quotation_id'] ?? null,
+                ];
+            }
+
+            return ['data' => $normalizedData];
+        } catch (\Exception $e) {
+            Log::error('EkspedisiKuService: lalamove calculateCost error', [
+                'warehouse_id' => $warehouse->id,
+                'address_id' => $address->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function normalizeOngkirRates(array $result): array
+    {
+        $normalizedData = [];
+
+        if (isset($result['rates']) && isset($result['rates']['services'])) {
+            $carrier = $result['rates'];
+            foreach ($carrier['services'] as $service) {
+                $normalizedData[] = [
+                    'code' => $carrier['id'],
+                    'name' => $carrier['label'],
+                    'service' => $service['code'],
+                    'description' => $service['name'],
+                    'cost' => $service['price'],
+                    'etd' => $service['etd'],
+                ];
+            }
+        }
+
+        return $normalizedData;
     }
 
     /**

@@ -171,20 +171,12 @@ class CheckoutController extends Controller
             'courier' => $defaultExpedition->code,
         ]);
         
-        if ($defaultExpedition->code === 'lion_parcel') {
-            $costResult = $this->ekspedisiku->calculateCost(
-                $sourceWarehouse->district_id,
-                $defaultAddress->district_id,
-                $totalWeight / 1000 // EkspedisiKu expects kg
-            );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $defaultAddress->district_id,
-                $totalWeight,
-                $defaultExpedition->code
-            );
-        }
+        $costResult = $this->resolveShippingCost(
+            $defaultExpedition,
+            $sourceWarehouse,
+            $defaultAddress,
+            $totalWeight
+        );
 
         \Log::info('Shipping Response:', [
             'courier' => $defaultExpedition->code,
@@ -216,7 +208,7 @@ class CheckoutController extends Controller
                         'name' => $service['description'],
                         'cost' => $service['cost'],
                         'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
-                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari'
+                        'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $firstExpCode)
                     ];
                     $allShippingServices[] = $item;
                     
@@ -344,20 +336,12 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Ekspedisi tidak ditemukan atau tidak tersedia'], 400);
         }
 
-        if ($expedition->code === 'lion_parcel') {
-            $costResult = $this->ekspedisiku->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight / 1000
-            );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight,
-                $expedition->code
-            );
-        }
+        $costResult = $this->resolveShippingCost(
+            $expedition,
+            $sourceWarehouse,
+            $address,
+            $totalWeight
+        );
 
         $shippingCost = 0;
         $serviceName = $request->service_code;
@@ -389,7 +373,7 @@ class CheckoutController extends Controller
                 if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $request->service_code) {
                     $shippingCost = $service['cost'];
                     $serviceName = $service['description'];
-                    $estimatedDelivery = ($service['etd'] ?: '2-3') . ' hari';
+                    $estimatedDelivery = $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code);
                     \Log::info('MATCH FOUND!', [
                         'cost' => $shippingCost,
                         'name' => $serviceName,
@@ -491,20 +475,12 @@ class CheckoutController extends Controller
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
-        if ($expedition->code === 'lion_parcel') {
-             $costResult = $this->ekspedisiku->calculateCost(
-                 $sourceWarehouse->district_id,
-                 $address->district_id,
-                 $totalWeight / 1000
-             );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight,
-                $expedition->code
-            );
-        }
+        $costResult = $this->resolveShippingCost(
+            $expedition,
+            $sourceWarehouse,
+            $address,
+            $totalWeight
+        );
 
         $services = [];
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -516,7 +492,7 @@ class CheckoutController extends Controller
                         'name' => $service['description'],
                         'cost' => $service['cost'],
                         'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
-                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari',
+                        'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code),
                     ];
                 }
             }
@@ -650,20 +626,12 @@ class CheckoutController extends Controller
                 'courier_code' => $expedition->code,
                 'service_requested' => $request->expedition_service
             ]);
-            if ($expedition->code === 'lion_parcel') {
-                $costResult = $this->ekspedisiku->calculateCost(
-                    $sourceWarehouse->district_id,
-                    $address->district_id,
-                    $totalWeight / 1000
-                );
-            } else {
-                $costResult = $this->rajaOngkir->calculateCost(
-                    $sourceWarehouse->district_id,
-                    $address->district_id,
-                    $totalWeight,
-                    $expedition->code
-                );
-            }
+            $costResult = $this->resolveShippingCost(
+                $expedition,
+                $sourceWarehouse,
+                $address,
+                $totalWeight
+            );
 
 
             if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -1095,5 +1063,44 @@ class CheckoutController extends Controller
             'warehouse' => $currentHub,
             'stock_warnings' => $stockWarnings,
         ];
+    }
+
+    /**
+     * @return array{data: array<int, array<string, mixed>>}|null
+     */
+    private function resolveShippingCost(
+        Expedition $expedition,
+        Warehouse $sourceWarehouse,
+        Address $address,
+        float $totalWeightGrams
+    ): ?array {
+        if (in_array($expedition->code, ['lion_parcel', 'lalamove'], true)) {
+            return $this->ekspedisiku->calculateCost(
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                max(1, $totalWeightGrams / 1000),
+                $expedition->code,
+                [
+                    'warehouse' => $sourceWarehouse,
+                    'address' => $address,
+                ]
+            );
+        }
+
+        return $this->rajaOngkir->calculateCost(
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $totalWeightGrams,
+            $expedition->code
+        );
+    }
+
+    private function formatEstimatedDelivery(?string $etd, string $expeditionCode): string
+    {
+        if ($etd !== null && $etd !== '') {
+            return $etd.' hari';
+        }
+
+        return $expeditionCode === 'lalamove' ? 'Hari yang sama' : '2-3 hari';
     }
 }

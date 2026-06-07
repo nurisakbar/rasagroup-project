@@ -3,7 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Order;
-use App\Services\EkspedisikuService;
+use App\Services\EkspedisiKuService;
+use App\Services\ShippingLocationResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,7 +33,7 @@ class CreateShipmentBooking implements ShouldQueue
      *
      * @return void
      */
-    public function handle(EkspedisikuService $service)
+    public function handle(EkspedisiKuService $service)
     {
         $this->order->load([
             'user',
@@ -47,6 +48,7 @@ class CreateShipmentBooking implements ShouldQueue
         Log::info('Processing background shipment booking', [
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
+            'carrier' => $this->order->expedition?->code,
             'attempt' => (int) ($this->order->ekspedisiku_booking_attempt ?? 0) + 1,
         ]);
 
@@ -60,24 +62,13 @@ class CreateShipmentBooking implements ShouldQueue
             return;
         }
 
-        $normalizePhoneE164Id = function (?string $phone): ?string {
-            $phone = trim((string) $phone);
-            if ($phone === '') {
-                return null;
-            }
-            $phone = preg_replace('/[^0-9+]/', '', $phone);
-            if (str_starts_with($phone, '+62')) {
-                return $phone;
-            }
-            if (str_starts_with($phone, '62')) {
-                return '+' . $phone;
-            }
-            if (str_starts_with($phone, '0')) {
-                return '+62' . substr($phone, 1);
-            }
-            // Fallback: assume already local number without prefix
-            return '+62' . $phone;
-        };
+        if ($this->order->expedition->code === 'lalamove') {
+            $this->handleLalamoveBooking($service);
+
+            return;
+        }
+
+        $normalizePhoneE164Id = fn (?string $phone) => $this->normalizePhoneE164Id($phone);
 
         $normalizeCityLabel = function (?string $cityName): string {
             $cityName = strtoupper(trim((string) $cityName));
@@ -205,7 +196,10 @@ class CreateShipmentBooking implements ShouldQueue
         $destCityId = $destCity?->id;
         $weightKg = (int) ceil(max(1, (float) ($totalWeight / 1000)));
         if ($originCityId && $destCityId) {
-            $rates = $service->calculateCost($originCityId, $destCityId, $weightKg, $carrier);
+            $rateOptions = $carrier === 'lalamove'
+                ? ['warehouse' => $this->order->sourceWarehouse, 'address' => $this->order->address]
+                : [];
+            $rates = $service->calculateCost($originCityId, $destCityId, $weightKg, $carrier, $rateOptions);
             $services = $rates['data'] ?? null;
             if (is_array($services) && count($services) > 0) {
                 $availableServiceCodes = array_values(array_unique(array_filter(array_map(fn ($s) => $s['service'] ?? null, $services))));
@@ -471,6 +465,140 @@ class CreateShipmentBooking implements ShouldQueue
                 'ekspedisiku_booking_last_error' => $err,
             ]);
         }
+    }
+
+    private function handleLalamoveBooking(EkspedisiKuService $service): void
+    {
+        $warehouse = $this->order->sourceWarehouse;
+        $address = $this->order->address;
+        $resolver = app(ShippingLocationResolver::class);
+        $pickup = $resolver->resolvePickup($warehouse);
+        $dropoff = $resolver->resolveDropoff($address);
+
+        if ($pickup === null || $dropoff === null) {
+            $message = 'Tidak dapat menentukan koordinat pickup/dropoff untuk Lalamove.';
+            Log::error('CreateShipmentBooking: Lalamove geocode failed', [
+                'order_id' => $this->order->id,
+                'warehouse_id' => $warehouse->id,
+                'address_id' => $address->id,
+                'has_pickup' => $pickup !== null,
+                'has_dropoff' => $dropoff !== null,
+            ]);
+            $this->order->update([
+                'ekspedisiku_booking_status' => 'failed',
+                'ekspedisiku_booking_last_error' => $message,
+            ]);
+
+            return;
+        }
+
+        $nextAttempt = ((int) ($this->order->ekspedisiku_booking_attempt ?? 0)) + 1;
+        $bookingReference = $this->order->order_number.'-B'.str_pad((string) $nextAttempt, 2, '0', STR_PAD_LEFT);
+        $serviceType = $this->order->expedition_service
+            ?: (string) config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE');
+
+        $payload = [
+            'carrier' => 'lalamove',
+            'service_type' => $serviceType,
+            'shipment' => [
+                'reference' => $bookingReference,
+                'sender' => [
+                    'name' => $warehouse->name,
+                    'phone' => $this->normalizePhoneE164Id($warehouse->phone) ?? '+628123456789',
+                ],
+                'recipient' => [
+                    'name' => $address->recipient_name,
+                    'phone' => $this->normalizePhoneE164Id($this->order->user->phone ?? $address->phone) ?? '+6289876543210',
+                ],
+                'pickup' => $pickup,
+                'dropoff' => $dropoff,
+            ],
+        ];
+
+        Log::info('CreateShipmentBooking: Sending Lalamove payload to EkspedisiKu', [
+            'order_id' => $this->order->id,
+            'reference' => $bookingReference,
+            'service_type' => $serviceType,
+            'pickup' => $pickup,
+            'dropoff' => $dropoff,
+        ]);
+
+        $this->order->update([
+            'ekspedisiku_booking_attempt' => $nextAttempt,
+            'ekspedisiku_booking_reference' => $bookingReference,
+            'ekspedisiku_booking_status' => 'sending',
+            'ekspedisiku_booking_last_error' => null,
+        ]);
+
+        $result = $service->createBooking($payload);
+
+        if ($result && ($result['success'] ?? false)) {
+            $data = is_array($result['data'] ?? null) ? $result['data'] : [];
+            $lalamoveOrderId = $data['lalamove_order_id']
+                ?? $data['stt_number']
+                ?? $data['order_id']
+                ?? null;
+
+            Log::info('CreateShipmentBooking: Lalamove success', [
+                'order_id' => $this->order->id,
+                'lalamove_order_id' => $lalamoveOrderId,
+            ]);
+
+            $updates = [
+                'order_status' => 'processing',
+                'shipped_at' => now(),
+                'ekspedisiku_booking_created_at' => now(),
+                'ekspedisiku_booking_status' => 'success',
+                'ekspedisiku_booking_last_error' => null,
+            ];
+
+            if (is_string($lalamoveOrderId) && $lalamoveOrderId !== '') {
+                $updates['tracking_number'] = $lalamoveOrderId;
+                $updates['ekspedisiku_shipment_id'] = $lalamoveOrderId;
+            }
+
+            $this->order->update($updates);
+
+            return;
+        }
+
+        $err = is_array($result) ? ($result['message'] ?? 'Booking Lalamove gagal.') : 'Booking Lalamove gagal.';
+        $lalamoveErrors = data_get($result, 'error.lalamove.errors');
+        if (is_array($lalamoveErrors) && isset($lalamoveErrors[0]['message'])) {
+            $err = (string) $lalamoveErrors[0]['message'];
+            if (isset($lalamoveErrors[0]['id'])) {
+                $err = $lalamoveErrors[0]['id'].': '.$err;
+            }
+        }
+        Log::error('CreateShipmentBooking: Lalamove failed', [
+            'order_id' => $this->order->id,
+            'response' => $result,
+        ]);
+
+        $this->order->update([
+            'ekspedisiku_booking_status' => 'failed',
+            'ekspedisiku_booking_last_error' => $err,
+        ]);
+    }
+
+    private function normalizePhoneE164Id(?string $phone): ?string
+    {
+        $phone = trim((string) $phone);
+        if ($phone === '') {
+            return null;
+        }
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        if (str_starts_with($phone, '+62')) {
+            return $phone;
+        }
+        if (str_starts_with($phone, '62')) {
+            return '+'.$phone;
+        }
+        if (str_starts_with($phone, '0')) {
+            return '+62'.substr($phone, 1);
+        }
+
+        return '+62'.$phone;
     }
 
 }

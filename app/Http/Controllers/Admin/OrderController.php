@@ -320,7 +320,7 @@ class OrderController extends Controller
 
         $code = strtolower($order->expedition->code);
 
-        if ($code === 'lion_parcel') {
+        if ($code === 'lion_parcel' || $code === 'lalamove') {
             $result = $this->ekspedisiku->track($order->tracking_number, $code);
             
             if ($result && isset($result['success']) && $result['success']) {
@@ -362,20 +362,21 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
         }
 
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+            return back()->with('error', 'Ekspedisi tidak didukung untuk booking EkspedisiKu.');
         }
 
         try {
             \Log::info('Admin OrderController: Manual booking requested', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
+                'carrier' => $order->expedition->code,
                 'existing_tracking_number' => $order->tracking_number,
                 'existing_shipment_id' => $order->ekspedisiku_shipment_id,
             ]);
             // Dispatch the job synchronously to get immediate result
             $job = new \App\Jobs\CreateShipmentBooking($order);
-            $job->handle(app(\App\Services\EkspedisikuService::class));
+            $job->handle(app(\App\Services\EkspedisiKuService::class));
 
             // Refresh order to get updated data
             $order->refresh();
@@ -399,7 +400,7 @@ class OrderController extends Controller
                 return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref . '. Sinkronisasi ke QAD juga telah dijadwalkan.');
             }
 
-            return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk pesan error dari Lion Parcel.');
+            return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk detail error dari kurir.');
         } catch (\Exception $e) {
             \Log::error('Admin OrderController: Manual booking error', [
                 'order_id' => $order->id,
@@ -411,8 +412,8 @@ class OrderController extends Controller
 
     public function resetEkspedisikuBooking(Order $order)
     {
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+            return back()->with('error', 'Ekspedisi tidak didukung untuk reset booking EkspedisiKu.');
         }
 
         \Log::warning('Admin OrderController: Reset booking requested', [

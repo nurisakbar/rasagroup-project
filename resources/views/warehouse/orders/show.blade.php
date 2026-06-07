@@ -193,9 +193,17 @@
                         <tr>
                             <th>Nomor Resi</th>
                             <td>
+                                @php
+                                    $supportsEkspedisiBooking = $order->expedition && in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true);
+                                    $isLionParcel = $order->expedition && $order->expedition->code === 'lion_parcel';
+                                    $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
+                                @endphp
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
-                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                    @if($isLalamove)
+                                        <br><small class="text-muted">Order ID Lalamove</small>
+                                    @endif
+                                    @if($isLionParcel)
                                         @if(!$order->ekspedisiku_shipment_id)
                                             <span class="label label-danger" style="margin-left: 10px;">shipment_id belum tersimpan</span>
                                             <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
@@ -244,12 +252,23 @@
                                             @endif
                                         @endif
                                     @endif
+                                    @if($isLalamove && $supportsEkspedisiBooking)
+                                        <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset booking Lalamove? Order ID akan dikosongkan agar bisa booking ulang.')">
+                                                <i class="fa fa-trash"></i> Reset Booking
+                                            </button>
+                                        </form>
+                                    @endif
                                     @if($order->shipped_at)
                                         <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
                                     @endif
                                 @else
                                     <span class="text-muted">Belum diisi</span>
-                                    @if($order->expedition && $order->expedition->code === 'lion_parcel')
+                                    @if($order->ekspedisiku_booking_status === 'failed' && $order->ekspedisiku_booking_last_error)
+                                        <br><small class="text-danger">Booking gagal: {{ $order->ekspedisiku_booking_last_error }}</small>
+                                    @endif
+                                    @if($supportsEkspedisiBooking)
                                         <form action="{{ route('warehouse.orders.ekspedisiku-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
