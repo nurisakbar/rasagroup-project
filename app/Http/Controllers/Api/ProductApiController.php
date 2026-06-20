@@ -23,7 +23,8 @@ class ProductApiController extends Controller
         return Cache::remember($cacheKey, 86400, function () use ($request) {
             try {
                 $query = Product::with(['brand', 'category'])
-                    ->where('status', 'active');
+                    ->where('status', 'active')
+                    ->withBuyerPrice();
 
                 // Search filter
                 if ($request->filled('search')) {
@@ -119,7 +120,8 @@ class ProductApiController extends Controller
         return Cache::remember($cacheKey, 86400, function () use ($request) {
             try {
                 $query = Product::with(['brand', 'category'])
-                    ->where('status', 'active');
+                    ->where('status', 'active')
+                    ->withBuyerPrice();
 
                 // Search filter
                 if ($request->filled('search')) {

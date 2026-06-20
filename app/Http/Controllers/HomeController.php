@@ -4,18 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use App\Models\Menu;
-use App\Models\Promo;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Slider;
 use App\Models\WebsitePopup;
+use App\Support\PromoProducts;
 
 class HomeController extends Controller
 {
     public function index()
     {
         $selectedHubId = session('selected_hub_id');
-        $baseQuery = Product::where('status', 'active')->orderByInStockFirst($selectedHubId);
+        $baseQuery = Product::where('status', 'active')
+            ->withBuyerPrice()
+            ->orderByInStockFirst($selectedHubId);
 
         $popularProducts = (clone $baseQuery)
             ->with(['category', 'brand', 'warehouseStocks'])
@@ -47,27 +49,13 @@ class HomeController extends Controller
             ->take(3)
             ->get();
             
-        $categories = Category::where('is_active', true)
-            ->withCount('products')
-            ->take(10)
-            ->get();
+        $categories = Category::forStorefrontSidebar()->take(10);
 
         $brands = Brand::where('is_active', true)
             ->withCount('products')
             ->orderBy('name')
             ->take(10)
-            ->get(); // Limit brands for tabs
-
-        // Get products for each brand for the tabs
-        $brandProducts = [];
-        foreach($brands as $brand) {
-            $brandProducts[$brand->id] = (clone $baseQuery)
-                ->where('brand_id', $brand->id)
-                ->with(['category', 'brand', 'warehouseStocks'])
-                ->latest()
-                ->take(8)
-                ->get();
-        }
+            ->get();
 
         $sliders = Slider::where('is_active', true)
             ->orderBy('sort_order')
@@ -81,14 +69,17 @@ class HomeController extends Controller
             ->with(['details.product'])
             ->orderBy('nama_menu')
             ->take(4)
-            ->get();
+            ->get()
+            ->each(function (Menu $menu) {
+                $menu->setRelation(
+                    'details',
+                    $menu->details->filter(
+                        fn ($detail) => $detail->product && (float) $detail->product->price > 0
+                    )
+                );
+            });
 
-        $homePromos = Promo::query()
-            ->where('awal', '<=', now())
-            ->where('akhir', '>=', now())
-            ->orderBy('akhir')
-            ->take(4)
-            ->get();
+        $promoProducts = PromoProducts::get(10, withActivePromos: true);
 
         return view('themes.nest.home.index', compact(
             'popularProducts', 
@@ -98,11 +89,10 @@ class HomeController extends Controller
             'topRated', 
             'categories',
             'brands', 
-            'brandProducts', 
             'sliders',
             'activePopups',
             'todayMenus',
-            'homePromos'
+            'promoProducts'
         ));
     }
 }

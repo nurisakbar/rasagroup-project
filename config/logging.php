@@ -138,6 +138,30 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'jubelio_sales_order' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/jubelio-sales-order.log'),
+            'level' => 'debug',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'jubelio_product_content' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/jubelio-product-content.log'),
+            'level' => 'debug',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'master_sync' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/master-sync.log'),
+            'level' => 'debug',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
         /*
          * Keranjang — debug POST /cart/{product} (aktifkan LOG_CART_DEBUG=true atau otomatis di local).
          */

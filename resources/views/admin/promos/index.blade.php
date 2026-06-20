@@ -11,14 +11,27 @@
 @section('content')
     <div class="box box-default">
         <div class="box-header with-border">
-            <h3 class="box-title"><i class="fa fa-filter"></i> Aksi</h3>
+            <h3 class="box-title"><i class="fa fa-filter"></i> Filter & Aksi</h3>
         </div>
         <div class="box-body">
             <div class="row">
-                <div class="col-md-12 text-right">
-                    <a href="{{ route('admin.promos.create') }}" class="btn btn-primary">
-                        <i class="fa fa-plus"></i> Tambah Promo
-                    </a>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="filter-status" class="form-control">
+                            <option value="">Semua Status</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-9 text-right">
+                    <div class="form-group">
+                        <label>&nbsp;</label><br>
+                        <a href="{{ route('admin.promos.create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Tambah Promo
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,11 +46,10 @@
                 <thead>
                     <tr>
                         <th width="5%">No</th>
-                        <th width="80px">Gambar</th>
-                        <th>Kode Promo</th>
-                        <th>Judul Promo</th>
-                        <th>Harga</th>
+                        <th>Nama Promo</th>
+                        <th>Produk</th>
                         <th>Masa Berlaku</th>
+                        <th>Status Aktif</th>
                         <th width="100px">Action</th>
                     </tr>
                 </thead>
@@ -54,14 +66,18 @@ $(document).ready(function() {
     var table = $('#promos-table').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('admin.promos.index') }}",
+        ajax: {
+            url: "{{ route('admin.promos.index') }}",
+            data: function(d) {
+                d.status = $('#filter-status').val();
+            }
+        },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'image', name: 'image', orderable: false, searchable: false },
-            { data: 'kode_promo', name: 'kode_promo' },
             { data: 'judul_promo', name: 'judul_promo' },
-            { data: 'harga_format', name: 'harga' },
+            { data: 'products_display', name: 'products_display', orderable: false, searchable: false },
             { data: 'masa_berlaku', name: 'awal', searchable: false },
+            { data: 'status_badge', name: 'status_badge', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         language: {
@@ -75,6 +91,8 @@ $(document).ready(function() {
             paginate: { first: "Pertama", previous: "Sebelumnya", next: "Selanjutnya", last: "Terakhir" }
         }
     });
+
+    $('#filter-status').change(function() { table.draw(); });
 });
 </script>
 @endpush

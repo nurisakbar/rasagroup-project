@@ -60,15 +60,20 @@
 
                                         <div class="card border-0 shadow-sm border-radius-10 mb-4">
                                             <div class="card-header bg-white border-bottom p-4">
-                                                <h4 class="mb-0">Pilih Pengirim (Hub)</h4>
-                                                <p class="text-muted font-sm">Pilih gudang pusat/hub asal pengiriman.</p>
+                                                <h4 class="mb-0">Hub Pengirim</h4>
+                                                <p class="text-muted font-sm">Dipilih otomatis dari hub/distributor terdekat alamat tujuan.</p>
                                             </div>
                                             <div class="card-body p-4">
-                                                <select name="source_warehouse_id" class="form-select font-sm border-radius-10">
-                                                    @foreach($warehouses as $wh)
-                                                        <option value="{{ $wh->id }}">{{ $wh->name }} - {{ $wh->regency->name ?? '' }}</option>
-                                                    @endforeach
-                                                </select>
+                                                @if($suggestedHub)
+                                                    <p class="mb-0 font-sm">
+                                                        <strong>{{ $suggestedHub->name }}</strong>
+                                                        @if($suggestedHub->regency)
+                                                            <span class="text-muted">— {{ $suggestedHub->regency->name }}</span>
+                                                        @endif
+                                                    </p>
+                                                @else
+                                                    <p class="mb-0 text-muted font-sm">Pilih alamat pengiriman untuk menentukan hub terdekat.</p>
+                                                @endif
                                             </div>
                                         </div>
 

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Buyer\AddressController;
+use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +33,99 @@ class CartController extends Controller
             ->where('session_id', session()->getId())
             ->where('cart_type', 'regular')
             ->get();
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Cart>  $carts
+     */
+    protected function calculateCartsTotalWeightGrams($carts): int
+    {
+        return (int) $carts->sum(function (Cart $cart) {
+            $weightPerUnit = (int) ($cart->product->weight ?? 500);
+
+            return $weightPerUnit * (int) $cart->quantity;
+        });
+    }
+
+    protected function formatTotalWeightGrams(int $grams): string
+    {
+        return number_format($grams / 1000, 1).' kg';
+    }
+
+    /**
+     * Terapkan alamat belanja dari profil user jika ada (opsional, tidak memblokir belanja).
+     */
+    protected function tryApplyShoppingAddressFromUser(): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+
+        if (session()->has('selected_shipping_address_id') && session()->has('selected_hub_id')) {
+            return;
+        }
+
+        $address = null;
+        if (session('selected_shipping_address_id')) {
+            $address = Address::where('user_id', Auth::id())
+                ->where('id', session('selected_shipping_address_id'))
+                ->first();
+        }
+        if (! $address) {
+            $address = Address::where('user_id', Auth::id())->where('is_default', true)->first();
+        }
+        if (! $address) {
+            $address = Address::where('user_id', Auth::id())->first();
+        }
+
+        if ($address) {
+            app(AddressController::class)->applyAddressForShopping($address);
+        }
+    }
+
+    /**
+     * Pastikan session punya hub pengirim; fallback ke hub aktif pertama jika belum ada alamat.
+     */
+    protected function ensureShoppingHubInSession(?string $warehouseIdFromRequest = null): void
+    {
+        if (session()->has('selected_hub_id')) {
+            return;
+        }
+
+        if ($warehouseIdFromRequest) {
+            $warehouse = Warehouse::query()
+                ->where('is_active', true)
+                ->where(function ($q) use ($warehouseIdFromRequest) {
+                    $q->where('id', $warehouseIdFromRequest)
+                        ->orWhere('slug', $warehouseIdFromRequest);
+                })
+                ->first();
+
+            if ($warehouse) {
+                session([
+                    'selected_hub_id' => $warehouse->id,
+                    'selected_hub_name' => $warehouse->name,
+                    'selected_hub_slug' => $warehouse->slug,
+                ]);
+
+                return;
+            }
+        }
+
+        $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        $query = Warehouse::where('is_active', true)->orderBy('name');
+        if ($excludeOwn) {
+            $query->where('id', '!=', $excludeOwn);
+        }
+
+        $fallbackHub = $query->first();
+        if ($fallbackHub) {
+            session([
+                'selected_hub_id' => $fallbackHub->id,
+                'selected_hub_name' => $fallbackHub->name,
+                'selected_hub_slug' => $fallbackHub->slug,
+            ]);
+        }
     }
 
     protected function wantsJsonCartUpdate(Request $request): bool
@@ -60,7 +156,10 @@ class CartController extends Controller
             return $cart->product->price * $cart->quantity;
         });
 
-        return view('cart.index', compact('carts', 'total', 'cartWarehouse'));
+        $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
+        $totalWeightFormatted = $this->formatTotalWeightGrams($totalWeight);
+
+        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted'));
     }
 
     public function update(Request $request, Cart $cart)
@@ -85,7 +184,7 @@ class CartController extends Controller
             : $qtyInput;
 
         // Check stock availability if warehouse is set (stok selalu per satuan terkecil)
-        if ($cart->warehouse_id) {
+        if (! ShopFulfillment::assumeStockReady() && $cart->warehouse_id) {
             $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
                 ->where('product_id', $cart->product_id)
                 ->first();
@@ -134,6 +233,8 @@ class CartController extends Controller
             return $c->product->price * $c->quantity;
         });
 
+        $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
+
         $product = $cart->product;
         $lineSubtotal = (float) ($product->price * $cart->quantity);
         $cartCountSum = (int) $carts->sum('quantity');
@@ -158,6 +259,8 @@ class CartController extends Controller
             ],
             'cart_total' => (float) $total,
             'cart_total_formatted' => 'Rp '.number_format($total, 0, ',', '.'),
+            'total_weight' => $totalWeight,
+            'total_weight_formatted' => $this->formatTotalWeightGrams($totalWeight),
             'mini_cart_html' => view('themes.nest.partials.mini-cart')->render(),
         ]);
     }
@@ -195,22 +298,8 @@ class CartController extends Controller
                 : redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk belanja.');
         }
 
-        if (!session()->has('selected_shipping_address_id') || !session()->has('selected_hub_id')) {
-            $address = \App\Models\Address::where('user_id', Auth::id())->where('is_default', true)->first();
-            if (!$address) {
-                $address = \App\Models\Address::where('user_id', Auth::id())->first();
-            }
-
-            if ($address) {
-                app(\App\Http\Controllers\Buyer\AddressController::class)->applyAddressForShopping($address);
-            }
-
-            if (!session()->has('selected_shipping_address_id') || !session()->has('selected_hub_id')) {
-                return $request->ajax()
-                    ? response()->json(['error' => 'Pilih alamat pengiriman terlebih dahulu.', 'needs_address' => true], 428)
-                    : back()->with('error', 'Pilih alamat pengiriman terlebih dahulu.');
-            }
-        }
+        $this->tryApplyShoppingAddressFromUser();
+        $this->ensureShoppingHubInSession($request->input('warehouse_id'));
 
         try {
             $request->validate([
@@ -223,6 +312,12 @@ class CartController extends Controller
                 'product_id' => $product->id,
             ]);
             throw $e;
+        }
+
+        if ((float) $product->price <= 0) {
+            return $request->ajax()
+                ? response()->json(['error' => 'Produk ini belum memiliki harga.'], 422)
+                : back()->with('error', 'Produk ini belum memiliki harga.');
         }
 
         // Determine default UOM based on user role
@@ -267,7 +362,9 @@ class CartController extends Controller
                 'is_active' => $warehouse?->is_active,
             ]);
 
-            return back()->with('error', 'Hub tidak valid atau tidak tersedia.');
+            return $request->ajax()
+                ? response()->json(['error' => 'Hub tidak valid atau tidak tersedia.'], 422)
+                : back()->with('error', 'Hub tidak valid atau tidak tersedia.');
         }
 
         $warehouseId = $warehouse->id;
@@ -360,7 +457,9 @@ class CartController extends Controller
             ->where('product_id', $product->id)
             ->first();
 
-        $availableStock = (int) ($stock ? $stock->stock : 0);
+        $availableStock = ShopFulfillment::assumeStockReady()
+            ? PHP_INT_MAX
+            : (int) ($stock ? $stock->stock : 0);
         $unitLabel = $product->unit ?: 'unit';
 
         $incomingUom = ($orderUom === 'large') ? 'large' : 'base';
@@ -417,27 +516,26 @@ class CartController extends Controller
         $room = max(0, $availableStock - $existingQty);
         $toAdd = $capToStock ? min($requestedBaseQty, $room) : $requestedBaseQty;
 
-        if (! $capToStock) {
-            if ($toAdd < 1) {
-                return ['ok' => false, 'error' => 'Jumlah tidak valid.', 'added' => 0];
-            }
-            if ($toAdd > $room) {
-                if ($existingQty > 0) {
-                    return [
-                        'ok' => false,
-                        'error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit.",
-                        'added' => 0,
-                    ];
-                }
+        if ($toAdd < 1) {
+            return $capToStock
+                ? ['ok' => true, 'error' => null, 'added' => 0]
+                : ['ok' => false, 'error' => 'Jumlah tidak valid.', 'added' => 0];
+        }
 
+        if (! ShopFulfillment::assumeStockReady() && $toAdd > $room) {
+            if ($existingQty > 0) {
                 return [
                     'ok' => false,
-                    'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
+                    'error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit.",
                     'added' => 0,
                 ];
             }
-        } elseif ($toAdd < 1) {
-            return ['ok' => true, 'error' => null, 'added' => 0];
+
+            return [
+                'ok' => false,
+                'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
+                'added' => 0,
+            ];
         }
 
         if ($cart) {
@@ -536,6 +634,10 @@ class CartController extends Controller
      */
     public function removeOutOfStock()
     {
+        if (ShopFulfillment::assumeStockReady()) {
+            return back()->with('success', 'Validasi stok dinonaktifkan; tidak ada item yang dihapus.');
+        }
+
         if (Auth::check()) {
             $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
         } else {
@@ -655,28 +757,44 @@ class CartController extends Controller
 
     public function updateQuantityByProduct(Request $request, Product $product)
     {
-        $action = $request->input('action'); // plus or minus
+        $action = $request->input('action');
         $warehouseId = session('selected_hub_id');
 
         $cart = Auth::check()
             ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->where('product_id', $product->id)->first()
             : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->where('product_id', $product->id)->first();
 
-        if (!$cart) {
-            if ($action === 'plus') {
+        if ($request->filled('quantity') && ! $request->has('action')) {
+            $newOrd = max(0, (int) preg_replace('/\D+/', '', (string) $request->input('quantity')));
+
+            if (! $cart) {
+                if ($newOrd <= 0) {
+                    return response()->json(['success' => false, 'message' => 'Produk tidak ada di keranjang.'], 404);
+                }
+
+                $request->merge(['quantity' => $newOrd]);
+
                 return $this->store($request, $product);
             }
-            return response()->json(['success' => false, 'message' => 'Produk tidak ada di keranjang.'], 404);
-        }
+        } elseif ($action === 'plus') {
+            if (! $cart) {
+                return $this->store($request, $product);
+            }
 
-        $currentOrd = (int) ($cart->quantity_ordered ?? 1);
-        $uom = $cart->order_uom ?: 'base';
-
-        if ($action === 'plus') {
+            $currentOrd = (int) ($cart->quantity_ordered ?? 1);
             $newOrd = $currentOrd + 1;
-        } else {
+        } elseif ($action === 'minus') {
+            if (! $cart) {
+                return response()->json(['success' => false, 'message' => 'Produk tidak ada di keranjang.'], 404);
+            }
+
+            $currentOrd = (int) ($cart->quantity_ordered ?? 1);
             $newOrd = $currentOrd - 1;
+        } else {
+            return response()->json(['success' => false, 'message' => 'Aksi tidak valid.'], 422);
         }
+
+        $uom = $cart->order_uom ?: 'base';
 
         if ($newOrd <= 0) {
             $cart->delete();
@@ -693,14 +811,16 @@ class CartController extends Controller
             ]);
         }
 
-        // Validate stock
         $baseNeeded = $product->orderedQuantityToBase($newOrd, $uom);
-        $stock = $product->warehouseStocks()
-            ->where('warehouse_id', $cart->warehouse_id)
-            ->first();
 
-        if (!$stock || $stock->stock < $baseNeeded) {
-            return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi.'], 422);
+        if (! ShopFulfillment::assumeStockReady()) {
+            $stock = $product->warehouseStocks()
+                ->where('warehouse_id', $cart->warehouse_id)
+                ->first();
+
+            if (! $stock || $stock->stock < $baseNeeded) {
+                return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi.'], 422);
+            }
         }
 
         $cart->quantity = $baseNeeded;

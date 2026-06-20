@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -117,6 +118,13 @@ class CartApiController extends Controller
         $product = Product::findOrFail($validated['product_id']);
         $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
 
+        if ((float) $product->price <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk ini belum memiliki harga.',
+            ], 422);
+        }
+
         $uom = $validated['uom'] ?? 'base';
         if ($uom === 'large' && ! $product->hasDualUnitOrdering()) {
             $uom = 'base';
@@ -192,7 +200,7 @@ class CartApiController extends Controller
             ->firstOrFail();
 
         // Check stock availability
-        if ($cart->warehouse_id) {
+        if (! ShopFulfillment::assumeStockReady() && $cart->warehouse_id) {
             $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
                 ->where('product_id', $cart->product_id)
                 ->first();

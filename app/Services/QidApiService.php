@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\QadIntegration;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +41,10 @@ class QidApiService
      */
     public function login(): ?string
     {
+        if (! QadIntegration::isConfigured()) {
+            return null;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Accept'       => 'text/plain',
@@ -134,10 +139,10 @@ class QidApiService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->baseUrl)
-            && !empty($this->username)
-            && !empty($this->password)
-            && !empty($this->appsId);
+        return ! empty($this->baseUrl)
+            && ! empty($this->username)
+            && ! empty($this->password)
+            && ! empty($this->appsId);
     }
 
     // -------------------------------------------------------------------------

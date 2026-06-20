@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\QadService;
 use App\Support\QadBusinessRelationHeadOffice;
+use App\Support\QadIntegration;
 use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -59,6 +60,23 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
      */
     public function handle(QadService $qadService): void
     {
+        if (! QadIntegration::isConfigured()) {
+            Log::info('SyncOrderToQad: skipped (QID API belum dikonfigurasi)', [
+                'order_id' => $this->order->id,
+            ]);
+
+            return;
+        }
+
+        if (! $this->order->shouldSyncToQad()) {
+            Log::info('SyncOrderToQad: skipped (bukan order distributor/POS)', [
+                'order_id' => $this->order->id,
+                'order_type' => $this->order->order_type,
+            ]);
+
+            return;
+        }
+
         $user = $this->order->user;
         $address = $this->order->address;
 

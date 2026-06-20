@@ -5,6 +5,12 @@
 @section('og_image', $product->image_url)
 
 @section('content')
+@php
+    $showHubPicker = (bool) config('shop.show_hub_picker_on_product_page', false);
+    if (! $showHubPicker) {
+        $selectedWarehouseId = $selectedWarehouseId ?: session('selected_hub_id');
+    }
+@endphp
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -88,7 +94,7 @@
                                         </div>
                                     </div>
 
-                                    @if($selectedWarehouseId)
+                                    @if($showHubPicker && $selectedWarehouseId)
                                         <div class="product-detail-stock-below-price mb-3">
                                             <span class="product-detail-stock-below-label">Stok</span>
                                             <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
@@ -109,11 +115,8 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="short-desc mb-30">
-                                        <p class="font-lg">{{ Str::limit(strip_tags($product->description), 150) }}</p>
-                                    </div>
-                                    
                                     <!-- HUB SELECTION -->
+                                    @if($showHubPicker)
                                     <div class="mb-4">
                                         @if(!$selectedWarehouseId)
                                             <!-- Hub Selection (only show if warehouse_id not in URL) -->
@@ -162,6 +165,7 @@
                                             </div>
                                         @endif
                                     </div>
+                                    @endif
                                     
                                     <!-- ADD TO CART FORM -->
                                     <form action="{{ route('cart.store', $product) }}" method="POST" id="add-to-cart-form">
@@ -206,8 +210,13 @@
                                                 <a href="#" class="qty-up" onclick="increaseQty(); return false;"><i class="fi-rs-angle-small-up"></i></a>
                                             </div>
                                             <div class="product-extra-link2 product-detail-cta-wrap">
-                                                <button type="submit" class="btn button-add-to-cart product-add-cart-btn" id="add-to-cart-btn" {{ !$selectedWarehouseId ? 'disabled' : '' }}>
-                                                    <i class="fi-rs-shopping-cart"></i> {{ $selectedWarehouseId ? 'Tambah ke Keranjang' : 'Pilih Hub Terlebih Dahulu' }}
+                                                <button type="submit" class="btn button-add-to-cart product-add-cart-btn" id="add-to-cart-btn" {{ $showHubPicker && !$selectedWarehouseId ? 'disabled' : '' }}>
+                                                    <i class="fi-rs-shopping-cart"></i>
+                                                    @if($showHubPicker && !$selectedWarehouseId)
+                                                        Pilih Hub Terlebih Dahulu
+                                                    @else
+                                                        Tambah ke Keranjang
+                                                    @endif
                                                 </button>
                                             </div>
                                         </div>
@@ -297,19 +306,22 @@
                 <!-- Sidebar -->
                 <div class="col-xl-3 primary-sidebar sticky-sidebar mt-30">
                     <div class="sidebar-widget widget-category-2 mb-30">
-                        <h5 class="section-title style-1 mb-30">Category</h5>
-                         <ul>
-                            @foreach($globalCategories as $cat)
+                        <h5 class="section-title style-1 mb-30">Kategori</h5>
+                        <ul>
+                            @foreach($sidebarCategories as $cat)
                                 <li>
-                                    <a href="{{ route('products.index', ['category' => $cat->slug]) }}">
-                                        @if($cat->image)
-                                            <img src="{{ asset('storage/' . $cat->image) }}" alt="{{ $cat->name }}" />
+                                    <a
+                                        href="{{ route('products.index', ['category' => $cat->slug]) }}"
+                                        class="{{ $product->category_id === $cat->id ? 'rg-category-active' : '' }}"
+                                    >
+                                        @if($cat->image_url)
+                                            <img src="{{ $cat->image_url }}" alt="{{ $cat->name }}" />
                                         @else
                                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
                                         @endif
                                         {{ $cat->name }}
                                     </a>
-                                    <span class="count">{{ $cat->products_count }}</span>
+                                    <span class="count">{{ (int) $cat->products_count }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -356,8 +368,10 @@
 @push('scripts')
 <script>
     const price = {{ $product->price }};
-    let selectedStock = 0;
-    let selectedWarehouseId = null;
+    const showHubPicker = @json($showHubPicker);
+    const assumeStockReady = @json(\App\Support\ShopFulfillment::assumeStockReady());
+    let selectedStock = assumeStockReady && !showHubPicker ? 999999 : 0;
+    let selectedWarehouseId = @json($selectedWarehouseId ?: '');
     const hasDualUom = @json($product->hasDualUnitOrdering());
     const unitsPerLarge = {{ (int) ($product->units_per_large ?? 0) }};
     let uomMode = '{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}';
@@ -365,6 +379,9 @@
     const largeUnitLabel = @json($product->large_unit ?: '');
 
     function getMaxOrderQty() {
+        if (assumeStockReady && !showHubPicker) {
+            return 999999;
+        }
         if (selectedStock <= 0) {
             return 0;
         }
@@ -686,7 +703,7 @@
     document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        if (!selectedWarehouseId) {
+        if (!selectedWarehouseId && showHubPicker) {
             showShopToast('Silakan pilih hub pengirim terlebih dahulu.', 'warning');
             return false;
         }
@@ -714,9 +731,8 @@
             },
             error: function(xhr) {
                 if (xhr.status === 401) {
-                    if (confirm("Silakan masuk terlebih dahulu untuk belanja. Masuk sekarang?")) {
-                        window.location.href = '{{ route("login") }}';
-                    }
+                    const body = xhr.responseJSON || {};
+                    window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
                     return;
                 }
 
@@ -760,13 +776,29 @@
                 updateSubtotal();
             });
         });
-        loadHubStock();
+        if (showHubPicker) {
+            loadHubStock();
+        } else {
+            const warehouseInput = document.getElementById('selected-warehouse-id');
+            if (warehouseInput?.value) {
+                selectedWarehouseId = warehouseInput.value;
+            }
+            const btn = document.getElementById('add-to-cart-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fi-rs-shopping-cart"></i> Tambah ke Keranjang';
+            }
+        }
     });
 </script>
 @endpush
 
 @push('styles')
 <style>
+    .widget-category-2 ul li a.rg-category-active {
+        color: #6A1B1B !important;
+        font-weight: 700;
+    }
     .product-detail-cart-row {
         align-items: center !important;
     }

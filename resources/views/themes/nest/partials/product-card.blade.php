@@ -7,9 +7,6 @@
                     <img class="hover-img rg-product-img" src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" />
                 </a>
             </div>
-            <div class="product-action-1">
-                <a aria-label="Lihat cepat" class="action-btn btn-quick-view" data-bs-toggle="modal" data-bs-target="#quickViewModal" href="#" data-url="{{ route('products.quick-view', $product->slug) }}"><i class="fi-rs-eye"></i></a>
-            </div>
             <div class="product-badges product-badges-position product-badges-mrg">
                 @if($product->created_at->diffInDays(now()) < 7)
                     <span class="new">Baru</span>
@@ -30,11 +27,27 @@
                 <span class="font-small ml-5 text-muted"> ({{ number_format($product->rating ?? 0, 1) }})</span>
             </div>
             <div>
-                <span class="font-small text-muted">Oleh <a href="#">{{ $product->brand->name ?? 'Tanpa Brand' }}</a></span>
-                @if(session('selected_hub_id'))
+                <span class="font-small text-muted">Oleh
+                    @if($product->brand?->slug)
+                        <a href="{{ route('products.index', ['brand' => $product->brand->slug]) }}">{{ $product->brand->name }}</a>
+                    @else
+                        {{ $product->brand->name ?? 'Tanpa Brand' }}
+                    @endif
+                </span>
+                @if(\App\Support\ShopFulfillment::showStockOnStorefront() && session('selected_hub_id'))
                     <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
                 @endif
             </div>
+            @if(!empty($showPromoPeriod) && $product->relationLoaded('promos') && $product->promos->isNotEmpty())
+                @php
+                    $promoAwal = $product->promos->min('awal');
+                    $promoAkhir = $product->promos->max('akhir');
+                @endphp
+                <div class="font-small text-brand mt-5">
+                    <i class="fi-rs-calendar mr-5"></i>
+                    Berlaku: {{ $promoAwal->format('d M Y H:i') }} – {{ $promoAkhir->format('d M Y H:i') }}
+                </div>
+            @endif
             <div class="product-card-bottom rg-product-footer">
                 <div class="product-price">
                     <span>Rp{{ number_format($product->price, 0, ',', '.') }}</span>
@@ -42,25 +55,32 @@
                         <span class="old-price">Rp{{ number_format($product->compare_price, 0, ',', '.') }}</span>
                     @endif
                 </div>
-                <div class="add-cart">
+                <div class="add-cart rg-add-cart-row">
                     @php
                         $inCartQty = isset($cartItemMap) ? ($cartItemMap[$product->id] ?? 0) : 0;
+                        $displayQty = $inCartQty > 0 ? $inCartQty : 1;
                     @endphp
-                    
-                    <!-- Quantity Selector -->
-                    <div class="product-qty-selector {{ $inCartQty > 0 ? '' : 'd-none' }}" id="qty-selector-{{ $product->slug }}">
-                        <div class="d-flex align-items-center justify-content-between" style="min-width: 100px;">
+
+                    <div class="product-qty-selector" id="qty-selector-{{ $product->slug }}">
+                        <div class="d-flex align-items-center justify-content-between rg-grid-qty-wrap">
                             <a href="javascript:void(0)" class="qty-down-grid" data-slug="{{ $product->slug }}">
                                 <i class="fi-rs-minus" style="font-size: 14px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 4px;"></i>
                             </a>
-                            <span class="qty-val-grid fw-bold" id="qty-val-{{ $product->slug }}" style="font-size: 16px; color: #253D4E; min-width: 25px; text-align: center;">{{ $inCartQty }}</span>
+                            <input type="text"
+                                class="qty-val-grid fw-bold"
+                                id="qty-val-{{ $product->slug }}"
+                                value="{{ $displayQty }}"
+                                min="1"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                aria-label="Jumlah"
+                                title="Jumlah">
                             <a href="javascript:void(0)" class="qty-up-grid" data-slug="{{ $product->slug }}">
                                 <i class="fi-rs-plus" style="font-size: 14px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 4px;"></i>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Add Button Form -->
                     <form class="add-to-cart-form {{ $inCartQty > 0 ? 'd-none' : '' }}" id="add-form-{{ $product->slug }}" action="{{ route('cart.store', $product->slug) }}" method="POST"
                         @if($product->hasDualUnitOrdering())
                             data-dual-uom="1"
@@ -71,13 +91,13 @@
                         @endif
                     >
                         @csrf
-                        <input type="hidden" name="quantity" value="1" class="js-qty-input">
+                        <input type="hidden" name="quantity" value="{{ $displayQty }}" class="js-qty-input">
                         <input type="hidden" name="warehouse_id" value="{{ session('selected_hub_id') }}">
                         @if($product->hasDualUnitOrdering())
                             <input type="hidden" name="uom" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}" class="js-cart-uom-field">
                         @endif
                         <button type="submit" class="add">
-                            Add
+                            Beli
                         </button>
                     </form>
                 </div>

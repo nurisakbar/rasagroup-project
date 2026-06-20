@@ -16,18 +16,6 @@
 @endpush
 
 @section('content')
-    @if(session('import_errors'))
-        <div class="alert alert-warning alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <h4><i class="icon fa fa-warning"></i> Peringatan Import</h4>
-            <ul>
-                @foreach(session('import_errors') as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <!-- Filter Box -->
     <div class="box box-default filter-box">
         <div class="box-header with-border">
@@ -72,30 +60,46 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6 text-right">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Sumber</label>
+                        <select id="filter-sync-source" class="form-control">
+                            <option value="">Semua Sumber</option>
+                            <option value="jubelio">Jubelio</option>
+                            <option value="qad">QAD</option>
+                            <option value="both">Keduanya</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
                     <div class="form-group">
                         <label>&nbsp;</label><br>
-                        <a href="{{ route('admin.brands.index') }}" class="btn btn-default btn-sm" title="Master Brand">
-                            <i class="fa fa-bookmark"></i>
-                        </a>
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-default btn-sm" title="Master Kategori">
-                            <i class="fa fa-folder"></i>
-                        </a>
-                        <a href="{{ route('admin.products.template') }}" class="btn btn-default btn-sm">
-                            <i class="fa fa-download"></i> Template
-                        </a>
-                        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
-                            <i class="fa fa-upload"></i> Import
+                        <button type="button" id="btn-filter" class="btn btn-default">
+                            <i class="fa fa-filter"></i> Filter
                         </button>
+                        <button type="button" id="btn-reset" class="btn btn-default">
+                            <i class="fa fa-times"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-right">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah
                         </a>
-                        <button type="button" class="btn btn-info btn-sm btn-maroon" onclick="confirmSyncQid()">
-                            <i class="fa fa-refresh"></i> Sinkronisasi QID
-                        </button>
-                        <form id="sync-qid-form" action="{{ route('admin.products.sync-qid') }}" method="POST" style="display: none;">
-                            @csrf
-                        </form>
+                        @include('admin.partials.sync-qad-jubelio')
+                        @if(app()->environment('local'))
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllProducts()" title="Hanya tersedia di APP_ENV=local">
+                                <i class="fa fa-trash"></i> Hapus Semua
+                            </button>
+                            <form id="delete-all-products-form" action="{{ route('admin.products.destroy-all') }}" method="POST" style="display: none;">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="confirm" id="delete-all-confirm-input" value="">
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -120,6 +124,7 @@
                                 <th>Ukuran</th>
                                 <th>Harga</th>
                                 <th>Poin</th>
+                                <th>Sumber</th>
                                 <th>Status</th>
                                 <th style="width: 100px;">Action</th>
                             </tr>
@@ -132,109 +137,6 @@
         </div>
     </div>
 
-    <!-- Import Modal -->
-    <div class="modal fade" id="importModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <form action="{{ route('admin.products.import') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <h4 class="modal-title"><i class="fa fa-upload"></i> Import Produk dari Excel</h4>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-info">
-                            <h4><i class="fa fa-info-circle"></i> Format Excel yang Didukung</h4>
-                            <p>Gunakan header kolom berikut:</p>
-                            <table class="table table-bordered table-condensed" style="background: white;">
-                                <thead>
-                                    <tr class="bg-primary">
-                                        <th>Header</th>
-                                        <th>Keterangan</th>
-                                        <th>Contoh</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><code>Product Code</code></td>
-                                        <td>Kode unik produk</td>
-                                        <td>FMF020-CT12</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Description</code></td>
-                                        <td>Nama produk</td>
-                                        <td>MB Cons 1L-Coconut Milk</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Description 2</code></td>
-                                        <td>Deskripsi teknis</td>
-                                        <td>(In Bottle) FG Multibev</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Commercial Name</code></td>
-                                        <td>Nama komersial</td>
-                                        <td>Coconut Milk</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Brand</code></td>
-                                        <td>Nama brand (auto-create)</td>
-                                        <td>Multibev</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Size</code></td>
-                                        <td>Ukuran</td>
-                                        <td>1 L</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Category</code></td>
-                                        <td>Nama kategori (auto-create)</td>
-                                        <td>Coconut</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>UM</code></td>
-                                        <td>Satuan</td>
-                                        <td>BT, PK, BOX</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Price</code></td>
-                                        <td><strong>Harga (Wajib)</strong></td>
-                                        <td>70000</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>Reseller Point</code></td>
-                                        <td>Poin untuk reseller / DRiiPPreneur</td>
-                                        <td>1000</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <p class="text-muted">
-                                <i class="fa fa-lightbulb-o"></i> Brand dan Kategori yang belum ada akan otomatis dibuat.
-                            </p>
-                            <p>
-                                <a href="{{ route('admin.products.template') }}" class="btn btn-sm btn-default">
-                                    <i class="fa fa-download"></i> Download Template CSV
-                                </a>
-                            </p>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="file">Pilih File Excel/CSV</label>
-                            <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls,.csv" required>
-                            <p class="help-block">Format: .xlsx, .xls, .csv (Maks. 10MB)</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fa fa-upload"></i> Import
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
@@ -253,6 +155,7 @@ $(document).ready(function() {
                 d.status = $('#filter-status').val();
                 d.brand_id = $('#filter-brand').val();
                 d.category_id = $('#filter-category').val();
+                d.sync_source = $('#filter-sync-source').val();
             }
         },
         columns: [
@@ -264,6 +167,7 @@ $(document).ready(function() {
             { data: 'size_unit', name: 'size', orderable: false, searchable: true },
             { data: 'price_formatted', name: 'price' },
             { data: 'reseller_point_display', name: 'reseller_point', orderable: true },
+            { data: 'sync_sources_info', name: 'sync_sources', orderable: false, searchable: false },
             { data: 'status_badge', name: 'status', orderable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
@@ -289,15 +193,34 @@ $(document).ready(function() {
     });
 
     // Filter handlers
-    $('#filter-status, #filter-brand, #filter-category').change(function() {
+    $('#filter-status, #filter-brand, #filter-category, #filter-sync-source').change(function() {
+        table.draw();
+    });
+
+    $('#btn-filter').on('click', function() {
+        table.draw();
+    });
+
+    $('#btn-reset').on('click', function() {
+        $('#filter-status').val('');
+        $('#filter-brand').val('').trigger('change');
+        $('#filter-category').val('').trigger('change');
+        $('#filter-sync-source').val('');
         table.draw();
     });
 });
 
-function confirmSyncQid() {
-    if (confirm('Apakah Anda yakin ingin menarik data produk dari QID? Proses ini mungkin memerlukan waktu beberapa saat.')) {
-        document.getElementById('sync-qid-form').submit();
+function confirmDeleteAllProducts() {
+    if (!confirm('PERINGATAN: Semua produk dan data terkait akan dihapus permanen:\n- Stok gudang & riwayat stok\n- Keranjang (regular & distributor)\n- Pesanan & item pesanan\n- Menu Hari Ini\n- Harga level & gambar produk\n\nLanjutkan?')) {
+        return;
     }
+    var typed = prompt('Ketik HAPUS SEMUA untuk konfirmasi:');
+    if (typed !== 'HAPUS SEMUA') {
+        alert('Konfirmasi dibatalkan.');
+        return;
+    }
+    document.getElementById('delete-all-confirm-input').value = typed;
+    document.getElementById('delete-all-products-form').submit();
 }
 </script>
 @endpush

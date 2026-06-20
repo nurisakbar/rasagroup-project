@@ -395,6 +395,8 @@
   });
 </script>
 
+@include('admin.partials.sync-progress-modal')
+
 @stack('scripts')
 
 </body>

@@ -62,6 +62,8 @@ class Order extends Model
         'payment_submitted_at',
         'qad_so_number',
         'qid_sales_order_number',
+        'jubelio_salesorder_id',
+        'jubelio_salesorder_no',
     ];
 
     protected $casts = [
@@ -91,7 +93,7 @@ class Order extends Model
 
     public function address(): BelongsTo
     {
-        return $this->belongsTo(Address::class);
+        return $this->belongsTo(Address::class)->withTrashed();
     }
 
     public function expedition(): BelongsTo
@@ -147,6 +149,22 @@ class Order extends Model
     public function isOffline(): bool
     {
         return $this->order_type === self::TYPE_POS;
+    }
+
+    /**
+     * Order dari hub/website (online) → sinkron ke Jubelio.
+     */
+    public function shouldSyncToJubelio(): bool
+    {
+        return $this->order_type === self::TYPE_REGULAR;
+    }
+
+    /**
+     * Order distributor / POS → sinkron ke QAD.
+     */
+    public function shouldSyncToQad(): bool
+    {
+        return in_array($this->order_type, [self::TYPE_DISTRIBUTOR, self::TYPE_POS], true);
     }
 
     /**

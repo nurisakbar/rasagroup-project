@@ -4,7 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Services\XenditService;
-use App\Support\QadAddressSnapshot;
+use App\Support\QadIntegration;
+use App\Support\SalesOrderSyncDispatcher;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Pekerjaan pasca halaman checkout/success: cek Xendit, antre sync customer/QAD SO, notifikasi.
+ * Pekerjaan pasca halaman checkout/success: cek Xendit, antre sync sales order (Jubelio), notifikasi.
  * Menghindari pemanggilan API berat secara sinkron di request HTTP.
  */
 class ProcessCheckoutSuccessJob implements ShouldQueue
@@ -46,11 +47,13 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
         }
 
         try {
-            $user = $order->user;
-            $address = $order->address;
-            if ($user && empty($user->qad_customer_code) && $address) {
-                $snapshot = QadAddressSnapshot::fromBuyerAddress($address);
-                SyncCustomerToQad::dispatch($user, $snapshot);
+            if (QadIntegration::isConfigured() && $order->shouldSyncToQad()) {
+                $user = $order->user;
+                $address = $order->address;
+                if ($user && empty($user->qad_customer_code) && $address) {
+                    $snapshot = \App\Support\QadAddressSnapshot::fromBuyerAddress($address);
+                    SyncCustomerToQad::dispatch($user, $snapshot);
+                }
             }
         } catch (\Throwable $e) {
             Log::warning('ProcessCheckoutSuccessJob: failed to dispatch SyncCustomerToQad', [
@@ -95,11 +98,8 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
 
         $order->refresh();
 
-        if ($order->payment_status === 'paid' && empty($order->qad_so_number)) {
-            SyncOrderToQad::dispatch($order);
-            Log::info('ProcessCheckoutSuccessJob: SyncOrderToQad dispatched', [
-                'order_id' => $order->id,
-            ]);
+        if ($order->payment_status === 'paid') {
+            SalesOrderSyncDispatcher::dispatch($order);
         }
 
         $order->refresh();

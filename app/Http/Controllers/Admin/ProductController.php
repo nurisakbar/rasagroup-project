@@ -4,12 +4,24 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Imports\ProductsImport;
+use App\Jobs\RunMasterSyncJob;
+use App\Jobs\SyncJubelioProductContent;
 use App\Models\Brand;
+use App\Models\Cart;
 use App\Models\Category;
+use App\Models\Menu;
+use App\Models\MenuDetail;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Support\MasterSyncProgress;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\ProductPriceLevel;
+use App\Models\WarehouseStock;
+use App\Models\WarehouseStockHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -36,6 +48,10 @@ class ProductController extends Controller
             // Filter by category
             if ($request->filled('category_id') && $request->category_id != '') {
                 $query->where('category_id', $request->category_id);
+            }
+
+            if ($request->filled('sync_source') && $request->sync_source !== '') {
+                $query->filterBySyncSource($request->sync_source);
             }
 
             return DataTables::of($query)
@@ -121,6 +137,9 @@ class ProductController extends Controller
                     $text = $product->status === 'active' ? 'Aktif' : 'Tidak Aktif';
                     return '<span class="label ' . $class . '">' . $text . '</span>';
                 })
+                ->addColumn('sync_sources_info', function ($product) {
+                    return $product->syncSourceBadgesHtml();
+                })
                 ->addColumn('action', function ($product) {
                     $showUrl = route('admin.products.show', $product);
                     $editUrl = route('admin.products.edit', $product);
@@ -141,7 +160,7 @@ class ProductController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['image_display', 'qrcode_display', 'code_display', 'name_info', 'brand_info', 'size_unit', 'status_badge', 'action'])
+                ->rawColumns(['image_display', 'qrcode_display', 'code_display', 'name_info', 'brand_info', 'size_unit', 'status_badge', 'sync_sources_info', 'action'])
                 ->make(true);
         }
 
@@ -276,10 +295,8 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'code' => 'nullable|string|max:50|unique:products,code',
-            'name' => 'required|string|max:255',
-            'commercial_name' => 'nullable|string|max:255',
+            'commercial_name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'technical_description' => 'nullable|string',
             'brand_id' => 'nullable|exists:brands,id',
             'category_id' => 'nullable|exists:categories,id',
             'size' => 'nullable|string|max:50',
@@ -302,6 +319,7 @@ class ProductController extends Controller
             $validated['units_per_large'] = null;
         }
 
+        $validated['name'] = $validated['commercial_name'];
         $validated['created_by'] = Auth::id();
 
         $product = Product::create($validated);
@@ -339,10 +357,8 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'code' => 'nullable|string|max:50|unique:products,code,' . $product->id,
-            'name' => 'required|string|max:255',
-            'commercial_name' => 'nullable|string|max:255',
+            'commercial_name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'technical_description' => 'nullable|string',
             'brand_id' => 'nullable|exists:brands,id',
             'category_id' => 'nullable|exists:categories,id',
             'size' => 'nullable|string|max:50',
@@ -369,6 +385,8 @@ class ProductController extends Controller
         if (empty($validated['large_unit'])) {
             $validated['units_per_large'] = null;
         }
+
+        $validated['name'] = $validated['commercial_name'];
 
         $product->update($validated);
 
@@ -418,90 +436,102 @@ class ProductController extends Controller
     }
 
     /**
-     * Sync products with QID API.
+     * Hapus semua produk beserta seluruh data terkait — hanya untuk APP_ENV=local (testing).
+     */
+    public function destroyAll(Request $request)
+    {
+        abort_unless(app()->environment('local'), 403);
+
+        $request->validate([
+            'confirm' => 'required|in:HAPUS SEMUA',
+        ]);
+
+        $productCount = Product::withoutGlobalScopes()->count();
+
+        Product::withoutGlobalScopes()->with('images')->chunk(100, function ($products) {
+            foreach ($products as $product) {
+                $this->deleteProductMediaFiles($product);
+            }
+        });
+
+        $deletedRelated = [];
+
+        DB::transaction(function () use (&$deletedRelated) {
+            $deletedRelated = [
+                'riwayat_stok' => WarehouseStockHistory::query()->delete(),
+                'item_pesanan' => OrderItem::query()->delete(),
+                'pesanan' => Order::query()->delete(),
+                'keranjang' => Cart::query()->delete(),
+                'detail_menu' => MenuDetail::query()->delete(),
+                'menu' => Menu::query()->delete(),
+                'harga_level' => ProductPriceLevel::query()->delete(),
+                'gambar_produk' => ProductImage::query()->delete(),
+                'stok_gudang' => WarehouseStock::query()->delete(),
+                'produk' => Product::withoutGlobalScopes()->delete(),
+            ];
+        });
+
+        $summary = collect($deletedRelated)
+            ->map(fn ($count, $label) => "{$label}: {$count}")
+            ->implode(', ');
+
+        return redirect()->route('admin.products.index')
+            ->with('success', "Data produk & relasinya dihapus ({$productCount} produk). {$summary}");
+    }
+
+    private function deleteProductMediaFiles(Product $product): void
+    {
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
+        }
+
+        if ($product->video) {
+            Storage::disk('public')->delete($product->video);
+        }
+
+        foreach ($product->images as $image) {
+            if ($image->image_path) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+        }
+    }
+
+    /**
+     * Sync products with QID API (QAD) — dinonaktifkan.
      */
     public function syncQid()
     {
-        try {
-            Log::info('Starting QID Product Synchronization...');
-            
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'text/plain',
-                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
-            ])->post('https://development-qadwebapi.rasagroupoffice.com/api/master/item/list', [
-                'prodLine' => 'FG',
-                'status' => 'active'
-            ]);
+        return back()->with('error', 'Sinkronisasi produk dengan QID/QAD dinonaktifkan.');
+    }
 
-            if ($response->successful()) {
-                $data = $response->json();
-                Log::info('QID Product API Response received', ['count' => count($data)]);
-                
-                // Debug log raw data sample
-                Log::debug('QID Product Data Sample', ['data' => array_slice($data, 0, 3)]);
-                
-                $items = isset($data['data']) ? $data['data'] : $data;
-                $synchronizedCount = 0;
-                
-                foreach ($items as $index => $item) {
-                    $itemCode = $item['itemCode'] ?? $item['item_code'] ?? null;
-                    $itemName = $item['description'] ?? $item['item_name'] ?? null;
-                    
-                    if ($itemCode && $itemName) {
-                        // Handle Brand
-                        $brandId = null;
-                        if (!empty($item['brand'])) {
-                            $brand = Brand::firstOrCreate(
-                                ['name' => $item['brand']],
-                                ['status' => 'active']
-                            );
-                            $brandId = $brand->id;
-                        }
-
-                        // Handle Category
-                        $categoryId = null;
-                        if (!empty($item['category'])) {
-                            $category = Category::firstOrCreate(
-                                ['name' => $item['category']],
-                                ['status' => 'active']
-                            );
-                            $categoryId = $category->id;
-                        }
-
-                        // Mapping data
-                        $productData = [
-                            'name' => $itemName,
-                            'brand_id' => $brandId,
-                            'category_id' => $categoryId,
-                            'unit' => $item['uom'] ?? null,
-                            'size' => $item['sizing'] ?? null,
-                            'price' => $item['defaultPrice'] ?? 0,
-                            'status' => isset($item['status']) ? strtolower($item['status']) : 'active',
-                            'weight' => 1000, // Default weight since it's required but not in API
-                            'created_by' => Auth::id() ?? \App\Models\User::where('role', 'super_admin')->first()?->id,
-                        ];
-
-                        Product::updateOrCreate(
-                            ['code' => $itemCode],
-                            $productData
-                        );
-
-                        $synchronizedCount++;
-                    } else {
-                        Log::warning("Skipping product at index {$index} due to missing data", ['item' => $item]);
-                    }
-                }
-                
-                Log::info("QID Product Synchronization finished. Total synced: {$synchronizedCount}");
-                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} produk dari QID.");
-            }
-            
-            Log::error('QID Product API Failed', ['status' => $response->status(), 'body' => $response->body()]);
-            return back()->with('error', 'Gagal menghubungi server QID Product: ' . $response->status());
-        } catch (\Exception $e) {
-            Log::error('QID Product Sync Exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Terjadi kesalahan saat sinkronisasi produk: ' . $e->getMessage());
+    /**
+     * Dispatch job sinkronisasi deskripsi & foto produk dari Jubelio.
+     */
+    public function syncJubelioContent()
+    {
+        if (! config('jubelio.product_content.enabled', true)) {
+            return back()->with('error', 'Sinkronisasi deskripsi & foto Jubelio dinonaktifkan.');
         }
+
+        SyncJubelioProductContent::dispatch();
+
+        return back()->with('success', 'Sinkronisasi deskripsi & foto Jubelio sedang diproses di background. Cek log jubelio-product-content.log untuk progress.');
+    }
+
+    /**
+     * Dispatch job sinkronisasi produk dari Jubelio.
+     */
+    public function syncJubelio()
+    {
+        $userId = Auth::guard('admin')->id() ?? Auth::id();
+        $progress = MasterSyncProgress::create('jubelio_products', $userId ? (string) $userId : null);
+
+        RunMasterSyncJob::dispatch($progress->id(), 'jubelio_products');
+
+        if (request()->expectsJson()) {
+            return response()->json(['sync_id' => $progress->id()]);
+        }
+
+        return back()->with('success', 'Sinkronisasi produk Jubelio sedang diproses di background.');
     }
 }

@@ -963,8 +963,22 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.status === 401) {
+                    let redirectUrl = '{{ route("login", ["reason" => "add_to_cart"]) }}';
+                    try {
+                        const body = await response.json();
+                        if (body.redirect) {
+                            redirectUrl = body.redirect;
+                        }
+                    } catch (e) {}
+                    window.location.href = redirectUrl;
+                    return null;
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!data) return;
                 if (data.success) {
                     if (data.message) {
                         showShopToast(data.message, 'success');

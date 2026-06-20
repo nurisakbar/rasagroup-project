@@ -215,7 +215,7 @@ class OrderController extends Controller
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
             
             // Sync to QAD
-            \App\Jobs\SyncOrderToQad::dispatch($order);
+            \App\Support\SalesOrderSyncDispatcher::dispatch($order);
         }
 
         return back()->with('success', 'Status pembayaran berhasil diperbarui.');
@@ -303,7 +303,7 @@ class OrderController extends Controller
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
 
                 // Sync to QAD
-                \App\Jobs\SyncOrderToQad::dispatch($order);
+                \App\Support\SalesOrderSyncDispatcher::dispatch($order);
             }
 
             return back()->with('success', $message);
@@ -392,11 +392,11 @@ class OrderController extends Controller
 
             if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
                 // Also trigger QAD sync automatically
-                \App\Jobs\SyncOrderToQad::dispatch($order);
+                \App\Support\SalesOrderSyncDispatcher::dispatch($order);
 
                 $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
 
-                return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref . '. Sinkronisasi ke QAD juga telah dijadwalkan.');
+                return back()->with('success', 'Booking berhasil! Nomor referensi / resi: ' . $ref . '. Sinkronisasi sales order dijadwalkan.');
             }
 
             return back()->with('error', 'Gagal membuat booking. Cek log `CreateShipmentBooking` / `EkspedisiKuService:createBooking` untuk pesan error dari Lion Parcel.');
@@ -533,7 +533,7 @@ class OrderController extends Controller
     {
         try {
             // Dispatch the job to the background queue to avoid timeouts
-            \App\Jobs\SyncOrderToQad::dispatch($order);
+            \App\Support\SalesOrderSyncDispatcher::dispatch($order);
             
             return back()->with('success', 'Permintaan sinkronisasi telah dikirim ke sistem (antrian). Silakan refresh halaman dalam beberapa saat untuk melihat hasilnya.');
         } catch (\Exception $e) {

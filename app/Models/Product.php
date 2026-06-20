@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\SyncedInJubelioAndQadScope;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,7 @@ class Product extends Model
         'weight',
         'image',
         'status',
+        'sync_sources',
         'created_by',
     ];
 
@@ -43,6 +45,7 @@ class Product extends Model
         'reseller_point' => 'integer',
         'weight' => 'integer',
         'units_per_large' => 'integer',
+        'sync_sources' => 'array',
     ];
 
     /**
@@ -52,14 +55,16 @@ class Product extends Model
     {
         parent::boot();
 
+        static::addGlobalScope(new SyncedInJubelioAndQadScope());
+
         static::creating(function ($product) {
             if (!$product->slug) {
                 $product->slug = \Illuminate\Support\Str::slug($product->display_name ?: $product->name);
                 
-                // Ensure uniqueness
+                // Ensure uniqueness (bypass global scope — slug bisa bentrok dengan produk tersembunyi)
                 $originalSlug = $product->slug;
                 $count = 1;
-                while (static::where('slug', $product->slug)->exists()) {
+                while (static::withoutGlobalScopes()->where('slug', $product->slug)->exists()) {
                     $product->slug = $originalSlug . '-' . $count;
                     $count++;
                 }
@@ -77,7 +82,7 @@ class Product extends Model
                 'id' => $product->id,
                 'code' => $product->code,
                 'name' => $product->name,
-                'exists_in_db' => Product::where('id', $product->id)->exists(),
+                'exists_in_db' => static::withoutGlobalScopes()->where('id', $product->id)->exists(),
             ]);
         });
 
@@ -85,10 +90,10 @@ class Product extends Model
             if ($product->isDirty('name') || $product->isDirty('commercial_name')) {
                 $product->slug = \Illuminate\Support\Str::slug($product->display_name ?: $product->name);
                 
-                // Ensure uniqueness
+                // Ensure uniqueness (bypass global scope)
                 $originalSlug = $product->slug;
                 $count = 1;
-                while (static::where('slug', $product->slug)->where('id', '!=', $product->id)->exists()) {
+                while (static::withoutGlobalScopes()->where('slug', $product->slug)->where('id', '!=', $product->id)->exists()) {
                     $product->slug = $originalSlug . '-' . $count;
                     $count++;
                 }
@@ -143,6 +148,92 @@ class Product extends Model
         return $this->hasMany(WarehouseStock::class);
     }
 
+    public function promos(): BelongsToMany
+    {
+        return $this->belongsToMany(Promo::class, 'promo_product')
+            ->withTimestamps();
+    }
+
+    public function markSyncSource(string $source): self
+    {
+        $sources = is_array($this->sync_sources) ? $this->sync_sources : [];
+
+        if (! in_array($source, $sources, true)) {
+            $sources[] = $source;
+            $this->sync_sources = $sources;
+        }
+
+        return $this;
+    }
+
+    public function syncSourceBadgesHtml(): string
+    {
+        $sources = is_array($this->sync_sources) ? $this->sync_sources : [];
+        $hasJubelio = in_array('jubelio', $sources, true);
+        $hasQad = in_array('qad', $sources, true);
+
+        if (! $hasJubelio && ! $hasQad) {
+            return '<span class="text-muted">-</span>';
+        }
+
+        $badges = [];
+
+        if ($hasJubelio && $hasQad) {
+            $badges[] = '<span class="label label-success">Keduanya</span>';
+        }
+
+        if ($hasJubelio) {
+            $badges[] = '<span class="label label-warning">Jubelio</span>';
+        }
+
+        if ($hasQad) {
+            $badges[] = '<span class="label label-primary">QAD</span>';
+        }
+
+        return implode(' ', $badges);
+    }
+
+    public function hasSyncSource(string $source): bool
+    {
+        return in_array($source, is_array($this->sync_sources) ? $this->sync_sources : [], true);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeFilterBySyncSource($query, string $source): void
+    {
+        match ($source) {
+            'jubelio' => $query->withoutGlobalScope(SyncedInJubelioAndQadScope::class)
+                ->whereJsonContains('sync_sources', 'jubelio')
+                ->whereJsonDoesntContain('sync_sources', 'qad'),
+            'qad' => $query->withoutGlobalScope(SyncedInJubelioAndQadScope::class)
+                ->whereJsonContains('sync_sources', 'qad')
+                ->whereJsonDoesntContain('sync_sources', 'jubelio'),
+            'both' => $query->whereJsonContains('sync_sources', 'jubelio')
+                ->whereJsonContains('sync_sources', 'qad'),
+            default => null,
+        };
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeIncludingUnsyncedSources($query): void
+    {
+        $query->withoutGlobalScope(SyncedInJubelioAndQadScope::class);
+    }
+
+    /**
+     * Hanya produk dengan harga > 0 untuk tampilan pembeli (storefront).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeWithBuyerPrice($query): void
+    {
+        $query->where('price', '>', 0);
+    }
+
     /**
      * Urutkan: produk dengan stok > 0 di depan (sesuai hub terpilih di session, atau total semua gudang).
      *
@@ -150,6 +241,10 @@ class Product extends Model
      */
     public function scopeOrderByInStockFirst($query, ?string $warehouseId = null): void
     {
+        if (! \App\Support\ShopFulfillment::showStockOnStorefront()) {
+            return;
+        }
+
         if ($warehouseId) {
             $query->orderByRaw(
                 '(SELECT CASE WHEN COALESCE(SUM(ws.stock), 0) > 0 THEN 1 ELSE 0 END FROM warehouse_stocks ws WHERE ws.product_id = products.id AND ws.warehouse_id = ?) DESC',

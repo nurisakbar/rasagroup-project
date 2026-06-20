@@ -13,7 +13,7 @@
                     <div class="header-right">
                         <div class="search-style-2 position-relative">
                             <form class="rg-search-no-category" action="{{ route('products.index') }}" method="GET">
-                                <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
+                                <input type="search" id="search-input-desktop" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
                                 <button type="submit" aria-label="Cari produk"><i class="fi-rs-search"></i></button>
                             </form>
                             <div id="search-suggestions" class="search-suggestions-wrap d-none"></div>
@@ -238,7 +238,28 @@
                 </div>
             </div>
         </div>
+        <div class="rg-mobile-search-bar d-block d-lg-none">
+            <div class="container">
+                <div class="search-style-2 position-relative">
+                    <form class="rg-search-no-category" action="{{ route('products.index') }}" method="GET">
+                        <input type="search" id="search-input-mobile" name="search" value="{{ request('search') }}" placeholder="Cari produk..." autocomplete="off" enterkeyhint="search" />
+                        <button type="submit" aria-label="Cari produk"><i class="fi-rs-search"></i></button>
+                    </form>
+                    <div id="search-suggestions-mobile" class="search-suggestions-wrap d-none"></div>
+                </div>
+            </div>
+        </div>
     <style>
+        .rg-mobile-search-bar {
+            padding: 10px 0 14px;
+            background-color: var(--bg-cream, #F2EAE1);
+        }
+        .rg-mobile-search-bar .search-style-2 form {
+            width: 100%;
+        }
+        .rg-mobile-search-bar .search-style-2 form input {
+            width: 100%;
+        }
         .search-suggestions-wrap {
             position: absolute;
             top: 100%;
@@ -306,14 +327,25 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.querySelector('input[name="search"]');
-            const suggestionsWrap = document.getElementById('search-suggestions');
-            let debounceTimer;
+            const searchPairs = [
+                [document.getElementById('search-input-desktop'), document.getElementById('search-suggestions')],
+                [document.getElementById('search-input-mobile'), document.getElementById('search-suggestions-mobile')],
+            ];
 
-            if (searchInput && suggestionsWrap) {
+            searchPairs.forEach(function(pair) {
+                initSearchSuggestions(pair[0], pair[1]);
+            });
+
+            function initSearchSuggestions(searchInput, suggestionsWrap) {
+                if (!searchInput || !suggestionsWrap) {
+                    return;
+                }
+
+                let debounceTimer;
+
                 searchInput.addEventListener('input', function() {
                     const query = this.value.trim();
-                    
+
                     clearTimeout(debounceTimer);
                     if (query.length < 2) {
                         suggestionsWrap.classList.add('d-none');
@@ -321,18 +353,16 @@
                     }
 
                     debounceTimer = setTimeout(() => {
-                        fetchSuggestions(query);
+                        fetchSuggestions(query, suggestionsWrap);
                     }, 300);
                 });
 
-                // Hide suggestions when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!searchInput.contains(e.target) && !suggestionsWrap.contains(e.target)) {
                         suggestionsWrap.classList.add('d-none');
                     }
                 });
 
-                // Show suggestions when clicking input if not empty
                 searchInput.addEventListener('focus', function() {
                     if (this.value.trim().length >= 2 && suggestionsWrap.innerHTML !== '') {
                         suggestionsWrap.classList.remove('d-none');
@@ -340,7 +370,7 @@
                 });
             }
 
-            function fetchSuggestions(query) {
+            function fetchSuggestions(query, suggestionsWrap) {
                 suggestionsWrap.innerHTML = '<div class="suggestion-loading"><i class="fi-rs-refresh mr-5"></i> Mencari...</div>';
                 suggestionsWrap.classList.remove('d-none');
 

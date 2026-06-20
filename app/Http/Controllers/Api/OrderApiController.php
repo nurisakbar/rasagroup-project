@@ -12,6 +12,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Services\XenditService;
 use App\Support\QadWsOrderNumberGenerator;
+use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -197,24 +198,26 @@ class OrderApiController extends Controller
         }
 
         // Check stock availability
-        $stockErrors = [];
-        foreach ($carts as $cart) {
-            $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                ->where('product_id', $cart->product_id)
-                ->first();
+        if (! ShopFulfillment::assumeStockReady()) {
+            $stockErrors = [];
+            foreach ($carts as $cart) {
+                $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                    ->where('product_id', $cart->product_id)
+                    ->first();
 
-            $availableStock = $stock ? $stock->stock : 0;
+                $availableStock = $stock ? $stock->stock : 0;
 
-            if ($cart->quantity > $availableStock) {
-                $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                if ($cart->quantity > $availableStock) {
+                    $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                }
             }
-        }
 
-        if (!empty($stockErrors)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stock tidak mencukupi di hub ' . $sourceWarehouse->name . ":\n" . implode("\n", $stockErrors),
-            ], 400);
+            if (! empty($stockErrors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stock tidak mencukupi di hub ' . $sourceWarehouse->name . ":\n" . implode("\n", $stockErrors),
+                ], 400);
+            }
         }
 
         DB::beginTransaction();
@@ -314,13 +317,14 @@ class OrderApiController extends Controller
                     'subtotal' => $cart->product->price * $cart->quantity,
                 ]);
 
-                // Reduce stock from warehouse
-                $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                    ->where('product_id', $cart->product_id)
-                    ->first();
+                if (! ShopFulfillment::assumeStockReady()) {
+                    $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                        ->where('product_id', $cart->product_id)
+                        ->first();
 
-                if ($stock) {
-                    $stock->decrement('stock', $cart->quantity);
+                    if ($stock) {
+                        $stock->decrement('stock', $cart->quantity);
+                    }
                 }
             }
 

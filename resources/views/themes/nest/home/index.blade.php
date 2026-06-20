@@ -47,47 +47,89 @@
             </div>
         </section>
         <!--End category slider-->
+
+        @if($sliders->isNotEmpty())
+        <section class="home-slider position-relative mb-30">
+            <div class="container">
+                <div class="home-slide-cover mt-30">
+                    <div class="hero-slider-1 style-4 dot-style-1 dot-style-1-position-1">
+                        @foreach($sliders as $slider)
+                            @php
+                                $slideStyle = $slider->heroSlideStyle();
+                                if ($slideStyle === '') {
+                                    $slideStyle = 'background-image: url(' . asset('themes/nest-frontend/assets/imgs/slider/slider-1.png') . ')';
+                                }
+                                $slideLink = $slider->resolvedLink();
+                            @endphp
+                            <div class="single-hero-slider single-animation-wrap" style="{{ $slideStyle }}">
+                                <div class="slider-content">
+                                    @if(filled($slider->title))
+                                        <h1 class="display-2 mb-40">{!! nl2br(e($slider->title)) !!}</h1>
+                                    @endif
+                                    @if(filled($slider->description))
+                                        <p class="mb-65">{{ $slider->description }}</p>
+                                    @endif
+                                    @if($slideLink)
+                                        <div class="form-subcriber d-flex">
+                                            <a href="{{ $slideLink }}" class="btn">Belanja Sekarang</a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="slider-arrow hero-slider-1-arrow"></div>
+                </div>
+            </div>
+        </section>
+        @endif
+
+        <section id="penawaran-hari-ini" class="section-padding pb-5">
+            <div class="container">
+                <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
+                    <h3 class="">Penawaran Hari Ini</h3>
+                </div>
+                @if($promoProducts->isEmpty())
+                    <p class="text-muted font-md text-center py-40 mb-0">Belum ada penawaran aktif saat ini.</p>
+                @else
+                    <div class="row product-grid-4">
+                        @foreach($promoProducts as $product)
+                            @include('themes.nest.partials.product-card', [
+                                'product' => $product,
+                                'showPromoPeriod' => true,
+                            ])
+                        @endforeach
+                    </div>
+                    <div class="text-center mt-30">
+                        <a href="{{ route('promo.index') }}" class="btn btn-sm btn-default">
+                            Lihat Semua <i class="fi-rs-arrow-right ml-10"></i>
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </section>
+        <!--End Penawaran Hari Ini-->
+
         <section class="product-tabs section-padding position-relative">
             <div class="container">
                 <div class="section-title style-2 wow animate__animated animate__fadeIn">
                     <h3>Produk Populer</h3>
                     <ul class="nav nav-tabs links text-uppercase" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active text-uppercase" id="nav-tab-one" data-bs-toggle="tab" data-bs-target="#tab-one" type="button" role="tab" aria-controls="tab-one" aria-selected="true">{{ mb_strtoupper('Semua', 'UTF-8') }}</button>
+                            <span class="nav-link active text-uppercase">{{ mb_strtoupper('Semua', 'UTF-8') }}</span>
                         </li>
-                        @foreach($brands as $index => $brand)
+                        @foreach($brands as $brand)
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link text-uppercase" id="nav-tab-{{ $brand->id }}" data-bs-toggle="tab" data-bs-target="#tab-brand-{{ $brand->id }}" type="button" role="tab" aria-controls="tab-brand-{{ $brand->id }}" aria-selected="false">{{ mb_strtoupper($brand->name, 'UTF-8') }}</button>
+                                <a class="nav-link text-uppercase" href="{{ route('products.index', ['brand' => $brand->slug]) }}">{{ mb_strtoupper($brand->name, 'UTF-8') }}</a>
                             </li>
                         @endforeach
                     </ul>
                 </div>
-                <!--End nav-tabs-->
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="tab-one" role="tabpanel" aria-labelledby="tab-one">
-                        <div class="row product-grid-4">
-                            @foreach($popularProducts as $product)
-                                @include('themes.nest.partials.product-card', compact('product'))
-                            @endforeach
-                        </div>
-                        <!--End product-grid-4-->
-                    </div>
-                    <!--En tab one-->
-                    @foreach($brands as $brand)
-                        <div class="tab-pane fade" id="tab-brand-{{ $brand->id }}" role="tabpanel" aria-labelledby="tab-brand-{{ $brand->id }}">
-                            <div class="row product-grid-4">
-                                @if(isset($brandProducts[$brand->id]))
-                                    @foreach($brandProducts[$brand->id] as $product)
-                                        @include('themes.nest.partials.product-card', compact('product'))
-                                    @endforeach
-                                @endif
-                            </div>
-                            <!--End product-grid-4-->
-                        </div>
-                        <!--En tab brand-->
+                <div class="row product-grid-4">
+                    @foreach($popularProducts as $product)
+                        @include('themes.nest.partials.product-card', compact('product'))
                     @endforeach
                 </div>
-                <!--End tab-content-->
                 <div class="text-center mt-30">
                     <a href="{{ route('products.index') }}" class="btn btn-sm btn-default">
                         Lihat lebih banyak <i class="fi-rs-arrow-right ml-10"></i>
@@ -95,43 +137,6 @@
                 </div>
             </div>
         </section>
-        <section id="penawaran-hari-ini" class="section-padding pb-5">
-            <div class="container">
-                <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
-                    <h3 class="">Penawaran Hari Ini</h3>
-                    <a class="show-all" href="{{ route('promo.index') }}">
-                        Semua Penawaran
-                        <i class="fi-rs-angle-right"></i>
-                    </a>
-                </div>
-                @if($homePromos->isEmpty())
-                    <p class="text-muted font-md text-center py-40 mb-0">Belum ada penawaran aktif saat ini.</p>
-                @else
-                    <div class="row">
-                        @foreach($homePromos as $promo)
-                            @php
-                                $idx = $loop->index;
-                                $colClass = 'col-xl-3 col-lg-4 col-md-6';
-                                if ($idx === 2) {
-                                    $colClass .= ' d-none d-lg-block';
-                                }
-                                if ($idx === 3) {
-                                    $colClass .= ' d-none d-xl-block';
-                                }
-                                $delay = $idx === 0 ? '0' : '.' . min($idx, 3) . 's';
-                            @endphp
-                            @include('themes.nest.partials.promo-deal-card', [
-                                'promo' => $promo,
-                                'delay' => $delay,
-                                'colClass' => $colClass,
-                            ])
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        </section>
-        <!--End Deals-->
-
         <section id="menu-hari-ini" class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
@@ -156,52 +161,6 @@
             </div>
         </section>
         <!--End Menu Hari Ini-->
-
-        {{-- Slider promosi: data sliders (Admin → Slider), urutan sort_order — tetap di bawah seperti layout asli Nest --}}
-        <section class="home-slider position-relative mb-30">
-            <div class="container">
-                <div class="home-slide-cover mt-30">
-                    <div class="hero-slider-1 style-4 dot-style-1 dot-style-1-position-1">
-                        @forelse($sliders as $slider)
-                            @php
-                                $slideStyle = $slider->heroSlideStyle();
-                                if ($slideStyle === '') {
-                                    $slideStyle = 'background-image: url(' . asset('themes/nest-frontend/assets/imgs/slider/slider-1.png') . ')';
-                                }
-                                $slideLink = $slider->resolvedLink();
-                            @endphp
-                            <div class="single-hero-slider single-animation-wrap" style="{{ $slideStyle }}">
-                                <div class="slider-content">
-                                    @if(filled($slider->title))
-                                        <h1 class="display-2 mb-40">{!! nl2br(e($slider->title)) !!}</h1>
-                                    @endif
-                                    @if(filled($slider->description))
-                                        <p class="mb-65">{{ $slider->description }}</p>
-                                    @endif
-                                    @if($slideLink)
-                                        <div class="form-subcriber d-flex">
-                                            <a href="{{ $slideLink }}" class="btn">Belanja Sekarang</a>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
-                            <div class="single-hero-slider single-animation-wrap" style="background-color: #e8f4f1; background-image: url({{ asset('themes/nest-frontend/assets/imgs/slider/slider-2.png') }});">
-                                <div class="slider-content">
-                                    <h1 class="display-2 mb-40">Selamat datang</h1>
-                                    <p class="mb-65">Tambahkan slide promosi dari menu <strong>Admin → Slider</strong> (aktif &amp; urutan tampil).</p>
-                                    <div class="form-subcriber d-flex flex-wrap align-items-center" style="gap: 12px;">
-                                        <a href="{{ route('hubs.index') }}" class="btn">Pilih hub</a>
-                                        <a href="{{ route('products.index') }}" class="btn btn-brush btn-xs">Lihat produk</a>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforelse
-                    </div>
-                    <div class="slider-arrow hero-slider-1-arrow"></div>
-                </div>
-            </div>
-        </section>
 
         <section class="section-padding mb-30" style="display: none;">
             <div class="container">

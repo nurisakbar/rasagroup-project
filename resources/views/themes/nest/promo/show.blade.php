@@ -30,8 +30,9 @@
                                         <h2 class="mb-10">{{ $promo->judul_promo }}</h2>
                                         <div class="single-header-meta">
                                             <div class="entry-meta meta-1 font-xxs color-grey mt-10 pb-10">
-                                                <span class="post-on"><i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y H:i') }} - {{ $promo->akhir->format('d M Y H:i') }}</span>
+                                                <span class="post-on"><i class="fi-rs-calendar mr-5"></i> Berlaku: {{ $promo->awal->format('d M Y H:i') }} – {{ $promo->akhir->format('d M Y H:i') }}</span>
                                                 <span class="hit-count has-dot">Kode Promo: <strong class="text-brand">{{ $promo->kode_promo }}</strong></span>
+                                                <span class="hit-count has-dot">{{ $promo->products->count() }} produk</span>
                                             </div>
                                         </div>
                                     </div>
@@ -47,19 +48,22 @@
                             <div class="single-content">
                                 <div class="row">
                                     <div class="col-xl-10 col-lg-12 m-auto">
-                                        <div class="promo-price-tag mb-30">
-                                            <h3 class="text-brand">Nilai Promo: Rp {{ number_format($promo->harga, 0, ',', '.') }}</h3>
-                                        </div>
-                                        
-                                        <div class="promo-description">
-                                            {!! $promo->deskripsi !!}
-                                        </div>
-                                        
-                                        <div class="promo-actions mt-50 mb-50 p-30 bg-grey-9 border-radius-10">
-                                            <h4>Cara Menggunakan:</h4>
-                                            <p>Gunakan kode promo <strong class="text-brand">{{ $promo->kode_promo }}</strong> saat melakukan checkout untuk mendapatkan potongan harga sebesar Rp {{ number_format($promo->harga, 0, ',', '.') }}.</p>
-                                            <a href="{{ route('products.index') }}" class="btn mt-20">Belanja Sekarang <i class="fi-rs-arrow-small-right"></i></a>
-                                        </div>
+                                        @if($promo->deskripsi)
+                                            <div class="promo-description mb-40">
+                                                {!! $promo->deskripsi !!}
+                                            </div>
+                                        @endif
+
+                                        <h4 class="mb-20">Produk dalam Promo</h4>
+                                        @if($promo->products->isEmpty())
+                                            <p class="text-muted">Belum ada produk yang ditambahkan ke promo ini.</p>
+                                        @else
+                                            <div class="row product-grid-4">
+                                                @foreach($promo->products as $product)
+                                                    @include('themes.nest.partials.product-card', ['product' => $product])
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

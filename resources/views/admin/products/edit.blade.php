@@ -88,22 +88,9 @@
 
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="form-group @error('name') has-error @enderror">
-                                    <label for="name"><i class="fa fa-info-circle"></i> Nama Produk (QID) <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control input-lg" id="name" name="name" value="{{ old('name', $product->name) }}" placeholder="Contoh: MB Cons 1L-Coconut Milk" required style="font-weight: bold;">
-                                    @error('name')
-                                        <span class="help-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
                                 <div class="form-group @error('commercial_name') has-error @enderror">
-                                    <label for="commercial_name"><i class="fa fa-globe"></i> Nama Komersial (Tampil di Website)</label>
-                                    <input type="text" class="form-control" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name) }}" placeholder="Contoh: Coconut Milk">
-                                    <p class="help-block"><small>Jika dikosongkan, Nama Produk (QID) akan digunakan di website.</small></p>
+                                    <label for="commercial_name"><i class="fa fa-globe"></i> Nama Komersial (Tampil di Website) <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control input-lg" id="commercial_name" name="commercial_name" value="{{ old('commercial_name', $product->commercial_name ?: $product->name) }}" placeholder="Contoh: Coconut Milk" required style="font-weight: bold;">
                                     @error('commercial_name')
                                         <span class="help-block">{{ $message }}</span>
                                     @enderror
@@ -195,14 +182,6 @@
 
                         <hr>
                         <!-- Group 3: Description -->
-                        <div class="form-group @error('technical_description') has-error @enderror">
-                            <label for="technical_description"><i class="fa fa-list-alt"></i> Deskripsi Pendek / Teknis</label>
-                            <textarea class="form-control" id="technical_description" name="technical_description" rows="2" placeholder="Penjelasan singkat teknis">{{ old('technical_description', $product->technical_description) }}</textarea>
-                            @error('technical_description')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
                         <div class="form-group @error('description') has-error @enderror">
                             <label for="description"><i class="fa fa-align-left"></i> Deskripsi Produk (Website)</label>
                             <textarea class="form-control summernote" id="description" name="description" rows="4" placeholder="Tuliskan deskripsi lengkap mengenai produk ini...">{{ old('description', $product->description) }}</textarea>

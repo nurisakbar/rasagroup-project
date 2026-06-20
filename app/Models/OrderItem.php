@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\SyncedInJubelioAndQadScope;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +65,7 @@ class OrderItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)
+            ->withoutGlobalScope(SyncedInJubelioAndQadScope::class);
     }
 }

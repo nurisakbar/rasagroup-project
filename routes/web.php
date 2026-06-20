@@ -174,6 +174,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/products/import', [App\Http\Controllers\Admin\ProductController::class, 'import'])->name('products.import');
         Route::get('/products/template', [App\Http\Controllers\Admin\ProductController::class, 'downloadTemplate'])->name('products.template');
         Route::post('/products/sync-qid', [App\Http\Controllers\Admin\ProductController::class, 'syncQid'])->name('products.sync-qid');
+        Route::post('/products/sync-jubelio', [App\Http\Controllers\Admin\ProductController::class, 'syncJubelio'])->name('products.sync-jubelio');
+        Route::post('/products/sync-jubelio-content', [App\Http\Controllers\Admin\ProductController::class, 'syncJubelioContent'])->name('products.sync-jubelio-content');
+        Route::post('/master-sync/dispatch', [App\Http\Controllers\Admin\MasterSyncController::class, 'dispatch'])->name('master-sync.dispatch');
+        Route::get('/master-sync/{syncId}/status', [App\Http\Controllers\Admin\MasterSyncController::class, 'status'])->name('master-sync.status');
+        Route::delete('/products/all', [App\Http\Controllers\Admin\ProductController::class, 'destroyAll'])->name('products.destroy-all');
         Route::delete('/products/{product}/images/{image}', [App\Http\Controllers\Admin\ProductController::class, 'deleteImage'])->name('products.images.destroy');
         Route::resource('products', App\Http\Controllers\Admin\ProductController::class);
 
@@ -181,6 +186,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('sliders', App\Http\Controllers\Admin\SliderController::class)->except(['show']);
 
         // Promos Management
+        Route::get('/promos/search-products', [App\Http\Controllers\Admin\PromoController::class, 'searchProducts'])->name('promos.search-products');
         Route::resource('promos', App\Http\Controllers\Admin\PromoController::class)->except(['show']);
 
         // Website Pop-ups Management
@@ -196,10 +202,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('discount-tiers', App\Http\Controllers\Admin\DiscountTierController::class)->except(['show']);
 
         // Warehouses CRUD
+        Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
         Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
+        Route::post('/warehouses/sync-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncJubelio'])->name('warehouses.sync-jubelio');
+        Route::post('/warehouses/sync-stock-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockJubelio'])->name('warehouses.sync-stock-jubelio');
         Route::post('/warehouses/{warehouse}/sync-stock-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockQid'])->name('warehouses.sync-stock-qid');
         Route::put('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateStock'])->name('warehouses.update-stock');
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');

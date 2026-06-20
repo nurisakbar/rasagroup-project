@@ -13,6 +13,7 @@ use App\Models\WarehouseStock;
 use App\Jobs\ProcessCheckoutSuccessJob;
 use App\Services\XenditService;
 use App\Support\QadWsOrderNumberGenerator;
+use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -71,26 +72,27 @@ class CheckoutController extends Controller
                 ->with('error', 'Data lokasi hub pengirim belum lengkap. Silakan hubungi administrator untuk melengkapi data lokasi hub (Provinsi, Kota, dan Kecamatan).');
         }
 
-        // Only show expeditions that are active AND available in the EkspedisiKu API
-        $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = [];
-        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
-            foreach ($courierRes['data'] as $courier) {
-                $apiCourierCodes[] = $courier['id'];
-            }
-        }
+        // Only show expeditions that are active in DB AND active in EkspedisiKu API
+        $apiCourierCodes = $this->activeApiCourierCodes();
 
         $expeditions = Expedition::where('is_active', true)
             ->whereIn('code', $apiCourierCodes)
             ->get();
-        $defaultExpedition = $expeditions->first();
+        $defaultExpedition = $expeditions->firstWhere('code', 'lion_parcel') ?? $expeditions->first();
 
         $addresses = Auth::user()->addresses()
             ->with(['province', 'regency', 'district'])
             ->orderByDesc('is_default')
             ->get();
 
-        $defaultAddress = $addresses->where('id', request('address_id'))->first() 
+        if ($addresses->isEmpty()) {
+            session(['checkout_return_after_address' => true]);
+
+            return redirect()->route('buyer.addresses.create', ['origin' => 'checkout'])
+                ->with('info', 'Tambahkan alamat pengiriman terlebih dahulu untuk melanjutkan checkout.');
+        }
+
+        $defaultAddress = $addresses->where('id', request('address_id'))->first()
             ?? $addresses->firstWhere('is_default', true) 
             ?? $addresses->first();
 
@@ -104,11 +106,6 @@ class CheckoutController extends Controller
                     ->where('user_id', Auth::id())
                     ->where('cart_type', 'regular')
                     ->get();
-
-                if (!empty($syncResult['stock_warnings']) && !session()->has('error')) {
-                    $warningMessage = "Sumber pengiriman diubah ke {$sourceWarehouse->name} berdasarkan alamat Anda. Namun ada beberapa kendala stok:\n" . implode("\n", $syncResult['stock_warnings']);
-                    session()->flash('warning', $warningMessage);
-                }
             }
         }
 
@@ -171,20 +168,12 @@ class CheckoutController extends Controller
             'courier' => $defaultExpedition->code,
         ]);
         
-        if ($defaultExpedition->code === 'lion_parcel') {
-            $costResult = $this->ekspedisiku->calculateCost(
-                $sourceWarehouse->district_id,
-                $defaultAddress->district_id,
-                $totalWeight / 1000 // EkspedisiKu expects kg
-            );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $defaultAddress->district_id,
-                $totalWeight,
-                $defaultExpedition->code
-            );
-        }
+        $costResult = $this->fetchShippingRates(
+            $sourceWarehouse->district_id,
+            $defaultAddress->district_id,
+            $totalWeight,
+            $defaultExpedition->code
+        );
 
         \Log::info('Shipping Response:', [
             'courier' => $defaultExpedition->code,
@@ -331,79 +320,26 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
 
-        $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = [];
-        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
-            foreach ($courierRes['data'] as $courier) {
-                $apiCourierCodes[] = $courier['id'];
-            }
-        }
-
-        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
+        $expedition = $this->findAvailableExpedition($request->expedition_id);
         if (!$expedition) {
             return response()->json(['error' => 'Ekspedisi tidak ditemukan atau tidak tersedia'], 400);
         }
 
-        if ($expedition->code === 'lion_parcel') {
-            $costResult = $this->ekspedisiku->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight / 1000
-            );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight,
-                $expedition->code
-            );
-        }
+        $shipping = $this->resolveShippingCost(
+            $sourceWarehouse,
+            $address->district_id,
+            $totalWeight,
+            $expedition,
+            (string) $request->service_code
+        );
 
-        $shippingCost = 0;
-        $serviceName = $request->service_code;
-        $estimatedDelivery = '-';
+        $shippingCost = $shipping['cost'];
+        $serviceName = $shipping['matched_service']['description'] ?? $request->service_code;
+        $estimatedDelivery = $shipping['matched_service']
+            ? (($shipping['matched_service']['etd'] ?: '2-3') . ' hari')
+            : '-';
 
-        // \Log::info('=== CALCULATE SHIPPING DEBUG ===');
-        \Log::info('Request params:', [
-            'expedition_id' => $request->expedition_id,
-            'expedition_code' => $expedition->code,
-            'service_code' => $request->service_code,
-        ]);
-        \Log::info('Shipping response:', [
-            'expedition' => $expedition->code,
-            'has_data' => isset($costResult['data']),
-            'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
-            'data' => $costResult['data'] ?? [],
-        ]);
-
-        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
-            // RajaOngkir returns flat array, find matching service
-            foreach ($costResult['data'] as $service) {
-                \Log::info('Checking service:', [
-                    'service_code' => $service['service'] ?? null,
-                    'service_name' => $service['description'] ?? null,
-                    'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
-                    'matches_service' => ($service['service'] ?? '') === $request->service_code,
-                ]);
-                
-                if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $request->service_code) {
-                    $shippingCost = $service['cost'];
-                    $serviceName = $service['description'];
-                    $estimatedDelivery = ($service['etd'] ?: '2-3') . ' hari';
-                    \Log::info('MATCH FOUND!', [
-                        'cost' => $shippingCost,
-                        'name' => $serviceName,
-                        'etd' => $estimatedDelivery,
-                    ]);
-                    break;
-                }
-            }
-        }
-
-        // No fallback for shipping cost anymore, we want real API data
-        
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
-        // \Log::info('=== END CALCULATE SHIPPING DEBUG ===');
 
         // Calculate discount
         $totalQuantity = $carts->sum('quantity');
@@ -455,22 +391,30 @@ class CheckoutController extends Controller
 
     public function getExpeditionServices(Request $request)
     {
-        $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = [];
-        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
-            foreach ($courierRes['data'] as $courier) {
-                $apiCourierCodes[] = $courier['id'];
-            }
-        }
+        Log::debug('[checkout.expedition-services] request', [
+            'user_id' => Auth::id(),
+            'expedition_id' => $request->expedition_id,
+            'address_id' => $request->address_id,
+            'query' => $request->query(),
+        ]);
 
-        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
-        
+        $expedition = $this->findAvailableExpedition($request->expedition_id);
+
         if (!$expedition) {
+            Log::debug('[checkout.expedition-services] expedition not found', [
+                'expedition_id' => $request->expedition_id,
+                'active_api_couriers' => $this->activeApiCourierCodes(),
+            ]);
+
             return response()->json(['error' => 'Ekspedisi tidak valid atau tidak tersedia'], 400);
         }
 
         $address = Address::with(['district', 'regency', 'province'])->find($request->address_id);
         if (!$address) {
+            Log::debug('[checkout.expedition-services] address not found', [
+                'address_id' => $request->address_id,
+            ]);
+
             return response()->json(['error' => 'Alamat tidak ditemukan'], 400);
         }
 
@@ -487,29 +431,76 @@ class CheckoutController extends Controller
         $syncResult = $this->syncWarehouseByAddress($address);
         $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
 
+        Log::debug('[checkout.expedition-services] context', [
+            'expedition' => [
+                'id' => $expedition->id,
+                'code' => $expedition->code,
+                'name' => $expedition->name,
+            ],
+            'address' => [
+                'id' => $address->id,
+                'district_id' => $address->district_id,
+                'regency_id' => $address->regency_id,
+                'province_id' => $address->province_id,
+                'district' => $address->district?->name,
+                'regency' => $address->regency?->name,
+            ],
+            'warehouse' => $sourceWarehouse ? [
+                'id' => $sourceWarehouse->id,
+                'name' => $sourceWarehouse->name,
+                'district_id' => $sourceWarehouse->district_id,
+                'regency_id' => $sourceWarehouse->regency_id,
+                'province_id' => $sourceWarehouse->province_id,
+            ] : null,
+            'total_weight_grams' => $totalWeight,
+            'total_weight_kg' => round($totalWeight / 1000, 3),
+            'cart_items' => $carts->count(),
+            'uses_ekspedisiku' => $this->usesEkspedisiKuRates($expedition->code),
+        ]);
+
         if (!$sourceWarehouse || !$sourceWarehouse->district_id) {
+            Log::debug('[checkout.expedition-services] warehouse incomplete', [
+                'warehouse_id' => $sourceWarehouse?->id,
+                'district_id' => $sourceWarehouse?->district_id,
+            ]);
+
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
-        if ($expedition->code === 'lion_parcel') {
-             $costResult = $this->ekspedisiku->calculateCost(
-                 $sourceWarehouse->district_id,
-                 $address->district_id,
-                 $totalWeight / 1000
-             );
-        } else {
-            $costResult = $this->rajaOngkir->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $totalWeight,
-                $expedition->code
-            );
-        }
+        Log::debug('[checkout.expedition-services] fetching rates', [
+            'origin_district_id' => $sourceWarehouse->district_id,
+            'destination_district_id' => $address->district_id,
+            'weight_grams' => $totalWeight,
+            'courier' => $expedition->code,
+            'provider' => $this->usesEkspedisiKuRates($expedition->code) ? 'ekspedisiku' : 'rajaongkir',
+        ]);
+
+        $costResult = $this->fetchShippingRates(
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $totalWeight,
+            $expedition->code
+        );
+
+        Log::debug('[checkout.expedition-services] rates response', [
+            'expedition_code' => $expedition->code,
+            'has_data' => isset($costResult['data']),
+            'data_count' => isset($costResult['data']) && is_array($costResult['data']) ? count($costResult['data']) : 0,
+            'raw' => $costResult,
+        ]);
 
         $services = [];
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
             // RajaOngkir returns flat array, filter by expedition code
             foreach ($costResult['data'] as $service) {
+                Log::debug('[checkout.expedition-services] checking service row', [
+                    'service_code' => $service['code'] ?? null,
+                    'service' => $service['service'] ?? null,
+                    'description' => $service['description'] ?? null,
+                    'cost' => $service['cost'] ?? null,
+                    'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
+                ]);
+
                 if (($service['code'] ?? '') === $expedition->code) {
                     $services[] = [
                         'code' => $service['service'],
@@ -522,9 +513,7 @@ class CheckoutController extends Controller
             }
         }
 
-        // Removed dummy services fallback to ensure API data is the only source
-
-        return response()->json([
+        $responsePayload = [
             'expedition' => [
                 'id' => $expedition->id,
                 'code' => $expedition->code,
@@ -538,7 +527,18 @@ class CheckoutController extends Controller
                 'name' => $sourceWarehouse->name,
                 'location' => $sourceWarehouse->full_location,
             ] : null,
+        ];
+
+        Log::debug('[checkout.expedition-services] response', [
+            'services_count' => count($services),
+            'services' => $services,
+            'hub_changed' => $responsePayload['hub_changed'],
+            'stock_warnings' => $responsePayload['stock_warnings'],
         ]);
+
+        // Removed dummy services fallback to ensure API data is the only source
+
+        return response()->json($responsePayload);
     }
 
     // Hardcoded logic removed in favor of RajaOngkirService
@@ -575,15 +575,7 @@ class CheckoutController extends Controller
         // Final sync of hub before order
         $this->syncWarehouseByAddress($address);
 
-        $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = [];
-        if (isset($courierRes['data']) && is_array($courierRes['data'])) {
-            foreach ($courierRes['data'] as $courier) {
-                $apiCourierCodes[] = $courier['id'];
-            }
-        }
-
-        $expedition = Expedition::whereIn('code', $apiCourierCodes)->find($request->expedition_id);
+        $expedition = $this->findAvailableExpedition($request->expedition_id);
         if (!$expedition) {
             return back()->with('error', 'Ekspedisi tidak valid atau sudah tidak tersedia.');
         }
@@ -614,21 +606,23 @@ class CheckoutController extends Controller
         }
 
         // Check stock availability
-        $stockErrors = [];
-        foreach ($carts as $cart) {
-            $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                ->where('product_id', $cart->product_id)
-                ->first();
-            
-            $availableStock = $stock ? $stock->stock : 0;
-            
-            if ($cart->quantity > $availableStock) {
-                $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+        if (! ShopFulfillment::assumeStockReady()) {
+            $stockErrors = [];
+            foreach ($carts as $cart) {
+                $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                    ->where('product_id', $cart->product_id)
+                    ->first();
+
+                $availableStock = $stock ? $stock->stock : 0;
+
+                if ($cart->quantity > $availableStock) {
+                    $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                }
             }
-        }
-        
-        if (!empty($stockErrors)) {
-            return back()->with('error', 'Stock tidak mencukupi di hub ' . $sourceWarehouse->name . ":\n" . implode("\n", $stockErrors));
+
+            if (! empty($stockErrors)) {
+                return back()->with('error', 'Stock tidak mencukupi di hub ' . $sourceWarehouse->name . ":\n" . implode("\n", $stockErrors));
+            }
         }
 
         DB::beginTransaction();
@@ -642,66 +636,32 @@ class CheckoutController extends Controller
                 return ($cart->product->weight ?? 500) * $cart->quantity;
             });
 
-            $shippingCost = 0;
-            \Log::info('Store: calculating shipping cost', [
-                'origin' => $sourceWarehouse->district_id,
-                'destination' => $address->district_id,
-                'weight' => $totalWeight,
-                'courier_code' => $expedition->code,
-                'service_requested' => $request->expedition_service
-            ]);
-            if ($expedition->code === 'lion_parcel') {
-                $costResult = $this->ekspedisiku->calculateCost(
-                    $sourceWarehouse->district_id,
-                    $address->district_id,
-                    $totalWeight / 1000
-                );
-            } else {
-                $costResult = $this->rajaOngkir->calculateCost(
-                    $sourceWarehouse->district_id,
-                    $address->district_id,
-                    $totalWeight,
-                    $expedition->code
-                );
-            }
+            $shipping = $this->resolveShippingCost(
+                $sourceWarehouse,
+                $address->district_id,
+                $totalWeight,
+                $expedition,
+                (string) $request->expedition_service
+            );
 
-
-            if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
-                // RajaOngkir returns flat array, find matching service
-                foreach ($costResult['data'] as $service) {
-                    \Log::info('Store: checking service', [
-                        'code' => $service['code'],
-                        'service' => $service['service'] ?? null,
-                    ]);
-                    $serviceCode = $service['service'] ?? '';
-                    $serviceCourier = $service['code'] ?? '';
-                    
-                    // Normalize for comparison
-                    $normalizedServiceCode = strtoupper(trim($serviceCode));
-                    $normalizedRequestService = strtoupper(trim($request->expedition_service));
-                    $normalizedCourier = strtolower(trim($serviceCourier));
-                    $normalizedExpeditionCode = strtolower(trim($expedition->code));
-                    
-                    if ($normalizedCourier === $normalizedExpeditionCode && $normalizedServiceCode === $normalizedRequestService) {
-                        $shippingCost = $service['cost'];
-                        \Log::info('Store: shipping cost matched', ['cost' => $shippingCost]);
-                        break;
-                    }
-                }
-            } else {
-                \Log::warning('Store: costResult data empty or format unexpected', ['result' => $costResult]);
-            }
+            $shippingCost = $shipping['cost'];
 
             if ($shippingCost <= 0) {
-                // Fallback for simulation
-                if ($request->expedition_service === 'REG') {
-                    $shippingCost = 15000;
-                } elseif ($request->expedition_service === 'OKE') {
-                    $shippingCost = 12000;
-                } else {
-                    \Log::error('Store: Gagal menghitung ongkos kirim. Shipping cost is 0 or less.');
-                    throw new \Exception('Gagal menghitung ongkos kirim. Silakan pilih layanan pengiriman kembali.');
+                \Log::error('Store: Gagal menghitung ongkos kirim.', [
+                    'expedition' => $expedition->code,
+                    'service_requested' => $request->expedition_service,
+                    'available_services' => $shipping['available_services'],
+                ]);
+
+                DB::rollBack();
+
+                $available = $shipping['available_services'];
+                $message = 'Gagal menghitung ongkos kirim. Silakan pilih ekspedisi dan layanan pengiriman kembali.';
+                if ($available !== []) {
+                    $message .= ' Layanan tersedia untuk ' . $expedition->name . ': ' . implode(', ', $available) . '.';
                 }
+
+                return back()->withInput()->with('error', $message);
             }
             
             // Calculate discount
@@ -822,13 +782,15 @@ class CheckoutController extends Controller
                     'subtotal' => $lineUnit * $cart->quantity,
                 ]);
 
-                // Reduce stock from warehouse
-                $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                    ->where('product_id', $cart->product_id)
-                    ->first();
-                
-                if ($stock) {
-                    $stock->decrement('stock', $cart->quantity);
+                // Stok lokal tidak dikurangi — asumsi ready; fulfillment via Jubelio/QAD
+                if (! ShopFulfillment::assumeStockReady()) {
+                    $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                        ->where('product_id', $cart->product_id)
+                        ->first();
+
+                    if ($stock) {
+                        $stock->decrement('stock', $cart->quantity);
+                    }
                 }
             }
 
@@ -1044,56 +1006,156 @@ class CheckoutController extends Controller
         ];
     }
 
-    private function syncWarehouseByAddress(Address $address)
+    private function syncWarehouseByAddress(Address $address): ?array
     {
         $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
-        if ($carts->isEmpty()) return null;
-        
+        if ($carts->isEmpty()) {
+            return null;
+        }
+
         $currentWarehouseId = $carts->first()->warehouse_id;
         $excludeOwnHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
-        // Auto-sync hub disabled to respect manual user selection from modal
-        /*
-        $bestHub = Warehouse::findBestHubForAddress($address, $excludeOwnHubId);
-        
-        if ($bestHub && $bestHub->id !== $currentWarehouseId) {
-            $hubChanged = true;
-            Cart::where('user_id', Auth::id())
-                ->where('cart_type', 'regular')
-                ->update(['warehouse_id' => $bestHub->id]);
-            
-            session(['selected_hub_id' => $bestHub->id]);
-        }
-        */
-        
-        // Keep the current hub as the one selected by user
-        $bestHub = null; 
         $hubChanged = false;
-        
-        // Always check stocks in the (new or current) warehouse
-        $stockWarnings = [];
-        $currentHub = $bestHub ?: Warehouse::find($currentWarehouseId);
-        
-        if ($currentHub) {
-            $cartsForStock = Cart::with('product')
-                ->where('user_id', Auth::id())
-                ->where('cart_type', 'regular')
-                ->get();
+        $bestHub = null;
 
-            foreach ($cartsForStock as $item) {
-                $stock = WarehouseStock::where('warehouse_id', $currentHub->id)
-                    ->where('product_id', $item->product_id)
-                    ->first();
-                if (!$stock || $stock->stock < $item->quantity) {
-                    $available = $stock ? $stock->stock : 0;
-                    $stockWarnings[] = "Stok {$item->product->name} tidak mencukupi (Tersedia: {$available})";
-                }
+        if (ShopFulfillment::autoHubByAddress()) {
+            $bestHub = ShopFulfillment::resolveNearestHub($address, $excludeOwnHubId);
+
+            if ($bestHub && $bestHub->id !== $currentWarehouseId) {
+                $hubChanged = true;
+                Cart::where('user_id', Auth::id())
+                    ->where('cart_type', 'regular')
+                    ->update(['warehouse_id' => $bestHub->id]);
+
+                session([
+                    'selected_hub_id' => $bestHub->id,
+                    'selected_hub_name' => $bestHub->name,
+                    'selected_hub_slug' => $bestHub->slug,
+                ]);
             }
         }
-        
+
+        $currentHub = $bestHub ?: Warehouse::find($currentWarehouseId);
+
         return [
             'hub_changed' => $hubChanged,
             'warehouse' => $currentHub,
-            'stock_warnings' => $stockWarnings,
+            'stock_warnings' => [],
         ];
+    }
+
+    /**
+     * Courier codes that are active in EkspedisiKu API (is_active=true).
+     *
+     * @return array<int, string>
+     */
+    private function activeApiCourierCodes(): array
+    {
+        $dbCodes = Expedition::where('is_active', true)
+            ->pluck('code')
+            ->filter()
+            ->values()
+            ->all();
+
+        $courierRes = $this->ekspedisiku->getCouriers();
+        if (! isset($courierRes['data']) || ! is_array($courierRes['data'])) {
+            return $dbCodes;
+        }
+
+        $codes = [];
+        foreach ($courierRes['data'] as $courier) {
+            if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
+                $codes[] = $courier['id'];
+            }
+        }
+
+        return $codes !== [] ? $codes : $dbCodes;
+    }
+
+    private function findAvailableExpedition(?string $expeditionId): ?Expedition
+    {
+        if (! $expeditionId) {
+            return null;
+        }
+
+        return Expedition::whereIn('code', $this->activeApiCourierCodes())->find($expeditionId);
+    }
+
+    /**
+     * @return array{cost: float, matched_service: ?array, available_services: array<int, string>}
+     */
+    private function resolveShippingCost(
+        Warehouse $sourceWarehouse,
+        int|string $destinationDistrictId,
+        int $totalWeightGrams,
+        Expedition $expedition,
+        string $requestedServiceCode
+    ): array {
+        $costResult = $this->fetchShippingRates(
+            $sourceWarehouse->district_id,
+            $destinationDistrictId,
+            $totalWeightGrams,
+            $expedition->code
+        );
+
+        $availableServices = [];
+        $matchedService = null;
+        $shippingCost = 0.0;
+        $normalizedRequest = strtoupper(trim($requestedServiceCode));
+        $normalizedExpedition = strtolower(trim($expedition->code));
+
+        if ($costResult && ! empty($costResult['data'])) {
+            foreach ($costResult['data'] as $service) {
+                $serviceCourier = strtolower(trim((string) ($service['code'] ?? '')));
+                if ($serviceCourier !== $normalizedExpedition) {
+                    continue;
+                }
+
+                $serviceCode = (string) ($service['service'] ?? '');
+                $availableServices[] = $serviceCode;
+
+                if (strtoupper(trim($serviceCode)) === $normalizedRequest) {
+                    $shippingCost = (float) ($service['cost'] ?? 0);
+                    $matchedService = $service;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'cost' => $shippingCost,
+            'matched_service' => $matchedService,
+            'available_services' => $availableServices,
+        ];
+    }
+
+    /**
+     * Couriers whose rates are resolved via EkspedisiKu /ongkir endpoint.
+     */
+    private function usesEkspedisiKuRates(string $courierCode): bool
+    {
+        return in_array($courierCode, ['lion_parcel', 'lalamove'], true);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchShippingRates(int|string $originDistrictId, int|string $destinationDistrictId, int $weightGrams, string $courierCode): ?array
+    {
+        if ($this->usesEkspedisiKuRates($courierCode)) {
+            return $this->ekspedisiku->calculateCost(
+                $originDistrictId,
+                $destinationDistrictId,
+                $weightGrams / 1000,
+                $courierCode
+            );
+        }
+
+        return $this->rajaOngkir->calculateCost(
+            $originDistrictId,
+            $destinationDistrictId,
+            $weightGrams,
+            $courierCode
+        );
     }
 }

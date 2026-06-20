@@ -16,7 +16,7 @@
         </div>
         <div class="product-price">
             <span>Rp{{ number_format($product->price, 0, ',', '.') }}</span>
-            @if(session('selected_hub_id'))
+            @if(\App\Support\ShopFulfillment::showStockOnStorefront() && session('selected_hub_id'))
                 <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
             @endif
             @if(isset($product->compare_price) && $product->compare_price > $product->price)

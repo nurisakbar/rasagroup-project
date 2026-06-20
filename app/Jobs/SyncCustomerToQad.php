@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Support\QadIntegration;
 use Illuminate\Support\Facades\Log;
 
 class SyncCustomerToQad implements ShouldQueue
@@ -27,6 +28,12 @@ class SyncCustomerToQad implements ShouldQueue
 
     public function handle(QadService $qadService): void
     {
+        if (! QadIntegration::isConfigured()) {
+            Log::info('SyncCustomerToQad: skipped (QID API belum dikonfigurasi)');
+
+            return;
+        }
+
         $user = $this->user->fresh();
         if (!$user) {
             return;

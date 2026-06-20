@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
-            $view->with('globalCategories', \App\Models\Category::active()->withCount('products')->get());
+            $view->with('globalCategories', \App\Models\Category::forStorefrontSidebar());
         });
     }
 }

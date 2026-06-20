@@ -44,7 +44,7 @@
                                     </tr>
                                     @if($warehouse->kode_hub)
                                     <tr>
-                                        <th>Kode Hub QID</th>
+                                        <th>Kode Hub</th>
                                         <td><span class="badge bg-purple">{{ $warehouse->kode_hub }}</span></td>
                                     </tr>
                                     @endif
@@ -103,10 +103,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="callout callout-info" style="margin-top: 20px;">
-                                    <h4><i class="fa fa-info"></i> Sinkronisasi QID Aktif</h4>
-                                    <p>Data stok pada hub ini diperbarui secara otomatis dari sistem QID setiap kali halaman ini dibuka.</p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -138,7 +134,7 @@
                                         <th>Produk</th>
                                         <th>Kode Produk</th>
                                         <th>Harga</th>
-                                        <th width="120" class="text-center">Stock QID</th>
+                                        <th width="120" class="text-center">Stok</th>
                                     </tr>
                                 </thead>
                                 <tbody>

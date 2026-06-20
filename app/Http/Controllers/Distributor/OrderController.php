@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\DistributorOrderImport;
 use App\Exports\DistributorOrderTemplateExport;
 use App\Support\QadWsOrderNumberGenerator;
+use App\Support\ShopFulfillment;
 
 class OrderController extends Controller
 {
@@ -243,15 +244,12 @@ class OrderController extends Controller
 
         $provinces = \App\Models\Province::orderBy('name')->get();
 
-        // Get all active warehouses (hubs) kecuali hub distributor sendiri (restock dari pusat lain)
+        // Hub pengirim otomatis = hub terdekat alamat tujuan
         $excludeOwnHub = Auth::user()->distributorShoppingExcludedWarehouseId();
-        $warehouses = \App\Models\Warehouse::where('is_active', true)
-            ->when($excludeOwnHub, fn ($q) => $q->where('id', '!=', $excludeOwnHub))
-            ->with(['province', 'regency'])
-            ->orderBy('name')
-            ->get();
+        $suggestedHub = $defaultAddress
+            ? ShopFulfillment::resolveNearestHub($defaultAddress, $excludeOwnHub)
+            : null;
 
-        // Add price info to each cart item for display
         $carts->each(function ($cart) use ($user) {
             $cart->display_price = $user->getProductPrice($cart->product);
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
@@ -276,7 +274,7 @@ class OrderController extends Controller
             'totalItems',
             'potentialPoints',
             'provinces',
-            'warehouses',
+            'suggestedHub',
             'preferredShippingDate'
         ));
     }
@@ -423,7 +421,6 @@ class OrderController extends Controller
     {
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
-            'source_warehouse_id' => 'required|exists:warehouses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
             'payment_method' => 'required|string',
@@ -441,8 +438,14 @@ class OrderController extends Controller
 
         $user = Auth::user();
         $excludeOwnHub = $user->distributorShoppingExcludedWarehouseId();
-        if ($excludeOwnHub && (string) $request->source_warehouse_id === $excludeOwnHub) {
-            return back()->with('error', 'Hub sumber tidak boleh hub Anda sendiri. Pilih hub pusat lain.');
+        $sourceWarehouse = ShopFulfillment::resolveNearestHub($address, $excludeOwnHub);
+
+        if (! $sourceWarehouse) {
+            return back()->with('error', 'Tidak ada hub aktif yang tersedia untuk alamat pengiriman ini.');
+        }
+
+        if ($excludeOwnHub && (string) $sourceWarehouse->id === $excludeOwnHub) {
+            return back()->with('error', 'Hub sumber tidak boleh hub Anda sendiri. Periksa alamat pengiriman atau hub terdekat.');
         }
 
         $expedition = Expedition::find($request->expedition_id);
@@ -507,7 +510,7 @@ class OrderController extends Controller
                 'address_id' => $address->id,
                 'expedition_id' => $expedition->id,
                 'expedition_service' => $request->expedition_service,
-                'source_warehouse_id' => $request->source_warehouse_id,
+                'source_warehouse_id' => $sourceWarehouse->id,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $total,
@@ -542,7 +545,7 @@ class OrderController extends Controller
                 ->delete();
 
             // Sync to QAD (Ensure customer is registered and SO is created)
-            \App\Jobs\SyncOrderToQad::dispatch($order);
+            \App\Support\SalesOrderSyncDispatcher::dispatch($order);
 
             DB::commit();
 

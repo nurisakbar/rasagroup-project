@@ -1319,7 +1319,7 @@
     @include('themes.nest.partials.modals')
 
     <div class="whatsapp-float">
-        <a href="https://wa.me/628118003357" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+        <a href="https://wa.me/628118003357?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
             <i class="bi bi-whatsapp me-2"></i> Chat Kami
         </a>
     </div>
@@ -1363,6 +1363,16 @@
             background-color: #FD6E3E !important;
             color: #fff !important;
         }
+        .rg-add-cart-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .rg-grid-qty-wrap {
+            min-width: 100px;
+        }
         .product-qty-selector i {
             transition: all 0.2s ease;
             cursor: pointer;
@@ -1379,8 +1389,22 @@
             transform: scale(0.85);
         }
         .product-qty-selector .qty-val-grid {
-            user-select: none;
             margin: 0 10px;
+            border: none;
+            background: transparent;
+            width: 32px;
+            min-width: 25px;
+            max-width: 48px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #253D4E;
+            padding: 0;
+            outline: none;
+            box-shadow: none;
+        }
+        .product-qty-selector .qty-val-grid:focus {
+            color: #FD6E3E;
         }
     </style>
 
@@ -1470,6 +1494,39 @@
                     form.submit();
                 });
             
+            function parseGridQty(val) {
+                const n = parseInt(String(val).replace(/\D/g, ''), 10);
+                return isNaN(n) || n < 1 ? 1 : n;
+            }
+
+            function isGridProductInCart(slug) {
+                return $('#add-form-' + slug).hasClass('d-none');
+            }
+
+            function syncGridQtyToAddForm(slug) {
+                const qty = parseGridQty($('#qty-val-' + slug).val());
+                $('#qty-val-' + slug).val(qty);
+                $('#add-form-' + slug).find('.js-qty-input').val(qty);
+                return qty;
+            }
+
+            function applyGridCartQtyResponse(slug, response) {
+                if (response.line.quantity_input <= 0) {
+                    $('#add-form-' + slug).removeClass('d-none');
+                    $('#qty-val-' + slug).val(1);
+                    $('#add-form-' + slug).find('.js-qty-input').val(1);
+                } else {
+                    $('#add-form-' + slug).addClass('d-none');
+                    $('#qty-val-' + slug).val(response.line.quantity_input);
+                }
+
+                $('.pro-count.blue').text(response.cart_count);
+                $('.pro-count.white').text(response.cart_count);
+                if (response.mini_cart_html) {
+                    $('.cart-dropdown-wrap').html(response.mini_cart_html);
+                }
+            }
+
             // Add to cart (AJAX) — dipakai juga setelah pilih satuan di modal
             function performAddToCartAjax(form) {
                 form = $(form);
@@ -1478,6 +1535,12 @@
                 const submitBtn = form.find('button[type="submit"]');
                 const originalBtnHtml = submitBtn.attr('data-original-add-html') || submitBtn.html();
                 submitBtn.attr('data-original-add-html', originalBtnHtml);
+
+                const formId = form.attr('id');
+                if (formId && formId.startsWith('add-form-')) {
+                    const slug = formId.replace('add-form-', '');
+                    syncGridQtyToAddForm(slug);
+                }
 
                 submitBtn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
 
@@ -1501,7 +1564,7 @@
                                 if (qtySelector.length) {
                                     form.addClass('d-none');
                                     qtySelector.removeClass('d-none');
-                                    $('#qty-val-' + slug).text(response.line.quantity_input);
+                                    $('#qty-val-' + slug).val(response.line.quantity_input);
                                 }
                             }
 
@@ -1515,7 +1578,8 @@
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            window.location.href = '{{ route("login") }}';
+                            const body = xhr.responseJSON || {};
+                            window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
                             return;
                         }
                         if (xhr.status === 428) {
@@ -1587,9 +1651,17 @@
                 const slug = btn.data('slug');
                 const action = btn.hasClass('qty-up-grid') ? 'plus' : 'minus';
                 const qtyValEl = $('#qty-val-' + slug);
-                const oldVal = qtyValEl.text();
+                const oldVal = qtyValEl.val();
                 const container = btn.closest('.product-qty-selector');
                 const buttons = container.find('a');
+
+                if (!isGridProductInCart(slug)) {
+                    let qty = parseGridQty(qtyValEl.val());
+                    qty = action === 'plus' ? qty + 1 : Math.max(1, qty - 1);
+                    qtyValEl.val(qty);
+                    $('#add-form-' + slug).find('.js-qty-input').val(qty);
+                    return;
+                }
 
                 if (btn.hasClass('disabled')) return;
                 buttons.addClass('disabled').css('opacity', '0.5');
@@ -1604,32 +1676,69 @@
                     success: function(response) {
                         buttons.removeClass('disabled').css('opacity', '1');
                         if (response.success) {
-                            if (response.line.quantity_input <= 0) {
-                                $('#qty-selector-' + slug).addClass('d-none');
-                                $('#add-form-' + slug).removeClass('d-none');
-                            } else {
-                                $('#qty-val-' + slug).text(response.line.quantity_input);
-                            }
-                            
-                            $('.pro-count.blue').text(response.cart_count);
-                            $('.pro-count.white').text(response.cart_count);
-                            if (response.mini_cart_html) {
-                                $('.cart-dropdown-wrap').html(response.mini_cart_html);
-                            }
+                            applyGridCartQtyResponse(slug, response);
                         } else {
-                            qtyValEl.text(oldVal);
+                            qtyValEl.val(oldVal);
                             showShopToast(response.message || 'Gagal memperbarui jumlah.', 'error');
                         }
                     },
                     error: function(xhr) {
                          buttons.removeClass('disabled').css('opacity', '1');
-                         qtyValEl.text(oldVal);
+                         qtyValEl.val(oldVal);
                          if (xhr.status === 401) {
-                             window.location.href = '{{ route("login") }}';
+                             const body = xhr.responseJSON || {};
+                             window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
                              return;
                          }
                          const body = xhr.responseJSON || {};
                          showShopToast(body.message || 'Gagal memperbarui jumlah.', 'error');
+                    }
+                });
+            });
+
+            $(document).on('change', '.qty-val-grid', function() {
+                const qtyValEl = $(this);
+                const inputId = qtyValEl.attr('id') || '';
+                if (!inputId.startsWith('qty-val-')) {
+                    return;
+                }
+
+                const slug = inputId.replace('qty-val-', '');
+                const oldVal = qtyValEl.attr('data-original-val') || qtyValEl.val();
+                qtyValEl.attr('data-original-val', oldVal);
+
+                if (!isGridProductInCart(slug)) {
+                    syncGridQtyToAddForm(slug);
+                    return;
+                }
+
+                const qty = parseGridQty(qtyValEl.val());
+                qtyValEl.val(qty);
+
+                $.ajax({
+                    url: '{{ route("cart.update-quantity", ":slug") }}'.replace(':slug', slug),
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        quantity: qty
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            applyGridCartQtyResponse(slug, response);
+                        } else {
+                            qtyValEl.val(oldVal);
+                            showShopToast(response.message || 'Gagal memperbarui jumlah.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        qtyValEl.val(oldVal);
+                        if (xhr.status === 401) {
+                            const body = xhr.responseJSON || {};
+                            window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
+                            return;
+                        }
+                        const body = xhr.responseJSON || {};
+                        showShopToast(body.message || 'Gagal memperbarui jumlah.', 'error');
                     }
                 });
             });

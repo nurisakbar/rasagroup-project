@@ -84,7 +84,7 @@
                     <li class="mb-5">Brand: <span class="text-brand">{{ $product->brand->name ?? '-' }}</span></li>
                     <li class="mb-5">Kategori: <span class="text-brand">{{ $product->category->name ?? '-' }}</span></li>
                     <li class="mb-5">Berat: <span class="text-brand">{{ $product->formatted_weight }}</span></li>
-                    @if($selectedHubId ?? session('selected_hub_id'))
+                    @if(\App\Support\ShopFulfillment::showStockOnStorefront() && ($selectedHubId ?? session('selected_hub_id')))
                         <li class="mb-5">Stok: <span class="text-brand">{{ $product->current_stock }}</span></li>
                     @endif
                 </ul>

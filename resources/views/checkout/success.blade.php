@@ -13,7 +13,35 @@
     </div>
 </div>
 
-<div class="page-content pt-100 pb-100" style="background-color: #F2EAE1;">
+<div class="page-content pt-100 pb-100 checkout-success-page" style="background-color: #F2EAE1;">
+    <style>
+        .checkout-success-section-title {
+            font-weight: 700;
+            color: #253D4E;
+            font-size: 1rem;
+            margin-bottom: 0.85rem;
+        }
+        .checkout-success-name {
+            color: #253D4E;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        .checkout-success-phone {
+            color: #253D4E;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .checkout-success-address-line {
+            color: #253D4E;
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.65;
+            margin: 0;
+        }
+    </style>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -40,21 +68,15 @@
 
                         @if($order->sourceWarehouse)
                             @php $hub = $order->sourceWarehouse; @endphp
-                            <div class="mb-40 p-25 border-radius-20 text-start" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
-                                <h5 class="mb-15" style="font-weight: 700; color: #6A1B1B;">
+                            <div class="mb-40 p-25 border-radius-20 text-start checkout-success-address-block" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
+                                <h5 class="mb-15 checkout-success-section-title">
                                     <i class="fi-rs-shop mr-10"></i>Barang dikirim dari
                                 </h5>
-                                <p class="text-muted font-sm mb-15">Pesanan Anda diproses dan dikirim dari hub berikut (stok diambil dari lokasi ini).</p>
-                                <strong class="d-block mb-2" style="color: #253D4E; font-size: 1.05rem;">{{ $hub->name }}</strong>
-                                @if($hub->kode_hub)
-                                    <span class="d-inline-block mb-10 font-xs text-muted">Kode hub: <strong style="color: #253D4E;">{{ $hub->kode_hub }}</strong></span>
-                                @endif
+                                <strong class="d-block mb-10 checkout-success-name">{{ $hub->name }}</strong>
                                 @if($hub->address)
-                                    <p class="text-muted mb-5" style="font-size: 14px; line-height: 1.6; margin: 0;">
-                                        {{ $hub->address }}
-                                    </p>
+                                    <p class="checkout-success-address-line mb-5">{{ $hub->address }}</p>
                                 @endif
-                                <p class="text-muted mb-0" style="font-size: 14px; line-height: 1.6;">
+                                <p class="checkout-success-address-line mb-0">
                                     @if($hub->district)
                                         Kec. {{ $hub->district->name }},
                                     @endif
@@ -64,8 +86,8 @@
                                     @endif
                                 </p>
                                 @if($hub->phone)
-                                    <p class="mt-10 mb-0 font-sm text-muted">
-                                        <i class="fi-rs-headset mr-5"></i>Hub: {{ $hub->phone }}
+                                    <p class="checkout-success-phone mt-10 mb-0">
+                                        <i class="fi-rs-headset mr-5"></i>{{ $hub->phone }}
                                     </p>
                                 @endif
                             </div>
@@ -74,15 +96,21 @@
                         <div class="row text-start mb-40 g-4">
                             <!-- Shipping Address -->
                             <div class="col-md-6">
-                                <div class="p-25 h-100 border-radius-20" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-15" style="font-weight: 700; color: #253D4E;"><i class="fi-rs-marker mr-10 text-muted"></i>Alamat Kirim</h5>
+                                <div class="p-25 h-100 border-radius-20 checkout-success-address-block" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
+                                    <h5 class="mb-15 checkout-success-section-title"><i class="fi-rs-marker mr-10"></i>Alamat Penerima</h5>
                                     @if($order->address)
-                                        <strong class="d-block mb-2" style="color: #253D4E;">{{ $order->address->recipient_name }}</strong>
-                                        <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0;">
-                                            {{ $order->address->phone }}<br>
+                                        <strong class="d-block mb-8 checkout-success-name">{{ $order->address->recipient_name }}</strong>
+                                        <p class="checkout-success-phone mb-8">{{ $order->address->phone }}</p>
+                                        <p class="checkout-success-address-line mb-0">
                                             {{ $order->address->address_detail }}<br>
-                                            {{ $order->address->village?->name }}, Kec. {{ $order->address->district?->name }}<br>
+                                            @if($order->address->village?->name)
+                                                {{ $order->address->village->name }},
+                                            @endif
+                                            Kec. {{ $order->address->district?->name }}<br>
                                             {{ $order->address->regency?->name }}, {{ $order->address->province?->name }}
+                                            @if($order->address->postal_code)
+                                                <br>{{ $order->address->postal_code }}
+                                            @endif
                                         </p>
                                     @endif
                                 </div>
@@ -90,11 +118,11 @@
                             
                             <!-- Shipping Method -->
                             <div class="col-md-6">
-                                <div class="p-25 h-100 border-radius-20" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-15" style="font-weight: 700; color: #253D4E;"><i class="fi-rs-truck-side mr-10 text-muted"></i>Pengiriman</h5>
+                                <div class="p-25 h-100 border-radius-20 checkout-success-address-block" style="background-color: #ffffff; border: 1.5px solid #ECECEC;">
+                                    <h5 class="mb-15 checkout-success-section-title"><i class="fi-rs-truck-side mr-10"></i>Pengiriman</h5>
                                     @if($order->expedition)
-                                        <strong class="d-block mb-2" style="color: #253D4E;">{{ $order->expedition->name }}</strong>
-                                        <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0;">
+                                        <strong class="d-block mb-8 checkout-success-name">{{ $order->expedition->name }}</strong>
+                                        <p class="checkout-success-address-line mb-0">
                                             Layanan: {{ $order->expedition_service }}<br>
                                             Estimasi: {{ $order->expedition->estimated_delivery }}
                                         </p>

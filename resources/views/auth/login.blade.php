@@ -26,9 +26,9 @@
                                     <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Masuk</h1>
                                     <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Belum punya akun? <a href="{{ route('register') }}" style="color: #6A1B1B; font-weight: 600;">Daftar di sini</a></p>
                                 </div>
-                                @if (session('error'))
+                                @if (session('error') || request('reason') === 'add_to_cart')
                                     <div class="alert alert-danger border-0 mb-20" style="border-radius: 12px;" role="alert">
-                                        {{ session('error') }}
+                                        {{ session('error') ?: 'Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.' }}
                                     </div>
                                 @endif
                                 <form method="POST" action="{{ route('login') }}">

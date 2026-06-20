@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Product;
 use App\Models\Promo;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -62,7 +63,7 @@ class PromoDummySeeder extends Seeder
             ],
         ];
 
-        foreach ($promos as $row) {
+        foreach ($promos as $index => $row) {
             $slug = Str::slug($row['judul_promo']);
             $base = $slug;
             $n = 1;
@@ -75,7 +76,7 @@ class PromoDummySeeder extends Seeder
                 $n++;
             }
 
-            Promo::updateOrCreate(
+            $promo = Promo::updateOrCreate(
                 ['kode_promo' => $row['kode_promo']],
                 [
                     'judul_promo' => $row['judul_promo'],
@@ -85,8 +86,18 @@ class PromoDummySeeder extends Seeder
                     'awal' => $row['awal'],
                     'akhir' => $row['akhir'],
                     'image' => self::DUMMY_IMAGE,
+                    'target_audience' => ['umum'],
                 ]
             );
+
+            $productIds = Product::where('status', 'active')
+                ->inRandomOrder()
+                ->limit(min(3, 2 + $index))
+                ->pluck('id');
+
+            if ($productIds->isNotEmpty()) {
+                $promo->products()->syncWithoutDetaching($productIds->all());
+            }
         }
     }
 }

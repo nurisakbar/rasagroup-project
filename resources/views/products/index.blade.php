@@ -19,10 +19,16 @@
             <div class="archive-header">
                 <div class="row align-items-center">
                     <div class="col-xl-6">
-                        <h1 class="mb-15">Katalog Produk</h1>
+                        <h1 class="mb-15">{{ $selectedBrand ? $selectedBrand->name : 'Katalog Produk' }}</h1>
                         <div class="breadcrumb">
                             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Halaman Utama</a>
-                            <span></span> Katalog
+                            <span></span>
+                            @if($selectedBrand)
+                                <a href="{{ route('products.index') }}">Katalog</a>
+                                <span></span> {{ $selectedBrand->name }}
+                            @else
+                                Katalog
+                            @endif
                         </div>
                     </div>
                 </div>

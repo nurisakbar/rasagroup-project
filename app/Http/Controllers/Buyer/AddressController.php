@@ -8,6 +8,7 @@ use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
 use App\Models\Village;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,13 +26,41 @@ class AddressController extends Controller
      */
     public function index()
     {
-        $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district'])
+        $user = Auth::user();
+        $addresses = $user->addresses()
+            ->with(['province', 'regency', 'district', 'village'])
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();
 
-        return view('buyer.addresses.index', compact('addresses'));
+        $selectedShoppingAddressId = session('selected_shipping_address_id');
+        $selectedShoppingAddress = $selectedShoppingAddressId
+            ? $addresses->firstWhere('id', $selectedShoppingAddressId)
+            : null;
+
+        if ($selectedShoppingAddressId && !$selectedShoppingAddress) {
+            session()->forget('selected_shipping_address_id');
+            $selectedShoppingAddressId = null;
+        }
+
+        $autoAppliedShopping = false;
+
+        if ($addresses->count() === 1) {
+            $onlyAddress = $addresses->first();
+            if (!$selectedShoppingAddress || $selectedShoppingAddress->id !== $onlyAddress->id) {
+                $this->applyAddressForShopping($onlyAddress);
+                $selectedShoppingAddress = $onlyAddress;
+                $selectedShoppingAddressId = $onlyAddress->id;
+                $autoAppliedShopping = true;
+            }
+        }
+
+        return view('buyer.addresses.index', [
+            'addresses' => $addresses,
+            'selectedShoppingAddressId' => $selectedShoppingAddressId,
+            'selectedHubName' => session('selected_hub_name'),
+            'autoAppliedShopping' => $autoAppliedShopping,
+        ]);
     }
 
     /**
@@ -41,7 +70,17 @@ class AddressController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        $redirectToCheckout = $request->query('origin') === 'checkout';
+
+        $isFirstAddressFlow = Auth::user()->addresses()->count() === 0;
+
+        if ($request->query('origin') === 'checkout' || $isFirstAddressFlow) {
+            session(['checkout_return_after_address' => true]);
+        }
+
+        $redirectToCheckout = $request->query('origin') === 'checkout'
+            || session('checkout_return_after_address', false)
+            || $isFirstAddressFlow;
+
         return view('buyer.addresses.create', compact('provinces', 'redirectToCheckout'));
     }
 
@@ -107,9 +146,15 @@ class AddressController extends Controller
             ]);
         }
 
-        if ($request->has('redirect_to_checkout')) {
+        $redirectToCheckout = $request->has('redirect_to_checkout')
+            || session()->pull('checkout_return_after_address')
+            || $user->addresses()->count() === 1;
+
+        if ($redirectToCheckout) {
+            $this->applyAddressForShopping($address);
+
             return redirect()->route('checkout.index', ['address_id' => $address->id])
-                ->with('success', 'Alamat berhasil ditambahkan dan dipilih.');
+                ->with('success', 'Alamat berhasil ditambahkan. Silakan lanjutkan checkout.');
         }
 
         return redirect()->route('buyer.addresses.index')
@@ -203,6 +248,7 @@ class AddressController extends Controller
         }
 
         $wasDefault = $address->is_default;
+        $wasSelectedForShopping = session('selected_shipping_address_id') === $address->id;
         $address->delete();
 
         // If deleted address was default, set another as default
@@ -211,6 +257,11 @@ class AddressController extends Controller
             if ($newDefault) {
                 $newDefault->update(['is_default' => true]);
             }
+        }
+
+        if ($wasSelectedForShopping) {
+            $this->clearShoppingHubSession();
+            $this->syncShoppingAddressAfterChange();
         }
 
         return redirect()->route('buyer.addresses.index')
@@ -267,7 +318,7 @@ class AddressController extends Controller
     public function selectForShopping(Request $request)
     {
         $request->validate([
-            'address_id' => 'required|string|exists:addresses,id'
+            'address_id' => 'required|string',
         ]);
 
         $address = Address::where('id', $request->address_id)
@@ -286,7 +337,8 @@ class AddressController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Alamat pengiriman dan hub terdekat berhasil dipilih.',
-            'hub' => $hub->name
+            'hub' => $hub->name,
+            'address_id' => $address->id,
         ]);
     }
 
@@ -298,57 +350,40 @@ class AddressController extends Controller
         session(['selected_shipping_address_id' => $address->id]);
 
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
-        
-        $query = \App\Models\Warehouse::where('is_active', true)
-            ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId));
-
-        // Priority 1: Same regency
-        $hub = (clone $query)->where('regency_id', $address->regency_id)
-            ->withCount(['stocks as products_count' => function ($q) {
-                $q->whereHas('product', function ($p) {
-                    $p->where('status', 'active');
-                });
-            }])
-            ->orderByDesc('products_count')
-            ->first();
-
-        // Priority 2: Same province
-        if (!$hub) {
-            $hub = (clone $query)->where('province_id', $address->province_id)
-                ->withCount(['stocks as products_count' => function ($q) {
-                    $q->whereHas('product', function ($p) {
-                        $p->where('status', 'active');
-                    });
-                }])
-                ->orderByDesc('products_count')
-                ->first();
-        }
-
-        // Priority 3: Any active hub (fallback)
-        if (!$hub) {
-            $hub = (clone $query)
-                ->withCount(['stocks as products_count' => function ($q) {
-                    $q->whereHas('product', function ($p) {
-                        $p->where('status', 'active');
-                    });
-                }])
-                ->orderByDesc('products_count')
-                ->first();
-        }
+        $hub = Warehouse::findBestHubForAddress($address, $excludeHubId);
 
         if ($hub) {
             session([
                 'selected_hub_id' => $hub->id,
                 'selected_hub_name' => $hub->name,
-                'selected_hub_slug' => $hub->slug
+                'selected_hub_slug' => $hub->slug,
             ]);
-            
+
             cookie()->queue('selected_hub_id', $hub->id, 60 * 24 * 30);
             cookie()->queue('selected_hub_name', $hub->name, 60 * 24 * 30);
             cookie()->queue('selected_hub_slug', $hub->slug, 60 * 24 * 30);
         }
 
         return $hub;
+    }
+
+    private function clearShoppingHubSession(): void
+    {
+        session()->forget([
+            'selected_shipping_address_id',
+            'selected_hub_id',
+            'selected_hub_name',
+            'selected_hub_slug',
+        ]);
+    }
+
+    private function syncShoppingAddressAfterChange(): void
+    {
+        $addresses = Auth::user()->addresses()->get();
+
+        if ($addresses->count() === 1) {
+            $this->applyAddressForShopping($addresses->first());
+        }
     }
 }
 

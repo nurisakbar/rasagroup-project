@@ -19,14 +19,25 @@
                     @if($order->order_type === 'distributor')
                         <span class="label label-warning pull-right">ORDER DISTRIBUTOR</span>
                     @endif
+                    @if($order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled())
                     <div class="pull-right" style="margin-right: 10px;">
                         <form action="{{ route('warehouse.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
                             @csrf
-                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QID / QAD" onclick="return confirm('Sinkronkan pesanan ini ke QID/QAD? Proses akan berjalan di background.')">
-                                <i class="fa fa-refresh"></i> Sinkron QID
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan sales order ke Jubelio" onclick="return confirm('Sinkronkan pesanan hub ini ke Jubelio? Proses akan berjalan di background.')">
+                                <i class="fa fa-refresh"></i> Sinkron Jubelio
                             </button>
                         </form>
                     </div>
+                    @elseif($order->shouldSyncToQad() && \App\Support\SalesOrderSyncDispatcher::isQadEnabled())
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <form action="{{ route('warehouse.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
+                            @csrf
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan sales order ke QAD" onclick="return confirm('Sinkronkan pesanan distributor ini ke QAD? Proses akan berjalan di background.')">
+                                <i class="fa fa-refresh"></i> Sinkron QAD
+                            </button>
+                        </form>
+                    </div>
+                    @endif
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
@@ -87,38 +98,21 @@
                 </div>
             </div>
 
-            <!-- QAD / QID Information -->
+            <!-- ERP: Jubelio (order hub/online) -->
+            @if($order->shouldSyncToJubelio() || $order->jubelio_salesorder_id)
             <div class="box box-success">
                 <div class="box-header">
-                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QID / QAD (ERP)</h3>
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi Jubelio (ERP Hub)</h3>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
                         <tr>
-                            <th width="30%">QAD Customer Code</th>
+                            <th width="30%">Jubelio Sales Order No.</th>
                             <td>
-                                @if($order->user->qad_customer_code)
-                                    <span class="label label-success" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
-                                @else
-                                    <span class="text-muted">Belum tersinkron</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>No. Sales Order QID</th>
-                            <td>
-                                @if($order->qid_sales_order_number)
-                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qid_sales_order_number }}</span>
-                                @else
-                                    <span class="text-muted">Belum tersinkron</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>QAD Sales Order No.</th>
-                            <td>
-                                @if($order->qad_so_number)
-                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @if($order->jubelio_salesorder_no)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->jubelio_salesorder_no }}</span>
+                                @elseif($order->jubelio_salesorder_id)
+                                    <span class="label label-info" style="font-size: 14px;">ID {{ $order->jubelio_salesorder_id }}</span>
                                 @else
                                     <span class="text-muted">Belum tersinkron</span>
                                 @endif
@@ -127,6 +121,50 @@
                     </table>
                 </div>
             </div>
+            @endif
+
+            <!-- ERP: QAD (order distributor/POS) -->
+            @if(($order->shouldSyncToQad() || $order->qad_so_number) && \App\Support\QadIntegration::isConfigured())
+            <div class="box box-warning">
+                <div class="box-header">
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QAD (ERP Distributor)</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">QAD Customer Code</th>
+                            <td>
+                                @if($order->user->qad_customer_code)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>No. Sales Order QID</th>
+                            <td>
+                                @if($order->qid_sales_order_number)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $order->qid_sales_order_number }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>QAD Sales Order No.</th>
+                            <td>
+                                @if($order->qad_so_number)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            @endif
 
             @php
                 $canWarehouseDebugPickup = $order->expedition
@@ -143,6 +181,7 @@
                         Menampilkan <strong>endpoint</strong>, <strong>payload</strong>, dan <strong>response</strong>.
                         Secara default hanya menyusun payload (dry run); centang untuk memanggil API sungguhan.
                     </p>
+                    @if(\App\Support\QadIntegration::isConfigured())
                     <div class="form-group" style="margin-bottom: 8px;">
                         <label class="checkbox-inline" style="font-weight: normal;">
                             <input type="checkbox" id="warehouseDebugQidExecute"> Jalankan POST create sales order ke QID
@@ -152,6 +191,7 @@
                         <i class="fa fa-code"></i> Debug Sales Order (QID)
                     </button>
                     <hr style="margin: 12px 0;">
+                    @endif
                     <div class="form-group" style="margin-bottom: 8px;">
                         <label class="checkbox-inline" style="font-weight: normal;">
                             <input type="checkbox" id="warehouseDebugPickupExecute" @if(!$canWarehouseDebugPickup) disabled @endif> Jalankan POST request pickup (EkspedisiKu)

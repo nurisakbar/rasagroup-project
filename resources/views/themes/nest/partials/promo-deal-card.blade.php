@@ -4,7 +4,7 @@
     $colClass = $colClass ?? 'col-xl-3 col-lg-4 col-md-6';
     $img = $promo->image_url ?? asset('themes/nest-frontend/assets/imgs/banner/banner-5.png');
     $detailUrl = route('promo.show', $promo->slug);
-    $harga = (float) $promo->harga;
+    $productCount = (int) ($promo->products_count ?? $promo->products?->count() ?? 0);
 @endphp
 <div class="{{ $colClass }}">
     <div class="product-cart-wrap style-2 position-relative wow animate__animated animate__fadeInUp" data-wow-delay="{{ $delay }}">
@@ -22,20 +22,17 @@
             <div class="deals-content">
                 <h2><a href="{{ $detailUrl }}" class="position-relative z-2">{{ $promo->judul_promo }}</a></h2>
                 <div class="product-rate-cover">
-                    <div class="product-rate d-inline-block">
-                        <div class="product-rating" style="width: 90%"></div>
-                    </div>
-                    <span class="font-small ml-5 text-muted"> (4.0)</span>
+                    <span class="font-small ml-5 text-muted">{{ $promo->awal->format('d M Y') }} – {{ $promo->akhir->format('d M Y') }}</span>
                 </div>
                 <div>
-                    <span class="font-small text-muted">By <a href="{{ route('promo.index') }}" class="position-relative z-2">Multi Citra Rasa</a></span>
+                    <span class="font-small text-muted">{{ $productCount }} produk dalam promo ini</span>
                 </div>
                 <div class="product-card-bottom">
                     <div class="product-price">
-                        <span>Rp {{ number_format($harga, 0, ',', '.') }}</span>
+                        <span class="font-small text-muted">Kode: {{ $promo->kode_promo }}</span>
                     </div>
                     <div class="add-cart">
-                        <a class="add position-relative z-2" href="{{ $detailUrl }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Tambah</a>
+                        <a class="add position-relative z-2" href="{{ $detailUrl }}" style="background-color: #3BB77E; color: #ffffff;"><i class="fi-rs-shopping-cart mr-5"></i>Lihat</a>
                     </div>
                 </div>
             </div>

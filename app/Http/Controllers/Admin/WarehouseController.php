@@ -3,79 +3,169 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Warehouse;
+use App\Models\Cart;
+use App\Models\OperationalHour;
 use App\Models\Product;
+use App\Models\RajaOngkirCity;
+use App\Models\RajaOngkirDistrict;
+use App\Models\RajaOngkirProvince;
 use App\Models\User;
+use App\Models\Village;
+use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Models\WarehouseStockHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
 use App\Services\EkspedisiKuService;
+use App\Services\JubelioStockSyncService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class WarehouseController extends Controller
 {
     /**
-     * Sync with QID API.
+     * Sync with QID API (QAD) — dinonaktifkan.
      */
     public function syncQid()
     {
-        set_time_limit(600); // 10 minutes to handle many hubs and stocks
-        try {
-            Log::info('Starting QID Hub & Stock Bulk Synchronization...');
-            
-            $response = Http::withHeaders([
-                'Accept' => 'text/plain',
-                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
-            ])->get('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/location');
+        return back()->with('error', 'Sinkronisasi Hub & Stock dengan QID/QAD dinonaktifkan.');
+    }
 
-            if ($response->successful()) {
-                $data = $response->json();
-                Log::info('QID API Response received', ['count' => count($data)]);
-                
-                // Debug log raw data first few items
-                Log::debug('QID Data Sample', ['data' => array_slice($data, 0, 3)]);
-                
-                $locations = isset($data['data']) ? $data['data'] : $data;
-                $synchronizedCount = 0;
-                
-                foreach ($locations as $index => $loc) {
-                    $kodeHub = $loc['location'] ?? $loc['locationID'] ?? $loc['locationid'] ?? null;
-                    $namaHub = $loc['description'] ?? $loc['locationName'] ?? $loc['locationname'] ?? null;
-                    
-                    if ($kodeHub && $namaHub) {
-                        $warehouse = Warehouse::updateOrCreate(
-                            ['kode_hub' => $kodeHub],
-                            [
-                                'name' => $namaHub,
-                                'slug' => Str::slug($namaHub) . '-' . strtolower($kodeHub),
-                                'description' => 'Synced from QID',
-                                'is_active' => true,
-                            ]
-                        );
-                        
-                        // Sekalian sinkronisasi stock untuk hub ini
-                        $this->refreshStockFromQid($warehouse);
-                        
-                        $synchronizedCount++;
-                    } else {
-                        Log::warning("Skipping location at index {$index} due to missing data", ['item' => $loc]);
-                    }
-                }
-                
-                Log::info("QID Synchronization finished. Total synced: {$synchronizedCount}");
-                return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} Hub dan Stock dari QID.");
-            }
+    /**
+     * Sync with Jubelio API.
+     */
+    public function syncJubelio()
+    {
+        set_time_limit(0);
+        try {
+            Log::info('Starting Jubelio Locations Synchronization...');
             
-            Log::error('QID API Failed', ['status' => $response->status(), 'body' => $response->body()]);
-            return back()->with('error', 'Gagal menghubungi server QID: ' . $response->status());
+            $email = env('JUBELIO_EMAIL');
+            $password = env('JUBELIO_PASSWORD');
+
+            if (!$email || !$password) {
+                return back()->with('error', 'Kredensial Jubelio tidak ditemukan di file .env');
+            }
+
+            // 1. Login to get Token
+            $loginResponse = Http::post('https://api2.jubelio.com/login', [
+                'email' => $email,
+                'password' => $password,
+            ]);
+
+            if (!$loginResponse->successful()) {
+                return back()->with('error', 'Gagal login ke Jubelio. Periksa kembali email dan password di .env');
+            }
+
+            $token = $loginResponse->json()['token'] ?? null;
+            if (!$token) {
+                return back()->with('error', 'Token Jubelio tidak ditemukan dalam response.');
+            }
+
+            // 2. Fetch all locations (paginated)
+            $this->ekspedisiku->getProvinces();
+
+            $locations = [];
+            $page = 1;
+            do {
+                $response = Http::withToken($token)
+                    ->get('https://api2.jubelio.com/locations/', [
+                        'page' => $page,
+                        'pageSize' => 200,
+                    ]);
+
+                if (!$response->successful()) {
+                    Log::error('Jubelio API Failed', ['status' => $response->status(), 'body' => $response->body()]);
+                    return back()->with('error', 'Gagal menghubungi server Jubelio: ' . $response->status());
+                }
+
+                $data = $response->json();
+                $batch = $data['data'] ?? [];
+                $locations = array_merge($locations, $batch);
+                $totalCount = (int) ($data['totalCount'] ?? count($locations));
+                $page++;
+            } while (count($locations) < $totalCount && count($batch) > 0);
+
+            Log::info('Jubelio Locations API Response received', ['count' => count($locations)]);
+
+            $synchronizedCount = 0;
+
+            foreach ($locations as $index => $loc) {
+                $locationCode = $loc['location_code'] ?? null;
+                $locationName = $loc['location_name'] ?? null;
+
+                if (!$locationCode || !$locationName) {
+                    Log::warning("Skipping location at index {$index} due to missing data", ['item' => $loc]);
+                    continue;
+                }
+
+                $regionIds = $this->ensureRajaOngkirRegionIds(
+                    $loc['province_id'] ?? null,
+                    $loc['city_id'] ?? null,
+                    $loc['district_id'] ?? null
+                );
+                $coords = $this->parseJubelioCoordinate($loc['coordinate'] ?? null);
+                $villageId = $this->resolveJubelioVillageId($loc['subdistrict_id'] ?? null);
+
+                $warehouse = Warehouse::updateOrCreate(
+                    ['kode_hub' => $locationCode],
+                    array_merge([
+                        'name' => $locationName,
+                        'slug' => Str::slug($locationName) . '-' . strtolower($locationCode),
+                        'address' => $loc['address'] ?? null,
+                        'postal_code' => $loc['post_code'] ?? null,
+                        'phone' => $loc['phone'] ?? null,
+                        'description' => 'Synced from Jubelio',
+                        'is_active' => (bool) ($loc['is_active'] ?? true),
+                        'village_id' => $villageId,
+                        'latitude' => $coords['latitude'],
+                        'longitude' => $coords['longitude'],
+                    ], $regionIds)
+                );
+                $warehouse->markSyncSource('jubelio')->save();
+
+                $synchronizedCount++;
+            }
+
+            Log::info("Jubelio Locations Synchronization finished. Total synced: {$synchronizedCount}");
+            return back()->with('success', "Berhasil mensinkronisasi {$synchronizedCount} Lokasi dari Jubelio.");
         } catch (\Exception $e) {
-            Log::error('QID Sync Exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Jubelio Sync Exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return back()->with('error', 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Sync warehouse stocks from Jubelio all-stocks API.
+     */
+    public function syncStockJubelio(JubelioStockSyncService $stockSync)
+    {
+        set_time_limit(0);
+
+        try {
+            Log::info('Starting Jubelio Stock Synchronization...');
+
+            $stats = $stockSync->sync();
+
+            return back()->with(
+                'success',
+                "Berhasil mensinkronisasi stok Jubelio: {$stats['stock_rows']} baris stok, "
+                . "{$stats['products']} produk. "
+                . "({$stats['skipped_products']} produk & {$stats['skipped_locations']} lokasi dilewati — belum ada di website/hub lokal)"
+            );
+        } catch (\Throwable $e) {
+            Log::error('Jubelio Stock Sync Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Gagal sinkronisasi stok Jubelio: ' . $e->getMessage());
+        }
+    }
+
     protected $ekspedisiku;
 
     public function __construct(EkspedisiKuService $ekspedisiku)
@@ -110,11 +200,15 @@ class WarehouseController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {
-                    $html = '<strong>' . $warehouse->name . '</strong>';
-                    if ($warehouse->kode_hub) {
-                        $html .= '<br><small class="text-muted">Kode: ' . $warehouse->kode_hub . '</small>';
-                    }
-                    return $html;
+                    return '<strong>' . e($warehouse->name) . '</strong>';
+                })
+                ->addColumn('kode_hub_display', function ($warehouse) {
+                    return $warehouse->kode_hub
+                        ? e($warehouse->kode_hub)
+                        : '<span class="text-muted">-</span>';
+                })
+                ->addColumn('sync_sources_info', function ($warehouse) {
+                    return $warehouse->syncSourceBadgesHtml();
                 })
                 ->addColumn('location_info', function ($warehouse) {
                     if ($warehouse->regency && $warehouse->province) {
@@ -151,7 +245,7 @@ class WarehouseController extends Controller
                         </a>
                     ';
                 })
-                ->rawColumns(['name_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
+                ->rawColumns(['name_info', 'kode_hub_display', 'sync_sources_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
                 ->make(true);
         }
 
@@ -232,11 +326,6 @@ class WarehouseController extends Controller
     public function show(Request $request, Warehouse $warehouse)
     {
         $warehouse->load(['province', 'regency', 'users']);
-        
-        // Sinkronisasi otomatis dari QID di balik layar jika ada kode_hub
-        if ($warehouse->kode_hub && !session('success') && !session('error')) {
-            $this->refreshStockFromQid($warehouse);
-        }
 
         // Get stocks with product information
         $query = WarehouseStock::with('product')
@@ -321,10 +410,47 @@ class WarehouseController extends Controller
     {
         // Delete all stocks first
         $warehouse->stocks()->delete();
+        $warehouse->operationalHours()->delete();
         $warehouse->delete();
 
         return redirect()->route('admin.warehouses.index')
             ->with('success', 'Warehouse berhasil dihapus.');
+    }
+
+    /**
+     * Hapus semua hub beserta seluruh data terkait — hanya untuk APP_ENV=local (testing).
+     */
+    public function destroyAll(Request $request)
+    {
+        abort_unless(app()->environment('local'), 403);
+
+        $request->validate([
+            'confirm' => 'required|in:HAPUS SEMUA',
+        ]);
+
+        $warehouseCount = Warehouse::count();
+
+        $deletedRelated = [];
+
+        DB::transaction(function () use (&$deletedRelated) {
+            $deletedRelated = [
+                'jadwal_operasional' => OperationalHour::query()
+                    ->where('operatable_type', Warehouse::class)
+                    ->delete(),
+                'staff_hub' => User::query()->where('role', User::ROLE_WAREHOUSE)->delete(),
+                'riwayat_stok' => WarehouseStockHistory::query()->delete(),
+                'stok_gudang' => WarehouseStock::query()->delete(),
+                'keranjang_hub' => Cart::query()->whereNotNull('warehouse_id')->delete(),
+                'hub' => Warehouse::query()->delete(),
+            ];
+        });
+
+        $summary = collect($deletedRelated)
+            ->map(fn ($count, $label) => "{$label}: {$count}")
+            ->implode(', ');
+
+        return redirect()->route('admin.warehouses.index')
+            ->with('success', "Data hub & relasinya dihapus ({$warehouseCount} hub). {$summary}");
     }
 
     /**
@@ -469,21 +595,11 @@ class WarehouseController extends Controller
     }
 
     /**
-     * Sinkronisasi stok QID secara manual (triggered by button)
+     * Sinkronisasi stok QID secara manual — dinonaktifkan.
      */
     public function syncStockQid(Warehouse $warehouse)
     {
-        if (!$warehouse->kode_hub) {
-            return back()->with('error', 'Hub ini tidak memiliki Kode Hub QID.');
-        }
-
-        $result = $this->refreshStockFromQid($warehouse);
-
-        if ($result['success']) {
-            return back()->with('success', "Berhasil mensinkronisasi " . $result['count'] . " item stok dari QID.");
-        }
-
-        return back()->with('error', "Gagal mensinkronisasi stok dari QID: " . $result['message']);
+        return back()->with('error', 'Sinkronisasi stok dengan QID/QAD dinonaktifkan.');
     }
 
     /**
@@ -510,89 +626,70 @@ class WarehouseController extends Controller
     }
 
     /**
-     * Sinkronisasi stok dari QID secara internal (di balik layar)
+     * Pastikan ID wilayah Jubelio ada di tabel Raja Ongkir sebelum disimpan ke warehouse.
      */
-    private function refreshStockFromQid(Warehouse $warehouse)
+    private function ensureRajaOngkirRegionIds($provinceId, $cityId, $districtId): array
     {
-        try {
-            $payload = [
-                'location' => $warehouse->kode_hub,
-                'search' => '',
-                'batch' => '',
-                'length' => 1000
-            ];
-            
-            Log::info("Auto Refreshing QID Stock for Hub: {$warehouse->name} ({$warehouse->kode_hub})", ['payload' => $payload]);
-            
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'text/plain',
-                'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIuem9obyIsImZ1bGxuYW1lIjoiVXNlciBab2hvIiwicm9sZW5hbWUiOiJVc2VyIiwicm9sZUlkIjoiZjA1MDg4ZDAtY2U1MC0xMWVmLWE3OWMtMmI0NTI1MzI5NDg2IiwiYXBwc0lkIjoiODY3NzA0NjAtY2ZkMy0xMWVlLWIwNDQtZDc0N2Y1NmEwZDM5IiwiZXhwaXJlZCI6IjIwMjctMDQtMDhUMjE6MzM6MjUuOTI5WiIsInN1cGVydXNlciI6ZmFsc2UsImNhbl9wb3N0aW5nIjpmYWxzZSwiY2FuX3N1Ym1pdCI6ZmFsc2UsImNhbl9hcHByb3ZlIjpmYWxzZSwiY2FuX2NhbmNlbCI6ZmFsc2UsImNhbl9wcmludCI6ZmFsc2UsImlhdCI6MTc3NTY2MzA1MywiZXhwIjoxODA3MjIwMDA1fQ.YPpZQWjpr_4Z9blgPodUPzJL1RYQ9zG84JPEawRGzVM'
-            ])->timeout(10)->post('https://development-qadwebapi.rasagroupoffice.com/api/master/inventory/all', $payload);
+        $result = [
+            'province_id' => null,
+            'regency_id' => null,
+            'district_id' => null,
+        ];
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $items = $data['data'] ?? [];
-                $processedCount = 0;
-                $skippedCount = 0;
-                $productNotFoundCount = 0;
-                
-                Log::debug("QID Response Meta", ['data_count' => count($items), 'first_item' => $items[0] ?? 'EMPTY']);
-                
-                if (count($items) > 0) {
-                    foreach ($items as $item) {
-                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-                        $qty = $item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0;
-                        
-                        if ($itemCode) {
-                            $product = Product::where('code', $itemCode)->first();
-                            if ($product) {
-                                WarehouseStock::updateOrCreate(
-                                    [
-                                        'warehouse_id' => $warehouse->id,
-                                        'product_id' => $product->id
-                                    ],
-                                    [
-                                        'stock' => $qty
-                                    ]
-                                );
-                                $processedCount++;
-                            } else {
-                                $productNotFoundCount++;
-                                if ($productNotFoundCount <= 10) {
-                                    Log::warning("Product not found in local DB for QID itemCode: {$itemCode}");
-                                }
-                            }
-                        } else {
-                            $skippedCount++;
-                        }
-                    }
-                    
-                    Log::info("Auto Refresh Success for Hub {$warehouse->kode_hub}", [
-                        'total_items_received' => count($items),
-                        'processed' => $processedCount,
-                        'product_not_found' => $productNotFoundCount,
-                        'skipped' => $skippedCount
-                    ]);
-                    
-                    return [
-                        'success' => true, 
-                        'count' => $processedCount, 
-                        'message' => "Berhasil memproses {$processedCount} item. (Ada {$productNotFoundCount} item dari QID yang kodenya tidak terdaftar di website)"
-                    ];
-                }
-                
-                Log::warning("No items found in QID response for Hub {$warehouse->kode_hub}. Raw response: " . substr($response->body(), 0, 500));
-                return ['success' => true, 'count' => 0, 'message' => 'QID mengembalikan 0 item untuk lokasi ini.'];
+        $provinceId = $provinceId !== null && $provinceId !== '' ? (string) $provinceId : null;
+        $cityId = $cityId !== null && $cityId !== '' ? (string) $cityId : null;
+        $districtId = $districtId !== null && $districtId !== '' ? (string) $districtId : null;
+
+        if ($provinceId) {
+            $this->ekspedisiku->getProvinces();
+            if (RajaOngkirProvince::where('id', $provinceId)->exists()) {
+                $result['province_id'] = $provinceId;
             }
-            
-            Log::error("QID API Error for Hub {$warehouse->kode_hub}", ['status' => $response->status(), 'body' => $response->body()]);
-            return ['success' => false, 'count' => 0, 'message' => 'Gagal menghubungi QID (Server Response: ' . $response->status() . ')'];
-        } catch (\Exception $e) {
-            Log::error("Auto Refresh Stock Exception for Hub {$warehouse->kode_hub}: " . $e->getMessage(), ['trace' => substr($e->getTraceAsString(), 0, 1000)]);
-            return ['success' => false, 'count' => 0, 'message' => 'Terjadi kesalahan teknis: ' . $e->getMessage()];
         }
+
+        if ($result['province_id'] && $cityId) {
+            $this->ekspedisiku->getRegencies($result['province_id']);
+            if (RajaOngkirCity::where('id', $cityId)->where('province_id', $result['province_id'])->exists()) {
+                $result['regency_id'] = $cityId;
+            }
+        }
+
+        if ($result['regency_id'] && $districtId) {
+            $this->ekspedisiku->getDistricts($result['regency_id']);
+            if (RajaOngkirDistrict::where('id', $districtId)->where('city_id', $result['regency_id'])->exists()) {
+                $result['district_id'] = $districtId;
+            }
+        }
+
+        return $result;
     }
+
+    private function resolveJubelioVillageId($subdistrictId): ?string
+    {
+        if ($subdistrictId === null || $subdistrictId === '') {
+            return null;
+        }
+
+        $subdistrictId = (string) $subdistrictId;
+
+        return Village::where('id', $subdistrictId)->exists() ? $subdistrictId : null;
+    }
+
+    /**
+     * Parse format Jubelio: "(-6.3167126,107.10949704999999)"
+     */
+    private function parseJubelioCoordinate(?string $coordinate): array
+    {
+        if (!$coordinate || !preg_match('/\(?\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)?/', $coordinate, $matches)) {
+            return ['latitude' => null, 'longitude' => null];
+        }
+
+        return [
+            'latitude' => (float) $matches[1],
+            'longitude' => (float) $matches[2],
+        ];
+    }
+
     /**
      * Debug EkspedisiKu API Connectivity
      */
@@ -630,48 +727,53 @@ class WarehouseController extends Controller
             ];
         }
 
-        // Test connectivity to QID API
-        $qidBaseUrl = config('qidapi.base_url');
-        $qidApi = app(\App\Services\QidApiService::class);
-        $qidToken = $qidApi->getToken();
-        
-        try {
-            $start = microtime(true);
-            $response = Http::timeout(5)->get($qidBaseUrl);
-            $end = microtime(true);
-            $results['tests']['qid_connectivity'] = [
-                'base_url' => $qidBaseUrl,
-                'status' => $response->status(),
-                'duration' => round($end - $start, 2) . 's',
-                'reachable' => true,
-                'token_valid' => !empty($qidToken),
-                'token_preview' => $qidToken ? substr($qidToken, 0, 15) . '...' : 'NONE'
-            ];
-            
-            if ($qidToken) {
-                // Test a simple master data endpoint
-                $itemStart = microtime(true);
-                $itemRes = Http::withToken($qidToken)->post("{$qidBaseUrl}/api/master/item/list", [
-                    'prodLine' => 'FG',
-                    'length' => 1
-                ]);
-                $itemEnd = microtime(true);
-                $results['tests']['qid_master_data'] = [
-                    'endpoint' => '/api/master/item/list',
-                    'status' => $itemRes->status(),
-                    'duration' => round($itemEnd - $itemStart, 2) . 's',
-                    'success' => $itemRes->successful(),
+        // Test connectivity to QID API (jika kredensial terisi)
+        if (\App\Support\QadIntegration::isConfigured()) {
+            $qidBaseUrl = config('qidapi.base_url');
+            $qidApi = app(\App\Services\QidApiService::class);
+            $qidToken = $qidApi->getToken();
+
+            try {
+                $start = microtime(true);
+                $response = Http::timeout(5)->get($qidBaseUrl);
+                $end = microtime(true);
+                $results['tests']['qid_connectivity'] = [
+                    'base_url' => $qidBaseUrl,
+                    'status' => $response->status(),
+                    'duration' => round($end - $start, 2) . 's',
+                    'reachable' => true,
+                    'token_valid' => ! empty($qidToken),
+                    'token_preview' => $qidToken ? substr($qidToken, 0, 15) . '...' : 'NONE',
+                ];
+
+                if ($qidToken) {
+                    $itemStart = microtime(true);
+                    $itemRes = Http::withToken($qidToken)->post("{$qidBaseUrl}/api/master/item/list", [
+                        'prodLine' => 'FG',
+                        'length' => 1,
+                    ]);
+                    $itemEnd = microtime(true);
+                    $results['tests']['qid_master_data'] = [
+                        'endpoint' => '/api/master/item/list',
+                        'status' => $itemRes->status(),
+                        'duration' => round($itemEnd - $itemStart, 2) . 's',
+                        'success' => $itemRes->successful(),
+                    ];
+                }
+            } catch (\Exception $e) {
+                $results['tests']['qid_connectivity'] = [
+                    'base_url' => $qidBaseUrl,
+                    'reachable' => false,
+                    'error' => $e->getMessage(),
                 ];
             }
-        } catch (\Exception $e) {
+        } else {
             $results['tests']['qid_connectivity'] = [
-                'base_url' => $qidBaseUrl,
-                'error' => $e->getMessage(),
-                'reachable' => false
+                'skipped' => true,
+                'reason' => 'QIDAPI belum dikonfigurasi (QIDAPI_* di .env)',
             ];
         }
 
-        // Server Environment Info
         $results['env'] = [
             'php_version' => PHP_VERSION,
             'server_ip' => $_SERVER['SERVER_ADDR'] ?? 'unknown',

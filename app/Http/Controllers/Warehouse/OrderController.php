@@ -278,14 +278,14 @@ class OrderController extends Controller
     {
         $this->authorizeWarehouseOrder($order);
 
-        $qad = app(\App\Services\QadService::class);
-        if (! $qad->isConfigured()) {
+        if (! \App\Support\QadIntegration::isConfigured()) {
             return response()->json([
                 'ok' => false,
                 'error' => 'QID API belum dikonfigurasi (QIDAPI_* di .env).',
             ], 422);
         }
 
+        $qad = app(\App\Services\QadService::class);
         $execute = $request->boolean('execute', false);
         $job = new \App\Jobs\SyncOrderToQad($order);
         $payload = $job->debugSalesOrderToQid($qad, $execute);
@@ -335,7 +335,7 @@ class OrderController extends Controller
         $this->authorizeWarehouseOrder($order);
 
         try {
-            \App\Jobs\SyncOrderToQad::dispatch($order);
+            \App\Support\SalesOrderSyncDispatcher::dispatch($order);
 
             return back()->with('success', 'Permintaan sinkronisasi telah dikirim ke sistem (antrian). Silakan refresh halaman dalam beberapa saat untuk melihat hasilnya.');
         } catch (\Exception $e) {
@@ -372,10 +372,10 @@ class OrderController extends Controller
             $order->refresh();
 
             if ($order->ekspedisiku_booking_status === 'success' && ($order->tracking_number || $order->ekspedisiku_shipment_id)) {
-                \App\Jobs\SyncOrderToQad::dispatch($order);
+                \App\Support\SalesOrderSyncDispatcher::dispatch($order);
                 $ref = $order->tracking_number ?: $order->ekspedisiku_shipment_id;
 
-                return back()->with('success', 'Booking berhasil! Referensi / resi: ' . $ref . '. Sinkronisasi QID dijadwalkan.');
+                return back()->with('success', 'Booking berhasil! Referensi / resi: ' . $ref . '. Sinkronisasi sales order dijadwalkan.');
             }
 
             return back()->with('error', 'Gagal membuat booking. Cek log EkspedisiKu / CreateShipmentBooking.');

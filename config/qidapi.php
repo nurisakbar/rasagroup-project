@@ -6,6 +6,7 @@ return [
     | QidApi Base URL
     |--------------------------------------------------------------------------
     | URL dasar dari QidApi. Contoh: https://development-qadwebapi.rasagroupoffice.com
+    | Order distributor/POS otomatis ke QAD jika kredensial di bawah terisi.
     */
     'base_url' => env('QIDAPI_BASE_URL', 'https://development-qadwebapi.rasagroupoffice.com'),
 

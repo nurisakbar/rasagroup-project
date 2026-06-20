@@ -25,6 +25,7 @@ class Warehouse extends Model
         'postal_code',
         'phone',
         'description',
+        'sync_sources',
         'province_id',
         'regency_id',
         'district_id',
@@ -36,6 +37,7 @@ class Warehouse extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'sync_sources' => 'array',
     ];
 
     public function getRouteKeyName()
@@ -111,6 +113,33 @@ class Warehouse extends Model
     public function getProductsCountAttribute(): int
     {
         return $this->stocks()->count();
+    }
+
+    public function markSyncSource(string $source): self
+    {
+        $sources = is_array($this->sync_sources) ? $this->sync_sources : [];
+
+        if (! in_array($source, $sources, true)) {
+            $sources[] = $source;
+            $this->sync_sources = $sources;
+        }
+
+        return $this;
+    }
+
+    public function syncSourceBadgesHtml(): string
+    {
+        $sources = is_array($this->sync_sources) ? $this->sync_sources : [];
+        $badges = [];
+
+        if (in_array('jubelio', $sources, true)) {
+            $badges[] = '<span class="label label-warning">Jubelio</span>';
+        }
+        if (in_array('qad', $sources, true)) {
+            $badges[] = '<span class="label label-primary">QAD</span>';
+        }
+
+        return $badges === [] ? '<span class="text-muted">-</span>' : implode(' ', $badges);
     }
 
     public function getFullLocationAttribute(): string

@@ -22,14 +22,25 @@
                     @else
                         <span class="label label-primary pull-right"><i class="fa fa-globe"></i> ONLINE</span>
                     @endif
+                    @if($order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled())
                     <div class="pull-right" style="margin-right: 10px;">
                         <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
                             @csrf
-                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan ke QAD" onclick="return confirm('Sinkronkan pesanan ini ke QAD? Proses akan berjalan di background.')">
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan sales order ke Jubelio" onclick="return confirm('Sinkronkan pesanan hub ini ke Jubelio? Proses akan berjalan di background.')">
+                                <i class="fa fa-refresh"></i> Sinkron Jubelio
+                            </button>
+                        </form>
+                    </div>
+                    @elseif($order->shouldSyncToQad() && \App\Support\SalesOrderSyncDispatcher::isQadEnabled())
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display: inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menunggu...';">
+                            @csrf
+                            <button type="submit" class="btn btn-xs btn-success" title="Sinkronkan sales order ke QAD" onclick="return confirm('Sinkronkan pesanan distributor ini ke QAD? Proses akan berjalan di background.')">
                                 <i class="fa fa-refresh"></i> Sinkron QAD
                             </button>
                         </form>
                     </div>
+                    @endif
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
@@ -99,28 +110,21 @@
                 </div>
             </div>
 
-            <!-- QAD Information -->
+            <!-- ERP: Jubelio (order hub/online) -->
+            @if($order->shouldSyncToJubelio() || $order->jubelio_salesorder_id)
             <div class="box box-success">
                 <div class="box-header">
-                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QAD (ERP)</h3>
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi Jubelio (ERP Hub)</h3>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
                         <tr>
-                            <th width="30%">QAD Customer Code</th>
+                            <th width="30%">Jubelio Sales Order No.</th>
                             <td>
-                                @if($order->user->qad_customer_code)
-                                    <span class="label label-success" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
-                                @else
-                                    <span class="text-muted">Belum tersinkron</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>QAD Sales Order No.</th>
-                            <td>
-                                @if($order->qad_so_number)
-                                    <span class="label label-success" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @if($order->jubelio_salesorder_no)
+                                    <span class="label label-success" style="font-size: 14px;">{{ $order->jubelio_salesorder_no }}</span>
+                                @elseif($order->jubelio_salesorder_id)
+                                    <span class="label label-info" style="font-size: 14px;">ID {{ $order->jubelio_salesorder_id }}</span>
                                 @else
                                     <span class="text-muted">Belum tersinkron</span>
                                 @endif
@@ -129,6 +133,48 @@
                     </table>
                 </div>
             </div>
+            @endif
+
+            <!-- ERP: QAD (order distributor/POS) -->
+            @if(($order->shouldSyncToQad() || $order->qad_so_number) && \App\Support\QadIntegration::isConfigured())
+            <div class="box box-warning">
+                <div class="box-header">
+                    <h3 class="box-title"><i class="fa fa-exchange"></i> Informasi QAD (ERP Distributor)</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">QAD Customer Code</th>
+                            <td>
+                                @if($order->user->qad_customer_code)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>QAD Sales Order No.</th>
+                            <td>
+                                @if($order->qad_so_number)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $order->qad_so_number }}</span>
+                                @else
+                                    <span class="text-muted">Belum tersinkron</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @if($order->qid_sales_order_number)
+                        <tr>
+                            <th>No. Sales Order QID</th>
+                            <td>
+                                <span class="label label-default" style="font-size: 14px;">{{ $order->qid_sales_order_number }}</span>
+                            </td>
+                        </tr>
+                        @endif
+                    </table>
+                </div>
+            </div>
+            @endif
 
             <!-- Shipping Information -->
             <div class="box box-info">

@@ -54,6 +54,34 @@ class Category extends Model
         return $query->where('is_active', true);
     }
 
+    /**
+     * Jumlah produk yang tampil di storefront (aktif, harga > 0, scope sync Jubelio+QAD).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeWithStorefrontProductsCount($query): void
+    {
+        $query->withCount([
+            'products as products_count' => function ($q) {
+                $q->where('status', 'active')->where('price', '>', 0);
+            },
+        ]);
+    }
+
+    /**
+     * Kategori aktif untuk sidebar / filter storefront.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, static>
+     */
+    public static function forStorefrontSidebar()
+    {
+        return static::query()
+            ->active()
+            ->withStorefrontProductsCount()
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getImageUrlAttribute(): ?string
     {
         if (!$this->image) {

@@ -25,7 +25,7 @@
                     <div class="card-header bg-white border-bottom p-30">
                         <div class="d-flex justify-content-between align-items-center">
                             <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Tambah Alamat Baru</h3>
-                            <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-rasa rounded-pill">
+                            <a href="{{ ($redirectToCheckout ?? false) ? route('checkout.index') : route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-rasa rounded-pill">
                                 <i class="fi-rs-arrow-left mr-5"></i> Kembali
                             </a>
                         </div>

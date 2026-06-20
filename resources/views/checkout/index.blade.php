@@ -129,13 +129,16 @@
                     <!-- Expedition Options -->
                     <div class="row mb-20" id="expeditionList">
                         @foreach($expeditions as $expedition)
+                            @php
+                                $isDefaultExpedition = $defaultExpedition && $expedition->id === $defaultExpedition->id;
+                            @endphp
                             <div class="col-md-4 col-6 mb-10">
-                                <div class="card-radio-btn expedition-card {{ $loop->first ? 'active' : '' }}" 
+                                <div class="card-radio-btn expedition-card {{ $isDefaultExpedition ? 'active' : '' }}" 
                                      data-expedition-id="{{ $expedition->id }}"
                                      onclick="selectExpedition('{{ $expedition->id }}')">
                                     <input type="radio" name="expedition_id" value="{{ $expedition->id }}" 
                                            id="exp{{ $expedition->id }}" class="d-none"
-                                           {{ $loop->first ? 'checked' : '' }}>
+                                           {{ $isDefaultExpedition ? 'checked' : '' }}>
                                     <div class="card-body text-center p-2">
                                         @if($expedition->logo)
                                             <img src="{{ asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
@@ -155,13 +158,16 @@
                         <div id="serviceList" class="row">
                             @if(!empty($allShippingServices))
                                 @foreach($allShippingServices as $index => $service)
+                                    @php
+                                        $isDefaultService = ($defaultService['code'] ?? null) === $service['code'];
+                                    @endphp
                                     <div class="col-md-6 mb-10">
-                                        <div class="card-radio-btn service-card {{ $index === 0 ? 'active' : '' }}"
+                                        <div class="card-radio-btn service-card {{ $isDefaultService ? 'active' : '' }}"
                                              data-service-code="{{ $service['code'] }}"
-                                             onclick="selectService('{{ $service['code'] }}')">
+                                             onclick="selectService(@json($service['code']))">
                                             <input type="radio" name="expedition_service" value="{{ $service['code'] }}" 
-                                                   id="service{{ $service['code'] }}" class="d-none"
-                                                   {{ $index === 0 ? 'checked' : '' }}>
+                                                   id="service-{{ $loop->index }}" class="d-none"
+                                                   {{ $isDefaultService ? 'checked' : '' }}>
                                             <div class="d-flex justify-content-between align-items-center p-3">
                                                 <div>
                                                     <h6 class="mb-0 text-dark">{{ $service['name'] }}</h6>
@@ -252,9 +258,9 @@
 
             <!-- Right Column - Order Summary -->
             <div class="col-lg-5">
-                <div class="border p-40 cart-totals ml-30 mb-50">
-                    <div class="d-flex align-items-end justify-content-between mb-30">
-                        <h4>Ringkasan Pesanan</h4>
+                <div class="border cart-totals checkout-order-summary rg-checkout-summary mb-50">
+                    <div class="d-flex align-items-end justify-content-between mb-30 rg-checkout-summary-header">
+                        <h4 class="mb-0">Ringkasan Pesanan</h4>
                     </div>
 
                     @if($affiliate)
@@ -269,26 +275,39 @@
 
                     <div class="divider-2 mb-30"></div>
                     
-                    <div class="order-items-scroll mb-30" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
-                        <div class="table-responsive order_table checkout">
-                            <table class="table no-border">
+                    <div class="order-items-scroll mb-30 rg-checkout-items-scroll" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                        <div class="table-responsive order_table checkout rg-checkout-items-wrap">
+                            <table class="table no-border rg-checkout-items-table">
                                 <tbody>
                                     @foreach($carts as $cart)
                                         @php
                                             $checkoutUser = Auth::user();
                                             $unitPrice = $checkoutUser->getProductPrice($cart->product);
                                             $retailUnit = (float) $cart->product->price;
+                                            $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit;
                                         @endphp
-                                        <tr>
-                                            <td class="image product-thumbnail"><img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="#" style="width: 50px; border-radius: 10px;"></td>
-                                            <td>
-                                                <h6 class="w-160 mb-5"><a href="{{ route('products.show', $cart->product) }}" class="text-heading">{{ Str::limit($cart->product->name . ($cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : ''), 30) }}</a></h6>
-                                                <div class="product-rate-cover">
-                                                    <span class="font-small text-muted">{{ $cart->quantity }} x @if($checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit)<span class="text-decoration-line-through me-5">Rp {{ number_format($retailUnit, 0, ',', '.') }}</span>@endif Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
+                                        <tr class="rg-checkout-item">
+                                            <td class="image product-thumbnail rg-checkout-item-thumb">
+                                                <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $cart->product->name }}">
+                                            </td>
+                                            <td class="rg-checkout-item-info">
+                                                <a href="{{ route('products.show', $cart->product) }}" class="rg-checkout-item-name text-heading">{{ $cart->product->name }}</a>
+                                                @if($cart->product->commercial_name)
+                                                    <p class="rg-checkout-item-variant">{{ $cart->product->commercial_name }}</p>
+                                                @endif
+                                                <div class="rg-checkout-item-meta">
+                                                    <span class="rg-checkout-item-qty">{{ $cart->quantity }} ×</span>
+                                                    <span class="rg-checkout-item-unit">
+                                                        @if($showRetailStrike)
+                                                            <span class="rg-checkout-item-unit-retail">Rp {{ number_format($retailUnit, 0, ',', '.') }}</span>
+                                                        @endif
+                                                        <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <h5 class="text-end text-brand">Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}</h5>
+                                            <td class="rg-checkout-item-price">
+                                                <span class="rg-checkout-item-price-label">Subtotal</span>
+                                                <strong class="rg-checkout-item-price-value text-brand">Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}</strong>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -299,10 +318,10 @@
                     
                     <div class="divider-2 mb-30"></div>
                     
-                    <div class="table-responsive order_table checkout">
-                        <table class="table no-border">
+                    <div class="table-responsive order_table checkout rg-checkout-totals-wrap">
+                        <table class="table no-border rg-checkout-totals-table">
                             <tbody>
-                                <tr id="distributorRetailRow" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
+                                <tr id="distributorRetailRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
                                     <td class="cart_total_label">
                                         <h6 class="text-muted">Subtotal katalog (referensi)</h6>
                                     </td>
@@ -310,7 +329,7 @@
                                         <h5 class="text-muted text-end" id="retailSubtotalDisplay">Rp {{ number_format($retailSubtotal ?? $subtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
-                                <tr id="distributorDiscountRow" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
+                                <tr id="distributorDiscountRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
                                     <td class="cart_total_label">
                                         <h6 class="text-muted mb-0">Potongan distributor <span id="distributorLevelLabel">@if(!empty($priceLevelName))({{ $priceLevelName }})@endif</span></h6>
                                     </td>
@@ -318,15 +337,15 @@
                                         <h5 class="text-danger text-end" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount ?? 0, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="rg-checkout-total-row">
                                     <td class="cart_total_label">
-                                        <h6 class="text-muted">Subtotal</h6>
+                                        <h6 class="text-muted mb-0">Subtotal</h6>
                                     </td>
                                     <td class="cart_total_amount">
                                         <h5 class="text-brand text-end" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
-                                <tr id="discountRow" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
+                                <tr id="discountRow" class="rg-checkout-total-row" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
                                     <td class="cart_total_label">
                                         <h6 class="text-muted">Potongan Harga (<span id="discountPercentDisplay">{{ $discountPercent }}</span>%)</h6>
                                     </td>
@@ -334,13 +353,13 @@
                                         <h5 class="text-danger text-end" id="discountAmountDisplay">-Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="rg-checkout-total-row rg-checkout-shipping-row">
                                     <td class="cart_total_label">
-                                        <h6 class="text-muted">Ongkos Kirim</h6>
-                                        <small class="text-muted d-block" id="expeditionInfo">{{ $defaultExpedition?->name ?? '-' }} - {{ $defaultService['name'] ?? 'Reguler' }}</small>
+                                        <h6 class="text-muted mb-0">Ongkos Kirim</h6>
+                                        <small class="text-muted d-block rg-checkout-expedition-info" id="expeditionInfo">{{ $defaultExpedition?->name ?? '-' }} - {{ $defaultService['name'] ?? 'Reguler' }}</small>
                                     </td>
                                     <td class="cart_total_amount">
-                                        <div class="d-flex flex-wrap justify-content-end align-items-baseline gap-3">
+                                        <div class="d-flex flex-wrap justify-content-end align-items-baseline gap-3 rg-checkout-shipping-amounts">
                                             <h5 class="text-brand text-end mb-0" id="shippingCostDisplay">
                                                 @if($shippingCost > 0)
                                                     Rp {{ number_format($shippingCost, 0, ',', '.') }}
@@ -357,12 +376,12 @@
                                         </small>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="rg-checkout-divider-row">
                                     <td scope="col" colspan="2">
                                         <div class="divider-2 mt-10 mb-10"></div>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="rg-checkout-total-row rg-checkout-total-final">
                                     <td class="cart_total_label">
                                         <h4 class="text-brand">Total</h4>
                                     </td>
@@ -374,34 +393,33 @@
                         </table>
                     </div>
                     
-                    <div class="bt-1 border-color-1 mt-30 mb-30"></div>
-                    
-                    <!-- Source Info -->
-                    <div class="payment_method mb-30">
-                         <div class="payment_accordion">
-                             <div class="payment-content" style="display: block;">
-                                 <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong id="sourceWarehouseName">{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
-                                 <p class="font-xs text-muted" id="sourceWarehouseLocation">{{ $sourceWarehouse->full_location ?? '' }}</p>
+                    <div class="rg-checkout-meta-wrap">
+                        <div class="payment_method mb-15 rg-checkout-meta-card">
+                             <div class="payment_accordion">
+                                 <div class="payment-content" style="display: block;">
+                                     <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong id="sourceWarehouseName">{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
+                                     <p class="font-xs text-muted mb-0" id="sourceWarehouseLocation">{{ $sourceWarehouse->full_location ?? '' }}</p>
+                                 </div>
                              </div>
-                         </div>
-                    </div>
-                    
-                    <div class="payment_method mb-30">
-                        <div class="payment_accordion">
-                            <div class="payment-content" style="display: block;">
-                                <p class="font-sm mb-0"><i class="fi-rs-marker mr-5"></i> Dikirim ke:</p>
-                                @if($defaultAddress)
-                                    <p class="font-sm font-weight-bold mb-0 text-dark" id="shippingRecipient">{{ $defaultAddress->recipient_name }}</p>
-                                    <p class="font-xs text-muted" id="shippingAddress">{{ Str::limit($defaultAddress->full_address, 60) }}</p>
-                                @else
-                                    <p class="font-sm text-danger" id="shippingRecipient">Pilih alamat pengiriman</p>
-                                    <p class="font-xs text-muted" id="shippingAddress"></p>
-                                @endif
+                        </div>
+                        
+                        <div class="payment_method mb-0 rg-checkout-meta-card">
+                            <div class="payment_accordion">
+                                <div class="payment-content" style="display: block;">
+                                    <p class="font-sm mb-0"><i class="fi-rs-marker mr-5"></i> Dikirim ke:</p>
+                                    @if($defaultAddress)
+                                        <p class="font-sm font-weight-bold mb-0 text-dark" id="shippingRecipient">{{ $defaultAddress->recipient_name }}</p>
+                                        <p class="font-xs text-muted mb-0" id="shippingAddress">{{ Str::limit($defaultAddress->full_address, 60) }}</p>
+                                    @else
+                                        <p class="font-sm text-danger mb-0" id="shippingRecipient">Pilih alamat pengiriman</p>
+                                        <p class="font-xs text-muted mb-0" id="shippingAddress"></p>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                   </div>
+                    </div>
                     
-                    <button type="submit" class="btn btn-fill-out btn-block mt-30" id="submitBtn" {{ $addresses->isEmpty() ? 'disabled' : '' }}>
+                    <button type="submit" class="btn btn-fill-out btn-block mt-30 rg-checkout-submit-btn" id="submitBtn" {{ $addresses->isEmpty() ? 'disabled' : '' }}>
                         Proses Pesanan <i class="fi-rs-sign-out ml-15"></i>
                     </button>
                     
@@ -539,6 +557,323 @@
         color: #ffffff !important;
         transform: translateY(-2px);
     }
+
+    /* Desktop: offset ringkasan ke kanan */
+    .checkout-page .checkout-order-summary {
+        margin-left: 30px;
+        padding: 30px 40px;
+    }
+
+    .checkout-page .rg-checkout-item-thumb img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 10px;
+        display: block;
+    }
+
+    .checkout-page .rg-checkout-item-name {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        color: #253D4E;
+        text-decoration: none;
+        line-height: 1.35;
+        margin-bottom: 4px;
+    }
+
+    .checkout-page .rg-checkout-item-name:hover {
+        color: #6A1B1B;
+    }
+
+    .checkout-page .rg-checkout-item-variant {
+        font-size: 12px;
+        color: #7E7E7E;
+        line-height: 1.3;
+        margin: 0 0 8px;
+    }
+
+    .checkout-page .rg-checkout-item-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 6px;
+        font-size: 13px;
+    }
+
+    .checkout-page .rg-checkout-item-qty {
+        font-weight: 700;
+        color: #253D4E;
+    }
+
+    .checkout-page .rg-checkout-item-unit {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px;
+        color: #5f6b7a;
+    }
+
+    .checkout-page .rg-checkout-item-unit-retail {
+        text-decoration: line-through;
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    .checkout-page .rg-checkout-item-unit-price {
+        font-weight: 600;
+        color: #5f6b7a;
+    }
+
+    .checkout-page .rg-checkout-item-price {
+        text-align: right;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .checkout-page .rg-checkout-item-price-label {
+        display: none;
+    }
+
+    .checkout-page .rg-checkout-item-price-value {
+        display: block;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .checkout-page .rg-checkout-items-table .rg-checkout-item-info {
+        vertical-align: middle;
+        padding-right: 12px !important;
+    }
+
+    /* Mobile: ringkasan pesanan */
+    @media (max-width: 991.98px) {
+        .checkout-page .checkout-order-summary.rg-checkout-summary {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            margin-top: 8px;
+            padding: 20px 16px 24px !important;
+            text-align: left !important;
+            background: #fff;
+            border: 1px solid #edf2f7 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 18px rgba(37, 61, 78, 0.06);
+        }
+
+        .checkout-page .rg-checkout-summary-header h4 {
+            font-size: 1.15rem;
+        }
+
+        .checkout-page .rg-checkout-items-scroll {
+            max-height: none !important;
+            overflow: visible !important;
+            padding-right: 0 !important;
+            margin-bottom: 20px !important;
+        }
+
+        .checkout-page .rg-checkout-items-wrap,
+        .checkout-page .rg-checkout-items-table,
+        .checkout-page .rg-checkout-items-table tbody {
+            display: block;
+            width: 100%;
+        }
+
+        .checkout-page .rg-checkout-item {
+            display: grid !important;
+            grid-template-columns: 60px 1fr minmax(92px, auto);
+            grid-template-areas: "thumb info price";
+            gap: 12px;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .checkout-page .rg-checkout-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-page .rg-checkout-item > td {
+            display: block;
+            border: none !important;
+            padding: 0 !important;
+        }
+
+        .checkout-page .rg-checkout-item-thumb {
+            grid-area: thumb;
+            align-self: start;
+        }
+
+        .checkout-page .rg-checkout-item-thumb img {
+            width: 60px !important;
+            height: 60px;
+            border-radius: 12px !important;
+        }
+
+        .checkout-page .rg-checkout-item-info {
+            grid-area: info;
+            min-width: 0;
+            padding-right: 0 !important;
+        }
+
+        .checkout-page .rg-checkout-item-name {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 14px !important;
+            line-height: 1.4;
+            margin-bottom: 2px !important;
+        }
+
+        .checkout-page .rg-checkout-item-variant {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 11px !important;
+            margin-bottom: 6px !important;
+        }
+
+        .checkout-page .rg-checkout-item-meta {
+            margin-top: 2px;
+        }
+
+        .checkout-page .rg-checkout-item-qty {
+            font-size: 13px;
+        }
+
+        .checkout-page .rg-checkout-item-unit-price {
+            font-size: 13px;
+        }
+
+        .checkout-page .rg-checkout-item-price {
+            grid-area: price;
+            align-self: center;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .checkout-page .rg-checkout-item-price-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .checkout-page .rg-checkout-item-price-value {
+            font-size: 15px !important;
+        }
+
+        .checkout-page .rg-checkout-totals-wrap,
+        .checkout-page .rg-checkout-totals-table,
+        .checkout-page .rg-checkout-totals-table tbody {
+            display: block;
+            width: 100%;
+        }
+
+        .checkout-page .rg-checkout-totals-table tr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        .checkout-page .rg-checkout-totals-table tr.rg-checkout-divider-row {
+            display: block;
+            padding: 0;
+        }
+
+        .checkout-page .rg-checkout-totals-table tr > td {
+            display: block;
+            border: none !important;
+            padding: 0 !important;
+        }
+
+        .checkout-page .rg-checkout-totals-table .cart_total_label {
+            flex: 1 1 auto;
+            min-width: 0;
+            text-align: left !important;
+        }
+
+        .checkout-page .rg-checkout-totals-table .cart_total_label h6,
+        .checkout-page .rg-checkout-totals-table .cart_total_label h4 {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .checkout-page .rg-checkout-totals-table .cart_total_amount {
+            flex: 0 0 auto;
+            text-align: right !important;
+            max-width: 48%;
+        }
+
+        .checkout-page .rg-checkout-totals-table .cart_total_amount h5,
+        .checkout-page .rg-checkout-totals-table .cart_total_amount h4 {
+            font-size: 14px !important;
+            text-align: right !important;
+            margin-bottom: 0;
+        }
+
+        .checkout-page .rg-checkout-shipping-row {
+            align-items: flex-start;
+        }
+
+        .checkout-page .rg-checkout-expedition-info {
+            margin-top: 4px;
+            line-height: 1.35;
+            font-size: 11px !important;
+        }
+
+        .checkout-page .rg-checkout-shipping-amounts {
+            flex-direction: column;
+            align-items: flex-end !important;
+            gap: 4px !important;
+        }
+
+        .checkout-page .rg-checkout-total-final {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 14px 12px !important;
+            margin-top: 4px;
+        }
+
+        .checkout-page .rg-checkout-total-final .cart_total_label h4,
+        .checkout-page .rg-checkout-total-final .cart_total_amount h4 {
+            font-size: 18px !important;
+            font-weight: 700;
+        }
+
+        .checkout-page .rg-checkout-meta-wrap {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .checkout-page .rg-checkout-meta-card {
+            background: #f8fafc;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px !important;
+        }
+
+        .checkout-page .rg-checkout-meta-card .payment-content {
+            padding: 0 !important;
+        }
+
+        .checkout-page .rg-checkout-submit-btn {
+            width: 100%;
+            margin-top: 20px !important;
+        }
+    }
 </style>
 @endsection
 
@@ -547,7 +882,41 @@
     window.checkoutTotalWithoutShipping = {{ (float) ($subtotal - $discountAmount) }};
     var currentAddressId = '{{ $defaultAddress?->id ?? '' }}';
     var currentExpeditionId = '{{ $defaultExpedition?->id ?? '' }}';
-    var currentServiceCode = '{{ $defaultService["code"] ?? "" }}';
+    var currentServiceCode = @json($defaultService['code'] ?? null);
+    var servicesLoading = false;
+
+    function syncCheckoutShippingStateFromForm() {
+        var checkedExpedition = $('input[name="expedition_id"]:checked').val();
+        var checkedService = $('#serviceList input[name="expedition_service"]:checked').val();
+
+        if (checkedExpedition) {
+            currentExpeditionId = String(checkedExpedition);
+        }
+        if (checkedService) {
+            currentServiceCode = String(checkedService);
+        }
+    }
+
+    function setServiceRadioChecked(serviceCode) {
+        $('#serviceList input[name="expedition_service"]').prop('checked', false);
+        $('#serviceList input[name="expedition_service"]').each(function() {
+            if (String($(this).val()) === String(serviceCode)) {
+                $(this).prop('checked', true);
+            }
+        });
+    }
+
+    function setSubmitEnabled(enabled) {
+        var btn = $('#submitBtn');
+        if (!btn.length) {
+            return;
+        }
+        if (enabled && currentAddressId && currentExpeditionId && currentServiceCode && !servicesLoading) {
+            btn.prop('disabled', false);
+        } else if (servicesLoading) {
+            btn.prop('disabled', true);
+        }
+    }
     
     function selectAddress(addressId) {
         currentAddressId = addressId;
@@ -578,9 +947,20 @@
     }
     
     function selectExpedition(expeditionId) {
+        if (!currentAddressId) {
+            alert('Silakan pilih alamat pengiriman terlebih dahulu');
+            return;
+        }
+
+        if (expeditionId === currentExpeditionId && $('#serviceList input[name="expedition_service"]').length > 0) {
+            return;
+        }
+
         currentExpeditionId = expeditionId;
+        currentServiceCode = '';
         
         // Update radio button
+        $('input[name="expedition_id"]').prop('checked', false);
         $('#exp' + expeditionId).prop('checked', true);
         
         // Update styling
@@ -593,11 +973,14 @@
     
     function loadExpeditionServices(expeditionId) {
         if (!currentAddressId) {
-            alert("Silakan pilih alamat pengiriman terlebih dahulu");
+            alert('Silakan pilih alamat pengiriman terlebih dahulu');
             return;
         }
     
         var serviceList = $('#serviceList');
+        servicesLoading = true;
+        setSubmitEnabled(false);
+        currentServiceCode = '';
         serviceList.html('<div class="col-12"><div class="text-center py-3"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Loading...</span></div> Memuat layanan...</div></div>');
     
         $.ajax({
@@ -610,6 +993,8 @@
             success: function(data) {
                 if (data.error) {
                     serviceList.html('<div class="col-12"><div class="alert alert-danger">' + data.error + '</div></div>');
+                    servicesLoading = false;
+                    setSubmitEnabled(false);
                     return;
                 }
                 
@@ -617,22 +1002,24 @@
                 
                 if (data.services.length === 0) {
                     serviceList.html('<div class="col-12"><div class="alert alert-warning py-2 small"><i class="fi-rs-info"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>');
+                    servicesLoading = false;
+                    setSubmitEnabled(false);
                     return;
                 }
     
                 data.services.forEach(function(service, index) {
                     var isSelected = index === 0;
                     if (isSelected) {
-                        currentServiceCode = service.code;
+                        currentServiceCode = String(service.code);
                     }
                     
                     var serviceHtml = `
                         <div class="col-md-6 mb-10">
                             <div class="card-radio-btn service-card ${isSelected ? 'active' : ''}"
                                  data-service-code="${service.code}"
-                                 onclick="selectService('${service.code}')">
+                                 onclick="selectService(${JSON.stringify(service.code)})">
                                 <input type="radio" name="expedition_service" value="${service.code}" 
-                                       id="service${service.code}" class="d-none"
+                                       class="d-none"
                                        ${isSelected ? 'checked' : ''}>
                                 <div class="d-flex justify-content-between align-items-center p-3">
                                     <div>
@@ -661,23 +1048,29 @@
                     $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID')); // Subtotal − potongan tier (tanpa ongkir)
                     $('#estimatedDelivery').text('-');
                 }
+
+                servicesLoading = false;
+                setSubmitEnabled(true);
             },
             error: function(xhr) {
                 console.error('Error:', xhr);
                 serviceList.html('<div class="col-12"><div class="alert alert-danger">Gagal memuat layanan pengiriman</div></div>');
+                servicesLoading = false;
+                setSubmitEnabled(false);
             }
         });
     }
     
     function selectService(serviceCode) {
-        currentServiceCode = serviceCode;
+        currentServiceCode = String(serviceCode);
         
-        // Update radio button
-        $('#service' + serviceCode).prop('checked', true);
+        setServiceRadioChecked(serviceCode);
         
         // Update styling
         $('.service-card').removeClass('active');
-        $('[data-service-code="' + serviceCode + '"]').addClass('active');
+        $('#serviceList .service-card').filter(function() {
+            return String($(this).data('service-code')) === String(serviceCode);
+        }).addClass('active');
         
         // Update shipping cost
         updateShipping();
@@ -819,5 +1212,29 @@
              $('#' + cardId).addClass('active');
         }
     }
+
+    $('#checkoutForm').on('submit', function(e) {
+        if (servicesLoading) {
+            e.preventDefault();
+            alert('Mohon tunggu, layanan pengiriman sedang dimuat.');
+            return false;
+        }
+
+        syncCheckoutShippingStateFromForm();
+
+        var checkedExpedition = $('input[name="expedition_id"]:checked').val();
+        var checkedService = $('#serviceList input[name="expedition_service"]:checked').val();
+
+        if (!checkedExpedition || !checkedService) {
+            e.preventDefault();
+            alert('Silakan pilih ekspedisi dan layanan pengiriman.');
+            return false;
+        }
+    });
+
+    $(function() {
+        syncCheckoutShippingStateFromForm();
+        setSubmitEnabled(true);
+    });
 </script>
 @endpush

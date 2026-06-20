@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,9 @@ class ProductController extends Controller
         Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
 
-        $query = Product::with(['category', 'brand', 'warehouseStocks'])->where('status', 'active');
+        $query = Product::with(['category', 'brand', 'warehouseStocks'])
+            ->where('status', 'active')
+            ->withBuyerPrice();
 
         if ($selectedHubId) {
             $query->with(['warehouseStocks' => function ($q) use ($selectedHubId) {
@@ -86,6 +89,9 @@ class ProductController extends Controller
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage)->withQueryString();
         $brands = \App\Models\Brand::where('is_active', true)->get();
+        $selectedBrand = $request->filled('brand')
+            ? \App\Models\Brand::where('slug', $request->brand)->where('is_active', true)->first()
+            : null;
 
         // Get current cart items to show qty selector in grid if already added
         $cartItemMap = [];
@@ -104,12 +110,13 @@ class ProductController extends Controller
             }
         }
 
-        return view('products.index', compact('products', 'selectedHubId', 'brands', 'cartItemMap'));
+        return view('products.index', compact('products', 'selectedHubId', 'brands', 'cartItemMap', 'selectedBrand'));
     }
 
     public function show(Request $request, $identifier)
     {
-        $product = Product::where('slug', $identifier)
+        $product = Product::with(['brand', 'category'])
+            ->where('slug', $identifier)
             ->orWhere('id', $identifier)
             ->firstOrFail();
 
@@ -118,7 +125,7 @@ class ProductController extends Controller
             return redirect()->route('products.show', $product->slug);
         }
 
-        if ($product->status !== 'active') {
+        if ($product->status !== 'active' || (float) $product->price <= 0) {
             abort(404);
         }
 
@@ -135,6 +142,7 @@ class ProductController extends Controller
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
+            ->withBuyerPrice()
             ->take(3)
             ->get();
 
@@ -144,6 +152,7 @@ class ProductController extends Controller
                 ->where('id', '!=', $product->id)
                 ->where('category_id', '!=', $product->category_id)
                 ->where('status', 'active')
+                ->withBuyerPrice()
                 ->take(3 - $relatedProducts->count())
                 ->get();
             $relatedProducts = $relatedProducts->merge($moreRelated);
@@ -171,7 +180,16 @@ class ProductController extends Controller
             ]
         ];
         
-        return view('products.show', compact('product', 'selectedHubId', 'selectedWarehouseId', 'relatedProducts', 'dummyReviews'));
+        $sidebarCategories = Category::forStorefrontSidebar();
+
+        return view('products.show', compact(
+            'product',
+            'selectedHubId',
+            'selectedWarehouseId',
+            'relatedProducts',
+            'dummyReviews',
+            'sidebarCategories',
+        ));
     }
 
     public function quickView($identifier)
@@ -179,6 +197,10 @@ class ProductController extends Controller
         $product = Product::where('slug', $identifier)
             ->orWhere('id', $identifier)
             ->firstOrFail();
+
+        if ((float) $product->price <= 0) {
+            abort(404);
+        }
             
         Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
@@ -194,6 +216,7 @@ class ProductController extends Controller
         $like = '%' . addcslashes($keyword, '%_\\') . '%';
 
         $products = Product::where('status', 'active')
+            ->withBuyerPrice()
             ->where(function ($q) use ($like) {
                 $q->where('name', 'like', $like)
                     ->orWhere('commercial_name', 'like', $like)

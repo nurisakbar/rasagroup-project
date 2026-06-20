@@ -17,12 +17,17 @@
                 <div class="box-header">
                     <h3 class="box-title">Daftar Hub</h3>
                     <div class="box-tools" style="display: flex; gap: 5px;">
-                        <form action="{{ route('admin.warehouses.sync-qid') }}" method="POST" id="sync-qid-form">
-                            @csrf
-                            <button type="button" class="btn btn-info btn-sm" onclick="confirmSyncQid()">
-                                <i class="fa fa-refresh"></i> Sinkronisasi Hub & Stock
+                        @include('admin.partials.sync-qad-jubelio')
+                        @if(app()->environment('local'))
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllWarehouses()" title="Hanya tersedia di APP_ENV=local">
+                                <i class="fa fa-trash"></i> Hapus Semua
                             </button>
-                        </form>
+                            <form id="delete-all-warehouses-form" action="{{ route('admin.warehouses.destroy-all') }}" method="POST" style="display: none;">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="confirm" id="delete-all-warehouses-confirm-input" value="">
+                            </form>
+                        @endif
                     </div>
                 </div>
                 <!-- Filter -->
@@ -66,6 +71,8 @@
                             <tr>
                                 <th width="5%">No</th>
                                 <th>Nama Hub</th>
+                                <th>Kode Hub</th>
+                                <th>Sumber</th>
                                 <th>Lokasi</th>
                                 <th>Telepon</th>
                                 <th>Jenis Produk</th>
@@ -83,21 +90,7 @@
             <!-- /.box -->
         </div>
     </div>
-    
-    <!-- Sync Loading Modal -->
-    <div class="modal fade" id="syncModal" tabindex="-1" role="dialog" aria-labelledby="syncModalLabel" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-sm" role="document" style="top: 25%;">
-            <div class="modal-content text-center" style="border-radius: 10px; padding: 20px;">
-                <div class="modal-body">
-                    <div style="margin-bottom: 20px;">
-                        <i class="fa fa-refresh fa-spin fa-3x text-info"></i>
-                    </div>
-                    <h4 style="font-weight: 600;">Sinkronisasi Sedang Berjalan</h4>
-                    <p class="text-muted">Harap tunggu, sistem sedang mengambil data Hub dan Stock dari QID untuk seluruh lokasi. Proses ini mungkin memakan waktu beberapa menit.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+
 @endsection
 
 @push('scripts')
@@ -117,6 +110,8 @@ $(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'name_info', name: 'name' },
+            { data: 'kode_hub_display', name: 'kode_hub' },
+            { data: 'sync_sources_info', name: 'sync_sources', orderable: false, searchable: false },
             { data: 'location_info', name: 'location', orderable: false, searchable: false },
             { data: 'phone_display', name: 'phone', orderable: false },
             { data: 'products_info', name: 'products_count', orderable: false, searchable: false },
@@ -186,22 +181,17 @@ $(function() {
 
 });
 
-function confirmSyncQid() {
-    swal({
-        title: "Konfirmasi Sinkronisasi",
-        text: "Apakah Anda yakin ingin mensinkronisasi data Hub dan Stock dari QID? Proses ini akan memperbarui data seluruh hub beserta stok produknya langsung dari server QID.",
-        type: "info",
-        showCancelButton: true,
-        confirmButtonColor: "#3c8dbc",
-        confirmButtonText: "Ya, Sinkronkan!",
-        cancelButtonText: "Batal",
-        closeOnConfirm: true
-    }, function() {
-        $('#syncModal').modal('show');
-        setTimeout(function() {
-            document.getElementById('sync-qid-form').submit();
-        }, 500);
-    });
+function confirmDeleteAllWarehouses() {
+    if (!confirm('PERINGATAN: Semua hub dan data terkait akan dihapus permanen:\n- Stok gudang & riwayat stok\n- Keranjang terkait hub\n- Jadwal operasional hub\n- Akun staff hub (role warehouse)\n\nHub distributor akan kehilangan referensi hub (warehouse_id di-reset).\n\nLanjutkan?')) {
+        return;
+    }
+    var typed = prompt('Ketik HAPUS SEMUA untuk konfirmasi:');
+    if (typed !== 'HAPUS SEMUA') {
+        alert('Konfirmasi dibatalkan.');
+        return;
+    }
+    document.getElementById('delete-all-warehouses-confirm-input').value = typed;
+    document.getElementById('delete-all-warehouses-form').submit();
 }
 </script>
 @endpush

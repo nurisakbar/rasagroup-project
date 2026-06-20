@@ -31,6 +31,15 @@ class QadWhatsAppService
      */
     public function sendText(string $phone, string $message): array
     {
+        if (! \App\Support\QadIntegration::isConfigured()) {
+            Log::info('QadWhatsAppService: skipped (QID API belum dikonfigurasi)');
+
+            return [
+                'success' => false,
+                'message' => 'QID API belum dikonfigurasi',
+            ];
+        }
+
         $baseUrl = rtrim(config('qidapi.base_url', 'https://development-qadwebapi.rasagroupoffice.com'), '/');
         $endpoint = '/api/system/notification/send-text';
         $url = $baseUrl . $endpoint;
