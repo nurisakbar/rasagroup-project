@@ -168,11 +168,11 @@ class CheckoutController extends Controller
             'courier' => $defaultExpedition->code,
         ]);
         
-        $costResult = $this->fetchShippingRates(
-            $sourceWarehouse->district_id,
-            $defaultAddress->district_id,
-            $totalWeight,
-            $defaultExpedition->code
+        $costResult = $this->resolveShippingCost(
+            $defaultExpedition,
+            $sourceWarehouse,
+            $defaultAddress,
+            $totalWeight
         );
 
         \Log::info('Shipping Response:', [
@@ -205,7 +205,7 @@ class CheckoutController extends Controller
                         'name' => $service['description'],
                         'cost' => $service['cost'],
                         'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
-                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari'
+                        'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $firstExpCode)
                     ];
                     $allShippingServices[] = $item;
                     
@@ -325,12 +325,11 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Ekspedisi tidak ditemukan atau tidak tersedia'], 400);
         }
 
-        $shipping = $this->resolveShippingCost(
-            $sourceWarehouse,
-            $address->district_id,
-            $totalWeight,
+        $costResult = $this->resolveShippingCost(
             $expedition,
-            (string) $request->service_code
+            $sourceWarehouse,
+            $address,
+            $totalWeight
         );
 
         $shippingCost = $shipping['cost'];
@@ -339,6 +338,45 @@ class CheckoutController extends Controller
             ? (($shipping['matched_service']['etd'] ?: '2-3') . ' hari')
             : '-';
 
+        // \Log::info('=== CALCULATE SHIPPING DEBUG ===');
+        \Log::info('Request params:', [
+            'expedition_id' => $request->expedition_id,
+            'expedition_code' => $expedition->code,
+            'service_code' => $request->service_code,
+        ]);
+        \Log::info('Shipping response:', [
+            'expedition' => $expedition->code,
+            'has_data' => isset($costResult['data']),
+            'data_count' => isset($costResult['data']) ? count($costResult['data']) : 0,
+            'data' => $costResult['data'] ?? [],
+        ]);
+
+        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+            // RajaOngkir returns flat array, find matching service
+            foreach ($costResult['data'] as $service) {
+                \Log::info('Checking service:', [
+                    'service_code' => $service['service'] ?? null,
+                    'service_name' => $service['description'] ?? null,
+                    'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
+                    'matches_service' => ($service['service'] ?? '') === $request->service_code,
+                ]);
+                
+                if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $request->service_code) {
+                    $shippingCost = $service['cost'];
+                    $serviceName = $service['description'];
+                    $estimatedDelivery = $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code);
+                    \Log::info('MATCH FOUND!', [
+                        'cost' => $shippingCost,
+                        'name' => $serviceName,
+                        'etd' => $estimatedDelivery,
+                    ]);
+                    break;
+                }
+            }
+        }
+
+        // No fallback for shipping cost anymore, we want real API data
+        
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
 
         // Calculate discount
@@ -467,27 +505,12 @@ class CheckoutController extends Controller
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
-        Log::debug('[checkout.expedition-services] fetching rates', [
-            'origin_district_id' => $sourceWarehouse->district_id,
-            'destination_district_id' => $address->district_id,
-            'weight_grams' => $totalWeight,
-            'courier' => $expedition->code,
-            'provider' => $this->usesEkspedisiKuRates($expedition->code) ? 'ekspedisiku' : 'rajaongkir',
-        ]);
-
-        $costResult = $this->fetchShippingRates(
-            $sourceWarehouse->district_id,
-            $address->district_id,
-            $totalWeight,
-            $expedition->code
+        $costResult = $this->resolveShippingCost(
+            $expedition,
+            $sourceWarehouse,
+            $address,
+            $totalWeight
         );
-
-        Log::debug('[checkout.expedition-services] rates response', [
-            'expedition_code' => $expedition->code,
-            'has_data' => isset($costResult['data']),
-            'data_count' => isset($costResult['data']) && is_array($costResult['data']) ? count($costResult['data']) : 0,
-            'raw' => $costResult,
-        ]);
 
         $services = [];
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -507,7 +530,7 @@ class CheckoutController extends Controller
                         'name' => $service['description'],
                         'cost' => $service['cost'],
                         'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
-                        'estimated_days' => ($service['etd'] ?: '2-3') . ' hari',
+                        'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code),
                     ];
                 }
             }
@@ -636,12 +659,19 @@ class CheckoutController extends Controller
                 return ($cart->product->weight ?? 500) * $cart->quantity;
             });
 
-            $shipping = $this->resolveShippingCost(
-                $sourceWarehouse,
-                $address->district_id,
-                $totalWeight,
+            $shippingCost = 0;
+            \Log::info('Store: calculating shipping cost', [
+                'origin' => $sourceWarehouse->district_id,
+                'destination' => $address->district_id,
+                'weight' => $totalWeight,
+                'courier_code' => $expedition->code,
+                'service_requested' => $request->expedition_service
+            ]);
+            $costResult = $this->resolveShippingCost(
                 $expedition,
-                (string) $request->expedition_service
+                $sourceWarehouse,
+                $address,
+                $totalWeight
             );
 
             $shippingCost = $shipping['cost'];
@@ -1045,117 +1075,41 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Courier codes that are active in EkspedisiKu API (is_active=true).
-     *
-     * @return array<int, string>
-     */
-    private function activeApiCourierCodes(): array
-    {
-        $dbCodes = Expedition::where('is_active', true)
-            ->pluck('code')
-            ->filter()
-            ->values()
-            ->all();
-
-        $courierRes = $this->ekspedisiku->getCouriers();
-        if (! isset($courierRes['data']) || ! is_array($courierRes['data'])) {
-            return $dbCodes;
-        }
-
-        $codes = [];
-        foreach ($courierRes['data'] as $courier) {
-            if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
-                $codes[] = $courier['id'];
-            }
-        }
-
-        return $codes !== [] ? $codes : $dbCodes;
-    }
-
-    private function findAvailableExpedition(?string $expeditionId): ?Expedition
-    {
-        if (! $expeditionId) {
-            return null;
-        }
-
-        return Expedition::whereIn('code', $this->activeApiCourierCodes())->find($expeditionId);
-    }
-
-    /**
-     * @return array{cost: float, matched_service: ?array, available_services: array<int, string>}
+     * @return array{data: array<int, array<string, mixed>>}|null
      */
     private function resolveShippingCost(
-        Warehouse $sourceWarehouse,
-        int|string $destinationDistrictId,
-        int $totalWeightGrams,
         Expedition $expedition,
-        string $requestedServiceCode
-    ): array {
-        $costResult = $this->fetchShippingRates(
-            $sourceWarehouse->district_id,
-            $destinationDistrictId,
-            $totalWeightGrams,
-            $expedition->code
-        );
-
-        $availableServices = [];
-        $matchedService = null;
-        $shippingCost = 0.0;
-        $normalizedRequest = strtoupper(trim($requestedServiceCode));
-        $normalizedExpedition = strtolower(trim($expedition->code));
-
-        if ($costResult && ! empty($costResult['data'])) {
-            foreach ($costResult['data'] as $service) {
-                $serviceCourier = strtolower(trim((string) ($service['code'] ?? '')));
-                if ($serviceCourier !== $normalizedExpedition) {
-                    continue;
-                }
-
-                $serviceCode = (string) ($service['service'] ?? '');
-                $availableServices[] = $serviceCode;
-
-                if (strtoupper(trim($serviceCode)) === $normalizedRequest) {
-                    $shippingCost = (float) ($service['cost'] ?? 0);
-                    $matchedService = $service;
-                    break;
-                }
-            }
-        }
-
-        return [
-            'cost' => $shippingCost,
-            'matched_service' => $matchedService,
-            'available_services' => $availableServices,
-        ];
-    }
-
-    /**
-     * Couriers whose rates are resolved via EkspedisiKu /ongkir endpoint.
-     */
-    private function usesEkspedisiKuRates(string $courierCode): bool
-    {
-        return in_array($courierCode, ['lion_parcel', 'lalamove'], true);
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function fetchShippingRates(int|string $originDistrictId, int|string $destinationDistrictId, int $weightGrams, string $courierCode): ?array
-    {
-        if ($this->usesEkspedisiKuRates($courierCode)) {
+        Warehouse $sourceWarehouse,
+        Address $address,
+        float $totalWeightGrams
+    ): ?array {
+        if (in_array($expedition->code, ['lion_parcel', 'lalamove'], true)) {
             return $this->ekspedisiku->calculateCost(
-                $originDistrictId,
-                $destinationDistrictId,
-                $weightGrams / 1000,
-                $courierCode
+                $sourceWarehouse->district_id,
+                $address->district_id,
+                max(1, $totalWeightGrams / 1000),
+                $expedition->code,
+                [
+                    'warehouse' => $sourceWarehouse,
+                    'address' => $address,
+                ]
             );
         }
 
         return $this->rajaOngkir->calculateCost(
-            $originDistrictId,
-            $destinationDistrictId,
-            $weightGrams,
-            $courierCode
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $totalWeightGrams,
+            $expedition->code
         );
+    }
+
+    private function formatEstimatedDelivery(?string $etd, string $expeditionCode): string
+    {
+        if ($etd !== null && $etd !== '') {
+            return $etd.' hari';
+        }
+
+        return $expeditionCode === 'lalamove' ? 'Hari yang sama' : '2-3 hari';
     }
 }

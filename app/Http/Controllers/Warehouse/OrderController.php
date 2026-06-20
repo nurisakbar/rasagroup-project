@@ -356,14 +356,15 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
         }
 
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+            return back()->with('error', 'Ekspedisi tidak didukung untuk booking EkspedisiKu.');
         }
 
         try {
             Log::info('Warehouse OrderController: Manual booking requested', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
+                'carrier' => $order->expedition->code,
             ]);
 
             $job = new \App\Jobs\CreateShipmentBooking($order);
@@ -393,8 +394,8 @@ class OrderController extends Controller
     {
         $this->authorizeWarehouseOrder($order);
 
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+            return back()->with('error', 'Ekspedisi tidak didukung untuk reset booking EkspedisiKu.');
         }
 
         $order->update([
