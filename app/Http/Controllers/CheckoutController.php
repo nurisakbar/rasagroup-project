@@ -332,11 +332,9 @@ class CheckoutController extends Controller
             $totalWeight
         );
 
-        $shippingCost = $shipping['cost'];
-        $serviceName = $shipping['matched_service']['description'] ?? $request->service_code;
-        $estimatedDelivery = $shipping['matched_service']
-            ? (($shipping['matched_service']['etd'] ?: '2-3') . ' hari')
-            : '-';
+        $shippingCost = 0;
+        $serviceName = $request->service_code;
+        $estimatedDelivery = '-';
 
         // \Log::info('=== CALCULATE SHIPPING DEBUG ===');
         \Log::info('Request params:', [
@@ -674,21 +672,31 @@ class CheckoutController extends Controller
                 $totalWeight
             );
 
-            $shippingCost = $shipping['cost'];
+            $shippingCost = 0;
+            $availableServices = [];
+            if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+                foreach ($costResult['data'] as $service) {
+                    if (($service['code'] ?? '') === $expedition->code) {
+                        $availableServices[] = $service['service'];
+                        if (($service['service'] ?? '') === $request->expedition_service) {
+                            $shippingCost = (float) $service['cost'];
+                        }
+                    }
+                }
+            }
 
             if ($shippingCost <= 0) {
                 \Log::error('Store: Gagal menghitung ongkos kirim.', [
                     'expedition' => $expedition->code,
                     'service_requested' => $request->expedition_service,
-                    'available_services' => $shipping['available_services'],
+                    'available_services' => $availableServices,
                 ]);
 
                 DB::rollBack();
 
-                $available = $shipping['available_services'];
                 $message = 'Gagal menghitung ongkos kirim. Silakan pilih ekspedisi dan layanan pengiriman kembali.';
-                if ($available !== []) {
-                    $message .= ' Layanan tersedia untuk ' . $expedition->name . ': ' . implode(', ', $available) . '.';
+                if ($availableServices !== []) {
+                    $message .= ' Layanan tersedia untuk ' . $expedition->name . ': ' . implode(', ', $availableServices) . '.';
                 }
 
                 return back()->withInput()->with('error', $message);
@@ -1111,5 +1119,47 @@ class CheckoutController extends Controller
         }
 
         return $expeditionCode === 'lalamove' ? 'Hari yang sama' : '2-3 hari';
+    }
+
+    /**
+     * Courier codes that are active in EkspedisiKu API (is_active=true).
+     *
+     * @return array<int, string>
+     */
+    private function activeApiCourierCodes(): array
+    {
+        $dbCodes = Expedition::where('is_active', true)
+            ->pluck('code')
+            ->filter()
+            ->values()
+            ->all();
+
+        $courierRes = $this->ekspedisiku->getCouriers();
+        if (! isset($courierRes['data']) || ! is_array($courierRes['data'])) {
+            return $dbCodes;
+        }
+
+        $codes = [];
+        foreach ($courierRes['data'] as $courier) {
+            if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
+                $codes[] = $courier['id'];
+            }
+        }
+
+        return $codes !== [] ? $codes : $dbCodes;
+    }
+
+    private function findAvailableExpedition(?string $expeditionId): ?Expedition
+    {
+        if (! $expeditionId) {
+            return null;
+        }
+
+        return Expedition::whereIn('code', $this->activeApiCourierCodes())->find($expeditionId);
+    }
+
+    private function usesEkspedisiKuRates(string $code): bool
+    {
+        return in_array($code, ['lion_parcel', 'lalamove'], true);
     }
 }

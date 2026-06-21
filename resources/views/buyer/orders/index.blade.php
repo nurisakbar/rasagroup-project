@@ -23,109 +23,57 @@
                 <div class="col-lg-8">
                     <div class="tab-content account dashboard-content pl-50">
                         <div class="tab-pane fade show active" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Riwayat Pesanan</h3>
-                                <div class="text-muted font-sm">
-                                    Total {{ $orders->total() }} pesanan ditemukan
-                                </div>
+                             <h3 class="mb-25">Riwayat Pesanan</h3>
+
+                            <div class="order-tabs-container mt-15 mb-30" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                                <ul class="nav flex-nowrap pb-10" style="gap: 8px; border-bottom: 2px solid #edf2f7;">
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ empty($status) || $status === 'all' ? 'active' : '' }} {{ $totalCount === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index') }}">
+                                            <span>Semua</span>
+                                            <span class="count-badge">{{ $totalCount }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ $status === 'pending' ? 'active' : '' }} {{ ($counts['pending'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index', ['status' => 'pending']) }}">
+                                            <span>Menunggu Pembayaran</span>
+                                            <span class="count-badge">{{ $counts['pending'] ?? 0 }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ $status === 'processing' ? 'active' : '' }} {{ ($counts['processing'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index', ['status' => 'processing']) }}">
+                                            <span>Dikemas</span>
+                                            <span class="count-badge">{{ $counts['processing'] ?? 0 }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ $status === 'shipped' ? 'active' : '' }} {{ ($counts['shipped'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index', ['status' => 'shipped']) }}">
+                                            <span>Dikirim</span>
+                                            <span class="count-badge">{{ $counts['shipped'] ?? 0 }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ $status === 'delivered' ? 'active' : '' }} {{ ($counts['delivered'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index', ['status' => 'delivered']) }}">
+                                            <span>Selesai</span>
+                                            <span class="count-badge">{{ $counts['delivered'] ?? 0 }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="order-status-tab {{ $status === 'cancelled' ? 'active' : '' }} {{ ($counts['cancelled'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                           href="{{ route('buyer.orders.index', ['status' => 'cancelled']) }}">
+                                            <span>Batal</span>
+                                            <span class="count-badge">{{ $counts['cancelled'] ?? 0 }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
 
-                            <div class="orders-list">
-                                @forelse($orders as $order)
-                                    @php
-                                        $statusClass = match($order->order_status) {
-                                            'pending' => 'bg-warning',
-                                            'processing' => 'bg-info',
-                                            'shipped' => 'bg-primary',
-                                            'delivered' => 'bg-success',
-                                            'cancelled' => 'bg-danger',
-                                            default => 'bg-secondary',
-                                        };
-                                        $statusLabel = match($order->order_status) {
-                                            'pending' => 'Menunggu Pembayaran',
-                                            'processing' => 'Sedang Diproses',
-                                            'shipped' => 'Dalam Pengiriman',
-                                            'delivered' => 'Selesai',
-                                            'cancelled' => 'Dibatalkan',
-                                            default => ucfirst($order->order_status),
-                                        };
-                                        
-                                        // Get the first item to show in preview
-                                        $firstItem = $order->items->first();
-                                        $remainingCount = $order->items->count() - 1;
-                                    @endphp
-                                    <div class="order-card mb-20">
-                                        <a href="{{ route('buyer.orders.show', $order) }}" class="stretched-link order-card-stretched-link" aria-label="Lihat detail pesanan #{{ $order->order_number }}"></a>
-                                        <div class="order-header p-25 d-flex justify-content-between align-items-center">
-                                            <div class="order-meta d-flex align-items-center">
-                                                <div class="mr-30">
-                                                    <span class="d-block text-muted font-xs mb-1">NO. PESANAN</span>
-                                                    <span class="fw-bold text-dark font-sm">#{{ $order->order_number }}</span>
-                                                </div>
-                                                <div class="mr-30">
-                                                    <span class="d-block text-muted font-xs mb-1">TANGGAL</span>
-                                                    <span class="fw-bold text-dark font-sm">{{ $order->created_at->format('d M Y') }}</span>
-                                                </div>
-                                                <div>
-                                                    <span class="d-block text-muted font-xs mb-1">TOTAL</span>
-                                                    <span class="fw-bold text-maroon font-sm">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="order-status">
-                                                <span class="badge rounded-pill {{ $statusClass }} py-2 px-3 text-white font-xs">{{ $statusLabel }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="order-body p-25">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-8">
-                                                    @if($firstItem)
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="product-thumb mr-20">
-                                                                <img src="{{ $firstItem->product->image_url ?: asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" 
-                                                                     alt="{{ $firstItem->product->display_name }}"
-                                                                     class="rounded-12" style="width: 75px; height: 75px; object-fit: cover; border: 1.5px solid #f1f1f1;">
-                                                            </div>
-                                                            <div class="product-info">
-                                                                <h6 class="mb-1 text-dark truncate-1">{{ $firstItem->product->display_name }}</h6>
-                                                                <p class="font-sm text-muted mb-0">{{ $firstItem->quantity }} item x Rp {{ number_format($firstItem->price, 0, ',', '.') }}</p>
-                                                                @if($remainingCount > 0)
-                                                                    <p class="font-xs text-maroon mt-1 fw-bold">+{{ $remainingCount }} produk lainnya</p>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                                                    <div class="d-grid d-md-block gap-2">
-                                                        <a href="{{ route('buyer.orders.show', $order) }}" class="btn btn-sm btn-outline rounded-pill">
-                                                            <i class="fi-rs-eye mr-5"></i> Lihat Detail
-                                                        </a>
-                                                        @if($order->order_status === 'shipped' && $order->tracking_number)
-                                                            <a href="{{ route('buyer.orders.show', $order) }}#btn-track-order" class="btn btn-sm rounded-pill ms-md-2">
-                                                                <i class="fi-rs-truck mr-5"></i> Lacak
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <div class="empty-state text-center py-5 border rounded-10 bg-white">
-                                        <div class="mb-4">
-                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" alt="Empty" style="width: 100px; opacity: 0.3;">
-                                        </div>
-                                        <h4 class="mb-2">Belum Ada Pesanan</h4>
-                                        <p class="text-muted mb-4 px-5">Mulai perjalanan belanja Anda dan temukan berbagai produk berkualitas kami.</p>
-                                        <a href="{{ route('products.index') }}" class="btn rounded-pill">
-                                            <i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja
-                                        </a>
-                                    </div>
-                                @endforelse
-                            </div>
-                            
-                            <div class="pagination-area mt-40">
-                                {{ $orders->links() }}
+                            <div id="orders-container">
+                                @include('buyer.orders.partials.list')
                             </div>
                         </div>
                     </div>
@@ -179,6 +127,165 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
+    .order-tabs-container::-webkit-scrollbar {
+        display: none;
+    }
+    .order-tabs-container {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    .order-status-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        border: 1.5px solid #edf2f7;
+        background-color: #fff;
+        color: #718096 !important;
+        white-space: nowrap;
+    }
+    .order-status-tab:hover {
+        border-color: #cbd5e0;
+        color: #4a5568 !important;
+        transform: translateY(-1px);
+    }
+    .order-status-tab.active {
+        background-color: #6A1B1B !important;
+        border-color: #6A1B1B !important;
+        color: #fff !important;
+        box-shadow: 0 4px 15px rgba(106, 27, 27, 0.15);
+    }
+    .order-status-tab .count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 700;
+        background-color: #edf2f7;
+        color: #4a5568;
+        transition: all 0.2s ease;
+    }
+    .order-status-tab.active .count-badge {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
+    .order-status-tab.zero-count {
+        opacity: 0.55;
+    }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Intercept tab clicks
+        $(document).on('click', '.order-status-tab', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            
+            // Update active class immediately for better feedback
+            $('.order-status-tab').removeClass('active');
+            $(this).addClass('active');
+            
+            loadOrders(url);
+            
+            // Update browser URL without reloading
+            window.history.pushState({path: url}, '', url);
+        });
+
+        // Intercept pagination clicks
+        $(document).on('click', '#orders-container .pagination a', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            loadOrders(url);
+            
+            // Scroll smoothly to top of orders list
+            $('html, body').animate({
+                scrollTop: $("#orders-container").offset().top - 120
+            }, 300);
+        });
+
+        function loadOrders(url) {
+            // Add loading state
+            $('#orders-container').css('opacity', '0.5');
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    // Update HTML
+                    $('#orders-container').html(response.html);
+                    $('#orders-container').css('opacity', '1');
+                    
+                    // Update tab count badges dynamically
+                    if (response.counts) {
+                        $('.order-status-tab').each(function() {
+                            var href = $(this).attr('href');
+                            var badge = $(this).find('.count-badge');
+                            
+                            if (href.includes('status=pending')) {
+                                badge.text(response.counts.pending || 0);
+                                toggleZeroCountClass($(this), response.counts.pending || 0);
+                            } else if (href.includes('status=processing')) {
+                                badge.text(response.counts.processing || 0);
+                                toggleZeroCountClass($(this), response.counts.processing || 0);
+                            } else if (href.includes('status=shipped')) {
+                                badge.text(response.counts.shipped || 0);
+                                toggleZeroCountClass($(this), response.counts.shipped || 0);
+                            } else if (href.includes('status=delivered')) {
+                                badge.text(response.counts.delivered || 0);
+                                toggleZeroCountClass($(this), response.counts.delivered || 0);
+                            } else if (href.includes('status=cancelled')) {
+                                badge.text(response.counts.cancelled || 0);
+                                toggleZeroCountClass($(this), response.counts.cancelled || 0);
+                            } else {
+                                // "Semua" tab
+                                badge.text(response.total_count || 0);
+                                toggleZeroCountClass($(this), response.total_count || 0);
+                            }
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    $('#orders-container').css('opacity', '1');
+                    console.error('Failed to load orders', xhr);
+                }
+            });
+        }
+
+        function toggleZeroCountClass(element, count) {
+            if (parseInt(count) === 0) {
+                element.addClass('zero-count');
+            } else {
+                element.removeClass('zero-count');
+            }
+        }
+        
+        // Handle back/forward browser buttons
+        window.onpopstate = function(event) {
+            var url = window.location.href;
+            loadOrders(url);
+            
+            // Set active tab based on path
+            $('.order-status-tab').removeClass('active');
+            $('.order-status-tab').each(function() {
+                if ($(this).attr('href') === url) {
+                    $(this).addClass('active');
+                } else if (!url.includes('status') && $(this).attr('href').indexOf('status') === -1) {
+                    $(this).addClass('active');
+                }
+            });
+        };
+    });
+</script>
 @endsection
 

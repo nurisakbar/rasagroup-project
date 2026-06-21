@@ -65,7 +65,7 @@ class GoogleController extends Controller
                 Auth::login($newUser);
                 \App\Models\Cart::mergeSessionCartToUser($newUser->id, $sessionId);
 
-                return redirect()->intended('dashboard');
+                return redirect()->intended(route('home'));
             }
 
             // Existing user found
@@ -85,7 +85,7 @@ class GoogleController extends Controller
             Auth::login($findUser);
             \App\Models\Cart::mergeSessionCartToUser($findUser->id, $sessionId);
 
-            return redirect()->intended('dashboard');
+            return redirect()->intended(route('home'));
         } catch (Exception $e) {
             return redirect('login')->with('error', 'Something went wrong while logging in with Google: ' . $e->getMessage());
         }

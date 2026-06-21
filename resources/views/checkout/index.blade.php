@@ -164,7 +164,7 @@
                                     <div class="col-md-6 mb-10">
                                         <div class="card-radio-btn service-card {{ $isDefaultService ? 'active' : '' }}"
                                              data-service-code="{{ $service['code'] }}"
-                                             onclick="selectService(@json($service['code']))">
+                                             onclick="selectService('{{ $service['code'] }}')">
                                             <input type="radio" name="expedition_service" value="{{ $service['code'] }}" 
                                                    id="service-{{ $loop->index }}" class="d-none"
                                                    {{ $isDefaultService ? 'checked' : '' }}>

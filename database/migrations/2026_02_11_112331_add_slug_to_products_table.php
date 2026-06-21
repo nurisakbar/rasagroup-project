@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,25 +12,30 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('slug')->nullable()->unique()->after('name');
-        });
+        if (!Schema::hasColumn('products', 'slug')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->string('slug')->nullable()->unique()->after('name');
+            });
+        }
 
         // Populate existing products
-        $products = \App\Models\Product::all();
+        $products = DB::table('products')->get();
         foreach ($products as $product) {
-            $slug = \Illuminate\Support\Str::slug($product->display_name ?: $product->name);
+            if (!empty($product->slug)) {
+                continue;
+            }
+            $displayName = (!empty($product->commercial_name)) ? $product->commercial_name : $product->name;
+            $slug = \Illuminate\Support\Str::slug($displayName);
             
             // Check for uniqueness
             $originalSlug = $slug;
             $count = 1;
-            while (\App\Models\Product::where('slug', $slug)->exists()) {
+            while (DB::table('products')->where('slug', $slug)->exists()) {
                 $slug = $originalSlug . '-' . $count;
                 $count++;
             }
             
-            $product->slug = $slug;
-            $product->save();
+            DB::table('products')->where('id', $product->id)->update(['slug' => $slug]);
         }
     }
 
@@ -38,8 +44,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('slug');
-        });
+        if (Schema::hasColumn('products', 'slug')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropColumn('slug');
+            });
+        }
     }
 };

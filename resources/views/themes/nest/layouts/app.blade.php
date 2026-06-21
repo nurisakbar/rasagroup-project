@@ -1265,6 +1265,13 @@
                 width: 100% !important;
             }
         }
+
+        @media (max-width: 991px) {
+            .dashboard-content.pl-50 {
+                padding-left: 0 !important;
+                margin-top: 35px !important;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>

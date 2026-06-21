@@ -11,14 +11,36 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with(['items.product'])
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->paginate(5);
+        $status = $request->query('status');
 
-        return view('buyer.orders.index', compact('orders'));
+        $counts = Order::where('user_id', Auth::id())
+            ->selectRaw('order_status, count(*) as count')
+            ->groupBy('order_status')
+            ->pluck('count', 'order_status')
+            ->all();
+
+        $totalCount = array_sum($counts);
+
+        $query = Order::with(['items.product'])
+            ->where('user_id', Auth::id());
+
+        if (in_array($status, ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], true)) {
+            $query->where('order_status', $status);
+        }
+
+        $orders = $query->latest()->paginate(5)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('buyer.orders.partials.list', compact('orders'))->render(),
+                'total_count' => $totalCount,
+                'counts' => $counts
+            ]);
+        }
+
+        return view('buyer.orders.index', compact('orders', 'status', 'counts', 'totalCount'));
     }
 
     public function show(Order $order)
