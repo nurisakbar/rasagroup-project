@@ -56,7 +56,8 @@
             '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Tutup"></button>' +
             '</div>';
         container.appendChild(el);
-        const toast = new bootstrap.Toast(el, { autohide: true, delay: 4500 });
+        const delayTime = type === 'success' ? 1000 : 4500;
+        const toast = new bootstrap.Toast(el, { autohide: true, delay: delayTime });
         el.addEventListener('hidden.bs.toast', function () {
             el.remove();
         });

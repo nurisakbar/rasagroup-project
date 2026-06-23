@@ -25,13 +25,7 @@
                     </h6>
                 @endif
             </div>
-            <div class="d-flex justify-content-end mt-10">
-                <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Kosongkan keranjang? Semua item akan dihapus.');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="text-muted bg-transparent border-0 p-0"><i class="fi-rs-trash mr-5"></i>Kosongkan Keranjang</button>
-                </form>
-            </div>
+
         </div>
     </div>
 
@@ -50,11 +44,21 @@
     @endif
 
     @if($carts->isEmpty())
-        <div class="text-center py-5">
-            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" alt="Keranjang Kosong" style="width: 100px; opacity: 0.5;" class="mb-4">
-            <h4 class="mb-3">Keranjang Anda kosong</h4>
-            <p class="text-muted mb-4">Mulai belanja dan tambahkan produk ke keranjang Anda</p>
-            <a href="{{ route('products.index') }}" class="btn btn-fill-out"><i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja</a>
+        <div class="row justify-content-center mt-50 mb-50">
+            <div class="col-lg-6 text-center">
+                <div class="empty-cart-wrapper p-5" style="background: #ffffff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02);">
+                    <div class="icon-wrapper mx-auto mb-30" style="width: 120px; height: 120px; background: rgba(107, 29, 29, 0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fi-rs-shopping-cart" style="font-size: 50px; color: #6B1D1D;"></i>
+                    </div>
+                    <h2 class="mb-20" style="font-weight: 800; color: #253D4E;">Keranjang Anda Kosong</h2>
+                    <p class="font-lg text-muted mb-40 px-md-4">
+                        Sepertinya Anda belum menambahkan produk apapun ke keranjang. Jelajahi katalog kami dan temukan produk favorit Anda!
+                    </p>
+                    <a href="{{ route('products.index') }}" class="btn" style="background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 700; padding: 16px 36px; border: none; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(107, 29, 29, 0.2);">
+                        <i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja Sekarang
+                    </a>
+                </div>
+            </div>
         </div>
     @else
         <div class="row">
@@ -234,10 +238,23 @@
     }
 
     .rg-cart-remove-btn {
-        color: #253D4E;
-        background: transparent;
-        border: 0;
-        padding: 0;
+        color: #253D4E !important;
+        background: transparent !important;
+        border: 0 !important;
+        padding: 5px !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 10px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: #fff5f5 !important;
+        color: #c0392b !important;
+    }
+    
+    .rg-cart-remove-btn:hover {
+        background-color: #ffe0e0 !important;
+        color: #e74c3c !important;
     }
 
     @media (max-width: 991.98px) {

@@ -30,15 +30,25 @@
                                         <p class="text-muted font-sm">Pilih produk untuk menambah stok warehouse Anda.</p>
                                     </div>
                                     <div class="d-flex gap-2 align-items-center">
-                                        <button class="btn btn-sm btn-info rounded-pill px-4 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#excelOrderForm" aria-expanded="false" aria-controls="excelOrderForm">
-                                            <i class="fi-rs-file-excel mr-5"></i> Order dari Excel
-                                        </button>
+                                        @if(request('mode') != 'excel')
+                                            <a href="{{ route('distributor.orders.products', ['mode' => 'excel']) }}" class="btn btn-sm btn-info rounded-pill px-4 text-white">
+                                                <i class="fi-rs-file-excel mr-5"></i> Order dari Excel
+                                            </a>
+                                        @else
+                                            <a href="{{ route('distributor.orders.products', ['mode' => 'manual']) }}" class="btn btn-sm btn-brand rounded-pill px-4 text-white">
+                                                <i class="fi-rs-shopping-bag mr-5"></i> Pesan Manual
+                                            </a>
+                                        @endif
                                         <a href="{{ route('distributor.orders.cart') }}" class="btn btn-sm btn-warning rounded-pill px-4 text-dark">
                                             <i class="fi-rs-shopping-cart mr-5"></i> Keranjang
                                         </a>
                                     </div>
                                 </div>
-                                <div class="collapse" id="excelOrderForm">
+                                @if(request('mode') == 'excel')
+                                <div class="p-4 bg-white border-bottom">
+                                    @include('buyer.distributor.orders.partials.step-wizard', ['step' => 1])
+                                </div>
+                                <div id="excelOrderForm">
                                     <div class="bg-light p-4 border-bottom">
                                         <h5 class="mb-3">Impor Pesanan dari Excel</h5>
                                         <p class="text-muted font-sm mb-4">
@@ -66,6 +76,9 @@
                                         </form>
                                     </div>
                                 </div>
+                                @endif
+
+                                @if(request('mode') != 'excel')
                                 <div class="card-body p-4">
                                     <!-- Search -->
                                     <form action="{{ route('distributor.orders.products') }}" method="GET" class="mb-4">
@@ -128,6 +141,7 @@
                                         {{ $products->appends(request()->query())->links() }}
                                     </div>
                                 </div>
+                                @endif
                             </div>
                         </div>
                     </div>

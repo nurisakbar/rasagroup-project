@@ -156,7 +156,7 @@
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label-custom">Alamat Lengkap</label>
-                                        <textarea required class="form-control custom-textarea" name="address_detail" rows="3" placeholder="Nama Jalan, No. Rumah, RT/RW">{{ old('address_detail', $address->address_detail) }}</textarea>
+                                        <input type="text" required class="form-control custom-input" name="address_detail" value="{{ old('address_detail', $address->address_detail) }}" placeholder="Nama Jalan, No. Rumah, RT/RW">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-custom">Kode Pos</label>

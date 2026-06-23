@@ -57,7 +57,7 @@ Route::get('/promo', [App\Http\Controllers\PromoController::class, 'index'])->na
 Route::get('/promo/{slug}', [App\Http\Controllers\PromoController::class, 'show'])->name('promo.show');
 
 // Hub & Distributor Routes
-Route::get('/hubs', [App\Http\Controllers\HubController::class, 'index'])->name('hubs.index');
+// Route::get('/hubs', [App\Http\Controllers\HubController::class, 'index'])->name('hubs.index');
 Route::get('/hubs/search-ajax', [App\Http\Controllers\HubController::class, 'searchAjax'])->name('hubs.search-ajax');
 Route::get('/hubs/get-regencies', [App\Http\Controllers\HubController::class, 'getRegencies'])->name('hubs.get-regencies');
 Route::get('/hubs/nearby', [App\Http\Controllers\HubController::class, 'getNearbyHubs'])->name('hubs.nearby');
@@ -97,7 +97,7 @@ Route::middleware(['auth', 'wa.verified'])->group(function () {
 });
 
 // Buyer Routes
-Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified'])->group(function () {
+Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');

@@ -31,19 +31,7 @@
                             <li><a href="{{ route('menus.index') }}">Menu Paket</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
                             <li><a href="{{ route('information-channels.index') }}">Saluran Informasi</a></li>
-                            @auth
-                                @if(Auth::user()->isDistributor())
-                                    <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
-                                @elseif(Auth::user()->isDriippreneur())
-                                    <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                                @else
-                                    <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                                    <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
-                                @endif
-                            @else
-                                <li><a href="{{ route('buyer.affiliate.index') }}">Affiliator</a></li>
-                                <li><a href="{{ $distributorMainMenuUrl }}">Distributor</a></li>
-                            @endauth
+
 
 
                         </ul>

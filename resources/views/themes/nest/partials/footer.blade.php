@@ -110,17 +110,7 @@
                         <h4 class="widget-title">Metode Pembayaran</h4>
                         <img class="mb-20" src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" />
                         
-                        <h4 class="widget-title">Hub Terpilih</h4>
-                        <div class="hub-info mt-10">
-                            <a href="{{ route('hubs.index') }}" class="font-sm text-heading">
-                                <i class="fi-rs-marker mr-5 text-brand"></i>
-                                @if(session()->has('selected_hub_name'))
-                                    <span class="text-brand"><strong>{{ session('selected_hub_name') }}</strong></span>
-                                @else
-                                    <span class="text-danger">Pilih Hub Terdekat</span>
-                                @endif
-                            </a>
-                        </div>
+
                     </div>
                 </div>
             </div>

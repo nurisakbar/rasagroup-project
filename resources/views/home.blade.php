@@ -644,7 +644,7 @@
                     <div class="container">
                         <h2>Sirup Premium dengan Rasa Terbaik</h2>
                         <p>Nikmati berbagai varian sirup berkualitas tinggi dengan harga spesial</p>
-                        <a href="{{ route('hubs.index') }}" class="btn btn-hero-primary btn-hero me-3">Belanja Sekarang</a>
+                        <a href="{{ route('products.index') }}" class="btn btn-hero-primary btn-hero me-3">Belanja Sekarang</a>
                         <a href="#products" class="btn btn-hero-outline btn-hero">Lihat Katalog</a>
                     </div>
                 </div>
@@ -655,7 +655,7 @@
                     <div class="container">
                         <h2>Diskon Hingga 30% untuk Semua Produk</h2>
                         <p>Promo terbatas! Dapatkan produk favorit Anda dengan harga terbaik</p>
-                        <a href="{{ route('hubs.index') }}" class="btn btn-hero-primary btn-hero me-3">Lihat Promo</a>
+                        <a href="{{ route('products.index') }}" class="btn btn-hero-primary btn-hero me-3">Lihat Promo</a>
                         <a href="#products" class="btn btn-hero-outline btn-hero">Pelajari Lebih Lanjut</a>
                     </div>
                 </div>
@@ -666,7 +666,7 @@
                     <div class="container">
                         <h2>Gratis Ongkir untuk Pembelian di Atas Rp 100.000</h2>
                         <p>Belanja lebih hemat dengan gratis ongkir ke seluruh Indonesia</p>
-                        <a href="{{ route('hubs.index') }}" class="btn btn-hero-primary btn-hero me-3">Mulai Belanja</a>
+                        <a href="{{ route('products.index') }}" class="btn btn-hero-primary btn-hero me-3">Mulai Belanja</a>
                         <a href="#products" class="btn btn-hero-outline btn-hero">Syarat & Ketentuan</a>
                     </div>
                 </div>
@@ -690,7 +690,7 @@
             <div class="row g-4">
                 @forelse($categories as $category)
                     <div class="col-6 col-md-4 col-lg-2">
-                        <a href="{{ route('hubs.index', ['category' => $category->slug]) }}" class="category-card">
+                        <a href="{{ route('products.index', ['category' => $category->slug]) }}" class="category-card">
                             <div class="category-icon">
                                 <i class="{{ $category->icon ?? 'bi bi-droplet-fill' }}"></i>
                             </div>
@@ -917,7 +917,7 @@
 
             @if($products->count() > 0)
             <div class="text-center mt-5">
-                <a href="{{ route('hubs.index') }}" class="btn btn-primary btn-lg px-5 py-3" style="border-radius: 30px;">
+                <a href="{{ route('products.index') }}" class="btn btn-primary btn-lg px-5 py-3" style="border-radius: 30px;">
                     <i class="bi bi-grid me-2"></i>Lihat Semua Produk
                 </a>
             </div>

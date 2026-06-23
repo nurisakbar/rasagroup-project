@@ -53,6 +53,10 @@ class DistributorLoginController extends Controller
             }
 
             $request->session()->regenerate();
+            $intendedUrl = redirect()->getIntendedUrl();
+            if ($intendedUrl && strpos($intendedUrl, '/admin') !== false) {
+                return redirect()->route('buyer.dashboard');
+            }
             return redirect()->intended(route('buyer.dashboard'));
         }
 

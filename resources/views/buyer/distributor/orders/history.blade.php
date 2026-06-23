@@ -24,9 +24,19 @@
                     <div class="tab-content account dashboard-content pl-50">
                         <div class="tab-pane fade show active" role="tabpanel">
                             <div class="card border-0 shadow-sm border-radius-10">
-                                <div class="card-header bg-white border-bottom p-4">
-                                    <h3 class="mb-0">Riwayat Pembelian</h3>
-                                    <p class="text-muted font-sm">Pesanan restok ke pusat dan pembelian melalui toko online (keranjang reguler).</p>
+                                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h3 class="mb-0">Riwayat Pembelian</h3>
+                                        <p class="text-muted font-sm mb-0">Pesanan restok ke pusat dan pembelian melalui toko online.</p>
+                                    </div>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <a href="{{ route('distributor.orders.products', ['mode' => 'excel']) }}" class="btn btn-sm btn-info rounded-pill px-4 text-white">
+                                            <i class="fi-rs-file-excel mr-5"></i> Order dari Excel
+                                        </a>
+                                        <a href="{{ route('distributor.orders.products', ['mode' => 'manual']) }}" class="btn btn-sm btn-brand rounded-pill px-4 text-white">
+                                            <i class="fi-rs-shopping-bag mr-5"></i> Pesan Manual
+                                        </a>
+                                    </div>
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="mb-3">

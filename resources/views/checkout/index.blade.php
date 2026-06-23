@@ -18,9 +18,6 @@
     <div class="row">
         <div class="col-lg-8 mb-40">
             <h3 class="heading-2 mb-10">Checkout</h3>
-            <div class="d-flex justify-content-between">
-                <h6 class="text-body">Ada <span class="text-brand">{{ $carts->count() }}</span> produk di keranjang Anda</h6>
-            </div>
         </div>
     </div>
 
@@ -251,7 +248,7 @@
                 <div class="mb-30">
                     <h4 class="mb-15"><i class="fi-rs-comment mr-10 text-muted"></i>Catatan Tambahan</h4>
                     <div class="form-group mb-30">
-                        <textarea name="notes" rows="4" placeholder="Catatan untuk penjual atau kurir (Opsional)">{{ old('notes') }}</textarea>
+                        <textarea name="notes" rows="2" placeholder="Catatan untuk penjual atau kurir (Opsional)">{{ old('notes') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -367,25 +364,20 @@
                                                     -
                                                 @endif
                                             </h5>
-                                            <span class="text-muted text-end" id="totalWeightDisplay">{{ number_format($totalWeight / 1000, 1) }} kg</span>
                                         </div>
-                                        <small class="text-muted d-block text-end mt-5" id="estimatedDelivery">
+                                        <small class="text-muted d-block text-end mt-1" id="totalWeightDisplay">Berat: {{ number_format($totalWeight / 1000, 1) }} kg</small>
+                                        <small class="text-muted d-block text-end mt-1" id="estimatedDelivery">
                                              @if($defaultService)
                                                 Estimasi: {{ $defaultService['estimated_days'] }}
                                             @endif
                                         </small>
                                     </td>
                                 </tr>
-                                <tr class="rg-checkout-divider-row">
-                                    <td scope="col" colspan="2">
-                                        <div class="divider-2 mt-10 mb-10"></div>
-                                    </td>
-                                </tr>
-                                <tr class="rg-checkout-total-row rg-checkout-total-final">
-                                    <td class="cart_total_label">
+                                <tr class="rg-checkout-total-row rg-checkout-total-final" style="border-top: 1px solid #ECECEC;">
+                                    <td class="cart_total_label" style="padding-top: 15px;">
                                         <h4 class="text-brand">Total</h4>
                                     </td>
-                                    <td class="cart_total_amount">
+                                    <td class="cart_total_amount" style="padding-top: 15px;">
                                         <h4 class="text-brand text-end" id="totalDisplay">Rp {{ number_format($total, 0, ',', '.') }}</h4>
                                     </td>
                                 </tr>
@@ -519,6 +511,8 @@
         border: 1px solid #ececec !important;
         border-radius: 12px !important;
         padding: 15px !important;
+        height: 60px !important;
+        min-height: 60px !important;
     }
     textarea:focus {
         border-color: #6A1B1B !important;
@@ -1103,7 +1097,7 @@
                 $('#totalDisplay').text(data.total_formatted);
                 $('#subtotalDisplay').text(data.subtotal_formatted);
                 if (data.total_weight_formatted) {
-                    $('#totalWeightDisplay').text(data.total_weight_formatted);
+                    $('#totalWeightDisplay').text('Berat: ' + data.total_weight_formatted);
                 }
                 window.checkoutTotalWithoutShipping = parseFloat(data.subtotal) - parseFloat(data.discount_amount);
 

@@ -38,6 +38,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
+        $intendedUrl = redirect()->getIntendedUrl();
+        if ($intendedUrl && strpos($intendedUrl, '/admin') !== false) {
+            return redirect()->route('home', absolute: false);
+        }
+
         return redirect()->intended(route('home', absolute: false));
     }
 

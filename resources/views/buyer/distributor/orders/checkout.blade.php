@@ -26,6 +26,9 @@
                         @csrf
                         <div class="tab-content account dashboard-content pl-50">
                             <div class="tab-pane fade show active" role="tabpanel">
+                                <div class="p-4 bg-white border-bottom mb-4 border-radius-10 shadow-sm">
+                                    @include('buyer.distributor.orders.partials.step-wizard', ['step' => 3])
+                                </div>
                                 <div class="row">
                                     <div class="col-lg-7">
                                         <div class="card border-0 shadow-sm border-radius-10 mb-4">
@@ -60,17 +63,14 @@
 
                                         <div class="card border-0 shadow-sm border-radius-10 mb-4">
                                             <div class="card-header bg-white border-bottom p-4">
-                                                <h4 class="mb-0">Hub Pengirim</h4>
-                                                <p class="text-muted font-sm">Dipilih otomatis dari hub/distributor terdekat alamat tujuan.</p>
+                                                <h4 class="mb-0">Alamat Pengirim</h4>
                                             </div>
                                             <div class="card-body p-4">
                                                 @if($suggestedHub)
                                                     <p class="mb-0 font-sm">
-                                                        <strong>{{ $suggestedHub->name }}</strong>
-                                                        @if($suggestedHub->regency)
-                                                            <span class="text-muted">— {{ $suggestedHub->regency->name }}</span>
-                                                        @endif
+                                                        <strong><i class="fi-rs-building mr-5"></i> {{ $suggestedHub->name }}</strong>
                                                     </p>
+                                                    <p class="font-xs text-muted mb-0 mt-1" id="sourceWarehouseLocation">{{ $suggestedHub->full_location ?? '' }}</p>
                                                 @else
                                                     <p class="mb-0 text-muted font-sm">Pilih alamat pengiriman untuk menentukan hub terdekat.</p>
                                                 @endif
@@ -84,11 +84,30 @@
                                             <div class="card-body p-4">
                                                 <div class="mb-4">
                                                     <label class="form-label font-sm fw-bold">Pilih Kurir</label>
-                                                    <select name="expedition_id" id="expedition_id" class="form-select font-sm mb-3">
-                                                        @foreach($expeditions as $exp)
-                                                            <option value="{{ $exp->id }}">{{ $exp->name }}</option>
+                                                    <div class="row mb-20" id="expeditionList">
+                                                        @foreach($expeditions as $expedition)
+                                                            @php
+                                                                $isDefaultExpedition = $defaultExpedition && $expedition->id === $defaultExpedition->id;
+                                                            @endphp
+                                                            <div class="col-md-4 col-6 mb-10">
+                                                                <div class="card-radio-btn expedition-card {{ $isDefaultExpedition ? 'active' : '' }}" 
+                                                                     data-expedition-id="{{ $expedition->id }}"
+                                                                     onclick="selectExpedition('{{ $expedition->id }}')">
+                                                                    <input type="radio" name="expedition_id" value="{{ $expedition->id }}" 
+                                                                           id="exp{{ $expedition->id }}" class="d-none"
+                                                                           {{ $isDefaultExpedition ? 'checked' : '' }}>
+                                                                    <div class="card-body text-center p-2">
+                                                                        @if($expedition->logo)
+                                                                            <img src="{{ asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
+                                                                        @else
+                                                                            <strong class="text-uppercase">{{ $expedition->code }}</strong>
+                                                                        @endif
+                                                                        <div class="small fw-bold mt-1 text-dark">{{ $expedition->name }}</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         @endforeach
-                                                    </select>
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <label class="form-label font-sm fw-bold">Pilih Layanan</label>
@@ -212,6 +231,20 @@
     .service-item input:checked + label .card { border-color: #3BB77E !important; background-color: #f7fef9; }
     .badge.bg-brand { background-color: #3BB77E !important; }
     .fs-tiny { font-size: 11px; }
+    .card-radio-btn {
+        border: 1.5px solid #ECECEC;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .card-radio-btn:hover {
+        border-color: #3BB77E;
+    }
+    .card-radio-btn.active {
+        border-color: #3BB77E;
+        background-color: #f8fff9;
+    }
 </style>
 @endpush
 
@@ -220,7 +253,7 @@
 $(document).ready(function() {
     function loadServices() {
         var addressId = $('input[name="address_id"]:checked').val();
-        var expeditionId = $('#expedition_id').val();
+        var expeditionId = $('input[name="expedition_id"]:checked').val();
         
         if (!addressId || !expeditionId) return;
 
@@ -264,7 +297,7 @@ $(document).ready(function() {
 
     function updateTotals() {
         var addressId = $('input[name="address_id"]:checked').val();
-        var expeditionId = $('#expedition_id').val();
+        var expeditionId = $('input[name="expedition_id"]:checked').val();
         var serviceCode = $('input[name="expedition_service"]:checked').val();
 
         if (!addressId || !expeditionId || !serviceCode) return;
@@ -288,9 +321,18 @@ $(document).ready(function() {
     // Initial load
     loadServices();
 
+    window.selectExpedition = function(expeditionId) {
+        $('input[name="expedition_id"]').prop('checked', false);
+        $('#exp' + expeditionId).prop('checked', true);
+        
+        $('.expedition-card').removeClass('active');
+        $('[data-expedition-id="' + expeditionId + '"]').addClass('active');
+        
+        loadServices();
+    };
+
     // Event handlers
     $('input[name="address_id"]').change(loadServices);
-    $('#expedition_id').change(loadServices);
     $(document).on('change', 'input[name="expedition_service"]', updateTotals);
 
     $('#checkout-form').on('submit', function() {

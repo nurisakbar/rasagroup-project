@@ -51,46 +51,14 @@
                                         <span class="pro-count blue">{{ $cartCount }}</span>
                                     </a>
                                     <a href="{{ route('cart.index') }}"><span class="lable">Keranjang</span></a>
-                                    <div class="cart-dropdown-wrap cart-dropdown-hm2">
-                                        @include('themes.nest.partials.mini-cart')
-                                    </div>
+
                                 </div>
                                 <div class="header-action-icon-2">
                                     <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                     </a>
-                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun</span></a>
-                                    @auth
-                                    <div class="cart-dropdown-wrap cart-dropdown-hm2 account-dropdown">
-                                        <ul>
-                                            <li>
-                                                <a href="{{ route('buyer.dashboard') }}"><i class="fi fi-rs-user mr-10"></i>Akun Saya</a>
-                                            </li>
-                                            <li>
-                                                <a href="{{ route('buyer.orders.index') }}"><i class="fi fi-rs-shopping-bag mr-10"></i>Pesanan Saya</a>
-                                            </li>
-                                            <li>
-                                                <a href="{{ route('buyer.addresses.index') }}"><i class="fi fi-rs-marker mr-10"></i>Alamat Saya</a>
-                                            </li>
-                                            <li>
-                                                <a href="{{ route('buyer.profile') }}"><i class="fi fi-rs-settings-sliders mr-10"></i>Pengaturan</a>
-                                            </li>
-                                            @if(Auth::user()->isDistributor())
-                                            <li>
-                                                <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi fi-rs-shopping-bag mr-10"></i>Kelola Pesanan</a>
-                                            </li>
-                                            @endif
-                                            <li>
-                                                <form method="POST" action="{{ route('logout') }}" id="logout-form-header">
-                                                    @csrf
-                                                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-header').submit();">
-                                                        <i class="fi fi-rs-sign-out mr-10"></i>Keluar
-                                                    </a>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    @endauth
+                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun Saya</span></a>
+
                                 </div>
                             </div>
                         </div>
@@ -176,31 +144,7 @@
                                     <li>
                                         <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">Saluran Informasi</a>
                                     </li>
-                                    @auth
-                                        @if(Auth::user()->isDistributor())
-                                            <li>
-                                                <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
-                                            </li>
-                                        @elseif(Auth::user()->isDriippreneur())
-                                            <li>
-                                                <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
-                                            </li>
-                                        @else
-                                            <li>
-                                                <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
-                                            </li>
-                                            <li>
-                                                <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
-                                            </li>
-                                        @endif
-                                    @else
-                                        <li>
-                                            <a class="{{ request()->routeIs('buyer.affiliate.index') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">Affiliator</a>
-                                        </li>
-                                        <li>
-                                            <a class="{{ $distributorMainMenuActive ? 'active' : '' }}" href="{{ $distributorMainMenuUrl }}">Distributor</a>
-                                        </li>
-                                    @endauth
+
                                 </ul>
                             </nav>
                         </div>
@@ -229,9 +173,7 @@
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                     <span class="pro-count white">{{ $cartCount }}</span>
                                 </a>
-                                <div class="cart-dropdown-wrap cart-dropdown-hm2">
-                                    @include('themes.nest.partials.mini-cart')
-                                </div>
+
                             </div>
                         </div>
                     </div>

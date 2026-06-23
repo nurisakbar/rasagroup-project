@@ -347,7 +347,7 @@ class CartController extends Controller
 
         $this->logCartStore('store: success', [
             'product_id' => $product->id,
-            'warehouse_id' => $warehouseId,
+            'warehouse_id' => $warehouse ? $warehouse->id : null,
             'response' => $request->ajax() ? 'json' : 'redirect_back',
         ]);
 

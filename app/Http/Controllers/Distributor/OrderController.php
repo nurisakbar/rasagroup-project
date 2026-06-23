@@ -118,7 +118,7 @@ class OrderController extends Controller
         });
 
         $totalItems = $carts->sum('quantity');
-        $potentialPoints = $totalItems * Order::DISTRIBUTOR_POINTS_PER_ITEM;
+        $potentialPoints = 0; // Distributors do not get points
 
         // Add price info to each cart item for display
         $carts->each(function ($cart) use ($user) {
@@ -213,7 +213,7 @@ class OrderController extends Controller
         });
 
         $totalItems = $carts->sum('quantity');
-        $potentialPoints = $totalItems * Order::DISTRIBUTOR_POINTS_PER_ITEM;
+        $potentialPoints = 0; // Distributors do not get points
 
         $totalWeight = $carts->sum(function ($cart) {
             return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -475,7 +475,7 @@ class OrderController extends Controller
             });
 
             $totalItems = $carts->sum('quantity');
-            $pointsEarned = $totalItems * Order::DISTRIBUTOR_POINTS_PER_ITEM;
+            $pointsEarned = 0; // Distributors do not get points
 
             $serviceMultiplier = 1.0;
             foreach ($expedition->services as $service) {

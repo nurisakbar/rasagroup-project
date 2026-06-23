@@ -29,6 +29,9 @@
                                     <h3 class="mb-0">Keranjang Belanja Distributor</h3>
                                     <p class="text-muted font-sm">Item yang Anda pilih untuk dipesan ke pusat.</p>
                                 </div>
+                                <div class="p-4 bg-white border-bottom">
+                                    @include('buyer.distributor.orders.partials.step-wizard', ['step' => 2])
+                                </div>
                                 <div class="card-body p-4">
                                     @if($carts->isEmpty())
                                         <div class="text-center py-5">
@@ -76,7 +79,9 @@
                                                                 <form action="{{ route('distributor.orders.remove-from-cart', $cart) }}" method="POST" onsubmit="return confirm('Hapus item ini?');">
                                                                     @csrf
                                                                     @method('DELETE')
-                                                                    <button type="submit" class="text-muted"><i class="fi-rs-trash"></i></button>
+                                                                    <button type="submit" class="rg-cart-remove-btn" aria-label="Hapus item">
+                                                                        <i class="fi-rs-trash"></i>
+                                                                    </button>
                                                                 </form>
                                                             </td>
                                                         </tr>
@@ -93,10 +98,6 @@
                                                     <div class="d-flex justify-content-between mb-2">
                                                         <span class="font-sm">Total Unit</span>
                                                         <span class="font-sm fw-bold">{{ number_format($totalItems) }} unit</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between">
-                                                        <span class="font-sm">Estimasi Poin</span>
-                                                        <span class="text-brand font-sm fw-bold">+{{ number_format($potentialPoints) }} Poin</span>
                                                     </div>
                                                 </div>
                                             </div>
