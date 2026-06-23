@@ -199,21 +199,7 @@ class CartApiController extends Controller
             ->where('cart_type', 'regular')
             ->firstOrFail();
 
-        // Check stock availability
-        if (! ShopFulfillment::assumeStockReady() && $cart->warehouse_id) {
-            $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
-                ->where('product_id', $cart->product_id)
-                ->first();
-            
-            $availableStock = $stock ? $stock->stock : 0;
-            
-            if ($validated['quantity'] > $availableStock) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Stock tidak mencukupi. Tersedia: {$availableStock} unit.",
-                ], 400);
-            }
-        }
+        // Disable stock check against a specific hub while shopping via API, will be checked during checkout
 
         $cart->quantity = (int) $validated['quantity'];
         $cart->syncOrderedMetadataFromBaseQuantity();

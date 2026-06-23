@@ -183,36 +183,7 @@ class CartController extends Controller
             ? $product->orderedQuantityToBase($qtyInput, 'large')
             : $qtyInput;
 
-        // Check stock availability if warehouse is set (stok selalu per satuan terkecil)
-        if (! ShopFulfillment::assumeStockReady() && $cart->warehouse_id) {
-            $stock = WarehouseStock::where('warehouse_id', $cart->warehouse_id)
-                ->where('product_id', $cart->product_id)
-                ->first();
-
-            $availableStock = $stock ? (int) $stock->stock : 0;
-
-            if ($newBaseQty > $availableStock) {
-                if ($cart->showsLargeUnitInCart() && $product && $product->hasDualUnitOrdering()) {
-                    $per = max(1, $product->unitsPerLargeEffective());
-                    $maxLarge = intdiv($availableStock, $per);
-                    $msg = "Stock tidak mencukupi. Maksimal {$maxLarge} {$product->large_unit} (tersedia {$availableStock} {$product->unit}).";
-
-                    if ($this->wantsJsonCartUpdate($request)) {
-                        return response()->json(['success' => false, 'message' => $msg], 422);
-                    }
-
-                    return back()->with('error', $msg);
-                }
-
-                $msg = "Stock tidak mencukupi. Tersedia: {$availableStock} unit.";
-
-                if ($this->wantsJsonCartUpdate($request)) {
-                    return response()->json(['success' => false, 'message' => $msg], 422);
-                }
-
-                return back()->with('error', $msg);
-            }
-        }
+        // Disable stock check against a specific hub while shopping, will be checked during checkout
 
         $cart->quantity = $newBaseQty;
         $cart->syncOrderedMetadataFromBaseQuantity();
@@ -355,34 +326,6 @@ class CartController extends Controller
             ->orWhere('slug', $sessionWarehouseId)
             ->first();
 
-        if (!$warehouse || !$warehouse->is_active) {
-            $this->logCartStore('store: abort warehouse missing or inactive', [
-                'warehouse_id_input' => $sessionWarehouseId,
-                'resolved_id' => $warehouse?->id,
-                'is_active' => $warehouse?->is_active,
-            ]);
-
-            return $request->ajax()
-                ? response()->json(['error' => 'Hub tidak valid atau tidak tersedia.'], 422)
-                : back()->with('error', 'Hub tidak valid atau tidak tersedia.');
-        }
-
-        $warehouseId = $warehouse->id;
-
-        $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
-        if ($excludeOwn && (string) $warehouseId === $excludeOwn) {
-            $msg = 'Sebagai distributor, Anda tidak dapat memilih hub sendiri sebagai sumber pembelian. Pilih hub lain.';
-
-            return $request->ajax()
-                ? response()->json(['error' => $msg], 422)
-                : back()->with('error', $msg);
-        }
-
-        $this->logCartStore('store: warehouse resolved', [
-            'warehouse_id' => $warehouseId,
-            'warehouse_name' => $warehouse->name,
-        ]);
-
         $merge = $this->mergeRegularCartLine(
             $product,
             $warehouse,
@@ -443,7 +386,7 @@ class CartController extends Controller
      */
     public function mergeRegularCartLine(
         Product $product,
-        Warehouse $warehouse,
+        ?Warehouse $warehouse,
         int $requestedBaseQty,
         bool $capToStock = false,
         ?string $orderUom = null,
@@ -451,16 +394,7 @@ class CartController extends Controller
         ?string $cartOwnerUserId = null,
         ?string $guestSessionId = null
     ): array {
-        $warehouseId = $warehouse->id;
-
-        $stock = WarehouseStock::where('warehouse_id', $warehouseId)
-            ->where('product_id', $product->id)
-            ->first();
-
-        $availableStock = ShopFulfillment::assumeStockReady()
-            ? PHP_INT_MAX
-            : (int) ($stock ? $stock->stock : 0);
-        $unitLabel = $product->unit ?: 'unit';
+        $warehouseId = $warehouse ? $warehouse->id : null;
 
         $incomingUom = ($orderUom === 'large') ? 'large' : 'base';
         $effectiveUserId = $cartOwnerUserId ?? (Auth::check() ? Auth::id() : null);
@@ -469,50 +403,34 @@ class CartController extends Controller
             : null;
 
         if ($effectiveUserId !== null) {
-            $existingCart = Cart::with('warehouse')
-                ->where('user_id', $effectiveUserId)
-                ->where('cart_type', 'regular')
-                ->whereNotNull('warehouse_id')
-                ->where('warehouse_id', '!=', $warehouseId)
-                ->first();
-
-            if ($existingCart) {
-                return [
-                    'ok' => false,
-                    'error' => 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.',
-                    'added' => 0,
-                ];
-            }
-
-            $cart = Cart::where('user_id', $effectiveUserId)
+            $cartQuery = Cart::where('user_id', $effectiveUserId)
                 ->where('product_id', $product->id)
-                ->where('warehouse_id', $warehouseId)
-                ->where('cart_type', 'regular')
-                ->first();
+                ->where('cart_type', 'regular');
+                
+            if ($warehouseId) {
+                $cartQuery->where('warehouse_id', $warehouseId);
+            } else {
+                $cartQuery->whereNull('warehouse_id');
+            }
+            $cart = $cartQuery->first();
         } else {
-            $existingCart = Cart::with('warehouse')
-                ->where('session_id', $effectiveSessionId)
-                ->where('cart_type', 'regular')
-                ->whereNotNull('warehouse_id')
-                ->where('warehouse_id', '!=', $warehouseId)
-                ->first();
-
-            if ($existingCart) {
-                return [
-                    'ok' => false,
-                    'error' => 'Keranjang Anda memiliki produk dari hub lain (' . $existingCart->warehouse->name . '). Kosongkan keranjang terlebih dahulu atau pilih hub yang sama.',
-                    'added' => 0,
-                ];
-            }
-
-            $cart = Cart::where('session_id', $effectiveSessionId)
+            $cartQuery = Cart::where('session_id', $effectiveSessionId)
                 ->where('product_id', $product->id)
-                ->where('warehouse_id', $warehouseId)
-                ->where('cart_type', 'regular')
-                ->first();
+                ->where('cart_type', 'regular');
+                
+            if ($warehouseId) {
+                $cartQuery->where('warehouse_id', $warehouseId);
+            } else {
+                $cartQuery->whereNull('warehouse_id');
+            }
+            $cart = $cartQuery->first();
         }
 
         $existingQty = $cart ? (int) $cart->quantity : 0;
+        
+        // Disable stock checking during add to cart (it will be checked at checkout)
+        $availableStock = PHP_INT_MAX; 
+        
         $room = max(0, $availableStock - $existingQty);
         $toAdd = $capToStock ? min($requestedBaseQty, $room) : $requestedBaseQty;
 
@@ -520,22 +438,6 @@ class CartController extends Controller
             return $capToStock
                 ? ['ok' => true, 'error' => null, 'added' => 0]
                 : ['ok' => false, 'error' => 'Jumlah tidak valid.', 'added' => 0];
-        }
-
-        if (! ShopFulfillment::assumeStockReady() && $toAdd > $room) {
-            if ($existingQty > 0) {
-                return [
-                    'ok' => false,
-                    'error' => "Total quantity melebihi stock. Tersedia: {$availableStock} unit.",
-                    'added' => 0,
-                ];
-            }
-
-            return [
-                'ok' => false,
-                'error' => "Stock tidak mencukupi di hub {$warehouse->name}. Tersedia: {$availableStock} {$unitLabel}.",
-                'added' => 0,
-            ];
         }
 
         if ($cart) {
