@@ -62,3 +62,8 @@ Route::prefix('orders')->group(function () {
 // Ongkir route
 Route::get('/ongkir', [OngkirApiController::class, 'index'])->name('api.ongkir');
 
+// Webhook routes
+Route::prefix('webhooks')->group(function () {
+    Route::get('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'verify'])->name('api.webhooks.meta.verify');
+    Route::post('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'handle'])->name('api.webhooks.meta.handle');
+});

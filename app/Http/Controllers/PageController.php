@@ -23,6 +23,14 @@ class PageController extends Controller
     }
 
     /**
+     * Show the privacy policy page.
+     */
+    public function privacy()
+    {
+        return view('pages.privacy');
+    }
+
+    /**
      * Show a dynamic page from database.
      */
     public function show($slug)

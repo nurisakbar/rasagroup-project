@@ -39,26 +39,77 @@
                     <!-- mobile menu end -->
                 </div>
                 <div class="mobile-header-info-wrap">
-                    <div class="single-mobile-header-info">
-                        <a href="{{ route('contact') }}"><i class="fi-rs-marker"></i> Lokasi kami </a>
-                    </div>
+
                     @auth
-                    <div class="single-mobile-header-info">
-                        <a href="{{ route('buyer.dashboard') }}"><i class="fi-rs-user"></i>Akun Saya </a>
-                    </div>
-                    @if(Auth::user()->isDistributor())
-                    <div class="single-mobile-header-info">
-                        <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-shopping-bag"></i>Kelola Pesanan </a>
-                    </div>
-                    @endif
-                    <div class="single-mobile-header-info">
-                        <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile">
-                            @csrf
-                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" style="display: flex; align-items: center;">
-                                <i class="fi-rs-sign-out" style="margin-right: 10px;"></i>Keluar
-                            </a>
-                        </form>
-                    </div>
+                        @php
+                            $isDistributor = Auth::user()->isDistributor();
+                            $isDistributorPage = request()->is('distributor*') || $isDistributor;
+                        @endphp
+                        
+                        @if($isDistributorPage)
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-shopping-bag"></i>Pesanan Masuk</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('distributor.stock.index') }}"><i class="fi-rs-box"></i>Kelola Stock</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('distributor.pos.index') }}"><i class="fi-rs-computer"></i>Point Of Sales</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.addresses.index') }}"><i class="fi-rs-marker"></i>Alamat Pengiriman</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.profile.operational-hours') }}"><i class="fi-rs-clock"></i>Jadwal Operasional</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('distributor.orders.history') }}"><i class="fi-rs-history"></i>Riwayat Pembelian</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('distributor.profile') }}"><i class="fi-rs-user"></i>Profil</a>
+                            </div>
+                            @if(!$isDistributor)
+                                <div class="single-mobile-header-info">
+                                    <a href="{{ route('buyer.dashboard') }}"><i class="fi-rs-user"></i>Mode Pembeli</a>
+                                </div>
+                            @endif
+                        @else
+
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('cart.index') }}"><i class="fi-rs-shopping-cart"></i>Keranjang Belanja</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.orders.index') }}"><i class="fi-rs-shopping-bag"></i>Pesanan Saya</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.addresses.index') }}"><i class="fi-rs-marker"></i>Alamat Pengiriman</a>
+                            </div>
+                            @if($isDistributor)
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.profile.operational-hours') }}"><i class="fi-rs-clock"></i>Jadwal Operasional</a>
+                            </div>
+                            @endif
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.profile') }}"><i class="fi-rs-user"></i>Profil</a>
+                            </div>
+                            <div class="single-mobile-header-info">
+                                <a href="{{ route('buyer.affiliate.index') }}"><i class="fi-rs-users"></i>Afiliasi</a>
+                            </div>
+                            @if($isDistributor)
+                                <div class="single-mobile-header-info">
+                                    <a href="{{ route('distributor.manage-orders.index') }}"><i class="fi-rs-marker"></i>Mode Distributor</a>
+                                </div>
+                            @endif
+                        @endif
+
+                        <div class="single-mobile-header-info">
+                            <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile">
+                                @csrf
+                                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" style="display: flex; align-items: center;">
+                                    <i class="fi-rs-sign-out" style="margin-right: 10px;"></i>Keluar
+                                </a>
+                            </form>
+                        </div>
                     @else
                     <div class="single-mobile-header-info">
                         <a href="{{ route('login') }}"><i class="fi-rs-user"></i> Masuk / Daftar </a>

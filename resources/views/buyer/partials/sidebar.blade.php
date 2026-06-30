@@ -4,7 +4,7 @@
     $layout = $layout ?? 'vertical';
 @endphp
 
-<div class="dashboard-menu {{ $layout === 'horizontal' ? 'dashboard-menu-horizontal mb-4' : '' }}">
+<div class="dashboard-menu d-none d-lg-block {{ $layout === 'horizontal' ? 'dashboard-menu-horizontal mb-4' : '' }}">
     <ul class="nav {{ $layout === 'horizontal' ? 'flex-row' : 'flex-column' }}" role="tablist">
         @if($isDistributorPage)
             <li class="nav-item">
@@ -30,7 +30,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('buyer.addresses.index') }}">
-                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat pengiriman
+                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat Pengiriman
                 </a>
             </li>
             <li class="nav-item">
@@ -69,12 +69,12 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.orders.*') ? 'active' : '' }}" href="{{ route('buyer.orders.index') }}">
-                    <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Pesanan
+                    <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Pesanan Saya
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('buyer.addresses.index') }}">
-                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat
+                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat Pengiriman
                 </a>
             </li>
             @if($isDistributor)

@@ -9,6 +9,7 @@ Route::get('/menu/{slug}', [App\Http\Controllers\MenuPublicController::class, 's
 Route::post('/menu/{slug}/add-composition-to-cart', [App\Http\Controllers\MenuPublicController::class, 'addCompositionToCart'])->name('menus.add-composition-to-cart');
 Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
 Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
+Route::get('/kebijakan-privasi', [App\Http\Controllers\PageController::class, 'privacy'])->name('privacy');
 Route::get('/p/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 Route::get('/saluran-informasi', [App\Http\Controllers\InformationChannelController::class, 'index'])->name('information-channels.index');
 Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannelController::class, 'show'])->name('information-channels.show');
