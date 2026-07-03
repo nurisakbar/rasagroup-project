@@ -107,9 +107,11 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'editPassword'])->name('profile.password.edit');
     Route::put('/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::get('/profile/operational-hours', [App\Http\Controllers\Buyer\ProfileController::class, 'operationalHours'])->name('profile.operational-hours');
     Route::put('/profile/operational-hours', [App\Http\Controllers\Buyer\ProfileController::class, 'updateOperationalHours'])->name('profile.operational-hours.update');
+    Route::get('/account/menu', [App\Http\Controllers\Buyer\ProfileController::class, 'mobileMenu'])->name('account.menu');
     
     // Address Management
     Route::get('/addresses', [App\Http\Controllers\Buyer\AddressController::class, 'index'])->name('addresses.index');

@@ -116,4 +116,14 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Jadwal operasional berhasil diperbarui.');
     }
+
+    public function mobileMenu()
+    {
+        return view('buyer.profile.mobile-menu');
+    }
+
+    public function editPassword()
+    {
+        return view('buyer.profile.password-edit');
+    }
 }

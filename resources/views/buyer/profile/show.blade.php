@@ -180,7 +180,7 @@
                                     @endif
                                 @endif
 
-                                <div class="mt-50 pt-30 border-top">
+                                <div class="mt-50 pt-30 border-top d-none d-lg-block">
                                     <h4 class="mb-25" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Ubah Password</h4>
                                     <form action="{{ route('buyer.profile.password') }}" method="POST">
                                         @csrf

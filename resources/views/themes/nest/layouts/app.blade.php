@@ -1325,7 +1325,7 @@
     @include('themes.nest.partials.footer')
     @include('themes.nest.partials.modals')
 
-    <div class="whatsapp-float">
+    <div class="whatsapp-float d-none d-lg-block">
         <a href="https://wa.me/628118003357?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
             <i class="bi bi-whatsapp me-2"></i> Chat Kami
         </a>
@@ -1988,6 +1988,82 @@
             });
         });
     </script>
+    @php
+        $isDistributor = auth()->check() ? auth()->user()->isDistributor() : false;
+        $isDistributorPage = request()->is('distributor*') || $isDistributor;
+        $orderRoute = auth()->check() ? ($isDistributorPage ? route('distributor.manage-orders.index') : route('buyer.orders.index')) : route('login');
+        $profileRoute = auth()->check() ? ($isDistributorPage ? route('distributor.profile') : route('buyer.profile')) : route('login');
+    @endphp
+    <div class="mobile-bottom-nav d-flex d-lg-none">
+        <div class="nav-item">
+            <a href="{{ route('home') }}" class="{{ Route::is('home') ? 'active' : '' }}">
+                <i class="fi-rs-home"></i>
+                <span>Beranda</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ route('cart.index') }}" class="{{ Route::is('cart.index') ? 'active' : '' }}">
+                <i class="fi-rs-shopping-cart"></i>
+                <span>Keranjang</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ $orderRoute }}" class="{{ Route::is('buyer.orders.*') || Route::is('distributor.manage-orders.*') ? 'active' : '' }}">
+                <i class="fi-rs-shopping-bag"></i>
+                <span>Pesanan</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ auth()->check() ? route('buyer.account.menu') : route('login') }}" class="{{ Route::is('buyer.account.menu') ? 'active' : '' }}">
+                <i class="fi-rs-user"></i>
+                <span>Akun</span>
+            </a>
+        </div>
+    </div>
+    
+    <style>
+    .mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 9999;
+        border-top: 1px solid #edf2f7;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    .mobile-bottom-nav .nav-item {
+        flex: 1;
+        text-align: center;
+    }
+    .mobile-bottom-nav .nav-item a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #7E7E7E;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .mobile-bottom-nav .nav-item a i {
+        font-size: 22px;
+        margin-bottom: 4px;
+    }
+    .mobile-bottom-nav .nav-item a.active, .mobile-bottom-nav .nav-item a:hover {
+        color: var(--primary-rasa, #6A1B1B);
+    }
+    @media (max-width: 991px) {
+        body {
+            padding-bottom: 75px !important;
+        }
+    }
+    </style>
+
+
 
     @stack('scripts')
 </body>

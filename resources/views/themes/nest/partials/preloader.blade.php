@@ -1,4 +1,4 @@
-    <div id="preloader-active">
+    <!-- <div id="preloader-active">
         <div class="preloader d-flex align-items-center justify-content-center">
             <div class="preloader-inner position-relative">
                 <div class="text-center">
@@ -18,5 +18,6 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.72; transform: scale(0.97); }
         }
-    </style>
+    </style> -->
     <!-- Vendor JS-->
+
