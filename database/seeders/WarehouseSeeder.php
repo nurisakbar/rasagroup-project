@@ -14,14 +14,27 @@ class WarehouseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Ensure RajaOngkir data for required provinces exists
+        if (\Illuminate\Support\Facades\DB::table('raja_ongkir_provinces')->count() == 0) {
+            $this->command->info('Fetching RajaOngkir provinces...');
+            app(\App\Services\RajaOngkirService::class)->getProvinces();
+        }
+        
+        $requiredProvinces = [10, 18, 5];
+        foreach ($requiredProvinces as $provId) {
+            if (\Illuminate\Support\Facades\DB::table('raja_ongkir_cities')->where('province_id', $provId)->count() == 0) {
+                app(\App\Services\RajaOngkirService::class)->getCities($provId);
+            }
+        }
+
         $warehouses = [
             [
                 'name' => 'Hub Jakarta Pusat',
                 'address' => 'Jl. Sudirman No. 123, Jakarta Pusat',
                 'phone' => '021-12345678',
                 'description' => 'Hub utama di Jakarta Pusat',
-                'province_id' => '31', // DKI Jakarta
-                'regency_id' => '3171', // Jakarta Pusat
+                'province_id' => 10, // DKI Jakarta (RajaOngkir)
+                'regency_id' => 137, // Jakarta Pusat (RajaOngkir)
                 'is_active' => true,
                 'manager' => [
                     'name' => 'Manager Hub Jakarta',
@@ -34,8 +47,8 @@ class WarehouseSeeder extends Seeder
                 'address' => 'Jl. Basuki Rahmat No. 45, Surabaya',
                 'phone' => '031-87654321',
                 'description' => 'Hub regional Jawa Timur',
-                'province_id' => '35', // Jawa Timur
-                'regency_id' => '3578', // Surabaya
+                'province_id' => 18, // Jawa Timur (RajaOngkir)
+                'regency_id' => 577, // Surabaya (RajaOngkir)
                 'is_active' => true,
                 'manager' => [
                     'name' => 'Manager Hub Surabaya',
@@ -48,8 +61,8 @@ class WarehouseSeeder extends Seeder
                 'address' => 'Jl. Asia Afrika No. 78, Bandung',
                 'phone' => '022-11223344',
                 'description' => 'Hub regional Jawa Barat',
-                'province_id' => '32', // Jawa Barat
-                'regency_id' => '3273', // Bandung
+                'province_id' => 5, // Jawa Barat (RajaOngkir)
+                'regency_id' => 55, // Bandung (RajaOngkir)
                 'is_active' => true,
                 'manager' => [
                     'name' => 'Manager Hub Bandung',
