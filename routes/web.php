@@ -17,6 +17,7 @@ Route::post('/saluran-informasi/{slug}/comment', [App\Http\Controllers\Informati
 
 // Xendit Webhook (no CSRF protection needed)
 Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
+Route::post('/webhooks/faspay', [App\Http\Controllers\FaspayWebhookController::class, 'handle'])->name('webhooks.faspay');
 
 // Redirect old dashboard based on user role
 Route::get('/dashboard', function () {

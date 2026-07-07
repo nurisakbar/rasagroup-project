@@ -40,7 +40,7 @@ class AuthenticatedSessionController extends Controller
 
         $intendedUrl = redirect()->getIntendedUrl();
         if ($intendedUrl && strpos($intendedUrl, '/admin') !== false) {
-            return redirect()->route('home', absolute: false);
+            return redirect()->route('home');
         }
 
         return redirect()->intended(route('home', absolute: false));

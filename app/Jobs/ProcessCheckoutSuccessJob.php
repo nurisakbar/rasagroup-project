@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Order;
-use App\Services\XenditService;
+use Illuminate\Bus\Queueable;
 use App\Support\QadIntegration;
 use App\Support\SalesOrderSyncDispatcher;
 use Illuminate\Bus\Queueable;
@@ -62,39 +62,7 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
             ]);
         }
 
-        if ($order->payment_method === 'xendit' && $order->xendit_invoice_id && $order->payment_status !== 'paid') {
-            try {
-                $xenditService = new XenditService();
-                $invoiceDetails = $xenditService->getInvoice($order->xendit_invoice_id);
-
-                Log::info('ProcessCheckoutSuccessJob: Xendit API response', [
-                    'order_id' => $order->id,
-                    'invoice_id' => $order->xendit_invoice_id,
-                    'has_response' => ! empty($invoiceDetails),
-                    'invoice_status' => $invoiceDetails['status'] ?? 'unknown',
-                ]);
-
-                if ($invoiceDetails && isset($invoiceDetails['status']) && in_array($invoiceDetails['status'], ['PAID', 'SETTLED'], true)) {
-                    $order->update([
-                        'payment_status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
-                    if ($order->order_status === 'pending') {
-                        $order->update(['order_status' => 'processing']);
-                    }
-                    Log::info('ProcessCheckoutSuccessJob: payment marked paid from Xendit', [
-                        'order_id' => $order->id,
-                        'invoice_status' => $invoiceDetails['status'],
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('ProcessCheckoutSuccessJob: Xendit verify failed', [
-                    'order_id' => $order->id,
-                    'invoice_id' => $order->xendit_invoice_id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+        // Payment polling is handled entirely by Webhooks for Faspay
 
         $order->refresh();
 

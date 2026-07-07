@@ -834,81 +834,37 @@ class CheckoutController extends Controller
 
             Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->delete();
 
-            // Handle Xendit payment first (to get invoice URL)
-            $xenditInvoiceUrl = null;
+            // Handle Faspay payment first (to get invoice URL)
+            $faspayInvoiceUrl = null;
             if ($request->payment_method === 'term_of_payment') {
-                // TOT/TOP: tidak membuat invoice Xendit; pesanan menunggu pembayaran sesuai tempo
-            } elseif ($request->payment_method === 'xendit') {
-                $xenditService = new XenditService();
-                $customer = [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $address->phone,
-                ];
+                // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
+            } elseif ($request->payment_method === 'xendit' || $request->payment_method === 'faspay') {
+                // We map 'xendit' or 'faspay' to FaspayService (if UI hasn't been updated yet)
+                $faspayService = new \App\Services\FaspayService();
+                
+                $invoice = $faspayService->createBill($order, $user);
 
-                $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
-
-                if ($invoice && isset($invoice['id'])) {
-                    $xenditInvoiceId = $invoice['id'];
-                    $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
-                    
-                    // If invoice_url is not in the response, try to get it by fetching the invoice
-                    if (empty($xenditInvoiceUrl)) {
-                        Log::warning('Xendit invoice_url not in response, fetching invoice', [
-                            'invoice_id' => $xenditInvoiceId,
-                            'order_id' => $order->id,
-                        ]);
-                        
-                        // Try to get invoice details
-                        $invoiceDetails = $xenditService->getInvoice($xenditInvoiceId);
-                        if ($invoiceDetails && isset($invoiceDetails['invoice_url'])) {
-                            $xenditInvoiceUrl = $invoiceDetails['invoice_url'];
-                            Log::info('Xendit invoice_url retrieved from getInvoice', [
-                                'invoice_id' => $xenditInvoiceId,
-                                'invoice_url' => $xenditInvoiceUrl,
-                    ]);
-                        }
-                    }
-                    
-                    // Ensure invoice_url is available from response
-                    if (empty($xenditInvoiceUrl) && isset($invoice['invoice_url'])) {
-                        $xenditInvoiceUrl = $invoice['invoice_url'];
-                    }
-                    
+                if ($invoice && isset($invoice['redirect_url'])) {
                     // Update order with invoice information
-                    $order->xendit_invoice_id = $xenditInvoiceId;
-                    $order->xendit_invoice_url = $xenditInvoiceUrl;
+                    $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
+                    $order->faspay_redirect_url = $invoice['redirect_url'];
                     $order->save();
                     
-                    // Refresh order to get updated xendit_invoice_url
-                    $order->refresh();
-                    
+                    $faspayInvoiceUrl = $order->faspay_redirect_url;
+
                     // Log for debugging
-                    Log::info('Xendit invoice saved to order', [
+                    Log::info('Faspay invoice saved to order', [
                         'order_id' => $order->id,
-                        'invoice_id' => $xenditInvoiceId,
-                        'invoice_url' => $order->xendit_invoice_url,
-                        'has_url' => !empty($order->xendit_invoice_url),
+                        'bill_no' => $order->faspay_bill_no,
+                        'redirect_url' => $order->faspay_redirect_url,
+                        'virtual_account_no' => $order->virtual_account_no,
                     ]);
-                    
-                    // If invoice URL is still not available, log warning
-                    if (empty($order->xendit_invoice_url)) {
-                        Log::warning('Xendit invoice URL still not available after save', [
-                            'order_id' => $order->id,
-                            'invoice_id' => $xenditInvoiceId,
-                            'invoice_response' => $invoice,
-                            'xenditInvoiceUrl_var' => $xenditInvoiceUrl,
-                        ]);
-                    }
                 } else {
                     DB::rollBack();
-                    Log::error('Failed to create Xendit invoice', [
-                        'order_id' => $order->id,
-                        'invoice_response' => $invoice,
-                    ]);
-                    return back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pilih metode pembayaran lain.');
+                    Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
+                    return redirect()->back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pastikan kredensial Faspay valid.');
                 }
-            }
+            } 
             // QAD sync (customer + SO) should only run after payment is PAID/SETTLED.
             // For Xendit, this is handled by the webhook (and success-page backup).
             // This prevents creating QAD customers for users who haven't completed a purchase.
@@ -942,9 +898,14 @@ class CheckoutController extends Controller
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
             // Redirect based on payment method
-            if ($request->payment_method === 'xendit' && $xenditInvoiceUrl) {
+            if ($request->payment_method === 'xendit' && isset($xenditInvoiceUrl) && $xenditInvoiceUrl) {
                 // Redirect to Xendit payment page
                 return redirect($xenditInvoiceUrl);
+            }
+
+            if (($request->payment_method === 'xendit' || $request->payment_method === 'faspay') && isset($faspayInvoiceUrl) && $faspayInvoiceUrl) {
+                // Redirect to Faspay payment page
+                return redirect($faspayInvoiceUrl);
             }
 
             return redirect()->route('checkout.success', $order)->with('success', 'Pesanan berhasil dibuat.');
@@ -994,7 +955,7 @@ class CheckoutController extends Controller
             'payment_status' => $order->payment_status,
             'order_status' => $order->order_status,
             'payment_method' => $order->payment_method,
-            'xendit_invoice_url' => $order->xendit_invoice_url,
+            'payment_url' => $order->faspay_redirect_url ?? $order->xendit_invoice_url,
         ]);
     }
 
@@ -1091,25 +1052,37 @@ class CheckoutController extends Controller
         Address $address,
         float $totalWeightGrams
     ): ?array {
-        if (in_array($expedition->code, ['lion_parcel', 'lalamove'], true)) {
-            return $this->ekspedisiku->calculateCost(
+        $cacheKey = sprintf(
+            'shipping_cost_%s_%s_%s_%s',
+            $expedition->code,
+            $sourceWarehouse->id,
+            $address->id,
+            $totalWeightGrams
+        );
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($expedition, $sourceWarehouse, $address, $totalWeightGrams) {
+            $ekspedisiKuCodes = ['lion_parcel', 'lalamove', 'jne'];
+            
+            if (in_array($expedition->code, $ekspedisiKuCodes, true)) {
+                return $this->ekspedisiku->calculateCost(
+                    $sourceWarehouse->district_id,
+                    $address->district_id,
+                    max(1, $totalWeightGrams / 1000),
+                    $expedition->code,
+                    [
+                        'warehouse' => $sourceWarehouse,
+                        'address' => $address,
+                    ]
+                );
+            }
+
+            return $this->rajaOngkir->calculateCost(
                 $sourceWarehouse->district_id,
                 $address->district_id,
-                max(1, $totalWeightGrams / 1000),
-                $expedition->code,
-                [
-                    'warehouse' => $sourceWarehouse,
-                    'address' => $address,
-                ]
+                $totalWeightGrams,
+                $expedition->code
             );
-        }
-
-        return $this->rajaOngkir->calculateCost(
-            $sourceWarehouse->district_id,
-            $address->district_id,
-            $totalWeightGrams,
-            $expedition->code
-        );
+        });
     }
 
     private function formatEstimatedDelivery(?string $etd, string $expeditionCode): string
@@ -1139,14 +1112,14 @@ class CheckoutController extends Controller
             return $dbCodes;
         }
 
-        $codes = [];
+        $inactiveEkspedisiKuCodes = [];
         foreach ($courierRes['data'] as $courier) {
-            if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
-                $codes[] = $courier['id'];
+            if (($courier['is_active'] ?? false) === false && ! empty($courier['id'])) {
+                $inactiveEkspedisiKuCodes[] = $courier['id'];
             }
         }
 
-        return $codes !== [] ? $codes : $dbCodes;
+        return array_values(array_diff($dbCodes, $inactiveEkspedisiKuCodes));
     }
 
     private function findAvailableExpedition(?string $expeditionId): ?Expedition
@@ -1160,6 +1133,6 @@ class CheckoutController extends Controller
 
     private function usesEkspedisiKuRates(string $code): bool
     {
-        return in_array($code, ['lion_parcel', 'lalamove'], true);
+        return in_array($code, ['lion_parcel', 'lalamove', 'jne'], true);
     }
 }

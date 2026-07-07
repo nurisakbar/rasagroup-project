@@ -90,6 +90,7 @@ class WarehouseController extends Controller
             } while (count($locations) < $totalCount && count($batch) > 0);
 
             Log::info('Jubelio Locations API Response received', ['count' => count($locations)]);
+            Log::debug('Jubelio Raw Locations Data', ['data' => $locations]);
 
             $synchronizedCount = 0;
 

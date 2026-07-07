@@ -1011,7 +1011,7 @@
                         <div class="col-md-6 mb-10">
                             <div class="card-radio-btn service-card ${isSelected ? 'active' : ''}"
                                  data-service-code="${service.code}"
-                                 onclick="selectService(${JSON.stringify(service.code)})">
+                                 onclick='selectService(${JSON.stringify(service.code)})'>
                                 <input type="radio" name="expedition_service" value="${service.code}" 
                                        class="d-none"
                                        ${isSelected ? 'checked' : ''}>
@@ -1228,6 +1228,13 @@
 
     $(function() {
         syncCheckoutShippingStateFromForm();
+        
+        var checkedExpedition = $('input[name="expedition_id"]:checked').val();
+        var serverExpedition = @json($defaultExpedition?->id ?? null);
+        if (checkedExpedition && checkedExpedition !== serverExpedition) {
+            selectExpedition(checkedExpedition);
+        }
+        
         setSubmitEnabled(true);
     });
 </script>

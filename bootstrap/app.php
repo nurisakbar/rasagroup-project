@@ -46,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Exclude Xendit webhook from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'webhooks/xendit',
+            'webhooks/faspay',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

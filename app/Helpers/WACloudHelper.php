@@ -811,50 +811,28 @@ class WACloudHelper
         $message .= "💳 *CARA PEMBAYARAN*\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        if ($order->payment_method === 'xendit') {
-            $message .= "Metode: *Pembayaran Online (Xendit)*\n\n";
+        if ($order->payment_method === 'xendit' || $order->payment_method === 'faspay') {
+            $message .= "Metode: *Pembayaran Online*\n\n";
             
-            // Always include payment link - if not in order, try to get from Xendit API
-            $invoiceUrl = $order->xendit_invoice_url;
-            
-            if (empty($invoiceUrl) && $order->xendit_invoice_id) {
-                // Try to fetch invoice URL from Xendit API
-                try {
-                    $xenditService = new \App\Services\XenditService();
-                    $invoiceDetails = $xenditService->getInvoice($order->xendit_invoice_id);
-                    if ($invoiceDetails && isset($invoiceDetails['invoice_url'])) {
-                        $invoiceUrl = $invoiceDetails['invoice_url'];
-                        // Update order with the URL
-                        $order->xendit_invoice_url = $invoiceUrl;
-                        $order->save();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Failed to fetch Xendit invoice URL', [
-                        'order_id' => $order->id,
-                        'invoice_id' => $order->xendit_invoice_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
+            // Link pembayaran bisa dari faspay (atau xendit lama)
+            $invoiceUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url;
             
             if ($invoiceUrl) {
                 $message .= "🔗 *Link Pembayaran:*\n";
                 $message .= $invoiceUrl . "\n\n";
                 $message .= "📝 *Langkah Pembayaran:*\n";
                 $message .= "1. Klik link pembayaran di atas untuk melakukan pembayaran\n";
-                $message .= "2. Pilih metode pembayaran yang tersedia (Virtual Account, E-Wallet, dll)\n";
+                $message .= "2. Pilih metode pembayaran yang tersedia\n";
                 $message .= "3. Selesaikan pembayaran sesuai instruksi\n";
                 $message .= "4. Pesanan akan otomatis diproses setelah pembayaran berhasil\n\n";
-                $message .= "⏰ *Catatan:* Link pembayaran berlaku selama 24 jam.\n";
+                $message .= "⏰ *Catatan:* Link pembayaran berlaku sementara waktu sesuai sistem.\n";
                 $message .= "Jika link tidak bisa diklik, copy dan paste ke browser Anda.\n";
             } else {
-                // If link still not available, log warning but still send notification
-                Log::warning('Xendit invoice URL not available for payment notification', [
+                Log::warning('Payment link not available for payment notification', [
                     'order_id' => $order->id,
-                    'invoice_id' => $order->xendit_invoice_id,
                 ]);
                 $message .= "⚠️ *Link Pembayaran:*\n";
-                $message .= "Link pembayaran sedang diproses. Silakan cek email atau WhatsApp Anda untuk link pembayaran.\n";
+                $message .= "Link pembayaran sedang diproses. Silakan cek email atau kunjungi halaman pesanan untuk link pembayaran.\n";
                 $message .= "Atau hubungi customer service kami untuk bantuan.\n";
             }
         } elseif ($order->payment_method === 'manual_transfer') {

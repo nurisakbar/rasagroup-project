@@ -41,6 +41,17 @@ return [
         'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
     ],
 
+    'faspay' => [
+        'merchant_id' => env('FASPAY_MERCHANT_ID'),
+        'user_id' => env('FASPAY_USER_ID'), // Legacy
+        'password' => env('FASPAY_PASSWORD'), // Legacy
+        'env' => env('FASPAY_ENV', 'dev'),
+        // SNAP BI Configuration
+        'client_id' => env('FASPAY_CLIENT_ID'),
+        'client_secret' => env('FASPAY_CLIENT_SECRET'),
+        'private_key' => env('FASPAY_PRIVATE_KEY'), // Base64 encoded or path
+    ],
+
     'rajaongkir' => [
         'key' => env('RAJAONGKIR_KEY'),
         'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),

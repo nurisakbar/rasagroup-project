@@ -1,0 +1,18 @@
+--- resources/views/checkout/index.blade.php
++++ resources/views/checkout/index.blade.php
+@@ -1227,8 +1227,15 @@
+     });
+ 
+     $(function() {
+         syncCheckoutShippingStateFromForm();
++        
++        // If the browser restored an expedition_id that differs from the server's default,
++        // or if the UI is out of sync, fetch the correct services.
++        var checkedExpedition = $('input[name="expedition_id"]:checked').val();
++        if (checkedExpedition && checkedExpedition !== currentExpeditionId) {
++            selectExpedition(checkedExpedition);
++        }
++        
+         setSubmitEnabled(true);
+     });
+ </script>

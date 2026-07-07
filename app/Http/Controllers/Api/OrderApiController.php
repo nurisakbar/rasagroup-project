@@ -330,81 +330,37 @@ class OrderApiController extends Controller
 
             Cart::where('user_id', $userId)->where('cart_type', 'regular')->delete();
 
-            // Handle Xendit payment first (to get invoice URL)
-            $xenditInvoiceUrl = null;
-            $xenditInvoiceId = null;
+            // Handle Faspay payment first (to get invoice URL)
+            $faspayInvoiceUrl = null;
+            $faspayBillNo = null;
 
-            if ($validated['payment_method'] === 'xendit') {
-                $xenditService = new XenditService();
-                $customer = [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $address->phone,
-                ];
+            if ($validated['payment_method'] === 'xendit' || $validated['payment_method'] === 'faspay') {
+                $faspayService = new \App\Services\FaspayService();
+                
+                $invoice = $faspayService->createBill($order, $user);
 
-                $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
-
-                if ($invoice && isset($invoice['id'])) {
-                    $xenditInvoiceId = $invoice['id'];
-                    $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
-                    
-                    // If invoice_url is not in the response, try to get it by fetching the invoice
-                    if (empty($xenditInvoiceUrl)) {
-                        Log::warning('Xendit invoice_url not in response, fetching invoice', [
-                            'invoice_id' => $xenditInvoiceId,
-                            'order_id' => $order->id,
-                        ]);
-                        
-                        // Try to get invoice details
-                        $invoiceDetails = $xenditService->getInvoice($xenditInvoiceId);
-                        if ($invoiceDetails && isset($invoiceDetails['invoice_url'])) {
-                            $xenditInvoiceUrl = $invoiceDetails['invoice_url'];
-                            Log::info('Xendit invoice_url retrieved from getInvoice', [
-                                'invoice_id' => $xenditInvoiceId,
-                                'invoice_url' => $xenditInvoiceUrl,
-                            ]);
-                        }
-                    }
-
-                    // Ensure invoice_url is available from response
-                    if (empty($xenditInvoiceUrl) && isset($invoice['invoice_url'])) {
-                        $xenditInvoiceUrl = $invoice['invoice_url'];
-                    }
+                if ($invoice && isset($invoice['redirect_url'])) {
+                    $faspayBillNo = $invoice['bill_no'] ?? $order->order_number;
+                    $faspayInvoiceUrl = $invoice['redirect_url'];
                     
                     // Update order with invoice information
-                    $order->xendit_invoice_id = $xenditInvoiceId;
-                    $order->xendit_invoice_url = $xenditInvoiceUrl;
+                    $order->faspay_bill_no = $faspayBillNo;
+                    $order->faspay_redirect_url = $faspayInvoiceUrl;
                     $order->save();
                     
-                    // Refresh order to get updated xendit_invoice_url
-                    $order->refresh();
-                    
                     // Log for debugging
-                    Log::info('Xendit invoice saved to order', [
+                    Log::info('Faspay invoice saved to order', [
                         'order_id' => $order->id,
-                        'invoice_id' => $xenditInvoiceId,
-                        'invoice_url' => $order->xendit_invoice_url,
-                        'has_url' => !empty($order->xendit_invoice_url),
+                        'bill_no' => $order->faspay_bill_no,
+                        'redirect_url' => $order->faspay_redirect_url,
+                        'virtual_account_no' => $order->virtual_account_no,
                     ]);
-                    
-                    // If invoice URL is still not available, log warning
-                    if (empty($order->xendit_invoice_url)) {
-                        Log::warning('Xendit invoice URL still not available after save', [
-                            'order_id' => $order->id,
-                            'invoice_id' => $xenditInvoiceId,
-                            'invoice_response' => $invoice,
-                            'xenditInvoiceUrl_var' => $xenditInvoiceUrl,
-                        ]);
-                    }
                 } else {
                     DB::rollBack();
-                    Log::error('Failed to create Xendit invoice', [
-                        'order_id' => $order->id,
-                        'invoice_response' => $invoice,
-                    ]);
+                    Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
                     return response()->json([
-                        'success' => false,
-                        'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pilih metode pembayaran lain.',
+                        'status' => 'error',
+                        'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
                     ], 500);
                 }
             }
@@ -454,6 +410,7 @@ class OrderApiController extends Controller
                     'order_status' => $order->order_status,
                     'xendit_invoice_url' => $xenditInvoiceUrl,
                     'xendit_invoice_id' => $xenditInvoiceId,
+                    'faspay_invoice_url' => $faspayInvoiceUrl ?? null,
                     'items' => $order->items->map(function ($item) {
                         return [
                             'product' => [

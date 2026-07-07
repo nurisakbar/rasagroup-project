@@ -163,10 +163,11 @@
                                         <h6 class="mb-10" style="color: #c62828;"><i class="fi-rs-close-circle mr-10"></i>Pembayaran tidak berhasil</h6>
                                         <p class="mb-0" style="color: #5d4037;">Status: {{ strtoupper($order->payment_status) }}. Silakan buat pesanan baru atau hubungi kami jika Anda sudah membayar.</p>
                                     </div>
-                                    <div id="checkout-xendit-pending-pane" class="p-30 border-radius-20 text-center" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1); {{ ($order->payment_status === 'paid' || in_array($order->payment_status, ['failed', 'refunded'], true) || ! $order->xendit_invoice_url) ? 'display: none;' : '' }}">
-                                        <h6 class="mb-15" style="color: #6A1B1B;"><i class="fi-rs-credit-card mr-10"></i>Selesaikan Pembayaran</h6>
-                                        <p class="mb-25">Silakan klik tombol di bawah untuk membayar melalui Xendit.</p>
-                                        <a id="checkout-xendit-pay-link" href="{{ $order->xendit_invoice_url }}" class="btn" target="_blank">Bayar Sekarang</a>
+                                    @php $paymentUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url; @endphp
+                                    <div id="checkout-xendit-pending-pane" class="p-30 border-radius-20 text-center" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1); {{ ($order->payment_status === 'paid' || in_array($order->payment_status, ['failed', 'refunded'], true) || ! $paymentUrl) ? 'display: none;' : '' }}">
+                                        <p class="mb-15 text-brand" style="font-size: 16px;"><strong>Selesaikan Pembayaran Anda</strong></p>
+                                        <p class="mb-20 text-muted">Pesanan ini sedang menunggu pembayaran. Silakan klik tombol di bawah untuk melanjutkan ke halaman pembayaran.</p>
+                                        <a id="checkout-xendit-pay-link" href="{{ $paymentUrl }}" class="btn" target="_blank">Bayar Sekarang</a>
                                     </div>
                                 </div>
                                 @if($order->payment_status === 'pending')
@@ -204,10 +205,10 @@
                                                     if (failedPane) failedPane.querySelector('p').textContent = 'Status: ' + String(st).toUpperCase() + '. Silakan buat pesanan baru atau hubungi kami jika Anda sudah membayar.';
                                                     return true;
                                                 }
-                                                if (data.xendit_invoice_url && payLink) payLink.href = data.xendit_invoice_url;
+                                                if (data.payment_url && payLink) payLink.href = data.payment_url;
                                                 show(paidPane, false);
                                                 show(failedPane, false);
-                                                show(pendingPane, !!data.xendit_invoice_url);
+                                                show(pendingPane, !!data.payment_url);
                                                 return false;
                                             }
                                             function tick() {
