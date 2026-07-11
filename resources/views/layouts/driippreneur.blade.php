@@ -28,8 +28,8 @@
   <header class="main-header">
     <!-- Logo -->
     <a href="{{ route('driippreneur.dashboard') }}" class="logo">
-      <span class="logo-mini"><b>A</b>P</span>
-      <span class="logo-lg"><b>Affili</b>ator</span>
+      <span class="logo-mini"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px; max-width: 40px;" alt="Logo"></span>
+      <span class="logo-lg"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px;" alt="Logo"></span>
     </a>
 
     <!-- Header Navbar -->

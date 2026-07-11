@@ -571,7 +571,7 @@ class CheckoutController extends Controller
         }
 
         $user = Auth::user();
-        $allowedPayments = ['xendit', 'manual_transfer'];
+        $allowedPayments = ['xendit', 'faspay', 'manual_transfer'];
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
         }
@@ -629,15 +629,53 @@ class CheckoutController extends Controller
         // Check stock availability
         if (! ShopFulfillment::assumeStockReady()) {
             $stockErrors = [];
+            
+            $usesJubelio = is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
+            $jubelioItems = null;
+
+            if ($usesJubelio && $sourceWarehouse->kode_hub) {
+                try {
+                    $jubelio = app(\App\Services\JubelioService::class);
+                    $token = $jubelio->token();
+                    $locationId = $jubelio->findLocationIdByCode($token, $sourceWarehouse->kode_hub);
+                    if ($locationId) {
+                        $jubelioItems = collect($jubelio->fetchItemsToSell($token, $locationId));
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Checkout stock validation fallback to local', ['error' => $e->getMessage()]);
+                }
+            }
+
             foreach ($carts as $cart) {
-                $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                    ->where('product_id', $cart->product_id)
-                    ->first();
+                $productName = $cart->product->display_name;
+                $qty = $cart->quantity;
+                $productCode = $cart->product->code;
 
-                $availableStock = $stock ? $stock->stock : 0;
+                if ($usesJubelio && $jubelioItems !== null) {
+                    $needle = strtoupper(trim((string) $productCode));
+                    $jItem = $jubelioItems->first(function ($item) use ($needle) {
+                        return strtoupper(trim((string) ($item['item_code'] ?? ''))) === $needle;
+                    });
 
-                if ($cart->quantity > $availableStock) {
-                    $stockErrors[] = "{$cart->product->display_name}: dipesan {$cart->quantity}, tersedia {$availableStock}";
+                    if (!$jItem) {
+                        $stockErrors[] = "{$productName}: Produk tidak tersedia/belum di-assign di gudang Jubelio.";
+                        continue;
+                    }
+
+                    $availableStock = (int) ($jItem['available_qty'] ?? 0);
+                    if ($qty > $availableStock) {
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (Jubelio).";
+                    }
+                } else {
+                    $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                        ->where('product_id', $cart->product_id)
+                        ->first();
+
+                    $availableStock = $stock ? $stock->stock : 0;
+
+                    if ($qty > $availableStock) {
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock}.";
+                    }
                 }
             }
 
@@ -839,30 +877,60 @@ class CheckoutController extends Controller
             if ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
             } elseif ($request->payment_method === 'xendit' || $request->payment_method === 'faspay') {
-                // We map 'xendit' or 'faspay' to FaspayService (if UI hasn't been updated yet)
-                $faspayService = new \App\Services\FaspayService();
-                
-                $invoice = $faspayService->createBill($order, $user);
+                $activeGateway = config('services.active_payment_gateway');
 
-                if ($invoice && isset($invoice['redirect_url'])) {
-                    // Update order with invoice information
-                    $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
-                    $order->faspay_redirect_url = $invoice['redirect_url'];
-                    $order->save();
-                    
-                    $faspayInvoiceUrl = $order->faspay_redirect_url;
+                if ($activeGateway === 'xendit') {
+                    $xenditService = new \App\Services\XenditService();
+                    $customer = [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $address->phone ?? $user->phone,
+                    ];
 
-                    // Log for debugging
-                    Log::info('Faspay invoice saved to order', [
-                        'order_id' => $order->id,
-                        'bill_no' => $order->faspay_bill_no,
-                        'redirect_url' => $order->faspay_redirect_url,
-                        'virtual_account_no' => $order->virtual_account_no,
-                    ]);
+                    $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
+
+                    if ($invoice && isset($invoice['id'])) {
+                        $xenditInvoiceId = $invoice['id'];
+                        $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
+
+                        $order->xendit_invoice_id = $xenditInvoiceId;
+                        $order->xendit_invoice_url = $xenditInvoiceUrl;
+                        $order->save();
+
+                        Log::info('Xendit invoice created and saved to order', [
+                            'order_id' => $order->id,
+                            'invoice_id' => $xenditInvoiceId,
+                        ]);
+                    } else {
+                        DB::rollBack();
+                        Log::error('Failed to create Xendit invoice', ['order_id' => $order->id]);
+                        return redirect()->back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi.');
+                    }
                 } else {
-                    DB::rollBack();
-                    Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
-                    return redirect()->back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pastikan kredensial Faspay valid.');
+                    $faspayService = new \App\Services\FaspayService();
+                    
+                    $invoice = $faspayService->createBill($order, $user);
+
+                    if ($invoice && isset($invoice['redirect_url'])) {
+                        // Update order with invoice information
+                        $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
+                        $order->faspay_redirect_url = $invoice['redirect_url'];
+                        $order->save();
+                        
+                        $faspayInvoiceUrl = $order->faspay_redirect_url;
+
+                        // Log for debugging
+                        Log::info('Faspay invoice saved to order', [
+                            'order_id' => $order->id,
+                            'bill_no' => $order->faspay_bill_no,
+                            'redirect_url' => $order->faspay_redirect_url,
+                            'virtual_account_no' => $order->virtual_account_no,
+                        ]);
+                    } else {
+                        DB::rollBack();
+                        Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
+                        return redirect()->back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi atau pastikan kredensial Faspay valid.');
+                    }
                 }
             } 
             // QAD sync (customer + SO) should only run after payment is PAID/SETTLED.
@@ -1112,14 +1180,14 @@ class CheckoutController extends Controller
             return $dbCodes;
         }
 
-        $inactiveEkspedisiKuCodes = [];
+        $activeEkspedisiKuCodes = [];
         foreach ($courierRes['data'] as $courier) {
-            if (($courier['is_active'] ?? false) === false && ! empty($courier['id'])) {
-                $inactiveEkspedisiKuCodes[] = $courier['id'];
+            if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
+                $activeEkspedisiKuCodes[] = $courier['id'];
             }
         }
 
-        return array_values(array_diff($dbCodes, $inactiveEkspedisiKuCodes));
+        return array_values(array_intersect($dbCodes, $activeEkspedisiKuCodes));
     }
 
     private function findAvailableExpedition(?string $expeditionId): ?Expedition
@@ -1133,6 +1201,6 @@ class CheckoutController extends Controller
 
     private function usesEkspedisiKuRates(string $code): bool
     {
-        return in_array($code, ['lion_parcel', 'lalamove', 'jne'], true);
+        return in_array($code, ['lion_parcel', 'lalamove', 'jne', 'sicepat'], true);
     }
 }

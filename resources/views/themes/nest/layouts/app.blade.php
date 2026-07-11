@@ -259,6 +259,17 @@
             align-items: flex-end;
             padding-top: 0.65rem !important;
         }
+        @media (max-width: 767px) {
+            .rg-product-card .rg-product-footer.product-card-bottom {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .rg-add-cart-row {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
 
         /* ------------------------------------------------------------------ */
         /* Global button theme (apply to all primary buttons)                  */

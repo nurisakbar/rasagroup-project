@@ -78,6 +78,9 @@ class Category extends Model
         return static::query()
             ->active()
             ->withStorefrontProductsCount()
+            ->whereHas('products', function ($q) {
+                $q->where('status', 'active')->where('price', '>', 0);
+            })
             ->orderBy('name')
             ->get();
     }

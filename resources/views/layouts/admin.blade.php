@@ -74,9 +74,9 @@
     <!-- Logo -->
     <a href="{{ route('admin.dashboard') }}" class="logo">
       <!-- mini logo for sidebar mini 50x50 pixels -->
-      <span class="logo-mini"><b>A</b>LT</span>
+      <span class="logo-mini"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px; max-width: 40px;" alt="Logo"></span>
       <!-- logo for regular state and mobile devices -->
-      <span class="logo-lg"><b>Rasa</b>Group</span>
+      <span class="logo-lg"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px;" alt="Logo"></span>
     </a>
 
     <!-- Header Navbar -->

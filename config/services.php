@@ -14,6 +14,9 @@ return [
     |
     */
 
+    'active_payment_gateway' => env('ACTIVE_PAYMENT_GATEWAY', 'xendit'),
+
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

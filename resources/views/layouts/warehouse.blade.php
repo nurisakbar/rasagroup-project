@@ -29,7 +29,7 @@
     <!-- Logo -->
     <a href="{{ route('warehouse.dashboard') }}" class="logo">
       <span class="logo-mini"><b>H</b>UB</span>
-      <span class="logo-lg"><b>Hub</b> Panel</span>
+      <span class="logo-lg"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px;" alt="Logo"></span>
     </a>
 
     <!-- Header Navbar -->

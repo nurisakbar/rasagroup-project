@@ -28,8 +28,8 @@
   <header class="main-header">
     <!-- Logo -->
     <a href="{{ route('home') }}" class="logo">
-      <span class="logo-mini"><b>D</b>S</span>
-      <span class="logo-lg"><b>Distributor</b></span>
+      <span class="logo-mini"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px; max-width: 40px;" alt="Logo"></span>
+      <span class="logo-lg"><img src="{{ asset('logorasa.png') }}" style="max-height: 40px;" alt="Logo"></span>
     </a>
 
     <!-- Header Navbar -->

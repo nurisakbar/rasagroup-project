@@ -149,7 +149,7 @@ class OrderApiController extends Controller
             'address_id' => 'required|exists:addresses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
-            'payment_method' => 'required|in:xendit,manual_transfer',
+            'payment_method' => 'required|in:xendit,faspay,manual_transfer',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -335,33 +335,67 @@ class OrderApiController extends Controller
             $faspayBillNo = null;
 
             if ($validated['payment_method'] === 'xendit' || $validated['payment_method'] === 'faspay') {
-                $faspayService = new \App\Services\FaspayService();
-                
-                $invoice = $faspayService->createBill($order, $user);
+                $activeGateway = config('services.active_payment_gateway');
 
-                if ($invoice && isset($invoice['redirect_url'])) {
-                    $faspayBillNo = $invoice['bill_no'] ?? $order->order_number;
-                    $faspayInvoiceUrl = $invoice['redirect_url'];
-                    
-                    // Update order with invoice information
-                    $order->faspay_bill_no = $faspayBillNo;
-                    $order->faspay_redirect_url = $faspayInvoiceUrl;
-                    $order->save();
-                    
-                    // Log for debugging
-                    Log::info('Faspay invoice saved to order', [
-                        'order_id' => $order->id,
-                        'bill_no' => $order->faspay_bill_no,
-                        'redirect_url' => $order->faspay_redirect_url,
-                        'virtual_account_no' => $order->virtual_account_no,
-                    ]);
+                if ($activeGateway === 'xendit') {
+                    $xenditService = new \App\Services\XenditService();
+                    $customer = [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $address->phone ?? $user->phone,
+                    ];
+
+                    $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
+
+                    if ($invoice && isset($invoice['id'])) {
+                        $xenditInvoiceId = $invoice['id'];
+                        $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
+
+                        $order->xendit_invoice_id = $xenditInvoiceId;
+                        $order->xendit_invoice_url = $xenditInvoiceUrl;
+                        $order->save();
+
+                        Log::info('Xendit invoice created and saved to order via API', [
+                            'order_id' => $order->id,
+                            'invoice_id' => $xenditInvoiceId,
+                        ]);
+                    } else {
+                        DB::rollBack();
+                        Log::error('Failed to create Xendit invoice via API', ['order_id' => $order->id]);
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
+                        ], 500);
+                    }
                 } else {
-                    DB::rollBack();
-                    Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
-                    ], 500);
+                    $faspayService = new \App\Services\FaspayService();
+                    
+                    $invoice = $faspayService->createBill($order, $user);
+
+                    if ($invoice && isset($invoice['redirect_url'])) {
+                        $faspayBillNo = $invoice['bill_no'] ?? $order->order_number;
+                        $faspayInvoiceUrl = $invoice['redirect_url'];
+                        
+                        // Update order with invoice information
+                        $order->faspay_bill_no = $faspayBillNo;
+                        $order->faspay_redirect_url = $faspayInvoiceUrl;
+                        $order->save();
+                        
+                        // Log for debugging
+                        Log::info('Faspay invoice saved to order', [
+                            'order_id' => $order->id,
+                            'bill_no' => $order->faspay_bill_no,
+                            'redirect_url' => $order->faspay_redirect_url,
+                            'virtual_account_no' => $order->virtual_account_no,
+                        ]);
+                    } else {
+                        DB::rollBack();
+                        Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
+                        ], 500);
+                    }
                 }
             }
 

@@ -145,6 +145,38 @@
     .shop-product-fillter .sort-by-dropdown {
         z-index: 102;
     }
+    @media (max-width: 767px) {
+        .shop-product-fillter {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .sort-by-product-area {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .sort-by-cover {
+            margin-right: 0 !important;
+            flex: 1;
+            min-width: 140px;
+        }
+        .nav-tabs.links {
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 5px;
+        }
+        .nav-tabs.links::-webkit-scrollbar {
+            height: 4px;
+        }
+        .nav-tabs.links::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 4px;
+        }
+    }
 </style>
 @endpush
 

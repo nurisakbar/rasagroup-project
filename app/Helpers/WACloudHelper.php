@@ -499,6 +499,7 @@ class WACloudHelper
 
         $methodLabel = match ($order->payment_method) {
             'xendit' => 'Pembayaran online (Xendit)',
+            'faspay' => 'Pembayaran online (Faspay)',
             'manual_transfer' => 'Transfer bank manual',
             'term_of_payment' => 'Term of payment / tempo',
             default => ucfirst(str_replace('_', ' ', (string) $order->payment_method)),

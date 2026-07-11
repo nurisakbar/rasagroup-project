@@ -196,10 +196,10 @@
                     <h4 class="mb-15"><i class="fi-rs-wallet mr-10 text-muted"></i>Metode Pembayaran</h4>
                     <div class="payment_method">
                         <div class="payment_accordion">
-                            <!-- Xendit -->
-                            <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('xendit')" id="card-xendit">
+                            <!-- Online Payment (Xendit/Faspay) -->
+                            <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('{{ config('services.active_payment_gateway') }}')" id="card-xendit">
                                 <div class="custom-radio">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="xendit" id="payXendit" checked>
+                                    <input class="form-check-input" type="radio" name="payment_method" value="{{ config('services.active_payment_gateway') }}" id="payXendit" checked>
                                     <label class="form-check-label" for="payXendit">
                                         <strong class="mr-5">Pembayaran Online (Otomatis)</strong>
                                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" style="height: 20px;">

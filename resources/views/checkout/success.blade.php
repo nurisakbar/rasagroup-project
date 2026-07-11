@@ -150,7 +150,7 @@
                                     </div>
                                     <p class="mt-20 mb-0 text-center font-sm" style="color: #7E7E7E;">Bayar sebelum: <strong>{{ $order->created_at->addDay()->format('d M Y, H:i') }}</strong></p>
                                 </div>
-                            @elseif($order->payment_method === 'xendit')
+                            @elseif($order->payment_method === 'xendit' || $order->payment_method === 'faspay')
                                 <div id="checkout-xendit-root">
                                     <p id="checkout-payment-sync-hint" class="text-center font-sm mb-20" style="color: #7E7E7E; display: none;">
                                         <span class="d-inline-block animate-pulse" style="animation: checkoutPulse 1.2s ease-in-out infinite;">Memverifikasi status pembayaran…</span>

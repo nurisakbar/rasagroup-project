@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Order;
-use Illuminate\Bus\Queueable;
 use App\Support\QadIntegration;
 use App\Support\SalesOrderSyncDispatcher;
 use Illuminate\Bus\Queueable;
