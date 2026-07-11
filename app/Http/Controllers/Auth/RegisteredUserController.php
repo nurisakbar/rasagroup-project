@@ -51,6 +51,12 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        if (env('BYPASS_WA_VERIFICATION', true)) {
+            $user->wa_verified_at = now();
+            $user->save();
+            return redirect(route('dashboard', absolute: false));
+        }
+
         // Dispatch WhatsApp Verification Job to queue
         \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $waCode);
 

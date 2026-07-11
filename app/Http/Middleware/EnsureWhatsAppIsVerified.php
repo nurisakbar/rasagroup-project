@@ -19,7 +19,7 @@ class EnsureWhatsAppIsVerified
 
         if ($user) {
             // Bypass verification for admin and distributor
-            if ($user->isSuperAdmin() || $user->isDistributor()) {
+            if ($user->isSuperAdmin() || $user->isDistributor() || env('BYPASS_WA_VERIFICATION', true)) {
                 return $next($request);
             }
 

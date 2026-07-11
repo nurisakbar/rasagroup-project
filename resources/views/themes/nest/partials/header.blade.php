@@ -1,7 +1,7 @@
     <header class="header-area header-style-1 header-height-2">
-        <div class="mobile-promotion">
+        {{-- <div class="mobile-promotion">
             <span>Pembukaan besar-besaran, diskon hingga <strong>15%</strong> untuk semua item. Tinggal <strong>3 hari</strong> lagi</span>
-        </div>
+        </div> --}}
         <div class="header-middle header-middle-ptb-1 d-none d-lg-block">
             <div class="container">
                 <div class="header-wrap">
