@@ -105,15 +105,24 @@ class JubelioProductSyncService
     private function fetchCategoryMap(string $token): array
     {
         $baseUrl = rtrim((string) config('jubelio.base_url', 'https://api2.jubelio.com'), '/');
-        $catResponse = Http::withToken($token)->get("{$baseUrl}/inventory/categories/item-categories/");
+        try {
+            $catResponse = Http::withToken($token)
+                ->retry(3, 1000)
+                ->timeout(30)
+                ->get("{$baseUrl}/inventory/categories/item-categories/");
 
-        $map = [];
-        if ($catResponse->successful()) {
-            foreach ($catResponse->json() as $cat) {
-                if (isset($cat['category_id'], $cat['category_name'])) {
-                    $map[$cat['category_id']] = $cat['category_name'];
+            $map = [];
+            if ($catResponse->successful()) {
+                foreach ($catResponse->json() as $cat) {
+                    if (isset($cat['category_id'], $cat['category_name'])) {
+                        $map[$cat['category_id']] = $cat['category_name'];
+                    }
                 }
             }
+            return $map;
+        } catch (\Exception $e) {
+            Log::warning('JubelioProductSyncService.fetchCategoryMap connection error', ['message' => $e->getMessage()]);
+            return [];
         }
 
         return $map;
@@ -125,14 +134,24 @@ class JubelioProductSyncService
             return null;
         }
 
-        $baseUrl = rtrim((string) config('jubelio.base_url', 'https://api2.jubelio.com'), '/');
-        $detailResponse = Http::withToken($token)->get("{$baseUrl}/inventory/items/{$itemId}");
+        try {
+            $detailResponse = Http::withToken($token)
+                ->retry(3, 1000)
+                ->timeout(30)
+                ->get("{$baseUrl}/inventory/items/{$itemId}");
 
-        if (! $detailResponse->successful()) {
+            if (! $detailResponse->successful()) {
+                return null;
+            }
+
+            $detailData = $detailResponse->json();
+        } catch (\Exception $e) {
+            Log::warning('JubelioProductSyncService.resolveBrandId connection error', [
+                'item_id' => $itemId,
+                'message' => $e->getMessage()
+            ]);
             return null;
         }
-
-        $detailData = $detailResponse->json();
         $brandName = $detailData['selected_brand_name'] ?? $detailData['brand_name'] ?? null;
 
         if (! $brandName) {

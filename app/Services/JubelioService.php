@@ -10,6 +10,16 @@ class JubelioService
 {
     private ?string $cachedToken = null;
 
+    protected function http(?string $token = null)
+    {
+        $request = Http::retry(3, 1000)->timeout(30);
+        if ($token) {
+            return $request->withToken($token);
+        }
+        return $request;
+    }
+
+
     private function baseUrl(): string
     {
         return rtrim((string) config('jubelio.base_url', 'https://api2.jubelio.com'), '/');
@@ -35,7 +45,7 @@ class JubelioService
             throw new RuntimeException('Kredensial Jubelio tidak ditemukan di file .env');
         }
 
-        $response = Http::post($this->baseUrl() . '/login', [
+        $response = $this->http()->post($this->baseUrl() . '/login', [
             'email' => $email,
             'password' => $password,
         ]);
@@ -61,7 +71,7 @@ class JubelioService
         $page = 1;
 
         do {
-            $response = Http::withToken($token)->get($this->baseUrl() . '/locations/', [
+            $response = $this->http($token)->get($this->baseUrl() . '/locations/', [
                 'page' => $page,
                 'pageSize' => 200,
             ]);
@@ -89,7 +99,7 @@ class JubelioService
         $page = 1;
 
         do {
-            $response = Http::withToken($token)->get($this->baseUrl() . '/inventory/items/', [
+            $response = $this->http($token)->get($this->baseUrl() . '/inventory/items/', [
                 'page' => $page,
                 'pageSize' => 200,
             ]);
@@ -123,7 +133,7 @@ class JubelioService
         $items = [];
 
         foreach (array_chunk($itemIds, $chunkSize) as $chunk) {
-            $response = Http::withToken($token)
+            $response = $this->http($token)
                 ->timeout(120)
                 ->post($this->baseUrl() . '/inventory/items/all-stocks/', [
                     'ids' => array_values($chunk),
@@ -162,7 +172,7 @@ class JubelioService
                 $params['q'] = $query;
             }
 
-            $response = Http::withToken($token)->get($this->baseUrl() . '/contacts/customers/', $params);
+            $response = $this->http($token)->get($this->baseUrl() . '/contacts/customers/', $params);
 
             if (!$response->successful()) {
                 throw new RuntimeException('Gagal mengambil customer Jubelio: HTTP ' . $response->status());
@@ -199,7 +209,7 @@ class JubelioService
      */
     public function fetchItemsToSell(string $token, int $locationId): array
     {
-        $response = Http::withToken($token)->get($this->baseUrl() . "/inventory/items/to-sell/{$locationId}");
+        $response = $this->http($token)->get($this->baseUrl() . "/inventory/items/to-sell/{$locationId}");
 
         if (!$response->successful()) {
             throw new RuntimeException('Gagal mengambil item to-sell Jubelio: HTTP ' . $response->status());
@@ -245,7 +255,7 @@ class JubelioService
             'payload' => $payload,
         ]);
 
-        $response = Http::withToken($token)
+        $response = $this->http($token)
             ->timeout(120)
             ->post($url, $payload);
 
@@ -274,7 +284,7 @@ class JubelioService
         $page = 1;
 
         do {
-            $response = Http::withToken($token)->get($this->baseUrl() . '/inventory/items/', [
+            $response = $this->http($token)->get($this->baseUrl() . '/inventory/items/', [
                 'page' => $page,
                 'pageSize' => 200,
             ]);
@@ -298,7 +308,7 @@ class JubelioService
      */
     public function getItemGroup(string $token, int $itemGroupId): ?array
     {
-        $response = Http::withToken($token)->get($this->baseUrl() . "/inventory/items/group/{$itemGroupId}");
+        $response = $this->http($token)->get($this->baseUrl() . "/inventory/items/group/{$itemGroupId}");
 
         if (!$response->successful()) {
             Log::channel('jubelio_product_content')->warning('JubelioService.getItemGroup failed', [
@@ -320,15 +330,23 @@ class JubelioService
      */
     public function getItem(string $token, int $itemId): ?array
     {
-        $response = Http::withToken($token)->get($this->baseUrl() . "/inventory/items/{$itemId}");
+        try {
+            $response = $this->http($token)->get($this->baseUrl() . "/inventory/items/{$itemId}");
 
-        if (!$response->successful()) {
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $body = $response->json();
+
+            return is_array($body) ? $body : null;
+        } catch (\Exception $e) {
+            Log::warning('JubelioService.getItem connection error', [
+                'item_id' => $itemId,
+                'message' => $e->getMessage()
+            ]);
             return null;
         }
-
-        $body = $response->json();
-
-        return is_array($body) ? $body : null;
     }
 
     /**
@@ -336,7 +354,7 @@ class JubelioService
      */
     public function getSalesOrder(string $token, int $salesOrderId): ?array
     {
-        $response = Http::withToken($token)->get($this->baseUrl() . "/sales/orders/{$salesOrderId}");
+        $response = $this->http($token)->get($this->baseUrl() . "/sales/orders/{$salesOrderId}");
 
         if (!$response->successful()) {
             Log::channel('jubelio_sales_order')->warning('JubelioService.getSalesOrder failed', [
