@@ -192,6 +192,15 @@
             </div>
         </div>
     <style>
+        @media (max-width: 991px) {
+            .header-bottom.sticky-bar {
+                margin-top: 15px !important;
+            }
+            .logo.d-lg-none img {
+                margin-top: 15px !important;
+
+            }
+        }
         .rg-mobile-search-bar {
             padding: 10px 0 14px;
             background-color: var(--bg-cream, #F2EAE1);
