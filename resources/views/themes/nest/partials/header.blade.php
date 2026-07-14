@@ -194,11 +194,10 @@
     <style>
         @media (max-width: 991px) {
             .header-bottom.sticky-bar {
-                margin-top: 15px !important;
+                margin-top: 0 !important;
             }
             .logo.d-lg-none img {
-                margin-top: 15px !important;
-
+                margin-top: 0 !important;
             }
         }
         .rg-mobile-search-bar {

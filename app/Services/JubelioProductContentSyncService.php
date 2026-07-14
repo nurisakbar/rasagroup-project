@@ -139,20 +139,21 @@ class JubelioProductContentSyncService
             $updates['technical_description'] = $technicalDescription;
         }
 
-        $downloadedPaths = $this->downloadImages($product->code, $imageUrls);
-        $imagesDownloaded = count($downloadedPaths);
+        // === IMAGE SYNC DISABLED PER USER REQUEST ===
+        // $downloadedPaths = $this->downloadImages($product->code, $imageUrls);
+        $imagesDownloaded = 0; // count($downloadedPaths);
 
-        if ($downloadedPaths !== []) {
-            $this->replaceGalleryImages($product, $downloadedPaths);
+        // if ($downloadedPaths !== []) {
+        //     $this->replaceGalleryImages($product, $downloadedPaths);
+        // 
+        //     $mainImagePath = $downloadedPaths[0];
+        //     if ($mainImagePath !== $product->image) {
+        //         $this->deleteStoredFile($product->image);
+        //     }
+        //     $updates['image'] = $mainImagePath;
+        // }
 
-            $mainImagePath = $downloadedPaths[0];
-            if ($mainImagePath !== $product->image) {
-                $this->deleteStoredFile($product->image);
-            }
-            $updates['image'] = $mainImagePath;
-        }
-
-        $hasContent = $updates !== [] || $downloadedPaths !== [];
+        $hasContent = $updates !== []; // || $downloadedPaths !== [];
 
         if (! $hasContent) {
             Log::channel('jubelio_product_content')->debug('JubelioProductContentSync: no content from Jubelio', [

@@ -16,6 +16,11 @@ class ProductController extends Controller
 
         $query = Product::with(['category', 'brand', 'warehouseStocks'])
             ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereHas('category', function ($q2) {
+                    $q2->where('is_active', true);
+                })->orWhereNull('category_id');
+            })
             ->withBuyerPrice();
 
         if ($selectedHubId) {

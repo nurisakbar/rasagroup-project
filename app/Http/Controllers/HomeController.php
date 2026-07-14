@@ -16,6 +16,11 @@ class HomeController extends Controller
     {
         $selectedHubId = session('selected_hub_id');
         $baseQuery = Product::where('status', 'active')
+            ->where(function ($q) {
+                $q->whereHas('category', function ($q2) {
+                    $q2->where('is_active', true);
+                })->orWhereNull('category_id');
+            })
             ->withBuyerPrice()
             ->orderByInStockFirst($selectedHubId);
 
