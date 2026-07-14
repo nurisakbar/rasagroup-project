@@ -27,7 +27,7 @@ return [
     | Hanya tampilkan produk yang ada di Jubelio dan QAD (sync_sources)
     |--------------------------------------------------------------------------
     */
-    'products_require_jubelio_and_qad' => env('SHOP_PRODUCTS_REQUIRE_JUBELIO_AND_QAD', true),
+
 
     /*
     |--------------------------------------------------------------------------

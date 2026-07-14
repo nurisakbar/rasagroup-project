@@ -356,7 +356,7 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
         }
 
-        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress', 'borzo'], true)) {
             return back()->with('error', 'Ekspedisi tidak didukung untuk booking EkspedisiKu.');
         }
 
@@ -418,11 +418,12 @@ class OrderController extends Controller
         $this->authorizeWarehouseOrder($order);
 
         if (!$order->ekspedisiku_shipment_id) {
-            return back()->with('error', 'Belum ada shipment_id. Buat booking Lion Parcel terlebih dahulu.');
+            return back()->with('error', 'Belum ada shipment_id. Buat booking Ekspedisiku terlebih dahulu.');
         }
 
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress'], true);
+        if (!$supportsPickup) {
+            return back()->with('error', 'Ekspedisi ini tidak mendukung request pickup via EkspedisiKu.');
         }
 
         $startAt = now()->addMinutes(30)->toIso8601String();

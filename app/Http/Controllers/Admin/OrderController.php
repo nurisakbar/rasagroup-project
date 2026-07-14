@@ -362,7 +362,7 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan sudah memiliki nomor resi.');
         }
 
-        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress', 'borzo'], true)) {
             return back()->with('error', 'Ekspedisi tidak didukung untuk booking EkspedisiKu.');
         }
 
@@ -446,8 +446,9 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan belum memiliki shipment_id (EkspedisiKu). Buat booking dulu sampai sukses.');
         }
 
-        if (!$order->expedition || $order->expedition->code !== 'lion_parcel') {
-            return back()->with('error', 'Ekspedisi bukan Lion Parcel.');
+        $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress'], true);
+        if (!$supportsPickup) {
+            return back()->with('error', 'Ekspedisi ini tidak mendukung request pickup via EkspedisiKu.');
         }
 
         // Lion rejects pickup windows that are <= "now" on their side.

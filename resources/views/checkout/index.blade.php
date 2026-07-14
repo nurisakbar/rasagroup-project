@@ -138,7 +138,7 @@
                                            {{ $isDefaultExpedition ? 'checked' : '' }}>
                                     <div class="card-body text-center p-2">
                                         @if($expedition->logo)
-                                            <img src="{{ asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
+                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
                                         @else
                                             <strong class="text-uppercase">{{ $expedition->code }}</strong>
                                         @endif
@@ -442,7 +442,7 @@
         position: relative;
     }
     .card-radio-btn.active::after {
-        content: '\f26b';
+        content: '\f143';
         font-family: 'uicons-regular-straight';
         position: absolute;
         top: 8px;

@@ -234,91 +234,141 @@
                             <th>Nomor Resi</th>
                             <td>
                                 @php
-                                    $supportsEkspedisiBooking = $order->expedition && in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true);
-                                    $isLionParcel = $order->expedition && $order->expedition->code === 'lion_parcel';
+                                    $ekspedisikuCouriers = ['lion_parcel', 'lalamove', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress', 'borzo'];
+                                    $supportsEkspedisiBooking = $order->expedition && in_array($order->expedition->code, $ekspedisikuCouriers, true);
+                                    // EkspedisiKu Pickup API currently only supports Lion Parcel
+                                    $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel'], true);
                                     $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
+                                    $colClass = $supportsPickup ? 'col-md-4' : 'col-md-6';
                                 @endphp
+
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
                                     @if($isLalamove)
                                         <br><small class="text-muted">Order ID Lalamove</small>
                                     @endif
-                                    @if($isLionParcel)
-                                        @if(!$order->ekspedisiku_shipment_id)
-                                            <span class="label label-danger" style="margin-left: 10px;">shipment_id belum tersimpan</span>
-                                            <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset booking/resi ini? Resi akan dikosongkan agar bisa booking ulang.')">
-                                                    <i class="fa fa-trash"></i> Reset Booking
-                                                </button>
-                                            </form>
-                                        @endif
-                                        @if($order->ekspedisiku_pickup_status === 'success')
-                                            <span class="label label-success" style="margin-left: 10px;">
-                                                Pickup requested{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
-                                            </span>
-                                            <form action="{{ route('warehouse.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Cancel request pickup untuk shipment ini?')">
-                                                    <i class="fa fa-ban"></i> Cancel Pickup
-                                                </button>
-                                            </form>
-                                        @elseif($order->ekspedisiku_pickup_status === 'cancelled')
-                                            <span class="label label-default" style="margin-left: 10px;">
-                                                Pickup cancelled{{ $order->ekspedisiku_pickup_requested_at ? ' @ '.$order->ekspedisiku_pickup_requested_at->format('d M Y H:i') : '' }}
-                                            </span>
-                                        @elseif($order->ekspedisiku_pickup_status === 'cancel_failed')
-                                            <span class="label label-danger" style="margin-left: 10px;">
-                                                Cancel pickup gagal
-                                            </span>
-                                            <form action="{{ route('warehouse.orders.cancel-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Retry cancel pickup untuk shipment ini?')">
-                                                    <i class="fa fa-ban"></i> Cancel Pickup
-                                                </button>
-                                            </form>
-                                            @if($order->ekspedisiku_pickup_last_error)
-                                                <br><small class="text-danger">Cancel pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
-                                            @endif
-                                        @else
-                                            <form action="{{ route('warehouse.orders.request-pickup', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs btn-warning" onclick="return confirm('Kirim request pickup ke Lion Parcel?')">
-                                                    <i class="fa fa-truck"></i> Request Pickup
-                                                </button>
-                                            </form>
-                                            @if($order->ekspedisiku_pickup_status === 'failed')
-                                                <br><small class="text-danger">Pickup gagal: {{ $order->ekspedisiku_pickup_last_error }}</small>
-                                            @endif
-                                        @endif
-                                    @endif
-                                    @if($isLalamove && $supportsEkspedisiBooking)
-                                        <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset booking Lalamove? Order ID akan dikosongkan agar bisa booking ulang.')">
-                                                <i class="fa fa-trash"></i> Reset Booking
-                                            </button>
-                                        </form>
-                                    @endif
-                                    @if($order->shipped_at)
-                                        <br><small class="text-muted">Dikirim: {{ $order->shipped_at->format('d M Y H:i') }}</small>
-                                    @endif
                                 @else
                                     <span class="text-muted">Belum diisi</span>
-                                    @if($order->ekspedisiku_booking_status === 'failed' && $order->ekspedisiku_booking_last_error)
-                                        <br><small class="text-danger">Booking gagal: {{ $order->ekspedisiku_booking_last_error }}</small>
-                                    @endif
-                                    @if($supportsEkspedisiBooking)
-                                        <form action="{{ route('warehouse.orders.ekspedisiku-booking', $order) }}" method="POST" style="display: inline; margin-left: 10px;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
-                                                <i class="fa fa-plus"></i> Buat Booking (EkspedisiKu)
-                                            </button>
-                                        </form>
-                                    @endif
                                 @endif
                             </td>
                         </tr>
+                        @if($supportsEkspedisiBooking)
+                        <tr>
+                            <td colspan="2" style="padding: 15px;">
+                                <div class="well well-sm" style="background-color: #f9fafc; border-left: 3px solid #00c0ef; margin-bottom: 0;">
+                                    <h4 style="margin-top:0; margin-bottom: 15px; font-size: 16px;"><i class="fa fa-paper-plane-o"></i> Proses Pengiriman (EkspedisiKu)</h4>
+                                    <div class="row">
+                                        <!-- Step 1: Booking -->
+                                        <div class="{{ $colClass }}">
+                                            <div class="box box-solid {{ $order->tracking_number ? 'box-success' : 'box-primary' }}" style="border: 1px solid #d2d6de; box-shadow: none; margin-bottom: 0;">
+                                                <div class="box-header with-border" style="padding: 8px;">
+                                                    <h3 class="box-title" style="font-size: 13px;">1. Buat Booking</h3>
+                                                </div>
+                                                <div class="box-body text-center" style="padding: 10px;">
+                                                    @if($order->tracking_number)
+                                                        <span class="text-success"><i class="fa fa-check-circle fa-2x"></i></span><br>
+                                                        <strong style="display:inline-block; margin-top:5px; font-size: 13px;">{{ $order->tracking_number }}</strong>
+                                                        <br>
+                                                        <form action="{{ route('warehouse.orders.ekspedisiku-reset-booking', $order) }}" method="POST" style="margin-top: 8px;">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-xs btn-default text-danger" onclick="return confirm('Reset booking/resi ini? Resi akan dikosongkan agar bisa booking ulang.')">
+                                                                <i class="fa fa-trash"></i> Reset Booking
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <form action="{{ route('warehouse.orders.ekspedisiku-booking', $order) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
+                                                                <i class="fa fa-plus"></i> Buat Booking
+                                                            </button>
+                                                        </form>
+                                                        @if($order->ekspedisiku_booking_status === 'failed' && $order->ekspedisiku_booking_last_error)
+                                                            <div class="text-danger" style="margin-top:5px; font-size:11px;">{{ $order->ekspedisiku_booking_last_error }}</div>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Step 2: Request Pickup -->
+                                        @if($supportsPickup)
+                                        <div class="{{ $colClass }}">
+                                            <div class="box box-solid {{ $order->ekspedisiku_pickup_status === 'success' ? 'box-success' : ($order->tracking_number ? 'box-primary' : 'box-default') }}" style="border: 1px solid #d2d6de; box-shadow: none; margin-bottom: 0;">
+                                                <div class="box-header with-border" style="padding: 8px;">
+                                                    <h3 class="box-title" style="font-size: 13px;">2. Request Pickup</h3>
+                                                </div>
+                                                <div class="box-body text-center" style="padding: 10px;">
+                                                    @if(!$order->tracking_number)
+                                                        <span class="text-muted"><i class="fa fa-lock fa-2x"></i><br><small>Selesaikan Step 1</small></span>
+                                                    @else
+                                                        @if($order->ekspedisiku_pickup_status === 'success')
+                                                            <span class="text-success"><i class="fa fa-check-circle fa-2x"></i></span><br>
+                                                            <small style="display:block; margin-top:2px;">Requested: {{ $order->ekspedisiku_pickup_requested_at ? $order->ekspedisiku_pickup_requested_at->format('d M H:i') : '' }}</small>
+                                                            <form action="{{ route('warehouse.orders.cancel-pickup', $order) }}" method="POST" style="margin-top: 8px;">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-xs btn-default text-danger" onclick="return confirm('Cancel request pickup?')">
+                                                                    <i class="fa fa-ban"></i> Cancel Pickup
+                                                                </button>
+                                                            </form>
+                                                        @elseif($order->ekspedisiku_pickup_status === 'cancelled')
+                                                            <span class="text-warning"><i class="fa fa-ban fa-2x"></i><br>Dibatalkan</span>
+                                                            <form action="{{ route('warehouse.orders.request-pickup', $order) }}" method="POST" style="margin-top: 8px;">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-xs btn-warning">Request Ulang</button>
+                                                            </form>
+                                                        @else
+                                                            <form action="{{ route('warehouse.orders.request-pickup', $order) }}" method="POST">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Kirim request pickup?')">
+                                                                    <i class="fa fa-truck"></i> Request Pickup
+                                                                </button>
+                                                            </form>
+                                                            @if($order->ekspedisiku_pickup_status === 'failed' || $order->ekspedisiku_pickup_status === 'cancel_failed')
+                                                                <div class="text-danger" style="margin-top:5px; font-size:11px;">Gagal: {{ $order->ekspedisiku_pickup_last_error }}</div>
+                                                            @endif
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
+
+                                        <!-- Step 3: Track -->
+                                        <div class="{{ $colClass }}">
+                                            <div class="box box-solid {{ $order->tracking_number ? 'box-primary' : 'box-default' }}" style="border: 1px solid #d2d6de; box-shadow: none; margin-bottom: 0;">
+                                                <div class="box-header with-border" style="padding: 8px;">
+                                                    <h3 class="box-title" style="font-size: 13px;">{{ $supportsPickup ? '3' : '2' }}. Lacak Pengiriman</h3>
+                                                </div>
+                                                <div class="box-body text-center" style="padding: 10px;">
+                                                    @if(!$order->tracking_number)
+                                                        <span class="text-muted"><i class="fa fa-lock fa-2x"></i><br><small>Selesaikan Step 1</small></span>
+                                                    @else
+                                                        <a href="#" id="btn-track-order" class="btn btn-sm btn-info">
+                                                            <i class="fa fa-search"></i> Lacak Resi
+                                                        </a>
+                                                        @if($order->shipped_at)
+                                                            <br><small class="text-muted" style="display:block; margin-top:5px;">Dikirim: {{ $order->shipped_at->format('d M H:i') }}</small>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        @else
+                            @if($order->tracking_number && $order->expedition)
+                                <tr>
+                                    <th>Pelacakan</th>
+                                    <td>
+                                        <a href="#" id="btn-track-order" class="btn btn-xs btn-info">
+                                            <i class="fa fa-search"></i> Lacak Resi
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endif
                         <tr>
                             <th>Ongkos Kirim</th>
                             <td>Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>

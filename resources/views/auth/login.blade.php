@@ -64,7 +64,7 @@
                                     <div class="form-group text-center mt-30">
                                         <p class="mb-10 text-muted small">Atau masuk dengan</p>
                                         <a href="{{ route('google.login', ['intent' => 'login']) }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: rgba(111, 23, 21, 1); color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 700; border-radius: 12px;">
-                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google.svg') }}" alt="" style="width: 18px; margin-right: 10px;" />
+                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google-g.png') }}" alt="" style="width: 18px; margin-right: 10px;" />
                                             Masuk dengan Google
                                         </a>
                                     </div>

@@ -259,8 +259,8 @@ class CreateShipmentBooking implements ShouldQueue
         $payload = [
             'carrier' => $carrier,
             'shipment' => [
-                'origin' => $originName,
-                'destination' => $destName,
+                'origin' => (string) ($originDistrict?->id ?? $originName),
+                'destination' => (string) ($destDistrict?->id ?? $destName),
                 'reference' => $bookingReference,
                 'sender' => [
                     'name' => $this->order->sourceWarehouse->name,
@@ -432,7 +432,9 @@ class CreateShipmentBooking implements ShouldQueue
             if ($trackingForUi !== null) {
                 $updates['tracking_number'] = $trackingForUi;
             }
-            if ($lionShipmentId !== null && $lionShipmentId !== '') {
+            if (!empty($data['id'])) {
+                $updates['ekspedisiku_shipment_id'] = (string) $data['id'];
+            } elseif ($lionShipmentId !== null && $lionShipmentId !== '') {
                 $updates['ekspedisiku_shipment_id'] = (string) $lionShipmentId;
             }
             $this->order->update($updates);

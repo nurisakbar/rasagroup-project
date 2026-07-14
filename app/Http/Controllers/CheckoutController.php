@@ -818,8 +818,10 @@ class CheckoutController extends Controller
                 $orderNotes = trim($totPrefix . (filled($orderNotes) ? ' | ' . $orderNotes : ''));
             }
 
+            $orderType = $user->isDistributor() ? Order::TYPE_DISTRIBUTOR : Order::TYPE_REGULAR;
+
             $order = Order::create([
-                'order_type' => Order::TYPE_REGULAR, // Online order
+                'order_type' => $orderType, // Determine by role
                 'order_number' => $orderNumber,
                 'qid_sales_order_number' => $orderNumber,
                 'user_id' => Auth::id(),
@@ -1136,9 +1138,7 @@ class CheckoutController extends Controller
         );
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($expedition, $sourceWarehouse, $address, $totalWeightGrams) {
-            $ekspedisiKuCodes = ['lion_parcel', 'lalamove', 'jne'];
-            
-            if (in_array($expedition->code, $ekspedisiKuCodes, true)) {
+            if ($this->usesEkspedisiKuRates($expedition->code)) {
                 return $this->ekspedisiku->calculateCost(
                     $sourceWarehouse->district_id,
                     $address->district_id,

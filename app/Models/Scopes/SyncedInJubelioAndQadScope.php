@@ -13,11 +13,11 @@ class SyncedInJubelioAndQadScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        if (! config('shop.products_require_jubelio_and_qad', true)) {
-            return;
+        if (auth()->check() && auth()->user()->user_type === 'distributor') {
+            $builder->whereJsonContains('sync_sources', 'qad');
+        } else {
+            // Guest or Regular User
+            $builder->whereJsonContains('sync_sources', 'jubelio');
         }
-
-        $builder->whereJsonContains('sync_sources', 'jubelio')
-            ->whereJsonContains('sync_sources', 'qad');
     }
 }
