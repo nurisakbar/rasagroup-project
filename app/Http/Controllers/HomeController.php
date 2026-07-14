@@ -16,6 +16,9 @@ class HomeController extends Controller
     {
         $selectedHubId = session('selected_hub_id');
         $baseQuery = Product::where('status', 'active')
+            ->whereHas('brand', function ($q) {
+                $q->where('is_active', true);
+            })
             ->where(function ($q) {
                 $q->whereHas('category', function ($q2) {
                     $q2->where('is_active', true);

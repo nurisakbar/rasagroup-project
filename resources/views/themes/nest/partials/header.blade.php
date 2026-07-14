@@ -82,7 +82,7 @@
                             <div class="categories-dropdown-wrap categories-dropdown-active-large font-heading">
                                 <div class="d-flex categori-dropdown-inner">
                                     @php
-                                        $allCategories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
+                                        $allCategories = \App\Models\Category::forStorefrontSidebar();
                                         $count = $allCategories->count();
                                         $half = ceil($count / 2);
                                         $col1 = $allCategories->take($half);

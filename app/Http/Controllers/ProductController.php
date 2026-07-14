@@ -16,6 +16,9 @@ class ProductController extends Controller
 
         $query = Product::with(['category', 'brand', 'warehouseStocks'])
             ->where('status', 'active')
+            ->whereHas('brand', function ($q) {
+                $q->where('is_active', true);
+            })
             ->where(function ($q) {
                 $q->whereHas('category', function ($q2) {
                     $q2->where('is_active', true);
@@ -93,7 +96,11 @@ class ProductController extends Controller
 
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage)->withQueryString();
-        $brands = \App\Models\Brand::where('is_active', true)->get();
+        $brands = \App\Models\Brand::where('is_active', true)
+            ->whereHas('products', function($q) {
+                $q->where('status', 'active');
+            })
+            ->get();
         $selectedBrand = $request->filled('brand')
             ? \App\Models\Brand::where('slug', $request->brand)->where('is_active', true)->first()
             : null;
