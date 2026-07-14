@@ -874,12 +874,25 @@ class CheckoutController extends Controller
 
             Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->delete();
 
-            // Handle Faspay payment first (to get invoice URL)
+            // Handle Faspay/Xendit payment (to get invoice URL)
             $faspayInvoiceUrl = null;
+            $xenditInvoiceUrl = null;
+            
+            Log::info('--- CHECKOUT DEBUG ---', [
+                'order_id' => $order->id,
+                'request_payment_method' => $request->payment_method,
+                'config_active_gateway' => config('services.active_payment_gateway')
+            ]);
+
             if ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
+                Log::info('Checkout Debug: TOP selected, skipping gateway.');
             } elseif ($request->payment_method === 'xendit' || $request->payment_method === 'faspay') {
                 $activeGateway = config('services.active_payment_gateway');
+                
+                Log::info('Checkout Debug: Entering Gateway block.', [
+                    'active_gateway' => $activeGateway
+                ]);
 
                 if ($activeGateway === 'xendit') {
                     $xenditService = new \App\Services\XenditService();
@@ -967,18 +980,27 @@ class CheckoutController extends Controller
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
+            Log::info('Checkout Debug: Checking redirect URLs.', [
+                'xenditInvoiceUrl' => $xenditInvoiceUrl ?? null,
+                'faspayInvoiceUrl' => $faspayInvoiceUrl ?? null,
+                'request_payment_method' => $request->payment_method
+            ]);
+
             // Redirect based on generated invoice URL rather than request parameter 
             // (in case frontend sent outdated payment_method due to cached views)
             if (isset($xenditInvoiceUrl) && $xenditInvoiceUrl) {
                 // Redirect to Xendit payment page
+                Log::info('Checkout Debug: Redirecting to Xendit', ['url' => $xenditInvoiceUrl]);
                 return redirect($xenditInvoiceUrl);
             }
 
             if (isset($faspayInvoiceUrl) && $faspayInvoiceUrl) {
                 // Redirect to Faspay payment page
+                Log::info('Checkout Debug: Redirecting to Faspay', ['url' => $faspayInvoiceUrl]);
                 return redirect($faspayInvoiceUrl);
             }
 
+            Log::info('Checkout Debug: No gateway URL found. Redirecting to success page.');
             return redirect()->route('checkout.success', $order)->with('success', 'Pesanan berhasil dibuat.');
         } catch (\Exception $e) {
             DB::rollBack();
