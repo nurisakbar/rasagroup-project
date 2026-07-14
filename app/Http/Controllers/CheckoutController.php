@@ -967,13 +967,14 @@ class CheckoutController extends Controller
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
-            // Redirect based on payment method
-            if ($request->payment_method === 'xendit' && isset($xenditInvoiceUrl) && $xenditInvoiceUrl) {
+            // Redirect based on generated invoice URL rather than request parameter 
+            // (in case frontend sent outdated payment_method due to cached views)
+            if (isset($xenditInvoiceUrl) && $xenditInvoiceUrl) {
                 // Redirect to Xendit payment page
                 return redirect($xenditInvoiceUrl);
             }
 
-            if (($request->payment_method === 'xendit' || $request->payment_method === 'faspay') && isset($faspayInvoiceUrl) && $faspayInvoiceUrl) {
+            if (isset($faspayInvoiceUrl) && $faspayInvoiceUrl) {
                 // Redirect to Faspay payment page
                 return redirect($faspayInvoiceUrl);
             }
