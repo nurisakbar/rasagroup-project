@@ -18,17 +18,17 @@ class WACloudHelper
     public static function sendText(string $phone, string $message): ?array
     {
         try {
-            $qadService = app(QadWhatsAppService::class);
-            $result = $qadService->sendText($phone, $message);
+            $metaService = app(\App\Services\MetaWhatsAppService::class);
+            $result = $metaService->sendText($phone, $message);
             
             if ($result['success']) {
-                Log::info('WhatsApp text message sent via QAD API', [
+                Log::info('WhatsApp text message sent via Meta API', [
                     'phone' => $phone,
                 ]);
                 return $result;
             }
 
-            Log::error('Failed to send WhatsApp via QAD API', [
+            Log::error('Failed to send WhatsApp via Meta API', [
                 'phone' => $phone,
                 'message' => $result['message'] ?? 'Unknown error'
             ]);

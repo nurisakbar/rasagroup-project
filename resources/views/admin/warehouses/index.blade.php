@@ -56,6 +56,14 @@
                                 <option value="0">Nonaktif</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="filter-sync-source">Sumber:</label>
+                            <select name="sync_source" id="filter-sync-source" class="form-control">
+                                <option value="">Semua Sumber</option>
+                                <option value="jubelio">Jubelio</option>
+                                <option value="qad">QAD</option>
+                            </select>
+                        </div>
                         <button type="button" id="btn-filter" class="btn btn-default">
                             <i class="fa fa-filter"></i> Filter
                         </button>
@@ -105,6 +113,7 @@ $(function() {
                 d.province_id = $('#filter-province').val();
                 d.regency_id = $('#filter-regency').val();
                 d.status = $('#filter-status').val();
+                d.sync_source = $('#filter-sync-source').val();
             }
         },
         columns: [
@@ -176,6 +185,7 @@ $(function() {
         $('#filter-province').val('');
         $('#filter-regency').html('<option value="">Semua Kabupaten/Kota</option>').prop('disabled', true);
         $('#filter-status').val('');
+        $('#filter-sync-source').val('');
         table.draw();
     });
 

@@ -985,6 +985,13 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
+        if ($order->payment_status !== 'paid') {
+            $order->update([
+                'payment_status' => 'paid',
+                'order_status' => 'processing',
+            ]);
+        }
+
         $order->load([
             'user',
             'items.product',

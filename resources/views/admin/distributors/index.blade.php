@@ -24,6 +24,9 @@
                         <a href="{{ route('admin.distributors.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah Manual
                         </a>
+                        <button type="button" id="btn-sync-qad" class="btn btn-info btn-sm">
+                            <i class="fa fa-refresh"></i> Sync QAD Customers
+                        </button>
                     </div>
                 </div>
                 <!-- Filter -->
@@ -74,6 +77,24 @@
                 <!-- /.box-body -->
             </div>
             <!-- /.box -->
+        </div>
+    </div>
+    <!-- Sync Progress Modal -->
+    <div class="modal fade" id="syncProgressModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Menyinkronkan Data...</h4>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Mohon tunggu, sedang menarik dan memproses data dari QAD.</p>
+                    <div class="progress active">
+                        <div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                            <span class="sr-only">Processing...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -158,6 +179,40 @@ $(function() {
         $('#filter-province').val('');
         $('#filter-regency').html('<option value="">Semua Kabupaten/Kota</option>').prop('disabled', true);
         table.draw();
+    });
+
+    // AJAX Sync QAD
+    $('#btn-sync-qad').on('click', function(e) {
+        e.preventDefault();
+        
+        if (!confirm('Mulai sinkronisasi data Customer dari QAD? Proses ini mungkin membutuhkan waktu beberapa saat.')) {
+            return;
+        }
+
+        $('#syncProgressModal').modal('show');
+
+        $.ajax({
+            url: "{{ route('admin.distributors.sync-qad') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(response) {
+                $('#syncProgressModal').modal('hide');
+                if(response.success) {
+                    alert(response.message);
+                    table.draw();
+                }
+            },
+            error: function(xhr) {
+                $('#syncProgressModal').modal('hide');
+                var msg = 'Terjadi kesalahan sistem.';
+                if(xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                alert('Gagal: ' + msg);
+            }
+        });
     });
 });
 </script>

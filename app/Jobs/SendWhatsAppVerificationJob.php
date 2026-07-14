@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use App\Services\QadWhatsAppService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,13 +29,19 @@ class SendWhatsAppVerificationJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(QadWhatsAppService $whatsappService): void
+    public function handle(\App\Services\MetaWhatsAppService $metaService): void
     {
         try {
-            $message = "Halo {$this->user->name}, selamat datang di Multi Citra Rasa Marketplace! Kode verifikasi Anda adalah: {$this->waCode}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
-            $whatsappService->sendText($this->user->phone, $message);
+            // SEMENTARA KITA GUNAKAN TEKS BIASA SAMPAI TEMPLATE OTP DIACTIVATE OLEH META
+            $message = "Halo {$this->user->name}, kode verifikasi Anda adalah: {$this->waCode}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
             
-            Log::info("WhatsApp verification sent to {$this->user->phone}");
+            $result = $metaService->sendText($this->user->phone, $message);
+            
+            if ($result['success']) {
+                Log::info("WhatsApp OTP verification sent to {$this->user->phone} via Meta API");
+            } else {
+                Log::error("Failed to send WhatsApp OTP to {$this->user->phone} via Meta API: " . ($result['message'] ?? 'Unknown error'));
+            }
         } catch (\Exception $e) {
             Log::error("Failed to send WhatsApp verification to {$this->user->phone}: " . $e->getMessage());
             // Re-throw to allow retries if needed

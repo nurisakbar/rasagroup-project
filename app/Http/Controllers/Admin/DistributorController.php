@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use App\Services\QidApiService;
 use App\Services\RajaOngkirService;
 
 class DistributorController extends Controller
@@ -807,5 +810,136 @@ class DistributorController extends Controller
         $user->delete();
 
         return back()->with('success', 'Staff distributor berhasil dihapus.');
+    }
+
+    /**
+     * Sync QAD Customers as Distributors.
+     */
+    public function syncQadCustomers(Request $request, QidApiService $qid)
+    {
+        try {
+            $token = $qid->getToken();
+            
+            $endpoint = env('QIDAPI_BASE_URL', 'https://development-qadwebapi.rasagroupoffice.com') . '/api/master/customer/get';
+            
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'accept' => 'application/json'
+            ])->get($endpoint);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengambil data dari QAD API: ' . $response->body()
+                ], 400);
+            }
+
+            $result = $response->json();
+            $data = $result['data'] ?? [];
+            
+            // Handle single object vs array of objects
+            $customers = isset($data['customerCode']) ? [$data] : (is_array($data) ? $data : []);
+            
+            if (empty($customers)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data customer dari QAD API kosong.'
+                ], 400);
+            }
+
+            $added = 0;
+            $updated = 0;
+
+            foreach ($customers as $c) {
+                if (empty($c['customerCode'])) {
+                    continue;
+                }
+
+                $code = $c['customerCode'];
+                $name = !empty($c['businessRelationName']) ? $c['businessRelationName'] : (!empty($c['addressName']) ? $c['addressName'] : "Customer " . $code);
+                $email = !empty($c['eMail']) ? $c['eMail'] : strtolower($code) . '@qad-dummy.com';
+                $phone = $c['telephone'] ?? null;
+                $address = $c['street1'] ?? null;
+                $postal = $c['zipCode'] ?? null;
+
+                $user = User::where('qad_customer_code', $code)->first();
+                
+                if (!$user) {
+                    $existingEmail = User::where('email', $email)->first();
+                    if ($existingEmail) {
+                        $user = $existingEmail;
+                        $user->qad_customer_code = $code;
+                        $user->save();
+                    }
+                }
+
+                if ($user) {
+                    $warehouse = $user->warehouse;
+                    if (!$warehouse) {
+                        $warehouse = Warehouse::create([
+                            'id' => (string) Str::uuid(),
+                            'name' => 'Gudang ' . $name,
+                            'address' => $address,
+                            'postal_code' => $postal,
+                            'phone' => $phone,
+                            'is_active' => true,
+                        ]);
+                        $user->warehouse_id = $warehouse->id;
+                    } else {
+                        $warehouse->update([
+                            'name' => 'Gudang ' . $name,
+                            'address' => $address ?? $warehouse->address,
+                            'phone' => $phone ?? $warehouse->phone,
+                        ]);
+                    }
+
+                    $user->update([
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone ?? $user->phone,
+                        'role' => User::ROLE_DISTRIBUTOR,
+                        'distributor_status' => 'approved',
+                    ]);
+
+                    $this->syncProductsToWarehouse($warehouse);
+                    $updated++;
+                } else {
+                    $warehouse = Warehouse::create([
+                        'id' => (string) Str::uuid(),
+                        'name' => 'Gudang ' . $name,
+                        'address' => $address,
+                        'postal_code' => $postal,
+                        'phone' => $phone,
+                        'is_active' => true,
+                    ]);
+
+                    $user = User::create([
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'password' => Hash::make('Rasagroup2025!'),
+                        'role' => User::ROLE_DISTRIBUTOR,
+                        'warehouse_id' => $warehouse->id,
+                        'distributor_status' => 'approved',
+                        'distributor_approved_at' => now(),
+                        'qad_customer_code' => $code,
+                    ]);
+
+                    $this->syncProductsToWarehouse($warehouse);
+                    $added++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Sinkronisasi QAD selesai! Ditambahkan: {$added} distributor, Diperbarui: {$updated} distributor."
+            ]);
+        } catch (\Exception $e) {
+            Log::error('QAD Sync Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat sinkronisasi QAD: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

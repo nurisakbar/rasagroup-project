@@ -3,19 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\QadWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class WhatsAppVerificationController extends Controller
 {
-    protected $whatsappService;
-
-    public function __construct(QadWhatsAppService $whatsappService)
-    {
-        $this->whatsappService = $whatsappService;
-    }
-
     public function show(Request $request)
     {
         $user = $request->user();
@@ -82,15 +74,9 @@ class WhatsAppVerificationController extends Controller
             $user->save();
         }
 
-        $message = "Halo {$user->name}, kode verifikasi Anda adalah: {$user->wa_verification_code}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
-        
-        $result = $this->whatsappService->sendText($user->phone, $message);
+        \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $user->wa_verification_code);
 
-        if ($result['success']) {
-            return back()->with('status', 'verification-link-sent');
-        }
-
-        return back()->with('error', 'Gagal mengirim kode verifikasi. Pastikan nomor Anda benar.');
+        return back()->with('status', 'verification-link-sent');
     }
 
     public function updatePhone(Request $request)
@@ -104,8 +90,7 @@ class WhatsAppVerificationController extends Controller
         $user->wa_verification_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
         $user->save();
 
-        $message = "Halo {$user->name}, kode verifikasi WhatsApp Anda adalah: {$user->wa_verification_code}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
-        $this->whatsappService->sendText($user->phone, $message);
+        \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $user->wa_verification_code);
 
         return back()->with('status', 'verification-link-sent')->with('success', 'Nomor WhatsApp berhasil diperbarui.');
     }

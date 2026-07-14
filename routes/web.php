@@ -282,6 +282,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');
         Route::delete('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'destroy'])->name('distributors.destroy');
+        Route::post('/distributors/sync-qad', [App\Http\Controllers\Admin\DistributorController::class, 'syncQadCustomers'])->name('distributors.sync-qad');
     });
 });
 

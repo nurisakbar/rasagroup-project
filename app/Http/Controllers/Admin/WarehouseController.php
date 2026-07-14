@@ -198,6 +198,11 @@ class WarehouseController extends Controller
                 $query->where('is_active', $request->status == '1');
             }
 
+            // Filter by sync source
+            if ($request->filled('sync_source') && $request->sync_source != '') {
+                $query->whereJsonContains('sync_sources', $request->sync_source);
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {
