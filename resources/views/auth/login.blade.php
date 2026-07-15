@@ -17,14 +17,14 @@
             <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
                 <div class="row align-items-center">
                     <div class="col-lg-6 pr-30 d-none d-lg-block">
-                        <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Login" />
+                        <img class="border-radius-20 shadow" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-house-of-rasa.png') }}" alt="Login" />
                     </div>
                     <div class="col-lg-6 col-md-8">
-                        <div class="login_wrap widget-taber-content background-white p-30 border-radius-20">
+                        <div class="login_wrap p-30">
                             <div class="padding_eight_all">
                                 <div class="heading_s1">
-                                    <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Masuk</h1>
-                                    <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Belum punya akun? <a href="{{ route('register') }}" style="color: #6A1B1B; font-weight: 600;">Daftar di sini</a></p>
+                                    <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 800; color: #253D4E; font-size: 42px;">Masuk</h1>
+                                    <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E; font-size: 15px;">Belum punya akun? <a href="{{ route('register') }}" style="color: #6A1B1B; font-weight: 600;">Daftar di sini</a></p>
                                 </div>
                                 @if (session('error') || request('reason') === 'add_to_cart')
                                     <div class="alert alert-danger border-0 mb-20" style="border-radius: 12px;" role="alert">
@@ -52,18 +52,18 @@
                                         <div class="chek-form">
                                             <div class="custome-checkbox">
                                                 <input class="form-check-input" type="checkbox" name="remember" id="exampleCheckbox1" value="" />
-                                                <label class="form-check-label" for="exampleCheckbox1"><span style="color: #6A1B1B; font-weight: 500;">Ingat saya</span></label>
+                                                <label class="form-check-label" for="exampleCheckbox1"><span style="color: #6A1B1B; font-weight: 600; font-size: 14px;">Ingat saya</span></label>
                                             </div>
                                         </div>
-                                        <a class="text-muted small" href="{{ route('password.request') }}">Lupa kata sandi?</a>
+                                        <a class="text-muted small" href="{{ route('password.request') }}" style="color: #A1A1A1 !important;">Lupa kata sandi?</a>
                                     </div>
                                     <div class="form-group">
-                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%; background-color: rgba(111, 23, 21, 1); color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Masuk</button>
+                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%; background-color: #6f1715; color: #ffffff; border-radius: 10px; height: 50px; font-weight: 600; border: none; font-size: 16px;">Masuk</button>
                                     </div>
                                     
                                     <div class="form-group text-center mt-30">
-                                        <p class="mb-10 text-muted small">Atau masuk dengan</p>
-                                        <a href="{{ route('google.login', ['intent' => 'login']) }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: rgba(111, 23, 21, 1); color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 55px; font-weight: 700; border-radius: 12px;">
+                                        <p class="mb-10 text-muted small" style="color: #A1A1A1 !important;">Atau masuk dengan</p>
+                                        <a href="{{ route('google.login', ['intent' => 'login']) }}" class="btn btn-heading btn-block hover-up google-login" style="background-color: #6f1715; color: #ffffff; border: none; width: 100%; display: flex; align-items: center; justify-content: center; height: 50px; font-weight: 600; border-radius: 10px; font-size: 16px;">
                                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/logo-google-g.png') }}" alt="" style="width: 18px; margin-right: 10px;" />
                                             Masuk dengan Google
                                         </a>

@@ -64,6 +64,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_refresh_token',
         'term_of_payment',
         'monthly_target',
+        'credit_limit',
         'wa_verified_at',
         'wa_verification_code',
         'qad_customer_code',

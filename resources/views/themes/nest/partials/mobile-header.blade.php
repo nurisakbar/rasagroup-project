@@ -26,7 +26,9 @@
                     <nav>
                         <ul class="mobile-menu font-heading">
                             <li><a href="{{ route('home') }}">Halaman Utama</a></li>
-                            <li><a href="{{ route('products.index') }}">Katalog Produk</a></li>
+
+                            <li><a href="{{ route('products.index', ['brand' => 'dripp']) }}">DRIPP</a></li>
+                            <li><a href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a></li>
                             <li><a href="{{ route('promo.index') }}">Promo</a></li>
                             <li><a href="{{ route('menus.index') }}">Menu Paket</a></li>
                             <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>

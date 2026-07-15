@@ -126,8 +126,12 @@
                                     <li>
                                         <a class="{{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Halaman Utama</a>
                                     </li>
+
                                     <li>
-                                        <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">Katalog Produk</a>
+                                        <a class="{{ request('brand') == 'dripp' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'dripp']) }}">DRIPP</a>
+                                    </li>
+                                    <li>
+                                        <a class="{{ request('brand') == 'multibev' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a>
                                     </li>
                                     <li>
                                         <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">Promo</a>
@@ -158,6 +162,23 @@
                             <span class="burger-icon-top"></span>
                             <span class="burger-icon-mid"></span>
                             <span class="burger-icon-bottom"></span>
+                        </div>
+                    </div>
+                    <div class="header-action-right d-none d-lg-flex sticky-desktop-actions">
+                        <div class="header-action-2">
+                            <div class="header-action-icon-2">
+                                <a class="mini-cart-icon" href="{{ route('cart.index') }}">
+                                    <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
+                                    <span class="pro-count blue">{{ $cartCount }}</span>
+                                </a>
+                                <a href="{{ route('cart.index') }}"><span class="lable">Keranjang</span></a>
+                            </div>
+                            <div class="header-action-icon-2">
+                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
+                                    <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
+                                </a>
+                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun Saya</span></a>
+                            </div>
                         </div>
                     </div>
                     <div class="header-action-right d-block d-lg-none">
@@ -199,6 +220,13 @@
             .logo.d-lg-none img {
                 margin-top: 0 !important;
             }
+        }
+        .sticky-desktop-actions {
+            display: none !important;
+        }
+        .sticky-bar.stick .sticky-desktop-actions {
+            display: flex !important;
+            align-items: center;
         }
         .rg-mobile-search-bar {
             padding: 10px 0 14px;

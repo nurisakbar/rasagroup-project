@@ -65,19 +65,19 @@
         <section class="section-padding footer-mid">
             <div class="container pt-15 pb-20">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-lg-5 col-md-6 col-12">
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
                                 <a href="{{ route('home') }}" class="mb-15">
                                     <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 150px;" />
                                 </a>
-                                <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi untuk kebutuhan industri dan rumah tangga.</p>
+                                <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi<br>untuk kebutuhan industri dan rumah tangga.</p>
                             </div>
                             <ul class="contact-infor">
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>Jl. Rasa Manis No. 123, Jakarta Selatan</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon:</strong><span><a href="tel:+628118003357" class="text-decoration-none text-heading">+62 811-8003-357</a></span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email:</strong><span>info@rasagroup.com</span></li>
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Jam Kerja:</strong><span>08:00 - 17:00, Senin - Sabtu</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>MM 2100 Industrial Town, Jl. Serui Blok AE1-3, Bekasi 17846 - Indonesia</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon: </strong> <span><a href="tel:02131176969" class="text-decoration-none text-heading">(021) 31176969</a></span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email: </strong> <span>info@rasagroup.co.id</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Jam Kerja: </strong> <span>08:00 - 17:00, Senin - Sabtu</span></li>
                             </ul>
                         </div>
                     </div>
@@ -90,14 +90,7 @@
                             <li><a href="#">Kebijakan Privasi</a></li>
                         </ul>
                     </div>
-                    <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".2s">
-                        <h4 class="widget-title">Akun</h4>
-                        <ul class="footer-list mb-sm-5 mb-md-0">
-                            <li><a href="{{ route('login') }}">Login</a></li>
-                            <li><a href="{{ route('cart.index') }}">Keranjang Saya</a></li>
-                            <li><a href="{{ route('buyer.dashboard') }}">Dashboard</a></li>
-                        </ul>
-                    </div>
+
                     <div class="footer-link-widget col wow animate__animated animate__fadeInUp" data-wow-delay=".3s">
                         <h4 class="widget-title">Link Cepat</h4>
                         <ul class="footer-list mb-sm-5 mb-md-0">
@@ -126,7 +119,7 @@
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex mr-30">
                         <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p><a href="tel:+628118003357" class="text-decoration-none" style="color: inherit;">+62 811-8003-357</a><span>Layanan Pelanggan</span></p>
+                        <p><a href="tel:02131176969" class="text-decoration-none" style="color: inherit;">(021) 31176969</a><span>Layanan Pelanggan</span></p>
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">

@@ -260,6 +260,21 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('credit_limit') has-error @enderror">
+                                    <label for="credit_limit">Limit Kredit</label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rp</span>
+                                        <input type="text" class="form-control rupiah-format" id="credit_limit" name="credit_limit" value="{{ number_format(old('credit_limit', $distributor->credit_limit ?? 0), 0, ',', '.') }}" placeholder="Contoh: 100.000.000">
+                                    </div>
+                                    @error('credit_limit')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="box-footer">
                         <button type="submit" class="btn btn-primary btn-lg">
