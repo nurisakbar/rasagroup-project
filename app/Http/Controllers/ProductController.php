@@ -97,8 +97,24 @@ class ProductController extends Controller
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage)->withQueryString();
         $brands = \App\Models\Brand::where('is_active', true)
-            ->whereHas('products', function($q) {
+            ->whereHas('products', function($q) use ($request) {
                 $q->where('status', 'active');
+                if ($request->filled('category')) {
+                    $q->whereHas('category', function($q2) use ($request) {
+                        $q2->where('slug', $request->category);
+                    });
+                }
+            })
+            ->get();
+
+        $tabCategories = \App\Models\Category::where('is_active', true)
+            ->whereHas('products', function($q) use ($request) {
+                $q->where('status', 'active');
+                if ($request->filled('brand')) {
+                    $q->whereHas('brand', function($q2) use ($request) {
+                        $q2->where('slug', $request->brand);
+                    });
+                }
             })
             ->get();
         $selectedBrand = $request->filled('brand')
@@ -122,7 +138,7 @@ class ProductController extends Controller
             }
         }
 
-        return view('products.index', compact('products', 'selectedHubId', 'brands', 'cartItemMap', 'selectedBrand'));
+        return view('products.index', compact('products', 'selectedHubId', 'brands', 'tabCategories', 'cartItemMap', 'selectedBrand'));
     }
 
     public function show(Request $request, $identifier)
