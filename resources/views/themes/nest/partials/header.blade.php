@@ -224,9 +224,11 @@
         .sticky-desktop-actions {
             display: none !important;
         }
-        .sticky-bar.stick .sticky-desktop-actions {
-            display: flex !important;
-            align-items: center;
+        @media (min-width: 992px) {
+            .sticky-bar.stick .sticky-desktop-actions {
+                display: flex !important;
+                align-items: center;
+            }
         }
         .rg-mobile-search-bar {
             padding: 10px 0 14px;
