@@ -25,51 +25,52 @@
                         <div class="tab-pane fade show active" role="tabpanel">
                              <h3 class="mb-25">Riwayat Pesanan</h3>
 
-                            <div class="order-tabs-container mt-15 mb-30" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                                <ul class="nav flex-nowrap pb-10" style="gap: 8px; border-bottom: 2px solid #edf2f7;">
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ empty($status) || $status === 'all' ? 'active' : '' }} {{ $totalCount === 0 ? 'zero-count' : '' }}" 
+                            <div class="order-tabs-container bg-white mb-3" style="border-radius: 2px; box-shadow: 0 1px 1px 0 rgba(0,0,0,.05);">
+                                <ul class="nav border-0 flex-nowrap" style="overflow-x: auto; display: flex; width: 100%;">
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ empty($status) || $status === 'all' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index') }}">
-                                            <span>Semua</span>
-                                            <span class="count-badge">{{ $totalCount }}</span>
+                                            All
                                         </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ $status === 'pending' ? 'active' : '' }} {{ ($counts['pending'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ $status === 'pending' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index', ['status' => 'pending']) }}">
-                                            <span>Menunggu Pembayaran</span>
-                                            <span class="count-badge">{{ $counts['pending'] ?? 0 }}</span>
+                                            Belum Bayar
                                         </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ $status === 'processing' ? 'active' : '' }} {{ ($counts['processing'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ $status === 'processing' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index', ['status' => 'processing']) }}">
-                                            <span>Dikemas</span>
-                                            <span class="count-badge">{{ $counts['processing'] ?? 0 }}</span>
+                                            Sedang Dikemas {!! ($counts['processing'] ?? 0) > 0 ? '<span class="text-theme-orange">(' . $counts['processing'] . ')</span>' : '' !!}
                                         </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ $status === 'shipped' ? 'active' : '' }} {{ ($counts['shipped'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ $status === 'shipped' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index', ['status' => 'shipped']) }}">
-                                            <span>Dikirim</span>
-                                            <span class="count-badge">{{ $counts['shipped'] ?? 0 }}</span>
+                                            Dikirim {!! ($counts['shipped'] ?? 0) > 0 ? '<span class="text-theme-orange">(' . $counts['shipped'] . ')</span>' : '' !!}
                                         </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ $status === 'delivered' ? 'active' : '' }} {{ ($counts['delivered'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ $status === 'delivered' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index', ['status' => 'delivered']) }}">
-                                            <span>Selesai</span>
-                                            <span class="count-badge">{{ $counts['delivered'] ?? 0 }}</span>
+                                            Selesai
                                         </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="order-status-tab {{ $status === 'cancelled' ? 'active' : '' }} {{ ($counts['cancelled'] ?? 0) === 0 ? 'zero-count' : '' }}" 
+                                    <li class="nav-item flex-fill text-center">
+                                        <a class="nav-link order-status-tab {{ $status === 'cancelled' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index', ['status' => 'cancelled']) }}">
-                                            <span>Batal</span>
-                                            <span class="count-badge">{{ $counts['cancelled'] ?? 0 }}</span>
+                                            Dibatalkan
                                         </a>
                                     </li>
                                 </ul>
+                            </div>
+
+                            <div class="search-bar-container mb-4">
+                                <div class="d-flex align-items-center" style="background: #eaeaea; border-radius: 2px; padding: 8px 15px;">
+                                    <i class="fi-rs-search" style="color: #999; font-size: 16px; margin-right: 10px;"></i>
+                                    <input type="text" class="form-control border-0 bg-transparent shadow-none p-0" placeholder="Kamu bisa cari berdasarkan Nama Penjual, No. Pesanan atau Nama Produk" style="font-size: 14px; color: #333;">
+                                </div>
                             </div>
 
                             <div id="orders-container">
@@ -82,105 +83,41 @@
         </div>
     </div>
 </div>
-
 <style>
     .bg-light-maroon { background-color: rgba(106, 27, 27, 0.03); }
-    .order-card {
-        background: #fff;
-        position: relative;
-        border-radius: 20px;
-        border: 1.5px solid #edf2f7;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.02);
-    }
-    .order-card:hover {
-        box-shadow: 0 10px 30px rgba(106, 27, 27, 0.08);
-        border-color: #6A1B1B88;
-        transform: translateY(-3px);
-    }
-    .order-header {
-        border-bottom: 1.5px solid #edf2f7;
-        background-color: #F8F9FA !important;
-        position: relative;
-        z-index: 2;
-    }
-    .order-body {
-        position: relative;
-        z-index: 2;
-    }
-    .order-card-stretched-link {
-        z-index: 1;
-    }
     
     .text-maroon { color: #6A1B1B !important; }
-
-    .product-info h6 {
-        font-size: 16px;
-        font-weight: 600;
-        color: #253D4E;
-    }
-    
-    .truncate-1 {
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
 
     .order-tabs-container::-webkit-scrollbar {
         display: none;
     }
     .order-tabs-container {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .order-status-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-size: 14px;
-        font-weight: 600;
-        transition: all 0.25s ease;
-        border: 1.5px solid #edf2f7;
+        display: block;
+        padding: 16px 5px;
+        font-size: 15px;
+        font-weight: 400;
+        color: rgba(0,0,0,.8) !important;
         background-color: #fff;
-        color: #718096 !important;
+        border-bottom: 2px solid transparent;
+        transition: color 0.2s ease;
+        text-decoration: none;
         white-space: nowrap;
+        cursor: pointer;
     }
     .order-status-tab:hover {
-        border-color: #cbd5e0;
-        color: #4a5568 !important;
-        transform: translateY(-1px);
+        color: #ee4d2d !important;
     }
     .order-status-tab.active {
-        background-color: #6A1B1B !important;
-        border-color: #6A1B1B !important;
-        color: #fff !important;
-        box-shadow: 0 4px 15px rgba(106, 27, 27, 0.15);
+        color: #ee4d2d !important;
+        border-bottom: 2px solid #ee4d2d;
     }
-    .order-status-tab .count-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 7px;
-        border-radius: 11px;
-        font-size: 11px;
-        font-weight: 700;
-        background-color: #edf2f7;
-        color: #4a5568;
-        transition: all 0.2s ease;
-    }
-    .order-status-tab.active .count-badge {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: #fff;
-    }
-    .order-status-tab.zero-count {
-        opacity: 0.55;
+    .text-theme-orange {
+        color: #ee4d2d;
     }
 </style>
 
@@ -230,28 +167,29 @@
                     if (response.counts) {
                         $('.order-status-tab').each(function() {
                             var href = $(this).attr('href');
-                            var badge = $(this).find('.count-badge');
-                            
-                            if (href.includes('status=pending')) {
-                                badge.text(response.counts.pending || 0);
-                                toggleZeroCountClass($(this), response.counts.pending || 0);
-                            } else if (href.includes('status=processing')) {
-                                badge.text(response.counts.processing || 0);
-                                toggleZeroCountClass($(this), response.counts.processing || 0);
-                            } else if (href.includes('status=shipped')) {
-                                badge.text(response.counts.shipped || 0);
-                                toggleZeroCountClass($(this), response.counts.shipped || 0);
-                            } else if (href.includes('status=delivered')) {
-                                badge.text(response.counts.delivered || 0);
-                                toggleZeroCountClass($(this), response.counts.delivered || 0);
-                            } else if (href.includes('status=cancelled')) {
-                                badge.text(response.counts.cancelled || 0);
-                                toggleZeroCountClass($(this), response.counts.cancelled || 0);
-                            } else {
-                                // "Semua" tab
-                                badge.text(response.total_count || 0);
-                                toggleZeroCountClass($(this), response.total_count || 0);
+                            var badge = $(this).find('.text-theme-orange');
+                            if(badge.length === 0) {
+                                $(this).append(' <span class="text-theme-orange"></span>');
+                                badge = $(this).find('.text-theme-orange');
                             }
+                            
+                            var count = 0;
+                            if (href.includes('status=pending')) {
+                                count = response.counts.pending || 0;
+                            } else if (href.includes('status=processing')) {
+                                count = response.counts.processing || 0;
+                            } else if (href.includes('status=shipped')) {
+                                count = response.counts.shipped || 0;
+                            } else if (href.includes('status=delivered')) {
+                                count = response.counts.delivered || 0;
+                            } else if (href.includes('status=cancelled')) {
+                                count = response.counts.cancelled || 0;
+                            } else {
+                                // "Semua" tab doesn't show badge in shopee UI usually, but if needed we can handle
+                                count = 0;
+                            }
+                            
+                            badge.text(count > 0 ? '(' + count + ')' : '');
                         });
                     }
                 },
@@ -260,14 +198,6 @@
                     console.error('Failed to load orders', xhr);
                 }
             });
-        }
-
-        function toggleZeroCountClass(element, count) {
-            if (parseInt(count) === 0) {
-                element.addClass('zero-count');
-            } else {
-                element.removeClass('zero-count');
-            }
         }
         
         // Handle back/forward browser buttons

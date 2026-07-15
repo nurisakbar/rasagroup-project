@@ -83,12 +83,26 @@
                                                     </span>
                                                 </div>
                                                 @if($order->affiliate)
-                                                <div class="info-item d-flex justify-content-between">
+                                                <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Kode Referal</span>
                                                     <span class="fw-bold font-sm text-brand">{{ $order->affiliate->referral_code }}</span>
                                                 </div>
                                                 @endif
                                             </div>
+
+                                            @if($order->payment_status === 'pending' && $order->payment_method === 'manual_transfer')
+                                                <div class="mt-4 pt-3 border-top text-center">
+                                                    @if($order->payment_proof)
+                                                        <div class="alert alert-info font-sm mb-0 rounded-pill">
+                                                            <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
+                                                        </div>
+                                                    @else
+                                                        <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100">
+                                                            <i class="fi-rs-upload mr-5"></i> Konfirmasi Pembayaran Manual
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -225,25 +239,25 @@
                                         </div>
                                         <div class="card-footer bg-white p-4 border-top">
                                             <div class="row justify-content-end">
-                                                <div class="col-md-5 col-lg-4">
+                                                <div class="col-md-6 col-lg-5">
                                                     <div class="price-summary">
-                                                        <div class="d-flex justify-content-between mb-2">
-                                                            <span class="text-dark font-sm fw-bold">Subtotal Produk</span>
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span class="text-muted font-sm">Subtotal Produk</span>
                                                             <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->subtotal ?? 0, 0, ',', '.') }}</span>
                                                         </div>
                                                         @if($order->discount_amount > 0)
-                                                        <div class="d-flex justify-content-between mb-2 text-danger fw-bold">
-                                                            <span class="font-sm">Diskon ({{ $order->discount_percent }}%)</span>
-                                                            <span class="font-sm fw-bold">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span class="text-muted font-sm">Diskon ({{ $order->discount_percent }}%)</span>
+                                                            <span class="font-sm text-danger fw-bold">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
                                                         </div>
                                                         @endif
-                                                        <div class="d-flex justify-content-between mb-3 text-dark fw-bold">
-                                                            <span class="font-sm">Ongkos Kirim</span>
+                                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                                            <span class="text-muted font-sm">Ongkos Kirim</span>
                                                             <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</span>
                                                         </div>
-                                                        <div class="d-flex justify-content-between pt-3 border-top">
-                                                            <h5 class="mb-0">Total Harga</h5>
-                                                            <h4 class="mb-0 text-brand text-nowrap">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
+                                                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                                            <h5 class="mb-0 text-dark fw-bold">Total Harga</h5>
+                                                            <h5 class="mb-0 text-brand fw-bold text-nowrap">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h5>
                                                         </div>
                                                     </div>
                                                 </div>

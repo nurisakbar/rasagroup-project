@@ -76,6 +76,7 @@ Route::get('/cart/{product}', function (\App\Models\Product $product) {
 
 Route::middleware(['auth', 'wa.verified'])->group(function () {
     Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/bulk-delete', [App\Http\Controllers\CartController::class, 'bulkDelete'])->name('cart.bulk-delete');
     Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
     Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
     Route::delete('/cart/remove-out-of-stock', [App\Http\Controllers\CartController::class, 'removeOutOfStock'])->name('cart.remove-out-of-stock');
@@ -105,6 +106,8 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/invoice', [App\Http\Controllers\Buyer\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
     Route::get('/orders/{order}/track', [App\Http\Controllers\Buyer\OrderController::class, 'trackOrder'])->name('orders.track');
+    Route::get('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'confirmPaymentForm'])->name('orders.confirm-payment');
+    Route::post('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'storePaymentConfirmation'])->name('orders.confirm-payment.store');
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('profile.update');
@@ -176,6 +179,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Products CRUD (Master Data)
         Route::post('/products/import', [App\Http\Controllers\Admin\ProductController::class, 'import'])->name('products.import');
+        Route::get('/products/import-status', [App\Http\Controllers\Admin\ProductController::class, 'importStatus'])->name('products.import-status');
         Route::get('/products/template', [App\Http\Controllers\Admin\ProductController::class, 'downloadTemplate'])->name('products.template');
         Route::post('/products/sync-qid', [App\Http\Controllers\Admin\ProductController::class, 'syncQid'])->name('products.sync-qid');
         Route::post('/products/sync-jubelio', [App\Http\Controllers\Admin\ProductController::class, 'syncJubelio'])->name('products.sync-jubelio');

@@ -112,4 +112,43 @@ class OrderController extends Controller
 
         return response()->json(['success' => false, 'message' => $errorMessage], 400);
     }
+    public function confirmPaymentForm(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($order->payment_status === 'paid') {
+            return redirect()->route('buyer.orders.show', $order)->with('info', 'Pesanan ini sudah dibayar.');
+        }
+
+        return view('buyer.orders.confirm-payment', compact('order'));
+    }
+
+    public function storePaymentConfirmation(Request $request, Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'payment_proof' => 'required|image|max:2048',
+            'payment_submit_note' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            if ($request->hasFile('payment_proof')) {
+                $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+                $order->update([
+                    'payment_proof' => $path,
+                    'payment_submit_note' => $request->payment_submit_note,
+                    'payment_submitted_at' => now(),
+                ]);
+            }
+
+            return redirect()->route('buyer.orders.show', $order)->with('success', 'Konfirmasi pembayaran berhasil dikirim. Tunggu verifikasi dari pusat.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memproses konfirmasi: ' . $e->getMessage());
+        }
+    }
 }

@@ -148,7 +148,7 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <p class="mt-20 mb-0 text-center font-sm" style="color: #7E7E7E;">Bayar sebelum: <strong>{{ $order->created_at->addDay()->format('d M Y, H:i') }}</strong></p>
+                                    <p class="mt-20 mb-0 text-center font-sm" style="color: #7E7E7E;">Bayar sebelum: <strong>{{ $order->created_at->addMinutes(15)->format('d M Y, H:i') }}</strong></p>
                                 </div>
                             @elseif($order->payment_method === 'xendit' || $order->payment_method === 'faspay')
                                 <div id="checkout-xendit-root">

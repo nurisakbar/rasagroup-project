@@ -91,6 +91,22 @@
                                 </span>
                             </td>
                         </tr>
+                        @if($order->payment_method === 'manual_transfer' && $order->payment_proof)
+                        <tr>
+                            <th>Bukti Pembayaran</th>
+                            <td>
+                                <a href="{{ Storage::url($order->payment_proof) }}" target="_blank" class="btn btn-sm btn-info" style="margin-bottom: 5px;">
+                                    <i class="fa fa-image"></i> Lihat Bukti Transfer
+                                </a>
+                                @if($order->payment_submit_note)
+                                    <p class="text-muted mb-0" style="margin-top: 5px;"><small><i class="fa fa-info-circle"></i> Catatan: {{ $order->payment_submit_note }}</small></p>
+                                @endif
+                                @if($order->payment_submitted_at)
+                                    <p class="text-muted mb-0"><small><i class="fa fa-clock-o"></i> Dikirim: {{ \Carbon\Carbon::parse($order->payment_submitted_at)->format('d M Y, H:i') }}</small></p>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
                         @if($order->affiliate)
                         <tr>
                             <th>Kode Referal</th>
@@ -458,11 +474,6 @@
                                     'cancelled' => 'danger',
                                 ][$order->order_status] ?? 'default';
                             @endphp
-                            <div class="text-center" style="margin-bottom: 10px;">
-                                <span class="label label-{{ $statusClass }}" style="font-size: 14px; padding: 8px 15px;">
-                                    {{ strtoupper($order->order_status) }}
-                                </span>
-                            </div>
                             <select name="order_status" id="order_status" class="form-control">
                                 <option value="">-- Pilih Status Baru (Opsional) --</option>
                                 <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -531,9 +542,6 @@
                                 ][$order->payment_status] ?? 'default';
                             @endphp
                             <div class="text-center" style="margin-bottom: 10px;">
-                                <span class="label label-{{ $paymentClass }}" style="font-size: 14px; padding: 8px 15px;">
-                                    {{ strtoupper($order->payment_status) }}
-                                </span>
                                 <p class="text-muted" style="margin-top: 5px; margin-bottom: 0;">
                                     <i class="fa fa-{{ $order->payment_method == 'transfer' ? 'bank' : 'money' }}"></i>
                                     {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ($order->payment_method == 'cod' ? 'COD (Bayar di Tempat)' : ucfirst($order->payment_method)) }}
@@ -734,6 +742,44 @@ $('#btn-track-order').click(function(e) {
             }
             $('#tracking-content').html('<div class="alert alert-danger">' + msg + '</div>');
         }
+    });
+});
+
+$(document).ready(function() {
+    function showToast(message, type = 'success') {
+        var bg = type === 'success' ? '#00a65a' : (type === 'info' ? '#00c0ef' : '#dd4b39');
+        var icon = type === 'success' ? 'fa-check' : (type === 'info' ? 'fa-info-circle' : 'fa-times');
+        var $toast = $('<div style="position:fixed; top:20px; right:20px; background:'+bg+'; color:white; padding:15px 25px; border-radius:4px; z-index:9999; box-shadow:0 4px 6px rgba(0,0,0,0.1); font-size:15px; display:none;"><i class="fa '+icon+'" style="margin-right:8px;"></i> <strong>'+message+'</strong></div>');
+        $('body').append($toast);
+        $toast.fadeIn();
+        setTimeout(function() {
+            $toast.fadeOut(function() { $(this).remove(); });
+        }, 3000);
+    }
+
+    $('#order_status, #payment_status').on('change', function() {
+        var $select = $(this);
+        var $form = $('#updateOrderForm');
+        
+        $select.attr('disabled', true);
+        
+        $.ajax({
+            url: $form.attr('action'),
+            type: 'POST',
+            data: $form.serialize(),
+            success: function(response) {
+                $select.attr('disabled', false);
+                if(response.success) {
+                    showToast('Status tersimpan otomatis', 'success');
+                } else {
+                    showToast('Tidak ada perubahan disimpan', 'info');
+                }
+            },
+            error: function(xhr) {
+                $select.attr('disabled', false);
+                showToast('Gagal menyimpan status', 'error');
+            }
+        });
     });
 });
 </script>

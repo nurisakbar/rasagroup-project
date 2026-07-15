@@ -710,7 +710,7 @@ class CheckoutController extends Controller
                 $totalWeight
             );
 
-            $shippingCost = 0;
+            $shippingCost = -1;
             $availableServices = [];
             if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
                 foreach ($costResult['data'] as $service) {
@@ -723,7 +723,7 @@ class CheckoutController extends Controller
                 }
             }
 
-            if ($shippingCost <= 0) {
+            if ($shippingCost < 0) {
                 \Log::error('Store: Gagal menghitung ongkos kirim.', [
                     'expedition' => $expedition->code,
                     'service_requested' => $request->expedition_service,
@@ -1010,13 +1010,6 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
-        if ($order->payment_status !== 'paid') {
-            $order->update([
-                'payment_status' => 'paid',
-                'order_status' => 'processing',
-            ]);
-        }
-
         $order->load([
             'user',
             'items.product',
@@ -1152,6 +1145,21 @@ class CheckoutController extends Controller
         Address $address,
         float $totalWeightGrams
     ): ?array {
+        if ($expedition->code === 'self_pickup') {
+            return [
+                'data' => [
+                    [
+                        'code' => 'self_pickup',
+                        'name' => 'Self Pickup',
+                        'service' => 'Self Pickup',
+                        'description' => 'Ambil Sendiri di Hub',
+                        'cost' => 0,
+                        'etd' => '-',
+                    ]
+                ]
+            ];
+        }
+
         $cacheKey = sprintf(
             'shipping_cost_%s_%s_%s_%s',
             $expedition->code,
@@ -1210,7 +1218,7 @@ class CheckoutController extends Controller
             return $dbCodes;
         }
 
-        $activeEkspedisiKuCodes = [];
+        $activeEkspedisiKuCodes = ['self_pickup'];
         foreach ($courierRes['data'] as $courier) {
             if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
                 $activeEkspedisiKuCodes[] = $courier['id'];

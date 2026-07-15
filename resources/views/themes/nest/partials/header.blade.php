@@ -109,7 +109,6 @@
                                         @endforeach
                                     </ul>
                                 </div>
-                                <div class="more_categories"><span class="icon"></span> <span class="heading-sm-1">Lihat Semua Kategori...</span></div>
                             </div>
                         </div>
                         @php

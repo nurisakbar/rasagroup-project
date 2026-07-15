@@ -34,26 +34,7 @@
                                         <div class="alert alert-success border-radius-12 mb-25">{{ session('success') }}</div>
                                     @endif
 
-                                    @if($addresses->count() > 1)
-                                        <div class="shopping-address-info mb-30 p-25 border-radius-15">
-                                            <h6 class="mb-10 address-header" style="font-size: 16px;">
-                                                <i class="fi-rs-shop mr-5 text-maroon"></i> Alamat untuk Hub Terdekat
-                                            </h6>
-                                            <p class="font-sm mb-0 text-muted">
-                                                Pilih alamat yang menjadi acuan lokasi Anda saat mencari hub atau distributor terdekat untuk belanja.
-                                            </p>
-                                            @if($selectedShoppingAddressId && $selectedHubName)
-                                                <p class="font-sm mb-0 mt-10">
-                                                    <strong>Hub saat ini:</strong>
-                                                    <span class="text-maroon">{{ $selectedHubName }}</span>
-                                                </p>
-                                            @elseif(!$selectedShoppingAddressId)
-                                                <p class="font-sm mb-0 mt-10 text-warning">
-                                                    Belum ada alamat belanja terpilih. Silakan pilih salah satu alamat di bawah.
-                                                </p>
-                                            @endif
-                                        </div>
-                                    @endif
+
 
                                     @if($addresses->isEmpty())
                                         <div class="text-center py-100">
@@ -67,27 +48,22 @@
                                     @else
                                         <div class="row">
                                             @foreach($addresses as $address)
-                                                @php
-                                                    $isShoppingSelected = $selectedShoppingAddressId === $address->id;
-                                                @endphp
-                                                <div class="col-12 mb-25">
-                                                    <div class="address-card p-30 {{ $isShoppingSelected ? 'shopping-selected' : ($address->is_default ? 'active' : '') }}" data-address-id="{{ $address->id }}">
+                                                <div class="col-12 mb-15">
+                                                    <div class="address-card p-20" data-address-id="{{ $address->id }}">
                                                         <div class="d-flex justify-content-between align-items-start">
                                                             <div class="flex-grow-1">
-                                                                <div class="d-flex align-items-center gap-2 mb-15 flex-wrap">
-                                                                    <span class="badge px-3 py-2 border-radius-8" style="background: #f1f1f1; color: #7E7E7E; font-weight: 600; font-size: 11px;">{{ strtoupper($address->label) }}</span>
+                                                                <div class="d-flex align-items-center gap-2 mb-10 flex-wrap">
+                                                                    <span class="badge px-3 py-1 border-radius-8" style="background: #f1f1f1; color: #7E7E7E; font-weight: 600; font-size: 10px;">{{ strtoupper($address->label) }}</span>
                                                                     @if($address->is_default)
-                                                                        <span class="badge px-3 py-2 border-radius-8 bg-maroon text-white" style="font-weight: 600; font-size: 11px;">UTAMA</span>
+                                                                        <span class="badge px-3 py-1 border-radius-8 bg-maroon text-white" style="font-weight: 600; font-size: 10px;">UTAMA</span>
                                                                     @endif
-                                                                    @if($isShoppingSelected)
-                                                                        <span class="badge px-3 py-2 border-radius-8 shopping-badge" style="font-weight: 600; font-size: 11px;">ALAMAT BELANJA</span>
-                                                                    @endif
+
                                                                 </div>
-                                                                <h5 class="mb-15 address-header" style="font-size: 20px;">{{ $address->recipient_name }}</h5>
-                                                                <p class="font-sm text-dark font-weight-bold mb-10"><i class="fi-rs-phone-call mr-10 text-maroon"></i> {{ $address->phone }}</p>
-                                                                <p class="font-md mb-5 address-detail">{{ $address->address_detail }}</p>
+                                                                <h5 class="mb-5 address-header" style="font-size: 16px;">{{ $address->recipient_name }}</h5>
+                                                                <p class="font-sm text-dark font-weight-bold mb-5"><i class="fi-rs-phone-call mr-5 text-maroon"></i> {{ $address->phone }}</p>
+                                                                <p class="font-sm mb-5 address-detail">{{ $address->address_detail }}</p>
                                                                 <p class="font-sm mb-0 address-location">
-                                                                    <i class="fi-rs-marker mr-10 text-maroon"></i> 
+                                                                    <i class="fi-rs-marker mr-5 text-maroon"></i> 
                                                                     @if($address->village) {{ $address->village->name }}, @endif
                                                                     {{ $address->district?->name }}, {{ $address->regency?->name }}, {{ $address->province?->name }} 
                                                                     @if($address->postal_code) - {{ $address->postal_code }} @endif
@@ -118,26 +94,7 @@
                                                             </div>
                                                         </div>
 
-                                                        @if($addresses->count() > 1)
-                                                            <div class="shopping-select-row mt-20 pt-20">
-                                                                @if($isShoppingSelected)
-                                                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                                        <span class="font-sm text-maroon font-weight-bold">
-                                                                            <i class="fi-rs-check mr-5"></i> Digunakan untuk hub terdekat
-                                                                            @if($selectedHubName)
-                                                                                — {{ $selectedHubName }}
-                                                                            @endif
-                                                                        </span>
-                                                                    </div>
-                                                                @else
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-shopping-select w-100 border-radius-8 py-2 select-shopping-address-btn"
-                                                                        data-address-id="{{ $address->id }}">
-                                                                        <i class="fi-rs-marker mr-5"></i> Gunakan untuk Hub Terdekat
-                                                                    </button>
-                                                                @endif
-                                                            </div>
-                                                        @endif
+
 
                                                         <div class="mobile-actions d-flex d-md-none">
                                                             <a href="{{ route('buyer.addresses.edit', $address) }}" class="btn btn-sm btn-outline-rasa flex-grow-1 border-radius-8 py-2">Edit</a>
@@ -187,45 +144,6 @@
         border-color: #6A1B1B88;
         transform: translateY(-3px);
     }
-    .address-card.active {
-        border-color: #6A1B1B;
-        background-color: rgba(106, 27, 27, 0.02);
-    }
-
-    .address-card.shopping-selected {
-        border-color: #253D4E;
-        background-color: rgba(37, 61, 78, 0.03);
-        box-shadow: 0 10px 30px rgba(37, 61, 78, 0.1);
-    }
-
-    .shopping-badge {
-        background: #253D4E;
-        color: #fff;
-    }
-
-    .shopping-address-info {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-    }
-
-    .shopping-select-row {
-        border-top: 1px solid #edf2f7;
-    }
-
-    .btn-shopping-select {
-        background: #253D4E;
-        color: #fff;
-        border: none;
-    }
-
-    .btn-shopping-select:hover {
-        background: #1a2a38;
-        color: #fff;
-    }
-
-    .btn-shopping-select:disabled {
-        opacity: 0.7;
-    }
     
     .address-header {
         font-family: 'Fira Sans', sans-serif !important;
@@ -258,45 +176,6 @@
     }
 </style>
 
-@if($addresses->count() > 1)
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.select-shopping-address-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const addressId = this.dataset.addressId;
-            const button = this;
-            button.disabled = true;
-            const originalHtml = button.innerHTML;
-            button.innerHTML = '<i class="fi-rs-spinner fi-spin mr-5"></i> Memproses...';
 
-            fetch('{{ route("buyer.addresses.select-for-shopping") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ address_id: addressId }),
-            })
-            .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
-            .then(function(result) {
-                if (result.ok && result.data.success) {
-                    window.location.reload();
-                    return;
-                }
-                alert(result.data.message || 'Gagal memilih alamat belanja.');
-                button.disabled = false;
-                button.innerHTML = originalHtml;
-            })
-            .catch(function() {
-                alert('Terjadi kesalahan. Silakan coba lagi.');
-                button.disabled = false;
-                button.innerHTML = originalHtml;
-            });
-        });
-    });
-});
-</script>
-@endif
 @endsection
 

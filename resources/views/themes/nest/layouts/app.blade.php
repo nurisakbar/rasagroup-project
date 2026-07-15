@@ -1580,8 +1580,8 @@
                                 const slug = formId.replace('add-form-', '');
                                 const qtySelector = $('#qty-selector-' + slug);
                                 if (qtySelector.length) {
-                                    form.addClass('d-none');
                                     qtySelector.removeClass('d-none');
+                                    $('#add-form-' + slug).addClass('d-none');
                                     $('#qty-val-' + slug).val(response.line.quantity_input);
                                 }
                             }

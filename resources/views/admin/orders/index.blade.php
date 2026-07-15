@@ -20,6 +20,46 @@
 @endpush
 
 @section('content')
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="info-box">
+                <span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Pending</span>
+                    <span class="info-box-number" id="count-pending">{{ number_format($countPending) }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="info-box">
+                <span class="info-box-icon bg-aqua"><i class="fa fa-money"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Konfirmasi Bayar</span>
+                    <span class="info-box-number" id="count-need-confirmation">{{ number_format($countNeedConfirmation) }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="info-box">
+                <span class="info-box-icon bg-green"><i class="fa fa-hourglass-start"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Segera Diproses</span>
+                    <span class="info-box-number" id="count-need-processing">{{ number_format($countNeedProcessing) }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="info-box">
+                <span class="info-box-icon bg-red"><i class="fa fa-truck"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Segera Dikirim</span>
+                    <span class="info-box-number" id="count-need-shipping">{{ number_format($countNeedShipping) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filter Box -->
     <div class="box box-default filter-box">
         <div class="box-header with-border">
@@ -160,6 +200,15 @@ $(document).ready(function() {
             { data: 'payment_badge', name: 'payment_status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
+        drawCallback: function(settings) {
+            var json = table.ajax.json();
+            if (json && json.counts) {
+                $('#count-pending').text(json.counts.pending.toLocaleString('id-ID'));
+                $('#count-need-confirmation').text(json.counts.need_confirmation.toLocaleString('id-ID'));
+                $('#count-need-processing').text(json.counts.need_processing.toLocaleString('id-ID'));
+                $('#count-need-shipping').text(json.counts.need_shipping.toLocaleString('id-ID'));
+            }
+        },
         order: [[0, 'desc']],
         pageLength: 15,
         lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],

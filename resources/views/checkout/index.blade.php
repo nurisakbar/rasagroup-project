@@ -255,7 +255,7 @@
 
             <!-- Right Column - Order Summary -->
             <div class="col-lg-5">
-                <div class="border cart-totals checkout-order-summary rg-checkout-summary mb-50">
+                <div class="cart-totals checkout-order-summary rg-checkout-summary mb-50">
                     <div class="d-flex align-items-end justify-content-between mb-30 rg-checkout-summary-header">
                         <h4 class="mb-0">Ringkasan Pesanan</h4>
                     </div>
@@ -316,69 +316,73 @@
                     <div class="divider-2 mb-30"></div>
                     
                     <div class="table-responsive order_table checkout rg-checkout-totals-wrap">
-                        <table class="table no-border rg-checkout-totals-table">
+                        <table class="table table-borderless no-border rg-checkout-totals-table" style="border: none !important;">
+                            <style>
+                                .rg-checkout-totals-table, .rg-checkout-totals-table th, .rg-checkout-totals-table td, .rg-checkout-totals-table tr {
+                                    border: none !important;
+                                    border-color: transparent !important;
+                                }
+                            </style>
                             <tbody>
                                 <tr id="distributorRetailRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
-                                    <td class="cart_total_label">
-                                        <h6 class="text-muted">Subtotal katalog (referensi)</h6>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <h5 class="text-muted text-end" id="retailSubtotalDisplay">Rp {{ number_format($retailSubtotal ?? $subtotal, 0, ',', '.') }}</h5>
+                                    <th class="cart_total_label align-middle pb-3">
+                                        <h6 class="text-muted mb-0">Subtotal katalog (referensi)</h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-muted mb-0" id="retailSubtotalDisplay">Rp {{ number_format($retailSubtotal ?? $subtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
                                 <tr id="distributorDiscountRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
-                                    <td class="cart_total_label">
+                                    <th class="cart_total_label align-middle pb-3">
                                         <h6 class="text-muted mb-0">Potongan distributor <span id="distributorLevelLabel">@if(!empty($priceLevelName))({{ $priceLevelName }})@endif</span></h6>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <h5 class="text-danger text-end" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount ?? 0, 0, ',', '.') }}</h5>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-danger mb-0" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount ?? 0, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
                                 <tr class="rg-checkout-total-row">
-                                    <td class="cart_total_label">
+                                    <th class="cart_total_label align-middle pb-3">
                                         <h6 class="text-muted mb-0">Subtotal</h6>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <h5 class="text-brand text-end" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
                                 <tr id="discountRow" class="rg-checkout-total-row" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
-                                    <td class="cart_total_label">
-                                        <h6 class="text-muted">Potongan Harga (<span id="discountPercentDisplay">{{ $discountPercent }}</span>%)</h6>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <h5 class="text-danger text-end" id="discountAmountDisplay">-Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
+                                    <th class="cart_total_label align-middle py-3">
+                                        <h6 class="text-muted mb-0">Potongan Harga (<span id="discountPercentDisplay">{{ $discountPercent }}</span>%)</h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle py-3">
+                                        <h5 class="text-danger mb-0" id="discountAmountDisplay">-Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
                                 <tr class="rg-checkout-total-row rg-checkout-shipping-row">
-                                    <td class="cart_total_label">
-                                        <h6 class="text-muted mb-0">Ongkos Kirim</h6>
+                                    <th class="cart_total_label align-middle py-3">
+                                        <h6 class="text-muted mb-2">Ongkos Kirim</h6>
                                         <small class="text-muted d-block rg-checkout-expedition-info" id="expeditionInfo">{{ $defaultExpedition?->name ?? '-' }} - {{ $defaultService['name'] ?? 'Reguler' }}</small>
-                                    </td>
-                                    <td class="cart_total_amount">
-                                        <div class="d-flex flex-wrap justify-content-end align-items-baseline gap-3 rg-checkout-shipping-amounts">
-                                            <h5 class="text-brand text-end mb-0" id="shippingCostDisplay">
-                                                @if($shippingCost > 0)
-                                                    Rp {{ number_format($shippingCost, 0, ',', '.') }}
-                                                @else
-                                                    -
-                                                @endif
-                                            </h5>
-                                        </div>
-                                        <small class="text-muted d-block text-end mt-1" id="totalWeightDisplay">Berat: {{ number_format($totalWeight / 1000, 1) }} kg</small>
-                                        <small class="text-muted d-block text-end mt-1" id="estimatedDelivery">
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle py-3">
+                                        <h5 class="text-brand mb-2" id="shippingCostDisplay">
+                                            @if($shippingCost > 0)
+                                                Rp {{ number_format($shippingCost, 0, ',', '.') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </h5>
+                                        <small class="text-muted d-block mt-1" id="totalWeightDisplay">Berat: {{ number_format($totalWeight / 1000, 1) }} kg</small>
+                                        <small class="text-muted d-block mt-1" id="estimatedDelivery">
                                              @if($defaultService)
                                                 Estimasi: {{ $defaultService['estimated_days'] }}
                                             @endif
                                         </small>
                                     </td>
                                 </tr>
-                                <tr class="rg-checkout-total-row rg-checkout-total-final" style="border-top: 1px solid #ECECEC;">
-                                    <td class="cart_total_label" style="padding-top: 15px;">
-                                        <h4 class="text-brand">Total</h4>
-                                    </td>
-                                    <td class="cart_total_amount" style="padding-top: 15px;">
-                                        <h4 class="text-brand text-end" id="totalDisplay">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                <tr class="rg-checkout-total-row rg-checkout-total-final">
+                                    <th class="cart_total_label align-middle pt-4 pb-2">
+                                        <h4 class="text-brand mb-0">Total</h4>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pt-4 pb-2">
+                                        <h4 class="text-brand mb-0" id="totalDisplay">Rp {{ number_format($total, 0, ',', '.') }}</h4>
                                     </td>
                                 </tr>
                             </tbody>
@@ -411,7 +415,14 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-fill-out btn-block mt-30 rg-checkout-submit-btn" id="submitBtn" {{ $addresses->isEmpty() ? 'disabled' : '' }}>
+                    <div class="form-check mt-30 mb-15">
+                        <input class="form-check-input" type="checkbox" id="agreeTerms">
+                        <label class="form-check-label text-muted font-xs" style="line-height: 1.5;" for="agreeTerms">
+                            Saya telah memeriksa seluruh detail pesanan dan memahami bahwa pesanan yang telah dibayar tidak dapat dibatalkan, diubah, atau direfund karena perubahan keputusan maupun kesalahan pemesanan dari pihak saya. Pengecualian berlaku apabila terdapat kesalahan penjual, produk tidak tersedia, produk tidak sesuai pesanan, atau produk rusak/cacat berdasarkan kebijakan pengembalian yang berlaku.
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-fill-out w-100 rg-checkout-submit-btn" id="submitBtn" disabled>
                         Proses Pesanan <i class="fi-rs-sign-out ml-15"></i>
                     </button>
                     
@@ -905,12 +916,20 @@
         if (!btn.length) {
             return;
         }
-        if (enabled && currentAddressId && currentExpeditionId && currentServiceCode && !servicesLoading) {
+        
+        var termsAgreed = $('#agreeTerms').is(':checked');
+        
+        if (enabled && currentAddressId && currentExpeditionId && currentServiceCode && !servicesLoading && termsAgreed) {
             btn.prop('disabled', false);
-        } else if (servicesLoading) {
+        } else {
             btn.prop('disabled', true);
         }
     }
+    
+    // Listen for terms agreement change
+    $(document).on('change', '#agreeTerms', function() {
+        setSubmitEnabled(true);
+    });
     
     function selectAddress(addressId) {
         currentAddressId = addressId;

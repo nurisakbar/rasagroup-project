@@ -28,6 +28,8 @@ class Address extends Model
         'address_detail',
         'postal_code',
         'notes',
+        'latitude',
+        'longitude',
         'is_default',
     ];
 

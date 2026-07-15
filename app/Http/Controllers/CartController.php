@@ -236,7 +236,30 @@ class CartController extends Controller
         ]);
     }
 
-    public function destroy(Cart $cart)
+    protected function cartDeleteJsonResponse(string $message): \Illuminate\Http\JsonResponse
+    {
+        $carts = $this->currentRegularCarts();
+        $total = $carts->sum(function ($c) {
+            return $c->product->price * $c->quantity;
+        });
+
+        $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
+        $cartCountSum = (int) $carts->sum('quantity');
+        
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'cart_count' => $cartCountSum,
+            'cart_total' => (float) $total,
+            'cart_total_formatted' => 'Rp '.number_format($total, 0, ',', '.'),
+            'total_weight' => $totalWeight,
+            'total_weight_formatted' => $this->formatTotalWeightGrams($totalWeight),
+            'mini_cart_html' => view('themes.nest.partials.mini-cart')->render(),
+            'is_empty' => $carts->isEmpty(),
+        ]);
+    }
+
+    public function destroy(Request $request, Cart $cart)
     {
         // Check ownership
         if (Auth::check() && $cart->user_id !== Auth::id()) {
@@ -247,7 +270,37 @@ class CartController extends Controller
         }
 
         $cart->delete();
+        
+        if ($this->wantsJsonCartUpdate($request)) {
+            return $this->cartDeleteJsonResponse('Item dihapus dari keranjang.');
+        }
+
         return back()->with('success', 'Item dihapus dari keranjang.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $cartIds = $request->input('cart_ids');
+
+        if (empty($cartIds) || !is_array($cartIds)) {
+            return back()->with('error', 'Tidak ada item yang dipilih untuk dihapus.');
+        }
+
+        $query = Cart::whereIn('id', $cartIds);
+        
+        if (Auth::check()) {
+            $query->where('user_id', Auth::id());
+        } else {
+            $query->where('session_id', session()->getId());
+        }
+
+        $query->delete();
+
+        if ($this->wantsJsonCartUpdate($request)) {
+            return $this->cartDeleteJsonResponse('Item terpilih berhasil dihapus dari keranjang.');
+        }
+
+        return back()->with('success', 'Item terpilih berhasil dihapus dari keranjang.');
     }
 
     public function store(Request $request, Product $product)
@@ -516,19 +569,22 @@ class CartController extends Controller
     /**
      * Clear all items from cart
      */
-    public function clear()
+    public function clear(Request $request)
     {
         if (Auth::check()) {
-            Cart::where('user_id', Auth::id())
-                ->where('cart_type', 'regular')
-                ->delete();
+            $query = Cart::where('user_id', Auth::id())
+                ->where('cart_type', 'regular');
         } else {
-            Cart::where('session_id', session()->getId())
-                ->where('cart_type', 'regular')
-                ->delete();
+            $query = Cart::where('session_id', session()->getId())
+                ->where('cart_type', 'regular');
+        }
+        $query->delete();
+
+        if ($this->wantsJsonCartUpdate($request)) {
+            return $this->cartDeleteJsonResponse('Keranjang belanja berhasil dikosongkan.');
         }
 
-        return back()->with('success', 'Keranjang dikosongkan.');
+        return back()->with('success', 'Keranjang belanja berhasil dikosongkan.');
     }
 
     /**

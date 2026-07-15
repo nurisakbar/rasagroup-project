@@ -45,7 +45,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.profile') || Route::is('buyer.profile') || Route::is('buyer.profile.edit') ? 'active' : '' }}" href="{{ route('distributor.profile') }}">
-                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil
+                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Akun Saya
                 </a>
             </li>
             @if(!$isDistributor)
@@ -58,17 +58,12 @@
         @else
             {{-- BUYER MODE MENUS --}}
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.dashboard') ? 'active' : '' }}" href="{{ route('buyer.dashboard') }}">
-                    <i class="fi-rs-settings-sliders {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Dashboard
+                <a class="nav-link {{ Route::is('buyer.profile') ? 'active' : '' }}" href="{{ route('buyer.profile') }}">
+                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Akun Saya
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('cart.index') ? 'active' : '' }}" href="{{ route('cart.index') }}">
-                    <i class="fi-rs-shopping-cart {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Keranjang Belanja
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.orders.*') ? 'active' : '' }}" href="{{ route('buyer.orders.index') }}">
+                <a class="nav-link {{ Route::is('buyer.orders.*') || Route::is('buyer.dashboard') ? 'active' : '' }}" href="{{ route('buyer.orders.index') }}">
                     <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Pesanan Saya
                 </a>
             </li>
@@ -85,13 +80,8 @@
             </li>
             @endif
             <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.profile') ? 'active' : '' }}" href="{{ route('buyer.profile') }}">
-                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Profil
-                </a>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.affiliate.*') || Route::is('buyer.point-withdrawals.*') ? 'active' : '' }}" href="{{ route('buyer.affiliate.index') }}">
-                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Afiliasi
+                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Program Afiliasi
                 </a>
             </li>
             @if($isDistributor)

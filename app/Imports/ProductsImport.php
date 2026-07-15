@@ -14,7 +14,11 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 
-class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\BeforeImport;
+use Illuminate\Support\Facades\Cache;
+
+class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithEvents
 {
     use SkipsFailures;
 
@@ -22,6 +26,35 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     private $skippedCount = 0;
     private $brandCache = [];
     private $categoryCache = [];
+    private $batchId;
+    private $userId;
+
+    public function __construct($batchId = null, $userId = null)
+    {
+        $this->batchId = $batchId;
+        $this->userId = $userId;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            BeforeImport::class => function(BeforeImport $event) {
+                if ($this->batchId) {
+                    $totalRows = array_sum($event->getReader()->getTotalRows());
+                    // Subtract header row if there is one (TotalRows usually includes header)
+                    $totalRows = max(0, $totalRows - 1); 
+                    
+                    Cache::put('import_products_'.$this->batchId, [
+                        'status' => 'processing',
+                        'total' => $totalRows,
+                        'processed' => 0,
+                        'message' => 'Processing...',
+                        'errors' => []
+                    ], now()->addHours(2));
+                }
+            }
+        ];
+    }
 
     /**
      * @param array $row
@@ -61,25 +94,56 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                     $categoryId = $this->getOrCreateCategory($row['category']);
                 }
 
-                // Convert weight and price
-                $weight = $this->parseWeight($row['size'] ?? null);
-                $price = $this->parsePrice($row['price'] ?? 0);
-                $resellerPoint = (int)($row['reseller_point'] ?? 0);
+                // Convert weight and price conditionally
+                $updateData = [];
 
-                // Update existing product
-                $existingProduct->update([
-                    'name' => $row['description'] ?? $row['commercial_name'] ?? $existingProduct->name,
-                    'commercial_name' => $row['commercial_name'] ?? $existingProduct->commercial_name,
-                    'description' => $row['description_2'] ?? $row['description'] ?? $existingProduct->description,
-                    'technical_description' => $row['description_2'] ?? $existingProduct->technical_description,
-                    'brand_id' => $brandId ?? $existingProduct->brand_id,
-                    'category_id' => $categoryId ?? $existingProduct->category_id,
-                    'size' => $row['size'] ?? $existingProduct->size,
-                    'unit' => $row['um'] ?? $existingProduct->unit,
-                    'price' => $price,
-                    'reseller_point' => $resellerPoint,
-                    'weight' => $weight,
-                ]);
+                if (isset($row['product_name'])) {
+                    $updateData['name'] = $row['product_name'];
+                } elseif (isset($row['description']) || isset($row['commercial_name'])) {
+                    $updateData['name'] = $row['description'] ?? $row['commercial_name'];
+                }
+
+                if (isset($row['commercial_name'])) {
+                    $updateData['commercial_name'] = $row['commercial_name'];
+                }
+
+                if (isset($row['description_2']) || isset($row['description'])) {
+                    $updateData['description'] = $row['description_2'] ?? $row['description'];
+                }
+
+                if (isset($row['description_2'])) {
+                    $updateData['technical_description'] = $row['description_2'];
+                }
+
+                if ($brandId) {
+                    $updateData['brand_id'] = $brandId;
+                }
+
+                if ($categoryId) {
+                    $updateData['category_id'] = $categoryId;
+                }
+
+                if (isset($row['size'])) {
+                    $updateData['size'] = $row['size'];
+                    $updateData['weight'] = $this->parseWeight($row['size']);
+                }
+
+                if (isset($row['um'])) {
+                    $updateData['unit'] = $row['um'];
+                }
+
+                if (isset($row['price'])) {
+                    $updateData['price'] = $this->parsePrice($row['price']);
+                }
+
+                if (isset($row['reseller_point'])) {
+                    $updateData['reseller_point'] = (int)$row['reseller_point'];
+                }
+
+                // Update existing product if there is something to update
+                if (!empty($updateData)) {
+                    $existingProduct->update($updateData);
+                }
 
                 Log::info('ProductsImport: Product updated successfully', [
                     'product_id' => $existingProduct->id,
@@ -87,6 +151,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 ]);
 
                 $this->importedCount++;
+                $this->updateProgress();
                 return null; // Return null because we're updating, not creating new model
             }
 
@@ -120,7 +185,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             $productData = [
                 'id' => (string) Str::uuid(),
                 'code' => $row['product_code'] ?? null,
-                'name' => $row['description'] ?? $row['commercial_name'] ?? 'Unnamed Product',
+                'name' => $row['product_name'] ?? $row['description'] ?? $row['commercial_name'] ?? 'Unnamed Product',
                 'commercial_name' => $row['commercial_name'] ?? null,
                 'description' => $row['description_2'] ?? $row['description'] ?? null,
                 'technical_description' => $row['description_2'] ?? null,
@@ -132,7 +197,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 'reseller_point' => $resellerPoint,
                 'weight' => $weight,
                 'status' => 'active',
-                'created_by' => Auth::id(),
+                'created_by' => $this->userId ?: Auth::id(),
             ];
 
             Log::info('ProductsImport: Creating product', [
@@ -146,6 +211,8 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 'product_code' => $product->code,
                 'product_name' => $product->name,
             ]);
+
+            $this->updateProgress();
 
             return $product;
         } catch (\Exception $e) {
@@ -354,6 +421,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     {
         return [
             'product_code' => 'nullable|string|max:50',
+            'product_name' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:255',
             'description_2' => 'nullable|string|max:500',
             'commercial_name' => 'nullable|string|max:255',
@@ -361,7 +429,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'size' => 'nullable|string|max:50',
             'category' => 'nullable|string|max:100',
             'um' => 'nullable|string|max:20',
-            'price' => 'required',
+            'price' => 'nullable',
             'reseller_point' => 'nullable|integer|min:0',
         ];
     }
@@ -390,5 +458,16 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     public function getSkippedCount(): int
     {
         return $this->skippedCount;
+    }
+
+    private function updateProgress()
+    {
+        if ($this->batchId && ($this->importedCount % 10 === 0)) {
+            $data = Cache::get('import_products_'.$this->batchId);
+            if ($data) {
+                $data['processed'] = $this->importedCount;
+                Cache::put('import_products_'.$this->batchId, $data, now()->addHours(2));
+            }
+        }
     }
 }

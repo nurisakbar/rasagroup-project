@@ -166,6 +166,25 @@
                                         <label class="form-label-custom">Patokan (Opsional)</label>
                                         <input type="text" class="form-control custom-input" name="notes" value="{{ old('notes', $address->notes) }}" placeholder="Contoh: Depan Masjid">
                                     </div>
+                                    <div class="col-md-12 mt-4">
+                                        <label class="form-label-custom">Koordinat Lokasi (Opsional)</label>
+                                        <div class="d-flex align-items-center mb-10">
+                                            <button type="button" class="btn btn-sm btn-outline-brand px-3 py-2" id="btn-get-location">
+                                                <i class="fi-rs-marker mr-5"></i> Dapatkan Koordinat Saat Ini
+                                            </button>
+                                            <span id="location-status" class="ms-3 text-muted" style="font-size: 13px;"></span>
+                                        </div>
+                                        <div id="map" style="height: 300px; width: 100%; border-radius: 12px; z-index: 1;" class="mb-3 border"></div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control custom-input" id="latitude" name="latitude" value="{{ old('latitude', $address->latitude) }}" placeholder="Latitude" readonly style="background-color: #e9ecef !important;">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control custom-input" id="longitude" name="longitude" value="{{ old('longitude', $address->longitude) }}" placeholder="Longitude" readonly style="background-color: #e9ecef !important;">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">Pilih lokasi di peta atau gunakan tombol "Dapatkan Koordinat Saat Ini". Koordinat akan membantu kurir menemukan lokasi Anda dengan lebih akurat.</small>
+                                    </div>
                                 </div>
                             </div>
 
@@ -188,6 +207,8 @@
     </div>
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <style>
     .form-label-custom { font-family: 'Fira Sans', sans-serif; font-weight: 600; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
     .custom-input, .custom-textarea {
@@ -441,6 +462,138 @@ $(document).ready(function() {
             }, 500);
         }
     });
+});
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script>
+$(document).ready(function() {
+    // Map Initialization
+    let defaultLat = -6.200000; // Jakarta default
+    let defaultLng = 106.816666;
+    let currentLat = $('#latitude').val() ? parseFloat($('#latitude').val()) : defaultLat;
+    let currentLng = $('#longitude').val() ? parseFloat($('#longitude').val()) : defaultLng;
+
+    // Use a small timeout to ensure container is fully rendered before leaflet computes size
+    setTimeout(function() {
+        const map = L.map('map').setView([currentLat, currentLng], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let marker = L.marker([currentLat, currentLng], {draggable: true}).addTo(map);
+
+        function updateInputs(lat, lng) {
+            $('#latitude').val(lat.toFixed(6));
+            $('#longitude').val(lng.toFixed(6));
+        }
+
+        // Add Search Control (Geocoder)
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: 'Cari gedung, jalan, kota...',
+        })
+        .on('markgeocode', function(e) {
+            const latlng = e.geocode.center;
+            map.setView(latlng, 16);
+            marker.setLatLng(latlng);
+            updateInputs(latlng.lat, latlng.lng);
+        })
+        .addTo(map);
+
+        // Drag marker event
+        marker.on('dragend', function (e) {
+            const position = marker.getLatLng();
+            updateInputs(position.lat, position.lng);
+        });
+
+        // Click map event
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            updateInputs(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Geolocation
+        $('#btn-get-location').on('click', function() {
+            const btn = $(this);
+            const status = $('#location-status');
+
+            if (!navigator.geolocation) {
+                status.text('Geolokasi tidak didukung oleh browser Anda.').css('color', '#c53030');
+                return;
+            }
+
+            btn.prop('disabled', true).html('<i class="fi-rs-refresh spin mr-5"></i> Mendapatkan lokasi...');
+            status.text('');
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                updateInputs(lat, lng);
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], 15);
+                
+                status.text('Koordinat berhasil didapatkan!').css('color', '#3BB77E');
+                btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Perbarui Koordinat');
+            }, function(error) {
+                let msg = 'Terjadi kesalahan.';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED: msg = 'Akses lokasi ditolak.'; break;
+                    case error.POSITION_UNAVAILABLE: msg = 'Informasi lokasi tidak tersedia.'; break;
+                    case error.TIMEOUT: msg = 'Waktu permintaan habis.'; break;
+                }
+                status.text(msg).css('color', '#c53030');
+                btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Coba Lagi');
+            });
+        });
+
+        // Auto-center map based on dropdown selection
+        function searchMapByAddress() {
+            let queryParts = [];
+            
+            const village = $('#village_id').find('option:selected').text();
+            if ($('#village_id').val() && village !== '' && !village.includes('--')) queryParts.push(village);
+            
+            const district = $('#district_id').find('option:selected').text();
+            if ($('#district_id').val() && district !== '' && !district.includes('--')) queryParts.push(district);
+            
+            const regency = $('#regency_id').find('option:selected').text();
+            if ($('#regency_id').val() && regency !== '' && !regency.includes('--')) queryParts.push(regency);
+            
+            const province = $('#province_id').find('option:selected').text();
+            if ($('#province_id').val() && province !== '' && !province.includes('--')) queryParts.push(province);
+            
+            if (queryParts.length > 0) {
+                queryParts.push('Indonesia');
+                const query = queryParts.join(', ');
+                
+                $.getJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), function(data) {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        
+                        let zoomLevel = 11;
+                        if ($('#village_id').val()) zoomLevel = 17;
+                        else if ($('#district_id').val()) zoomLevel = 15;
+                        else if ($('#regency_id').val()) zoomLevel = 12;
+                        
+                        map.setView([lat, lon], zoomLevel);
+                        marker.setLatLng([lat, lon]);
+                        updateInputs(lat, lon);
+                    }
+                });
+            }
+        }
+        
+        // Listen to dropdown changes to update map
+        $('#province_id, #regency_id, #district_id, #village_id').on('change', function() {
+            setTimeout(searchMapByAddress, 500);
+        });
+
+    }, 500); // 500ms delay for UI render
 });
 </script>
 @endpush

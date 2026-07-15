@@ -68,8 +68,8 @@
                         <thead class="rg-cart-thead-desktop">
                             <tr class="main-heading">
                                 <th class="custome-checkbox start pl-30">
-                                    <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox11" value="">
-                                    <label class="form-check-label" for="exampleCheckbox11"></label>
+                                    <input class="form-check-input" type="checkbox" id="select-all-checkbox" value="">
+                                    <label class="form-check-label" for="select-all-checkbox"></label>
                                 </th>
                                 <th scope="col" colspan="2">Produk</th>
                                 <th scope="col">Harga Satuan</th>
@@ -82,8 +82,8 @@
                             @foreach($carts as $cart)
                                 <tr class="pt-30 rg-cart-item" data-cart-row="{{ $cart->id }}">
                                     <td class="custome-checkbox pl-30 rg-cart-checkbox">
-                                        <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox{{ $loop->iteration }}" value="">
-                                        <label class="form-check-label" for="exampleCheckbox{{ $loop->iteration }}"></label>
+                                        <input class="form-check-input cart-item-checkbox" type="checkbox" name="cart_ids[]" id="cartCheckbox{{ $cart->id }}" value="{{ $cart->id }}">
+                                        <label class="form-check-label" for="cartCheckbox{{ $cart->id }}"></label>
                                     </td>
                                     <td class="image product-thumbnail pt-40 pr-15 rg-cart-thumb">
                                         <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $cart->product->name }}" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
@@ -124,10 +124,10 @@
                                         <h4 class="text-brand js-cart-line-subtotal mb-0">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="action text-center rg-cart-remove" data-title="Hapus">
-                                        <form action="{{ route('cart.destroy', $cart) }}" method="POST">
+                                        <form action="{{ route('cart.destroy', $cart) }}" method="POST" class="form-delete-item">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="rg-cart-remove-btn" onclick="return confirm('Hapus item ini?')" aria-label="Hapus item">
+                                            <button type="submit" class="rg-cart-remove-btn" aria-label="Hapus item">
                                                 <i class="fi-rs-trash"></i>
                                             </button>
                                         </form>
@@ -139,12 +139,17 @@
                 </div>
                 <div class="divider-2 mb-30"></div>
                 <div class="cart-action text-end">
+                    <button type="button" class="btn btn-outline-danger mr-10" id="btn-delete-selected" style="display: none;"><i class="fi-rs-trash mr-5"></i>Hapus Terpilih</button>
                     <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Kosongkan keranjang? Semua item akan dihapus.');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline-danger"><i class="fi-rs-trash mr-5"></i>Kosongkan Keranjang</button>
                     </form>
                 </div>
+
+                <form id="bulk-delete-form" action="{{ route('cart.bulk-delete') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
                 <!-- Optional: Shipping Calculator Section preserved from template if needed by USER, currently placeholders -->
                 
             </div>
@@ -574,5 +579,126 @@
             });
         });
     })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const itemCheckboxes = document.querySelectorAll('.cart-item-checkbox');
+        const btnDeleteSelected = document.getElementById('btn-delete-selected');
+        const bulkDeleteForm = document.getElementById('bulk-delete-form');
+
+        function updateDeleteSelectedButtonVisibility() {
+            const checkedCount = document.querySelectorAll('.cart-item-checkbox:checked').length;
+            if (checkedCount > 0) {
+                btnDeleteSelected.style.display = 'inline-block';
+            } else {
+                btnDeleteSelected.style.display = 'none';
+            }
+            
+            if (checkedCount > 0 && checkedCount === itemCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.checked = false;
+            }
+        }
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function () {
+                const isChecked = this.checked;
+                itemCheckboxes.forEach(function (cb) {
+                    cb.checked = isChecked;
+                });
+                updateDeleteSelectedButtonVisibility();
+            });
+        }
+
+        itemCheckboxes.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                updateDeleteSelectedButtonVisibility();
+            });
+        });
+
+        function handleCartDeleteAjax(url, method, body, rowsToRemove) {
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var token = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify(body),
+                credentials: 'same-origin'
+            })
+            .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, body: j })))
+            .then(res => {
+                if (!res.ok || !res.body.success) {
+                    var msg = (res.body && (res.body.message || res.body.error)) || 'Gagal menghapus item.';
+                    if (typeof window.showShopToast === 'function') window.showShopToast(msg, 'error');
+                    else alert(msg);
+                    return;
+                }
+                
+                if (typeof window.showShopToast === 'function') {
+                    window.showShopToast(res.body.message || 'Berhasil dihapus.', 'success');
+                }
+
+                if (res.body.is_empty) {
+                    window.location.reload();
+                    return;
+                }
+
+                if (rowsToRemove && rowsToRemove.length) {
+                    rowsToRemove.forEach(row => row.remove());
+                }
+
+                document.querySelectorAll('.js-cart-page-total').forEach(el => el.textContent = res.body.cart_total_formatted);
+                if (res.body.total_weight_formatted) {
+                    document.querySelectorAll('.js-cart-page-total-weight').forEach(el => el.textContent = res.body.total_weight_formatted);
+                }
+                if (typeof res.body.cart_count !== 'undefined' && window.jQuery) {
+                    window.jQuery('.header-action-icon-2 .mini-cart-icon .pro-count').text(res.body.cart_count);
+                }
+                if (res.body.mini_cart_html && window.jQuery) {
+                    window.jQuery('.cart-dropdown-wrap.cart-dropdown-hm2:not(.account-dropdown)').html(res.body.mini_cart_html);
+                }
+                
+                updateDeleteSelectedButtonVisibility();
+            })
+            .catch(() => {
+                if (typeof window.showShopToast === 'function') window.showShopToast('Koneksi gagal. Coba lagi.', 'error');
+                else alert('Koneksi gagal.');
+            });
+        }
+
+        if (btnDeleteSelected) {
+            btnDeleteSelected.addEventListener('click', function () {
+                const checkedCheckboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+                if (checkedCheckboxes.length === 0) return;
+
+                if (confirm('Hapus ' + checkedCheckboxes.length + ' item terpilih dari keranjang?')) {
+                    const cartIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+                    const rowsToRemove = Array.from(checkedCheckboxes).map(cb => cb.closest('.rg-cart-item'));
+                    const url = bulkDeleteForm.getAttribute('action');
+                    
+                    handleCartDeleteAjax(url, 'POST', { cart_ids: cartIds }, rowsToRemove);
+                }
+            });
+        }
+
+        // Single delete via AJAX
+        document.querySelectorAll('.form-delete-item').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (confirm('Hapus item ini?')) {
+                    const url = form.getAttribute('action');
+                    const row = form.closest('.rg-cart-item');
+                    handleCartDeleteAjax(url, 'DELETE', {}, [row]);
+                }
+            });
+        });
+    });
 </script>
 @endpush

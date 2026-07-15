@@ -89,6 +89,9 @@
                         <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah
                         </a>
+                        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
+                            <i class="fa fa-file-excel-o"></i> Update dari Excel
+                        </button>
                         @include('admin.partials.sync-qad-jubelio')
                         @if(app()->environment('local'))
                             <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllProducts()" title="Hanya tersedia di APP_ENV=local">
@@ -133,6 +136,41 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import Excel -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="import-excel-form" action="{{ route('admin.products.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="importModalLabel">Update Produk dari Excel</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="upload-form-group" class="form-group">
+                            <label>File Excel</label>
+                            <input type="file" name="file" id="import-file" class="form-control" accept=".xls,.xlsx,.csv" required>
+                            <small class="text-muted">Data yang dapat diupdate: nama produk, kategori, dan brand (berdasarkan SKU / product_code).</small>
+                        </div>
+                        <div id="import-progress-container" style="display: none;">
+                            <p id="import-status-text" class="text-center">Menyiapkan import...</p>
+                            <div class="progress progress-sm active">
+                                <div id="import-progress-bar" class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                                    <span class="sr-only">0% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('admin.products.template') }}" class="btn btn-default pull-left"><i class="fa fa-download"></i> Download Template</a>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" id="btn-import-submit" class="btn btn-primary">Upload & Update</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -208,6 +246,89 @@ $(document).ready(function() {
         $('#filter-sync-source').val('');
         table.draw();
     });
+
+    // Import Excel AJAX
+    $('#import-excel-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        var form = $(this);
+        var fileInput = document.getElementById('import-file');
+        if (fileInput.files.length === 0) return;
+
+        var formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        var submitBtn = $('#btn-import-submit');
+        submitBtn.prop('disabled', true);
+        
+        $('#upload-form-group').hide();
+        $('#import-progress-container').show();
+        $('#import-progress-bar').css('width', '0%');
+        $('#import-status-text').text('Mengupload file...');
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if(response.success && response.batch_id) {
+                    pollImportStatus(response.batch_id, submitBtn, table);
+                } else {
+                    alert('Gagal memulai import: ' + (response.message || 'Unknown error'));
+                    resetImportModal(submitBtn);
+                }
+            },
+            error: function(xhr) {
+                alert('Terjadi kesalahan saat upload file.');
+                resetImportModal(submitBtn);
+            }
+        });
+    });
+
+    function pollImportStatus(batchId, submitBtn, table) {
+        var pollInterval = setInterval(function() {
+            $.ajax({
+                url: "{{ route('admin.products.import-status') }}",
+                type: 'GET',
+                data: { batch_id: batchId },
+                success: function(res) {
+                    if(res.status) {
+                        $('#import-status-text').text(res.message);
+                        if(res.total > 0) {
+                            var pct = Math.round((res.processed / res.total) * 100);
+                            $('#import-progress-bar').css('width', pct + '%');
+                        }
+
+                        if(res.status === 'completed' || res.status === 'completed_with_errors' || res.status === 'failed') {
+                            clearInterval(pollInterval);
+                            alert(res.message);
+                            if(res.errors && res.errors.length > 0) {
+                                console.log(res.errors);
+                            }
+                            table.draw();
+                            $('#importModal').modal('hide');
+                            resetImportModal(submitBtn);
+                        }
+                    }
+                },
+                error: function() {
+                    clearInterval(pollInterval);
+                    alert('Gagal mengecek status import.');
+                    resetImportModal(submitBtn);
+                }
+            });
+        }, 1500);
+    }
+
+    function resetImportModal(submitBtn) {
+        submitBtn.prop('disabled', false);
+        $('#upload-form-group').show();
+        $('#import-progress-container').hide();
+        document.getElementById('import-file').value = '';
+    }
 });
 
 function confirmDeleteAllProducts() {

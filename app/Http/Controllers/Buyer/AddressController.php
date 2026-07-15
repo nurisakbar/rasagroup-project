@@ -101,6 +101,8 @@ class AddressController extends Controller
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'latitude' => ['nullable', 'string', 'max:50'],
+            'longitude' => ['nullable', 'string', 'max:50'],
             'is_default' => ['nullable', 'boolean'],
         ], [
             'label.required' => 'Label alamat wajib diisi.',
@@ -134,6 +136,8 @@ class AddressController extends Controller
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_default' => $isDefault,
         ]);
 
@@ -208,6 +212,8 @@ class AddressController extends Controller
             'address_detail' => ['required', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'latitude' => ['nullable', 'string', 'max:50'],
+            'longitude' => ['nullable', 'string', 'max:50'],
             'is_default' => ['nullable', 'boolean'],
         ]);
 
@@ -230,6 +236,8 @@ class AddressController extends Controller
             'address_detail' => $validated['address_detail'],
             'postal_code' => $validated['postal_code'],
             'notes' => $validated['notes'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_default' => $request->boolean('is_default'),
         ]);
 

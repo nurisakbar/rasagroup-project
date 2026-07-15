@@ -172,14 +172,6 @@ class ProductController extends Controller
 
     public function import(Request $request)
     {
-        Log::info('ProductController: Import request received', [
-            'user_id' => Auth::id(),
-            'has_file' => $request->hasFile('file'),
-            'file_name' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
-            'file_size' => $request->hasFile('file') ? $request->file('file')->getSize() : null,
-            'file_mime' => $request->hasFile('file') ? $request->file('file')->getMimeType() : null,
-        ]);
-
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
         ], [
@@ -190,70 +182,58 @@ class ProductController extends Controller
 
         try {
             $file = $request->file('file');
-            Log::info('ProductController: Starting import', [
-                'file_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize(),
-                'file_path' => $file->getRealPath(),
-            ]);
-
-            $import = new ProductsImport();
+            $fileName = time() . '_' . $file->getClientOriginalName();
             
-            Log::info('ProductController: Calling Excel::import');
-            Excel::import($import, $file);
-            Log::info('ProductController: Excel::import completed');
+            // Simpan file sementara
+            $filePath = $file->storeAs('imports', $fileName);
 
-            $failures = $import->failures();
-            $importedCount = $import->getImportedCount();
-            $skippedCount = $import->getSkippedCount();
+            $batchId = (string) \Illuminate\Support\Str::uuid();
+            $userId = Auth::id();
 
-            Log::info('ProductController: Import completed', [
-                'imported_count' => $importedCount,
-                'skipped_count' => $skippedCount,
-                'failures_count' => count($failures),
+            // Setup cache awal
+            \Illuminate\Support\Facades\Cache::put('import_products_'.$batchId, [
+                'status' => 'pending',
+                'total' => 0,
+                'processed' => 0,
+                'message' => 'Menyiapkan import...',
+                'errors' => []
+            ], now()->addHours(2));
+
+            // Dispatch job
+            \App\Jobs\ImportProductsJob::dispatch($filePath, $batchId, $userId);
+
+            return response()->json([
+                'success' => true,
+                'batch_id' => $batchId,
+                'message' => 'Proses import sedang berjalan di latar belakang.'
             ]);
-
-            $message = "Berhasil import {$importedCount} produk.";
-            
-            if ($skippedCount > 0) {
-                $message .= " {$skippedCount} produk dilewati karena kode sudah ada.";
-            }
-
-            if (count($failures) > 0) {
-                $errorMessages = [];
-                foreach ($failures as $failure) {
-                    $errorMsg = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
-                    $errorMessages[] = $errorMsg;
-                    Log::warning('ProductController: Import failure', [
-                        'row' => $failure->row(),
-                        'errors' => $failure->errors(),
-                        'values' => $failure->values(),
-                    ]);
-                }
-                
-                Log::warning('ProductController: Import completed with failures', [
-                    'total_failures' => count($failures),
-                ]);
-                
-                return back()
-                    ->with('warning', $message . " " . count($failures) . " baris gagal diimport.")
-                    ->with('import_errors', $errorMessages);
-            }
-
-            Log::info('ProductController: Import successful', [
-                'message' => $message,
-            ]);
-
-            return back()->with('success', $message);
         } catch (\Exception $e) {
-            Log::error('ProductController: Import error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+            Log::error('ProductController: Import dispatch error', [
+                'error' => $e->getMessage()
             ]);
             
-            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memulai import: ' . $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function importStatus(Request $request)
+    {
+        $batchId = $request->get('batch_id');
+        
+        if (!$batchId) {
+            return response()->json(['error' => 'Batch ID tidak valid'], 400);
+        }
+
+        $status = \Illuminate\Support\Facades\Cache::get('import_products_'.$batchId);
+
+        if (!$status) {
+            return response()->json(['error' => 'Status tidak ditemukan atau sudah kadaluarsa'], 404);
+        }
+
+        return response()->json($status);
     }
 
     public function downloadTemplate()
@@ -263,11 +243,11 @@ class ProductController extends Controller
             'Content-Disposition' => 'attachment; filename="template_import_produk.csv"',
         ];
 
-        $columns = ['Product Code', 'Description', 'Description 2', 'Commercial Name', 'Brand', 'Size', 'Category', 'UM', 'Price', 'Reseller Point'];
+        $columns = ['Product Code', 'Product Name', 'Category', 'Brand'];
         $examples = [
-            ['FMF020-CT12', 'MB Cons 1L-Coconut Milk', '(In Bottle) FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'BT', '70000', '1000'],
-            ['FMF020-CT11', 'MB Cons 1L-Coconut Water', '(In Bottle) FG Multibev', 'Coconut Water', 'Multibev', '1 L', 'Coconut', 'BT', '70000', '1000'],
-            ['FMF020-CT02', 'MB Cons 1L-Coconut Milk', 'FG Multibev', 'Coconut Milk', 'Multibev', '1 L', 'Coconut', 'PK', '70000', '1000'],
+            ['FMF020-CT12', 'MB Cons 1L-Coconut Milk', 'Coconut', 'Multibev'],
+            ['FMF020-CT11', 'MB Cons 1L-Coconut Water', 'Coconut', 'Multibev'],
+            ['FMF020-CT02', 'MB Cons 1L-Coconut Milk PK', 'Coconut', 'Multibev'],
         ];
 
         $callback = function () use ($columns, $examples) {

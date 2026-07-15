@@ -128,6 +128,14 @@ class OrderController extends Controller
                 ->orderColumn('created_at', function ($query, $order) {
                     $query->orderBy('created_at', $order);
                 })
+                ->with([
+                    'counts' => [
+                        'pending' => (clone $query)->where('payment_status', 'pending')->whereNull('payment_proof')->count(),
+                        'need_confirmation' => (clone $query)->where('payment_status', 'pending')->whereNotNull('payment_proof')->count(),
+                        'need_processing' => (clone $query)->where('payment_status', 'paid')->where('order_status', 'pending')->count(),
+                        'need_shipping' => (clone $query)->where('payment_status', 'paid')->where('order_status', 'processing')->count(),
+                    ]
+                ])
                 ->make(true);
         }
 
@@ -135,7 +143,12 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('admin.orders.index', compact('warehouses'));
+        $countPending = Order::where('payment_status', 'pending')->whereNull('payment_proof')->count();
+        $countNeedConfirmation = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
+        $countNeedProcessing = Order::where('payment_status', 'paid')->where('order_status', 'pending')->count();
+        $countNeedShipping = Order::where('payment_status', 'paid')->where('order_status', 'processing')->count();
+
+        return view('admin.orders.index', compact('warehouses', 'countPending', 'countNeedConfirmation', 'countNeedProcessing', 'countNeedShipping'));
     }
 
     public function show(Order $order)
@@ -306,9 +319,15 @@ class OrderController extends Controller
                 \App\Support\SalesOrderSyncDispatcher::dispatch($order);
             }
 
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
             return back()->with('success', $message);
         }
 
+        if ($request->ajax()) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada perubahan yang disimpan.']);
+        }
         return back()->with('info', 'Tidak ada perubahan yang disimpan.');
     }
 
