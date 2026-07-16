@@ -575,6 +575,9 @@
         object-fit: cover;
         border-radius: 10px;
         display: block;
+        border: none !important;
+        padding: 0 !important;
+        margin-right: 15px !important;
     }
 
     .checkout-page .rg-checkout-item-name {
@@ -647,8 +650,24 @@
         line-height: 1.2;
     }
 
+    /* Menghapus border Ringkasan Pesanan */
+    .checkout-page .rg-checkout-items-wrap {
+        border: none !important;
+    }
+    .checkout-page .rg-checkout-items-table,
+    .checkout-page .rg-checkout-items-table th,
+    .checkout-page .rg-checkout-items-table td,
+    .checkout-page .rg-checkout-items-table tr {
+        border: none !important;
+    }
+
+    .checkout-page .rg-checkout-items-table td {
+        vertical-align: top !important;
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+    }
+
     .checkout-page .rg-checkout-items-table .rg-checkout-item-info {
-        vertical-align: middle;
         padding-right: 12px !important;
     }
 

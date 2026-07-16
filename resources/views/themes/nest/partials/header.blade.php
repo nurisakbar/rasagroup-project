@@ -83,16 +83,40 @@
                                 <div class="d-flex categori-dropdown-inner">
                                     @php
                                         $allCategories = \App\Models\Category::forStorefrontSidebar();
-                                        $count = $allCategories->count();
-                                        $half = ceil($count / 2);
-                                        $col1 = $allCategories->take($half);
-                                        $col2 = $allCategories->skip($half);
+                                        
+                                        $leftOrder = ['Syrup', 'PULP', 'SAUCE', 'COCOA'];
+                                        $rightOrder = ['POWDER', 'PUREE', 'TOPPING', 'RAMOE'];
+                                        
+                                        $col1 = collect();
+                                        $col2 = collect();
+                                        
+                                        foreach ($leftOrder as $name) {
+                                            $cat = $allCategories->firstWhere('name', $name);
+                                            if ($cat) $col1->push($cat);
+                                        }
+                                        foreach ($rightOrder as $name) {
+                                            $cat = $allCategories->firstWhere('name', $name);
+                                            if ($cat) $col2->push($cat);
+                                        }
+                                        
+                                        $usedNames = array_merge($leftOrder, $rightOrder);
+                                        $remaining = $allCategories->filter(function($cat) use ($usedNames) {
+                                            return !in_array($cat->name, $usedNames);
+                                        })->values();
+                                        
+                                        foreach ($remaining as $idx => $cat) {
+                                            if ($col1->count() <= $col2->count()) {
+                                                $col1->push($cat);
+                                            } else {
+                                                $col2->push($cat);
+                                            }
+                                        }
                                     @endphp
                                     <ul>
                                         @foreach($col1 as $category)
                                             <li>
                                                 <a class="{{ request('category') === $category->slug ? 'rg-category-active' : '' }}" href="{{ route('products.index', ['category' => $category->slug]) }}">
-                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-1.svg') }}" alt="" />
+                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/logorasa-new.png') }}" alt="" style="width: 24px; height: 24px; object-fit: contain; margin-right: 15px;" />
                                                     {{ $category->name }}
                                                 </a>
                                             </li>
@@ -102,7 +126,7 @@
                                         @foreach($col2 as $category)
                                             <li>
                                                 <a class="{{ request('category') === $category->slug ? 'rg-category-active' : '' }}" href="{{ route('products.index', ['category' => $category->slug]) }}">
-                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/icons/category-6.svg') }}" alt="" />
+                                                    <img src="{{ $category->image_url ?? asset('themes/nest-frontend/assets/imgs/theme/logorasa-new.png') }}" alt="" style="width: 24px; height: 24px; object-fit: contain; margin-right: 15px;" />
                                                     {{ $category->name }}
                                                 </a>
                                             </li>
