@@ -59,6 +59,9 @@
 
     <form action="{{ route('checkout.store') }}" method="POST" id="checkoutForm">
         @csrf
+        @foreach(request('cart_ids', []) as $cartId)
+            <input type="hidden" name="cart_ids[]" value="{{ $cartId }}">
+        @endforeach
         <div class="row">
             <!-- Left Column - Shipping & Payment -->
             <div class="col-lg-7">

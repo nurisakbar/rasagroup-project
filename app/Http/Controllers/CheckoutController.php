@@ -39,10 +39,15 @@ class CheckoutController extends Controller
 
         Auth::user()->loadMissing('priceLevel');
 
-        $carts = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
+        $query = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
             ->where('user_id', Auth::id())
-            ->where('cart_type', 'regular')
-            ->get();
+            ->where('cart_type', 'regular');
+
+        if (request()->has('cart_ids') && is_array(request('cart_ids'))) {
+            $query->whereIn('id', request('cart_ids'));
+        }
+
+        $carts = $query->get();
 
         if ($carts->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Keranjang kosong.');
@@ -255,6 +260,8 @@ class CheckoutController extends Controller
         $affiliate = User::find($affiliateId);
     }
 
+    $cart_ids = request('cart_ids', []);
+
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
@@ -274,7 +281,8 @@ class CheckoutController extends Controller
         'defaultService',
         'allShippingServices',
         'sourceWarehouse',
-        'affiliate'
+        'affiliate',
+        'cart_ids'
     ));
 }
 
@@ -601,10 +609,15 @@ class CheckoutController extends Controller
             return back()->with('error', 'Ekspedisi tidak valid atau sudah tidak tersedia.');
         }
 
-        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+        $query = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
             ->where('user_id', Auth::id())
-            ->where('cart_type', 'regular')
-            ->get();
+            ->where('cart_type', 'regular');
+
+        if ($request->has('cart_ids') && is_array($request->cart_ids)) {
+            $query->whereIn('id', $request->cart_ids);
+        }
+
+        $carts = $query->get();
 
         if ($carts->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Keranjang kosong.');
@@ -872,7 +885,11 @@ class CheckoutController extends Controller
                 }
             }
 
-            Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->delete();
+            $deleteQuery = Cart::where('user_id', Auth::id())->where('cart_type', 'regular');
+            if ($request->has('cart_ids') && is_array($request->cart_ids)) {
+                $deleteQuery->whereIn('id', $request->cart_ids);
+            }
+            $deleteQuery->delete();
 
             // Handle Faspay/Xendit payment (to get invoice URL)
             $faspayInvoiceUrl = null;

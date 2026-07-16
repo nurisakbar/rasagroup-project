@@ -68,7 +68,7 @@
                         <thead class="rg-cart-thead-desktop">
                             <tr class="main-heading">
                                 <th class="custome-checkbox start pl-30">
-                                    <input class="form-check-input" type="checkbox" id="select-all-checkbox" value="">
+                                    <input class="form-check-input" type="checkbox" id="select-all-checkbox" value="" checked>
                                     <label class="form-check-label" for="select-all-checkbox"></label>
                                 </th>
                                 <th scope="col" colspan="2">Produk</th>
@@ -80,9 +80,9 @@
                         </thead>
                         <tbody>
                             @foreach($carts as $cart)
-                                <tr class="pt-30 rg-cart-item" data-cart-row="{{ $cart->id }}">
+                                <tr class="pt-30 rg-cart-item" data-cart-row="{{ $cart->id }}" data-price="{{ $cart->product->price }}" data-weight="{{ $cart->product->weight ?? 0 }}">
                                     <td class="custome-checkbox pl-30 rg-cart-checkbox">
-                                        <input class="form-check-input cart-item-checkbox" type="checkbox" name="cart_ids[]" id="cartCheckbox{{ $cart->id }}" value="{{ $cart->id }}">
+                                        <input class="form-check-input cart-item-checkbox" type="checkbox" name="cart_ids[]" id="cartCheckbox{{ $cart->id }}" value="{{ $cart->id }}" checked>
                                         <label class="form-check-label" for="cartCheckbox{{ $cart->id }}"></label>
                                     </td>
                                     <td class="image product-thumbnail pt-40 pr-15 rg-cart-thumb">
@@ -154,9 +154,14 @@
                 
             </div>
             <div class="col-lg-4">
-                <div class="border p-md-4 cart-totals ml-30 rg-cart-totals">
+                <div class="p-md-4 cart-totals ml-30 rg-cart-totals" style="border: none !important; box-shadow: none !important;">
                     <div class="table-responsive">
-                        <table class="table no-border">
+                        <table class="table no-border" style="border: none !important;">
+                            <style>
+                                .rg-cart-totals .table td, .rg-cart-totals .table th, .rg-cart-totals .table tr {
+                                    border: none !important;
+                                }
+                            </style>
                             <tbody>
                                 <tr>
                                     <td class="cart_total_label">
@@ -204,7 +209,9 @@
                     </style>
                     <a href="{{ route('products.index') }}" class="btn w-100 mb-15 btn-lanjut-belanja text-center"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                     @auth
-                        <a href="{{ route('checkout.index') }}" class="btn mb-20 w-100 text-center">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></a>
+                        <form action="{{ route('checkout.index') }}" method="GET" id="checkout-form">
+                            <button type="submit" class="btn mb-20 w-100 text-center" id="btn-checkout">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></button>
+                        </form>
                     @else
                         <a href="{{ route('login') }}" class="btn mb-20 w-100 text-center">Login untuk Melanjutkan<i class="fi-rs-sign-in ml-15"></i></a>
                     @endauth
@@ -521,13 +528,8 @@
                             }
                         }
                     }
-                    document.querySelectorAll('.js-cart-page-total').forEach(function (el) {
-                        el.textContent = res.body.cart_total_formatted;
-                    });
-                    if (res.body.total_weight_formatted) {
-                        document.querySelectorAll('.js-cart-page-total-weight').forEach(function (el) {
-                            el.textContent = res.body.total_weight_formatted;
-                        });
+                    if (typeof window.calculateCartTotals === 'function') {
+                        window.calculateCartTotals();
                     }
                     if (typeof res.body.cart_count !== 'undefined' && window.jQuery) {
                         window.jQuery('.header-action-icon-2 .mini-cart-icon .pro-count').text(res.body.cart_count);
@@ -586,6 +588,44 @@
         const btnDeleteSelected = document.getElementById('btn-delete-selected');
         const bulkDeleteForm = document.getElementById('bulk-delete-form');
 
+        window.calculateCartTotals = function() {
+            let totalSubtotal = 0;
+            let totalWeight = 0;
+
+            const checkedCheckboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+            checkedCheckboxes.forEach(function (cb) {
+                const row = cb.closest('.rg-cart-item');
+                const qtyInput = row.querySelector('.qty-val');
+                if (qtyInput) {
+                    const qty = parseInt(String(qtyInput.value).replace(/\D/g, ''), 10) || 1;
+                    const price = parseFloat(row.getAttribute('data-price')) || 0;
+                    const weight = parseFloat(row.getAttribute('data-weight')) || 0;
+
+                    totalSubtotal += price * qty;
+                    totalWeight += weight * qty;
+                }
+            });
+
+            const formattedTotalCustom = 'Rp ' + totalSubtotal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            document.querySelectorAll('.js-cart-page-total').forEach(function (el) {
+                el.textContent = formattedTotalCustom;
+            });
+
+            let formattedWeight = '';
+            if (totalWeight >= 1000) {
+                formattedWeight = (totalWeight / 1000).toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' kg';
+            } else if (totalWeight > 0) {
+                formattedWeight = totalWeight.toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' gram';
+            } else {
+                formattedWeight = '0 gram';
+            }
+            
+            document.querySelectorAll('.js-cart-page-total-weight').forEach(function (el) {
+                el.textContent = formattedWeight;
+            });
+        }
+
         function updateDeleteSelectedButtonVisibility() {
             const checkedCount = document.querySelectorAll('.cart-item-checkbox:checked').length;
             if (checkedCount > 0) {
@@ -599,7 +639,40 @@
             } else {
                 selectAllCheckbox.checked = false;
             }
+
+            window.calculateCartTotals();
         }
+
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const checked = document.querySelectorAll('.cart-item-checkbox:checked');
+                if (checked.length === 0) {
+                    if (typeof window.showShopToast === 'function') {
+                        window.showShopToast('Silakan pilih minimal 1 item untuk dipesan.', 'warning');
+                    } else {
+                        alert('Silakan pilih minimal 1 item untuk dipesan.');
+                    }
+                    return;
+                }
+                
+                checkoutForm.querySelectorAll('input[name="cart_ids[]"]').forEach(el => el.remove());
+                
+                checked.forEach(function (cb) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'cart_ids[]';
+                    input.value = cb.value;
+                    checkoutForm.appendChild(input);
+                });
+                
+                checkoutForm.submit();
+            });
+        }
+
+        // Initialize totals on load
+        window.calculateCartTotals();
 
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', function () {
