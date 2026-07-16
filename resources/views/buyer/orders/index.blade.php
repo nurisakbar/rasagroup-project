@@ -30,7 +30,7 @@
                                     <li class="nav-item flex-fill text-center">
                                         <a class="nav-link order-status-tab {{ empty($status) || $status === 'all' ? 'active' : '' }}" 
                                            href="{{ route('buyer.orders.index') }}">
-                                            All
+                                            Semua
                                         </a>
                                     </li>
                                     <li class="nav-item flex-fill text-center">
