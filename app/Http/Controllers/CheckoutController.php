@@ -1046,6 +1046,15 @@ class CheckoutController extends Controller
             'payment_method' => $order->payment_method,
         ]);
 
+        // HACK: Auto-approve untuk keperluan testing/UAT
+        if (in_array($order->payment_status, ['pending', 'unpaid'])) {
+            $order->update([
+                'payment_status' => 'paid',
+                'order_status' => 'processing'
+            ]);
+            \Illuminate\Support\Facades\Log::info('Order auto-marked as paid on success page for testing.', ['order_id' => $order->id]);
+        }
+
         // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).
         ProcessCheckoutSuccessJob::dispatch((string) $order->id)->afterResponse();
 

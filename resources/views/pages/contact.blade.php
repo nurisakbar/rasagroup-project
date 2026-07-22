@@ -241,7 +241,7 @@
                             <i class="bi bi-telephone"></i>
                         </div>
                         <h4>Telepon</h4>
-                        <p><a href="tel:+628118003357">+62 811-8003-357</a></p>
+                        <p><a href="tel:+6282151988440">+62 821-5198-8440</a></p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">

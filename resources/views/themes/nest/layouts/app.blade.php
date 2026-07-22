@@ -1337,7 +1337,7 @@
     @include('themes.nest.partials.modals')
 
     <div class="whatsapp-float d-none d-lg-block">
-        <a href="https://wa.me/628118003357?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+        <a href="https://wa.me/6282151988440?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
             <i class="bi bi-whatsapp me-2"></i> Chat Kami
         </a>
     </div>

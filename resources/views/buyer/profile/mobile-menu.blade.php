@@ -44,7 +44,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="https://wa.me/628118003357?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer">
+                            <a class="nav-link" href="https://wa.me/6282151988440?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer">
                                 <i class="fi-rs-headphones mr-15"></i>Hubungi CS
                             </a>
                         </li>
