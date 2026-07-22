@@ -1053,6 +1053,14 @@ class CheckoutController extends Controller
                 'order_status' => 'processing'
             ]);
             \Illuminate\Support\Facades\Log::info('Order auto-marked as paid on success page for testing.', ['order_id' => $order->id]);
+            
+            // Bypass antrean (queue) dan paksa sinkronisasi langsung ke Jubelio:
+            try {
+                \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                \Illuminate\Support\Facades\Log::info('Synchronous Jubelio sync executed.', ['order_id' => $order->id]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Synchronous Jubelio sync failed.', ['error' => $e->getMessage()]);
+            }
         }
 
         // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).
