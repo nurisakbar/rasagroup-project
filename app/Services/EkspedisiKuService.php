@@ -24,7 +24,7 @@ class EkspedisiKuService
     public function getProvinces()
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/provinces");
 
             if ($response->failed()) {
@@ -65,7 +65,7 @@ class EkspedisiKuService
     public function getRegencies($provinceId)
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/regencies", [
                     'province_id' => $provinceId
                 ]);
@@ -109,7 +109,7 @@ class EkspedisiKuService
     public function getDistricts($regencyId)
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/districts", [
                     'regency_id' => $regencyId
                 ]);
@@ -151,7 +151,7 @@ class EkspedisiKuService
     public function getVillages($districtId)
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/villages", [
                     'district_id' => $districtId
                 ]);
@@ -202,7 +202,7 @@ class EkspedisiKuService
         }
 
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/ongkir", [
                     'origin' => $originId,
                     'destination' => $destinationId,
@@ -276,7 +276,7 @@ class EkspedisiKuService
                 'service_type' => (string) config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE'),
             ];
 
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->acceptJson()
                 ->post("{$this->baseUrl}/rates", $payload);
 
@@ -375,7 +375,7 @@ class EkspedisiKuService
                 'destination' => $payload['shipment']['destination'] ?? null,
             ]);
 
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->post("{$this->baseUrl}/shipments", $payload);
 
             if ($response->failed()) {
@@ -426,7 +426,7 @@ class EkspedisiKuService
                 'shipment_id' => (string) $shipmentId,
             ]);
 
-            $response = Http::withToken($this->token)->get($url);
+            $response = Http::timeout(10)->withToken($this->token)->get($url);
 
             if ($response->failed()) {
                 Log::warning('EkspedisiKuService: getShipment failed', [
@@ -458,7 +458,7 @@ class EkspedisiKuService
     public function track($resi, $carrier)
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/track/{$resi}", [
                     'carrier' => $carrier
                 ]);
@@ -524,7 +524,7 @@ class EkspedisiKuService
                 'payload' => $payload,
             ]);
 
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->withHeaders([
                     'Timezone' => '+07:00',
                 ])
@@ -581,7 +581,7 @@ class EkspedisiKuService
                 'payload' => $payload
             ]);
 
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->withHeaders([
                     'Timezone' => '+07:00'
                 ])
@@ -628,7 +628,7 @@ class EkspedisiKuService
                 'payload' => $payload,
             ]);
 
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->post("{$this->baseUrl}/pickup/cancel", $payload);
 
             Log::info('EkspedisiKuService: Cancel pickup response', [
@@ -663,7 +663,7 @@ class EkspedisiKuService
     public function getCouriers()
     {
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/couriers");
 
             if ($response->failed()) {

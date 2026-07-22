@@ -44,17 +44,17 @@ class Address extends Model
 
     public function province(): BelongsTo
     {
-        return $this->belongsTo(RajaOngkirProvince::class, 'province_id');
+        return $this->belongsTo(Province::class, 'province_id');
     }
 
     public function regency(): BelongsTo
     {
-        return $this->belongsTo(RajaOngkirCity::class, 'regency_id');
+        return $this->belongsTo(Regency::class, 'regency_id');
     }
 
     public function district(): BelongsTo
     {
-        return $this->belongsTo(RajaOngkirDistrict::class, 'district_id');
+        return $this->belongsTo(District::class, 'district_id');
     }
 
     public function village(): BelongsTo

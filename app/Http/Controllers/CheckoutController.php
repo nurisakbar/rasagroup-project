@@ -1256,6 +1256,6 @@ class CheckoutController extends Controller
 
     private function usesEkspedisiKuRates(string $code): bool
     {
-        return in_array($code, ['lion_parcel', 'lalamove', 'jne', 'sicepat'], true);
+        return in_array($code, ['lion_parcel', 'lalamove', 'jne', 'sicepat', 'jnt'], true);
     }
 }

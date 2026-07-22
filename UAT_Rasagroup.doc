@@ -1,0 +1,133 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Times New Roman', serif; line-height: 1.6; }
+h1, h2, h3 { color: #000; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>Dokumen User Acceptance Testing (UAT) - Rasagroup Project</h1>
+<p>Dokumen ini berisi skenario pengujian untuk memastikan fungsionalitas sistem berjalan sesuai kebutuhan bisnis, baik dari sisi pengguna (User/Buyer) maupun dari sisi Admin.</p>
+
+<h2>1. Skenario Pengujian Sisi Pengguna (User / Buyer)</h2>
+
+<h3>1.1. Autentikasi dan Manajemen Akun</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Registrasi</td><td>Melakukan registrasi dengan data valid (Nama, Email, No WA, Password).</td><td>Akun berhasil dibuat dan user dapat login.</td><td></td></tr>
+<tr><td>2</td><td>Login</td><td>Login menggunakan kredensial yang valid.</td><td>Berhasil masuk ke dashboard / halaman utama dengan status terautentikasi.</td><td></td></tr>
+<tr><td>3</td><td>Profil Akun</td><td>Mengubah data profil dan password.</td><td>Perubahan tersimpan dan user bisa login dengan password baru.</td><td></td></tr>
+<tr><td>4</td><td>Alamat</td><td>Menambahkan, mengedit, dan mengatur alamat default pengiriman.</td><td>Alamat baru berhasil disimpan dan muncul di opsi pengiriman.</td><td></td></tr>
+</table>
+
+<h3>1.2. Halaman Utama & Menu Publik</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Halaman Utama</td><td>Membuka halaman utama (/).</td><td>Banner, pop-up promosi, dan produk unggulan (jika ada) tampil dengan baik.</td><td></td></tr>
+<tr><td>2</td><td>Menu Dinamis</td><td>Mengakses navigasi menu dinamis dari admin.</td><td>Halaman menampilkan konten menu yang dipilih.</td><td></td></tr>
+<tr><td>3</td><td>Halaman Statis</td><td>Membuka halaman Tentang Kami, Kontak, dan Kebijakan Privasi.</td><td>Informasi statis dapat dibaca dengan tata letak yang rapi.</td><td></td></tr>
+<tr><td>4</td><td>Saluran Informasi</td><td>Membuka daftar artikel/saluran informasi dan menambahkan komentar.</td><td>Artikel dapat dibaca, dan komentar (jika terautentikasi) berhasil disubmit.</td><td></td></tr>
+</table>
+
+<h3>1.3. Katalog Produk dan Eksplorasi</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Pencarian Produk</td><td>Mencari produk berdasarkan nama / kata kunci (Search Suggestions).</td><td>Menampilkan daftar produk yang relevan dengan kata kunci.</td><td></td></tr>
+<tr><td>2</td><td>Detail Produk</td><td>Membuka halaman detail produk.</td><td>Informasi harga, stok, deskripsi, dan varian tampil dengan benar.</td><td></td></tr>
+<tr><td>3</td><td>Promo</td><td>Membuka halaman promo / diskon.</td><td>Daftar promo dan produk yang termasuk di dalamnya tampil sesuai periode.</td><td></td></tr>
+</table>
+
+<h3>1.4. Keranjang Belanja (Cart) & Checkout</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Tambah ke Keranjang</td><td>Menambahkan produk dengan kuantitas tertentu ke cart.</td><td>Produk dan total harga tampil pada keranjang.</td><td></td></tr>
+<tr><td>2</td><td>Update Keranjang</td><td>Menambah/mengurangi kuantitas produk di keranjang atau menghapus produk.</td><td>Total harga dan ketersediaan stok diperbarui otomatis.</td><td></td></tr>
+<tr><td>3</td><td>Checkout (Alamat)</td><td>Melanjutkan checkout dan memilih alamat tujuan.</td><td>Sistem dapat memproses lokasi untuk hitung ongkir.</td><td></td></tr>
+<tr><td>4</td><td>Kalkulasi Ongkir</td><td>Memilih metode pengiriman (Ekspedisi).</td><td>Tarif ongkos kirim muncul dan kalkulasi total akhir (Subtotal + Ongkir) akurat.</td><td></td></tr>
+<tr><td>5</td><td>Pembayaran</td><td>Menyelesaikan checkout dan memilih metode pembayaran (Gateway/Transfer).</td><td>Order terbentuk dengan status Menunggu Pembayaran.</td><td></td></tr>
+</table>
+
+<h3>1.5. Manajemen Pesanan</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Konfirmasi Bayar</td><td>Upload bukti transfer manual pada pesanan (jika ada).</td><td>Status berubah menjadi Menunggu Konfirmasi.</td><td></td></tr>
+<tr><td>2</td><td>Riwayat Pesanan</td><td>Membuka menu riwayat pesanan di dashboard Buyer.</td><td>Menampilkan daftar pesanan dengan status yang akurat (Diproses, Dikirim, Selesai).</td><td></td></tr>
+<tr><td>3</td><td>Tracking & Invoice</td><td>Lacak pengiriman (tracking resi) dan download invoice.</td><td>Status pengiriman terupdate dan invoice PDF dapat diunduh.</td><td></td></tr>
+</table>
+
+<h3>1.6. Fitur Kemitraan (Distributor / DRiiPPreneur / Affiliate)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Pendaftaran Mitra</td><td>Mengisi form pengajuan sebagai Distributor / DRiiPPreneur.</td><td>Form tersubmit dan status menunggu persetujuan Admin.</td><td></td></tr>
+<tr><td>2</td><td>Point Withdrawals</td><td>Melakukan request penarikan komisi / poin afiliasi.</td><td>Request masuk ke sistem untuk diproses oleh Admin.</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>2. Skenario Pengujian Sisi Admin (Super Admin)</h2>
+
+<h3>2.1. Autentikasi dan Dashboard Admin</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Login Admin</td><td>Login melalui /admin/login dengan kredensial Admin.</td><td>Berhasil masuk ke Admin Dashboard.</td><td></td></tr>
+<tr><td>2</td><td>Dashboard</td><td>Melihat ringkasan data transaksi, stok, dan user.</td><td>Data metrik tampil sesuai dengan real-time database.</td><td></td></tr>
+</table>
+
+<h3>2.2. Master Data (Katalog)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Kategori & Brand</td><td>Tambah, Edit, Hapus (CRUD) Kategori dan Brand produk.</td><td>Data tersimpan dan terefleksi di halaman user.</td><td></td></tr>
+<tr><td>2</td><td>Produk</td><td>CRUD Produk, pengaturan harga, gambar, dan varian.</td><td>Produk baru tampil di frontend (jika status aktif).</td><td></td></tr>
+<tr><td>3</td><td>Sinkronisasi</td><td>Menjalankan fitur Import Produk atau Sinkronisasi ke Jubelio / QAD.</td><td>Data ter-update masif tanpa error (Mapping sukses).</td><td></td></tr>
+<tr><td>4</td><td>Promo & Diskon</td><td>Membuat aturan diskon/promo (Discount Tiers) baru.</td><td>Potongan harga aktif saat user checkout sesuai kriteria.</td><td></td></tr>
+</table>
+
+<h3>2.3. Manajemen Pesanan (Orders)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Daftar Pesanan</td><td>Membuka daftar pesanan dan memfilter berdasarkan status.</td><td>List pesanan tampil lengkap beserta rincian customer.</td><td></td></tr>
+<tr><td>2</td><td>Proses Pesanan</td><td>Mengubah status pesanan (Konfirmasi Bayar -> Proses -> Kirim).</td><td>Status terupdate dan notifikasi dikirim ke user.</td><td></td></tr>
+<tr><td>3</td><td>Booking Ekspedisi</td><td>Membuat booking pengiriman (Integrasi EkspedisiKu).</td><td>AWB (Resi) ter-generate otomatis dan dapat di-request pickup.</td><td></td></tr>
+<tr><td>4</td><td>Sync Order QAD</td><td>Meneruskan data pesanan (Sync Sales Order) ke sistem QAD.</td><td>Berhasil terintegrasi dengan ERP QAD.</td><td></td></tr>
+</table>
+
+<h3>2.4. Manajemen Kemitraan & User</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Approval Mitra</td><td>Menyetujui atau menolak aplikasi Distributor / DRiiPPreneur.</td><td>Status user berubah (role diupdate) jika disetujui.</td><td></td></tr>
+<tr><td>2</td><td>Kelola Distributor</td><td>Mengatur data Distributor, dokumen legalitas, dan penetapan produk.</td><td>Data distributor valid dan siap beroperasi.</td><td></td></tr>
+<tr><td>3</td><td>Kelola Withdraw</td><td>Menyetujui / Menolak pengajuan penarikan poin (Withdrawal).</td><td>Saldo user terpotong dan mutasi sukses dicatat.</td><td></td></tr>
+</table>
+
+<h3>2.5. Manajemen Gudang (Warehouses)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Data Gudang</td><td>CRUD data Gudang (Lokasi, Jam Operasional).</td><td>Lokasi gudang bisa mendeteksi radius ke alamat user.</td><td></td></tr>
+<tr><td>2</td><td>Kelola Stok</td><td>Update manual stok per gudang atau Sync Stok via Jubelio/QAD.</td><td>Ketersediaan produk di gudang spesifik terupdate.</td><td></td></tr>
+<tr><td>3</td><td>Admin Gudang</td><td>Menetapkan (Assign) user tertentu sebagai pengelola gudang.</td><td>User tersebut bisa login ke panel Warehouse.</td><td></td></tr>
+</table>
+
+<h3>2.6. Manajemen Konten Website</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Sliders & Pop-up</td><td>Menambahkan banner slider dan pop-up website.</td><td>Banner muncul di Homepage frontend.</td><td></td></tr>
+<tr><td>2</td><td>Pages</td><td>Membuat/Mengedit halaman statis (Tentang Kami, Privacy).</td><td>Konten halaman berubah sesuai update CMS.</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>3. Persetujuan (Sign-off)</h2>
+<table>
+<tr><th>Peran</th><th>Nama</th><th>Tanda Tangan</th><th>Tanggal</th></tr>
+<tr><td>Project Manager</td><td></td><td></td><td></td></tr>
+<tr><td>QA / Tester</td><td></td><td></td><td></td></tr>
+<tr><td>Product Owner</td><td></td><td></td><td></td></tr>
+</table>
+
+</body>
+</html>

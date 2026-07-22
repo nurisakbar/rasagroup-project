@@ -5,28 +5,30 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 $qadService = app(\App\Services\QadService::class);
-$json = <<<'JSON'
+
+$rand = rand(1000, 9999);
+$json = <<<JSON
 {
   "domainCode": "MCR",
-  "salesOrderNumber": "WS000001",
-  "billToCustomerCode": "ZH78584",
-  "soldToCustomerCode": "ZH78584",
-  "shipToCustomerCode": "ZH78584",
+  "salesOrderNumber": "WS{$rand}2",
+  "billToCustomerCode": "CS00003",
+  "soldToCustomerCode": "CS00003",
+  "shipToCustomerCode": "CS00003",
   "orderDate": "2026-04-28T00:00:00.000Z",
   "dueDate": "2026-04-28T00:00:00.000Z",
   "requiredDate": "2026-04-28T00:00:00.000Z",
   "shipDate": "2026-04-28T00:00:00.000Z",
   "promiseDate": "2026-04-28T00:00:00.000Z",
   "creditTermsCode": "CIA",
-  "remarks": "ORD-20260428-0002",
-  "purchaseOrderNumber": "2604280002",
+  "remarks": "ORD-20260428-{$rand}",
+  "purchaseOrderNumber": "260428{$rand}",
   "taxClass": "PPN",
   "isTaxable": true,
   "salespersonCode_01": "SLS00001",
   "isSelfBillingEnabled": true,
   "salesOrderLines": [
     {
-      "salesOrderNumber": "WS000001",
+      "salesOrderNumber": "WS{$rand}2",
       "salesOrderLine": 1,
       "itemCode": "FMB010-MD03",
       "quantityOrdered": 1,
