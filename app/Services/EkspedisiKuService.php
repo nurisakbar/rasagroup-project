@@ -28,7 +28,7 @@ class EkspedisiKuService
                 ->distinct()
                 ->orderBy('province_name')
                 ->get();
-            return ['data' => $provinces->toArray()];
+            return ['success' => true, 'data' => $provinces->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getProvinces error', [
                 'message' => $e->getMessage(),
@@ -50,7 +50,7 @@ class EkspedisiKuService
                 ->distinct()
                 ->orderBy('regency_name')
                 ->get();
-            return ['data' => $regencies->toArray()];
+            return ['success' => true, 'data' => $regencies->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getRegencies error', ['province_id' => $provinceId, 'message' => $e->getMessage()]);
             return null;
@@ -68,7 +68,7 @@ class EkspedisiKuService
                 ->distinct()
                 ->orderBy('district_name')
                 ->get();
-            return ['data' => $districts->toArray()];
+            return ['success' => true, 'data' => $districts->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getDistricts error', ['regency_id' => $regencyId, 'message' => $e->getMessage()]);
             return null;
@@ -86,7 +86,7 @@ class EkspedisiKuService
                 ->distinct()
                 ->orderBy('village_name')
                 ->get();
-            return ['data' => $villages->toArray()];
+            return ['success' => true, 'data' => $villages->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getVillages error', ['district_id' => $districtId, 'message' => $e->getMessage()]);
             return null;
