@@ -30,6 +30,11 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command->error('Akses ditolak: Tidak dapat menjalankan seeder data dummy di environment production!');
+            return;
+        }
+
         $this->command->info('Cleaning up old demo data...');
         $this->cleanupOldData();
 

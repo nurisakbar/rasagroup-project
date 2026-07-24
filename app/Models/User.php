@@ -158,24 +158,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(PriceLevel::class);
     }
 
-    public function distributorProvince(): BelongsTo
+    public function distributorWilayah(): BelongsTo
     {
-        return $this->belongsTo(RajaOngkirProvince::class, 'distributor_province_id');
+        // Using distributor_regency_id to get WilayahAdministratif because it's more specific, or just map via regency_id
+        return $this->belongsTo(WilayahAdministratif::class, 'distributor_regency_id', 'regency_id');
     }
 
-    public function distributorRegency(): BelongsTo
+    public function driippreneurWilayah(): BelongsTo
     {
-        return $this->belongsTo(RajaOngkirCity::class, 'distributor_regency_id');
-    }
-
-    public function driippreneurProvince(): BelongsTo
-    {
-        return $this->belongsTo(RajaOngkirProvince::class, 'driippreneur_province_id');
-    }
-
-    public function driippreneurRegency(): BelongsTo
-    {
-        return $this->belongsTo(RajaOngkirCity::class, 'driippreneur_regency_id');
+        return $this->belongsTo(WilayahAdministratif::class, 'driippreneur_regency_id', 'regency_id');
     }
 
     public function addresses(): HasMany

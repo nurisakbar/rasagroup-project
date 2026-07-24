@@ -220,7 +220,7 @@ class OrderController extends Controller
         });
 
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district'])
+            ->with(['wilayah'])
             ->orderByDesc('is_default')
             ->get();
 
@@ -242,7 +242,10 @@ class OrderController extends Controller
 
         $total = $subtotal + $shippingCost;
 
-        $provinces = \App\Models\Province::orderBy('name')->get();
+        $provinces = \App\Models\WilayahAdministratif::select('province_id as id', 'province_name as name')
+            ->distinct()
+            ->orderBy('province_name')
+            ->get();
 
         // Hub pengirim otomatis = hub terdekat alamat tujuan
         $excludeOwnHub = Auth::user()->distributorShoppingExcludedWarehouseId();
@@ -429,7 +432,7 @@ class OrderController extends Controller
 
         $address = Address::where('id', $request->address_id)
             ->where('user_id', Auth::id())
-            ->with(['province', 'regency', 'district'])
+            ->with(['wilayah'])
             ->first();
 
         if (!$address) {

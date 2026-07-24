@@ -18,6 +18,11 @@ class PromoDummySeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command->error('Akses ditolak: Tidak dapat menjalankan seeder data dummy di environment production!');
+            return;
+        }
+
         $now = Carbon::now();
 
         $promos = [

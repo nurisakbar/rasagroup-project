@@ -42,41 +42,46 @@ class Address extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function province(): BelongsTo
+    public function wilayah(): BelongsTo
     {
-        return $this->belongsTo(Province::class, 'province_id');
+        return $this->belongsTo(WilayahAdministratif::class, 'village_id', 'village_id');
     }
 
-    public function regency(): BelongsTo
+    public function getProvinceNameAttribute(): ?string
     {
-        return $this->belongsTo(Regency::class, 'regency_id');
+        return $this->wilayah?->province_name ?? WilayahAdministratif::where('province_id', $this->province_id)->first()?->province_name;
     }
 
-    public function district(): BelongsTo
+    public function getRegencyNameAttribute(): ?string
     {
-        return $this->belongsTo(District::class, 'district_id');
+        return $this->wilayah?->regency_name ?? WilayahAdministratif::where('regency_id', $this->regency_id)->first()?->regency_name;
     }
 
-    public function village(): BelongsTo
+    public function getDistrictNameAttribute(): ?string
     {
-        return $this->belongsTo(Village::class, 'village_id');
+        return $this->wilayah?->district_name ?? WilayahAdministratif::where('district_id', $this->district_id)->first()?->district_name;
+    }
+
+    public function getVillageNameAttribute(): ?string
+    {
+        return $this->wilayah?->village_name ?? WilayahAdministratif::where('village_id', $this->village_id)->first()?->village_name;
     }
 
     public function getFullAddressAttribute(): string
     {
         $parts = [$this->address_detail];
         
-        if ($this->village) {
-            $parts[] = 'Ds/Kel. ' . $this->village->name;
+        if ($this->village_id || $this->village_name) {
+            $parts[] = 'Ds/Kel. ' . ($this->village_name ?? $this->village_id);
         }
-        if ($this->district) {
-            $parts[] = 'Kec. ' . $this->district->name;
+        if ($this->district_id || $this->district_name) {
+            $parts[] = 'Kec. ' . ($this->district_name ?? $this->district_id);
         }
-        if ($this->regency) {
-            $parts[] = $this->regency->name;
+        if ($this->regency_id || $this->regency_name) {
+            $parts[] = $this->regency_name ?? $this->regency_id;
         }
-        if ($this->province) {
-            $parts[] = $this->province->name;
+        if ($this->province_id || $this->province_name) {
+            $parts[] = $this->province_name ?? $this->province_id;
         }
         if ($this->postal_code) {
             $parts[] = $this->postal_code;

@@ -51,7 +51,7 @@ class AddressApiController extends Controller
             ], 400);
         }
         
-        $addresses = Address::with(['province', 'regency', 'district', /* removed village */])
+        $addresses = Address::with(['wilayah'])
             ->where('user_id', $userId)
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
@@ -67,17 +67,17 @@ class AddressApiController extends Controller
                 'postal_code' => $address->postal_code,
                 'notes' => $address->notes,
                 'is_default' => $address->is_default,
-                'province' => $address->province ? [
-                    'id' => $address->province->id,
-                    'name' => $address->province->name,
+                'province' => $address->province_id ? [
+                    'id' => $address->province_id,
+                    'name' => $address->province_name,
                 ] : null,
-                'regency' => $address->regency ? [
-                    'id' => $address->regency->id,
-                    'name' => $address->regency->name,
+                'regency' => $address->regency_id ? [
+                    'id' => $address->regency_id,
+                    'name' => $address->regency_name,
                 ] : null,
-                'district' => $address->district ? [
-                    'id' => $address->district->id,
-                    'name' => $address->district->name,
+                'district' => $address->district_id ? [
+                    'id' => $address->district_id,
+                    'name' => $address->district_name,
                 ] : null,
 
                 'full_address' => $address->full_address,
@@ -137,7 +137,7 @@ class AddressApiController extends Controller
             'is_default' => $isDefault,
         ]);
 
-        $address->load(['province', 'regency', 'district', /* removed village */]);
+        $address->load(['wilayah']);
 
         return response()->json([
             'success' => true,
@@ -151,17 +151,17 @@ class AddressApiController extends Controller
                 'postal_code' => $address->postal_code,
                 'notes' => $address->notes,
                 'is_default' => $address->is_default,
-                'province' => $address->province ? [
-                    'id' => $address->province->id,
-                    'name' => $address->province->name,
+                'province' => $address->province_id ? [
+                    'id' => $address->province_id,
+                    'name' => $address->province_name,
                 ] : null,
-                'regency' => $address->regency ? [
-                    'id' => $address->regency->id,
-                    'name' => $address->regency->name,
+                'regency' => $address->regency_id ? [
+                    'id' => $address->regency_id,
+                    'name' => $address->regency_name,
                 ] : null,
-                'district' => $address->district ? [
-                    'id' => $address->district->id,
-                    'name' => $address->district->name,
+                'district' => $address->district_id ? [
+                    'id' => $address->district_id,
+                    'name' => $address->district_name,
                 ] : null,
 
                 'full_address' => $address->full_address,
@@ -216,7 +216,7 @@ class AddressApiController extends Controller
             'is_default' => $request->boolean('is_default'),
         ]);
 
-        $address->load(['province', 'regency', 'district', /* removed village */]);
+        $address->load(['wilayah']);
 
         return response()->json([
             'success' => true,
@@ -230,17 +230,17 @@ class AddressApiController extends Controller
                 'postal_code' => $address->postal_code,
                 'notes' => $address->notes,
                 'is_default' => $address->is_default,
-                'province' => $address->province ? [
-                    'id' => $address->province->id,
-                    'name' => $address->province->name,
+                'province' => $address->province_id ? [
+                    'id' => $address->province_id,
+                    'name' => $address->province_name,
                 ] : null,
-                'regency' => $address->regency ? [
-                    'id' => $address->regency->id,
-                    'name' => $address->regency->name,
+                'regency' => $address->regency_id ? [
+                    'id' => $address->regency_id,
+                    'name' => $address->regency_name,
                 ] : null,
-                'district' => $address->district ? [
-                    'id' => $address->district->id,
-                    'name' => $address->district->name,
+                'district' => $address->district_id ? [
+                    'id' => $address->district_id,
+                    'name' => $address->district_name,
                 ] : null,
 
                 'full_address' => $address->full_address,

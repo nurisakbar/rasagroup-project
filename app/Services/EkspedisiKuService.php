@@ -19,38 +19,18 @@ class EkspedisiKuService
     }
 
     /**
-     * Get all provinces
+     * Get all provinces from local database
      */
     public function getProvinces()
     {
         try {
-            $response = Http::timeout(10)->withToken($this->token)
-                ->get("{$this->baseUrl}/provinces");
-
-            if ($response->failed()) {
-                Log::warning('EkspedisiKuService: getProvinces failed', [
-                    'url' => "{$this->baseUrl}/provinces",
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'token_prefix' => substr($this->token, 0, 10) . '...'
-                ]);
-                return null;
-            }
-
-            $result = $response->json();
-            if (isset($result['data']) && is_array($result['data'])) {
-                foreach ($result['data'] as $item) {
-                    \App\Models\RajaOngkirProvince::updateOrCreate(
-                        ['id' => $item['id']],
-                        ['name' => $item['name']]
-                    );
-                }
-            }
-
-            return $result;
+            $provinces = \App\Models\WilayahAdministratif::select('province_id as id', 'province_name as name')
+                ->distinct()
+                ->orderBy('province_name')
+                ->get();
+            return ['data' => $provinces->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getProvinces error', [
-                'url' => "{$this->baseUrl}/provinces",
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -60,43 +40,17 @@ class EkspedisiKuService
     }
 
     /**
-     * Get regencies by province ID
+     * Get regencies by province ID from local database
      */
     public function getRegencies($provinceId)
     {
         try {
-            $response = Http::timeout(10)->withToken($this->token)
-                ->get("{$this->baseUrl}/regencies", [
-                    'province_id' => $provinceId
-                ]);
-
-            if ($response->failed()) {
-                Log::warning('EkspedisiKuService: getRegencies failed', [
-                    'url' => "{$this->baseUrl}/regencies",
-                    'province_id' => $provinceId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'token_prefix' => substr($this->token, 0, 10) . '...'
-                ]);
-                return null;
-            }
-
-            $result = $response->json();
-            if (isset($result['data']) && is_array($result['data'])) {
-                foreach ($result['data'] as $item) {
-                    \App\Models\RajaOngkirCity::updateOrCreate(
-                        ['id' => $item['id']],
-                        [
-                            'province_id' => $provinceId,
-                            'name' => $item['name'],
-                            'type' => $item['type'] ?? null,
-                            'postal_code' => $item['postal_code'] ?? null
-                        ]
-                    );
-                }
-            }
-
-            return $result;
+            $regencies = \App\Models\WilayahAdministratif::select('regency_id as id', 'province_id', 'regency_name as name')
+                ->where('province_id', $provinceId)
+                ->distinct()
+                ->orderBy('regency_name')
+                ->get();
+            return ['data' => $regencies->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getRegencies error', ['province_id' => $provinceId, 'message' => $e->getMessage()]);
             return null;
@@ -104,41 +58,17 @@ class EkspedisiKuService
     }
 
     /**
-     * Get districts by regency ID
+     * Get districts by regency ID from local database
      */
     public function getDistricts($regencyId)
     {
         try {
-            $response = Http::timeout(10)->withToken($this->token)
-                ->get("{$this->baseUrl}/districts", [
-                    'regency_id' => $regencyId
-                ]);
-
-            if ($response->failed()) {
-                Log::warning('EkspedisiKuService: getDistricts failed', [
-                    'url' => "{$this->baseUrl}/districts",
-                    'regency_id' => $regencyId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                return null;
-            }
-
-            $result = $response->json();
-            if (isset($result['data']) && is_array($result['data'])) {
-                foreach ($result['data'] as $item) {
-                    \App\Models\RajaOngkirDistrict::updateOrCreate(
-                        ['id' => $item['id']],
-                        [
-                            'city_id' => $regencyId,
-                            'name' => $item['name'],
-                            'postal_code' => $item['postal_code'] ?? null
-                        ]
-                    );
-                }
-            }
-
-            return $result;
+            $districts = \App\Models\WilayahAdministratif::select('district_id as id', 'regency_id', 'district_name as name')
+                ->where('regency_id', $regencyId)
+                ->distinct()
+                ->orderBy('district_name')
+                ->get();
+            return ['data' => $districts->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getDistricts error', ['regency_id' => $regencyId, 'message' => $e->getMessage()]);
             return null;
@@ -146,40 +76,17 @@ class EkspedisiKuService
     }
 
     /**
-     * Get villages by district ID
+     * Get villages by district ID from local database
      */
     public function getVillages($districtId)
     {
         try {
-            $response = Http::timeout(10)->withToken($this->token)
-                ->get("{$this->baseUrl}/villages", [
-                    'district_id' => $districtId
-                ]);
-
-            if ($response->failed()) {
-                Log::warning('EkspedisiKuService: getVillages failed', [
-                    'url' => "{$this->baseUrl}/villages",
-                    'district_id' => $districtId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                return null;
-            }
-
-            $result = $response->json();
-            if (isset($result['data']) && is_array($result['data'])) {
-                foreach ($result['data'] as $item) {
-                    \App\Models\Village::updateOrCreate(
-                        ['id' => $item['id']],
-                        [
-                            'district_id' => $districtId,
-                            'name' => $item['name']
-                        ]
-                    );
-                }
-            }
-
-            return $result;
+            $villages = \App\Models\WilayahAdministratif::select('village_id as id', 'district_id', 'village_name as name')
+                ->where('district_id', $districtId)
+                ->distinct()
+                ->orderBy('village_name')
+                ->get();
+            return ['data' => $villages->toArray()];
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getVillages error', ['district_id' => $districtId, 'message' => $e->getMessage()]);
             return null;

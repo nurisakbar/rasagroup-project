@@ -28,7 +28,7 @@ class AddressController extends Controller
     {
         $user = Auth::user();
         $addresses = $user->addresses()
-            ->with(['province', 'regency', 'district', 'village'])
+            ->with(['wilayah'])
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();

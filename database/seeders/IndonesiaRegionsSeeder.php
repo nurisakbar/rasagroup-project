@@ -16,33 +16,23 @@ class IndonesiaRegionsSeeder extends Seeder
     {
         $driver = DB::connection()->getDriverName();
         
-        // For MySQL, data is already imported via migration
-        // Just create the view
         if ($driver === 'mysql') {
-            $this->command->info('MySQL detected - regions data imported via migration.');
-            $this->command->info('Provinces: ' . DB::table('provinces')->count());
-            $this->command->info('Regencies: ' . DB::table('regencies')->count());
-            $this->command->info('Districts: ' . DB::table('districts')->count());
-            $this->command->info('Villages: ' . DB::table('villages')->count());
-        }
-        
-        // Create view
-        DB::statement("DROP VIEW IF EXISTS view_wilayah_administratif_indonesia");
-        DB::statement("CREATE VIEW view_wilayah_administratif_indonesia AS 
-            SELECT 
-                villages.id as village_id,
-                villages.name as village_name,
-                districts.id as district_id,
-                districts.name as district_name,
-                regencies.id as regency_id,
-                regencies.name as regency_name,
-                provinces.id as province_id,
-                provinces.name as province_name
-            FROM villages
-            LEFT JOIN districts ON districts.id = villages.district_id
-            LEFT JOIN regencies ON regencies.id = districts.regency_id
-            LEFT JOIN provinces ON provinces.id = regencies.province_id");
+            $this->command->info('MySQL detected - importing regions cache data...');
             
-        $this->command->info('View view_wilayah_administratif_indonesia created successfully.');
+            // Drop old view if it exists
+            DB::statement("DROP VIEW IF EXISTS view_wilayah_administratif_indonesia");
+            DB::statement("DROP TABLE IF EXISTS view_wilayah_administratif_indonesia_cache");
+            
+            $sqlPath = database_path('seeders/view_wilayah_administratif_indonesia_cache.sql');
+            if (file_exists($sqlPath)) {
+                $this->command->info('Executing SQL dump for wilayah administratf cache...');
+                DB::unprepared(file_get_contents($sqlPath));
+                $this->command->info('Regions cache data imported successfully.');
+            } else {
+                $this->command->error('SQL file not found at: ' . $sqlPath);
+            }
+        } else {
+            $this->command->warn('Seeding regions is only supported on MySQL driver.');
+        }
     }
 }

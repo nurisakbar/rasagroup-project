@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Province;
-use App\Models\Regency;
+use App\Models\WilayahAdministratif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,7 +22,10 @@ class DistributorApplicationController extends Controller
                 ->with('error', 'Anda tidak dapat mendaftar sebagai distributor.');
         }
 
-        $provinces = Province::orderBy('name')->get();
+        $provinces = WilayahAdministratif::select('province_id as id', 'province_name as name')
+            ->distinct()
+            ->orderBy('province_name')
+            ->get();
 
         return view('buyer.distributor.apply', compact('user', 'provinces'));
     }
@@ -87,7 +89,11 @@ class DistributorApplicationController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $regencies = Regency::where('province_id', $request->province_id)->orderBy('name')->get();
+        $regencies = WilayahAdministratif::select('regency_id as id', 'province_id', 'regency_name as name')
+            ->where('province_id', $request->province_id)
+            ->distinct()
+            ->orderBy('regency_name')
+            ->get();
         return response()->json($regencies);
     }
 }

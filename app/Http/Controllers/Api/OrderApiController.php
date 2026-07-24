@@ -158,7 +158,7 @@ class OrderApiController extends Controller
         // Verify address belongs to user
         $address = Address::where('user_id', $userId)
             ->where('id', $validated['address_id'])
-            ->with(['province', 'regency', 'district'])
+            ->with(['wilayah'])
             ->firstOrFail();
 
         $expedition = Expedition::findOrFail($validated['expedition_id']);
@@ -252,10 +252,9 @@ class OrderApiController extends Controller
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
-                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
-                ($address->regency ? $address->regency->name . ', ' : '') .
-                ($address->province ? $address->province->name : '') .
+                ($address->district_name ? 'Kec. ' . $address->district_name . ', ' : '') .
+                ($address->regency_name ? $address->regency_name . ', ' : '') .
+                ($address->province_name ?? '') .
                 ($address->postal_code ? ' ' . $address->postal_code : '');
 
             // Calculate points for DRiiPPreneur
@@ -416,8 +415,8 @@ class OrderApiController extends Controller
                 ]);
             } else {
                 // Ensure address relationships are loaded
-                if ($order->address && (! $order->address->relationLoaded('village') || ! $order->address->relationLoaded('district') || ! $order->address->relationLoaded('regency') || ! $order->address->relationLoaded('province'))) {
-                    $order->address->load(['village', 'district', 'regency', 'province']);
+                if ($order->address && (! $order->address->relationLoaded('village') || ! $order->address->relationLoaded('district') || ! $order->address->relationLoaded('regency') || ! $order->address->relationLoaded('wilayah'))) {
+                    $order->address->load(['village', 'district', 'regency', 'wilayah']);
                 }
                 $order->loadMissing(['user', 'sourceWarehouse']);
             }

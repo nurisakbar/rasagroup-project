@@ -68,24 +68,29 @@ class Warehouse extends Model
         return $slug;
     }
 
-    public function province(): BelongsTo
+    public function wilayah()
     {
-        return $this->belongsTo(Province::class, 'province_id');
+        return $this->belongsTo(WilayahAdministratif::class, 'village_id', 'village_id');
     }
 
-    public function regency(): BelongsTo
+    public function getProvinceNameAttribute(): ?string
     {
-        return $this->belongsTo(Regency::class, 'regency_id');
+        return $this->wilayah?->province_name ?? WilayahAdministratif::where('province_id', $this->province_id)->first()?->province_name;
     }
 
-    public function district(): BelongsTo
+    public function getRegencyNameAttribute(): ?string
     {
-        return $this->belongsTo(District::class, 'district_id');
+        return $this->wilayah?->regency_name ?? WilayahAdministratif::where('regency_id', $this->regency_id)->first()?->regency_name;
     }
 
-    public function village(): BelongsTo
+    public function getDistrictNameAttribute(): ?string
     {
-        return $this->belongsTo(Village::class, 'village_id');
+        return $this->wilayah?->district_name ?? WilayahAdministratif::where('district_id', $this->district_id)->first()?->district_name;
+    }
+
+    public function getVillageNameAttribute(): ?string
+    {
+        return $this->wilayah?->village_name ?? WilayahAdministratif::where('village_id', $this->village_id)->first()?->village_name;
     }
 
     public function stocks(): HasMany

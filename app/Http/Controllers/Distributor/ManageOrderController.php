@@ -23,7 +23,7 @@ class ManageOrderController extends Controller
         $warehouse = $user->warehouse;
 
         if ($request->ajax()) {
-            $query = Order::with(['user', 'expedition', 'sourceWarehouse.province', 'sourceWarehouse.regency'])
+            $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah'])
                 ->where('source_warehouse_id', $warehouse->id);
 
             // Filter by status

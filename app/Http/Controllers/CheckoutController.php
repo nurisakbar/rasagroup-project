@@ -39,7 +39,7 @@ class CheckoutController extends Controller
 
         Auth::user()->loadMissing('priceLevel');
 
-        $query = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
+        $query = Cart::with(['product', 'warehouse.wilayah'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular');
 
@@ -86,7 +86,7 @@ class CheckoutController extends Controller
         $defaultExpedition = $expeditions->firstWhere('code', 'lion_parcel') ?? $expeditions->first();
 
         $addresses = Auth::user()->addresses()
-            ->with(['province', 'regency', 'district'])
+            ->with(['wilayah'])
             ->orderByDesc('is_default')
             ->get();
 
@@ -107,7 +107,7 @@ class CheckoutController extends Controller
             if ($syncResult && $syncResult['hub_changed']) {
                 $sourceWarehouse = $syncResult['warehouse'];
                 // Refresh carts
-                $carts = Cart::with(['product', 'warehouse.province', 'warehouse.regency'])
+                $carts = Cart::with(['product', 'warehouse.wilayah'])
                     ->where('user_id', Auth::id())
                     ->where('cart_type', 'regular')
                     ->get();
@@ -288,13 +288,13 @@ class CheckoutController extends Controller
 
     public function calculateShipping(Request $request)
     {
-        $address = Address::with(['district', 'regency', 'province'])->find($request->address_id);
+        $address = Address::with(['wilayah'])->find($request->address_id);
         
         if (!$address || $address->user_id !== Auth::id()) {
             return response()->json(['error' => 'Alamat tidak valid'], 400);
         }
 
-        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+        $carts = Cart::with(['product', 'warehouse.wilayah'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -302,7 +302,7 @@ class CheckoutController extends Controller
         // Re-detect best Hub based on selected address
         $syncResult = $this->syncWarehouseByAddress($address) ?? [];
         if (!empty($syncResult['hub_changed'])) {
-            $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+            $carts = Cart::with(['product', 'warehouse.wilayah'])
                 ->where('user_id', Auth::id())
                 ->where('cart_type', 'regular')
                 ->get();
@@ -453,7 +453,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Ekspedisi tidak valid atau tidak tersedia'], 400);
         }
 
-        $address = Address::with(['district', 'regency', 'province'])->find($request->address_id);
+        $address = Address::with(['wilayah'])->find($request->address_id);
         if (!$address) {
             Log::debug('[checkout.expedition-services] address not found', [
                 'address_id' => $request->address_id,
@@ -462,7 +462,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Alamat tidak ditemukan'], 400);
         }
 
-        $carts = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+        $carts = Cart::with(['product', 'warehouse.wilayah'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
@@ -594,7 +594,7 @@ class CheckoutController extends Controller
         // Verify address belongs to user
         $address = Address::where('id', $request->address_id)
             ->where('user_id', Auth::id())
-            ->with(['province', 'regency', 'district'])
+            ->with(['wilayah'])
             ->first();
 
         if (!$address) {
@@ -609,7 +609,7 @@ class CheckoutController extends Controller
             return back()->with('error', 'Ekspedisi tidak valid atau sudah tidak tersedia.');
         }
 
-        $query = Cart::with(['product', 'warehouse.district', 'warehouse.regency', 'warehouse.province'])
+        $query = Cart::with(['product', 'warehouse.wilayah'])
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular');
 
@@ -769,9 +769,9 @@ class CheckoutController extends Controller
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
-                ($address->regency ? $address->regency->name . ', ' : '') .
-                ($address->province ? $address->province->name : '') .
+                ($address->district_name ? 'Kec. ' . $address->district_name . ', ' : '') .
+                ($address->regency_name ? $address->regency_name . ', ' : '') .
+                ($address->province_name ?? '') .
                 ($address->postal_code ? ' ' . $address->postal_code : '');
 
             // Calculate points for DRiiPPreneur based on product reseller_point
@@ -1053,14 +1053,15 @@ class CheckoutController extends Controller
                 'order_status' => 'processing'
             ]);
             \Illuminate\Support\Facades\Log::info('Order auto-marked as paid on success page for testing.', ['order_id' => $order->id]);
-            
-            // Bypass antrean (queue) dan paksa sinkronisasi langsung ke Jubelio:
-            try {
-                \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
-                \Illuminate\Support\Facades\Log::info('Synchronous Jubelio sync executed.', ['order_id' => $order->id]);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Synchronous Jubelio sync failed.', ['error' => $e->getMessage()]);
-            }
+        }
+
+        // Bypass antrean (queue) dan paksa sinkronisasi langsung ke Jubelio:
+        // Pokoknya setiap kali masuk halaman ini, sistem akan men-trigger ulang ke Jubelio.
+        try {
+            \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+            \Illuminate\Support\Facades\Log::info('Synchronous Jubelio sync executed.', ['order_id' => $order->id]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Synchronous Jubelio sync failed.', ['error' => $e->getMessage()]);
         }
 
         // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).

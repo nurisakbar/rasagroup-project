@@ -632,7 +632,7 @@ class CartController extends Controller
         if ($warehouseId) {
             try {
                 // First check if warehouse exists (by ID or Slug) and is active
-                $warehouse = Warehouse::with(['province', 'regency'])
+                $warehouse = Warehouse::with(['wilayah'])
                     ->where(function($q) use ($warehouseId) {
                         $q->where('id', $warehouseId)
                           ->orWhere('slug', $warehouseId);
@@ -690,7 +690,7 @@ class CartController extends Controller
         }
         
         // Semua hub aktif yang punya baris stok untuk produk ini (termasuk stok 0)
-        $stocks = WarehouseStock::with(['warehouse.province', 'warehouse.regency'])
+        $stocks = WarehouseStock::with(['warehouse.wilayah'])
             ->where('product_id', $product->id)
             ->whereHas('warehouse', function ($q) {
                 $q->where('is_active', true);

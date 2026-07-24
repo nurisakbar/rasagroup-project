@@ -19,7 +19,7 @@ class HubController extends Controller
 
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
 
-        $query = Warehouse::with(['province', 'regency'])
+        $query = Warehouse::with(['wilayah'])
             ->where('is_active', true)
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->withCount(['stocks as products_count' => function ($q) {
@@ -102,7 +102,7 @@ class HubController extends Controller
             abort(404);
         }
 
-        $warehouse->load(['province', 'regency', 'stocks.product']);
+        $warehouse->load(['wilayah', 'regency', 'stocks.product']);
 
         // Produk di hub (termasuk stok 0) — hanya produk aktif
         $productsWithStock = $warehouse->stocks()
@@ -174,7 +174,7 @@ class HubController extends Controller
      */
     public function getNearbyHubs(Request $request)
     {
-        $query = Warehouse::with(['province', 'regency'])
+        $query = Warehouse::with(['wilayah'])
             ->where('is_active', true)
             ->withCount(['stocks as products_count' => function ($q) {
                 $q->whereHas('product', function ($p) {
@@ -226,7 +226,7 @@ class HubController extends Controller
                     'name' => $w->name,
                     'address' => $w->address,
                     'phone' => $w->phone,
-                    'province' => $w->province?->name,
+                    'wilayah' => $w->province?->name,
                     'regency' => $w->regency?->name,
                     'location' => $w->full_location,
                     'products_count' => $w->products_count,
@@ -416,7 +416,7 @@ class HubController extends Controller
 
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
 
-        $hubs = Warehouse::with(['province', 'regency'])
+        $hubs = Warehouse::with(['wilayah'])
             ->where('is_active', true)
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->where(function ($q) use ($search) {
@@ -425,7 +425,7 @@ class HubController extends Controller
                     ->orWhereHas('regency', function ($rq) use ($search) {
                         $rq->where('name', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('province', function ($pq) use ($search) {
+                    ->orWhereHas('wilayah', function ($pq) use ($search) {
                         $pq->where('name', 'like', "%{$search}%");
                     });
             })
@@ -437,7 +437,7 @@ class HubController extends Controller
                 'id' => $h->id,
                 'name' => $h->name,
                 'location' => $h->full_location,
-                'province' => $h->province?->name,
+                'wilayah' => $h->province?->name,
                 'regency' => $h->regency?->name,
                 'slug' => $h->slug,
             ];

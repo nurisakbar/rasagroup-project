@@ -35,7 +35,7 @@ class DistributorController extends Controller
     {
         if ($request->ajax()) {
             $query = User::where('role', User::ROLE_DISTRIBUTOR)
-                ->with(['warehouse.province', 'warehouse.regency']);
+                ->with(['warehouse.wilayah']);
 
             // Filter by province
             if ($request->filled('province_id') && $request->province_id != '') {
@@ -708,15 +708,17 @@ class DistributorController extends Controller
             return [];
         }
 
-        $localDistrict = \App\Models\District::where('name', $roDistrict->name)->first();
+        $localDistrict = \App\Models\WilayahAdministratif::where('district_name', $roDistrict->name)->first();
+
         if (!$localDistrict) {
-            $localDistrict = \App\Models\District::where('name', 'like', '%' . $roDistrict->name . '%')->first();
+            $localDistrict = \App\Models\WilayahAdministratif::where('district_name', 'like', '%' . $roDistrict->name . '%')->first();
         }
 
         if ($localDistrict) {
-            return \App\Models\Village::where('district_id', $localDistrict->id)
-                ->orderBy('name')
-                ->get(['id', 'name']);
+            return \App\Models\WilayahAdministratif::where('district_id', $localDistrict->district_id)
+                ->orderBy('village_name')
+                ->select('village_id as id', 'village_name as name')
+                ->get();
         }
 
         return [];

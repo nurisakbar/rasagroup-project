@@ -21,7 +21,7 @@ class WarehouseApiController extends Controller
         $cacheKey = 'api_warehouses_' . md5(json_encode($request->all()));
         
         return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $query = Warehouse::with(['province', 'regency'])
+            $query = Warehouse::with(['wilayah'])
                 ->withCount('stocks as products_count')
                 ->withSum('stocks', 'stock');
 
@@ -74,7 +74,7 @@ class WarehouseApiController extends Controller
         $cacheKey = 'api_warehouse_products_' . $warehouse . '_' . md5(json_encode($request->all()));
         
         return Cache::remember($cacheKey, 86400, function () use ($request, $warehouse) {
-            $warehouseModel = Warehouse::with(['province', 'regency'])->find($warehouse);
+            $warehouseModel = Warehouse::with(['wilayah'])->find($warehouse);
 
             if (!$warehouseModel) {
                 return response()->json([
@@ -193,7 +193,7 @@ class WarehouseApiController extends Controller
                 'phone' => $warehouseModel->phone,
                 'description' => $warehouseModel->description,
                 'is_active' => $warehouseModel->is_active,
-                'province' => $warehouseModel->province ? [
+                'wilayah' => $warehouseModel->province ? [
                     'id' => $warehouseModel->province->id,
                     'name' => $warehouseModel->province->name,
                 ] : null,
@@ -225,7 +225,7 @@ class WarehouseApiController extends Controller
         $cacheKey = 'api_warehouses_with_products_' . md5(json_encode($request->all()));
         
         return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $query = Warehouse::with(['province', 'regency']);
+            $query = Warehouse::with(['wilayah']);
 
             // Filter by province
             if ($request->filled('province_id')) {
@@ -321,7 +321,7 @@ class WarehouseApiController extends Controller
                     'phone' => $warehouse->phone,
                     'description' => $warehouse->description,
                     'is_active' => $warehouse->is_active,
-                    'province' => $warehouse->province ? [
+                    'wilayah' => $warehouse->province ? [
                         'id' => $warehouse->province->id,
                         'name' => $warehouse->province->name,
                     ] : null,

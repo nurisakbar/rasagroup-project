@@ -10,7 +10,6 @@ $file = '/Applications/MAMP/htdocs/rasagroup/distributor_prod.xlsx';
 $spreadsheet = IOFactory::load($file);
 $worksheet = $spreadsheet->getActiveSheet();
 $rows = $worksheet->toArray();
-// Remove header
 array_shift($rows);
 
 $regencies = WilayahAdministratif::select('regency_id', 'regency_name', 'province_id', 'province_name')
@@ -20,10 +19,9 @@ $regencies = WilayahAdministratif::select('regency_id', 'regency_name', 'provinc
 $regencyLookup = [];
 foreach ($regencies as $regency) {
     $name = strtoupper(trim($regency->regency_name));
-    $name = str_replace(['KOTA ', 'KABUPATEN '], '', $name);
+    $name = str_replace(['KOTA ADM. ', 'KAB. ADM. ', 'KOTA ', 'KAB. ', 'KABUPATEN '], '', $name);
     $regencyLookup[$name] = $regency;
 }
-// Sort by length descending to match longer names first
 uksort($regencyLookup, function($a, $b) {
     return strlen($b) - strlen($a);
 });
@@ -35,8 +33,6 @@ $stats = [
     'regency_only' => 0,
     'failed' => 0,
 ];
-
-$failedExamples = [];
 
 foreach ($rows as $row) {
     if (empty(trim($row[0]))) continue;
@@ -55,11 +51,9 @@ foreach ($rows as $row) {
     
     if (!$matchedRegency) {
         $stats['failed']++;
-        if (count($failedExamples) < 5) $failedExamples[] = $addressRaw;
         continue;
     }
     
-    // Find district
     $districts = WilayahAdministratif::where('regency_id', $matchedRegency->regency_id)
         ->groupBy('district_id', 'district_name')
         ->select('district_id', 'district_name')
@@ -78,7 +72,6 @@ foreach ($rows as $row) {
         continue;
     }
     
-    // Find village
     $villages = WilayahAdministratif::where('district_id', $matchedDistrict->district_id)
         ->groupBy('village_id', 'village_name')
         ->select('village_id', 'village_name')
@@ -99,15 +92,9 @@ foreach ($rows as $row) {
     }
 }
 
-echo "=== MAPPING REPORT ===\n";
+echo "=== IMPROVED MAPPING REPORT ===\n";
 echo "Total Data: {$stats['total']}\n";
 echo "Full Match (Prov+Kota+Kec+Kel): {$stats['full_match']}\n";
 echo "Regency+District Match (Prov+Kota+Kec): {$stats['regency_district_match']}\n";
 echo "Regency Only Match (Prov+Kota): {$stats['regency_only']}\n";
 echo "FAILED (No Match): {$stats['failed']}\n";
-
-echo "\nExamples of FAILED addresses:\n";
-foreach ($failedExamples as $ex) {
-    echo "- $ex\n";
-}
-

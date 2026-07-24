@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         if (app()->isProduction()) {
+            $this->command->info('Environment production terdeteksi. Hanya seeder penting (Region & Super Admin) yang dijalankan. Data dummy dilewati.');
             return;
         }
 

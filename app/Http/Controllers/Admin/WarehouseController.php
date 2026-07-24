@@ -10,7 +10,7 @@ use App\Models\RajaOngkirCity;
 use App\Models\RajaOngkirDistrict;
 use App\Models\RajaOngkirProvince;
 use App\Models\User;
-use App\Models\Village;
+use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseStockHistory;
@@ -179,7 +179,7 @@ class WarehouseController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Warehouse::with(['province', 'regency'])
+            $query = Warehouse::with(['wilayah'])
                 ->withCount('stocks as products_count')
                 ->withSum('stocks', 'stock');
 
@@ -331,7 +331,7 @@ class WarehouseController extends Controller
      */
     public function show(Request $request, Warehouse $warehouse)
     {
-        $warehouse->load(['province', 'regency', 'users']);
+        $warehouse->load(['wilayah', 'regency', 'users']);
 
         // Get stocks with product information
         $query = WarehouseStock::with('product')
@@ -678,7 +678,7 @@ class WarehouseController extends Controller
 
         $subdistrictId = (string) $subdistrictId;
 
-        return Village::where('id', $subdistrictId)->exists() ? $subdistrictId : null;
+        return WilayahAdministratif::where('village_id', $subdistrictId)->exists() ? $subdistrictId : null;
     }
 
     /**

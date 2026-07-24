@@ -62,12 +62,12 @@
                     </div>
                     <div class="sort-by-product-area">
                         <div class="sort-by-cover mr-10">
-                            <div class="sort-by-product-wrap">
-                                <div class="sort-by">
+                            <div class="sort-by-product-wrap d-flex align-items-center justify-content-between">
+                                <div class="sort-by d-flex align-items-center">
                                     <span><i class="fi-rs-apps"></i>Tampilkan:</span>
                                 </div>
-                                <div class="sort-by-dropdown-wrap">
-                                    <span> {{ $products->perPage() }} <i class="fi-rs-angle-small-down"></i></span>
+                                <div class="sort-by-dropdown-wrap d-flex align-items-center">
+                                    <span class="d-flex align-items-center"> {{ $products->perPage() }} <i class="fi-rs-angle-small-down ml-2"></i></span>
                                 </div>
                             </div>
                             <div class="sort-by-dropdown">
@@ -79,19 +79,19 @@
                             </div>
                         </div>
                         <div class="sort-by-cover">
-                            <div class="sort-by-product-wrap">
-                                <div class="sort-by">
+                            <div class="sort-by-product-wrap d-flex align-items-center justify-content-between">
+                                <div class="sort-by d-flex align-items-center">
                                     <span><i class="fi-rs-apps-sort"></i>Urutkan:</span>
                                 </div>
-                                <div class="sort-by-dropdown-wrap">
-                                    <span> 
+                                <div class="sort-by-dropdown-wrap d-flex align-items-center">
+                                    <span class="d-flex align-items-center"> 
                                         @switch(request('sort'))
                                             @case('price_low') Harga Terendah @break
                                             @case('price_high') Harga Tertinggi @break
                                             @case('name') Nama A-Z @break
                                             @default Terbaru
                                         @endswitch
-                                        <i class="fi-rs-angle-small-down"></i>
+                                        <i class="fi-rs-angle-small-down ml-2"></i>
                                     </span>
                                 </div>
                             </div>

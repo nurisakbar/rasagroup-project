@@ -10,7 +10,6 @@ $file = '/Applications/MAMP/htdocs/rasagroup/distributor_prod.xlsx';
 $spreadsheet = IOFactory::load($file);
 $worksheet = $spreadsheet->getActiveSheet();
 $rows = $worksheet->toArray();
-// Remove header
 array_shift($rows);
 
 $regencies = WilayahAdministratif::select('regency_id', 'regency_name', 'province_id', 'province_name')
@@ -20,10 +19,9 @@ $regencies = WilayahAdministratif::select('regency_id', 'regency_name', 'provinc
 $regencyLookup = [];
 foreach ($regencies as $regency) {
     $name = strtoupper(trim($regency->regency_name));
-    $name = str_replace(['KOTA ', 'KABUPATEN '], '', $name);
+    $name = str_replace(['KOTA ADM. ', 'KAB. ADM. ', 'KOTA ', 'KAB. ', 'KABUPATEN '], '', $name);
     $regencyLookup[$name] = $regency;
 }
-// Sort by length descending to match longer names first
 uksort($regencyLookup, function($a, $b) {
     return strlen($b) - strlen($a);
 });
@@ -37,10 +35,12 @@ $stats = [
 ];
 
 $failedExamples = [];
+$successExamples = [];
 
 foreach ($rows as $row) {
     if (empty(trim($row[0]))) continue;
     
+    $distributor = $row[0];
     $addressRaw = $row[1] ?? '';
     $addressLower = strtolower($addressRaw);
     $stats['total']++;
@@ -55,11 +55,10 @@ foreach ($rows as $row) {
     
     if (!$matchedRegency) {
         $stats['failed']++;
-        if (count($failedExamples) < 5) $failedExamples[] = $addressRaw;
+        if (count($failedExamples) < 10) $failedExamples[] = "* **$distributor**: $addressRaw";
         continue;
     }
     
-    // Find district
     $districts = WilayahAdministratif::where('regency_id', $matchedRegency->regency_id)
         ->groupBy('district_id', 'district_name')
         ->select('district_id', 'district_name')
@@ -78,7 +77,6 @@ foreach ($rows as $row) {
         continue;
     }
     
-    // Find village
     $villages = WilayahAdministratif::where('district_id', $matchedDistrict->district_id)
         ->groupBy('village_id', 'village_name')
         ->select('village_id', 'village_name')
@@ -94,20 +92,32 @@ foreach ($rows as $row) {
     
     if ($matchedVillage) {
         $stats['full_match']++;
+        if (count($successExamples) < 5) $successExamples[] = "* **$distributor**: $addressRaw\n  *Terdeteksi:* {$matchedRegency->province_name} -> {$matchedRegency->regency_name} -> {$matchedDistrict->district_name} -> {$matchedVillage->village_name}";
     } else {
         $stats['regency_district_match']++;
     }
 }
 
-echo "=== MAPPING REPORT ===\n";
-echo "Total Data: {$stats['total']}\n";
-echo "Full Match (Prov+Kota+Kec+Kel): {$stats['full_match']}\n";
-echo "Regency+District Match (Prov+Kota+Kec): {$stats['regency_district_match']}\n";
-echo "Regency Only Match (Prov+Kota): {$stats['regency_only']}\n";
-echo "FAILED (No Match): {$stats['failed']}\n";
+$md = "# Laporan Hasil Mapping Alamat (Preview)\n\n";
+$md .= "Dari algoritma matching terbaru (dengan pembersihan nama KOTA/KABUPATEN), berikut adalah tingkat keberhasilannya:\n\n";
+$md .= "- **Total Data**: {$stats['total']}\n";
+$md .= "- **Berhasil Penuh (Prov+Kota+Kec+Kel)**: {$stats['full_match']}\n";
+$md .= "- **Berhasil Sebagian (Prov+Kota+Kec)**: {$stats['regency_district_match']}\n";
+$md .= "- **Berhasil Sebagian (Prov+Kota)**: {$stats['regency_only']}\n";
+$md .= "- **Gagal Mapping Sama Sekali**: {$stats['failed']}\n\n";
 
-echo "\nExamples of FAILED addresses:\n";
+$successRate = round((($stats['total'] - $stats['failed']) / $stats['total']) * 100, 1);
+$md .= "> [!TIP]\n> **Tingkat Keberhasilan Deteksi (Minimal Kota): $successRate%**\n\n";
+
+$md .= "## Contoh Alamat yang Gagal Dideteksi\n";
+$md .= "Alamat-alamat ini tidak mengandung nama Kota/Kabupaten yang persis sama dengan database Kemendagri.\n\n";
 foreach ($failedExamples as $ex) {
-    echo "- $ex\n";
+    $md .= "$ex\n";
 }
 
+$md .= "\n## Contoh Alamat yang Berhasil Penuh\n\n";
+foreach ($successExamples as $ex) {
+    $md .= "$ex\n";
+}
+
+file_put_contents('/tmp/mapping_report.md', $md);

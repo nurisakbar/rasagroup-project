@@ -38,12 +38,12 @@
                     </div>
                     --}}
                     <div class="sort-by-cover">
-                        <div class="sort-by-product-wrap">
-                            <div class="sort-by">
+                        <div class="sort-by-product-wrap d-flex align-items-center justify-content-between">
+                            <div class="sort-by d-flex align-items-center">
                                 <span><i class="fi-rs-apps-sort"></i>Filter:</span>
                             </div>
-                            <div class="sort-by-dropdown-wrap">
-                                <span> Lokasi <i class="fi-rs-angle-small-down"></i></span>
+                            <div class="sort-by-dropdown-wrap d-flex align-items-center">
+                                <span class="d-flex align-items-center"> Lokasi <i class="fi-rs-angle-small-down ml-2"></i></span>
                             </div>
                         </div>
                         <div class="sort-by-dropdown" style="width: 300px; padding: 20px;">

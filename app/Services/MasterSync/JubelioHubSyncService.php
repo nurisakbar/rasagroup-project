@@ -5,7 +5,7 @@ namespace App\Services\MasterSync;
 use App\Models\RajaOngkirCity;
 use App\Models\RajaOngkirDistrict;
 use App\Models\RajaOngkirProvince;
-use App\Models\Village;
+use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
 use App\Services\EkspedisiKuService;
 use App\Services\JubelioService;
@@ -125,7 +125,7 @@ class JubelioHubSyncService
 
         $subdistrictId = (string) $subdistrictId;
 
-        return Village::where('id', $subdistrictId)->exists() ? $subdistrictId : null;
+        return WilayahAdministratif::where('village_id', $subdistrictId)->exists() ? $subdistrictId : null;
     }
 
     /**

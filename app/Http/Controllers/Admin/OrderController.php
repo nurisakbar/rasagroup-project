@@ -20,7 +20,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Order::with(['user', 'expedition', 'sourceWarehouse.province', 'sourceWarehouse.regency']);
+            $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah']);
 
             // Filter by status
             if ($request->filled('status') && $request->status != '') {

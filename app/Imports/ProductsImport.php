@@ -16,9 +16,10 @@ use Maatwebsite\Excel\Concerns\SkipsFailures;
 
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\BeforeImport;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Illuminate\Support\Facades\Cache;
 
-class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithEvents
+class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithEvents, SkipsEmptyRows
 {
     use SkipsFailures;
 
@@ -63,6 +64,14 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
      */
     public function model(array $row)
     {
+        // Skip empty rows to prevent infinite loop / OOM
+        $isEmpty = collect($row)->filter(function($val) {
+            return $val !== null && trim((string)$val) !== '';
+        })->isEmpty();
+
+        if ($isEmpty) {
+            return null;
+        }
         try {
             Log::info('ProductsImport: Processing row', [
                 'row_data' => $row,
