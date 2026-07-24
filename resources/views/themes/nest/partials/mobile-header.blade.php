@@ -3,7 +3,7 @@
             <div class="mobile-header-top">
                 <div class="mobile-header-logo">
                     <a href="{{ route('home') }}">
-                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 120px;" />
+                        <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="logo" style="width: 50px !important; min-width: 50px !important; height: auto !important; object-fit: contain;" />
                     </a>
                 </div>
                 <div class="mobile-menu-close close-style-wrap close-style-position-inherit">

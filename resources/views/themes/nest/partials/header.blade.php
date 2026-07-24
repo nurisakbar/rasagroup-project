@@ -7,7 +7,7 @@
                 <div class="header-wrap">
                     <div class="logo logo-width-1">
                         <a href="{{ route('home') }}">
-                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 180px;" />
+                            <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="logo" style="width: 70px !important; min-width: 70px !important; height: auto !important; object-fit: contain;" />
                         </a>
                     </div>
                     <div class="header-right">
@@ -70,7 +70,7 @@
             <div class="container">
                 <div class="header-wrap header-space-between position-relative">
                     <div class="logo logo-width-1 d-block d-lg-none">
-                        <a href="/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" /></a>
+                        <a href="/"><img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="logo" style="width: 50px !important; min-width: 50px !important; height: auto !important; object-fit: contain;" /></a>
                     </div>
                     <div class="header-nav d-none d-lg-flex">
 

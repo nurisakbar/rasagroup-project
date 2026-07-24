@@ -20,7 +20,7 @@
 <meta property="twitter:description" content="@yield('meta_description', 'Multi Citra Rasa Marketplace - Solusi Kebutuhan Produk Berkualitas')" />
 <meta property="twitter:image" content="@yield('og_image', asset('logorasa.png'))" />
 <!-- Favicon -->
-<link rel="shortcut icon" type="image/png" href="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" />
+<link rel="shortcut icon" type="image/png" href="{{ asset('logo/RASA Group - Logo - R-02.png') }}" />
 <!-- Template CSS -->
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/plugins/animate.min.css') }}" />
 <link rel="stylesheet" href="{{ asset('themes/nest-frontend/assets/css/main.css?v=6.1') }}" />

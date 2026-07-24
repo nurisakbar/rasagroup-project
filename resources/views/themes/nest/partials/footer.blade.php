@@ -69,7 +69,7 @@
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
                                 <a href="{{ route('home') }}" class="mb-15">
-                                    <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="logo" style="max-width: 150px;" />
+                                    <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="logo" style="width: 80px !important; min-width: 80px !important; height: auto !important; object-fit: contain;" />
                                 </a>
                                 <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi<br>untuk kebutuhan industri dan rumah tangga.</p>
                             </div>
@@ -125,9 +125,9 @@
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">
                     <div class="mobile-social-icon">
                         <h6>Ikuti Kami</h6>
-                        <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
-                        <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
-                        <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
+                        <a href="https://web.facebook.com/profile.php?id=100080673773420"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
+                        <a href="https://www.instagram.com/rasagroupofficial/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
+                        <a href="https://www.youtube.com/@rasagroup4229"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                     </div>
                 </div>
             </div>

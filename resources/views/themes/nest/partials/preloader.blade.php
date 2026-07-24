@@ -2,16 +2,16 @@
         <div class="preloader d-flex align-items-center justify-content-center">
             <div class="preloader-inner position-relative">
                 <div class="text-center">
-                    <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/logorasa.png') }}" alt="Rasa Group" class="rg-preloader-logo" />
+                    <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="Rasa Group" class="rg-preloader-logo" />
                 </div>
             </div>
         </div>
     </div>
     <style>
         .rg-preloader-logo {
-            max-width: 160px;
-            width: min(42vw, 160px);
-            height: auto;
+            width: 80px !important;
+            min-width: 80px !important;
+            height: auto !important;
             animation: rgPreloaderPulse 1.4s ease-in-out infinite;
         }
         @keyframes rgPreloaderPulse {
