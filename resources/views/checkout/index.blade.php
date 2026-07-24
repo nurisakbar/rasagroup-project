@@ -105,8 +105,8 @@
                                             <p class="font-weight-bold">{{ $address->recipient_name }} | {{ $address->phone }}</p>
                                             <p class="checkout-address-detail">{{ $address->address_detail }}</p>
                                             <p class="checkout-address-location text-small">
-                                                {{ $address->village?->name }}, Kec. {{ $address->district?->name }}<br>
-                                                {{ $address->regency?->name }}, {{ $address->province?->name }} 
+                                                {{ $address->village_name }}, Kec. {{ $address->district_name }}<br>
+                                                {{ $address->regency_name }}, {{ $address->province_name }} 
                                                 @if($address->postal_code) {{ $address->postal_code }} @endif
                                             </p>
                                         </div>
@@ -141,7 +141,7 @@
                                            {{ $isDefaultExpedition ? 'checked' : '' }}>
                                     <div class="card-body text-center p-2">
                                         @if($expedition->logo)
-                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
+                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset($expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
                                         @else
                                             <strong class="text-uppercase">{{ $expedition->code }}</strong>
                                         @endif

@@ -98,7 +98,7 @@
                                                                            {{ $isDefaultExpedition ? 'checked' : '' }}>
                                                                     <div class="card-body text-center p-2">
                                                                         @if($expedition->logo)
-                                                                            <img src="{{ asset('storage/' . $expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
+                                                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset($expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
                                                                         @else
                                                                             <strong class="text-uppercase">{{ $expedition->code }}</strong>
                                                                         @endif

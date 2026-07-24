@@ -20,19 +20,25 @@ class SettingController extends Controller
     {
         // Fetch couriers from EkspedisiKu API
         $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = [];
+        $apiCourierCodes = ['self_pickup'];
+
+        \App\Models\Expedition::updateOrCreate(
+            ['code' => 'self_pickup'],
+            [
+                'name' => 'Ambil Sendiri (Self Pickup)',
+            ]
+        );
         
         if (isset($courierRes['data']) && is_array($courierRes['data'])) {
             foreach ($courierRes['data'] as $courier) {
                 $apiCourierCodes[] = $courier['id'];
                 
-                \App\Models\Expedition::updateOrCreate(
-                    ['code' => $courier['id']], // Use id (e.g. lion_parcel) as code
-                    [
-                        'name' => $courier['name'],
-                        'logo' => $courier['image'] ?? null,
-                    ]
-                );
+                $expedition = \App\Models\Expedition::firstOrNew(['code' => $courier['id']]);
+                $expedition->name = $courier['name'];
+                if (empty($expedition->logo) && !empty($courier['image'])) {
+                    $expedition->logo = $courier['image'];
+                }
+                $expedition->save();
             }
         }
 

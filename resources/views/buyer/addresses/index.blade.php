@@ -64,8 +64,8 @@
                                                                 <p class="font-sm mb-5 address-detail">{{ $address->address_detail }}</p>
                                                                 <p class="font-sm mb-0 address-location">
                                                                     <i class="fi-rs-marker mr-5 text-maroon"></i> 
-                                                                    @if($address->village) {{ $address->village->name }}, @endif
-                                                                    {{ $address->district?->name }}, {{ $address->regency?->name }}, {{ $address->province?->name }} 
+                                                                    @if($address->village_name) {{ $address->village_name }}, @endif
+                                                                    {{ $address->district_name }}, {{ $address->regency_name }}, {{ $address->province_name }} 
                                                                     @if($address->postal_code) - {{ $address->postal_code }} @endif
                                                                 </p>
                                                             </div>
