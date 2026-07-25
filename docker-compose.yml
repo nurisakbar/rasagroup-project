@@ -15,10 +15,11 @@ services:
       SERVICE_TAGS: ${APP_SERVICE_TAGS:-dev}
     working_dir: /var/www
     depends_on:
-      - db
       - redis
     networks:
       - rasagroup-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # Nginx Service
   web:
@@ -34,45 +35,6 @@ services:
       - "${WEB_HTTP_PORT:-18080}:80"
     depends_on:
       - app
-    networks:
-      - rasagroup-network
-
-  # MySQL Service
-  db:
-    image: mysql:8.0
-    container_name: ${DB_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-db}
-    restart: unless-stopped
-    tty: true
-    # Port host: hindari bentrok dengan MySQL yang sudah jalan di server (3306).
-    ports:
-      - "${DB_EXPOSE_PORT:-3307}:3306"
-    env_file:
-      - .env
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-rasagroup}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
-      MYSQL_USER: ${DB_USERNAME:-user}
-      SERVICE_TAGS: ${DB_SERVICE_TAGS:-dev}
-      SERVICE_NAME: ${DB_SERVICE_NAME:-mysql}
-    volumes:
-      - dbdata:/var/lib/mysql
-    networks:
-      - rasagroup-network
-
-  # phpMyAdmin (akses dari host: PHPMYADMIN_PORT → HTTP di container)
-  phpmyadmin:
-    image: phpmyadmin:5-apache
-    container_name: ${PHPMYADMIN_CONTAINER_NAME:-${DOCKER_CONTAINER_PREFIX:-rasagroup}-phpmyadmin}
-    restart: unless-stopped
-    depends_on:
-      - db
-    environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-      UPLOAD_LIMIT: 64M
-    ports:
-      - "${PHPMYADMIN_PORT:-8081}:80"
     networks:
       - rasagroup-network
 
@@ -96,5 +58,4 @@ networks:
 
 # Volumes
 volumes:
-  dbdata:
   redisdata:

@@ -1,8 +1,8 @@
 # Stage 1: Build frontend assets
-FROM node:18-alpine AS node-builder
+FROM node:22 AS frontend
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 
@@ -27,6 +27,10 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
 
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -43,7 +47,7 @@ COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
 RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs
 
 # Copy the build artifacts from node stage
-COPY --from=node-builder /app/public/build /var/www/public/build
+COPY --from=frontend /app/public/build ./public/build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
