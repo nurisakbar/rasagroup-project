@@ -315,7 +315,7 @@ class Product extends Model
     public function getImageUrlAttribute(): ?string
     {
         if (!$this->image) {
-            return null;
+            return asset('logo/RASA%20Group%20-%20Logo%20-%20R-02.png');
         }
 
         if (filter_var($this->image, FILTER_VALIDATE_URL)) {
