@@ -14,6 +14,11 @@
             --btn-rasa-shadow: 0 18px 35px rgba(24, 24, 24, 0.12);
         }
 
+        html, body {
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+        }
+
         body, .main, .header-area, .header-bottom, .header-middle, .header-top, .sticky-bar {
             background-color: var(--bg-cream) !important;
             font-family: 'Fira Sans', sans-serif !important;

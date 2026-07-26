@@ -173,7 +173,7 @@ class DistributorController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:villages,id'],
+            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -265,7 +265,7 @@ class DistributorController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:villages,id'],
+            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -612,7 +612,7 @@ class DistributorController extends Controller
             'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
             'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
             'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:villages,id'],
+            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -696,6 +696,24 @@ class DistributorController extends Controller
     {
         $result = $this->rajaOngkir->getCities($request->province_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
+    }
+
+    /**
+     * Get districts by regency (AJAX).
+     */
+    public function getDistricts(Request $request)
+    {
+        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
+    }
+
+    /**
+     * Get villages by district (AJAX).
+     */
+    public function getVillages(Request $request)
+    {
+        $villages = $this->getVillagesInternal($request->district_id);
+        return response()->json($villages);
     }
 
     /**

@@ -20,46 +20,6 @@
 @endpush
 
 @section('content')
-    <!-- Summary Cards -->
-    <div class="row">
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box">
-                <span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Pending</span>
-                    <span class="info-box-number" id="count-pending">{{ number_format($countPending) }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box">
-                <span class="info-box-icon bg-aqua"><i class="fa fa-money"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Konfirmasi Bayar</span>
-                    <span class="info-box-number" id="count-need-confirmation">{{ number_format($countNeedConfirmation) }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box">
-                <span class="info-box-icon bg-green"><i class="fa fa-hourglass-start"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Segera Diproses</span>
-                    <span class="info-box-number" id="count-need-processing">{{ number_format($countNeedProcessing) }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box">
-                <span class="info-box-icon bg-red"><i class="fa fa-truck"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Segera Dikirim</span>
-                    <span class="info-box-number" id="count-need-shipping">{{ number_format($countNeedShipping) }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Filter Box -->
     <div class="box box-default filter-box">
         <div class="box-header with-border">
@@ -108,6 +68,7 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Tipe Order</label>
@@ -130,13 +91,12 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="button" id="btn-reset" class="btn btn-danger btn-block">
-                            <i class="fa fa-refresh"></i> Reset Filter
-                        </button>
-                    </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-md-2 pull-right">
+                    <button type="button" id="btn-reset" class="btn btn-danger btn-block">
+                        <i class="fa fa-refresh"></i> Reset Filter
+                    </button>
                 </div>
             </div>
         </div>
@@ -144,27 +104,33 @@
 
     <div class="row">
         <div class="col-xs-12">
-            <div class="box">
-                <div class="box-header">
-                    <h3 class="box-title">Daftar Pesanan</h3>
-                </div>
-                <div class="box-body">
-                    <table id="orders-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>No. Pesanan</th>
-                                <th>Pembeli</th>
-                                <th>Ekspedisi</th>
-                                <th>Sumber Pengiriman</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Pembayaran</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+            <div class="nav-tabs-custom">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab_menunggu_pembayaran" data-toggle="tab" class="order-tab" data-tab="menunggu_pembayaran"><i class="fa fa-hourglass-start"></i> MENUNGGU PEMBAYARAN <span class="label label-warning" id="count-menunggu-pembayaran">{{ number_format($countMenungguPembayaran) }}</span></a></li>
+                    <li><a href="#tab_menunggu_konfirmasi" data-toggle="tab" class="order-tab" data-tab="menunggu_konfirmasi"><i class="fa fa-check-square-o"></i> MENUNGGU KONFIRMASI PEMBAYARAN <span class="label label-info" id="count-menunggu-konfirmasi">{{ number_format($countMenungguKonfirmasi) }}</span></a></li>
+                    <li><a href="#tab_sedang_diproses" data-toggle="tab" class="order-tab" data-tab="sedang_diproses"><i class="fa fa-cogs"></i> SEDANG DIPROSES <span class="label label-primary" id="count-sedang-diproses">{{ number_format($countSedangDiproses) }}</span></a></li>
+                    <li><a href="#tab_dikirim" data-toggle="tab" class="order-tab" data-tab="dikirim"><i class="fa fa-truck"></i> DIKIRIM <span class="label bg-purple" id="count-dikirim">{{ number_format($countDikirim) }}</span></a></li>
+                    <li><a href="#tab_selesai" data-toggle="tab" class="order-tab" data-tab="selesai"><i class="fa fa-check-circle"></i> SELESAI <span class="label label-success" id="count-selesai">{{ number_format($countSelesai ?? 0) }}</span></a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab_menunggu_pembayaran">
+                        <table id="orders-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>No. Pesanan</th>
+                                    <th>Pembeli</th>
+                                    <th>Ekspedisi</th>
+                                    <th>Sumber Pengiriman</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Pembayaran</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -186,6 +152,7 @@ $(document).ready(function() {
                 d.status = $('#filter-status').val();
                 d.order_type = $('#filter-order-type').val();
                 d.source_warehouse_id = $('#filter-source-warehouse').val();
+                d.tab_status = window.currentTabStatus || '';
                 d.date_from = $('#filter-date-from').val();
                 d.date_to = $('#filter-date-to').val();
             }
@@ -203,10 +170,12 @@ $(document).ready(function() {
         drawCallback: function(settings) {
             var json = table.ajax.json();
             if (json && json.counts) {
-                $('#count-pending').text(json.counts.pending.toLocaleString('id-ID'));
-                $('#count-need-confirmation').text(json.counts.need_confirmation.toLocaleString('id-ID'));
-                $('#count-need-processing').text(json.counts.need_processing.toLocaleString('id-ID'));
-                $('#count-need-shipping').text(json.counts.need_shipping.toLocaleString('id-ID'));
+                $('#count-semua').text(json.counts.semua.toLocaleString('id-ID'));
+                $('#count-menunggu-pembayaran').text(json.counts.menunggu_pembayaran.toLocaleString('id-ID'));
+                $('#count-menunggu-konfirmasi').text(json.counts.menunggu_konfirmasi.toLocaleString('id-ID'));
+                $('#count-sedang-diproses').text(json.counts.sedang_diproses.toLocaleString('id-ID'));
+                $('#count-dikirim').text(json.counts.dikirim.toLocaleString('id-ID'));
+                $('#count-selesai').text(json.counts.selesai.toLocaleString('id-ID'));
             }
         },
         order: [[0, 'desc']],
@@ -244,6 +213,14 @@ $(document).ready(function() {
     $('#filter-source-warehouse').select2({
         placeholder: '-- Semua Hub --',
         allowClear: true
+    });
+
+    window.currentTabStatus = 'menunggu_pembayaran';
+
+    // Tab handlers
+    $('.order-tab').on('shown.bs.tab', function (e) {
+        window.currentTabStatus = $(e.target).data('tab');
+        table.draw();
     });
 
     // Filter handlers

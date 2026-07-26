@@ -45,7 +45,7 @@
                                                     default => 'bg-secondary',
                                                 };
                                                 $statusLabel = match($order->order_status) {
-                                                    'pending' => 'Menunggu Pembayaran',
+                                                    'pending' => $order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran',
                                                     'processing' => 'Sedang Diproses',
                                                     'shipped' => 'Dalam Pengiriman',
                                                     'delivered' => 'Selesai',
@@ -58,6 +58,192 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if($order->payment_method === 'manual_transfer' && $order->order_status !== 'cancelled' && $order->payment_status !== 'paid')
+                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
+                                <div class="card-body p-4" style="background-color: #fcfcfc; border: 1px solid #ececec; border-radius: 15px;">
+                                    <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-list-check mr-5"></i>Tahapan Pembayaran Manual</h6>
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center position-relative pt-2">
+                                        <!-- Step 1: Upload -->
+                                        @php
+                                            $step1Completed = !empty($order->payment_proof) || $order->payment_status === 'paid';
+                                            $step1Active = empty($order->payment_proof) && $order->payment_status === 'pending';
+                                        @endphp
+                                        <div class="d-flex align-items-center mb-3 mb-md-0 flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: {{ $step1Completed ? '#3bb77e' : ($step1Active ? '#ff9900' : '#e2e2e2') }};">
+                                                @if($step1Completed) <i class="fi-rs-check font-xs"></i> @else 1 @endif
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm {{ $step1Active || $step1Completed ? 'text-dark' : 'text-muted' }}">1. Upload Bukti Pembayaran</div>
+                                                <small class="font-xs {{ $step1Completed ? 'text-success' : ($step1Active ? 'text-warning fw-bold' : 'text-muted') }}">
+                                                    {{ $step1Completed ? 'Selesai diunggah' : ($step1Active ? 'Belum diunggah' : '-') }}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-none d-md-block border-top flex-fill mx-3" style="border-color: #e2e2e2 !important; height: 2px;"></div>
+
+                                        <!-- Step 2: Verifikasi -->
+                                        @php
+                                            $step2Completed = $order->payment_status === 'paid';
+                                            $step2Active = !empty($order->payment_proof) && $order->payment_status === 'pending';
+                                        @endphp
+                                        <div class="d-flex align-items-center mb-3 mb-md-0 flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: {{ $step2Completed ? '#3bb77e' : ($step2Active ? '#ff9900' : '#e2e2e2') }};">
+                                                @if($step2Completed) <i class="fi-rs-check font-xs"></i> @else 2 @endif
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm {{ $step2Active || $step2Completed ? 'text-dark' : 'text-muted' }}">2. Menunggu Konfirmasi</div>
+                                                <small class="font-xs {{ $step2Completed ? 'text-success' : ($step2Active ? 'text-warning fw-bold' : 'text-muted') }}">
+                                                    {{ $step2Completed ? 'Diverifikasi admin' : ($step2Active ? 'Sedang diverifikasi admin' : 'Menunggu upload bukti') }}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-none d-md-block border-top flex-fill mx-3" style="border-color: #e2e2e2 !important; height: 2px;"></div>
+
+                                        <!-- Step 3: Selesai -->
+                                        @php
+                                            $step3Completed = $order->payment_status === 'paid';
+                                        @endphp
+                                        <div class="d-flex align-items-center flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: {{ $step3Completed ? '#3bb77e' : '#e2e2e2' }};">
+                                                @if($step3Completed) <i class="fi-rs-check font-xs"></i> @else 3 @endif
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm {{ $step3Completed ? 'text-dark' : 'text-muted' }}">3. Pembayaran Lunas</div>
+                                                <small class="font-xs {{ $step3Completed ? 'text-success fw-bold' : 'text-muted' }}">
+                                                    {{ $step3Completed ? 'Pesanan siap diproses' : 'Menunggu konfirmasi' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @php
+                                $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                            @endphp
+                            @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
+                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
+                                <div class="card-body p-4" style="background-color: #f0faf5; border: 1px solid #cceadd; border-radius: 15px;">
+                                    <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-shopping-bag mr-5"></i>Tahapan Pengambilan Pesanan (Self Pickup)</h6>
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center position-relative pt-2">
+                                        <!-- Step 1: Disiapkan -->
+                                        @php
+                                            $pickupStep1Completed = true; // Always active/completed once ordered
+                                        @endphp
+                                        <div class="d-flex align-items-center mb-3 mb-md-0 flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: #3bb77e;">
+                                                <i class="fi-rs-check font-xs"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm text-dark">1. Pesanan Disiapkan</div>
+                                                <small class="font-xs text-success">
+                                                    Gudang menyiapkan barang
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-none d-md-block border-top flex-fill mx-3" style="border-color: #cceadd !important; height: 2px;"></div>
+
+                                        <!-- Step 2: Siap Diambil -->
+                                        @php
+                                            $pickupStep2Completed = !empty($order->pickup_ready_at) || in_array($order->order_status, ['shipped', 'delivered', 'completed']);
+                                        @endphp
+                                        <div class="d-flex align-items-center mb-3 mb-md-0 flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: {{ $pickupStep2Completed ? '#3bb77e' : '#ff9900' }};">
+                                                @if($pickupStep2Completed) <i class="fi-rs-check font-xs"></i> @else 2 @endif
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm {{ $pickupStep2Completed ? 'text-dark' : 'text-dark' }}">2. Siap Diambil di Gudang</div>
+                                                <small class="font-xs {{ $pickupStep2Completed ? 'text-success fw-bold' : 'text-warning fw-bold' }}">
+                                                    @if($order->pickup_ready_at)
+                                                        📅 Mulai: {{ $order->pickup_ready_at->format('d M Y, H:i') }} WIB
+                                                    @elseif($pickupStep2Completed)
+                                                        Barang siap diambil sekarang
+                                                    @else
+                                                        Menunggu jadwal dari admin gudang
+                                                    @endif
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-none d-md-block border-top flex-fill mx-3" style="border-color: #cceadd !important; height: 2px;"></div>
+
+                                        <!-- Step 3: Selesai -->
+                                        @php
+                                            $pickupStep3Completed = !empty($order->shipped_at) || in_array($order->order_status, ['shipped', 'delivered', 'completed']);
+                                        @endphp
+                                        <div class="d-flex align-items-center flex-fill">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                                                 style="width: 38px; height: 38px; min-width: 38px; background-color: {{ $pickupStep3Completed ? '#3bb77e' : '#e2e2e2' }};">
+                                                @if($pickupStep3Completed) <i class="fi-rs-check font-xs"></i> @else 3 @endif
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold font-sm {{ $pickupStep3Completed ? 'text-dark' : 'text-muted' }}">3. Barang Diambil</div>
+                                                <small class="font-xs {{ $pickupStep3Completed ? 'text-success fw-bold' : 'text-muted' }}">
+                                                    @if($order->received_at)
+                                                        🤝 Diterima: {{ $order->received_at->format('d M Y, H:i') }} WIB
+                                                    @elseif($order->shipped_at)
+                                                        🤝 Diserahkan: {{ $order->shipped_at->format('d M Y, H:i') }} WIB
+                                                    @elseif($pickupStep3Completed)
+                                                        🤝 Barang sudah diserahkan / diambil
+                                                    @else
+                                                        Menunggu pengambilan pembeli
+                                                    @endif
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if($order->pickup_note)
+                                    <div class="mt-3 p-3 rounded" style="background-color: #ffffff; border: 1px dashed #3bb77e;">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fi-rs-info text-brand font-md me-2 mt-1"></i>
+                                            <div>
+                                                <span class="fw-bold text-dark font-sm d-block">Catatan / Instruksi Pengambilan dari Gudang:</span>
+                                                <span class="text-muted font-sm">{{ $order->pickup_note }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
+
+                            @if(($order->shipped_at || in_array($order->order_status, ['shipped', 'delivered'])) && !in_array($order->order_status, ['completed', 'cancelled']))
+                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
+                                <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center" style="background-color: #e8f8f0; border: 2px solid #3bb77e; border-radius: 15px;">
+                                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-3">
+                                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px; min-width: 48px;">
+                                            <i class="fi-rs-box-check font-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 text-dark fw-bold font-md">Konfirmasi Pesanan Diterima</h6>
+                                            <span class="text-muted font-sm">
+                                                @if($isSelfPickup)
+                                                    Barang telah diserahkan/diambil pada <strong>{{ $order->shipped_at ? $order->shipped_at->format('d M Y, H:i') : '-' }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di bawah ini.
+                                                @else
+                                                    Paket pesanan sedang/telah dikirim. Jika paket sudah tiba dan Anda terima dengan baik, silakan klik tombol konfirmasi di bawah ini.
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <form action="{{ route('buyer.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang/paket pesanan ini sudah diterima dengan baik?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success fw-bold px-4 py-3 shadow-sm text-white" style="border-radius: 10px; background-color: #3bb77e; border-color: #3bb77e; white-space: nowrap;">
+                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Sudah Diterima
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            @endif
 
                             <div class="row g-4">
                                 <!-- Order Info Card -->
@@ -108,23 +294,31 @@
                                 </div>
 
                                 <!-- Shipping Status Card -->
+                                @php
+                                    $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
                                         <div class="card-header bg-info-light border-0 p-3">
-                                            <h5 class="mb-0 text-info font-md"><i class="fi-rs-truck-side mr-10"></i>Status Pengiriman</h5>
+                                            <h5 class="mb-0 text-info font-md">
+                                                <i class="{{ $isSelfPickup ? 'fi-rs-shopping-bag' : 'fi-rs-truck-side' }} mr-10"></i>
+                                                {{ $isSelfPickup ? 'Status Pengambilan (Self Pickup)' : 'Status Pengiriman' }}
+                                            </h5>
                                         </div>
                                         <div class="card-body p-4">
                                             <div class="info-list">
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
-                                                    <span class="text-dark font-sm">Kurir & Layanan</span>
+                                                    <span class="text-dark font-sm">{{ $isSelfPickup ? 'Metode Pengambilan' : 'Kurir & Layanan' }}</span>
                                                     <span class="fw-bold font-sm text-dark text-end">
                                                         {{ $order->expedition ? $order->expedition->name : '-' }} 
-                                                        <br><small class="text-dark fw-bold">({{ $order->expedition_service ?? 'Standard' }})</small>
+                                                        <br><small class="text-dark fw-bold">({{ $order->expedition_service ?? ($isSelfPickup ? 'Ambil Sendiri' : 'Standard') }})</small>
                                                     </span>
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom align-items-center">
-                                                    <span class="text-dark font-sm">Nomor Resi</span>
-                                                    @if($order->tracking_number)
+                                                    <span class="text-dark font-sm">{{ $isSelfPickup ? 'Info Pengambilan' : 'Nomor Resi' }}</span>
+                                                    @if($isSelfPickup)
+                                                        <span class="badge rounded-pill bg-success px-3 py-2 text-white font-sm" style="white-space: nowrap;"><i class="fi-rs-check mr-5"></i> Ambil Sendiri di Gudang</span>
+                                                    @elseif($order->tracking_number)
                                                         <div class="text-end">
                                                             <span class="fw-bold font-sm text-brand d-block">{{ $order->tracking_number }}</span>
                                                             <a href="javascript:void(0)" class="font-xs text-info fw-bold" id="btn-track-order">
@@ -135,10 +329,29 @@
                                                         <span class="text-dark font-sm fw-bold">Belum tersedia</span>
                                                     @endif
                                                 </div>
+                                                @if($isSelfPickup)
+                                                <div class="info-item d-flex justify-content-between mb-2 pb-2 border-bottom">
+                                                    <span class="text-dark font-sm">1. Jadwal Siap Diambil</span>
+                                                    <span class="fw-bold font-sm {{ $order->pickup_ready_at ? 'text-success' : 'text-dark' }}">{{ $order->pickup_ready_at ? $order->pickup_ready_at->format('d M Y, H:i') . ' WIB' : 'Menunggu Jadwal' }}</span>
+                                                </div>
+                                                <div class="info-item d-flex justify-content-between mb-2 pb-2 border-bottom">
+                                                    <span class="text-dark font-sm">2. Waktu Diserahkan (Handover)</span>
+                                                    <span class="fw-bold font-sm {{ $order->shipped_at ? 'text-primary' : 'text-dark' }}">{{ $order->shipped_at ? $order->shipped_at->format('d M Y, H:i') . ' WIB' : 'Belum Diambil' }}</span>
+                                                </div>
                                                 <div class="info-item d-flex justify-content-between">
+                                                    <span class="text-dark font-sm">3. Waktu Diterima Pembeli</span>
+                                                    <span class="fw-bold font-sm {{ $order->received_at ? 'text-success' : 'text-dark' }}">{{ $order->received_at ? $order->received_at->format('d M Y, H:i') . ' WIB' : '-' }}</span>
+                                                </div>
+                                                @else
+                                                <div class="info-item d-flex justify-content-between mb-2 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Tanggal Pengiriman</span>
                                                     <span class="fw-bold font-sm text-dark">{{ $order->shipped_at ? $order->shipped_at->format('d M Y') : '-' }}</span>
                                                 </div>
+                                                <div class="info-item d-flex justify-content-between">
+                                                    <span class="text-dark font-sm">Waktu Diterima</span>
+                                                    <span class="fw-bold font-sm {{ $order->received_at ? 'text-success' : 'text-dark' }}">{{ $order->received_at ? $order->received_at->format('d M Y, H:i') . ' WIB' : '-' }}</span>
+                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -150,7 +363,7 @@
                                         <div class="row g-4">
                                             @if($order->sourceWarehouse)
                                             <div class="col-md-6 border-end-md">
-                                                <h6 class="mb-3 text-dark text-uppercase fw-bold letter-spacing-1 font-xs">Dikirim Dari</h6>
+                                                <h6 class="mb-3 text-dark text-uppercase fw-bold letter-spacing-1 font-xs">{{ $isSelfPickup ? 'Lokasi Gudang Pengambilan' : 'Dikirim Dari' }}</h6>
                                                 <div class="d-flex">
                                                     <div class="icon-circle bg-brand-light text-brand shadow-sm mr-15">
                                                         <i class="fi-rs-shop"></i>

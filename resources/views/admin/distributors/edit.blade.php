@@ -323,7 +323,7 @@ $(document).ready(function() {
         
         if (provinceId) {
             $.ajax({
-                url: '{{ route("admin.get-regencies") }}',
+                url: '{{ route("admin.distributors.get-regencies") }}',
                 type: 'GET',
                 data: { province_id: provinceId },
                 success: function(data) {
@@ -354,7 +354,7 @@ $(document).ready(function() {
         
         if (regencyId) {
             $.ajax({
-                url: '{{ route("admin.get-districts") }}',
+                url: '{{ route("admin.distributors.get-districts") }}',
                 type: 'GET',
                 data: { regency_id: regencyId },
                 success: function(data) {
@@ -383,7 +383,7 @@ $(document).ready(function() {
         
         if (districtId) {
             $.ajax({
-                url: '{{ route("admin.get-villages") }}',
+                url: '{{ route("admin.distributors.get-villages") }}',
                 type: 'GET',
                 data: { district_id: districtId },
                 success: function(data) {

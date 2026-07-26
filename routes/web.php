@@ -108,6 +108,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/orders/{order}/track', [App\Http\Controllers\Buyer\OrderController::class, 'trackOrder'])->name('orders.track');
     Route::get('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'confirmPaymentForm'])->name('orders.confirm-payment');
     Route::post('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'storePaymentConfirmation'])->name('orders.confirm-payment.store');
+    Route::post('/orders/{order}/confirm-receipt', [App\Http\Controllers\Buyer\OrderController::class, 'confirmReceipt'])->name('orders.confirm-receipt');
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('profile.update');
@@ -250,6 +251,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings/general', [App\Http\Controllers\Admin\SettingController::class, 'updateGeneral'])->name('settings.update-general');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');
         Route::put('/settings/expeditions', [App\Http\Controllers\Admin\SettingController::class, 'updateExpeditions'])->name('settings.update-expeditions');
 
@@ -276,6 +278,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/distributors/create', [App\Http\Controllers\Admin\DistributorController::class, 'create'])->name('distributors.create');
         Route::post('/distributors', [App\Http\Controllers\Admin\DistributorController::class, 'store'])->name('distributors.store');
         Route::get('/distributors/get-regencies', [App\Http\Controllers\Admin\DistributorController::class, 'getRegencies'])->name('distributors.get-regencies');
+        Route::get('/distributors/get-districts', [App\Http\Controllers\Admin\DistributorController::class, 'getDistricts'])->name('distributors.get-districts');
+        Route::get('/distributors/get-villages', [App\Http\Controllers\Admin\DistributorController::class, 'getVillages'])->name('distributors.get-villages');
         Route::get('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'show'])->name('distributors.show');
         Route::get('/distributors/{distributor}/edit', [App\Http\Controllers\Admin\DistributorController::class, 'edit'])->name('distributors.edit');
         Route::put('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'update'])->name('distributors.update');

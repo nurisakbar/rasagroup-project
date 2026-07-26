@@ -44,8 +44,8 @@
                                             <table class="table font-sm">
                                                 <thead>
                                                     <tr class="main-heading">
-                                                        <th class="pl-20">Produk</th>
-                                                        <th>Harga Unit</th>
+                                                        <th class="pl-20" colspan="2">Produk</th>
+
                                                         <th>Jumlah</th>
                                                         <th>Subtotal</th>
                                                         <th class="text-end pr-20">Aksi</th>
@@ -53,33 +53,30 @@
                                                 </thead>
                                                 <tbody>
                                                     @foreach($carts as $cart)
-                                                        <tr>
+                                                        <tr id="cart-row-{{ $cart->id }}">
                                                             <td class="image product-thumbnail pl-20" width="80">
                                                                 <img src="{{ asset($cart->product->image_url) }}" alt="{{ $cart->product->display_name }}" class="border-radius-10">
                                                             </td>
                                                             <td class="product-des product-name">
                                                                 <h6 class="mb-5"><a href="#" class="text-heading">{{ $cart->product->display_name }}</a></h6>
-                                                                <p class="font-xs text-muted">{{ $cart->product->code }}</p>
+                                                                <p class="font-xs text-muted mb-1">{{ $cart->product->code }}</p>
+                                                                <p class="font-sm fw-bold text-brand">Rp {{ number_format($cart->display_price, 0, ',', '.') }}</p>
                                                             </td>
                                                             <td>
-                                                                <p class="font-sm fw-bold">Rp {{ number_format($cart->display_price, 0, ',', '.') }}</p>
-                                                            </td>
-                                                            <td>
-                                                                <form action="{{ route('distributor.orders.update-cart', $cart) }}" method="POST" class="d-flex align-items-center gap-2">
+                                                                <form action="{{ route('distributor.orders.update-cart', $cart) }}" method="POST" class="update-cart-form" data-cart-id="{{ $cart->id }}">
                                                                     @csrf
                                                                     @method('PUT')
-                                                                    <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" class="form-control form-control-sm" style="width: 60px;">
-                                                                    <button type="submit" class="btn btn-sm btn-brand rounded-pill px-2 py-1"><i class="fi-rs-refresh"></i></button>
+                                                                    <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" class="form-control form-control-sm text-center cart-qty-input" style="width: 80px;">
                                                                 </form>
                                                             </td>
                                                             <td>
-                                                                <p class="font-sm text-brand fw-bold">Rp {{ number_format($cart->display_subtotal, 0, ',', '.') }}</p>
+                                                                <p class="font-sm text-brand fw-bold item-subtotal-display" id="item-subtotal-{{ $cart->id }}">Rp {{ number_format($cart->display_subtotal, 0, ',', '.') }}</p>
                                                             </td>
                                                             <td class="text-end pr-20">
-                                                                <form action="{{ route('distributor.orders.remove-from-cart', $cart) }}" method="POST" onsubmit="return confirm('Hapus item ini?');">
+                                                                <form action="{{ route('distributor.orders.remove-from-cart', $cart) }}" method="POST" class="remove-cart-form" data-cart-id="{{ $cart->id }}">
                                                                     @csrf
                                                                     @method('DELETE')
-                                                                    <button type="submit" class="rg-cart-remove-btn" aria-label="Hapus item">
+                                                                    <button type="button" class="text-danger btn-remove-cart" style="background: none; border: none; padding: 0; font-size: 14px;" aria-label="Hapus item">
                                                                         <i class="fi-rs-trash"></i>
                                                                     </button>
                                                                 </form>
@@ -97,14 +94,14 @@
                                                 <div class="p-3 bg-light border-radius-10">
                                                     <div class="d-flex justify-content-between mb-2">
                                                         <span class="font-sm">Total Unit</span>
-                                                        <span class="font-sm fw-bold">{{ number_format($totalItems) }} unit</span>
+                                                        <span class="font-sm fw-bold" id="cart-total-items">{{ number_format($totalItems) }} unit</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-md-12">
                                                 <div class="p-3 bg-light border-radius-10 text-end">
                                                     <h6 class="text-muted mb-2 font-sm">Subtotal</h6>
-                                                    <h3 class="text-brand mb-4">Rp {{ number_format($subtotal, 0, ',', '.') }}</h3>
+                                                    <h3 class="text-brand mb-4" id="cart-subtotal">Rp {{ number_format($subtotal, 0, ',', '.') }}</h3>
                                                     <a href="{{ route('distributor.orders.checkout') }}" class="btn btn-brand rounded-pill w-100">Lanjut ke Checkout <i class="fi-rs-arrow-right ml-10"></i></a>
                                                 </div>
                                             </div>
@@ -123,3 +120,81 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    let debounceTimer;
+    
+    $('.cart-qty-input').on('change keyup', function() {
+        clearTimeout(debounceTimer);
+        
+        let input = $(this);
+        let form = input.closest('form');
+        let cartId = form.data('cart-id');
+        let quantity = input.val();
+        
+        if (quantity < 1) return;
+        
+        debounceTimer = setTimeout(function() {
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#item-subtotal-' + cartId).text(response.item_subtotal_formatted);
+                        $('#cart-total-items').text(response.cart_total_items + ' unit');
+                        $('#cart-subtotal').text(response.cart_subtotal_formatted);
+                        
+                        // Optional visual feedback
+                        $('#item-subtotal-' + cartId).fadeOut(100).fadeIn(100);
+                        $('#cart-subtotal').fadeOut(100).fadeIn(100);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Update cart failed');
+                    // Reload on error as fallback
+                    location.reload();
+                }
+            });
+        }, 500); // 500ms debounce
+    });
+
+    $('.btn-remove-cart').on('click', function(e) {
+        e.preventDefault();
+        
+        if (!confirm('Hapus item ini?')) return;
+        
+        let btn = $(this);
+        let form = btn.closest('form');
+        let cartId = form.data('cart-id');
+        let row = $('#cart-row-' + cartId);
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    if (response.is_empty) {
+                        location.reload();
+                    } else {
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            $('#cart-total-items').text(response.cart_total_items + ' unit');
+                            $('#cart-subtotal').text(response.cart_subtotal_formatted);
+                            $('#cart-subtotal').fadeOut(100).fadeIn(100);
+                        });
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Remove cart failed');
+                location.reload();
+            }
+        });
+    });
+});
+</script>
+@endpush

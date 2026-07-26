@@ -1,7 +1,7 @@
 <article class="row align-items-center hover-up">
     <figure class="col-md-4 mb-0">
         <a href="{{ route('products.show', $product->slug) }}">
-            <img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/thumbnail-1.jpg') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-1.jpg') }}';" />
+            <img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/thumbnail-1.jpg') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-1.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 1rem;" @endif />
         </a>
     </figure>
     <div class="col-md-8 mb-0">

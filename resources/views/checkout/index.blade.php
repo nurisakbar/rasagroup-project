@@ -987,7 +987,7 @@
             return;
         }
 
-        if (expeditionId === currentExpeditionId && $('#serviceList input[name="expedition_service"]').length > 0) {
+        if (expeditionId === currentExpeditionId && $('#serviceList input[name="expedition_service"]:checked').length > 0) {
             return;
         }
 
@@ -1249,6 +1249,12 @@
     }
 
     $('#checkoutForm').on('submit', function(e) {
+        var btn = $('#submitBtn');
+        if (btn.prop('disabled') && btn.data('submitting')) {
+            e.preventDefault();
+            return false;
+        }
+
         if (servicesLoading) {
             e.preventDefault();
             alert('Mohon tunggu, layanan pengiriman sedang dimuat.');
@@ -1265,15 +1271,18 @@
             alert('Silakan pilih ekspedisi dan layanan pengiriman.');
             return false;
         }
+
+        btn.prop('disabled', true).data('submitting', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses pesanan...');
     });
 
     $(function() {
-        syncCheckoutShippingStateFromForm();
-        
         var checkedExpedition = $('input[name="expedition_id"]:checked').val();
         var serverExpedition = @json($defaultExpedition?->id ?? null);
         if (checkedExpedition && checkedExpedition !== serverExpedition) {
+            currentExpeditionId = ''; // Reset so selectExpedition fetches correct services
             selectExpedition(checkedExpedition);
+        } else {
+            syncCheckoutShippingStateFromForm();
         }
         
         setSubmitEnabled(true);

@@ -5,7 +5,7 @@
             <!-- MAIN SLIDES -->
             <div class="product-image-slider">
                 <figure class="border-radius-10">
-                    <img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" />
+                    <img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
                 </figure>
                 @if($product->images)
                     @foreach(json_decode($product->images) as $img)
@@ -17,7 +17,7 @@
             </div>
             <!-- THUMBNAILS -->
             <div class="slider-nav-thumbnails">
-                <div><img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" /></div>
+                <div><img src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 1rem;" @endif /></div>
                 @if($product->images)
                     @foreach(json_decode($product->images) as $img)
                         <div><img src="{{ asset('storage/' . $img) }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" /></div>

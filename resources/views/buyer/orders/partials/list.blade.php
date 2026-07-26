@@ -2,7 +2,7 @@
     @forelse($orders as $order)
         @php
             $statusLabel = match($order->order_status) {
-                'pending' => 'BELUM BAYAR',
+                'pending' => $order->payment_proof ? 'MENUNGGU PEMBAYARAN DIVERIFIKASI' : 'BELUM BAYAR',
                 'processing' => 'SEDANG DIKEMAS',
                 'shipped' => 'DIKIRIM',
                 'delivered' => 'SELESAI',

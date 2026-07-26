@@ -73,6 +73,26 @@ class Warehouse extends Model
         return $this->belongsTo(WilayahAdministratif::class, 'village_id', 'village_id');
     }
 
+    public function village()
+    {
+        return $this->belongsTo(Village::class, 'village_id', 'village_id');
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id', 'district_id');
+    }
+
+    public function regency()
+    {
+        return $this->belongsTo(Regency::class, 'regency_id', 'regency_id');
+    }
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'province_id');
+    }
+
     public function getProvinceNameAttribute(): ?string
     {
         return $this->wilayah?->province_name ?? WilayahAdministratif::where('province_id', $this->province_id)->first()?->province_name;

@@ -35,4 +35,11 @@ return [
     |--------------------------------------------------------------------------
     */
     'show_hub_picker_on_product_page' => env('SHOP_SHOW_HUB_PICKER_PRODUCT', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hub Utama (Digunakan distributor sebagai acuan perhitungan ongkir & QAD)
+    |--------------------------------------------------------------------------
+    */
+    'main_hub_id' => env('SHOP_MAIN_HUB_ID', null),
 ];

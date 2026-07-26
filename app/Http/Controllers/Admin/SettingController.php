@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Expedition;
 use App\Models\Setting;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -45,7 +46,11 @@ class SettingController extends Controller
         // Only show expeditions that are in the API response
         $expeditions = Expedition::whereIn('code', $apiCourierCodes)->get();
         
-        return view('admin.settings.index', compact('expeditions'));
+        $hubs = Warehouse::where('is_active', true)->get();
+        $payment_confirmation_email = Setting::get('payment_confirmation_email');
+        $distributor_default_hub = Setting::get('distributor_default_hub');
+
+        return view('admin.settings.index', compact('expeditions', 'hubs', 'payment_confirmation_email', 'distributor_default_hub'));
     }
 
     public function updateExpeditions(Request $request)
@@ -59,5 +64,18 @@ class SettingController extends Controller
         }
 
         return back()->with('success', 'Pengaturan ekspedisi berhasil diperbarui.');
+    }
+
+    public function updateGeneral(Request $request)
+    {
+        $request->validate([
+            'payment_confirmation_email' => 'nullable|email',
+            'distributor_default_hub' => 'nullable|exists:warehouses,id',
+        ]);
+
+        Setting::set('payment_confirmation_email', $request->payment_confirmation_email, 'Email untuk menerima konfirmasi pembayaran');
+        Setting::set('distributor_default_hub', $request->distributor_default_hub, 'Hub default untuk pengiriman order distributor');
+
+        return back()->with('success', 'Pengaturan umum berhasil diperbarui.');
     }
 }

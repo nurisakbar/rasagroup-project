@@ -7,6 +7,10 @@ use App\Models\Order;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use App\Notifications\Orders\OrderProcessingNotification;
+use App\Notifications\Orders\OrderPickupReadyNotification;
+use App\Notifications\Orders\OrderShippedNotification;
+use App\Notifications\Orders\OrderCompletedNotification;
 
 class OrderController extends Controller
 {
@@ -32,6 +36,8 @@ class OrderController extends Controller
                 $query->where('order_type', $request->order_type);
             }
 
+
+
             // Filter by date range
             if ($request->filled('date_from') && $request->date_from != '') {
                 $query->whereDate('created_at', '>=', $request->date_from);
@@ -55,6 +61,22 @@ class OrderController extends Controller
                           $u->where('name', 'like', "%{$searchValue}%");
                       });
                 });
+            }
+
+            $baseQuery = clone $query;
+
+            if ($request->filled('tab_status') && $request->tab_status != '') {
+                if ($request->tab_status === 'menunggu_pembayaran') {
+                    $query->where('payment_status', 'pending')->whereNull('payment_proof');
+                } elseif ($request->tab_status === 'menunggu_konfirmasi') {
+                    $query->where('payment_status', 'pending')->whereNotNull('payment_proof');
+                } elseif ($request->tab_status === 'sedang_diproses') {
+                    $query->where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing']);
+                } elseif ($request->tab_status === 'dikirim') {
+                    $query->where('order_status', 'shipped');
+                } elseif ($request->tab_status === 'selesai') {
+                    $query->whereIn('order_status', ['delivered', 'completed']);
+                }
             }
 
             return DataTables::of($query)
@@ -111,6 +133,9 @@ class OrderController extends Controller
                     return '<span class="label label-' . $statusClass . '">' . ucfirst($order->order_status) . '</span>';
                 })
                 ->addColumn('payment_badge', function ($order) {
+                    if ($order->payment_status === 'pending' && $order->payment_proof) {
+                        return '<span class="label label-warning" style="background-color: #ff851b !important; font-size: 11px;"><i class="fa fa-bell"></i> PERLU KONFIRMASI</span>';
+                    }
                     $paymentClass = [
                         'pending' => 'warning',
                         'paid' => 'success',
@@ -120,9 +145,15 @@ class OrderController extends Controller
                     return '<span class="label label-' . $paymentClass . '">' . ucfirst($order->payment_status) . '</span>';
                 })
                 ->addColumn('action', function ($order) {
-                    return '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-info btn-xs">
+                    $btn = '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-info btn-xs" style="margin-right: 3px;">
                         <i class="fa fa-eye"></i> Detail
                     </a>';
+                    if ($order->payment_status === 'pending' && $order->payment_proof) {
+                        $btn .= '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-warning btn-xs" title="Verifikasi Bukti Bayar" style="background-color: #ff851b; border-color: #ff851b;">
+                            <i class="fa fa-check-square-o"></i> Verifikasi
+                        </a>';
+                    }
+                    return $btn;
                 })
                 ->rawColumns(['order_info', 'buyer_info', 'expedition_info', 'hub_info', 'total_formatted', 'status_badge', 'payment_badge', 'action'])
                 ->orderColumn('created_at', function ($query, $order) {
@@ -130,10 +161,12 @@ class OrderController extends Controller
                 })
                 ->with([
                     'counts' => [
-                        'pending' => (clone $query)->where('payment_status', 'pending')->whereNull('payment_proof')->count(),
-                        'need_confirmation' => (clone $query)->where('payment_status', 'pending')->whereNotNull('payment_proof')->count(),
-                        'need_processing' => (clone $query)->where('payment_status', 'paid')->where('order_status', 'pending')->count(),
-                        'need_shipping' => (clone $query)->where('payment_status', 'paid')->where('order_status', 'processing')->count(),
+                        'semua' => (clone $baseQuery)->count(),
+                        'menunggu_pembayaran' => (clone $baseQuery)->where('payment_status', 'pending')->whereNull('payment_proof')->count(),
+                        'menunggu_konfirmasi' => (clone $baseQuery)->where('payment_status', 'pending')->whereNotNull('payment_proof')->count(),
+                        'sedang_diproses' => (clone $baseQuery)->where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing'])->count(),
+                        'dikirim' => (clone $baseQuery)->where('order_status', 'shipped')->count(),
+                        'selesai' => (clone $baseQuery)->whereIn('order_status', ['delivered', 'completed'])->count(),
                     ]
                 ])
                 ->make(true);
@@ -143,12 +176,14 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $countPending = Order::where('payment_status', 'pending')->whereNull('payment_proof')->count();
-        $countNeedConfirmation = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
-        $countNeedProcessing = Order::where('payment_status', 'paid')->where('order_status', 'pending')->count();
-        $countNeedShipping = Order::where('payment_status', 'paid')->where('order_status', 'processing')->count();
+        $countSemua = Order::count();
+        $countMenungguPembayaran = Order::where('payment_status', 'pending')->whereNull('payment_proof')->count();
+        $countMenungguKonfirmasi = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
+        $countSedangDiproses = Order::where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing'])->count();
+        $countDikirim = Order::where('order_status', 'shipped')->count();
+        $countSelesai = Order::whereIn('order_status', ['delivered', 'completed'])->count();
 
-        return view('admin.orders.index', compact('warehouses', 'countPending', 'countNeedConfirmation', 'countNeedProcessing', 'countNeedShipping'));
+        return view('admin.orders.index', compact('warehouses', 'countSemua', 'countMenungguPembayaran', 'countMenungguKonfirmasi', 'countSedangDiproses', 'countDikirim', 'countSelesai'));
     }
 
     public function show(Order $order)
@@ -171,12 +206,21 @@ class OrderController extends Controller
             $updateData['shipped_at'] = now();
         }
 
+        if (in_array($request->order_status, ['delivered', 'completed']) && !$order->received_at) {
+            $updateData['received_at'] = now();
+        }
+
         // If order is completed, credit points
         if ($request->order_status === 'completed') {
             $order->creditPoints();
         }
 
+        $oldStatus = $order->order_status;
+        $oldPickupReady = $order->pickup_ready_at;
+
         $order->update($updateData);
+
+        $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady);
 
         return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
@@ -243,8 +287,13 @@ class OrderController extends Controller
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
             'tracking_number' => 'nullable|string|max:100',
             'payment_status' => 'nullable|in:pending,paid,failed,refunded',
-            'expedition_id' => 'nullable|exists:expeditions,id',
+            'pickup_ready_at' => 'nullable|date',
+            'shipped_at' => 'nullable|date',
+            'pickup_note' => 'nullable|string|max:1000',
         ]);
+
+        $oldStatus = $order->order_status;
+        $oldPickupReady = $order->pickup_ready_at;
 
         $updateData = [];
         $messages = [];
@@ -260,8 +309,12 @@ class OrderController extends Controller
             $updateData['order_status'] = $request->order_status;
             
             // If status changed to shipped and no shipped_at date, set it
-            if ($request->order_status === 'shipped' && !$order->shipped_at) {
+            if ($request->order_status === 'shipped' && !$order->shipped_at && !$request->has('shipped_at')) {
                 $updateData['shipped_at'] = now();
+            }
+
+            if (in_array($request->order_status, ['delivered', 'completed']) && !$order->received_at) {
+                $updateData['received_at'] = now();
             }
 
             // If order is completed, credit points
@@ -301,9 +354,31 @@ class OrderController extends Controller
             $messages[] = 'Status pembayaran';
         }
 
+        // Update pickup fields
+        if ($request->has('pickup_ready_at')) {
+            $updateData['pickup_ready_at'] = $request->filled('pickup_ready_at') ? \Carbon\Carbon::parse($request->pickup_ready_at) : null;
+            $messages[] = 'Jadwal pengambilan';
+        }
+        if ($request->has('shipped_at')) {
+            $updateData['shipped_at'] = $request->filled('shipped_at') ? \Carbon\Carbon::parse($request->shipped_at) : null;
+            $messages[] = 'Waktu penyerahan/diambil';
+            
+            // If handover timestamp is entered and status is still pending/processing, move to shipped (or completed)
+            if ($request->filled('shipped_at') && in_array($order->order_status, ['pending', 'processing']) && 
+                (!isset($updateData['order_status']) || in_array($updateData['order_status'], ['pending', 'processing']))) {
+                $updateData['order_status'] = 'shipped';
+            }
+        }
+        if ($request->has('pickup_note')) {
+            $updateData['pickup_note'] = $request->pickup_note;
+            $messages[] = 'Catatan pengambilan';
+        }
+
         if (!empty($updateData)) {
             $order->update($updateData);
             
+            $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady);
+
             // Dispatch background job for tracking notification
             if (isset($updateData['tracking_number'])) {
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'tracking');
@@ -563,6 +638,33 @@ class OrderController extends Controller
                 'message' => $e->getMessage()
             ]);
             return back()->with('error', 'Terjadi kesalahan saat memulai sinkronisasi: ' . $e->getMessage());
+        }
+    }
+
+    protected function sendOrderTransitionNotifications(Order $order, $oldStatus, $oldPickupReady)
+    {
+        if (!$order->user) {
+            return;
+        }
+
+        // Status processing
+        if ($oldStatus !== 'processing' && $order->order_status === 'processing') {
+            $order->user->notify(new OrderProcessingNotification($order));
+        }
+
+        // Pickup ready
+        if ($order->pickup_ready_at && (!$oldPickupReady || $order->pickup_ready_at->toDateTimeString() !== $oldPickupReady->toDateTimeString())) {
+            $order->user->notify(new OrderPickupReadyNotification($order));
+        }
+
+        // Status shipped
+        if ($oldStatus !== 'shipped' && $order->order_status === 'shipped') {
+            $order->user->notify(new OrderShippedNotification($order));
+        }
+
+        // Status completed
+        if ($oldStatus !== 'completed' && $order->order_status === 'completed') {
+            $order->user->notify(new OrderCompletedNotification($order));
         }
     }
 }

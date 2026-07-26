@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Notifications\Orders\OrderCompletedNotification;
 
 class OrderController extends Controller
 {
@@ -150,5 +151,28 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memproses konfirmasi: ' . $e->getMessage());
         }
+    }
+
+    public function confirmReceipt(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if (!in_array($order->order_status, ['shipped', 'delivered']) && empty($order->shipped_at)) {
+            return redirect()->route('buyer.orders.show', $order)->with('error', 'Pesanan belum dapat dikonfirmasi karena belum dikirim/diserahkan.');
+        }
+
+        $order->update([
+            'order_status' => 'completed',
+            'received_at' => now(),
+        ]);
+        $order->creditPoints();
+
+        if ($order->user) {
+            $order->user->notify(new OrderCompletedNotification($order));
+        }
+
+        return redirect()->route('buyer.orders.show', $order)->with('success', 'Terima kasih! Pesanan telah dikonfirmasi selesai dan diterima dengan baik.');
     }
 }

@@ -175,19 +175,69 @@ class OrderController extends Controller
 
         $cart->update(['quantity' => $request->quantity]);
 
+        if ($request->ajax()) {
+            $user = Auth::user();
+            $carts = Cart::with('product')
+                ->where('user_id', Auth::id())
+                ->where('cart_type', 'distributor')
+                ->get();
+            
+            $subtotal = $carts->sum(function ($c) use ($user) {
+                return $user->getProductPrice($c->product) * $c->quantity;
+            });
+            $totalItems = $carts->sum('quantity');
+            
+            $itemDisplayPrice = $user->getProductPrice($cart->product);
+            $itemDisplaySubtotal = $itemDisplayPrice * $cart->quantity;
+
+            return response()->json([
+                'success' => true,
+                'item_subtotal_formatted' => 'Rp ' . number_format($itemDisplaySubtotal, 0, ',', '.'),
+                'cart_total_items' => number_format($totalItems),
+                'cart_subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            ]);
+        }
+
         return back()->with('success', 'Jumlah berhasil diperbarui.');
     }
 
     /**
      * Remove item from cart.
      */
-    public function removeFromCart(Cart $cart)
+    public function removeFromCart(Request $request, Cart $cart)
     {
         if ($cart->user_id !== Auth::id() || $cart->cart_type !== 'distributor') {
             abort(403);
         }
 
         $cart->delete();
+
+        if ($request->ajax()) {
+            $user = Auth::user();
+            $carts = Cart::with('product')
+                ->where('user_id', Auth::id())
+                ->where('cart_type', 'distributor')
+                ->get();
+            
+            if ($carts->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'is_empty' => true
+                ]);
+            }
+            
+            $subtotal = $carts->sum(function ($c) use ($user) {
+                return $user->getProductPrice($c->product) * $c->quantity;
+            });
+            $totalItems = $carts->sum('quantity');
+
+            return response()->json([
+                'success' => true,
+                'is_empty' => false,
+                'cart_total_items' => number_format($totalItems),
+                'cart_subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            ]);
+        }
 
         return back()->with('success', 'Produk berhasil dihapus dari keranjang.');
     }
@@ -247,11 +297,9 @@ class OrderController extends Controller
             ->orderBy('province_name')
             ->get();
 
-        // Hub pengirim otomatis = hub terdekat alamat tujuan
-        $excludeOwnHub = Auth::user()->distributorShoppingExcludedWarehouseId();
-        $suggestedHub = $defaultAddress
-            ? ShopFulfillment::resolveNearestHub($defaultAddress, $excludeOwnHub)
-            : null;
+        // Hub pengirim dari pengaturan (bukan terdekat)
+        $defaultHubId = \App\Models\Setting::get('distributor_default_hub');
+        $suggestedHub = $defaultHubId ? \App\Models\Warehouse::find($defaultHubId) : null;
 
         $carts->each(function ($cart) use ($user) {
             $cart->display_price = $user->getProductPrice($cart->product);
@@ -440,15 +488,16 @@ class OrderController extends Controller
         }
 
         $user = Auth::user();
-        $excludeOwnHub = $user->distributorShoppingExcludedWarehouseId();
-        $sourceWarehouse = ShopFulfillment::resolveNearestHub($address, $excludeOwnHub);
+        $defaultHubId = \App\Models\Setting::get('distributor_default_hub');
+        $sourceWarehouse = $defaultHubId ? \App\Models\Warehouse::find($defaultHubId) : null;
 
         if (! $sourceWarehouse) {
-            return back()->with('error', 'Tidak ada hub aktif yang tersedia untuk alamat pengiriman ini.');
+            return back()->with('error', 'Hub default distributor belum diatur oleh admin.');
         }
 
+        $excludeOwnHub = $user->distributorShoppingExcludedWarehouseId();
         if ($excludeOwnHub && (string) $sourceWarehouse->id === $excludeOwnHub) {
-            return back()->with('error', 'Hub sumber tidak boleh hub Anda sendiri. Periksa alamat pengiriman atau hub terdekat.');
+            return back()->with('error', 'Hub sumber pengiriman tidak boleh hub Anda sendiri.');
         }
 
         $expedition = Expedition::find($request->expedition_id);

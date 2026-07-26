@@ -73,13 +73,15 @@ class AddressController extends Controller
 
         $isFirstAddressFlow = Auth::user()->addresses()->count() === 0;
 
-        if ($request->query('origin') === 'checkout' || $isFirstAddressFlow) {
-            session(['checkout_return_after_address' => true]);
+        if (in_array($request->query('origin'), ['checkout', 'distributor_checkout']) || $isFirstAddressFlow) {
+            $origin = $request->query('origin');
+            if ($isFirstAddressFlow && !$origin) {
+                $origin = 'checkout'; // default fallback for first address
+            }
+            session(['checkout_return_origin' => $origin]);
         }
 
-        $redirectToCheckout = $request->query('origin') === 'checkout'
-            || session('checkout_return_after_address', false)
-            || $isFirstAddressFlow;
+        $redirectToCheckout = session()->has('checkout_return_origin') || $request->query('origin') === 'checkout' || $request->query('origin') === 'distributor_checkout' || $isFirstAddressFlow;
 
         return view('buyer.addresses.create', compact('provinces', 'redirectToCheckout'));
     }
@@ -150,14 +152,21 @@ class AddressController extends Controller
             ]);
         }
 
+        $checkoutOrigin = session()->pull('checkout_return_origin');
+        
         $redirectToCheckout = $request->has('redirect_to_checkout')
-            || session()->pull('checkout_return_after_address')
+            || $checkoutOrigin
             || $user->addresses()->count() === 1;
 
         if ($redirectToCheckout) {
             $this->applyAddressForShopping($address);
 
-            return redirect()->route('checkout.index', ['address_id' => $address->id])
+            $routeName = 'checkout.index';
+            if ($checkoutOrigin === 'distributor_checkout' || $request->input('origin') === 'distributor_checkout') {
+                $routeName = 'distributor.orders.checkout';
+            }
+
+            return redirect()->route($routeName, ['address_id' => $address->id])
                 ->with('success', 'Alamat berhasil ditambahkan. Silakan lanjutkan checkout.');
         }
 

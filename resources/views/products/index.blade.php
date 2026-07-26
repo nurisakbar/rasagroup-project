@@ -145,6 +145,37 @@
     .shop-product-fillter .sort-by-dropdown {
         z-index: 102;
     }
+    /* Fix overflow horizontal pada kontainer tab kategori */
+    .shop-category-tabs {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        display: block !important; /* Timpa display: flex dari .section-title */
+        overflow: hidden;
+    }
+    .shop-category-tabs .nav-tabs.links {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        white-space: nowrap;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        margin-bottom: 0;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .shop-category-tabs .nav-tabs.links .nav-item {
+        flex: 0 0 auto;
+    }
+    .shop-category-tabs .nav-tabs.links::-webkit-scrollbar {
+        height: 4px;
+    }
+    .shop-category-tabs .nav-tabs.links::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 4px;
+    }
     @media (max-width: 767px) {
         .shop-product-fillter {
             flex-direction: column;
@@ -161,20 +192,6 @@
             margin-right: 0 !important;
             flex: 1;
             min-width: 140px;
-        }
-        .nav-tabs.links {
-            overflow-x: auto;
-            white-space: nowrap;
-            flex-wrap: nowrap !important;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 5px;
-        }
-        .nav-tabs.links::-webkit-scrollbar {
-            height: 4px;
-        }
-        .nav-tabs.links::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 4px;
         }
     }
 </style>

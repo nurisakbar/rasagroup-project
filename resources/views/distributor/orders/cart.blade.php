@@ -59,17 +59,10 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <form action="{{ route('distributor.orders.update-cart', $cart) }}" method="POST" class="form-inline">
+                                            <form action="{{ route('distributor.orders.update-cart', $cart) }}" method="POST">
                                                 @csrf
                                                 @method('PUT')
-                                                <div class="input-group input-group-sm">
-                                                    <input type="number" name="quantity" class="form-control" value="{{ $cart->quantity }}" min="1" style="width: 60px;">
-                                                    <span class="input-group-btn">
-                                                        <button type="submit" class="btn btn-default btn-flat">
-                                                            <i class="fa fa-refresh"></i>
-                                                        </button>
-                                                    </span>
-                                                </div>
+                                                <input type="number" name="quantity" class="form-control input-sm" value="{{ $cart->quantity }}" min="1" style="width: 60px;" onchange="this.form.submit()">
                                             </form>
                                         </td>
                                         <td><strong>Rp {{ number_format($cart->display_subtotal ?? (Auth::user()->getProductPrice($cart->product) * $cart->quantity), 0, ',', '.') }}</strong></td>
@@ -77,7 +70,7 @@
                                             <form action="{{ route('distributor.orders.remove-from-cart', $cart) }}" method="POST" onsubmit="return confirm('Hapus produk ini?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-xs">
+                                                <button type="submit" class="btn btn-link text-danger" style="padding: 0; border: none; background: none;">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
                                             </form>

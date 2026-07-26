@@ -14,31 +14,35 @@
     </div>
 </div>
 
-<div class="container mb-80 mt-50">
+<div class="container mb-80 mt-50 checkout-page">
     <div class="row">
         <div class="col-lg-12">
-            <div class="row">
-                <div class="col-lg-4">
-                    @include('buyer.partials.sidebar')
-                </div>
-                <div class="col-lg-8">
-                    <form action="{{ route('distributor.orders.store') }}" method="POST" id="checkout-form">
-                        @csrf
-                        <div class="tab-content account dashboard-content pl-50">
-                            <div class="tab-pane fade show active" role="tabpanel">
-                                <div class="p-4 bg-white border-bottom mb-4 border-radius-10 shadow-sm">
+            <form action="{{ route('distributor.orders.store') }}" method="POST" id="checkout-form">
+                @csrf
+                <div class="p-4 bg-white border-bottom mb-4 border-radius-10 shadow-sm">
                                     @include('buyer.distributor.orders.partials.step-wizard', ['step' => 3])
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-7">
                                         <div class="card border-0 shadow-sm border-radius-10 mb-4">
-                                            <div class="card-header bg-white border-bottom p-4">
-                                                <h4 class="mb-0">Alamat Pengiriman</h4>
-                                                <p class="text-muted font-sm">Pilih alamat tujuan pengiriman stok.</p>
+                                            <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h4 class="mb-0">Alamat Pengiriman</h4>
+                                                    <p class="text-muted font-sm mb-0">Pilih alamat tujuan pengiriman stok.</p>
+                                                </div>
+                                                <a href="{{ route('buyer.addresses.create', ['origin' => 'distributor_checkout']) }}" class="btn btn-sm btn-brand rounded-pill">
+                                                    <i class="fi-rs-plus mr-5"></i> Tambah Alamat
+                                                </a>
                                             </div>
                                             <div class="card-body p-4">
-                                                <div class="row g-3">
-                                                    @foreach($addresses as $address)
+                                                @if($addresses->isEmpty())
+                                                    <div class="alert alert-warning mb-0">
+                                                        <i class="fi-rs-info mr-10"></i> 
+                                                        Anda belum memiliki alamat pengiriman. Silakan tambah alamat terlebih dahulu untuk melanjutkan pesanan.
+                                                    </div>
+                                                @else
+                                                    <div class="row g-3">
+                                                        @foreach($addresses as $address)
                                                         <div class="col-12">
                                                             <div class="address-item p-3 border border-radius-10 {{ $address->is_default ? 'border-brand' : '' }}">
                                                                 <div class="form-check">
@@ -58,6 +62,7 @@
                                                         </div>
                                                     @endforeach
                                                 </div>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -72,7 +77,7 @@
                                                     </p>
                                                     <p class="font-xs text-muted mb-0 mt-1" id="sourceWarehouseLocation">{{ $suggestedHub->full_location ?? '' }}</p>
                                                 @else
-                                                    <p class="mb-0 text-muted font-sm">Pilih alamat pengiriman untuk menentukan hub terdekat.</p>
+                                                    <p class="mb-0 text-muted font-sm text-danger">Hub pengiriman default belum diatur oleh admin. Pesanan tidak dapat diproses.</p>
                                                 @endif
                                             </div>
                                         </div>
@@ -207,17 +212,11 @@
                                                     <textarea name="notes" class="form-control font-sm" rows="3" placeholder="Contoh: Titip di satpam..."></textarea>
                                                 </div>
 
-                                                <button type="submit" class="btn btn-brand rounded-pill w-100 py-3 mt-2" id="btn-place-order">Buat Pesanan Sekarang <i class="fi-rs-check ml-10"></i></button>
+                                                <button type="submit" class="btn btn-brand rounded-pill w-100 py-3 mt-2" id="btn-place-order" {{ $addresses->isEmpty() ? 'disabled' : '' }}>Buat Pesanan Sekarang <i class="fi-rs-check ml-10"></i></button>
                                                 <p class="font-xs text-muted text-center mt-10"><i class="fi-rs-lock mr-5"></i> Pembayaran Anda aman dan terenkripsi.</p>
                                             </div>
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

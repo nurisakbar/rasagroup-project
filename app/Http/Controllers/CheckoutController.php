@@ -578,6 +578,14 @@ class CheckoutController extends Controller
             return redirect()->route('login');
         }
 
+        Log::info('--- CHECKOUT STORE START ---', [
+            'user_id' => Auth::id(),
+            'payment_method' => $request->payment_method,
+            'expedition_id' => $request->expedition_id,
+            'expedition_service' => $request->expedition_service,
+            'cart_ids' => $request->cart_ids,
+        ]);
+
         $user = Auth::user();
         $allowedPayments = ['xendit', 'faspay', 'manual_transfer'];
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
@@ -736,6 +744,21 @@ class CheckoutController extends Controller
                 }
             }
 
+            // Auto-resolve if service mismatch happens on self_pickup or single available service
+            if ($shippingCost < 0 && !empty($availableServices)) {
+                if ($expedition->code === 'self_pickup' || count($availableServices) === 1) {
+                    $autoService = $availableServices[0];
+                    \Log::info("Store: Auto-resolving expedition service mismatch for {$expedition->code} (requested: {$request->expedition_service}). Using service: {$autoService}");
+                    $request->merge(['expedition_service' => $autoService]);
+                    foreach ($costResult['data'] as $service) {
+                        if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $autoService) {
+                            $shippingCost = (float) $service['cost'];
+                            break;
+                        }
+                    }
+                }
+            }
+
             if ($shippingCost < 0) {
                 \Log::error('Store: Gagal menghitung ongkos kirim.', [
                     'expedition' => $expedition->code,
@@ -858,6 +881,14 @@ class CheckoutController extends Controller
                 'affiliate_points' => $affiliatePoints,
             ]);
             
+            Log::info('--- CHECKOUT DEBUG: ORDER CREATED ---', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'total_amount' => $total,
+                'payment_method' => $request->payment_method,
+                'expedition_service' => $request->expedition_service,
+            ]);
+
             // Load relationships for notification
             $order->load('address');
 
@@ -889,7 +920,7 @@ class CheckoutController extends Controller
             if ($request->has('cart_ids') && is_array($request->cart_ids)) {
                 $deleteQuery->whereIn('id', $request->cart_ids);
             }
-            $deleteQuery->delete();
+            $deletedCartCount = $deleteQuery->delete();
 
             // Handle Faspay/Xendit payment (to get invoice URL)
             $faspayInvoiceUrl = null;
@@ -897,7 +928,9 @@ class CheckoutController extends Controller
             
             Log::info('--- CHECKOUT DEBUG ---', [
                 'order_id' => $order->id,
+                'order_number' => $order->order_number,
                 'request_payment_method' => $request->payment_method,
+                'deleted_cart_count' => $deletedCartCount,
                 'config_active_gateway' => config('services.active_payment_gateway')
             ]);
 
@@ -970,6 +1003,7 @@ class CheckoutController extends Controller
             // This prevents creating QAD customers for users who haven't completed a purchase.
 
             DB::commit();
+            Log::info('--- CHECKOUT DEBUG: DB COMMITTED SUCCESS ---', ['order_id' => $order->id]);
 
             // Load relationships for notification (after commit to ensure data is saved)
             if (!$order->relationLoaded('address') || !$order->relationLoaded('items') || !$order->relationLoaded('expedition')) {
@@ -990,10 +1024,18 @@ class CheckoutController extends Controller
                 }
                 $order->loadMissing(['user', 'sourceWarehouse']);
             }
+            Log::info('--- CHECKOUT DEBUG: RELATIONSHIPS LOADED SUCCESS ---', ['order_id' => $order->id]);
 
                 // Dispatch background job to send payment notification
-                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
-                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
+                try {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
+                } catch (\Exception $exNotification) {
+                    Log::warning('Checkout Debug: Gagal dispatch WhatsApp notification (non-fatal)', [
+                        'order_id' => $order->id,
+                        'error' => $exNotification->getMessage(),
+                    ]);
+                }
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 
@@ -1021,6 +1063,11 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.success', $order)->with('success', 'Pesanan berhasil dibuat.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('--- CHECKOUT STORE ERROR ---', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->except(['_token'])
+            ]);
             return back()->with('error', 'Terjadi kesalahan saat membuat pesanan: ' . $e->getMessage());
         }
     }
@@ -1046,22 +1093,13 @@ class CheckoutController extends Controller
             'payment_method' => $order->payment_method,
         ]);
 
-        // HACK: Auto-approve untuk keperluan testing/UAT
-        if (in_array($order->payment_status, ['pending', 'unpaid'])) {
-            $order->update([
-                'payment_status' => 'paid',
-                'order_status' => 'processing'
-            ]);
-            \Illuminate\Support\Facades\Log::info('Order auto-marked as paid on success page for testing.', ['order_id' => $order->id]);
-        }
-
-        // Bypass antrean (queue) dan paksa sinkronisasi langsung ke Jubelio:
-        // Pokoknya setiap kali masuk halaman ini, sistem akan men-trigger ulang ke Jubelio.
-        try {
-            \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
-            \Illuminate\Support\Facades\Log::info('Synchronous Jubelio sync executed.', ['order_id' => $order->id]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Synchronous Jubelio sync failed.', ['error' => $e->getMessage()]);
+        if ($order->payment_status === 'paid') {
+            try {
+                \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                \Illuminate\Support\Facades\Log::info('Synchronous Jubelio sync executed for paid order.', ['order_id' => $order->id]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Synchronous Jubelio sync failed.', ['error' => $e->getMessage()]);
+            }
         }
 
         // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).

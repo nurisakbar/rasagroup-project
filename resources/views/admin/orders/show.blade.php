@@ -61,6 +61,27 @@
                             <th>Tanggal Pesanan</th>
                             <td>{{ $order->created_at->format('d M Y H:i') }}</td>
                         </tr>
+                        @php
+                            $isSelfPickupTop = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                        @endphp
+                        @if($order->pickup_ready_at)
+                        <tr class="bg-success">
+                            <th><i class="fa fa-calendar-check-o"></i> Siap Diambil</th>
+                            <td><strong>{{ $order->pickup_ready_at->format('d M Y H:i') }} WIB</strong></td>
+                        </tr>
+                        @endif
+                        @if($order->shipped_at)
+                        <tr class="bg-info">
+                            <th><i class="fa {{ $isSelfPickupTop ? 'fa-shopping-bag' : 'fa-truck' }}"></i> {{ $isSelfPickupTop ? 'Waktu Diambil Pembeli' : 'Waktu Dikirim' }}</th>
+                            <td><strong>{{ $order->shipped_at->format('d M Y H:i') }} WIB</strong></td>
+                        </tr>
+                        @endif
+                        @if($order->received_at)
+                        <tr class="bg-success">
+                            <th><i class="fa fa-check-circle"></i> Waktu Diterima</th>
+                            <td><strong>{{ $order->received_at->format('d M Y H:i') }} WIB</strong></td>
+                        </tr>
+                        @endif
                         @if($order->preferred_shipping_date)
                         <tr class="bg-yellow">
                             <th><i class="fa fa-calendar"></i> Rencana Pengiriman</th>
@@ -225,9 +246,12 @@
                                     // EkspedisiKu Pickup API currently only supports Lion Parcel
                                     $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel'], true);
                                     $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
+                                    $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
                                 @endphp
 
-                                @if($order->tracking_number)
+                                @if($isSelfPickup)
+                                    <span class="label label-success" style="font-size: 12px;"><i class="fa fa-shopping-bag"></i> Tidak Ada Resi (Self Pickup)</span>
+                                @elseif($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
                                     @if($isLalamove)
                                         <br><small class="text-muted">Order ID Lalamove</small>
@@ -461,6 +485,29 @@
                         @csrf
                         @method('PUT')
                         
+                        <!-- Payment Status -->
+                        <div class="form-group">
+                            <label>Status Pembayaran Saat Ini</label>
+                            @php
+                                $paymentClass = [
+                                    'pending' => 'warning',
+                                    'paid' => 'success',
+                                    'failed' => 'danger',
+                                    'refunded' => 'info',
+                                ][$order->payment_status] ?? 'default';
+                            @endphp
+
+                            <select name="payment_status" id="payment_status" class="form-control">
+                                <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
+                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
+                                <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
+                                <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
+                            </select>
+                        </div>
+
+                        <hr>
+
                         <!-- Current Status Display -->
                         <div class="form-group">
                             <label>Status Pesanan Saat Ini</label>
@@ -474,15 +521,26 @@
                                     'cancelled' => 'danger',
                                 ][$order->order_status] ?? 'default';
                             @endphp
-                            <select name="order_status" id="order_status" class="form-control">
-                                <option value="">-- Pilih Status Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="processing" {{ $order->order_status === 'processing' ? 'selected' : '' }}>Processing</option>
-                                <option value="shipped" {{ $order->order_status === 'shipped' ? 'selected' : '' }}>Shipped</option>
-                                <option value="delivered" {{ $order->order_status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                                <option value="completed" {{ $order->order_status === 'completed' ? 'selected' : '' }}>Completed</option>
-                                <option value="cancelled" {{ $order->order_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                            </select>
+                            @if($order->payment_status === 'paid')
+                                <select name="order_status" id="order_status" class="form-control">
+                                    <option value="">-- Pilih Status Baru (Opsional) --</option>
+                                    <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="processing" {{ $order->order_status === 'processing' ? 'selected' : '' }}>Processing</option>
+                                    <option value="shipped" {{ $order->order_status === 'shipped' ? 'selected' : '' }}>Shipped</option>
+                                    <option value="delivered" {{ $order->order_status === 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                    <option value="completed" {{ $order->order_status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                    <option value="cancelled" {{ $order->order_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                </select>
+                            @else
+                                <div class="form-control" style="background-color: #e9ecef; cursor: not-allowed; display: flex; align-items: center; height: auto;">
+                                    <span class="label label-{{ $statusClass }}" style="margin-right: 10px;">{{ ucfirst($order->order_status) }}</span>
+                                    <span class="text-muted"><i class="fa fa-lock"></i> Terkunci (Menunggu Pembayaran)</span>
+                                </div>
+                                <input type="hidden" name="order_status" value="{{ $order->order_status }}">
+                                <div class="alert alert-warning" style="margin-top: 10px; margin-bottom: 0; padding: 10px; border-radius: 5px;">
+                                    <i class="fa fa-warning"></i> Status pesanan hanya dapat diubah setelah pembayaran lunas/terkonfirmasi.
+                                </div>
+                            @endif
                         </div>
 
                         <hr>
@@ -501,6 +559,35 @@
                         </div>
 
                         <!-- Tracking Number -->
+                        @if($isSelfPickup)
+                        <div class="form-group">
+                            <label>Jadwal & Info Pengambilan (Self Pickup)</label>
+                            <div class="callout callout-success" style="margin-bottom: 15px; padding: 10px;">
+                                <i class="fa fa-shopping-bag"></i> <strong>Self Pickup (Ambil Sendiri di Gudang)</strong><br>
+                                <small>Tentukan kapan pesanan siap diambil dan berikan catatan instruksi untuk pembeli.</small>
+                            </div>
+                            @if($order->payment_status === 'paid')
+                                <label for="pickup_ready_at" style="font-weight: 600;"><i class="fa fa-calendar-check-o text-success"></i> 1. Tanggal & Waktu Siap Diambil (Ready)</label>
+                                <input type="datetime-local" class="form-control" id="pickup_ready_at" name="pickup_ready_at" 
+                                       value="{{ $order->pickup_ready_at ? $order->pickup_ready_at->format('Y-m-d\TH:i') : '' }}" style="margin-bottom: 12px; font-size: 14px; padding: 8px;">
+                                
+                                @if(!empty($order->pickup_ready_at))
+                                    <label for="shipped_at" style="font-weight: 600;"><i class="fa fa-handshake-o text-primary"></i> 2. Tanggal & Waktu Diserahkan / Diambil Pembeli (Handover)</label>
+                                    <input type="datetime-local" class="form-control" id="shipped_at" name="shipped_at" 
+                                           value="{{ $order->shipped_at ? $order->shipped_at->format('Y-m-d\TH:i') : '' }}" style="margin-bottom: 12px; font-size: 14px; padding: 8px;">
+                                @else
+                                    <div class="text-muted" style="margin-bottom: 12px; font-style: italic; font-size: 12px;"><i class="fa fa-info-circle"></i> Tentukan dan simpan jadwal siap diambil (Ready) terlebih dahulu untuk memunculkan opsi serah terima.</div>
+                                @endif
+
+                                <label for="pickup_note" style="font-weight: 600;"><i class="fa fa-pencil text-success"></i> Catatan & Instruksi Pengambilan</label>
+                                <textarea class="form-control" id="pickup_note" name="pickup_note" rows="3" 
+                                          placeholder="Contoh: Barang siap diambil di Gudang Utama (Lantai 1), harap menemui petugas gudang dengan menunjukkan nomor pesanan ini.">{{ $order->pickup_note }}</textarea>
+                                <small class="text-info" style="display: block; margin-top: 6px;">
+                                    <i class="fa fa-info-circle"></i> Mengisi waktu diserahkan/diambil akan otomatis mengubah status pesanan menjadi Dikirim (Diserahkan).
+                                </small>
+                            @endif
+                        </div>
+                        @else
                         <div class="form-group">
                             <label for="tracking_number">Nomor Resi Pengiriman</label>
                             @if($order->tracking_number)
@@ -527,36 +614,9 @@
                                 </small>
                             @endif
                         </div>
+                        @endif
 
-                        <hr>
 
-                        <!-- Payment Status -->
-                        <div class="form-group">
-                            <label>Status Pembayaran Saat Ini</label>
-                            @php
-                                $paymentClass = [
-                                    'pending' => 'warning',
-                                    'paid' => 'success',
-                                    'failed' => 'danger',
-                                    'refunded' => 'info',
-                                ][$order->payment_status] ?? 'default';
-                            @endphp
-                            <div class="text-center" style="margin-bottom: 10px;">
-                                <p class="text-muted" style="margin-top: 5px; margin-bottom: 0;">
-                                    <i class="fa fa-{{ $order->payment_method == 'transfer' ? 'bank' : 'money' }}"></i>
-                                    {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ($order->payment_method == 'cod' ? 'COD (Bayar di Tempat)' : ucfirst($order->payment_method)) }}
-                                </p>
-                            </div>
-                            <select name="payment_status" id="payment_status" class="form-control">
-                                <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
-                                <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
-                                <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
-                            </select>
-                        </div>
-
-                        <hr>
 
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-block btn-lg">
@@ -585,11 +645,17 @@ $(document).ready(function() {
     var originalOrderStatus = $('#order_status').val();
     var originalTrackingNumber = $('#tracking_number').val();
     var originalPaymentStatus = $('#payment_status').val();
+    var originalPickupReadyAt = $('#pickup_ready_at').val();
+    var originalShippedAt = $('#shipped_at').val();
+    var originalPickupNote = $('#pickup_note').val();
     
     $('#updateOrderForm').on('submit', function(e) {
         var orderStatus = $('#order_status').val();
         var trackingNumber = $('#tracking_number').val();
         var paymentStatus = $('#payment_status').val();
+        var pickupReadyAt = $('#pickup_ready_at').val();
+        var shippedAt = $('#shipped_at').val();
+        var pickupNote = $('#pickup_note').val();
         
         // Check if at least one field has changed
         var hasChanges = false;
@@ -598,11 +664,23 @@ $(document).ready(function() {
             hasChanges = true;
         }
         
-        if (trackingNumber !== originalTrackingNumber) {
+        if (trackingNumber !== undefined && trackingNumber !== originalTrackingNumber) {
             hasChanges = true;
         }
         
         if (paymentStatus && paymentStatus !== originalPaymentStatus) {
+            hasChanges = true;
+        }
+
+        if (pickupReadyAt !== undefined && pickupReadyAt !== originalPickupReadyAt) {
+            hasChanges = true;
+        }
+
+        if (shippedAt !== undefined && shippedAt !== originalShippedAt) {
+            hasChanges = true;
+        }
+
+        if (pickupNote !== undefined && pickupNote !== originalPickupNote) {
             hasChanges = true;
         }
         
@@ -757,7 +835,7 @@ $(document).ready(function() {
         }, 3000);
     }
 
-    $('#order_status, #payment_status').on('change', function() {
+    $('#order_status, #payment_status, #pickup_ready_at, #shipped_at').on('change', function() {
         var $select = $(this);
         var $form = $('#updateOrderForm');
         
