@@ -783,6 +783,16 @@
         color: #6A1B1B !important;
         font-weight: 700;
     }
+    .widget-category-2 .count {
+        background-color: #F7E9E9 !important;
+        color: #6A1B1B !important;
+        font-weight: 700 !important;
+    }
+    .widget-category-2 ul li:hover .count,
+    .widget-category-2 ul li a.rg-category-active ~ .count {
+        background-color: #6A1B1B !important;
+        color: #FFFFFF !important;
+    }
     .product-detail-cart-row {
         align-items: center !important;
     }

@@ -932,6 +932,24 @@
             color: #6A1B1B !important;
         }
 
+        /* Kategori widget count & hover styling (sesuai identitas Rasa Group) */
+        .widget-category-2 .count {
+            background-color: #F7E9E9 !important;
+            color: #6A1B1B !important;
+            font-weight: 700 !important;
+        }
+        .widget-category-2 ul li:hover .count,
+        .widget-category-2 ul li a.rg-category-active ~ .count {
+            background-color: #6A1B1B !important;
+            color: #FFFFFF !important;
+        }
+        .widget-category-2 ul li:hover {
+            border-color: #E8C5C5 !important;
+        }
+        .widget-category-2 ul li:hover a {
+            color: #6A1B1B !important;
+        }
+
         /* Menu paket: beranda (Menu Hari Ini) + /menus — gambar kartu tinggi seragam (timpa main.css Nest) */
         .product-cart-wrap.style-2.rg-menu-hari-ini-card .product-img-action-wrap {
             overflow: hidden !important;

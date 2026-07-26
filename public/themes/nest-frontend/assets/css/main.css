@@ -7564,15 +7564,15 @@ span.fi-rs-apps {
   margin-bottom: 0 !important;
 }
 .widget-category-2 ul li:hover {
-  border: 1px solid #BCE3C9;
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E8C5C5;
+  box-shadow: 5px 5px 15px rgba(106, 27, 27, 0.05);
   transition: 0.3s;
   -moz-transition: 0.3s;
   -webkit-transition: 0.3s;
   -o-transition: 0.3s;
 }
 .widget-category-2 ul li:hover a {
-  color: #3BB77E;
+  color: #6A1B1B;
 }
 .widget-category-2 ul li a {
   display: flex;
@@ -7583,7 +7583,7 @@ span.fi-rs-apps {
   font-size: 14px;
 }
 .widget-category-2 ul li a:hover {
-  color: #3BB77E;
+  color: #6A1B1B;
   background-color: transparent;
 }
 .widget-category-2 ul li a img {
@@ -7661,7 +7661,7 @@ span.fi-rs-apps {
 }
 .widget-category-2 .count {
   display: inline-block;
-  background-color: #BCE3C9;
+  background-color: #F7E9E9;
   width: 24px;
   height: 24px;
   line-height: 24px;
@@ -7669,7 +7669,13 @@ span.fi-rs-apps {
   border-radius: 20px;
   margin-left: 5px;
   font-size: 12px;
-  color: #253D4E;
+  font-weight: 700;
+  color: #6A1B1B;
+}
+.widget-category-2 ul li:hover .count,
+.widget-category-2 ul li a.rg-category-active ~ .count {
+  background-color: #6A1B1B;
+  color: #FFFFFF;
 }
 
 /*Social network widget*/
