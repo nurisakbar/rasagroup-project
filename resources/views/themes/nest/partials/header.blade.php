@@ -145,7 +145,7 @@
                             <nav>
                                 <ul>
                                     <li>
-                                        <a class="{{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Halaman Utama</a>
+                                        <a class="{{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">HALAMAN UTAMA</a>
                                     </li>
 
                                     <li>
@@ -155,19 +155,19 @@
                                         <a class="{{ request('brand') == 'multibev' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a>
                                     </li>
                                     <li>
-                                        <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">Promo</a>
+                                        <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">PROMO</a>
                                     </li>
                                     <li>
-                                        <a class="{{ request()->routeIs('menus.*') ? 'active' : '' }}" href="{{ route('menus.index') }}">Menu Paket</a>
+                                        <a class="{{ request()->routeIs('menus.*') ? 'active' : '' }}" href="{{ route('menus.index') }}">MENU PAKET</a>
                                     </li>
                                     {{-- <li>
                                         <a class="{{ request()->routeIs('hubs.*') ? 'active' : '' }}" href="{{ route('hubs.index') }}">Distributor</a>
                                     </li> --}}
                                     <li>
-                                        <a class="{{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">Hubungi Kami</a>
+                                        <a class="{{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">HUBUNGI KAMI</a>
                                     </li>
                                     <li>
-                                        <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">Saluran Informasi</a>
+                                        <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">SALURAN INFORMASI</a>
                                     </li>
 
                                 </ul>

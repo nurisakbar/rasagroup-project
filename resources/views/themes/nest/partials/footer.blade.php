@@ -125,9 +125,9 @@
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">
                     <div class="mobile-social-icon">
                         <h6>Ikuti Kami</h6>
-                        <a href="https://web.facebook.com/profile.php?id=100080673773420"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
-                        <a href="https://www.instagram.com/rasagroupofficial/"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
-                        <a href="https://www.youtube.com/@rasagroup4229"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
+                        <a href="https://web.facebook.com/profile.php?id=100080673773420" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
+                        <a href="https://www.instagram.com/rasagroupofficial/" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
+                        <a href="https://www.youtube.com/@rasagroup4229" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                     </div>
                 </div>
             </div>

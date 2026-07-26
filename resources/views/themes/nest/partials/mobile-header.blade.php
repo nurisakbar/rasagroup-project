@@ -25,14 +25,14 @@
                     @endphp
                     <nav>
                         <ul class="mobile-menu font-heading">
-                            <li><a href="{{ route('home') }}">Halaman Utama</a></li>
+                            <li><a href="{{ route('home') }}">HALAMAN UTAMA</a></li>
 
                             <li><a href="{{ route('products.index', ['brand' => 'dripp']) }}">DRIPP</a></li>
                             <li><a href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a></li>
-                            <li><a href="{{ route('promo.index') }}">Promo</a></li>
-                            <li><a href="{{ route('menus.index') }}">Menu Paket</a></li>
-                            <li><a href="{{ route('contact') }}">Hubungi Kami</a></li>
-                            <li><a href="{{ route('information-channels.index') }}">Saluran Informasi</a></li>
+                            <li><a href="{{ route('promo.index') }}">PROMO</a></li>
+                            <li><a href="{{ route('menus.index') }}">MENU PAKET</a></li>
+                            <li><a href="{{ route('contact') }}">HUBUNGI KAMI</a></li>
+                            <li><a href="{{ route('information-channels.index') }}">SALURAN INFORMASI</a></li>
 
 
 
@@ -43,11 +43,11 @@
 
                 <div class="mobile-social-icon mt-40 mb-50 pt-20 border-top">
                     <h6 class="mb-15">Ikuti Kami</h6>
-                    <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
-                    <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-twitter-white.svg') }}" alt="" /></a>
-                    <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
-                    <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
-                    <a href="#"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
+                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
+                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-twitter-white.svg') }}" alt="" /></a>
+                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
+                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
+                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                 </div>
                 <div class="site-copyright">Copyright {{ date('Y') }} © Rasa Group. Seluruh hak cipta dilindungi.</div>
             </div>
