@@ -52,7 +52,7 @@
                                                                             <h6 class="mb-1">{{ $address->recipient_name }} @if($address->is_default) <span class="badge bg-brand fs-tiny ml-10">Default</span> @endif</h6>
                                                                             <span class="text-muted font-sm">{{ $address->phone }}</span>
                                                                         </div>
-                                                                        <p class="font-sm text-muted mb-0">
+                                                                        <p class="font-sm mb-0 mt-2" style="color: #253D4E;">
                                                                             {{ $address->address_detail }}<br>
                                                                             {{ $address->district->name ?? '' }}, {{ $address->regency->name ?? '' }}, {{ $address->province->name ?? '' }} {{ $address->postal_code }}
                                                                         </p>
@@ -74,8 +74,15 @@
                                                 @if($suggestedHub)
                                                     <p class="mb-0 font-sm">
                                                         <strong><i class="fi-rs-building mr-5"></i> {{ $suggestedHub->name }}</strong>
+                                                        @if($suggestedHub->phone)
+                                                        <br><i class="fi-rs-smartphone mr-5"></i> {{ $suggestedHub->phone }}
+                                                        @endif
                                                     </p>
-                                                    <p class="font-xs text-muted mb-0 mt-1" id="sourceWarehouseLocation">{{ $suggestedHub->full_location ?? '' }}</p>
+                                                    <p class="font-sm mb-0 mt-2" style="color: #253D4E;" id="sourceWarehouseLocation">
+                                                        {{ $suggestedHub->address }}<br>
+                                                        {{ implode(', ', array_filter([$suggestedHub->village_name, $suggestedHub->district_name, $suggestedHub->regency_name, $suggestedHub->province_name])) }}
+                                                        {{ $suggestedHub->postal_code ? $suggestedHub->postal_code : '' }}
+                                                    </p>
                                                 @else
                                                     <p class="mb-0 text-muted font-sm text-danger">Hub pengiriman default belum diatur oleh admin. Pesanan tidak dapat diproses.</p>
                                                 @endif

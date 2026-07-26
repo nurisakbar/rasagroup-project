@@ -614,6 +614,13 @@ class OrderController extends Controller
             ]);
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
 
+            if ($order->payment_method === 'term_of_payment' && $order->sourceWarehouse) {
+                $staffMembers = $order->sourceWarehouse->users;
+                if ($staffMembers && $staffMembers->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($staffMembers, new \App\Notifications\Orders\NewTopOrderNotification($order));
+                }
+            }
+
             return redirect()->route('distributor.orders.success', $order)
                 ->with('success', 'Pesanan berhasil dibuat.');
         } catch (\Exception $e) {
@@ -846,6 +853,15 @@ class OrderController extends Controller
                     'payment_submit_note' => $request->payment_submit_note,
                     'payment_submitted_at' => now(),
                 ]);
+
+                if ($email = \App\Models\Setting::get('payment_confirmation_email')) {
+                    try {
+                        \Illuminate\Support\Facades\Notification::route('mail', $email)
+                            ->notify(new \App\Notifications\Orders\PaymentConfirmationSubmittedNotification($order));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed sending payment confirmation email: ' . $e->getMessage());
+                    }
+                }
             }
 
             return redirect()->route('distributor.orders.show', $order)->with('success', 'Konfirmasi pembayaran berhasil dikirim. Tunggu verifikasi dari pusat.');

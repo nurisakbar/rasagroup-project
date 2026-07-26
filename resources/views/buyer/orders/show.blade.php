@@ -59,7 +59,7 @@
                                 </div>
                             </div>
 
-                            @if($order->payment_method === 'manual_transfer' && $order->order_status !== 'cancelled' && $order->payment_status !== 'paid')
+                            @if(in_array($order->payment_method, ['manual_transfer', 'transfer']) && $order->order_status !== 'cancelled' && $order->payment_status !== 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
                                 <div class="card-body p-4" style="background-color: #fcfcfc; border: 1px solid #ececec; border-radius: 15px;">
                                     <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-list-check mr-5"></i>Tahapan Pembayaran Manual</h6>
@@ -276,7 +276,7 @@
                                                 @endif
                                             </div>
 
-                                            @if($order->payment_status === 'pending' && $order->payment_method === 'manual_transfer')
+                                            @if($order->payment_status === 'pending' && in_array($order->payment_method, ['manual_transfer', 'transfer']))
                                                 <div class="mt-4 pt-3 border-top text-center">
                                                     @if($order->payment_proof)
                                                         <div class="alert alert-info font-sm mb-0 rounded-pill">

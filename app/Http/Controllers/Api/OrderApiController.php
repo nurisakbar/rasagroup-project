@@ -424,6 +424,13 @@ class OrderApiController extends Controller
             // Dispatch background job to send payment notification
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
+
+            if ($order->payment_method === 'term_of_payment' && $order->sourceWarehouse) {
+                $staffMembers = $order->sourceWarehouse->users;
+                if ($staffMembers && $staffMembers->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($staffMembers, new \App\Notifications\Orders\NewTopOrderNotification($order));
+                }
+            }
             
             // Note: Thank you notification will be sent after payment is successful via Xendit webhook
 

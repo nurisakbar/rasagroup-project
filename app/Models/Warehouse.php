@@ -179,6 +179,38 @@ class Warehouse extends Model
         return implode(', ', $parts) ?: '-';
     }
 
+    public function getFullAddressAttribute(): string
+    {
+        $parts = [];
+        if ($this->address) {
+            $parts[] = $this->address;
+        }
+        
+        $regionParts = [];
+        if ($this->village_name) {
+            $regionParts[] = $this->village_name;
+        }
+        if ($this->district_name) {
+            $regionParts[] = $this->district_name;
+        }
+        if ($this->regency_name) {
+            $regionParts[] = $this->regency_name;
+        }
+        if ($this->province_name) {
+            $regionParts[] = $this->province_name;
+        }
+        
+        if (!empty($regionParts)) {
+            $parts[] = implode(', ', $regionParts);
+        }
+        
+        if ($this->postal_code) {
+            $parts[] = $this->postal_code;
+        }
+        
+        return implode(', ', $parts) ?: '-';
+    }
+
     /**
      * Find the best warehouse for a given address.
      *

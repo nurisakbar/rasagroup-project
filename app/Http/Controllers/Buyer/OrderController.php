@@ -145,6 +145,15 @@ class OrderController extends Controller
                     'payment_submit_note' => $request->payment_submit_note,
                     'payment_submitted_at' => now(),
                 ]);
+
+                if ($email = \App\Models\Setting::get('payment_confirmation_email')) {
+                    try {
+                        \Illuminate\Support\Facades\Notification::route('mail', $email)
+                            ->notify(new \App\Notifications\Orders\PaymentConfirmationSubmittedNotification($order));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed sending payment confirmation email: ' . $e->getMessage());
+                    }
+                }
             }
 
             return redirect()->route('buyer.orders.show', $order)->with('success', 'Konfirmasi pembayaran berhasil dikirim. Tunggu verifikasi dari pusat.');

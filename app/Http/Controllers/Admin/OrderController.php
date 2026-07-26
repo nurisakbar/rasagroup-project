@@ -217,10 +217,11 @@ class OrderController extends Controller
 
         $oldStatus = $order->order_status;
         $oldPickupReady = $order->pickup_ready_at;
+        $oldShippedAt = $order->shipped_at;
 
         $order->update($updateData);
 
-        $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady);
+        $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady, $oldShippedAt);
 
         return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
@@ -266,8 +267,8 @@ class OrderController extends Controller
 
         $order->update($updateData);
 
-        // Dispatch background jobs for notifications
-        if ($request->payment_status === 'paid') {
+        // Dispatch background jobs for notifications only when payment status actually changed to paid
+        if ($order->wasChanged('payment_status') && $order->payment_status === 'paid') {
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
             
@@ -294,6 +295,7 @@ class OrderController extends Controller
 
         $oldStatus = $order->order_status;
         $oldPickupReady = $order->pickup_ready_at;
+        $oldShippedAt = $order->shipped_at;
 
         $updateData = [];
         $messages = [];
@@ -377,7 +379,7 @@ class OrderController extends Controller
         if (!empty($updateData)) {
             $order->update($updateData);
             
-            $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady);
+            $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady, $oldShippedAt);
 
             // Dispatch background job for tracking notification
             if (isset($updateData['tracking_number'])) {
@@ -385,8 +387,8 @@ class OrderController extends Controller
             }
 
             $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
-            // Dispatch background jobs for notifications
-            if (isset($updateData['payment_status']) && $updateData['payment_status'] === 'paid') {
+            // Dispatch background jobs for notifications only when payment status actually changed to paid
+            if ($order->wasChanged('payment_status') && $order->payment_status === 'paid') {
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
 
@@ -641,7 +643,7 @@ class OrderController extends Controller
         }
     }
 
-    protected function sendOrderTransitionNotifications(Order $order, $oldStatus, $oldPickupReady)
+    protected function sendOrderTransitionNotifications(Order $order, $oldStatus, $oldPickupReady, $oldShippedAt = null)
     {
         if (!$order->user) {
             return;
@@ -657,8 +659,9 @@ class OrderController extends Controller
             $order->user->notify(new OrderPickupReadyNotification($order));
         }
 
-        // Status shipped
-        if ($oldStatus !== 'shipped' && $order->order_status === 'shipped') {
+        // Status shipped OR Handover timestamp updated
+        if (($oldStatus !== 'shipped' && $order->order_status === 'shipped') || 
+            ($order->shipped_at && (!$oldShippedAt || $order->shipped_at->toDateTimeString() !== $oldShippedAt->toDateTimeString()))) {
             $order->user->notify(new OrderShippedNotification($order));
         }
 
