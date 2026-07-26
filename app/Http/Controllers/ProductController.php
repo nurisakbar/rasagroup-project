@@ -108,14 +108,14 @@ class ProductController extends Controller
             ->get();
 
         $tabCategories = \App\Models\Category::where('is_active', true)
-            ->whereHas('products', function($q) use ($request) {
-                $q->where('status', 'active');
-                if ($request->filled('brand')) {
-                    $q->whereHas('brand', function($q2) use ($request) {
-                        $q2->where('slug', $request->brand);
+            ->when($request->filled('brand'), function($q) use ($request) {
+                $q->whereHas('products', function($q2) use ($request) {
+                    $q2->where('status', 'active')->whereHas('brand', function($q3) use ($request) {
+                        $q3->where('slug', $request->brand);
                     });
-                }
+                });
             })
+            ->orderBy('name')
             ->get();
         $selectedBrand = $request->filled('brand')
             ? \App\Models\Brand::where('slug', $request->brand)->where('is_active', true)->first()
