@@ -139,6 +139,9 @@
                                 </thead>
                                 <tbody>
                                     @forelse($stocks as $stock)
+                                        @if(!$stock->product)
+                                            @continue
+                                        @endif
                                         <tr>
                                             <td class="text-center">
                                                 @if($stock->product->image)

@@ -177,8 +177,12 @@ class WarehouseController extends Controller
     {
         if ($request->ajax()) {
             $query = Warehouse::with(['wilayah'])
-                ->withCount('stocks as products_count')
-                ->withSum('stocks', 'stock');
+                ->withCount(['stocks as products_count' => function ($q) {
+                    $q->whereHas('product');
+                }])
+                ->withSum(['stocks as stocks_sum_stock' => function ($q) {
+                    $q->whereHas('product');
+                }], 'stock');
 
             // Filter by province
             if ($request->filled('province_id') && $request->province_id != '') {
@@ -332,6 +336,7 @@ class WarehouseController extends Controller
 
         // Get stocks with product information
         $query = WarehouseStock::with('product')
+            ->whereHas('product')
             ->where('warehouse_id', $warehouse->id);
         
         // Search filter
