@@ -25,12 +25,13 @@ class DashboardController extends Controller
         $recentStocks = collect();
         
         if ($warehouse) {
-            $totalProducts = WarehouseStock::where('warehouse_id', $warehouse->id)->count();
-            $totalStock = WarehouseStock::where('warehouse_id', $warehouse->id)->sum('stock');
-            $lowStockProducts = WarehouseStock::where('warehouse_id', $warehouse->id)
+            $totalProducts = WarehouseStock::whereHas('product')->where('warehouse_id', $warehouse->id)->count();
+            $totalStock = WarehouseStock::whereHas('product')->where('warehouse_id', $warehouse->id)->sum('stock');
+            $lowStockProducts = WarehouseStock::whereHas('product')->where('warehouse_id', $warehouse->id)
                 ->where('stock', '<=', 10)
                 ->count();
             $recentStocks = WarehouseStock::with('product')
+                ->whereHas('product')
                 ->where('warehouse_id', $warehouse->id)
                 ->orderBy('updated_at', 'desc')
                 ->limit(5)

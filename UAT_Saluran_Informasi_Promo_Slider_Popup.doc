@@ -1,0 +1,67 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Times New Roman', serif; line-height: 1.6; }
+h1, h2, h3 { color: #000; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>Dokumen User Acceptance Testing (UAT) - Modul Saluran Informasi, Promo, Web Slider, dan Pop Up</h1>
+<p>Dokumen ini berisi skenario pengujian End-to-End untuk menguji fitur manajemen konten marketing dan publikasi sistem, meliputi pengelolaan Saluran Informasi (artikel/berita & komentar), program Promo & Diskon produk, Banner Web Slider beranda, hingga pop up promosi interaktif bagi pengunjung situs.</p>
+
+<h2>1. Pengujian Modul Saluran Informasi (Information Channels / CMS Berita)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Admin - Buat Saluran Informasi Baru</td><td>Admin membuka /admin/information-channels/create, mengisi Judul, Deskripsi, Upload Gambar, memilih Target Audience (All, Distributor, atau Customer), Rentang Waktu, dan centang Aktif, lalu klik Simpan.</td><td>Data saluran informasi tersimpan, gambar terupload ke storage, dan muncul pada tabel daftar saluran informasi dengan status Aktif.</td><td></td></tr>
+<tr><td>2</td><td>Frontend - Filter Konten Sesuai Role (Target Audience)</td><td>Pengguna membuka halaman /saluran-informasi dengan kondisi login sebagai Pembeli Biasa (Customer) atau Distributor.</td><td>Sistem hanya menampilkan saluran informasi yang ditujukan untuk semua orang (All) dan yang khusus sesuai role pengguna yang login. Konten khusus role lain disembunyikan.</td><td></td></tr>
+<tr><td>3</td><td>Frontend - Detail Artikel & Fitur Komentar (User Login)</td><td>Pengguna yang sudah login membuka detail saluran informasi (/saluran-informasi/{slug}), mengetik komentar pada kolom diskusi, lalu kirim.</td><td>Komentar berhasil ditambahkan ke dalam sistem (storeComment), halaman dimuat ulang dengan pesan sukses, dan komentar muncul dengan nama pengirim serta tanggal posting.</td><td></td></tr>
+<tr><td>4</td><td>Frontend - Validasi Komentar untuk Tamu (Guest)</td><td>Pengguna yang belum login (guest) membuka detail saluran informasi dan mencoba mengirim komentar.</td><td>Sistem meminta pengguna untuk melakukan login terlebih dahulu (diproteksi oleh middleware('auth')).</td><td></td></tr>
+<tr><td>5</td><td>Admin - Nonaktifkan / Hapus Konten</td><td>Admin mengubah status saluran informasi menjadi Nonaktif atau mengklik tombol Hapus pada tabel admin.</td><td>Konten saluran informasi langsung tidak ditampilkan lagi di halaman publik (/saluran-informasi).</td><td></td></tr>
+</table>
+
+<h2>2. Pengujian Modul Promo & Diskon Produk</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Admin - Buat Program Promo Baru</td><td>Admin membuka /admin/promos/create, mengisi Kode Promo, Judul Promo, Upload Banner, Deskripsi, Tanggal Awal & Akhir, memilih Target Audience (umum, affiliator, distributor), dan menambahkan Produk (product_ids), lalu klik Simpan.</td><td>Program promo baru berhasil dibuat dengan slug unik dan mengikat produk-produk yang dipilih sesuai target audiens.</td><td></td></tr>
+<tr><td>2</td><td>Frontend - Tampilan Promo di Halaman Utama & Katalog</td><td>Pengguna mengunjungi Halaman Utama (/) dan Halaman Promo (/promo) selama periode promo aktif berlangsung.</td><td>Produk yang masuk ke dalam program promo menampilkan harga coret (harga normal), harga setelah diskon, dan label/badge promo menarik.</td><td></td></tr>
+<tr><td>3</td><td>Frontend - Akses Detail Promo & Daftar Produk Diskon</td><td>Pengguna mengklik banner atau tautan promo untuk menuju ke halaman detail /promo/{slug}.</td><td>Menampilkan halaman informasi promo secara spesifik beserta daftar seluruh produk yang mendapatkan harga spesial pada promo tersebut.</td><td></td></tr>
+<tr><td>4</td><td>Validasi Masa Berlaku Promo (Expired)</td><td>Admin mengatur tanggal akhir promo (akhir) melewati batas waktu (sudah lewat) atau menonaktifkan status promo.</td><td>Sistem otomatis menghentikan penawaran harga diskon; produk kembali menampilkan harga normal dan promo tidak lagi muncul di halaman /promo.</td><td></td></tr>
+</table>
+
+<h2>3. Pengujian Modul Web Slider (Banner Beranda)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Admin - Tambah Web Slider Baru</td><td>Admin membuka /admin/sliders/create, mengisi Judul, Deskripsi, Tautan Target (Link URL), Upload Gambar Banner, Urutan Tampil (sort_order), dan centang Aktif, lalu klik Simpan.</td><td>Banner slider tersimpan dan tampil di tabel daftar slider Admin.</td><td></td></tr>
+<tr><td>2</td><td>Frontend - Navigasi & Urutan Tampilan Carousel Slider</td><td>Pengguna mengunjungi halaman utama situs (/).</td><td>Banner slider ditampilkan dalam bentuk carousel yang dapat di-slide/berputar otomatis, diurutkan secara presisi mulai dari angka sort_order terkecil ke terbesar.</td><td></td></tr>
+<tr><td>3</td><td>Frontend - Interaksi Klik Tautan Slider</td><td>Pengguna mengklik gambar atau tombol aksi pada Web Slider yang memiliki Tautan Target (Link).</td><td>Browser secara otomatis mengarahkan pengguna ke halaman promo, kategori, atau URL tujuan yang telah diatur oleh Admin.</td><td></td></tr>
+<tr><td>4</td><td>Admin - Nonaktifkan Slider</td><td>Admin menonaktifkan status slider (is_active = false) di panel Admin.</td><td>Banner slider tersebut seketika disembunyikan dari carousel beranda tanpa perlu menghapus datanya.</td><td></td></tr>
+</table>
+
+<h2>4. Pengujian Modul Pop Up Promosi (Website Popups)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Admin - Buat Pop Up Promosi Baru</td><td>Admin membuka /admin/website-popups/create, mengisi Nama Pop Up, URL Tujuan (Opsional), Upload Gambar Pop Up, dan centang Status Aktif, lalu klik Simpan.</td><td>Pop up promosi tersimpan di dalam sistem dengan status aktif (is_active = true).</td><td></td></tr>
+<tr><td>2</td><td>Frontend - Munculan Otomatis (Modal Popup) Saat Kunjungan</td><td>Pengguna atau pengunjung baru membuka halaman utama situs (/).</td><td>Jendela Pop Up Modal muncul secara otomatis di tengah layar sesaat setelah halaman dimuat, menampilkan gambar promosi terbaru (latest()).</td><td></td></tr>
+<tr><td>3</td><td>Frontend - Interaksi Klik Pop Up</td><td>Pengguna mengklik gambar pada Pop Up Promosi yang dilengkapi dengan tautan URL.</td><td>Pengguna langsung diarahkan ke halaman produk, promo, atau pengumuman yang relevan sesuai tautan pada Pop Up.</td><td></td></tr>
+<tr><td>4</td><td>Frontend - Menutup Pop Up (Close Button)</td><td>Pengguna mengklik ikon silang (X) atau mengklik area gelap di luar kotak modal Pop Up.</td><td>Jendela Pop Up tertutup dengan mulus dan pengunjung dapat melanjutkan navigasi di dalam situs tanpa hambatan.</td><td></td></tr>
+<tr><td>5</td><td>Admin - Pergantian & Penonaktifan Pop Up</td><td>Admin menonaktifkan pop up yang lama atau mengunggah pop up promosi yang baru.</td><td>Situs hanya menampilkan pop up berstatus aktif yang paling baru diunggah, mencegah munculnya pop up yang sudah tidak relevan.</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>5. Persetujuan (Sign-off)</h2>
+<table>
+<tr><th>Peran</th><th>Nama</th><th>Tanda Tangan</th><th>Tanggal</th></tr>
+<tr><td>Project Manager</td><td></td><td></td><td></td></tr>
+<tr><td>QA / Tester</td><td></td><td></td><td></td></tr>
+<tr><td>Product Owner</td><td></td><td></td><td></td></tr>
+<tr><td>Marketing & Content Manager</td><td></td><td></td><td></td></tr>
+</table>
+
+</body>
+</html>

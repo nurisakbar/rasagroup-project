@@ -17,12 +17,13 @@ class DashboardController extends Controller
         $warehouse = $user->warehouse;
 
         // Get statistics
-        $totalProducts = $warehouse->stocks()->count();
-        $totalStock = $warehouse->stocks()->sum('stock');
-        $lowStockProducts = $warehouse->stocks()->where('stock', '<=', 10)->count();
+        $totalProducts = $warehouse->stocks()->whereHas('product')->count();
+        $totalStock = $warehouse->stocks()->whereHas('product')->sum('stock');
+        $lowStockProducts = $warehouse->stocks()->whereHas('product')->where('stock', '<=', 10)->count();
         
         // Get recent stock updates
         $recentStocks = WarehouseStock::with('product')
+            ->whereHas('product')
             ->where('warehouse_id', $warehouse->id)
             ->orderBy('updated_at', 'desc')
             ->limit(5)

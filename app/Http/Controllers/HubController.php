@@ -253,6 +253,7 @@ class HubController extends Controller
 
         $stocks = $warehouse->stocks()
             ->whereIn('product_id', $productIds)
+            ->whereHas('product')
             ->with('product')
             ->get()
             ->keyBy('product_id');
@@ -262,7 +263,7 @@ class HubController extends Controller
             $stock = $stocks->get($productId);
             $result[$productId] = [
                 'available' => $stock ? $stock->stock : 0,
-                'product_name' => $stock ? $stock->product->display_name : null,
+                'product_name' => ($stock && $stock->product) ? $stock->product->display_name : null,
             ];
         }
 

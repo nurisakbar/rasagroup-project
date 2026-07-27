@@ -336,6 +336,7 @@ class DistributorController extends Controller
         // Handle AJAX request for stock DataTable
         if ($request->ajax() && $request->get('type') === 'stock' && $distributor->warehouse) {
             $query = WarehouseStock::with(['product.brand', 'product.category'])
+                ->whereHas('product')
                 ->where('warehouse_id', $distributor->warehouse->id);
 
             // Filter by product search

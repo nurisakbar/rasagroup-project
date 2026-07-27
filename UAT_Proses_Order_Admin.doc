@@ -1,0 +1,62 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Times New Roman', serif; line-height: 1.6; }
+h1, h2, h3 { color: #000; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>Dokumen User Acceptance Testing (UAT) - Proses Manajemen Pesanan oleh Admin (Admin Order Processing)</h1>
+<p>Dokumen ini berisi skenario pengujian End-to-End dari sisi Admin / Super Admin untuk mengelola pesanan masuk, memvalidasi bukti pembayaran transfer manual, mengatur jadwal pengambilan paket (Self Pickup / Ekspedisi), serah terima barang, hingga penyelesaian pesanan dan sinkronisasi sistem ERP.</p>
+
+<h2>1. Verifikasi Pembayaran & Konfirmasi Transfer Manual (Payment Verification)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Monitor Pesanan Masuk (Tab Menunggu Konfirmasi)</td><td>Admin membuka menu Manajemen Pesanan (/admin/orders) dan memilih tab filter "Menunggu Konfirmasi" (?tab_status=menunggu_konfirmasi).</td><td>Menampilkan daftar pesanan dengan metode pembayaran Transfer Manual (manual_transfer) yang sudah mengunggah bukti bayar (payment_proof), dengan status pembayaran masih Pending.</td><td></td></tr>
+<tr><td>2</td><td>Review Bukti Transfer Manual</td><td>Admin mengklik detail pesanan (/admin/orders/{order}) pada pesanan transfer manual, kemudian mengklik tombol "Lihat Bukti Transfer" dan memeriksa catatan (payment_submit_note).</td><td>Gambar bukti transfer terbuka di jendela baru (target="_blank") dengan jelas, menampilkan keterangan waktu kirim dan catatan dari pembeli.</td><td></td></tr>
+<tr><td>3</td><td>Konfirmasi Pembayaran Valid (Lunas/Paid)</td><td>Admin pada form pengaturan pesanan memilih Status Pembayaran menjadi "Paid (Lunas)", lalu klik Simpan.</td><td>Status pembayaran berubah menjadi paid, waktu lunas (paid_at) tercatat otomatis, poin reward pembeli dikreditkan, memicu pengiriman notifikasi WhatsApp ucapan terima kasih & notifikasi gudang, serta memicu sinkronisasi Sales Order ke QAD ERP.</td><td></td></tr>
+<tr><td>4</td><td>Tolak Pembayaran Transfer (Failed/Refunded)</td><td>Admin menemukan bukti transfer tidak valid (misal salah nominal atau palsu), lalu mengubah Status Pembayaran menjadi "Failed" atau "Refunded".</td><td>Status pembayaran diperbarui di database dan tampilan pembeli menunjukkan pembayaran gagal/dikembalikan sehingga pesanan tidak diproses ke tahap pengiriman.</td><td></td></tr>
+<tr><td>5</td><td>Validasi Penguncian Status Pesanan (Lock Mechanism)</td><td>Admin mencoba mengubah Status Pesanan (order_status) pada pesanan yang status pembayarannya masih Pending (belum lunas).</td><td>Form dropdown Status Pesanan dalam keadaan terkunci (disabled/read-only) dengan label keterangan: "Terkunci (Menunggu Pembayaran) - Status pesanan hanya dapat diubah setelah pembayaran lunas/terkonfirmasi."</td><td></td></tr>
+</table>
+
+<h2>2. Pengaturan Jadwal Siap Diambil & Serah Terima Paket Self Pickup</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Pengaturan Tanggal Siap Diambil (Pickup Ready At)</td><td>Pada pesanan berjenis Self Pickup (Ambil Sendiri di Gudang) yang sudah lunas, Admin mengisi tanggal & waktu pada field "1. Tanggal & Waktu Siap Diambil (Ready)" dan menambahkan Catatan Instruksi Pengambilan (pickup_note), lalu klik Simpan.</td><td>Waktu siap diambil (pickup_ready_at) dan catatan instruksi tersimpan, pesanan beralih ke tahap siap diambil, dan sistem mengirimkan notifikasi (OrderPickupReadyNotification) kepada pembeli.</td><td></td></tr>
+<tr><td>2</td><td>Validasi Urutan Input Jadwal Handover</td><td>Admin mencoba mengisi kolom "2. Tanggal & Waktu Diserahkan / Diambil Pembeli (Handover)" (shipped_at) padahal kolom "1. Tanggal & Waktu Siap Diambil" (pickup_ready_at) masih kosong.</td><td>Sistem tidak menampilkan input handover atau memberikan informasi: "Tentukan dan simpan jadwal siap diambil (Ready) terlebih dahulu untuk memunculkan opsi serah terima."</td><td></td></tr>
+<tr><td>3</td><td>Konfirmasi Paket Sudah Diambil (Handover to Buyer)</td><td>Pembeli datang ke gudang mengambil paket. Admin mengisi tanggal & waktu pada field "2. Tanggal & Waktu Diserahkan / Diambil Pembeli" (shipped_at), mengubah Status Pesanan menjadi "Shipped" (Dikirim / Diserahkan), lalu klik Simpan.</td><td>Waktu penyerahan (shipped_at) tersimpan di database, status pesanan resmi berubah menjadi shipped (Diserahkan ke pembeli), dan memicu notifikasi pesanan diserahkan.</td><td></td></tr>
+</table>
+
+<h2>3. Pengelolaan Pengiriman via Kurir / Ekspedisi (Expedition Processing)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Input Nomor Resi Manual</td><td>Pada pesanan pengiriman reguler/ekspedisi yang sudah lunas, Admin memasukkan nomor resi pada kolom "Nomor Resi Pengiriman" (tracking_number), lalu klik Simpan.</td><td>Nomor resi tersimpan, sistem secara otomatis mengubah status pesanan dari Pending/Processing menjadi "Shipped" (shipped_at = now()), dan memicu notifikasi WhatsApp tracking ke pembeli.</td><td></td></tr>
+<tr><td>2</td><td>Booking AWB Otomatis (Integrasi EkspedisiKu)</td><td>Admin mengklik tombol "Booking EkspedisiKu" pada pesanan yang menggunakan layanan ekspedisi terintegrasi.</td><td>Sistem berkomunikasi dengan API EkspedisiKu, membuatkan nomor AWB/Resi secara otomatis, dan mempersiapkan paket untuk dipickup oleh kurir.</td><td></td></tr>
+<tr><td>3</td><td>Request & Cancel Pickup Kurir</td><td>Admin mengklik "Request Pickup" untuk meminta kurir menjemput paket ke gudang, atau mengklik "Cancel Pickup" jika terjadi pembatalan penjemputan.</td><td>Status penjemputan di sistem EkspedisiKu terupdate dan informasi status penjemputan terefleksi di panel admin.</td><td></td></tr>
+</table>
+
+<h2>4. Penyelesaian Pesanan & Sinkronisasi ERP (Order Completion & Sync)</h2>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Konfirmasi Pesanan Selesai (Completed / Delivered)</td><td>Setelah barang diterima pembeli (atau setelah selesai serah terima self pickup), Admin mengubah Status Pesanan menjadi "Completed" (Selesai), lalu klik Simpan.</td><td>Status pesanan menjadi completed, waktu terima (received_at) tercatat otomatis, poin reward afiliasi/pembeli dikreditkan secara final, dan sistem mengirimkan notifikasi pesanan selesai (OrderCompletedNotification).</td><td></td></tr>
+<tr><td>2</td><td>Sinkronisasi Ulang ke QAD ERP (Manual Sync)</td><td>Admin mengklik tombol / fungsi "Sync QAD" pada pesanan yang sempat mengalami kendala jaringan saat integrasi awal.</td><td>Sistem mengirimkan ulang payload Sales Order ke QAD ERP dan memperbarui status sinkronisasi pesanan menjadi sukses.</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>5. Persetujuan (Sign-off)</h2>
+<table>
+<tr><th>Peran</th><th>Nama</th><th>Tanda Tangan</th><th>Tanggal</th></tr>
+<tr><td>Project Manager</td><td></td><td></td><td></td></tr>
+<tr><td>QA / Tester</td><td></td><td></td><td></td></tr>
+<tr><td>Product Owner</td><td></td><td></td><td></td></tr>
+<tr><td>Warehouse / Admin Representative</td><td></td><td></td><td></td></tr>
+</table>
+
+</body>
+</html>

@@ -26,6 +26,7 @@ class StockController extends Controller
         }
 
         $query = WarehouseStock::with('product')
+            ->whereHas('product')
             ->where('warehouse_id', $warehouse->id);
 
         // Search filter

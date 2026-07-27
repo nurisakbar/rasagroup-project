@@ -1,0 +1,68 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Times New Roman', serif; line-height: 1.6; }
+h1, h2, h3 { color: #000; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+
+<h1>Dokumen User Acceptance Testing (UAT) - Alur Order Distributor via Excel & Login</h1>
+<p>Dokumen ini berisi skenario pengujian End-to-End untuk memastikan fungsionalitas pemesanan produk oleh Distributor (Mulai dari Autentikasi Login di halaman utama, Tambah Alamat Pengiriman, Order via Excel, hingga Sinkronisasi QAD ERP) berjalan sesuai kebutuhan bisnis dan sistem RASA Group.</p>
+
+<h2>1. Skenario Pengujian Alur Distributor (End-to-End)</h2>
+
+<h3>1.1. Autentikasi dan Validasi Akun Distributor</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Login Distributor Valid</td><td>Login melalui halaman utama http://localhost:8000/login (halaman login yang sama dengan pembeli regular) menggunakan email dan password akun Distributor yang valid.</td><td>Berhasil masuk ke sistem dan diarahkan ke halaman utama / dashboard (http://localhost:8000/buyer/dashboard). Hak akses Distributor aktif sehingga dapat menggunakan fitur order via Excel dan melihat harga khusus distributor.</td><td></td></tr>
+<tr><td>2</td><td>Validasi Akses Fitur Distributor vs Pembeli Regular</td><td>Login melalui http://localhost:8000/login menggunakan akun pembeli biasa (Regular Buyer), kemudian mencoba mengakses menu atau URL khusus pemesanan distributor (/distributor/orders/products).</td><td>Sistem membatasi hak akses. Pembeli regular tidak dapat mengakses fitur pesanan massal via Excel (terproteksi middleware distributor), dan harga yang tampil adalah harga retail normal.</td><td></td></tr>
+<tr><td>3</td><td>Validasi Assign Gudang / Hub Distributor</td><td>Login menggunakan akun Distributor yang belum ditugaskan (assigned) ke gudang/hub manapun oleh Admin (warehouse_id kosong), lalu mencoba membuat pesanan.</td><td>Sistem memproses validasi dan menampilkan pesan error peringatan bahwa akun distributor belum terhubung dengan hub manapun ("Akun Anda belum terdaftar di hub manapun. Hubungi admin").</td><td></td></tr>
+</table>
+
+<h3>1.2. Manajemen Alamat Pengiriman (Address Setup)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Tambah Alamat dari Checkout</td><td>Distributor yang belum punya alamat (atau klik tambah alamat dari halaman checkout) mengisi form alamat baru lengkap.</td><td>Alamat baru berhasil disimpan, dan sistem secara otomatis mengembalikan (redirect) distributor ke halaman Checkout dengan pesan sukses.</td><td></td></tr>
+<tr><td>2</td><td>Validasi Field Wajib Alamat</td><td>Mengosongkan field wajib seperti Provinsi, Kabupaten/Kota, Kecamatan, Alamat Lengkap, atau No. HP saat simpan alamat.</td><td>Sistem menolak penyimpanan data dan menampilkan pesan error validasi spesifik pada field yang kosong.</td><td></td></tr>
+<tr><td>3</td><td>Otomatisasi Alamat Utama</td><td>Menambahkan alamat pengiriman pertama pada akun distributor tanpa mencentang "Jadikan Alamat Utama".</td><td>Sistem secara otomatis mengatur alamat pertama tersebut menjadi alamat utama (is_default = true).</td><td></td></tr>
+</table>
+
+<h3>1.3. Pemesanan via Excel (Bulk Order - Katalog & Upload)</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Unduh Template Excel</td><td>Membuka halaman Katalog Order Distributor dan mengklik tombol "Download Template Excel".</td><td>Sistem mengunduh file template_order_distributor.xlsx yang berisi daftar seluruh produk aktif dengan kolom Kode Produk, Nama Produk, dan Jumlah siap diisi.</td><td></td></tr>
+<tr><td>2</td><td>Upload Excel Order Valid</td><td>Mengisikan kuantitas pada file template Excel, memilih tanggal pengiriman (preferred shipping date), lalu mengunggah file.</td><td>Sistem berhasil mengimpor produk, mengalihkan ke halaman Keranjang, dan menampilkan pesan "{X} produk berhasil diimpor dari Excel" dengan harga khusus distributor.</td><td></td></tr>
+<tr><td>3</td><td>Validasi Format File</td><td>Mengunggah file dengan format selain .xlsx, .xls, atau .csv (misal: .pdf, .docx, .png) pada form upload order Excel.</td><td>Sistem menolak upload dan menampilkan pesan error validasi tipe file: "The excel file must be a file of type: xlsx, xls, csv."</td><td></td></tr>
+<tr><td>4</td><td>Validasi Excel Kosong / Nol</td><td>Mengunggah file template Excel tanpa mengisi kolom Jumlah sama sekali (atau isi angka 0 pada semua produk).</td><td>Sistem menolak proses impor dan mengembalikan pengguna dengan pesan error: "Tidak ada data produk yang valid di dalam Excel."</td><td></td></tr>
+<tr><td>5</td><td>Validasi Tanggal Pengiriman</td><td>Memilih tanggal pengiriman di masa lampau (past date, misal tanggal kemarin) saat proses upload Excel.</td><td>Sistem menolak upload dan menampilkan pesan error: "The preferred shipping date must be a date after or equal to today."</td><td></td></tr>
+<tr><td>6</td><td>Aturan Penggantian Keranjang (Cart Override)</td><td>Distributor sebelumnya sudah memasukkan item ke keranjang secara manual, lalu melakukan upload file Excel order baru.</td><td>Item lama di keranjang distributor otomatis dihapus dan digantikan 100% oleh daftar produk dari file Excel terbaru.</td><td></td></tr>
+<tr><td>7</td><td>Review & Modifikasi Keranjang</td><td>Mengubah kuantitas item atau menghapus produk di halaman Keranjang sebelum melanjutkan ke Checkout.</td><td>Kuantitas terupdate secara real-time via AJAX, subtotal dikalkulasi ulang dengan tepat, atau tombol checkout non-aktif jika keranjang kosong.</td><td></td></tr>
+</table>
+
+<h3>1.4. Checkout, Kalkulasi Ongkir, & Sinkronisasi QAD</h3>
+<table>
+<tr><th>No</th><th>Fitur / Modul</th><th>Skenario Pengujian</th><th>Hasil yang Diharapkan</th><th>Status (Pass/Fail)</th></tr>
+<tr><td>1</td><td>Kalkulasi Ongkir Dinamis</td><td>Memeriksa rincian checkout (Total Berat dari pesanan Excel, Subtotal, Tanggal Pengiriman) dan mengganti alamat atau layanan ekspedisi.</td><td>Total berat pesanan akurat, dan sistem memperbarui ongkos kirim serta total bayar secara dinamis (AJAX) tanpa reload halaman.</td><td></td></tr>
+<tr><td>2</td><td>Validasi Gudang Sumber Pengiriman</td><td>Admin mengosongkan pengaturan distributor_default_hub ATAU mengatur hub default ke gudang milik distributor itu sendiri (self-hub).</td><td>Sistem menolak submit order dan menampilkan pesan error: "Hub default distributor belum diatur oleh admin" atau "Hub sumber pengiriman tidak boleh hub Anda sendiri."</td><td></td></tr>
+<tr><td>3</td><td>Submit Order & Integrasi QAD</td><td>Memilih metode pembayaran (Transfer / Term of Payment), menyetujui rincian, dan mengklik "Buat Pesanan".</td><td>Pesanan terbentuk di database, menghasilkan nomor SO format QAD, memicu job SalesOrderSyncDispatcher ke ERP QAD, dan mengirim notifikasi WhatsApp/TOP.</td><td></td></tr>
+<tr><td>4</td><td>Riwayat & Rincian Pesanan</td><td>Membuka menu Riwayat Pesanan di dasbor Distributor dan melihat rincian order yang baru dibuat via Excel.</td><td>Menampilkan daftar pesanan dengan status yang akurat (Pending), rincian produk, harga tier distributor, dan tanggal pengiriman pilihan.</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>2. Persetujuan (Sign-off)</h2>
+<table>
+<tr><th>Peran</th><th>Nama</th><th>Tanda Tangan</th><th>Tanggal</th></tr>
+<tr><td>Project Manager</td><td></td><td></td><td></td></tr>
+<tr><td>QA / Tester</td><td></td><td></td><td></td></tr>
+<tr><td>Product Owner</td><td></td><td></td><td></td></tr>
+<tr><td>Distributor Representative</td><td></td><td></td><td></td></tr>
+</table>
+
+</body>
+</html>

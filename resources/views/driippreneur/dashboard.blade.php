@@ -117,7 +117,7 @@
                         <tbody>
                             @forelse($recentStocks as $stock)
                                 <tr>
-                                    <td>{{ $stock->product->display_name }}</td>
+                                    <td>{{ optional($stock->product)->display_name ?? 'Produk Tidak Tersedia' }}</td>
                                     <td>
                                         @if($stock->stock <= 10)
                                             <span class="badge bg-red">{{ number_format($stock->stock) }}</span>
