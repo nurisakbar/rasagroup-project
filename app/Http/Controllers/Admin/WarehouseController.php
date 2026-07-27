@@ -6,9 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\OperationalHour;
 use App\Models\Product;
-use App\Models\RajaOngkirCity;
-use App\Models\RajaOngkirDistrict;
-use App\Models\RajaOngkirProvince;
 use App\Models\User;
 use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
@@ -255,7 +252,7 @@ class WarehouseController extends Controller
                 ->make(true);
         }
 
-        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        $provinces = WilayahAdministratif::select('province_id as id', 'province_name as name')->distinct()->orderBy('province_name')->get();
 
         return view('admin.warehouses.index', compact('provinces'));
     }
@@ -648,21 +645,21 @@ class WarehouseController extends Controller
 
         if ($provinceId) {
             $this->ekspedisiku->getProvinces();
-            if (RajaOngkirProvince::where('id', $provinceId)->exists()) {
+            if (WilayahAdministratif::where('province_id', $provinceId)->exists()) {
                 $result['province_id'] = $provinceId;
             }
         }
 
         if ($result['province_id'] && $cityId) {
             $this->ekspedisiku->getRegencies($result['province_id']);
-            if (RajaOngkirCity::where('id', $cityId)->where('province_id', $result['province_id'])->exists()) {
+            if (WilayahAdministratif::where('regency_id', $cityId)->where('province_id', $result['province_id'])->exists()) {
                 $result['regency_id'] = $cityId;
             }
         }
 
         if ($result['regency_id'] && $districtId) {
             $this->ekspedisiku->getDistricts($result['regency_id']);
-            if (RajaOngkirDistrict::where('id', $districtId)->where('city_id', $result['regency_id'])->exists()) {
+            if (WilayahAdministratif::where('district_id', $districtId)->where('regency_id', $result['regency_id'])->exists()) {
                 $result['district_id'] = $districtId;
             }
         }

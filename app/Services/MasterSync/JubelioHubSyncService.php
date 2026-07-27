@@ -2,9 +2,6 @@
 
 namespace App\Services\MasterSync;
 
-use App\Models\RajaOngkirCity;
-use App\Models\RajaOngkirDistrict;
-use App\Models\RajaOngkirProvince;
 use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
 use App\Services\EkspedisiKuService;
@@ -95,21 +92,21 @@ class JubelioHubSyncService
 
         if ($provinceId) {
             $this->ekspedisiku->getProvinces();
-            if (RajaOngkirProvince::where('id', $provinceId)->exists()) {
+            if (WilayahAdministratif::where('province_id', $provinceId)->exists()) {
                 $result['province_id'] = $provinceId;
             }
         }
 
         if ($result['province_id'] && $cityId) {
             $this->ekspedisiku->getRegencies($result['province_id']);
-            if (RajaOngkirCity::where('id', $cityId)->where('province_id', $result['province_id'])->exists()) {
+            if (WilayahAdministratif::where('regency_id', $cityId)->where('province_id', $result['province_id'])->exists()) {
                 $result['regency_id'] = $cityId;
             }
         }
 
         if ($result['regency_id'] && $districtId) {
             $this->ekspedisiku->getDistricts($result['regency_id']);
-            if (RajaOngkirDistrict::where('id', $districtId)->where('city_id', $result['regency_id'])->exists()) {
+            if (WilayahAdministratif::where('district_id', $districtId)->where('regency_id', $result['regency_id'])->exists()) {
                 $result['district_id'] = $districtId;
             }
         }

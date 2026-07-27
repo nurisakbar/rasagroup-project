@@ -85,20 +85,11 @@ class OrderController extends Controller
             'tracking_number' => $order->tracking_number,
         ]);
 
-        if ($code === 'lion_parcel') {
-            $ekspedisiku = app(\App\Services\EkspedisiKuService::class);
-            $result = $ekspedisiku->track($order->tracking_number, $code);
+        $ekspedisiku = app(\App\Services\EkspedisiKuService::class);
+        $result = $ekspedisiku->track($order->tracking_number, $code);
 
-            if ($result && isset($result['success']) && $result['success']) {
-                return response()->json(['success' => true, 'data' => $result['data'] ?? $result]);
-            }
-        } else {
-            $rajaOngkir = new \App\Services\RajaOngkirService();
-            $result = $rajaOngkir->trackWaybill($order->tracking_number, $code);
-
-            if ($result && isset($result['data']) && !is_null($result['data'])) {
-                return response()->json(['success' => true, 'data' => $result['data']]);
-            }
+        if ($result && isset($result['success']) && $result['success']) {
+            return response()->json(['success' => true, 'data' => $result['data'] ?? $result]);
         }
 
         // Check for specific error message

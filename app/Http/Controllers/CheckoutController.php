@@ -22,12 +22,10 @@ use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
-    protected $rajaOngkir;
     protected $ekspedisiku;
 
-    public function __construct(\App\Services\RajaOngkirService $rajaOngkir, \App\Services\EkspedisiKuService $ekspedisiku)
+    public function __construct(\App\Services\EkspedisiKuService $ekspedisiku)
     {
-        $this->rajaOngkir = $rajaOngkir;
         $this->ekspedisiku = $ekspedisiku;
     }
 
@@ -1242,24 +1240,15 @@ class CheckoutController extends Controller
         );
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($expedition, $sourceWarehouse, $address, $totalWeightGrams) {
-            if ($this->usesEkspedisiKuRates($expedition->code)) {
-                return $this->ekspedisiku->calculateCost(
-                    $sourceWarehouse->district_id,
-                    $address->district_id,
-                    max(1, $totalWeightGrams / 1000),
-                    $expedition->code,
-                    [
-                        'warehouse' => $sourceWarehouse,
-                        'address' => $address,
-                    ]
-                );
-            }
-
-            return $this->rajaOngkir->calculateCost(
+            return $this->ekspedisiku->calculateCost(
                 $sourceWarehouse->district_id,
                 $address->district_id,
-                $totalWeightGrams,
-                $expedition->code
+                max(1, $totalWeightGrams / 1000),
+                $expedition->code,
+                [
+                    'warehouse' => $sourceWarehouse,
+                    'address' => $address,
+                ]
             );
         });
     }
@@ -1312,6 +1301,6 @@ class CheckoutController extends Controller
 
     private function usesEkspedisiKuRates(string $code): bool
     {
-        return in_array($code, ['lion_parcel', 'lalamove', 'jne', 'sicepat', 'jnt'], true);
+        return true;
     }
 }

@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RajaOngkirCity;
-use App\Models\RajaOngkirProvince;
+use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,14 +59,16 @@ class HubController extends Controller
 
         $provinceIdsWithHubs = (clone $activeHubQuery)->distinct()->pluck('province_id');
 
-        $provinces = RajaOngkirProvince::query()
-            ->whereIn('id', $provinceIdsWithHubs)
-            ->orderBy('name')
+        $provinces = WilayahAdministratif::query()
+            ->whereIn('province_id', $provinceIdsWithHubs)
+            ->select('province_id as id', 'province_name as name')
+            ->distinct()
+            ->orderBy('province_name')
             ->get();
 
         $regencies = collect();
         if ($request->filled('province_id')
-            && $provinces->contains(fn (RajaOngkirProvince $p) => (string) $p->id === (string) $request->province_id)) {
+            && $provinces->contains(fn ($p) => (string) $p->id === (string) $request->province_id)) {
             $regencyIdsWithHubs = Warehouse::query()
                 ->where('is_active', true)
                 ->where('province_id', $request->province_id)
@@ -77,10 +78,12 @@ class HubController extends Controller
                 ->pluck('regency_id');
 
             if ($regencyIdsWithHubs->isNotEmpty()) {
-                $regencies = RajaOngkirCity::query()
+                $regencies = WilayahAdministratif::query()
                     ->where('province_id', $request->province_id)
-                    ->whereIn('id', $regencyIdsWithHubs)
-                    ->orderBy('name')
+                    ->whereIn('regency_id', $regencyIdsWithHubs)
+                    ->select('regency_id as id', 'regency_name as name')
+                    ->distinct()
+                    ->orderBy('regency_name')
                     ->get();
             }
         }
@@ -160,11 +163,13 @@ class HubController extends Controller
             return response()->json([]);
         }
 
-        $regencies = RajaOngkirCity::query()
+        $regencies = WilayahAdministratif::query()
             ->where('province_id', $provinceId)
-            ->whereIn('id', $regencyIdsWithHubs)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+            ->whereIn('regency_id', $regencyIdsWithHubs)
+            ->select('regency_id as id', 'regency_name as name')
+            ->distinct()
+            ->orderBy('regency_name')
+            ->get();
 
         return response()->json($regencies);
     }

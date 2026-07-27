@@ -18,15 +18,16 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\QidApiService;
-use App\Services\RajaOngkirService;
+use App\Services\EkspedisiKuService;
+use App\Models\WilayahAdministratif;
 
 class DistributorController extends Controller
 {
-    protected $rajaOngkir;
+    protected $ekspedisiku;
 
-    public function __construct(RajaOngkirService $rajaOngkir)
+    public function __construct(EkspedisiKuService $ekspedisiku)
     {
-        $this->rajaOngkir = $rajaOngkir;
+        $this->ekspedisiku = $ekspedisiku;
     }
     /**
      * Display a listing of Distributors.
@@ -109,7 +110,7 @@ class DistributorController extends Controller
                 ->make(true);
         }
 
-        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        $provinces = WilayahAdministratif::select('province_id as id', 'province_name as name')->distinct()->orderBy('province_name')->get();
         $pendingCount = User::where('distributor_status', 'pending')->count();
 
         return view('admin.distributors.index', compact('provinces', 'pendingCount'));
@@ -134,7 +135,7 @@ class DistributorController extends Controller
         }
 
         $applications = $query->orderBy('distributor_applied_at', 'asc')->paginate(20);
-        $provinces = \App\Models\RajaOngkirProvince::orderBy('name')->get();
+        $provinces = WilayahAdministratif::select('province_id as id', 'province_name as name')->distinct()->orderBy('province_name')->get();
 
         return view('admin.distributors.applications', compact('applications', 'provinces'));
     }
@@ -151,7 +152,7 @@ class DistributorController extends Controller
 
         $user->load(['distributorProvince', 'distributorRegency']);
         
-        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinceRes = $this->ekspedisiku->getProvinces();
         $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
         $priceLevels = PriceLevel::active()->ordered()->get();
@@ -170,10 +171,10 @@ class DistributorController extends Controller
 
         $validated = $request->validate([
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
-            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
-            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
+            'province_id' => ['required'],
+            'regency_id' => ['required'],
+            'district_id' => ['required'],
+            'village_id' => ['nullable'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -248,7 +249,7 @@ class DistributorController extends Controller
      */
     public function create()
     {
-        $result = $this->rajaOngkir->getProvinces();
+        $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
         $priceLevels = PriceLevel::active()->ordered()->get();
         return view('admin.distributors.create', compact('provinces', 'priceLevels'));
@@ -262,10 +263,10 @@ class DistributorController extends Controller
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
-            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
-            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
+            'province_id' => ['required'],
+            'regency_id' => ['required'],
+            'district_id' => ['required'],
+            'village_id' => ['nullable'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -576,15 +577,15 @@ class DistributorController extends Controller
 
         $distributor->load('warehouse');
         
-        $provinceRes = $this->rajaOngkir->getProvinces();
+        $provinceRes = $this->ekspedisiku->getProvinces();
         $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
         $regencies = ($distributor->warehouse && $distributor->warehouse->province_id)
-            ? ($this->rajaOngkir->getCities($distributor->warehouse->province_id)['data'] ?? [])
+            ? ($this->ekspedisiku->getRegencies($distributor->warehouse->province_id)['data'] ?? [])
             : [];
             
         $districts = ($distributor->warehouse && $distributor->warehouse->regency_id)
-            ? ($this->rajaOngkir->getDistricts($distributor->warehouse->regency_id)['data'] ?? [])
+            ? ($this->ekspedisiku->getDistricts($distributor->warehouse->regency_id)['data'] ?? [])
             : [];
 
         $villages = [];
@@ -609,10 +610,10 @@ class DistributorController extends Controller
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required', 'exists:raja_ongkir_provinces,id'],
-            'regency_id' => ['required', 'exists:raja_ongkir_cities,id'],
-            'district_id' => ['required', 'exists:raja_ongkir_districts,id'],
-            'village_id' => ['nullable', 'exists:view_wilayah_administratif_indonesia_cache,village_id'],
+            'province_id' => ['required'],
+            'regency_id' => ['required'],
+            'district_id' => ['required'],
+            'village_id' => ['nullable'],
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
@@ -694,7 +695,7 @@ class DistributorController extends Controller
      */
     public function getRegencies(Request $request)
     {
-        $result = $this->rajaOngkir->getCities($request->province_id);
+        $result = $this->ekspedisiku->getRegencies($request->province_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
@@ -703,7 +704,7 @@ class DistributorController extends Controller
      */
     public function getDistricts(Request $request)
     {
-        $result = $this->rajaOngkir->getDistricts($request->regency_id);
+        $result = $this->ekspedisiku->getDistricts($request->regency_id);
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
@@ -712,8 +713,8 @@ class DistributorController extends Controller
      */
     public function getVillages(Request $request)
     {
-        $villages = $this->getVillagesInternal($request->district_id);
-        return response()->json($villages);
+        $result = $this->ekspedisiku->getVillages($request->district_id);
+        return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
     /**
@@ -721,25 +722,8 @@ class DistributorController extends Controller
      */
     private function getVillagesInternal($districtId)
     {
-        $roDistrict = \App\Models\RajaOngkirDistrict::find($districtId);
-        if (!$roDistrict) {
-            return [];
-        }
-
-        $localDistrict = \App\Models\WilayahAdministratif::where('district_name', $roDistrict->name)->first();
-
-        if (!$localDistrict) {
-            $localDistrict = \App\Models\WilayahAdministratif::where('district_name', 'like', '%' . $roDistrict->name . '%')->first();
-        }
-
-        if ($localDistrict) {
-            return \App\Models\WilayahAdministratif::where('district_id', $localDistrict->district_id)
-                ->orderBy('village_name')
-                ->select('village_id as id', 'village_name as name')
-                ->get();
-        }
-
-        return [];
+        $result = $this->ekspedisiku->getVillages($districtId);
+        return isset($result['data']) ? $result['data'] : [];
     }
 
     /**
