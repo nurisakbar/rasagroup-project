@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   
-  <title>@yield('title', 'Affiliator Panel') | {{ config('app.name', 'Laravel') }}</title>
+  <title>@yield('title', 'Affiliator Panel') | {{ config('app.name', 'Rasa Group') }}</title>
 
   <!-- Bootstrap 3.4.1 -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/bootstrap/css/bootstrap.min.css') }}">
@@ -151,7 +151,7 @@
     <div class="pull-right hidden-xs">
       Affiliator Panel
     </div>
-    <strong>Copyright &copy; 2025 <a href="#">{{ config('app.name', 'Laravel') }}</a>.</strong> All rights reserved.
+    <strong>Copyright &copy; 2025 <a href="#">{{ config('app.name', 'Rasa Group') }}</a>.</strong> All rights reserved.
   </footer>
 </div>
 

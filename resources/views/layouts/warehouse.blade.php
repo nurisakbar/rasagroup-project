@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   
-  <title>@yield('title', 'Hub Panel') | {{ config('app.name', 'Laravel') }}</title>
+  <title>@yield('title', 'Hub Panel') | {{ config('app.name', 'Rasa Group') }}</title>
 
   <!-- Bootstrap 3.4.1 -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/bootstrap/css/bootstrap.min.css') }}">
@@ -170,7 +170,7 @@
     <div class="pull-right hidden-xs">
       Warehouse Panel v1.0
     </div>
-    <strong>Copyright &copy; 2025 {{ config('app.name', 'Laravel') }}.</strong>
+    <strong>Copyright &copy; 2025 {{ config('app.name', 'Rasa Group') }}.</strong>
   </footer>
 </div>
 
