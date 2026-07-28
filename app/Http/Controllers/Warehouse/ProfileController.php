@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Warehouse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Warehouse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -24,32 +26,47 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the warehouse/hub information.
+     * Update the warehouse user account profile and security (password).
      */
     public function update(Request $request)
     {
         $user = auth()->user();
-        $warehouse = $user->warehouse;
-
-        if (!$warehouse) {
-            return back()->with('error', 'Anda tidak memiliki otoritas untuk memperbarui Hub.');
-        }
 
         $request->validate([
-            'hub_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
             'phone' => 'nullable|string|max:20',
-            'address' => 'required|string',
-            'description' => 'nullable|string',
+            'current_password' => 'nullable|required_with:new_password|string',
+            'new_password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $warehouse->update([
-            'name' => $request->hub_name,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'description' => $request->description,
-        ]);
+        if ($request->filled('new_password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
+            }
+            $user->password = Hash::make($request->new_password);
+        }
 
-        return back()->with('success', 'Informasi Hub berhasil diperbarui.');
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->save();
+
+        return back()->with('success', 'Profil akun dan password berhasil diperbarui.');
+    }
+
+    /**
+     * Alias for account update.
+     */
+    public function updateAccount(Request $request)
+    {
+        return $this->update($request);
     }
 
     public function operationalHours()

@@ -331,6 +331,7 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         // Hub Profile/Settings
         Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/account', [App\Http\Controllers\Warehouse\ProfileController::class, 'updateAccount'])->name('profile.account.update');
         Route::get('/profile/operational-hours', [App\Http\Controllers\Warehouse\ProfileController::class, 'operationalHours'])->name('profile.operational-hours');
         Route::put('/profile/operational-hours', [App\Http\Controllers\Warehouse\ProfileController::class, 'updateOperationalHours'])->name('profile.operational-hours.update');
     });

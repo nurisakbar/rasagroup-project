@@ -1256,7 +1256,7 @@ class CheckoutController extends Controller
     private function formatEstimatedDelivery(?string $etd, string $expeditionCode): string
     {
         if ($etd !== null && $etd !== '') {
-            return $etd.' hari';
+            return str_contains(strtolower($etd), 'hari') || str_contains(strtolower($etd), 'jam') ? $etd : $etd.' hari';
         }
 
         return $expeditionCode === 'lalamove' ? 'Hari yang sama' : '2-3 hari';

@@ -57,7 +57,7 @@
                                     <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                     </a>
-                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun Saya</span></a>
+                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">{{ auth()->check() ? auth()->user()->name : 'Akun Saya' }}</span></a>
 
                                 </div>
                             </div>
@@ -198,7 +198,7 @@
                                 <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
                                     <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                 </a>
-                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">Akun Saya</span></a>
+                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">{{ auth()->check() ? auth()->user()->name : 'Akun Saya' }}</span></a>
                             </div>
                         </div>
                     </div>

@@ -89,8 +89,9 @@
                                     <select class="form-control select2" id="village_id" name="village_id" style="width: 100%;">
                                         <option value="">-- Pilih Desa/Kelurahan --</option>
                                         @foreach($villages as $village)
-                                            <option value="{{ $village->id }}" {{ old('village_id', $distributor->warehouse->village_id ?? '') == $village->id ? 'selected' : '' }}>
-                                                {{ $village->name }}
+                                            @php $vId = is_array($village) ? $village['id'] : $village->id; $vName = is_array($village) ? $village['name'] : $village->name; @endphp
+                                            <option value="{{ $vId }}" {{ old('village_id', $distributor->warehouse->village_id ?? '') == $vId ? 'selected' : '' }}>
+                                                {{ $vName }}
                                             </option>
                                         @endforeach
                                     </select>

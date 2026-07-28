@@ -47,13 +47,26 @@
         <div class="col-md-4">
             <div class="box box-primary">
                 <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-building"></i> Info Hub</h3>
+                    <h3 class="box-title"><i class="fa fa-building"></i> Info Hub & Pengelola</h3>
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('warehouse.profile') }}" class="btn btn-primary btn-xs" title="Update Profile">
+                            <i class="fa fa-pencil"></i> Edit
+                        </a>
+                    </div>
                 </div>
                 <div class="box-body">
                     <table class="table table-condensed">
                         <tr>
-                            <th>Nama</th>
+                            <th>Nama Hub</th>
                             <td>{{ $warehouse->name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Pengelola</th>
+                            <td>{{ Auth::user()->name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ Auth::user()->email }}</td>
                         </tr>
                         <tr>
                             <th>Lokasi</th>
@@ -65,7 +78,7 @@
                         </tr>
                         <tr>
                             <th>Telepon</th>
-                            <td>{{ $warehouse->phone ?? '-' }}</td>
+                            <td>{{ $warehouse->phone ?? Auth::user()->phone ?? '-' }}</td>
                         </tr>
                         <tr>
                             <th>Status</th>
@@ -78,6 +91,14 @@
                             </td>
                         </tr>
                     </table>
+                </div>
+                <div class="box-footer text-center" style="background: #fdfdfd;">
+                    <a href="{{ route('warehouse.profile') }}" class="btn btn-primary btn-sm" style="margin: 2px;">
+                        <i class="fa fa-user-edit"></i> Update Profile & Keamanan
+                    </a>
+                    <a href="{{ route('warehouse.profile.operational-hours') }}" class="btn btn-default btn-sm" style="margin: 2px;">
+                        <i class="fa fa-clock-o"></i> Jam Operasional
+                    </a>
                 </div>
             </div>
         </div>
