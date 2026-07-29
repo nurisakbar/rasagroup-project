@@ -31,7 +31,7 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
         $url = url('/orders/' . $this->order->id);
 
         $mail = (new MailMessage)
-            ->subject('Pesanan Diproses - #' . $this->order->order_number . ' | Rasa Group')
+            ->subject('Pesanan Diproses - #' . $this->order->order_number . ' | Rasaconnect')
             ->greeting('Halo, ' . ($notifiable->name ?? 'Pelanggan') . '!')
             ->line('Kabar gembira! Pembayaran pesanan Anda #' . $this->order->order_number . ' telah berhasil diverifikasi dan saat ini sedang disiapkan oleh tim gudang kami.')
             ->line('Total Pesanan: Rp ' . number_format($this->order->total_amount, 0, ',', '.'));
@@ -45,7 +45,7 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
         }
 
         return $mail->action('Lihat Detail Pesanan', $url)
-                    ->line('Terima kasih telah berbelanja di Rasa Group!')
-                    ->salutation("Salam Hangat,\nTim Rasa Group");
+                    ->line('Terima kasih telah berbelanja di Rasaconnect!')
+                    ->salutation("Salam Hangat,\nTim Rasaconnect");
     }
 }

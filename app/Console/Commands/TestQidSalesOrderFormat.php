@@ -35,7 +35,7 @@ class TestQidSalesOrderFormat extends Command
 
         $ws = $this->option('ws');
         if (! $ws) {
-            $ws = 'WS' . str_pad((string) random_int(961000, 979999), 6, '0', STR_PAD_LEFT);
+            $ws = 'WS' . date('ymd') . str_pad((string) random_int(100, 999), 3, '0', STR_PAD_LEFT);
         }
 
         $day = $this->option('date') ? Carbon::parse($this->option('date'))->startOfDay() : now()->startOfDay();

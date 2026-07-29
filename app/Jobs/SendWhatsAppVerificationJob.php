@@ -32,15 +32,38 @@ class SendWhatsAppVerificationJob implements ShouldQueue
     public function handle(\App\Services\MetaWhatsAppService $metaService): void
     {
         try {
-            // SEMENTARA KITA GUNAKAN TEKS BIASA SAMPAI TEMPLATE OTP DIACTIVATE OLEH META
-            $message = "Halo {$this->user->name}, kode verifikasi Anda adalah: {$this->waCode}. Segera masukkan kode ini untuk mengaktifkan akun Anda.";
+            $templateName = env('META_WA_OTP_TEMPLATE', 'otp_register');
+            $languageCode = env('META_WA_TEMPLATE_LANG', 'en');
             
-            $result = $metaService->sendText($this->user->phone, $message);
+            $components = [
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => $this->waCode
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'button',
+                    'sub_type' => 'url',
+                    'index' => '0',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => $this->waCode
+                        ]
+                    ]
+                ]
+            ];
+            
+            $result = $metaService->sendTemplate($this->user->phone, $templateName, $languageCode, $components);
             
             if ($result['success']) {
-                Log::info("WhatsApp OTP verification sent to {$this->user->phone} via Meta API");
+                Log::info("WhatsApp OTP template {$templateName} sent to {$this->user->phone} via Meta API");
             } else {
-                Log::error("Failed to send WhatsApp OTP to {$this->user->phone} via Meta API: " . ($result['message'] ?? 'Unknown error'));
+                Log::error("Failed to send WhatsApp OTP template {$templateName} to {$this->user->phone} via Meta API: " . ($result['message'] ?? 'Unknown error'));
             }
         } catch (\Exception $e) {
             Log::error("Failed to send WhatsApp verification to {$this->user->phone}: " . $e->getMessage());

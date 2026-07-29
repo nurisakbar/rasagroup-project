@@ -32,7 +32,7 @@ class OrderPickupReadyNotification extends Notification implements ShouldQueue
         $readyTime = $this->order->pickup_ready_at ? Carbon::parse($this->order->pickup_ready_at)->format('d M Y, H:i') . ' WIB' : 'Segera';
         $note = $this->order->pickup_note ?: 'Harap menunjukkan nomor pesanan / invoice ini saat menemui petugas gudang.';
 
-        $subject = 'Pesanan Siap Diambil (Ready) - Order #' . $this->order->order_number . ' | Rasa Group';
+        $subject = 'Pesanan Siap Diambil (Ready) - Order #' . $this->order->order_number . ' | Rasaconnect';
 
         $mail = (new MailMessage)
             ->subject($subject)
@@ -51,7 +51,7 @@ class OrderPickupReadyNotification extends Notification implements ShouldQueue
         }
 
         return $mail->action('Lihat Detail & Instruksi Pengambilan', $url)
-                    ->line('Terima kasih telah berbelanja di Rasa Group!')
-                    ->salutation("Salam Hangat,\nTim Rasa Group");
+                    ->line('Terima kasih telah berbelanja di Rasaconnect!')
+                    ->salutation("Salam Hangat,\nTim Rasaconnect");
     }
 }

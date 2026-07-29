@@ -40,7 +40,7 @@ class OrderShippedNotification extends Notification implements ShouldQueue
             ->greeting('Halo, ' . ($notifiable->name ?? 'Pelanggan') . '!');
 
         if ($isSelfPickup) {
-            $mail->subject('Pesanan Diserahkan / Diambil (Handover) - Order #' . $this->order->order_number . ' | Rasa Group')
+            $mail->subject('Pesanan Diserahkan / Diambil (Handover) - Order #' . $this->order->order_number . ' | Rasaconnect')
                  ->line('Barang pesanan Anda #' . $this->order->order_number . ' telah resmi diserahkan / diambil dari gudang pada ' . $timeStr . ' (Status: Handover).');
             
             if ($isDistributor) {
@@ -52,7 +52,7 @@ class OrderShippedNotification extends Notification implements ShouldQueue
             $expName = $this->order->expedition->name ?? 'Kurir';
             $resi = $this->order->tracking_number ? 'Nomor Resi: ' . $this->order->tracking_number : 'Kurir Sedang Mengirimkan Paket';
 
-            $mail->subject('Pesanan Dikirim / Diserahkan (Handover) - Order #' . $this->order->order_number . ' | Rasa Group')
+            $mail->subject('Pesanan Dikirim / Diserahkan (Handover) - Order #' . $this->order->order_number . ' | Rasaconnect')
                  ->line('Pesanan Anda #' . $this->order->order_number . ' telah diserahkan / dikirimkan menggunakan layanan ekspedisi ' . $expName . '.')
                  ->line($resi)
                  ->line('Waktu Penyerahan / Pengiriman: ' . $timeStr);
@@ -67,7 +67,7 @@ class OrderShippedNotification extends Notification implements ShouldQueue
         $actionText = $isDistributor ? 'Lihat Pesanan & Masukkan ke Stock' : 'Lihat Pesanan & Konfirmasi Terima';
 
         return $mail->action($actionText, $url)
-                    ->line('Terima kasih telah berbelanja di Rasa Group!')
-                    ->salutation("Salam Hangat,\nTim Rasa Group");
+                    ->line('Terima kasih telah berbelanja di Rasaconnect!')
+                    ->salutation("Salam Hangat,\nTim Rasaconnect");
     }
 }

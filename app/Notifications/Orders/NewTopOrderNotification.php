@@ -36,14 +36,14 @@ class NewTopOrderNotification extends Notification implements ShouldQueue
         $url = url('/admin/orders/' . $this->order->id);
 
         return (new MailMessage)
-            ->subject('Order Baru (TOP) - #' . $this->order->order_number . ' | Rasa Group')
+            ->subject('Order Baru (TOP) - #' . $this->order->order_number . ' | Rasaconnect')
             ->greeting('Halo, ' . ($notifiable->name ?? 'Staff') . '!')
             ->line('Terdapat pesanan baru (Order #' . $this->order->order_number . ') yang menggunakan metode pembayaran TOP (Term of Payment) yang dialokasikan ke Hub/Gudang Anda.')
             ->line('Pelanggan: ' . ($this->order->user->name ?? 'Pelanggan'))
             ->line('Total Pesanan: Rp ' . number_format($this->order->total_amount, 0, ',', '.'))
             ->action('Lihat Detail Pesanan', $url)
             ->line('Silakan login ke panel untuk memproses pesanan ini.')
-            ->salutation("Salam,\nSistem Rasa Group");
+            ->salutation("Salam,\nSistem Rasaconnect");
     }
 
     /**

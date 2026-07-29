@@ -261,7 +261,7 @@ class QidStressTest extends Command
     {
         $id = Str::random(4);
         // Use shorter, numeric-only suffix to avoid BadRequest for SO number
-        $wsNumber = 'WS' . str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        $wsNumber = 'WS' . date('ymd') . str_pad((string) random_int(100, 999), 3, '0', STR_PAD_LEFT);
         $date = now()->format('Y-m-d') . 'T00:00:00.000Z';
 
         return [

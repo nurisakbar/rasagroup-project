@@ -26,11 +26,11 @@ class VerifyEmailNotification extends VerifyEmail
         ]);
 
         return (new MailMessage)
-            ->subject('Verifikasi Alamat Email - Rasa Group')
+            ->subject('Verifikasi Alamat Email - Rasaconnect')
             ->greeting('Halo, ' . $notifiable->name . '!')
-            ->line('Terima kasih telah bergabung dengan Rasa Group. Langkah terakhir untuk mengaktifkan akun Anda adalah dengan melakukan verifikasi alamat email.')
+            ->line('Terima kasih telah bergabung dengan Rasaconnect. Langkah terakhir untuk mengaktifkan akun Anda adalah dengan melakukan verifikasi alamat email.')
             ->action('Verifikasi Email Sekarang', $verificationUrl)
             ->line('Jika Anda tidak merasa melakukan pendaftaran akun, abaikan saja email ini.')
-            ->salutation("Salam Hangat,\nTim Rasa Group");
+            ->salutation("Salam Hangat,\nTim Rasaconnect");
     }
 }

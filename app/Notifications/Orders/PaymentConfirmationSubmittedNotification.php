@@ -36,7 +36,7 @@ class PaymentConfirmationSubmittedNotification extends Notification implements S
         $url = url('/admin/orders/' . $this->order->id);
 
         return (new MailMessage)
-            ->subject('Konfirmasi Pembayaran Baru - Order #' . $this->order->order_number . ' | Rasa Group')
+            ->subject('Konfirmasi Pembayaran Baru - Order #' . $this->order->order_number . ' | Rasaconnect')
             ->greeting('Halo, Admin!')
             ->line('Pelanggan telah mengirimkan bukti konfirmasi pembayaran untuk pesanan (Order #' . $this->order->order_number . ').')
             ->line('Pelanggan: ' . ($this->order->user->name ?? 'Pelanggan'))
@@ -44,7 +44,7 @@ class PaymentConfirmationSubmittedNotification extends Notification implements S
             ->line('Catatan Pembayaran: ' . ($this->order->payment_submit_note ?: '-'))
             ->action('Verifikasi Pembayaran Sekarang', $url)
             ->line('Silakan login ke panel admin untuk memeriksa bukti transfer dan memverifikasi pembayaran ini.')
-            ->salutation("Salam,\nSistem Rasa Group");
+            ->salutation("Salam,\nSistem Rasaconnect");
     }
 
     /**
