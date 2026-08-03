@@ -15,6 +15,11 @@ class FaspaySnapController extends Controller
      */
     public function inquiry(Request $request)
     {
+        Log::info('Faspay SNAP Inquiry Received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
+
         // UAT SNAP Validation Check
         if ($errorResponse = $this->validateSnapHeaders($request, '24')) {
             return $errorResponse;
@@ -24,11 +29,6 @@ class FaspaySnapController extends Controller
         if (strtolower((string) $request->input('type')) === 'payment' || $request->has('payment_status_code')) {
             return $this->paymentNotification($request);
         }
-
-        Log::info('Faspay SNAP Inquiry Received', [
-            'payload' => $request->all(),
-            'headers' => $request->headers->all()
-        ]);
 
         // Identifikasi nomor VA dari request
         $vaNumber = $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
@@ -122,15 +122,15 @@ class FaspaySnapController extends Controller
      */
     public function paymentNotification(Request $request)
     {
-        // UAT SNAP Validation Check
-        if ($errorResponse = $this->validateSnapHeaders($request, '25')) {
-            return $errorResponse;
-        }
-
         Log::info('Faspay SNAP Notification Received', [
             'payload' => $request->all(),
             'headers' => $request->headers->all()
         ]);
+
+        // UAT SNAP Validation Check
+        if ($errorResponse = $this->validateSnapHeaders($request, '25')) {
+            return $errorResponse;
+        }
 
         // Biasanya SNAP mengirimkan berbagai parameter
         // Untuk QRIS dan VA, biasanya ada 'partnerReferenceNo' atau 'customerNo'
