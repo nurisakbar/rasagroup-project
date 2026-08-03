@@ -25,7 +25,10 @@ class FaspaySnapController extends Controller
             return $this->paymentNotification($request);
         }
 
-        Log::info('Faspay SNAP Inquiry Received', $request->all());
+        Log::info('Faspay SNAP Inquiry Received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
 
         // Identifikasi nomor VA dari request
         $vaNumber = $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
@@ -124,7 +127,10 @@ class FaspaySnapController extends Controller
             return $errorResponse;
         }
 
-        Log::info('Faspay SNAP Notification Received', $request->all());
+        Log::info('Faspay SNAP Notification Received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
 
         // Biasanya SNAP mengirimkan berbagai parameter
         // Untuk QRIS dan VA, biasanya ada 'partnerReferenceNo' atau 'customerNo'
