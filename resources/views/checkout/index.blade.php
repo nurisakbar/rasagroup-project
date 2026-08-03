@@ -199,19 +199,64 @@
                     <h4 class="mb-15"><i class="fi-rs-wallet mr-10 text-muted"></i>Metode Pembayaran</h4>
                     <div class="payment_method">
                         <div class="payment_accordion">
-                            <!-- Online Payment (Xendit/Faspay) -->
-                            <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('{{ config('services.active_payment_gateway') }}')" id="card-xendit">
-                                <div class="custom-radio">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="{{ config('services.active_payment_gateway') }}" id="payXendit" checked>
-                                    <label class="form-check-label" for="payXendit">
-                                        <strong class="mr-5">Pembayaran Online (Otomatis)</strong>
-                                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" style="height: 20px;">
-                                    </label>
+                            <!-- Online Payment -->
+                            @if(config('services.active_payment_gateway') === 'faspay')
+                                <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('faspay_qris')" id="card-faspay-qris">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_qris" id="payQRIS" checked>
+                                        <label class="form-check-label" for="payQRIS">
+                                            <strong class="mr-5">QRIS</strong>
+                                            <img src="https://qris.id/homepage/images/logo.png" alt="QRIS" style="height: 15px;">
+                                        </label>
+                                    </div>
+                                    <div class="payment-content pl-20 mt-10" style="display: block;">
+                                        <p class="font-sm text-muted">Bayar menggunakan e-Wallet (OVO, Dana, ShopeePay, LinkAja) atau m-Banking yang mendukung QRIS.</p>
+                                    </div>
                                 </div>
-                                <div class="payment-content pl-20 mt-10" style="display: block;">
-                                    <p class="font-sm text-muted">QRIS, E-Wallet (Ovo, Dana, ShopeePay), Transfer Bank Virtual Account, Kartu Kredit. Konfirmasi Otomatis.</p>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_permata_va" id="payPermataVA">
+                                        <label class="form-check-label" for="payPermataVA"><strong>Permata Virtual Account</strong></label>
+                                    </div>
                                 </div>
-                            </div>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_mandiri_va')" id="card-faspay-mandiri">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_mandiri_va" id="payMandiriVA">
+                                        <label class="form-check-label" for="payMandiriVA"><strong>Mandiri Virtual Account</strong></label>
+                                    </div>
+                                </div>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bri_va')" id="card-faspay-bri">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_bri_va" id="payBRIVA">
+                                        <label class="form-check-label" for="payBRIVA"><strong>BRI Virtual Account</strong></label>
+                                    </div>
+                                </div>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_cimb_va" id="payCIMBVA">
+                                        <label class="form-check-label" for="payCIMBVA"><strong>CIMB Virtual Account</strong></label>
+                                    </div>
+                                </div>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_bni_va" id="payBNIVA">
+                                        <label class="form-check-label" for="payBNIVA"><strong>BNI Virtual Account</strong></label>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('{{ config('services.active_payment_gateway') }}')" id="card-xendit">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="{{ config('services.active_payment_gateway') }}" id="payXendit" checked>
+                                        <label class="form-check-label" for="payXendit">
+                                            <strong class="mr-5">Pembayaran Online (Otomatis)</strong>
+                                            <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" style="height: 20px;">
+                                        </label>
+                                    </div>
+                                    <div class="payment-content pl-20 mt-10" style="display: block;">
+                                        <p class="font-sm text-muted">QRIS, E-Wallet (Ovo, Dana, ShopeePay), Transfer Bank Virtual Account, Kartu Kredit. Konfirmasi Otomatis.</p>
+                                    </div>
+                                </div>
+                            @endif
                             
                             <!-- Manual Transfer -->
                             <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('manual_transfer')" id="card-transfer">

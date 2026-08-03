@@ -163,6 +163,53 @@
                                             </p>
                                         </div>
                                     </div>
+                                @elseif(str_starts_with($order->payment_method, 'faspay_'))
+                                    <!-- Faspay SNAP UI -->
+                                    <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">
+                                        @if($order->payment_method === 'faspay_qris')
+                                            <div class="text-center mb-20">
+                                                <h5 class="mb-15" style="color: #253D4E;">Scan QRIS untuk Membayar</h5>
+                                                @if($order->virtual_account_no)
+                                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode($order->virtual_account_no) }}" alt="QRIS Barcode" style="max-width: 250px; border: 2px solid #ECECEC; padding: 10px; border-radius: 10px;">
+                                                @else
+                                                    <p class="text-danger">Gagal memuat QRIS. Silakan hubungi admin.</p>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="d-flex align-items-center mb-25">
+                                                <div class="icon-wrap mr-15" style="width: 45px; height: 45px; border-radius: 50%; background: rgba(106, 27, 27, 0.05); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fi-rs-bank" style="font-size: 22px; color: #6A1B1B;"></i>
+                                                </div>
+                                                <div>
+                                                    @php
+                                                        $bankNames = [
+                                                            'faspay_permata_va' => 'Bank Permata',
+                                                            'faspay_mandiri_va' => 'Bank Mandiri',
+                                                            'faspay_bri_va' => 'Bank BRI',
+                                                            'faspay_bni_va' => 'Bank BNI',
+                                                            'faspay_cimb_va' => 'Bank CIMB Niaga',
+                                                        ];
+                                                        $bankName = $bankNames[$order->payment_method] ?? 'Virtual Account';
+                                                    @endphp
+                                                    <h5 class="mb-1" style="color: #253D4E;">{{ $bankName }}</h5>
+                                                    <span class="font-sm" style="color: #7E7E7E;">Virtual Account</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="p-25 border-radius-12 mb-20 text-center" style="background: #F8F9FA; border: 1.5px dashed #E2E2E2;">
+                                                <div class="mb-15">
+                                                    <span class="font-sm d-block mb-5" style="color: #7E7E7E;">Nomor Virtual Account</span>
+                                                    <h2 class="mb-0" style="color: #6A1B1B; letter-spacing: 1.5px; font-weight: 700;">{{ $order->virtual_account_no }}</h2>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        <div class="text-center mt-25">
+                                            <p class="mb-0 font-sm" style="color: #7E7E7E;">
+                                                Status: <strong style="color: #253D4E;">{{ strtoupper($order->payment_status) }}</strong>
+                                            </p>
+                                            <p class="mt-10 font-sm text-muted">Pesanan akan otomatis diproses setelah pembayaran berhasil diverifikasi oleh sistem.</p>
+                                        </div>
+                                    </div>
                                 @elseif($order->payment_method === 'xendit' || $order->payment_method === 'faspay')
                                     <div id="checkout-xendit-root">
                                         <p id="checkout-payment-sync-hint" class="text-center font-sm mb-20" style="color: #7E7E7E; display: none;">

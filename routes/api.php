@@ -67,3 +67,24 @@ Route::prefix('webhooks')->group(function () {
     Route::get('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'verify'])->name('api.webhooks.meta.verify');
     Route::post('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'handle'])->name('api.webhooks.meta.handle');
 });
+
+// Faspay SNAP VA & Payment Notification routes
+Route::prefix('faspay')->group(function () {
+    Route::post('/snap/inquiry', [\App\Http\Controllers\Api\FaspaySnapController::class, 'inquiry'])->name('api.faspay.snap.inquiry');
+    Route::post('/snap/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('api.faspay.snap.payment');
+    Route::post('/payment-inquiry', [\App\Http\Controllers\Api\FaspaySnapController::class, 'inquiry'])->name('api.faspay.payment-inquiry');
+    Route::post('/payment-notification', [\App\Http\Controllers\Api\FaspaySnapController::class, 'paymentNotification'])->name('api.faspay.payment-notification');
+
+    // Standar SNAP BI (V1.0) jika Base URL Merchant di Faspay diset: https://dev.rasaconnect.com/api/faspay
+    Route::prefix('v1.0/transfer-va')->group(function () {
+        Route::post('/inquiry', [\App\Http\Controllers\Api\FaspaySnapController::class, 'inquiry'])->name('api.faspay.v1.inquiry');
+        Route::post('/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('api.faspay.v1.payment');
+    });
+});
+
+// Standar SNAP BI (V1.0) jika Base URL Merchant di Faspay diset: https://dev.rasaconnect.com/api
+Route::prefix('v1.0/transfer-va')->group(function () {
+    Route::post('/inquiry', [\App\Http\Controllers\Api\FaspaySnapController::class, 'inquiry'])->name('api.v1.inquiry');
+    Route::post('/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('api.v1.payment');
+});
+

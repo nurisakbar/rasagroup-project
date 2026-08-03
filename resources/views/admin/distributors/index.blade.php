@@ -24,7 +24,7 @@
                         <a href="{{ route('admin.distributors.create') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-plus"></i> Tambah Manual
                         </a>
-                        <button type="button" id="btn-sync-qad" class="btn btn-info btn-sm">
+                        <button type="button" id="btn-sync-qad" class="btn btn-info btn-sm" disabled>
                             <i class="fa fa-refresh"></i> Sync QAD Customers
                         </button>
                     </div>

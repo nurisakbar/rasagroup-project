@@ -15,9 +15,26 @@ Route::get('/saluran-informasi', [App\Http\Controllers\InformationChannelControl
 Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannelController::class, 'show'])->name('information-channels.show');
 Route::post('/saluran-informasi/{slug}/comment', [App\Http\Controllers\InformationChannelController::class, 'storeComment'])->name('information-channels.comment')->middleware('auth');
 
-// Xendit Webhook (no CSRF protection needed)
+// Xendit & Faspay Webhook (no CSRF protection needed)
 Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 Route::post('/webhooks/faspay', [App\Http\Controllers\FaspayWebhookController::class, 'handle'])->name('webhooks.faspay');
+Route::post('/webhooks/faspay/ewallet', [App\Http\Controllers\FaspayWebhookController::class, 'handle'])->name('webhooks.faspay.ewallet');
+
+// Landing Page Faspay E-Wallet & PG (ShopeePay, DANA, OVO, LinkAja, QRIS, dll) - Tanpa kata 'return'
+Route::match(['get', 'post'], '/faspay/ewallet', [App\Http\Controllers\FaspayWebhookController::class, 'returnUrl'])->name('faspay.ewallet');
+Route::match(['get', 'post'], '/faspay/ewallet/landing', [App\Http\Controllers\FaspayWebhookController::class, 'returnUrl'])->name('faspay.ewallet.landing');
+Route::match(['get', 'post'], '/faspay/ewallet/finish', [App\Http\Controllers\FaspayWebhookController::class, 'returnUrl'])->name('faspay.ewallet.finish');
+
+// Alias Return URL Umum
+Route::match(['get', 'post'], '/faspay/return', [App\Http\Controllers\FaspayWebhookController::class, 'returnUrl'])->name('faspay.return');
+Route::match(['get', 'post'], '/faspay/finish', [App\Http\Controllers\FaspayWebhookController::class, 'returnUrl'])->name('faspay.finish');
+
+// Standard SNAP BI (V1.0) untuk Faspay jika Base URL Merchant di Faspay diset ke: https://dev.rasaconnect.com
+Route::prefix('v1.0/transfer-va')->group(function () {
+    Route::post('/inquiry', [\App\Http\Controllers\Api\FaspaySnapController::class, 'inquiry'])->name('web.faspay.v1.inquiry');
+    Route::post('/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('web.faspay.v1.payment');
+});
+
 
 // Redirect old dashboard based on user role
 Route::get('/dashboard', function () {

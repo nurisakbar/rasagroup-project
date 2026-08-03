@@ -50,9 +50,11 @@ return [
         'password' => env('FASPAY_PASSWORD'), // Legacy
         'env' => env('FASPAY_ENV', 'dev'),
         // SNAP BI Configuration
-        'client_id' => env('FASPAY_CLIENT_ID'),
-        'client_secret' => env('FASPAY_CLIENT_SECRET'),
-        'private_key' => env('FASPAY_PRIVATE_KEY'), // Base64 encoded or path
+        'va_partner_id' => env('FASPAY_VA_PARTNER_ID', '36850'),
+        'qris_partner_id' => env('FASPAY_QRIS_PARTNER_ID', '37020'),
+        'snap_base_url' => env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0'),
+        'snap_client_id' => env('FASPAY_SNAP_CLIENT_ID'),
+        'private_key_path' => env('FASPAY_SNAP_PRIVATE_KEY_PATH', 'storage/app/faspay_private_key.pem'),
     ],
 
     'rajaongkir' => [

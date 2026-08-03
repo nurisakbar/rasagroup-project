@@ -26,7 +26,7 @@ class FaspayService
         if ($this->env === 'prod' || $this->env === 'production') {
             return 'https://web.faspay.co.id';
         }
-        return 'https://dev.faspay.co.id';
+        return 'https://debit-sandbox.faspay.co.id';
     }
 
     /**
@@ -112,7 +112,7 @@ class FaspayService
             $url = $this->getBaseUrl() . '/cvr/300011/10';
 
             try {
-                $response = Http::withoutVerifying()->timeout(5)->post($url, $data);
+                $response = Http::withoutVerifying()->timeout(15)->post($url, $data);
 
                 if ($response->successful()) {
                     $responseData = $response->json();
@@ -133,15 +133,7 @@ class FaspayService
                     ]);
                 }
             } catch (\Illuminate\Http\Client\ConnectionException $e) {
-                // If it's a dev environment and we can't connect, simulate a successful response
-                if ($this->env === 'dev') {
-                    Log::info('Simulating Faspay createBill because dev server is unreachable.', ['error' => $e->getMessage()]);
-                    return [
-                        'bill_no' => $billNo,
-                        'redirect_url' => 'https://dev.faspay.co.id/cvr/300011/10/mock/' . $billNo
-                    ];
-                }
-                
+                Log::error('Faspay Connection Error', ['error' => $e->getMessage()]);
                 throw $e;
             }
 

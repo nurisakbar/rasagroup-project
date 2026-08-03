@@ -585,7 +585,7 @@ class CheckoutController extends Controller
         ]);
 
         $user = Auth::user();
-        $allowedPayments = ['xendit', 'faspay', 'manual_transfer'];
+        $allowedPayments = ['xendit', 'faspay', 'manual_transfer', 'faspay_qris', 'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va'];
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
         }
@@ -935,14 +935,59 @@ class CheckoutController extends Controller
             if ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
                 Log::info('Checkout Debug: TOP selected, skipping gateway.');
-            } elseif ($request->payment_method === 'xendit' || $request->payment_method === 'faspay') {
+            } elseif ($request->payment_method === 'xendit' || str_starts_with($request->payment_method, 'faspay')) {
                 $activeGateway = config('services.active_payment_gateway');
                 
                 Log::info('Checkout Debug: Entering Gateway block.', [
-                    'active_gateway' => $activeGateway
+                    'active_gateway' => $activeGateway,
+                    'method' => $request->payment_method
                 ]);
 
-                if ($activeGateway === 'xendit') {
+                if (str_starts_with($request->payment_method, 'faspay_')) {
+                    // Faspay SNAP Flow (Direct UI)
+                    if ($request->payment_method === 'faspay_qris') {
+                        $snapService = new \App\Services\FaspaySnapService();
+                        $qrisData = $snapService->generateQris($order, $total);
+                        if ($qrisData && isset($qrisData['qrContent'])) {
+                            $order->virtual_account_no = $qrisData['qrContent'];
+                            $order->payment_method = 'faspay_qris';
+                            $order->save();
+                            Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id]);
+                        } else {
+                            Log::error('Failed to generate Faspay QRIS', ['order_id' => $order->id]);
+                        }
+                    } else {
+                        // VA Static Flow
+                        // Prefix mapping
+                        $prefixes = [
+                            'faspay_permata_va' => '368501',
+                            'faspay_mandiri_va' => '36850002',
+                            'faspay_bri_va'     => '368503',
+                            'faspay_cimb_va'    => '368504',
+                            'faspay_bni_va'     => '9881236387',
+                        ];
+                        $prefix = $prefixes[$request->payment_method] ?? '368500';
+                        $targetLength = 16;
+                        $prefixLength = strlen($prefix);
+                        $freeDigitsLength = $targetLength - $prefixLength;
+                        
+                        // Extract digits from order number (WS260729001 -> 260729001)
+                        $numericOrder = preg_replace('/[^0-9]/', '', $order->order_number);
+                        if (strlen($numericOrder) > $freeDigitsLength) {
+                            $freeDigits = substr($numericOrder, -$freeDigitsLength);
+                        } else {
+                            $freeDigits = str_pad($numericOrder, $freeDigitsLength, '0', STR_PAD_LEFT);
+                        }
+                        
+                        $vaNumber = $prefix . $freeDigits;
+                        
+                        $order->virtual_account_no = $vaNumber;
+                        $order->payment_method = $request->payment_method;
+                        $order->save();
+                        
+                        Log::info('Faspay Static VA generated', ['order_id' => $order->id, 'va' => $vaNumber]);
+                    }
+                } elseif ($activeGateway === 'xendit') {
                     $xenditService = new \App\Services\XenditService();
                     $customer = [
                         'name' => $user->name,

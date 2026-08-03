@@ -43,10 +43,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // API routes do not require authentication by default in Laravel 11
         // All routes in routes/api.php are public
         
-        // Exclude Xendit webhook from CSRF verification
+        // Exclude webhooks, Return URL, and Faspay SNAP routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'webhooks/xendit',
             'webhooks/faspay',
+            'webhooks/faspay/*',
+            'v1.0/*',
+            'faspay/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

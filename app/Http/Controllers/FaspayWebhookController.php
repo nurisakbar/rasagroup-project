@@ -41,9 +41,10 @@ class FaspayWebhookController extends Controller
                 // Commented out to ensure testing works, uncomment in production if Faspay sends signature
             }
 
-            // Find order by faspay_bill_no or order_number
+            // Find order by faspay_bill_no, order_number, or virtual_account_no
             $order = Order::where('faspay_bill_no', $billNo)
                 ->orWhere('order_number', $billNo)
+                ->orWhere('virtual_account_no', $billNo)
                 ->first();
 
             if (!$order) {
@@ -127,4 +128,48 @@ class FaspayWebhookController extends Controller
             return response()->json(['error' => 'Internal server error'], 500);
         }
     }
+
+    /**
+     * Handle Return URL / Landing Page setelah pembayaran E-Wallet atau Debit di Faspay.
+     */
+    public function returnUrl(Request $request)
+    {
+        Log::info('Faspay Return URL / Landing Page Accessed', [
+            'params' => $request->all(),
+            'url' => $request->fullUrl(),
+        ]);
+
+        $billNo = $request->input('bill_no') 
+               ?: $request->input('order_number') 
+               ?: $request->input('order_id') 
+               ?: $request->input('id_order') 
+               ?: $request->input('bill_reff');
+
+        $order = null;
+        if ($billNo) {
+            $order = Order::where('faspay_bill_no', $billNo)
+                ->orWhere('order_number', $billNo)
+                ->orWhere('virtual_account_no', $billNo)
+                ->orWhere('id', $billNo)
+                ->first();
+        }
+
+        if ($order) {
+            if (auth()->check()) {
+                return redirect()->route('checkout.success', $order)
+                    ->with('success', 'Pembayaran pesanan #' . $order->order_number . ' sedang diproses/telah berhasil.');
+            }
+
+            return redirect()->route('login')
+                ->with('status', 'Pembayaran pesanan #' . $order->order_number . ' berhasil diterima. Silakan login untuk melihat status pesanan.');
+        }
+
+        if (auth()->check()) {
+            return redirect()->route('buyer.orders.index')
+                ->with('success', 'Pembayaran Anda sedang diproses oleh sistem. Silakan cek status pesanan di halaman ini.');
+        }
+
+        return redirect()->route('home');
+    }
 }
+
