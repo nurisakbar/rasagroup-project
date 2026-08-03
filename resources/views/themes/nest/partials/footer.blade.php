@@ -117,9 +117,9 @@
                     <p class="font-sm mb-0">&copy; {{ date('Y') }}, <strong class="text-brand">Rasa Group</strong> - Seluruh hak cipta dilindungi</p>
                 </div>
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
-                    <div class="hotline d-lg-inline-flex mr-30">
-                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p><a href="tel:02131176969" class="text-decoration-none" style="color: inherit;">(021) 31176969</a><span>Layanan Pelanggan</span></p>
+                    <div class="hotline d-lg-inline-flex mr-30 align-items-center">
+                        <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/phone-call.svg') }}" alt="hotline" class="mr-10" />
+                        <p class="d-flex align-items-center m-0" style="gap: 8px; flex-wrap: nowrap;"><a href="tel:02131176969" class="text-decoration-none" style="color: inherit; white-space: nowrap;">(021) 31176969</a><span class="m-0" style="display: inline-block; font-size: 16px; margin-top: 0 !important; white-space: nowrap;">Layanan Pelanggan</span></p>
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-6 col-md-6 text-end d-none d-md-block">
