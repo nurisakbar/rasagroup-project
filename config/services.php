@@ -50,7 +50,7 @@ return [
         'password' => env('FASPAY_PASSWORD'), // Legacy
         'env' => env('FASPAY_ENV', 'dev'),
         // SNAP BI Configuration
-        'va_partner_id' => env('FASPAY_VA_PARTNER_ID', '36850'),
+        'va_partner_id' => env('FASPAY_VA_PARTNER_ID', '37020'),
         'qris_partner_id' => env('FASPAY_QRIS_PARTNER_ID', '37020'),
         'snap_base_url' => env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0'),
         'snap_client_id' => env('FASPAY_SNAP_CLIENT_ID'),

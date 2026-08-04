@@ -90,6 +90,7 @@
                             <label for="image">Ganti gambar sampul</label>
                             <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
                             <p class="help-block"><small>Kosongkan jika tidak ingin mengganti. Maks. 2 MB.</small></p>
+                            <p class="help-block text-primary"><small><strong><i class="fa fa-info-circle"></i> Rekomendasi Ukuran:</strong> 1200 x 630 pixel (Rasio 1.91:1) dengan orientasi lanskap/mendatar agar gambar tampil proporsional dan tidak terpotong.</small></p>
                             @error('image')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror

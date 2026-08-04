@@ -12,9 +12,21 @@ class InformationChannelController extends Controller
      */
     public function index()
     {
-        $channels = InformationChannel::where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = InformationChannel::where('is_active', true);
+
+        if (!auth()->check()) {
+            $query->whereIn('target_audience', ['all', 'customer']);
+        } else {
+            // Jika sudah login, cek role distributor
+            $user = auth()->user();
+            if ($user->role === 'distributor') {
+                $query->whereIn('target_audience', ['all', 'distributor']);
+            } else {
+                $query->whereIn('target_audience', ['all', 'customer']);
+            }
+        }
+
+        $channels = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return view('themes.nest.information-channels.index', compact('channels'));
     }
@@ -24,9 +36,20 @@ class InformationChannelController extends Controller
      */
     public function show($slug)
     {
-        $channel = InformationChannel::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $query = InformationChannel::where('slug', $slug)->where('is_active', true);
+
+        if (!auth()->check()) {
+            $query->whereIn('target_audience', ['all', 'customer']);
+        } else {
+            $user = auth()->user();
+            if ($user->role === 'distributor') {
+                $query->whereIn('target_audience', ['all', 'distributor']);
+            } else {
+                $query->whereIn('target_audience', ['all', 'customer']);
+            }
+        }
+
+        $channel = $query->firstOrFail();
 
         return view('themes.nest.information-channels.show', compact('channel'));
     }

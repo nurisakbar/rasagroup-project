@@ -14,8 +14,8 @@ class FaspaySnapTest extends TestCase
     public function test_faspay_inquiry_endpoint()
     {
         $response = $this->postJson('/api/faspay/snap/inquiry', [
-            'virtualAccountNo' => '3685011234567890',
-            'partnerServiceId' => '368501',
+            'virtualAccountNo' => '3702011234567890',
+            'partnerServiceId' => '370201',
             'customerNo' => '1234567890',
             'inquiryRequestId' => 'REQ-123'
         ]);
@@ -33,8 +33,8 @@ class FaspaySnapTest extends TestCase
     public function test_faspay_payment_endpoint()
     {
         $response = $this->postJson('/api/faspay/snap/payment', [
-            'virtualAccountNo' => '3685011234567890',
-            'partnerServiceId' => '368501',
+            'virtualAccountNo' => '3702011234567890',
+            'partnerServiceId' => '370201',
             'customerNo' => '1234567890',
             'paymentRequestId' => 'PAY-123'
         ]);

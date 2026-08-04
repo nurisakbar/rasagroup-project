@@ -960,13 +960,13 @@ class CheckoutController extends Controller
                         // VA Static Flow
                         // Prefix mapping
                         $prefixes = [
-                            'faspay_permata_va' => '368501',
-                            'faspay_mandiri_va' => '36850002',
-                            'faspay_bri_va'     => '368503',
-                            'faspay_cimb_va'    => '368504',
+                            'faspay_permata_va' => '370201',
+                            'faspay_mandiri_va' => '37020002',
+                            'faspay_bri_va'     => '370202',
+                            'faspay_cimb_va'    => '370204',
                             'faspay_bni_va'     => '9881236387',
                         ];
-                        $prefix = $prefixes[$request->payment_method] ?? '368500';
+                        $prefix = $prefixes[$request->payment_method] ?? '370200';
                         $targetLength = 16;
                         $prefixLength = strlen($prefix);
                         $freeDigitsLength = $targetLength - $prefixLength;

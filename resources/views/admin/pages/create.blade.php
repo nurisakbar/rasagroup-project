@@ -45,6 +45,7 @@
                         <div class="form-group @error('content') has-error @enderror">
                             <label for="content">Konten Halaman</label>
                             <textarea class="form-control summernote" id="content" name="content" rows="10">{{ old('content') }}</textarea>
+                            <p class="help-block text-primary"><small><strong><i class="fa fa-info-circle"></i> Tips Gambar:</strong> Jika menyisipkan gambar/foto, disarankan menggunakan lebar maksimal <strong>1200 pixel</strong> (proporsi lanskap) agar terlihat rapi dan tidak terlalu berat saat dimuat.</small></p>
                             @error('content')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
