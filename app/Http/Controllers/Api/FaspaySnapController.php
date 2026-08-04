@@ -31,7 +31,7 @@ class FaspaySnapController extends Controller
         }
 
         // Identifikasi nomor VA dari request
-        $vaNumber = $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
+        $vaNumber = $request->input('virtualAccountNo') ?? $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
         
         if (!$vaNumber) {
             return response()->json([
@@ -136,7 +136,7 @@ class FaspaySnapController extends Controller
         // Untuk QRIS dan VA, biasanya ada 'partnerReferenceNo' atau 'customerNo'
         
         // Coba ambil dari request input
-        $orderNumber = $request->input('partnerReferenceNo') ?? $request->input('bill_no') ?? $request->input('customerNo') ?? $request->input('VA') ?? $request->input('va');
+        $orderNumber = $request->input('virtualAccountNo') ?? $request->input('partnerReferenceNo') ?? $request->input('bill_no') ?? $request->input('customerNo') ?? $request->input('VA') ?? $request->input('va');
         $status = $request->input('latestTransactionStatus', $request->input('payment_status_code', $request->input('txnStatus')));
 
         // Jika kosong, mungkin payload JSON dikirim sebagai raw string dan Laravel gagal mem-parsing
@@ -145,7 +145,7 @@ class FaspaySnapController extends Controller
             if (!empty($rawContent)) {
                 $decoded = json_decode($rawContent, true);
                 if (is_array($decoded)) {
-                    $orderNumber = $decoded['partnerReferenceNo'] ?? $decoded['bill_no'] ?? $decoded['customerNo'] ?? $decoded['VA'] ?? $decoded['va'] ?? $decoded['trx_id'] ?? null;
+                    $orderNumber = $decoded['virtualAccountNo'] ?? $decoded['partnerReferenceNo'] ?? $decoded['bill_no'] ?? $decoded['customerNo'] ?? $decoded['VA'] ?? $decoded['va'] ?? $decoded['trx_id'] ?? null;
                     $status = $decoded['latestTransactionStatus'] ?? $decoded['payment_status_code'] ?? $decoded['txnStatus'] ?? null;
                 }
             }

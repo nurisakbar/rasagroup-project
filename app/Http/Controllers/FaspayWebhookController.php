@@ -18,14 +18,31 @@ class FaspayWebhookController extends Controller
             Log::info('Faspay Webhook Received - FULL DEBUG', [
                 'headers' => $request->headers->all(),
                 'payload' => $data,
+                'auth_user' => $request->getUser()
             ]);
+
+            // Basic Auth Validation for Legacy Faspay Webhook
+            $authUser = $request->getUser();
+            $authPass = $request->getPassword();
+            
+            $expectedUser = config('services.faspay.user_id');
+            $expectedPass = config('services.faspay.password');
+
+            if ($authUser !== $expectedUser || $authPass !== $expectedPass) {
+                Log::warning('Faspay Webhook Basic Auth Failed', [
+                    'user' => $authUser
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
 
             $billNo = $data['bill_no'] ?? null;
             $paymentStatusCode = $data['payment_status_code'] ?? null;
             $signature = $data['signature'] ?? null;
+            $trxId = $data['trx_id'] ?? '';
+            $merchantId = config('services.faspay.merchant_id');
 
             if (!$billNo || !$paymentStatusCode) {
-                return response()->json(['error' => 'Invalid payload'], 400);
+                return $this->jsonResponse($trxId, $merchantId, $billNo, '01', 'Failed');
             }
 
             // Verify signature (optional but recommended)
@@ -37,8 +54,6 @@ class FaspayWebhookController extends Controller
                     'expected' => $expectedSignature,
                     'received' => $signature
                 ]);
-                // return response()->json(['error' => 'Invalid signature'], 401); 
-                // Commented out to ensure testing works, uncomment in production if Faspay sends signature
             }
 
             // Find order by faspay_bill_no, order_number, or virtual_account_no
@@ -51,7 +66,7 @@ class FaspayWebhookController extends Controller
                 Log::warning('Faspay webhook: Order not found', [
                     'bill_no' => $billNo,
                 ]);
-                return response()->json(['error' => 'Order not found'], 404);
+                return $this->jsonResponse($trxId, $merchantId, $billNo, '01', 'Failed');
             }
 
             DB::beginTransaction();
@@ -100,17 +115,7 @@ class FaspayWebhookController extends Controller
 
                 DB::commit();
                 
-                // Faspay expects response XML or specific format based on their docs, 
-                // but generally HTTP 200 is acceptable for standard webhooks. 
-                // Some Faspay versions require specific response:
-                return response()->json([
-                    'response' => 'Payment Notification',
-                    'trx_id' => $data['trx_id'] ?? '',
-                    'merchant_id' => config('services.faspay.merchant_id'),
-                    'bill_no' => $billNo,
-                    'response_code' => '00',
-                    'response_desc' => 'Success'
-                ], 200);
+                return $this->jsonResponse($trxId, $merchantId, $billNo, '00', 'Success');
 
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -118,7 +123,7 @@ class FaspayWebhookController extends Controller
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
-                return response()->json(['error' => 'Processing failed'], 500);
+                return $this->jsonResponse($trxId, $merchantId, $billNo, '01', 'Failed');
             }
         } catch (\Exception $e) {
             Log::error('Faspay webhook exception', [
@@ -127,6 +132,18 @@ class FaspayWebhookController extends Controller
             ]);
             return response()->json(['error' => 'Internal server error'], 500);
         }
+    }
+
+    private function jsonResponse($trxId, $merchantId, $billNo, $code, $desc)
+    {
+        return response()->json([
+            'response' => 'Payment Notification',
+            'trx_id' => $trxId,
+            'merchant_id' => $merchantId,
+            'bill_no' => $billNo,
+            'response_code' => $code,
+            'response_desc' => $desc
+        ], 200);
     }
 
     /**
@@ -172,4 +189,3 @@ class FaspayWebhookController extends Controller
         return redirect()->route('home');
     }
 }
-
