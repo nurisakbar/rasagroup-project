@@ -133,7 +133,7 @@ class FaspaySnapService
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
-            'X-EXTERNAL-ID' => (string) $order->order_number,
+            'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
             'CHANNEL-ID' => '711',
             'Content-Type' => 'application/json'
         ];
