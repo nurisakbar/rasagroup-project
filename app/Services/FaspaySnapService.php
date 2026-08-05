@@ -106,9 +106,9 @@ class FaspaySnapService
     {
         $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
         $endpoint = '/v1.0/qr/qr-mpm-generate';
-        $url = env('FASPAY_SNAP_URL', 'https://debit-sandbox.faspay.co.id') . $endpoint;
-        $partnerId = env('FASPAY_SNAP_CLIENT_ID', env('FASPAY_MERCHANT_ID'));
-        $privateKeyPath = env('FASPAY_PRIVATE_KEY_PATH', storage_path('app/faspay_private_key.pem'));
+        $url = config('services.faspay.snap_base_url', 'https://debit-sandbox.faspay.co.id/v1.0') . '/qr/qr-mpm-generate';
+        $partnerId = config('services.faspay.snap_client_id') ?: config('services.faspay.merchant_id');
+        $privateKeyPath = base_path(config('services.faspay.private_key_path', 'storage/app/faspay_private_key.pem'));
         $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
 
         $payload = [
