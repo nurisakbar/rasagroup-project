@@ -69,7 +69,7 @@
                         <div class="widget-about font-md mb-md-3 mb-lg-3 mb-xl-0 wow animate__animated animate__fadeInUp" data-wow-delay="0">
                             <div class="logo mb-30">
                                 <a href="{{ route('home') }}" class="mb-15">
-                                    <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="logo" style="width: 80px !important; min-width: 80px !important; height: auto !important; object-fit: contain;" />
+                                    <img src="{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="logo" style="width: 220px !important; min-width: 220px !important; height: auto !important; object-fit: contain;" />
                                 </a>
                                 <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi<br>untuk kebutuhan industri dan rumah tangga.</p>
                             </div>

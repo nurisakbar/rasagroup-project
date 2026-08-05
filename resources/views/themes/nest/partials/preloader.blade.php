@@ -2,7 +2,7 @@
         <div class="preloader d-flex align-items-center justify-content-center">
             <div class="preloader-inner position-relative">
                 <div class="text-center">
-                    <img src="{{ asset('logo/RASA Group - Logo - R-02.png') }}" alt="Rasa Group" class="rg-preloader-logo" />
+                    <img src="{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="Rasa Group" class="rg-preloader-logo" />
                 </div>
             </div>
         </div>
