@@ -134,7 +134,7 @@ class FaspaySnapService
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
             'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
-            'CHANNEL-ID' => '711',
+            'CHANNEL-ID' => '77001',
             'Content-Type' => 'application/json'
         ];
 
