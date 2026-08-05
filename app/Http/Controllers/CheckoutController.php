@@ -948,8 +948,8 @@ class CheckoutController extends Controller
                     if ($request->payment_method === 'faspay_qris') {
                         $snapService = new \App\Services\FaspaySnapService();
                         $qrisData = $snapService->generateQris($order, $total);
-                        if ($qrisData && isset($qrisData['qrContent'])) {
-                            $order->virtual_account_no = $qrisData['qrContent'];
+                        if ($qrisData && (isset($qrisData['qrUrl']) || isset($qrisData['additionalInfo']['qrImageUrl']))) {
+                            $order->virtual_account_no = $qrisData['qrUrl'] ?? $qrisData['additionalInfo']['qrImageUrl'];
                             $order->payment_method = 'faspay_qris';
                             $order->save();
                             Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id]);

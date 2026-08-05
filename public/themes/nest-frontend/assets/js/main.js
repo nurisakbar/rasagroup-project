@@ -3,13 +3,14 @@
     // Page loading
     $(window).on("load", function () {
         $("#preloader-active").fadeOut("slow");
-        var modalShown = localStorage.getItem("onloadModalShown");
-        if (!modalShown) {
-            var $onloadModal = $("#onloadModal");
-            if ($onloadModal.length) {
+        var $onloadModal = $("#onloadModal");
+        if ($onloadModal.length) {
+            var popupId = $onloadModal.data("popup-id");
+            var modalShown = localStorage.getItem("onloadModalShown_" + popupId);
+            if (!modalShown) {
                 $onloadModal.modal("show");
+                localStorage.setItem("onloadModalShown_" + popupId, "true");
             }
-            localStorage.setItem("onloadModalShown", "true");
         }
     });
     /*-----------------

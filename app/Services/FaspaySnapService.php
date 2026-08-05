@@ -87,22 +87,29 @@ class FaspaySnapService
     }
 
     /**
+     * Generate SNAP Asymmetric Signature (RSA-SHA256)
+     */
+    public function generateTransactionAsymmetricSignature($method, $endpoint, $payload, $timestamp, $privateKey)
+    {
+        $minifyPayload = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $hashPayload = strtolower(hash('sha256', $minifyPayload));
+        $stringToSign = $method . ":" . $endpoint . ":" . $hashPayload . ":" . $timestamp;
+        
+        openssl_sign($stringToSign, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        return base64_encode($signature);
+    }
+
+    /**
      * Generate QRIS
      */
     public function generateQris($order, $amount)
     {
-        $tokenData = $this->getB2bToken();
-        if (!$tokenData || !isset($tokenData['accessToken'])) {
-            return null;
-        }
-
-        $accessToken = $tokenData['accessToken'];
-        $endpoint = '/qr/qr-mpm-generate';
-        $url = rtrim($this->baseUrl, '/') . $endpoint;
-        
         $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
-        $partnerId = config('services.faspay.qris_partner_id'); // 37020
-        $clientSecret = config('services.faspay.password'); 
+        $endpoint = '/v1.0/qr/qr-mpm-generate';
+        $url = env('FASPAY_SNAP_URL', 'https://debit-sandbox.faspay.co.id') . $endpoint;
+        $partnerId = env('FASPAY_SNAP_CLIENT_ID', env('FASPAY_MERCHANT_ID'));
+        $privateKeyPath = env('FASPAY_PRIVATE_KEY_PATH', storage_path('app/faspay_private_key.pem'));
+        $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
 
         $payload = [
             'partnerReferenceNo' => (string) $order->order_number,
@@ -111,20 +118,24 @@ class FaspaySnapService
                 'currency' => 'IDR'
             ],
             'merchantId' => $partnerId,
-            'storeId' => '001',
             'validityPeriod' => now()->addHours(1)->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+            'additionalInfo' => [
+                'billDate' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+                'billDescription' => 'Payment #' . $order->order_number,
+                'channelCode' => '711',
+                'phoneNo' => $order->user->phone ?? '081234567890'
+            ]
         ];
 
-        $signature = $this->generateSymmetricSignature('POST', $endpoint, $accessToken, $payload, $timestamp, $clientSecret);
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
 
         $headers = [
-            'Authorization' => 'Bearer ' . $accessToken,
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
-            'X-EXTERNAL-ID' => (string) Str::uuid(),
-            'CHANNEL-ID' => '77001',
-            'Content-Type' => 'application/json',
+            'X-EXTERNAL-ID' => (string) $order->order_number,
+            'CHANNEL-ID' => '711',
+            'Content-Type' => 'application/json'
         ];
 
         $response = Http::withoutVerifying()
