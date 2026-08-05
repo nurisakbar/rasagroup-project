@@ -25,7 +25,20 @@ class ShippingLocationResolver
 
         $warehouse->loadMissing(['district', 'regency', 'province']);
 
-        return $this->geocode($this->buildWarehouseQuery($warehouse), 'warehouse.'.$warehouse->id);
+        $queries = array_values(array_filter([
+            $this->buildAdministrativeQueryWarehouse($warehouse),
+            $this->buildWarehouseQuery($warehouse),
+        ]));
+
+        foreach ($queries as $query) {
+            $result = $this->geocode($query, 'warehouse.'.$warehouse->id.':'.md5($query));
+            if ($result !== null) {
+                $result['address'] = $warehouse->address ?: $warehouse->name;
+                return $result;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -77,6 +90,20 @@ class ShippingLocationResolver
         ]);
 
         return implode(', ', $parts) ?: $warehouse->name;
+    }
+
+    protected function buildAdministrativeQueryWarehouse(Warehouse $warehouse): ?string
+    {
+        $parts = array_filter([
+            $warehouse->district?->name ? 'Kecamatan '.$warehouse->district->name : null,
+            $this->cleanRegencyName($warehouse->regency?->name),
+            $warehouse->province?->name,
+            'Indonesia',
+        ]);
+
+        $query = implode(', ', $parts);
+
+        return $query !== '' ? $query : null;
     }
 
     protected function cleanRegencyName(?string $name): ?string

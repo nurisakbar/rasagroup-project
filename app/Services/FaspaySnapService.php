@@ -65,6 +65,9 @@ class FaspaySnapService
         }
 
         Log::error('Faspay SNAP B2B Token Error', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload,
             'status' => $response->status(),
             'body' => $response->body()
         ]);
@@ -133,6 +136,9 @@ class FaspaySnapService
         }
 
         Log::error('Faspay SNAP QRIS Error', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload,
             'status' => $response->status(),
             'body' => $response->body()
         ]);
