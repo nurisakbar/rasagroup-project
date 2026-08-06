@@ -306,6 +306,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
         Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');
+        Route::post('/distributors/{distributor}/target-belanja', [App\Http\Controllers\Admin\DistributorController::class, 'updateTargetBelanja'])->name('distributors.target-belanja.update');
         Route::delete('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'destroy'])->name('distributors.destroy');
         Route::post('/distributors/sync-qad', [App\Http\Controllers\Admin\DistributorController::class, 'syncQadCustomers'])->name('distributors.sync-qad');
     });

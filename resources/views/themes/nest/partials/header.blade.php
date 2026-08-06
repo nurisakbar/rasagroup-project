@@ -141,6 +141,16 @@
                                     : route('buyer.distributor.apply'));
                             $distributorMainMenuActive = request()->routeIs('buyer.dashboard') || request()->routeIs('buyer.distributor.apply');
                         @endphp
+                        <style>
+                            @media (min-width: 992px) and (max-width: 1250px) {
+                                .main-menu.main-menu-padding-1 > nav > ul > li {
+                                    padding: 0 8px !important;
+                                }
+                                .main-menu > nav > ul > li > a {
+                                    font-size: 13px !important;
+                                }
+                            }
+                        </style>
                         <div class="main-menu main-menu-padding-1 main-menu-lh-2 d-none d-lg-block font-heading">
                             <nav>
                                 <ul>

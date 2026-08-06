@@ -194,6 +194,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(PointWithdrawal::class);
     }
 
+    public function targetBelanja(): HasMany
+    {
+        return $this->hasMany(TargetBelanja::class, 'distributor_id');
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === self::ROLE_SUPER_ADMIN;

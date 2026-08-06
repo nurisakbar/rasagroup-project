@@ -564,7 +564,65 @@ class DistributorController extends Controller
             }
         }
 
-        return view('admin.distributors.show', compact('distributor', 'stockStats'));
+        $targetBelanjaRaw = \App\Models\TargetBelanja::where('distributor_id', $distributor->id)
+            ->orderBy('bulan_tahun')
+            ->get();
+            
+        $targetBelanjaData = [];
+        foreach ($targetBelanjaRaw as $tb) {
+            $year = substr($tb->bulan_tahun, 0, 4);
+            $month = substr($tb->bulan_tahun, 5, 2);
+            $targetBelanjaData[$year][$month] = $tb->jumlah_target;
+        }
+
+        return view('admin.distributors.show', compact('distributor', 'stockStats', 'targetBelanjaData'));
+    }
+
+    /**
+     * Update target belanja for a distributor.
+     */
+    public function updateTargetBelanja(Request $request, User $distributor)
+    {
+        if (!$distributor->isDistributor()) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'year' => 'required|digits:4',
+            'targets' => 'required|array',
+            'targets.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $year = $validated['year'];
+        $targets = $validated['targets'];
+
+        foreach ($targets as $month => $amount) {
+            $monthFormatted = str_pad($month, 2, '0', STR_PAD_LEFT);
+            $bulanTahun = $year . '-' . $monthFormatted;
+            
+            // if amount is empty, maybe set to 0 or leave existing? We will set to 0.
+            $amount = $amount ?: 0;
+
+            if ($amount > 0) {
+                \App\Models\TargetBelanja::updateOrCreate(
+                    [
+                        'distributor_id' => $distributor->id,
+                        'bulan_tahun' => $bulanTahun,
+                    ],
+                    [
+                        'jumlah_target' => $amount,
+                    ]
+                );
+            } else {
+                // if 0, maybe remove it?
+                \App\Models\TargetBelanja::where('distributor_id', $distributor->id)
+                    ->where('bulan_tahun', $bulanTahun)
+                    ->delete();
+            }
+        }
+
+        return redirect()->route('admin.distributors.show', $distributor)
+            ->with('success', 'Target belanja tahun ' . $year . ' berhasil diperbarui.');
     }
 
     /**

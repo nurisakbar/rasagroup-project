@@ -11,77 +11,76 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-3">
-            <!-- Profile Box -->
-            <div class="box box-warning">
-                <div class="box-body box-profile">
-                    <img class="profile-user-img img-responsive img-circle" src="{{ asset('adminlte/img/user2-160x160.jpg') }}" alt="User profile picture">
-                    <h3 class="profile-username text-center">{{ $distributor->name }}</h3>
-                    <p class="text-muted text-center">
-                        <span class="label label-warning">Distributor</span>
-                    </p>
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- Combined Profile and Stats Box -->
+                    <div class="box box-warning">
+                        <div class="box-body">
+                            <div class="row" style="display: flex; align-items: center; flex-wrap: wrap;">
+                                <!-- Profile Name & Actions -->
+                                <div class="col-md-3 text-center" style="border-right: 1px solid #eee; padding: 20px;">
+                                    <div style="font-size: 50px; color: #f39c12; margin-bottom: 10px;">
+                                        <i class="fa fa-building"></i>
+                                    </div>
+                                    <h3 class="profile-username" style="font-size: 22px; margin-top: 0; font-weight: bold;">{{ $distributor->name }}</h3>
+                                    <p class="text-muted" style="margin-bottom: 15px;">
+                                        <span class="label label-warning" style="font-size: 12px; padding: 4px 10px; border-radius: 4px;">Distributor</span>
+                                    </p>
+                                    <div>
+                                        <a href="{{ route('admin.distributors.edit', $distributor) }}" class="btn btn-warning btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
+                                        <a href="{{ route('admin.distributors.index') }}" class="btn btn-default btn-sm btn-flat"><i class="fa fa-arrow-left"></i> Kembali</a>
+                                    </div>
+                                </div>
 
-                    <ul class="list-group list-group-unbordered">
-                        <li class="list-group-item">
-                            <b>Email</b> <a class="pull-right">{{ $distributor->email }}</a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>No. HP</b> <a class="pull-right">{{ $distributor->phone ?? '-' }}</a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Level Harga</b> <a class="pull-right">{{ $distributor->priceLevel->name ?? 'Harga Normal' }}</a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>TOP</b> <a class="pull-right">{{ $distributor->term_of_payment ?? '0' }} Hari</a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Target Bulanan</b> <a class="pull-right">Rp {{ number_format($distributor->monthly_target ?? 0, 0, ',', '.') }}</a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Terdaftar</b> <a class="pull-right">{{ $distributor->created_at->format('d M Y') }}</a>
-                        </li>
-                    </ul>
+                                <!-- Profile Details -->
+                                <div class="col-md-5" style="border-right: 1px solid #eee; padding: 20px;">
+                                    <ul class="list-group list-group-unbordered mb-0" style="margin-bottom: 0;">
+                                        <li class="list-group-item" style="border-top: 0; padding-top: 0;">
+                                            <b><i class="fa fa-envelope-o text-muted" style="width: 20px;"></i> Email</b> <a class="pull-right">{{ $distributor->email }}</a>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-phone text-muted" style="width: 20px;"></i> No. HP</b> <a class="pull-right">{{ $distributor->phone ?? '-' }}</a>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-tags text-muted" style="width: 20px;"></i> Level Harga</b> <a class="pull-right">{{ $distributor->priceLevel->name ?? 'Harga Normal' }}</a>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-clock-o text-muted" style="width: 20px;"></i> TOP</b> <a class="pull-right">{{ $distributor->term_of_payment ?? '0' }} Hari</a>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-bullseye text-muted" style="width: 20px;"></i> Target Bulanan</b> <a class="pull-right">Rp {{ number_format($distributor->monthly_target ?? 0, 0, ',', '.') }}</a>
+                                        </li>
+                                        <li class="list-group-item" style="border-bottom: 0; padding-bottom: 0;">
+                                            <b><i class="fa fa-calendar-check-o text-muted" style="width: 20px;"></i> Terdaftar</b> <a class="pull-right">{{ $distributor->created_at->format('d M Y') }}</a>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <a href="{{ route('admin.distributors.edit', $distributor) }}" class="btn btn-warning btn-block">
-                                <i class="fa fa-edit"></i> Edit Profil
-                            </a>
-                            <a href="{{ route('admin.distributors.index') }}" class="btn btn-default btn-block">
-                                <i class="fa fa-arrow-left"></i> Kembali
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            @php
-                $totalOrders = \App\Models\Order::where('user_id', $distributor->id)->count();
-                $totalSales = \App\Models\Order::where('user_id', $distributor->id)->where('payment_status', 'paid')->sum('total_amount');
-            @endphp
-            <div class="box box-info">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-info-circle"></i> Quick Stats</h3>
-                </div>
-                <div class="box-body">
-                    <div class="row">
-                        <div class="col-xs-6">
-                            <div class="description-block border-right">
-                                <span class="description-percentage text-green">
-                                    <i class="fa fa-shopping-cart"></i>
-                                </span>
-                                <h5 class="description-header">{{ number_format($totalOrders, 0, ',', '.') }}</h5>
-                                <span class="description-text">TOTAL ORDER</span>
-                            </div>
-                        </div>
-                        <div class="col-xs-6">
-                            <div class="description-block">
-                                <span class="description-percentage text-blue">
-                                    <i class="fa fa-money"></i>
-                                </span>
-                                <h5 class="description-header">Rp {{ number_format($totalSales ?: 0, 0, ',', '.') }}</h5>
-                                <span class="description-text">TOTAL PENJUALAN</span>
+                                <!-- Quick Stats -->
+                                <div class="col-md-4 text-center" style="padding: 20px;">
+                                    @php
+                                        $totalOrders = \App\Models\Order::where('user_id', $distributor->id)->count();
+                                        $totalSales = \App\Models\Order::where('user_id', $distributor->id)->where('payment_status', 'paid')->sum('total_amount');
+                                    @endphp
+                                    <h4 style="margin-top: 0; margin-bottom: 25px; font-weight: bold; color: #555;">Riwayat Transaksi</h4>
+                                    <div class="row">
+                                        <div class="col-xs-6" style="border-right: 1px solid #eee;">
+                                            <div class="description-block" style="margin-bottom: 0;">
+                                                <span class="description-percentage text-green" style="font-size: 28px; display: block; margin-bottom: 5px;"><i class="fa fa-shopping-cart"></i></span>
+                                                <h5 class="description-header" style="font-size: 22px; font-weight: bold;">{{ number_format($totalOrders, 0, ',', '.') }}</h5>
+                                                <span class="description-text text-muted">TOTAL ORDER</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <div class="description-block" style="margin-bottom: 0;">
+                                                <span class="description-percentage text-blue" style="font-size: 28px; display: block; margin-bottom: 5px;"><i class="fa fa-money"></i></span>
+                                                <h5 class="description-header" style="font-size: 22px; font-weight: bold;">Rp {{ number_format($totalSales ?: 0, 0, ',', '.') }}</h5>
+                                                <span class="description-text text-muted">TOTAL PENJUALAN</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -89,7 +88,7 @@
             </div>
         </div>
 
-        <div class="col-md-9">
+        <div class="col-md-12">
             <!-- Tabbed Content -->
             <div class="nav-tabs-custom">
                 <ul class="nav nav-tabs">
@@ -98,6 +97,7 @@
                     <li><a href="#tab_orders" data-toggle="tab"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
                     <li><a href="#tab_dokumen" data-toggle="tab"><i class="fa fa-file-text"></i> Dokumen</a></li>
                     <li><a href="#tab_staff" data-toggle="tab"><i class="fa fa-users"></i> Kelola Staff</a></li>
+                    <li><a href="#tab_target_belanja" data-toggle="tab"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
                     <li class="pull-right"><a href="#tab_danger" data-toggle="tab" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
                 <div class="tab-content">
@@ -407,6 +407,83 @@
                         </div>
                     </div>
 
+                    <!-- Tab: Target Belanja -->
+                    <div class="tab-pane" id="tab_target_belanja">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 class="page-header"><i class="fa fa-bullseye"></i> Target Belanja per Bulan</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="box box-solid box-primary">
+                                            <div class="box-header with-border">
+                                                <h3 class="box-title">Pilih Tahun</h3>
+                                            </div>
+                                            <div class="box-body">
+                                                <div class="form-group">
+                                                    <label>Tahun</label>
+                                                    <select id="select-target-year" class="form-control">
+                                                        <option value="">-- Pilih Tahun --</option>
+                                                        @php
+                                                            $currentYear = date('Y');
+                                                            $years = range($currentYear - 2, $currentYear + 3);
+                                                        @endphp
+                                                        @foreach($years as $y)
+                                                            <option value="{{ $y }}" {{ $y == $currentYear ? 'selected' : '' }}>{{ $y }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="box box-solid" id="box-target-form" style="display: none;">
+                                            <div class="box-header with-border">
+                                                <h3 class="box-title">Form Target Belanja Tahun <span id="target-year-title"></span></h3>
+                                            </div>
+                                            <div class="box-body">
+                                                <form action="{{ route('admin.distributors.target-belanja.update', $distributor) }}" method="POST">
+                                                    @csrf
+                                                    <input type="hidden" name="year" id="input-target-year">
+                                                    
+                                                    <div class="row">
+                                                        @php
+                                                            $months = [
+                                                                '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
+                                                                '4' => 'April', '5' => 'Mei', '6' => 'Juni',
+                                                                '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
+                                                                '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                                                            ];
+                                                        @endphp
+                                                        @foreach($months as $num => $name)
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>{{ $name }}</label>
+                                                                    <div class="input-group">
+                                                                        <span class="input-group-addon">Rp</span>
+                                                                        <input type="number" name="targets[{{ $num }}]" id="target-month-{{ $num }}" class="form-control" placeholder="0" min="0" step="1">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                    
+                                                    <div class="form-group text-right">
+                                                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan Target</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="callout callout-info" id="info-select-year">
+                                            <h4><i class="fa fa-info-circle"></i> Info</h4>
+                                            <p>Silakan pilih tahun di samping untuk mengatur target belanja bulanan.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tab: Danger Zone -->
                     <div class="tab-pane" id="tab_danger">
                         <div class="callout callout-danger">
@@ -712,6 +789,44 @@ $(document).ready(function() {
         $('#edit_doc_keterangan').val($btn.attr('data-keterangan'));
         $('#modalEditDokumen').modal('show');
     });
+
+    // Target Belanja
+    var targetBelanjaData = @json($targetBelanjaData ?? []);
+    
+    $('#select-target-year').change(function() {
+        var year = $(this).val();
+        
+        if (year) {
+            $('#input-target-year').val(year);
+            $('#target-year-title').text(year);
+            
+            // Reset all inputs to empty
+            for(var i=1; i<=12; i++) {
+                $('#target-month-' + i).val('');
+            }
+            
+            // Fill existing data if any
+            if (targetBelanjaData[year]) {
+                var yearData = targetBelanjaData[year];
+                for(var month in yearData) {
+                    // month is '01', '02', etc. parse it to int to match id
+                    var monthInt = parseInt(month, 10);
+                    $('#target-month-' + monthInt).val(parseFloat(yearData[month]));
+                }
+            }
+            
+            $('#info-select-year').hide();
+            $('#box-target-form').show();
+        } else {
+            $('#box-target-form').hide();
+            $('#info-select-year').show();
+        }
+    });
+
+    // Trigger on load if there's a selected value
+    if ($('#select-target-year').val()) {
+        $('#select-target-year').trigger('change');
+    }
 });
 </script>
 @endpush
