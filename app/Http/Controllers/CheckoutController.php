@@ -203,11 +203,23 @@ class CheckoutController extends Controller
                 if ($service['code'] === $firstExpCode) {
                     \Log::info('Found matching service for expedition');
                     
+                    $originalCost = $service['cost'];
+                    $cost = $originalCost;
+                    $isDiscounted = false;
+                    
+                    if ($firstExpCode === 'jne') {
+                        $isDiscounted = true;
+                        $cost = $originalCost * 0.8;
+                    }
+
                     $item = [
                         'code' => $service['service'],
                         'name' => $service['description'],
-                        'cost' => $service['cost'],
-                        'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
+                        'cost' => $cost,
+                        'original_cost' => $originalCost,
+                        'is_discounted' => $isDiscounted,
+                        'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
+                        'original_cost_formatted' => 'Rp ' . number_format($originalCost, 0, ',', '.'),
                         'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $firstExpCode)
                     ];
                     $allShippingServices[] = $item;
@@ -260,6 +272,13 @@ class CheckoutController extends Controller
 
     $cart_ids = request('cart_ids', []);
 
+    $originalShippingCost = $shippingCost;
+    $isShippingDiscounted = false;
+    if ($defaultExpedition && $defaultExpedition->code === 'jne' && $shippingCost > 0) {
+        $isShippingDiscounted = true;
+        $originalShippingCost = $shippingCost / 0.8;
+    }
+
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
@@ -268,6 +287,8 @@ class CheckoutController extends Controller
         'priceLevelName',
         'showDistributorPricing',
         'shippingCost', 
+        'originalShippingCost',
+        'isShippingDiscounted',
         'discountAmount',
         'discountPercent',
         'total', 
@@ -366,11 +387,18 @@ class CheckoutController extends Controller
                 ]);
                 
                 if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $request->service_code) {
-                    $shippingCost = $service['cost'];
+                    $originalShippingCost = $service['cost'];
+                    $shippingCost = $originalShippingCost;
+                    
+                    if ($expedition->code === 'jne') {
+                        $shippingCost = $originalShippingCost * 0.8;
+                    }
+
                     $serviceName = $service['description'];
                     $estimatedDelivery = $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code);
                     \Log::info('MATCH FOUND!', [
                         'cost' => $shippingCost,
+                        'original_cost' => $originalShippingCost,
                         'name' => $serviceName,
                         'etd' => $estimatedDelivery,
                     ]);
@@ -395,9 +423,18 @@ class CheckoutController extends Controller
 
         $total = $subtotal - $discountAmount + $shippingCost;
 
+        $isShippingDiscounted = false;
+        $originalShippingCost = $shippingCost;
+        if ($expedition->code === 'jne') {
+            $isShippingDiscounted = true;
+            $originalShippingCost = $shippingCost / 0.8;
+        }
+
         return response()->json([
             'shipping_cost' => $shippingCost,
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
+            'original_shipping_cost_formatted' => 'Rp ' . number_format($originalShippingCost, 0, ',', '.'),
+            'is_shipping_discounted' => $isShippingDiscounted,
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
             'retail_subtotal' => $retailSubtotal,
@@ -529,11 +566,23 @@ class CheckoutController extends Controller
                 ]);
 
                 if (($service['code'] ?? '') === $expedition->code) {
+                    $originalCost = $service['cost'];
+                    $cost = $originalCost;
+                    $isDiscounted = false;
+
+                    if ($expedition->code === 'jne') {
+                        $isDiscounted = true;
+                        $cost = $originalCost * 0.8;
+                    }
+
                     $services[] = [
                         'code' => $service['service'],
                         'name' => $service['description'],
-                        'cost' => $service['cost'],
-                        'cost_formatted' => 'Rp ' . number_format($service['cost'], 0, ',', '.'),
+                        'cost' => $cost,
+                        'original_cost' => $originalCost,
+                        'is_discounted' => $isDiscounted,
+                        'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
+                        'original_cost_formatted' => 'Rp ' . number_format($originalCost, 0, ',', '.'),
                         'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code),
                     ];
                 }
@@ -736,7 +785,11 @@ class CheckoutController extends Controller
                     if (($service['code'] ?? '') === $expedition->code) {
                         $availableServices[] = $service['service'];
                         if (($service['service'] ?? '') === $request->expedition_service) {
-                            $shippingCost = (float) $service['cost'];
+                            $originalShippingCost = (float) $service['cost'];
+                            $shippingCost = $originalShippingCost;
+                            if ($expedition->code === 'jne') {
+                                $shippingCost = $originalShippingCost * 0.8;
+                            }
                         }
                     }
                 }
@@ -750,7 +803,11 @@ class CheckoutController extends Controller
                     $request->merge(['expedition_service' => $autoService]);
                     foreach ($costResult['data'] as $service) {
                         if (($service['code'] ?? '') === $expedition->code && ($service['service'] ?? '') === $autoService) {
-                            $shippingCost = (float) $service['cost'];
+                            $originalShippingCost = (float) $service['cost'];
+                            $shippingCost = $originalShippingCost;
+                            if ($expedition->code === 'jne') {
+                                $shippingCost = $originalShippingCost * 0.8;
+                            }
                             break;
                         }
                     }

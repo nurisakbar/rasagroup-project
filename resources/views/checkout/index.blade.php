@@ -173,7 +173,12 @@
                                                     <h6 class="mb-0 text-dark">{{ $service['name'] }}</h6>
                                                     <small class="text-muted">{{ $service['estimated_days'] }}</small>
                                                 </div>
-                                                <div class="fw-bold text-brand">{{ $service['cost_formatted'] }}</div>
+                                                <div class="fw-bold text-brand">
+                                                    @if(isset($service['is_discounted']) && $service['is_discounted'])
+                                                        <span class="text-muted text-decoration-line-through me-1" style="font-size: 0.85em;">{{ $service['original_cost_formatted'] }}</span>
+                                                    @endif
+                                                    {{ $service['cost_formatted'] }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -412,6 +417,9 @@
                                     <td class="cart_total_amount text-end align-middle py-3">
                                         <h5 class="text-brand mb-2" id="shippingCostDisplay">
                                             @if($shippingCost > 0)
+                                                @if(isset($isShippingDiscounted) && $isShippingDiscounted)
+                                                    <span class="text-muted text-decoration-line-through me-1" style="font-size: 0.7em;">Rp {{ number_format($originalShippingCost, 0, ',', '.') }}</span>
+                                                @endif
                                                 Rp {{ number_format($shippingCost, 0, ',', '.') }}
                                             @else
                                                 -
@@ -1106,7 +1114,10 @@
                                         <h6 class="mb-0 text-dark">${service.name}</h6>
                                         <small class="text-muted">${service.estimated_days}</small>
                                     </div>
-                                    <div class="fw-bold text-brand">${service.cost_formatted}</div>
+                                    <div class="fw-bold text-brand">
+                                        ${service.is_discounted ? `<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.85em;">${service.original_cost_formatted}</span>` : ''}
+                                        ${service.cost_formatted}
+                                    </div>
                                 </div>
                             </div>
                         </div>`;
@@ -1179,7 +1190,11 @@
                 }
                 
                 // Update displays
-                $('#shippingCostDisplay').text(data.shipping_cost_formatted);
+                if (data.is_shipping_discounted) {
+                    $('#shippingCostDisplay').html(`<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.7em;">${data.original_shipping_cost_formatted}</span> ${data.shipping_cost_formatted}`);
+                } else {
+                    $('#shippingCostDisplay').text(data.shipping_cost_formatted);
+                }
                 $('#totalDisplay').text(data.total_formatted);
                 $('#subtotalDisplay').text(data.subtotal_formatted);
                 if (data.total_weight_formatted) {
