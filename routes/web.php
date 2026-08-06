@@ -444,3 +444,7 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::post('/orders/{order}/convert-to-stock', [App\Http\Controllers\Distributor\OrderController::class, 'convertToStock'])->name('orders.convert-to-stock');
     });
 });
+
+// Faspay UAT Simulator (Development)
+Route::get('/faspay/simulate-uat', [\App\Http\Controllers\FaspayUatSimulatorController::class, 'simulate']);
+
