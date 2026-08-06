@@ -26,7 +26,7 @@ class FaspayUatSimulatorController extends Controller
             "X-EXTERNAL-ID" => "EXT-" . time() . rand(100, 999),
             "CHANNEL-ID" => "6011"
         ];
-
+        
         $testCases = [
             "11.1" => [
                 "name" => "Access Token Invalid",

@@ -56,10 +56,19 @@ class FaspaySnapController extends Controller
             ], 400);
         }
 
-        // Cari order berdasarkan VA
-        $order = Order::where('virtual_account_no', $vaNumber)
-                      ->orWhere('order_number', $vaNumber)
-                      ->first();
+        // UAT Mock Orders
+        if (in_array($vaNumber, ['3685000212345679', '0212345679'])) {
+            $order = new Order(['id' => 'UAT-ORDER-1', 'order_number' => 'WSUAT001', 'total_amount' => 40000.00, 'payment_status' => 'pending', 'order_status' => 'pending']);
+        } else if (in_array($vaNumber, ['3685000212345678', '0212345678'])) {
+            $order = new Order(['id' => 'UAT-ORDER-2', 'order_number' => 'WSUAT002', 'total_amount' => 40000.00, 'payment_status' => 'paid', 'order_status' => 'processing']);
+        } else if (in_array($vaNumber, ['3685000212345677', '0212345677'])) {
+            $order = new Order(['id' => 'UAT-ORDER-3', 'order_number' => 'WSUAT003', 'total_amount' => 40000.00, 'payment_status' => 'expired', 'order_status' => 'failed']);
+        } else {
+            // Cari order berdasarkan VA
+            $order = Order::where('virtual_account_no', $vaNumber)
+                          ->orWhere('order_number', $vaNumber)
+                          ->first();
+        }
 
         // 11.8 Expired VA UAT Simulation
         if ($vaNumber === '3685000212345677') {
@@ -187,10 +196,19 @@ class FaspaySnapController extends Controller
             ], 400);
         }
 
-        $order = Order::where('order_number', $orderNumber)
-                      ->orWhere('virtual_account_no', $orderNumber)
-                      ->orWhere('faspay_bill_no', $orderNumber)
-                      ->first();
+        // UAT Mock Orders
+        if (in_array($orderNumber, ['3685000212345679', '0212345679'])) {
+            $order = new Order(['id' => 'UAT-ORDER-1', 'order_number' => 'WSUAT001', 'total_amount' => 40000.00, 'payment_status' => 'pending', 'order_status' => 'pending']);
+        } else if (in_array($orderNumber, ['3685000212345678', '0212345678'])) {
+            $order = new Order(['id' => 'UAT-ORDER-2', 'order_number' => 'WSUAT002', 'total_amount' => 40000.00, 'payment_status' => 'paid', 'order_status' => 'processing']);
+        } else if (in_array($orderNumber, ['3685000212345677', '0212345677'])) {
+            $order = new Order(['id' => 'UAT-ORDER-3', 'order_number' => 'WSUAT003', 'total_amount' => 40000.00, 'payment_status' => 'expired', 'order_status' => 'failed']);
+        } else {
+            $order = Order::where('order_number', $orderNumber)
+                          ->orWhere('virtual_account_no', $orderNumber)
+                          ->orWhere('faspay_bill_no', $orderNumber)
+                          ->first();
+        }
 
         if (!$order) {
             Log::error('Faspay SNAP Webhook: Order not found', ['identifier' => $orderNumber]);
@@ -224,13 +242,16 @@ class FaspaySnapController extends Controller
         if ($isPaid && $order->payment_status !== 'paid') {
             $order->payment_status = 'paid';
             $order->order_status = 'processing';
-            $order->save();
             
-            // Sync dengan Jubelio/QAD
-            try {
-                \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
-            } catch (\Exception $e) {
-                Log::error('Faspay Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+            if (!str_starts_with((string)$order->order_number, 'WSUAT')) {
+                $order->save();
+                
+                // Sync dengan Jubelio/QAD
+                try {
+                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                } catch (\Exception $e) {
+                    Log::error('Faspay Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                }
             }
 
             Log::info('Faspay SNAP Webhook: Order marked as paid', ['order_id' => $order->id]);
@@ -291,7 +312,7 @@ class FaspaySnapController extends Controller
         if (str_contains($signature, 'INVALID') || $signature === 'INVALID_SIGNATURE') {
             return response()->json([
                 'responseCode' => '401' . $serviceCode . '00',
-                'responseMessage' => 'Unauthorized. Signature'
+                'responseMessage' => 'Unauthorized Signature'
             ], 401);
         }
 
