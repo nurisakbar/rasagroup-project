@@ -17,41 +17,51 @@ class FaspayUatSimulatorController extends Controller
             $baseUrl = rtrim($request->input('base_url'), '/');
         }
 
+        $baseHeaders = [
+            "Content-Type" => "application/json",
+            "Authorization" => "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...", // Mock valid token
+            "X-SIGNATURE" => "VALID_SIGNATURE_123",
+            "X-TIMESTAMP" => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+            "X-PARTNER-ID" => "368500",
+            "X-EXTERNAL-ID" => "EXT-" . time() . rand(100, 999),
+            "CHANNEL-ID" => "6011"
+        ];
+
         $testCases = [
             "11.1" => [
                 "name" => "Access Token Invalid",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Authorization" => "Bearer INVALID_TOKEN", "Content-Type" => "application/json"],
+                "headers" => array_merge($baseHeaders, ["Authorization" => "Bearer INVALID_TOKEN"]),
                 "payload" => []
             ],
             "11.2" => [
                 "name" => "Unauthorized Signature",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["X-SIGNATURE" => "INVALID_SIGNATURE", "Content-Type" => "application/json"],
+                "headers" => array_merge($baseHeaders, ["X-SIGNATURE" => "INVALID_SIGNATURE"]),
                 "payload" => ["partnerServiceId" => "370201", "customerNo" => "123", "virtualAccountNo" => "370201123"]
             ],
             "11.3" => [
                 "name" => "Missing Mandatory Field",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => ["partnerServiceId" => "370201"] // Missing virtualAccountNo dll
             ],
             "11.4" => [
                 "name" => "Invalid Field Format",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => ["partnerServiceId" => "370201", "virtualAccountNo" => 370201123] // Int instead of string
             ],
             "11.5" => [
                 "name" => "Cannot use the same X-EXTERNAL-ID",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["X-EXTERNAL-ID" => "SAME_ID_123", "Content-Type" => "application/json"],
+                "headers" => array_merge($baseHeaders, ["X-EXTERNAL-ID" => "SAME_ID_123"]),
                 "payload" => ["partnerServiceId" => "370201", "virtualAccountNo" => "370201123"]
             ],
             "11.6" => [
                 "name" => "Inquiry VA - Input no Virtual Account Valid",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345679",
@@ -63,7 +73,7 @@ class FaspayUatSimulatorController extends Controller
             "11.7" => [
                 "name" => "Inquiry VA - Input no Virtual Account Valid sudah lunas",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345678",
@@ -74,7 +84,7 @@ class FaspayUatSimulatorController extends Controller
             "11.8" => [
                 "name" => "Inquiry VA - Input no Virtual Account Valid kadaluarsa",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345677", 
@@ -85,7 +95,7 @@ class FaspayUatSimulatorController extends Controller
             "11.9" => [
                 "name" => "Inquiry VA - Input no Virtual Account tidak terdaftar",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "9999999999",
@@ -96,7 +106,7 @@ class FaspayUatSimulatorController extends Controller
             "11.10" => [
                 "name" => "Payment VA - Input no VA Valid (Closed Amount)",
                 "url" => $baseUrl . "/payment",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345679",
@@ -109,7 +119,7 @@ class FaspayUatSimulatorController extends Controller
             "11.11" => [
                 "name" => "Payment VA - Input no VA tidak terdaftar",
                 "url" => $baseUrl . "/payment",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "9999999999",
@@ -121,7 +131,7 @@ class FaspayUatSimulatorController extends Controller
             "11.12" => [
                 "name" => "Payment VA - Invalid Amount",
                 "url" => $baseUrl . "/payment",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345679",
@@ -134,7 +144,7 @@ class FaspayUatSimulatorController extends Controller
             "11.16" => [
                 "name" => "Payment VA - Open Amount",
                 "url" => $baseUrl . "/payment",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345679",
@@ -147,7 +157,7 @@ class FaspayUatSimulatorController extends Controller
             "11.17" => [
                 "name" => "Payment Notification - Merchant Success",
                 "url" => $baseUrl . "/payment",
-                "headers" => ["Content-Type" => "application/json"],
+                "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "368500",
                     "customerNo" => "0212345679",
