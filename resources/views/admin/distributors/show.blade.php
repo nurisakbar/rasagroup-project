@@ -460,7 +460,7 @@
                                                                     <label>{{ $name }}</label>
                                                                     <div class="input-group">
                                                                         <span class="input-group-addon">Rp</span>
-                                                                        <input type="number" name="targets[{{ $num }}]" id="target-month-{{ $num }}" class="form-control" placeholder="0" min="0" step="1">
+                                                                        <input type="text" name="targets[{{ $num }}]" id="target-month-{{ $num }}" class="form-control rupiah" placeholder="0">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -811,7 +811,7 @@ $(document).ready(function() {
                 for(var month in yearData) {
                     // month is '01', '02', etc. parse it to int to match id
                     var monthInt = parseInt(month, 10);
-                    $('#target-month-' + monthInt).val(parseFloat(yearData[month]));
+                    $('#target-month-' + monthInt).val(formatRupiah(parseFloat(yearData[month]).toString()));
                 }
             }
             
@@ -822,6 +822,26 @@ $(document).ready(function() {
             $('#info-select-year').show();
         }
     });
+
+    $('.rupiah').on('keyup', function(e) {
+        $(this).val(formatRupiah($(this).val()));
+    });
+
+    function formatRupiah(angka, prefix) {
+        var number_string = angka.toString().replace(/[^,\d]/g, ''),
+            split = number_string.split(','),
+            sisa = split[0].length % 3,
+            rupiah = split[0].substr(0, sisa),
+            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            var separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        return prefix == undefined ? rupiah : (rupiah ? prefix + rupiah : '');
+    }
 
     // Trigger on load if there's a selected value
     if ($('#select-target-year').val()) {

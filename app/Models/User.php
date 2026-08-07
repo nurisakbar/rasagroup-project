@@ -24,6 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_DRIIPPRENEUR = 'driippreneur';
     const ROLE_DISTRIBUTOR = 'distributor';
     const ROLE_SUPER_ADMIN = 'super_admin';
+    const ROLE_SALES = 'sales';
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -68,6 +69,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'wa_verified_at',
         'wa_verification_code',
         'qad_customer_code',
+        'sales_code',
     ];
 
     protected static function boot()
@@ -227,6 +229,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isBuyer(): bool
     {
         return $this->role === self::ROLE_BUYER;
+    }
+
+    public function isSales(): bool
+    {
+        return $this->role === self::ROLE_SALES;
     }
 
     /**

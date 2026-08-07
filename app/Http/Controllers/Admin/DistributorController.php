@@ -57,15 +57,11 @@ class DistributorController extends Controller
                 ->addColumn('name_info', function ($dist) {
                     return '<strong>' . $dist->name . '</strong>';
                 })
-                ->addColumn('hub_info', function ($dist) {
-                    if ($dist->warehouse) {
-                        $html = '<span class="label label-warning">' . $dist->warehouse->name . '</span>';
-                        if ($dist->warehouse->kode_hub) {
-                            $html .= '<br><small class="text-muted">' . $dist->warehouse->kode_hub . '</small>';
-                        }
-                        return $html;
+                ->addColumn('status_info', function ($dist) {
+                    if ($dist->warehouse && $dist->warehouse->is_active) {
+                        return '<span class="label label-success">Aktif</span>';
                     }
-                    return '<span class="text-muted">-</span>';
+                    return '<span class="label label-danger">Non Aktif</span>';
                 })
                 ->addColumn('location_info', function ($dist) {
                     if ($dist->warehouse) {
@@ -106,7 +102,7 @@ class DistributorController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['name_info', 'hub_info', 'location_info', 'action'])
+                ->rawColumns(['name_info', 'status_info', 'location_info', 'action'])
                 ->make(true);
         }
 
@@ -589,6 +585,14 @@ class DistributorController extends Controller
             abort(404);
         }
 
+        if ($request->has('targets') && is_array($request->targets)) {
+            $cleanedTargets = [];
+            foreach ($request->targets as $month => $amount) {
+                $cleanedTargets[$month] = str_replace('.', '', (string)$amount);
+            }
+            $request->merge(['targets' => $cleanedTargets]);
+        }
+
         $validated = $request->validate([
             'year' => 'required|digits:4',
             'targets' => 'required|array',
@@ -671,6 +675,7 @@ class DistributorController extends Controller
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
+            'is_active' => ['required', 'boolean'],
             'province_id' => ['required'],
             'regency_id' => ['required'],
             'district_id' => ['required'],
@@ -695,6 +700,7 @@ class DistributorController extends Controller
         if ($distributor->warehouse) {
             $distributor->warehouse->update([
                 'name' => $validated['hub_name'],
+                'is_active' => $validated['is_active'],
                 'province_id' => $validated['province_id'],
                 'regency_id' => $validated['regency_id'],
                 'district_id' => $validated['district_id'],

@@ -182,7 +182,11 @@ class WarehouseController extends Controller
                 }])
                 ->withSum(['stocks as stocks_sum_stock' => function ($q) {
                     $q->whereHas('product');
-                }], 'stock');
+                }], 'stock')
+                ->where(function ($q) {
+                    $q->whereJsonContains('sync_sources', 'qad')
+                      ->orWhereJsonContains('sync_sources', 'jubelio');
+                });
 
             // Filter by province
             if ($request->filled('province_id') && $request->province_id != '') {

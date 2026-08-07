@@ -64,9 +64,9 @@
                                 <th>Nama Distributor</th>
                                 <th>Email</th>
                                 <th>No. HP</th>
-                                <th>Hub</th>
                                 <th>Lokasi</th>
                                 <th>Terdaftar</th>
+                                <th>Status Aktif</th>
                                 <th width="100">Action</th>
                             </tr>
                         </thead>
@@ -117,12 +117,12 @@ $(function() {
             { data: 'name_info', name: 'name' },
             { data: 'email', name: 'email' },
             { data: 'phone_display', name: 'phone', orderable: false },
-            { data: 'hub_info', name: 'warehouse.name', orderable: false },
             { data: 'location_info', name: 'location', orderable: false, searchable: false },
             { data: 'created_date', name: 'created_at' },
+            { data: 'status_info', name: 'status_info', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[6, 'desc']],
+        order: [[5, 'desc']],
         language: {
             processing: '<i class="fa fa-spinner fa-spin"></i> Memuat...',
             search: 'Cari:',

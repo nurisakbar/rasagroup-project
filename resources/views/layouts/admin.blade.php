@@ -201,6 +201,12 @@
           </a>
         </li>
         
+        <li class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.sales.index') }}">
+            <i class="fa fa-briefcase"></i> <span>DATA SALES</span>
+          </a>
+        </li>
+        
         <li class="treeview {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') ? 'active menu-open' : '' }}">
           <a href="#">
             <i class="fa fa-cube"></i> <span>MASTER DATA</span>

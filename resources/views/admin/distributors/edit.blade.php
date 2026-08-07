@@ -23,12 +23,28 @@
                         <h3 class="box-title"><i class="fa fa-building"></i> Data Hub Distributor</h3>
                     </div>
                     <div class="box-body">
-                        <div class="form-group @error('hub_name') has-error @enderror">
-                            <label for="hub_name">Nama Hub <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="hub_name" name="hub_name" value="{{ old('hub_name', $distributor->warehouse->name ?? '') }}" placeholder="Contoh: Hub Distributor Jakarta" required>
-                            @error('hub_name')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group @error('hub_name') has-error @enderror">
+                                    <label for="hub_name">Nama Hub <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="hub_name" name="hub_name" value="{{ old('hub_name', $distributor->warehouse->name ?? '') }}" placeholder="Contoh: Hub Distributor Jakarta" required>
+                                    @error('hub_name')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group @error('is_active') has-error @enderror">
+                                    <label for="is_active">Status Hub <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="is_active" name="is_active" required>
+                                        <option value="1" {{ old('is_active', $distributor->warehouse->is_active ?? 1) == 1 ? 'selected' : '' }}>Aktif</option>
+                                        <option value="0" {{ old('is_active', $distributor->warehouse->is_active ?? 1) == 0 ? 'selected' : '' }}>Non Aktif</option>
+                                    </select>
+                                    @error('is_active')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
