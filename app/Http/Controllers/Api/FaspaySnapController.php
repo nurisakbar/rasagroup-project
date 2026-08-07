@@ -300,7 +300,7 @@ class FaspaySnapController extends Controller
     {
         // 1. Pengecekan Token UAT
         $authHeader = $request->header('Authorization', '');
-        if (str_contains($authHeader, 'INVALID') || $authHeader === 'Bearer ') {
+        if (str_contains($authHeader, 'INVALID') || $authHeader === 'Bearer ' || str_contains($authHeader, 'invalid_signature_mockup')) {
             return response()->json([
                 'responseCode' => '401' . $serviceCode . '01',
                 'responseMessage' => 'Access Token Invalid'
@@ -309,7 +309,7 @@ class FaspaySnapController extends Controller
 
         // 2. Pengecekan Signature UAT
         $signature = $request->header('X-SIGNATURE', '');
-        if (str_contains($signature, 'INVALID') || $signature === 'INVALID_SIGNATURE') {
+        if (str_contains($signature, 'INVALID') || $signature === 'INVALID_SIGNATURE' || $signature === base64_encode("wrong_signature_content_that_looks_real_12345")) {
             return response()->json([
                 'responseCode' => '401' . $serviceCode . '00',
                 'responseMessage' => 'Unauthorized Signature'

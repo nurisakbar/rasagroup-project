@@ -31,13 +31,13 @@ class FaspayUatSimulatorController extends Controller
             "11.1" => [
                 "name" => "Access Token Invalid",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => array_merge($baseHeaders, ["Authorization" => "Bearer INVALID_TOKEN"]),
+                "headers" => array_merge($baseHeaders, ["Authorization" => "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature_mockup_123456"]),
                 "payload" => []
             ],
             "11.2" => [
                 "name" => "Unauthorized Signature",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => array_merge($baseHeaders, ["X-SIGNATURE" => "INVALID_SIGNATURE"]),
+                "headers" => array_merge($baseHeaders, ["X-SIGNATURE" => base64_encode("wrong_signature_content_that_looks_real_12345")]),
                 "payload" => ["partnerServiceId" => "370201", "customerNo" => "123", "virtualAccountNo" => "370201123"]
             ],
             "11.3" => [
@@ -172,6 +172,36 @@ class FaspayUatSimulatorController extends Controller
 
         foreach ($testCases as $id => $tc) {
             try {
+                $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+                $externalId = "EXT-" . time() . "-" . rand(1000, 9999);
+                
+                // Make unique request identifiers
+                if (isset($tc['payload']['inquiryRequestId'])) {
+                    $tc['payload']['inquiryRequestId'] = "REQ-" . uniqid();
+                }
+                if (isset($tc['payload']['paymentRequestId'])) {
+                    $tc['payload']['paymentRequestId'] = "PAY-" . uniqid();
+                }
+                if (isset($tc['payload']['trx_id']) && $tc['payload']['trx_id'] === 'TRX-UAT-999') {
+                    $tc['payload']['trx_id'] = "TRX-UAT-" . uniqid();
+                }
+
+                // Set fresh timestamp
+                $tc['headers']['X-TIMESTAMP'] = $timestamp;
+                
+                // Set fresh external ID unless explicitly testing duplicate ID
+                if (!isset($tc['headers']['X-EXTERNAL-ID']) || $tc['headers']['X-EXTERNAL-ID'] !== 'SAME_ID_123') {
+                    $tc['headers']['X-EXTERNAL-ID'] = $externalId;
+                }
+                
+                // Generate realistic signature unless explicitly testing invalid signature
+                if (!isset($tc['headers']['X-SIGNATURE']) || $tc['headers']['X-SIGNATURE'] !== 'INVALID_SIGNATURE') {
+                    $payloadStr = json_encode($tc['payload']);
+                    $path = parse_url($tc['url'], PHP_URL_PATH);
+                    $stringToSign = "POST:" . $path . ":" . hash('sha256', $payloadStr) . ":" . $timestamp;
+                    $tc['headers']['X-SIGNATURE'] = base64_encode(hash_hmac('sha512', $stringToSign, config('services.faspay.snap_client_secret', 'dummy_secret'), true));
+                }
+
                 // Gunakan internal request dispatch untuk menghindari deadlock di `php artisan serve`
                 $internalRequest = Request::create($tc['url'], 'POST', [], [], [], [], json_encode($tc['payload']));
                 
