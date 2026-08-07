@@ -250,6 +250,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', App\Http\Controllers\Admin\UserController::class);
 
         // Sales Management
+        Route::get('sales/{sale}/orders', [App\Http\Controllers\Admin\SalesController::class, 'orders'])->name('sales.orders');
         Route::resource('sales', App\Http\Controllers\Admin\SalesController::class);
 
         // Orders Management

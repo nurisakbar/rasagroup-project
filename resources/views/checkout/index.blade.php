@@ -218,34 +218,46 @@
                                         <p class="font-sm text-muted">Bayar menggunakan e-Wallet (OVO, Dana, ShopeePay, LinkAja) atau m-Banking yang mendukung QRIS.</p>
                                     </div>
                                 </div>
-                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_permata_va" id="payPermataVA">
-                                        <label class="form-check-label" for="payPermataVA"><strong>Permata Virtual Account</strong></label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata">
+                                            <div class="custom-radio">
+                                                <input class="form-check-input" type="radio" name="payment_method" value="faspay_permata_va" id="payPermataVA">
+                                                <label class="form-check-label" for="payPermataVA"><strong>Permata VA</strong></label>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_mandiri_va')" id="card-faspay-mandiri">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_mandiri_va" id="payMandiriVA">
-                                        <label class="form-check-label" for="payMandiriVA"><strong>Mandiri Virtual Account</strong></label>
+                                    <div class="col-md-6">
+                                        <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_mandiri_va')" id="card-faspay-mandiri">
+                                            <div class="custom-radio">
+                                                <input class="form-check-input" type="radio" name="payment_method" value="faspay_mandiri_va" id="payMandiriVA">
+                                                <label class="form-check-label" for="payMandiriVA"><strong>Mandiri VA</strong></label>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bri_va')" id="card-faspay-bri">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_bri_va" id="payBRIVA">
-                                        <label class="form-check-label" for="payBRIVA"><strong>BRI Virtual Account</strong></label>
+                                    <div class="col-md-6">
+                                        <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bri_va')" id="card-faspay-bri">
+                                            <div class="custom-radio">
+                                                <input class="form-check-input" type="radio" name="payment_method" value="faspay_bri_va" id="payBRIVA">
+                                                <label class="form-check-label" for="payBRIVA"><strong>BRI VA</strong></label>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_cimb_va" id="payCIMBVA">
-                                        <label class="form-check-label" for="payCIMBVA"><strong>CIMB Virtual Account</strong></label>
+                                    <div class="col-md-6">
+                                        <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb">
+                                            <div class="custom-radio">
+                                                <input class="form-check-input" type="radio" name="payment_method" value="faspay_cimb_va" id="payCIMBVA">
+                                                <label class="form-check-label" for="payCIMBVA"><strong>CIMB VA</strong></label>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_bni_va" id="payBNIVA">
-                                        <label class="form-check-label" for="payBNIVA"><strong>BNI Virtual Account</strong></label>
+                                    <div class="col-md-6">
+                                        <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni">
+                                            <div class="custom-radio">
+                                                <input class="form-check-input" type="radio" name="payment_method" value="faspay_bni_va" id="payBNIVA">
+                                                <label class="form-check-label" for="payBNIVA"><strong>BNI VA</strong></label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             @else
@@ -292,6 +304,19 @@
 
 
                         </div>
+                    </div>
+                </div>
+                
+                <div class="divider-2 mb-30"></div>
+
+                <!-- Sales Code -->
+                <div class="mb-30">
+                    <h4 class="mb-15"><i class="fi-rs-user mr-10 text-muted"></i>Kode Sales</h4>
+                    <div class="form-group mb-30">
+                        <input type="text" name="sales_code" class="form-control" placeholder="Masukkan kode sales (Opsional)" value="{{ old('sales_code') }}">
+                        @error('sales_code')
+                            <div class="text-danger small mt-2">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 

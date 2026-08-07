@@ -14,15 +14,19 @@ class SalesController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $sales = User::where('role', User::ROLE_SALES)->select('id', 'name', 'sales_code', 'email', 'monthly_target', 'created_at');
+            $sales = User::where('role', User::ROLE_SALES)->select('id', 'sales_code', 'name', 'email', 'monthly_target', 'is_active', 'created_at');
 
             return DataTables::of($sales)
                 ->addIndexColumn()
                 ->addColumn('action', function ($sale) {
                     $editUrl = route('admin.sales.edit', $sale);
                     $deleteUrl = route('admin.sales.destroy', $sale);
+                    $viewOrdersUrl = route('admin.sales.orders', $sale);
                     
                     return '
+                        <a href="' . $viewOrdersUrl . '" class="btn btn-info btn-xs" title="Lihat Order">
+                            <i class="fa fa-eye"></i> Order
+                        </a>
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i> Edit
                         </a>
@@ -35,13 +39,18 @@ class SalesController extends Controller
                         </form>
                     ';
                 })
+                ->addColumn('status', function ($sale) {
+                    return $sale->is_active 
+                        ? '<span class="label label-success">Aktif</span>' 
+                        : '<span class="label label-danger">Tidak Aktif</span>';
+                })
                 ->editColumn('monthly_target', function ($sale) {
                     return $sale->monthly_target ? 'Rp ' . number_format($sale->monthly_target, 0, ',', '.') : '-';
                 })
                 ->editColumn('created_at', function ($sale) {
-                    return $sale->created_at->format('d M Y H:i');
+                    return $sale->created_at->format('d M Y');
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'status'])
                 ->make(true);
         }
 
@@ -68,6 +77,7 @@ class SalesController extends Controller
             'sales_code' => 'nullable|string|max:255',
             'monthly_target' => 'nullable|numeric',
             'password' => 'required|string|min:8|confirmed',
+            'is_active' => 'nullable|boolean',
         ]);
 
         User::create([
@@ -77,6 +87,7 @@ class SalesController extends Controller
             'monthly_target' => $request->monthly_target,
             'password' => Hash::make($request->password),
             'role' => User::ROLE_SALES,
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         return redirect()->route('admin.sales.index')->with('success', 'Data Sales berhasil ditambahkan.');
@@ -116,6 +127,7 @@ class SalesController extends Controller
             'sales_code' => 'nullable|string|max:255',
             'monthly_target' => 'nullable|numeric',
             'password' => 'nullable|string|min:8|confirmed',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $data = [
@@ -123,6 +135,7 @@ class SalesController extends Controller
             'email' => $request->email,
             'sales_code' => $request->sales_code,
             'monthly_target' => $request->monthly_target,
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ];
 
         if ($request->filled('password')) {
@@ -143,5 +156,58 @@ class SalesController extends Controller
         $sale->delete();
 
         return redirect()->route('admin.sales.index')->with('success', 'Data Sales berhasil dihapus.');
+    }
+
+    public function orders(Request $request, User $sale)
+    {
+        if ($sale->role !== User::ROLE_SALES) {
+            abort(403);
+        }
+
+        if ($request->ajax()) {
+            $query = \App\Models\Order::with(['user', 'expedition'])
+                ->where('sales_code', $sale->sales_code);
+
+            if ($request->filled('date_from') && $request->date_from != '') {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to') && $request->date_to != '') {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
+            $query->orderBy('created_at', 'desc');
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('order_info', function ($order) {
+                    $html = '<strong>' . $order->order_number . '</strong>';
+                    $html .= '<br><small class="text-muted">' . $order->created_at->format('d M Y H:i') . '</small>';
+                    return $html;
+                })
+                ->addColumn('buyer_info', function ($order) {
+                    return $order->user ? ($order->user->name . '<br><small class="text-muted">' . $order->user->email . '</small>') : '-';
+                })
+                ->addColumn('expedition_info', function ($order) {
+                    if ($order->expedition) {
+                        return $order->expedition->name . ' - ' . $order->expedition_service;
+                    }
+                    return '-';
+                })
+                ->editColumn('total_amount', function ($order) {
+                    return 'Rp ' . number_format($order->total_amount, 0, ',', '.');
+                })
+                ->addColumn('status_badge', function ($order) {
+                    return '<small class="text-muted">Order:</small> <span class="label label-' . $order->status_color . '">' . ucfirst($order->order_status) . '</span><br>' .
+                           '<small class="text-muted mt-5" style="display:inline-block">Pembayaran:</small> <span class="label label-' . $order->payment_status_color . ' mt-5" style="display:inline-block">' . ucfirst($order->payment_status) . '</span>';
+                })
+                ->addColumn('action', function ($order) {
+                    return '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-info btn-xs"><i class="fa fa-eye"></i> Detail</a>';
+                })
+                ->rawColumns(['order_info', 'buyer_info', 'status_badge', 'action'])
+                ->make(true);
+        }
+
+        return view('admin.sales.orders', compact('sale'));
     }
 }

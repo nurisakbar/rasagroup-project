@@ -9,6 +9,25 @@
             #myTab.nav-tabs.links .nav-link {
                 text-transform: uppercase !important;
             }
+            
+            /* Fix slider terpotong di mobile */
+            @media only screen and (max-width: 768px) {
+                .hero-slider-1 .single-hero-slider {
+                    height: 50vw !important; /* Sesuaikan rasio aspek */
+                    min-height: 180px;
+                    background-size: contain !important;
+                    background-position: center center !important;
+                    background-repeat: no-repeat !important;
+                }
+                .hero-slider-1 .single-hero-slider .display-2 {
+                    font-size: 24px !important;
+                    margin-bottom: 10px !important;
+                }
+                .hero-slider-1 .single-hero-slider .slider-content p {
+                    font-size: 14px !important;
+                    margin-bottom: 15px !important;
+                }
+            }
         </style>
 
         <section class="popular-categories section-padding" style="display: none;">

@@ -644,6 +644,7 @@ class CheckoutController extends Controller
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
             'payment_method' => ['required', 'string', Rule::in($allowedPayments)],
+            'sales_code' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Verify address belongs to user
@@ -934,6 +935,7 @@ class CheckoutController extends Controller
                 'points_credited' => false,
                 'affiliate_id' => $affiliateId,
                 'affiliate_points' => $affiliatePoints,
+                'sales_code' => $request->sales_code,
             ]);
             
             Log::info('--- CHECKOUT DEBUG: ORDER CREATED ---', [

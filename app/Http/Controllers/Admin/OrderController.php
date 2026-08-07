@@ -36,8 +36,10 @@ class OrderController extends Controller
                 $query->where('order_type', $request->order_type);
             }
 
-
-
+            // Filter by sales code
+            if ($request->filled('sales_code') && $request->sales_code != '') {
+                $query->where('sales_code', $request->sales_code);
+            }
             // Filter by date range
             if ($request->filled('date_from') && $request->date_from != '') {
                 $query->whereDate('created_at', '>=', $request->date_from);

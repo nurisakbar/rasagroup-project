@@ -68,6 +68,15 @@
                             <label for="password_confirmation">Konfirmasi Password <span class="text-danger">*</span></label>
                             <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
                         </div>
+
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
+                                    Status Aktif
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.box-body -->
 

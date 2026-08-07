@@ -91,18 +91,19 @@
         <div class="col-md-12">
             <!-- Tabbed Content -->
             <div class="nav-tabs-custom">
+                @php $activeTab = request('tab', 'info'); @endphp
                 <ul class="nav nav-tabs">
-                    <li class="active"><a href="#tab_info" data-toggle="tab"><i class="fa fa-info-circle"></i> Info Umum</a></li>
-                    <li><a href="#tab_stock" data-toggle="tab"><i class="fa fa-cubes"></i> Monitoring Stock</a></li>
-                    <li><a href="#tab_orders" data-toggle="tab"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
-                    <li><a href="#tab_dokumen" data-toggle="tab"><i class="fa fa-file-text"></i> Dokumen</a></li>
-                    <li><a href="#tab_staff" data-toggle="tab"><i class="fa fa-users"></i> Kelola Staff</a></li>
-                    <li><a href="#tab_target_belanja" data-toggle="tab"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
-                    <li class="pull-right"><a href="#tab_danger" data-toggle="tab" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
+                    <li class="{{ $activeTab == 'info' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'info']) }}"><i class="fa fa-info-circle"></i> Info Umum</a></li>
+                    <li class="{{ $activeTab == 'stock' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'stock']) }}"><i class="fa fa-cubes"></i> Monitoring Stock</a></li>
+                    <li class="{{ $activeTab == 'orders' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'orders']) }}"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
+                    <li class="{{ $activeTab == 'dokumen' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'dokumen']) }}"><i class="fa fa-file-text"></i> Dokumen</a></li>
+                    <li class="{{ $activeTab == 'staff' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Kelola Staff</a></li>
+                    <li class="{{ $activeTab == 'target_belanja' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'target_belanja']) }}"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
+                    <li class="pull-right {{ $activeTab == 'danger' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'danger']) }}" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
                 <div class="tab-content">
                     <!-- Tab: Info Umum -->
-                    <div class="tab-pane active" id="tab_info">
+                    <div class="tab-pane {{ $activeTab == 'info' ? 'active' : '' }}" id="tab_info">
                         <div class="row">
                             <div class="col-md-6">
                                 <h4 class="page-header"><i class="fa fa-building"></i> Data Hub</h4>
@@ -201,7 +202,7 @@
                     </div>
 
                     <!-- Tab: Stock Monitoring -->
-                    <div class="tab-pane" id="tab_stock">
+                    <div class="tab-pane {{ $activeTab == 'stock' ? 'active' : '' }}" id="tab_stock">
                         <div class="row" style="margin-bottom: 10px;">
                             <div class="col-md-12 text-right">
                                 <form action="{{ route('admin.distributors.sync-products', $distributor) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Sinkronisasi produk akan menambahkan semua produk aktif yang belum ada di stock warehouse dengan stock 0. Lanjutkan?');">
@@ -232,7 +233,7 @@
                     </div>
 
                     <!-- Tab: Riwayat Order -->
-                    <div class="tab-pane" id="tab_orders">
+                    <div class="tab-pane {{ $activeTab == 'orders' ? 'active' : '' }}" id="tab_orders">
                         <div class="row" style="margin-bottom: 15px;">
                             <div class="col-md-2">
                                 <div class="form-group">
@@ -320,7 +321,7 @@
                     </div>
 
                     <!-- Tab: Dokumen -->
-                    <div class="tab-pane" id="tab_dokumen">
+                    <div class="tab-pane {{ $activeTab == 'dokumen' ? 'active' : '' }}" id="tab_dokumen">
                         <div class="row" style="margin-bottom: 15px;">
                             <div class="col-md-12 text-right">
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalTambahDokumen">
@@ -345,7 +346,7 @@
                     </div>
 
                     <!-- Tab: Kelola Staff -->
-                    <div class="tab-pane" id="tab_staff">
+                    <div class="tab-pane {{ $activeTab == 'staff' ? 'active' : '' }}" id="tab_staff">
                         <div class="row">
                             <div class="col-md-12">
                                 <button type="button" class="btn btn-success btn-sm pull-right" style="margin-bottom: 15px;" data-toggle="modal" data-target="#addUserModal">
@@ -408,7 +409,7 @@
                     </div>
 
                     <!-- Tab: Target Belanja -->
-                    <div class="tab-pane" id="tab_target_belanja">
+                    <div class="tab-pane {{ $activeTab == 'target_belanja' ? 'active' : '' }}" id="tab_target_belanja">
                         <div class="row">
                             <div class="col-md-12">
                                 <h4 class="page-header"><i class="fa fa-bullseye"></i> Target Belanja per Bulan</h4>
@@ -485,7 +486,7 @@
                     </div>
 
                     <!-- Tab: Danger Zone -->
-                    <div class="tab-pane" id="tab_danger">
+                    <div class="tab-pane {{ $activeTab == 'danger' ? 'active' : '' }}" id="tab_danger">
                         <div class="callout callout-danger">
                             <h4>Zona Berbahaya</h4>
                             <p>Menghapus Distributor akan menghapus akun dan hub-nya secara permanen. Aksi ini tidak dapat dibatalkan.</p>

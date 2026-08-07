@@ -36,10 +36,11 @@
                         <thead>
                             <tr>
                                 <th>No</th>
+                                <th>Kode Sales</th>
                                 <th>Nama</th>
-                                <th>Code Sales</th>
                                 <th>Email</th>
                                 <th>Target Bulanan</th>
+                                <th>Status</th>
                                 <th>Tanggal Daftar</th>
                                 <th>Action</th>
                             </tr>
@@ -67,14 +68,15 @@
             ajax: "{{ route('admin.sales.index') }}",
             columns: [
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'name', name: 'name'},
                 {data: 'sales_code', name: 'sales_code'},
+                {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'monthly_target', name: 'monthly_target'},
+                {data: 'status', name: 'status', orderable: false, searchable: false},
                 {data: 'created_at', name: 'created_at'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[5, 'desc']],
+            order: [[6, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

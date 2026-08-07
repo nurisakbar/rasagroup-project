@@ -69,6 +69,15 @@
                             <label for="password_confirmation">Konfirmasi Password</label>
                             <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Isi hanya jika Anda mengisi kolom Password">
                         </div>
+
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', $sale->is_active) ? 'checked' : '' }}>
+                                    Status Aktif
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.box-body -->
 
