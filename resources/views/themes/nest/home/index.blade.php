@@ -10,15 +10,26 @@
                 text-transform: uppercase !important;
             }
             
-            /* Fix slider terpotong di mobile dan tablet/iPad */
+            /* Override CSS theme untuk memastikan gambar slider tidak terpotong */
+            .home-slider .hero-slider-1,
+            .hero-slider-1 .single-hero-slider {
+                height: auto !important;
+                min-height: 0 !important;
+                background: none !important;
+                padding: 0 !important;
+            }
+            .hero-slider-1 .single-hero-slider img.slider-bg {
+                width: 100%;
+                height: auto;
+                border-radius: 30px;
+                display: block;
+            }
+            .hero-slider-1 .single-hero-slider .slider-content {
+                z-index: 2;
+            }
+
+            /* Penyesuaian konten slider di mobile */
             @media only screen and (max-width: 1024px) {
-                .hero-slider-1 .single-hero-slider {
-                    height: 50vw !important; /* Sesuaikan rasio aspek */
-                    min-height: 180px;
-                    background-size: contain !important;
-                    background-position: center center !important;
-                    background-repeat: no-repeat !important;
-                }
                 .hero-slider-1 .single-hero-slider .display-2 {
                     font-size: 24px !important;
                     margin-bottom: 10px !important;
@@ -74,13 +85,17 @@
                     <div class="hero-slider-1 style-4 dot-style-1 dot-style-1-position-1">
                         @foreach($sliders as $slider)
                             @php
-                                $slideStyle = $slider->heroSlideStyle();
-                                if ($slideStyle === '') {
-                                    $slideStyle = 'background-image: url(' . asset('themes/nest-frontend/assets/imgs/slider/slider-1.png') . ')';
-                                }
                                 $slideLink = $slider->resolvedLink();
+                                $imageUrl = $slider->image_url ?? asset('themes/nest-frontend/assets/imgs/slider/slider-1.png');
                             @endphp
-                            <div class="single-hero-slider single-animation-wrap" style="{{ $slideStyle }}">
+                            <div class="single-hero-slider single-animation-wrap position-relative">
+                                @if($slideLink)
+                                    <a href="{{ $slideLink }}">
+                                        <img src="{{ $imageUrl }}" alt="{{ $slider->title }}" class="slider-bg">
+                                    </a>
+                                @else
+                                    <img src="{{ $imageUrl }}" alt="{{ $slider->title }}" class="slider-bg">
+                                @endif
                                 <div class="slider-content">
                                     @if(filled($slider->title))
                                         <h1 class="display-2 mb-40">{!! nl2br(e($slider->title)) !!}</h1>
