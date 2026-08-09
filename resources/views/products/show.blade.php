@@ -33,7 +33,7 @@
                                     <!-- MAIN SLIDES -->
                                     <div class="product-image-slider">
                                         <figure class="border-radius-10">
-                                            <img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-16-2.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
+                                            <img src="{{ $product->image_url ? asset($product->image_url) : asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="{{ $product->display_name }}" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
                                         </figure>
                                         @foreach($product->images as $img)
                                             <figure class="border-radius-10">
@@ -47,7 +47,7 @@
                                     </div>
                                     <!-- THUMBNAILS -->
                                     <div class="slider-nav-thumbnails">
-                                        <div><img src="{{ $product->image_url ? asset($product->image_url) : asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}" alt="product image" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/thumbnail-3.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 1rem;" @endif /></div>
+                                        <div><img src="{{ $product->image_url ? asset($product->image_url) : asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="product image" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';" @if(!$product->image) style="object-fit: contain; padding: 1rem;" @endif /></div>
                                         @foreach($product->images as $img)
                                             <div>
                                                 @if($img->is_video)
@@ -83,12 +83,15 @@
                                     <!-- Price -->
                                     <div class="product-detail-price-block mb-3">
                                         <div class="product-price primary-color">
-                                            <span class="current-price text-brand product-detail-price-amount" id="display-price">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                            <span class="current-price text-brand product-detail-price-amount" id="display-price">Rp {{ number_format($product->final_price, 0, ',', '.') }}</span>
                                             <span class="text-muted font-sm" id="display-unit-label">/ {{ $product->unit }}</span>
-                                            @if(isset($product->compare_price) && $product->compare_price > $product->price)
+                                            @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
                                                 <div class="product-detail-price-promo mt-2">
-                                                    <span class="save-price font-md color3">{{ round((($product->compare_price - $product->price)/$product->compare_price)*100) }}% Off</span>
-                                                    <span class="old-price font-md ms-2">Rp {{ number_format($product->compare_price, 0, ',', '.') }}</span>
+                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->price, 0, ',', '.') }}</del></span>
+                                                </div>
+                                            @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
+                                                <div class="product-detail-price-promo mt-2">
+                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->compare_price, 0, ',', '.') }}</del></span>
                                                 </div>
                                             @endif
                                         </div>
@@ -222,7 +225,7 @@
                                         </div>
                                         <div class="form-group mt-3 product-detail-subtotal-row">
                                             <span class="product-detail-subtotal-label">Subtotal</span>
-                                            <span id="subtotal" class="text-brand product-detail-subtotal-amount">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                            <span id="subtotal" class="text-brand product-detail-subtotal-amount">Rp {{ number_format($product->final_price, 0, ',', '.') }}</span>
                                         </div>
                                     </form>
                                 </div>
@@ -351,7 +354,7 @@
 
 @push('scripts')
 <script>
-    const price = {{ $product->price }};
+    const price = {{ $product->final_price }};
     const showHubPicker = @json($showHubPicker);
     const assumeStockReady = @json(\App\Support\ShopFulfillment::assumeStockReady());
     let selectedStock = assumeStockReady && !showHubPicker ? 999999 : 0;

@@ -288,7 +288,20 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'images.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,webm|max:10240',
             'status' => 'required|in:active,inactive',
+            'is_discount' => 'nullable|boolean',
+            'discount_price' => 'nullable|numeric|min:0',
+            'discount_start_date' => 'nullable|date',
+            'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
+
+        $validated['is_discount'] = $request->has('is_discount') ? (bool) $request->is_discount : false;
+
+        // Jika periode diskon sudah lewat, set is_discount = false
+        if ($validated['is_discount'] && !empty($validated['discount_end_date'])) {
+            if (\Carbon\Carbon::parse($validated['discount_end_date'])->endOfDay()->lessThan(now())) {
+                $validated['is_discount'] = false;
+            }
+        }
 
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
@@ -350,7 +363,20 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'images.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,webm|max:10240',
             'status' => 'required|in:active,inactive',
+            'is_discount' => 'nullable|boolean',
+            'discount_price' => 'nullable|numeric|min:0',
+            'discount_start_date' => 'nullable|date',
+            'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
+
+        $validated['is_discount'] = $request->has('is_discount') ? (bool) $request->is_discount : false;
+
+        // Jika periode diskon sudah lewat, set is_discount = false
+        if ($validated['is_discount'] && !empty($validated['discount_end_date'])) {
+            if (\Carbon\Carbon::parse($validated['discount_end_date'])->endOfDay()->lessThan(now())) {
+                $validated['is_discount'] = false;
+            }
+        }
 
         if ($request->hasFile('image')) {
             if ($product->image) {

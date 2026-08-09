@@ -26,6 +26,9 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_DISTRIBUTOR = 'distributor';
     const ROLE_SUPER_ADMIN = 'super_admin';
     const ROLE_SALES = 'sales';
+    const ROLE_ECOMMERCE = 'ecommerce';
+    const ROLE_BRAND_MARKETING = 'brand_marketing';
+    const ROLE_FINANCE = 'finance';
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -205,7 +208,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_SUPER_ADMIN;
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ECOMMERCE,
+            self::ROLE_BRAND_MARKETING,
+            self::ROLE_FINANCE,
+        ]);
     }
 
     public function isAgent(): bool
@@ -329,8 +337,8 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->priceLevel->calculatePriceForProduct($product);
         }
         
-        // Otherwise return regular price
-        return (float) $product->price;
+        // Otherwise return regular price (discounted if applicable)
+        return (float) $product->final_price;
     }
 
     /**

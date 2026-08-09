@@ -114,24 +114,19 @@ class OrderController extends Controller
 
         $user = Auth::user();
         $subtotal = $carts->sum(function ($cart) use ($user) {
-            return $cart->product->price * $cart->quantity;
+            return $user->getProductPrice($cart->product) * $cart->quantity;
         });
 
         $totalItems = $carts->sum('quantity');
         $potentialPoints = 0; // Distributors do not get points
 
-        
-        $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-        $discountAmount = ($subtotal * $discountPercent) / 100;
-
         // Add price info to each cart item for display
-
         $carts->each(function ($cart) use ($user) {
-            $cart->display_price = $cart->product->price;
+            $cart->display_price = $user->getProductPrice($cart->product);
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
         });
 
-        return view('buyer.distributor.orders.cart', compact('carts', 'subtotal', 'totalItems', 'potentialPoints', 'discountPercent', 'discountAmount'));
+        return view('buyer.distributor.orders.cart', compact('carts', 'subtotal', 'totalItems', 'potentialPoints'));
     }
 
     /**
@@ -188,14 +183,11 @@ class OrderController extends Controller
                 ->get();
             
             $subtotal = $carts->sum(function ($c) use ($user) {
-                return $c->product->price * $c->quantity;
+                return $user->getProductPrice($c->product) * $c->quantity;
             });
-            $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-            $discountAmount = ($subtotal * $discountPercent) / 100;
-            $totalAfterDiscount = $subtotal - $discountAmount;
             $totalItems = $carts->sum('quantity');
             
-            $itemDisplayPrice = $cart->product->price;
+            $itemDisplayPrice = $user->getProductPrice($cart->product);
             $itemDisplaySubtotal = $itemDisplayPrice * $cart->quantity;
 
             return response()->json([
@@ -203,10 +195,6 @@ class OrderController extends Controller
                 'item_subtotal_formatted' => 'Rp ' . number_format($itemDisplaySubtotal, 0, ',', '.'),
                 'cart_total_items' => number_format($totalItems),
                 'cart_subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
-                'cart_discount_formatted' => '- Rp ' . number_format($discountAmount, 0, ',', '.'),
-                'cart_total_after_discount_formatted' => 'Rp ' . number_format($totalAfterDiscount, 0, ',', '.'),
-                'cart_discount_formatted' => '- Rp ' . number_format($discountAmount, 0, ',', '.'),
-                'cart_total_after_discount_formatted' => 'Rp ' . number_format($totalAfterDiscount, 0, ',', '.'),
             ]);
         }
 
@@ -239,11 +227,8 @@ class OrderController extends Controller
             }
             
             $subtotal = $carts->sum(function ($c) use ($user) {
-                return $c->product->price * $c->quantity;
+                return $user->getProductPrice($c->product) * $c->quantity;
             });
-            $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-            $discountAmount = ($subtotal * $discountPercent) / 100;
-            $totalAfterDiscount = $subtotal - $discountAmount;
             $totalItems = $carts->sum('quantity');
 
             return response()->json([
@@ -274,19 +259,13 @@ class OrderController extends Controller
 
         $user = Auth::user();
         $subtotal = $carts->sum(function ($cart) use ($user) {
-            return $cart->product->price * $cart->quantity;
+            return $user->getProductPrice($cart->product) * $cart->quantity;
         });
 
         $totalItems = $carts->sum('quantity');
         $potentialPoints = 0; // Distributors do not get points
 
-        
-        $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-        $discountAmount = ($subtotal * $discountPercent) / 100;
-        $totalAfterDiscount = $subtotal - $discountAmount;
-
         $totalWeight = $carts->sum(function ($cart) {
-
             return ($cart->product->weight ?? 500) * $cart->quantity;
         });
 
@@ -309,13 +288,9 @@ class OrderController extends Controller
                 $defaultExpedition->base_cost,
                 $defaultService['multiplier']
             );
-
-            if (strtolower($defaultExpedition->code) === 'jne') {
-                $shippingCost = $shippingCost * 0.8; // 20% discount
-            }
         }
 
-        $total = $totalAfterDiscount + $shippingCost;
+        $total = $subtotal + $shippingCost;
 
         $provinces = \App\Models\WilayahAdministratif::select('province_id as id', 'province_name as name')
             ->distinct()
@@ -327,7 +302,7 @@ class OrderController extends Controller
         $suggestedHub = $defaultHubId ? \App\Models\Warehouse::find($defaultHubId) : null;
 
         $carts->each(function ($cart) use ($user) {
-            $cart->display_price = $cart->product->price;
+            $cart->display_price = $user->getProductPrice($cart->product);
             $cart->display_subtotal = $cart->display_price * $cart->quantity;
         });
 
@@ -339,9 +314,6 @@ class OrderController extends Controller
         return view('buyer.distributor.orders.checkout', compact(
             'carts',
             'subtotal',
-            'discountPercent',
-            'discountAmount',
-            'totalAfterDiscount',
             'shippingCost',
             'total',
             'addresses',
@@ -380,12 +352,8 @@ class OrderController extends Controller
 
         $user = Auth::user();
         $subtotal = $carts->sum(function ($cart) use ($user) {
-            return $cart->product->price * $cart->quantity;
+            return $user->getProductPrice($cart->product) * $cart->quantity;
         });
-
-        $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-        $discountAmount = ($subtotal * $discountPercent) / 100;
-        $totalAfterDiscount = $subtotal - $discountAmount;
 
         $expedition = Expedition::find($request->expedition_id);
         $expeditionMultiplier = $expedition ? $expedition->base_cost : 1.0;
@@ -414,24 +382,13 @@ class OrderController extends Controller
             $serviceMultiplier
         );
 
-        $originalShippingCost = $shippingCost;
-        if ($expedition && strtolower($expedition->code) === 'jne') {
-            $shippingCost = $shippingCost * 0.8; // 20% discount
-        }
-
         return response()->json([
             'shipping_cost' => $shippingCost,
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
-            'original_shipping_cost_formatted' => 'Rp ' . number_format($originalShippingCost, 0, ',', '.'),
-            'has_shipping_discount' => $shippingCost < $originalShippingCost,
             'subtotal' => $subtotal,
-                'discount_percent' => $discountPercent,
-                'discount_amount' => $discountAmount,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
-            'discount_amount' => $discountAmount,
-            'discount_formatted' => '- Rp ' . number_format($discountAmount, 0, ',', '.'),
-            'total' => $totalAfterDiscount + $shippingCost,
-            'total_formatted' => 'Rp ' . number_format($totalAfterDiscount + $shippingCost, 0, ',', '.'),
+            'total' => $subtotal + $shippingCost,
+            'total_formatted' => 'Rp ' . number_format($subtotal + $shippingCost, 0, ',', '.'),
             'total_weight' => $totalWeight,
             'total_weight_formatted' => number_format($totalWeight / 1000, 1) . ' kg',
             'service_name' => $serviceName,
@@ -473,14 +430,6 @@ class OrderController extends Controller
                 $service['multiplier']
             );
 
-            $originalCost = $cost;
-            $hasDiscount = false;
-
-            if (strtolower($expedition->code) === 'jne') {
-                $cost = $cost * 0.8; // 20% discount
-                $hasDiscount = true;
-            }
-
             $estDaysMin = max(1, $expedition->est_days_min + $service['days_add']);
             $estDaysMax = max(1, $expedition->est_days_max + $service['days_add']);
 
@@ -489,9 +438,6 @@ class OrderController extends Controller
                 'name' => $service['name'],
                 'cost' => $cost,
                 'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
-                'original_cost' => $originalCost,
-                'original_cost_formatted' => 'Rp ' . number_format($originalCost, 0, ',', '.'),
-                'has_discount' => $hasDiscount,
                 'estimated_days' => $estDaysMin === $estDaysMax
                     ? $estDaysMin . ' hari'
                     : $estDaysMin . '-' . $estDaysMax . ' hari',
@@ -573,12 +519,8 @@ class OrderController extends Controller
         try {
             $orderNumber = $this->generateOrderNumber();
             $subtotal = $carts->sum(function ($cart) use ($user) {
-                return $cart->product->price * $cart->quantity;
+                return $user->getProductPrice($cart->product) * $cart->quantity;
             });
-
-            $discountPercent = $user->priceLevel ? $user->priceLevel->discount_percentage : 0;
-            $discountAmount = ($subtotal * $discountPercent) / 100;
-            $totalAfterDiscount = $subtotal - $discountAmount;
 
             $totalWeight = $carts->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -601,12 +543,7 @@ class OrderController extends Controller
                 $expedition->base_cost,
                 $serviceMultiplier
             );
-
-            if (strtolower($expedition->code) === 'jne') {
-                $shippingCost = $shippingCost * 0.8; // 20% discount
-            }
-
-            $total = $totalAfterDiscount + $shippingCost;
+            $total = $subtotal + $shippingCost;
 
             $shippingAddressText = $address->recipient_name . "\n" .
                 $address->phone . "\n" .
@@ -627,8 +564,6 @@ class OrderController extends Controller
                 'expedition_service' => $request->expedition_service,
                 'source_warehouse_id' => $sourceWarehouse->id,
                 'subtotal' => $subtotal,
-                'discount_percent' => $discountPercent,
-                'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $total,
                 'points_earned' => $pointsEarned,
@@ -645,7 +580,7 @@ class OrderController extends Controller
             session()->forget('preferred_shipping_date');
 
             foreach ($carts as $cart) {
-                $productPrice = $cart->product->price;
+                $productPrice = $user->getProductPrice($cart->product);
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
@@ -731,14 +666,8 @@ class OrderController extends Controller
 
         $orders = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
 
-        // Calculate Monthly Target Progress from TargetBelanja
-        $currentMonthYear = now()->format('Y-m');
-        $targetRecord = \App\Models\TargetBelanja::where('distributor_id', $user->id)
-            ->where('bulan_tahun', $currentMonthYear)
-            ->first();
-            
-        $monthlyTarget = $targetRecord ? $targetRecord->jumlah_target : 0;
-
+        // Calculate Monthly Target Progress
+        $monthlyTarget = $user->monthly_target ?? 0;
         $totalSpentThisMonth = Order::where('user_id', $user->id)
             ->whereIn('order_type', [Order::TYPE_DISTRIBUTOR, Order::TYPE_REGULAR])
             ->whereNotIn('order_status', ['cancelled'])

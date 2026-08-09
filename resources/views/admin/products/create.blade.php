@@ -105,7 +105,8 @@
                                     <label for="price"><i class="fa fa-money"></i> Harga Jual <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-addon">Rp</span>
-                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price') }}" step="1" min="0" placeholder="0" required style="font-size: 1.1em; font-weight: bold; color: #6A1B1B;">
+                                        <input type="text" class="form-control" id="price_display" value="{{ old('price') ? number_format(old('price'), 0, ',', '.') : '' }}" placeholder="0" required style="font-size: 1.1em; font-weight: bold; color: #6A1B1B;">
+                                        <input type="hidden" id="price" name="price" value="{{ old('price') }}">
                                     </div>
                                     @error('price')
                                         <span class="help-block">{{ $message }}</span>
@@ -179,7 +180,55 @@
                         </div>
 
                         <hr>
-                        <!-- Group 3: Description -->
+                        <!-- Group 3: Discount (Optional) -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group @error('is_discount') has-error @enderror">
+                                    <label for="is_discount"><i class="fa fa-percent"></i> Status Diskon</label>
+                                    <select class="form-control" id="is_discount" name="is_discount">
+                                        <option value="0" {{ old('is_discount') == '0' ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1" {{ old('is_discount') == '1' ? 'selected' : '' }}>Ya</option>
+                                    </select>
+                                    @error('is_discount')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3 discount-fields" style="display: none;">
+                                <div class="form-group @error('discount_price') has-error @enderror">
+                                    <label for="discount_price"><i class="fa fa-tags"></i> Harga Diskon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rp</span>
+                                        <input type="text" class="form-control" id="discount_price_display" value="{{ old('discount_price') ? number_format(old('discount_price'), 0, ',', '.') : '' }}" placeholder="0" style="font-size: 1.1em; font-weight: bold; color: #E74C3C;">
+                                        <input type="hidden" id="discount_price" name="discount_price" value="{{ old('discount_price') }}">
+                                    </div>
+                                    @error('discount_price')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3 discount-fields" style="display: none;">
+                                <div class="form-group @error('discount_start_date') has-error @enderror">
+                                    <label for="discount_start_date"><i class="fa fa-calendar"></i> Tanggal Awal Diskon</label>
+                                    <input type="date" class="form-control" id="discount_start_date" name="discount_start_date" value="{{ old('discount_start_date') }}">
+                                    @error('discount_start_date')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3 discount-fields" style="display: none;">
+                                <div class="form-group @error('discount_end_date') has-error @enderror">
+                                    <label for="discount_end_date"><i class="fa fa-calendar"></i> Tanggal Akhir Diskon</label>
+                                    <input type="date" class="form-control" id="discount_end_date" name="discount_end_date" value="{{ old('discount_end_date') }}">
+                                    @error('discount_end_date')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <!-- Group 4: Description -->
                         <div class="form-group @error('description') has-error @enderror">
                             <label for="description"><i class="fa fa-align-left"></i> Deskripsi Produk (Website)</label>
                             <textarea class="form-control summernote" id="description" name="description" rows="4" placeholder="Tuliskan deskripsi lengkap mengenai produk ini...">{{ old('description') }}</textarea>
@@ -275,6 +324,63 @@
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Format Rupiah for Harga Jual
+    var priceDisplay = document.getElementById('price_display');
+    var priceHidden = document.getElementById('price');
+    
+    if (priceDisplay) {
+        priceDisplay.addEventListener('keyup', function(e) {
+            priceHidden.value = this.value.replace(/[^0-9]/g, '');
+            this.value = formatRupiah(this.value);
+        });
+    }
+
+    var discountPriceDisplay = document.getElementById('discount_price_display');
+    var discountPriceHidden = document.getElementById('discount_price');
+    
+    if (discountPriceDisplay) {
+        discountPriceDisplay.addEventListener('keyup', function(e) {
+            discountPriceHidden.value = this.value.replace(/[^0-9]/g, '');
+            this.value = formatRupiah(this.value);
+        });
+    }
+
+    // Toggle Discount Fields
+    var isDiscountSelect = document.getElementById('is_discount');
+    var discountFields = document.querySelectorAll('.discount-fields');
+
+    function toggleDiscountFields() {
+        if (isDiscountSelect.value === '1') {
+            discountFields.forEach(function(el) {
+                el.style.display = 'block';
+            });
+        } else {
+            discountFields.forEach(function(el) {
+                el.style.display = 'none';
+            });
+        }
+    }
+
+    if (isDiscountSelect) {
+        isDiscountSelect.addEventListener('change', toggleDiscountFields);
+        toggleDiscountFields(); // run on load
+    }
+
+    function formatRupiah(angka) {
+        var number_string = angka.replace(/[^0-9]/g, '').toString();
+        var split = number_string.split(',');
+        var sisa = split[0].length % 3;
+        var rupiah = split[0].substr(0, sisa);
+        var ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            var separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        return rupiah;
+    }
+
     $('.select2').select2({
         placeholder: function() {
             return $(this).data('placeholder') || '-- Pilih --';

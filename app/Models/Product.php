@@ -37,6 +37,10 @@ class Product extends Model
         'weight',
         'image',
         'status',
+        'is_discount',
+        'discount_price',
+        'discount_start_date',
+        'discount_end_date',
         'sync_sources',
         'created_by',
     ];
@@ -47,6 +51,9 @@ class Product extends Model
         'weight' => 'integer',
         'units_per_large' => 'integer',
         'sync_sources' => 'array',
+        'is_discount' => 'boolean',
+        'discount_start_date' => 'date',
+        'discount_end_date' => 'date',
     ];
 
     /**
@@ -316,7 +323,7 @@ class Product extends Model
     public function getImageUrlAttribute(): ?string
     {
         if (!$this->image) {
-            return asset('logo/RASA%20Group%20-%20Logo%20-%20R-02.png');
+            return asset('logo/Rasa Connect - Logo 2_Maroon 1.png');
         }
 
         if (filter_var($this->image, FILTER_VALIDATE_URL)) {
@@ -386,5 +393,33 @@ class Product extends Model
         }
 
         return $orderedQty;
+    }
+
+    public function hasActiveDiscount(): bool
+    {
+        if (!$this->is_discount) {
+            return false;
+        }
+
+        $now = now()->startOfDay();
+
+        if ($this->discount_start_date && \Carbon\Carbon::parse($this->discount_start_date)->startOfDay()->greaterThan($now)) {
+            return false;
+        }
+
+        if ($this->discount_end_date && \Carbon\Carbon::parse($this->discount_end_date)->endOfDay()->lessThan($now)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getFinalPriceAttribute(): float
+    {
+        if ($this->hasActiveDiscount() && $this->discount_price !== null) {
+            return (float) $this->discount_price;
+        }
+
+        return (float) $this->price;
     }
 }

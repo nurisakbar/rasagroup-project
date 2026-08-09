@@ -101,7 +101,12 @@
                                             <div class="col-lg-6 col-md-12">
                                                 <div class="p-3 bg-light border-radius-10 text-end">
                                                     <h6 class="text-muted mb-2 font-sm">Subtotal</h6>
-                                                    <h3 class="text-brand mb-4" id="cart-subtotal">Rp {{ number_format($subtotal, 0, ',', '.') }}</h3>
+                                                    <h5 class="text-muted mb-2" style="text-decoration: line-through;" id="cart-subtotal">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
+                                                    @if(isset($discountAmount) && $discountAmount > 0)
+                                                    <h6 class="text-success mb-2 font-sm">Diskon ({{ floatval($discountPercent) }}%)</h6>
+                                                    <h5 class="text-success mb-2" id="cart-discount">- Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
+                                                    @endif
+                                                    <h3 class="text-brand mb-4" id="cart-total-after-discount">Rp {{ number_format($totalAfterDiscount ?? $subtotal, 0, ',', '.') }}</h3>
                                                     <a href="{{ route('distributor.orders.checkout') }}" class="btn btn-brand rounded-pill w-100">Lanjut ke Checkout <i class="fi-rs-arrow-right ml-10"></i></a>
                                                 </div>
                                             </div>
@@ -147,9 +152,16 @@ $(document).ready(function() {
                         $('#cart-total-items').text(response.cart_total_items + ' unit');
                         $('#cart-subtotal').text(response.cart_subtotal_formatted);
                         
+                        if (response.cart_discount_formatted) {
+                            $('#cart-discount').text(response.cart_discount_formatted);
+                            $('#cart-total-after-discount').text(response.cart_total_after_discount_formatted);
+                        } else {
+                            $('#cart-total-after-discount').text(response.cart_subtotal_formatted);
+                        }
+                        
                         // Optional visual feedback
                         $('#item-subtotal-' + cartId).fadeOut(100).fadeIn(100);
-                        $('#cart-subtotal').fadeOut(100).fadeIn(100);
+                        $('#cart-total-after-discount').fadeOut(100).fadeIn(100);
                     }
                 },
                 error: function(xhr) {
@@ -184,7 +196,15 @@ $(document).ready(function() {
                             $(this).remove();
                             $('#cart-total-items').text(response.cart_total_items + ' unit');
                             $('#cart-subtotal').text(response.cart_subtotal_formatted);
-                            $('#cart-subtotal').fadeOut(100).fadeIn(100);
+                            
+                            if (response.cart_discount_formatted) {
+                                $('#cart-discount').text(response.cart_discount_formatted);
+                                $('#cart-total-after-discount').text(response.cart_total_after_discount_formatted);
+                            } else {
+                                $('#cart-total-after-discount').text(response.cart_subtotal_formatted);
+                            }
+                            
+                            $('#cart-total-after-discount').fadeOut(100).fadeIn(100);
                         });
                     }
                 }

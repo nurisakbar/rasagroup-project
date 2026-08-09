@@ -18,12 +18,19 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::where('role', 'super_admin')->select('id', 'name', 'email', 'phone', 'role', 'created_at');
+            $users = User::whereIn('role', ['super_admin', 'ecommerce', 'brand_marketing', 'finance'])
+                ->select('id', 'name', 'email', 'phone', 'role', 'created_at');
 
             return DataTables::of($users)
                 ->addIndexColumn()
                 ->addColumn('role_badge', function ($user) {
-                    return '<span class="label label-danger">Super Admin</span>';
+                    $labels = [
+                        'super_admin' => '<span class="label label-danger">Super Admin</span>',
+                        'ecommerce' => '<span class="label label-info">eCommerce</span>',
+                        'brand_marketing' => '<span class="label label-primary">Brand Marketing</span>',
+                        'finance' => '<span class="label label-warning">Finance</span>',
+                    ];
+                    return $labels[$user->role] ?? '<span class="label label-default">' . ucfirst($user->role) . '</span>';
                 })
                 ->addColumn('action', function ($user) {
                     $editUrl = route('admin.users.edit', $user);
@@ -70,6 +77,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance',
         ]);
 
         User::create([
@@ -77,10 +85,10 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'role' => 'super_admin',
+            'role' => $request->role,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User Super Admin berhasil ditambahkan.');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     /**
@@ -88,8 +96,9 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        if ($user->role !== 'super_admin') {
-            return redirect()->route('admin.users.index')->with('error', 'Hanya dapat mengubah user Super Admin.');
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect()->route('admin.users.index')->with('error', 'Role user ini tidak dapat diubah di sini.');
         }
 
         return view('admin.users.edit', compact('user'));
@@ -100,7 +109,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        if ($user->role !== 'super_admin') {
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        if (!in_array($user->role, $allowedRoles)) {
             abort(403);
         }
 
@@ -115,12 +125,14 @@ class UserController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance',
         ]);
 
         $data = [
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'role' => $request->role,
         ];
 
         if ($request->filled('password')) {
@@ -129,7 +141,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('admin.users.index')->with('success', 'Data Super Admin berhasil diperbarui.');
+        return redirect()->route('admin.users.index')->with('success', 'Data User berhasil diperbarui.');
     }
 
     /**
@@ -137,7 +149,8 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        if ($user->role !== 'super_admin') {
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        if (!in_array($user->role, $allowedRoles)) {
             abort(403);
         }
 
@@ -148,6 +161,6 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')->with('success', 'User Super Admin berhasil dihapus.');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
     }
 }

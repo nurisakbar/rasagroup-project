@@ -10,8 +10,8 @@
                 text-transform: uppercase !important;
             }
             
-            /* Fix slider terpotong di mobile */
-            @media only screen and (max-width: 768px) {
+            /* Fix slider terpotong di mobile dan tablet/iPad */
+            @media only screen and (max-width: 1024px) {
                 .hero-slider-1 .single-hero-slider {
                     height: 50vw !important; /* Sesuaikan rasio aspek */
                     min-height: 180px;
@@ -103,30 +103,28 @@
         </section>
         @endif
 
+        @if($promoProducts->isNotEmpty())
         <section id="penawaran-hari-ini" class="section-padding pb-5">
             <div class="container">
                 <div class="section-title wow animate__animated animate__fadeIn" data-wow-delay="0">
                     <h3 class="">Penawaran Hari Ini</h3>
                 </div>
-                @if($promoProducts->isEmpty())
-                    <p class="text-muted font-md text-center py-40 mb-0">Belum ada penawaran aktif saat ini.</p>
-                @else
-                    <div class="row product-grid-4">
-                        @foreach($promoProducts as $product)
-                            @include('themes.nest.partials.product-card', [
-                                'product' => $product,
-                                'showPromoPeriod' => true,
-                            ])
-                        @endforeach
-                    </div>
-                    <div class="text-center mt-30">
-                        <a href="{{ route('promo.index') }}" class="btn btn-sm btn-default">
-                            Lihat Semua <i class="fi-rs-arrow-right ml-10"></i>
-                        </a>
-                    </div>
-                @endif
+                <div class="row product-grid-4">
+                    @foreach($promoProducts as $product)
+                        @include('themes.nest.partials.product-card', [
+                            'product' => $product,
+                            'showPromoPeriod' => true,
+                        ])
+                    @endforeach
+                </div>
+                <div class="text-center mt-30">
+                    <a href="{{ route('promo.index') }}" class="btn btn-sm btn-default">
+                        Lihat Semua <i class="fi-rs-arrow-right ml-10"></i>
+                    </a>
+                </div>
             </div>
         </section>
+        @endif
         <!--End Penawaran Hari Ini-->
 
         <section class="product-tabs section-padding position-relative">

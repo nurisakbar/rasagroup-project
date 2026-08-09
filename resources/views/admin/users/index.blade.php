@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Super Admin')
-@section('page-title', 'Manajemen Super Admin')
-@section('page-description', 'Kelola data pengguna dengan akses administrator penuh')
+@section('title', 'Admin Users')
+@section('page-title', 'Manajemen Admin Users')
+@section('page-description', 'Kelola data pengguna dengan akses admin / internal')
 
 @section('breadcrumb')
-    <li class="active">Super Admin</li>
+    <li class="active">Admin Users</li>
 @endsection
 
 @push('styles')
@@ -23,10 +23,10 @@
         <div class="col-xs-12">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Daftar Super Admin</h3>
+                    <h3 class="box-title">Daftar Admin</h3>
                     <div class="box-tools">
                         <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fa fa-plus"></i> Tambah Super Admin
+                            <i class="fa fa-plus"></i> Tambah Admin
                         </a>
                     </div>
                 </div>

@@ -40,7 +40,7 @@ Route::prefix('v1.0/transfer-va')->group(function () {
 Route::get('/dashboard', function () {
     $user = auth()->user();
     
-    if (in_array($user->role, ['agent', 'super_admin'])) {
+    if (in_array($user->role, ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'])) {
         return redirect()->route('admin.dashboard');
     }
     

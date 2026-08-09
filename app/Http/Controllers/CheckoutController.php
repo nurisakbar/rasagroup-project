@@ -119,6 +119,8 @@ class CheckoutController extends Controller
         $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
         $retailSubtotal = $pricing['retail_subtotal'];
         $distributorPriceDiscount = $pricing['distributor_price_discount'];
+        $tieredDiscountAmount = $pricing['tiered_discount_amount'];
+        $showTieredDiscount = $pricing['show_tiered_discount'];
         $subtotal = $pricing['subtotal_after_distributor'];
         $priceLevelName = $pricing['price_level_name'];
         $showDistributorPricing = $pricing['show_distributor_pricing'];
@@ -284,6 +286,8 @@ class CheckoutController extends Controller
         'subtotal', 
         'retailSubtotal',
         'distributorPriceDiscount',
+        'tieredDiscountAmount',
+        'showTieredDiscount',
         'priceLevelName',
         'showDistributorPricing',
         'shippingCost', 
@@ -442,6 +446,9 @@ class CheckoutController extends Controller
             'distributor_price_discount' => $distributorPriceDiscount,
             'distributor_price_discount_formatted' => 'Rp ' . number_format($distributorPriceDiscount, 0, ',', '.'),
             'show_distributor_pricing' => $showDistributorPricing,
+            'tiered_discount_amount' => $pricing['tiered_discount_amount'] ?? 0,
+            'tiered_discount_amount_formatted' => 'Rp ' . number_format($pricing['tiered_discount_amount'] ?? 0, 0, ',', '.'),
+            'show_tiered_discount' => $pricing['show_tiered_discount'] ?? false,
             'price_level_name' => $priceLevelName,
             'discount_amount' => $discountAmount,
             'discount_amount_formatted' => 'Rp ' . number_format($discountAmount, 0, ',', '.'),
@@ -949,8 +956,16 @@ class CheckoutController extends Controller
             // Load relationships for notification
             $order->load('address');
 
+            $discountService = new \App\Services\DiscountService();
+
             foreach ($carts as $cart) {
-                $lineUnit = $user->getProductPrice($cart->product);
+                if (!$user->isDistributor()) {
+                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
+                    $lineUnit = $discountData['final_price'];
+                } else {
+                    $lineUnit = $user->getProductPrice($cart->product);
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
@@ -1245,7 +1260,7 @@ class CheckoutController extends Controller
     private function cartPricingBreakdown(User $user, $carts): array
     {
         $retailSubtotal = (float) $carts->sum(function ($cart) {
-            return (float) $cart->product->price * (int) $cart->quantity;
+            return (float) $cart->product->final_price * (int) $cart->quantity;
         });
 
         $user->loadMissing('priceLevel');
@@ -1254,22 +1269,35 @@ class CheckoutController extends Controller
         $distributorPriceDiscount = 0.0;
         $priceLevelName = null;
 
+        $discountService = new \App\Services\DiscountService();
+        $tieredDiscountAmount = 0.0;
+
         if ($user->isDistributor() && $user->priceLevel) {
             $priceLevelName = $user->priceLevel->name;
             $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user) {
                 return $user->getProductPrice($cart->product) * (int) $cart->quantity;
             });
             $distributorPriceDiscount = max(0.0, $retailSubtotal - $subtotalAfterDistributor);
+        } else if (!$user->isDistributor()) {
+            // Apply tiered discount per SKU for non-distributors
+            $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user, $discountService, &$tieredDiscountAmount) {
+                $discountData = $discountService->calculateCartItemDiscount($cart, $user);
+                // Accumulate total discount amount from all items
+                $tieredDiscountAmount += $discountData['discount_amount'] * $cart->quantity;
+                return $discountData['final_subtotal'];
+            });
         }
 
         return [
             'retail_subtotal' => $retailSubtotal,
             'distributor_price_discount' => $distributorPriceDiscount,
+            'tiered_discount_amount' => $tieredDiscountAmount,
             'subtotal_after_distributor' => $subtotalAfterDistributor,
             'price_level_name' => $priceLevelName,
             'show_distributor_pricing' => $user->isDistributor()
                 && $user->priceLevel !== null
                 && $distributorPriceDiscount > 0,
+            'show_tiered_discount' => $tieredDiscountAmount > 0,
         ];
     }
 

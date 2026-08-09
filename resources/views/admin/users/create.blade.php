@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', 'Tambah Super Admin')
-@section('page-title', 'Tambah Super Admin')
+@section('title', 'Tambah Admin')
+@section('page-title', 'Tambah Admin')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.users.index') }}">Super Admin</a></li>
+    <li><a href="{{ route('admin.users.index') }}">Admin Users</a></li>
     <li class="active">Tambah</li>
 @endsection
 
@@ -47,9 +47,16 @@
                         <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi password">
                     </div>
 
-                    <div class="callout callout-info" style="margin-bottom: 0;">
-                        <h4><i class="icon fa fa-info"></i> Info Role</h4>
-                        <p>User yang ditambahkan melalui halaman ini akan otomatis memiliki role <strong>Super Admin</strong>.</p>
+                    <div class="form-group @error('role') has-error @enderror">
+                        <label for="role">Role User</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">-- Pilih Role --</option>
+                            <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                            <option value="ecommerce" {{ old('role') == 'ecommerce' ? 'selected' : '' }}>eCommerce</option>
+                            <option value="brand_marketing" {{ old('role') == 'brand_marketing' ? 'selected' : '' }}>Brand Marketing</option>
+                            <option value="finance" {{ old('role') == 'finance' ? 'selected' : '' }}>Finance</option>
+                        </select>
+                        @error('role') <span class="help-block">{{ $message }}</span> @enderror
                     </div>
                 </div>
 

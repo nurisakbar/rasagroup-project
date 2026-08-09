@@ -397,7 +397,7 @@
                         data.forEach(product => {
                             html += `
                                 <a href="${product.url}" class="suggestion-item">
-                                    <img src="${product.image}" class="suggestion-img" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                                    <img src="${product.image}" class="suggestion-img" onerror="this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}'">
                                     <div class="suggestion-info">
                                         <span class="suggestion-name">${product.name}</span>
                                         <span class="suggestion-price">Rp ${product.price}</span>

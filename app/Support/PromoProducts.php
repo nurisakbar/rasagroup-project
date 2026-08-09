@@ -15,9 +15,22 @@ class PromoProducts
             ->where('status', 'active')
             ->withBuyerPrice()
             ->with(['category', 'brand', 'warehouseStocks'])
-            ->whereHas('promos', function ($q) {
-                $q->currentlyActive();
-                static::applyAudienceFilter($q);
+            ->where(function ($q) {
+                $q->whereHas('promos', function ($subQ) {
+                    $subQ->currentlyActive();
+                    static::applyAudienceFilter($subQ);
+                })
+                ->orWhere(function ($subQ) {
+                    $subQ->where('is_discount', true)
+                         ->where(function ($q2) {
+                             $q2->whereNull('discount_start_date')
+                                ->orWhereDate('discount_start_date', '<=', now());
+                         })
+                         ->where(function ($q2) {
+                             $q2->whereNull('discount_end_date')
+                                ->orWhereDate('discount_end_date', '>=', now());
+                         });
+                });
             });
 
         if ($withActivePromos) {

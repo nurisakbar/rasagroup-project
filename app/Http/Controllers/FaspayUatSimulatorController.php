@@ -22,7 +22,7 @@ class FaspayUatSimulatorController extends Controller
             "Authorization" => "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...", // Mock valid token
             "X-SIGNATURE" => "VALID_SIGNATURE_123",
             "X-TIMESTAMP" => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
-            "X-PARTNER-ID" => "368500",
+            "X-PARTNER-ID" => "37020",
             "X-EXTERNAL-ID" => "EXT-" . time() . rand(100, 999),
             "CHANNEL-ID" => "6011"
         ];
@@ -63,9 +63,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/inquiry",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3685000212345679",
+                    "virtualAccountNo" => "3702010212345679",
                     "channelCode" => "6011",
                     "inquiryRequestId" => "REQ-001"
                 ]
@@ -75,9 +75,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/inquiry",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345678",
-                    "virtualAccountNo" => "3685000212345678",
+                    "virtualAccountNo" => "3702010212345678",
                     "inquiryRequestId" => "REQ-002"
                 ]
             ],
@@ -86,9 +86,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/inquiry",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345677", 
-                    "virtualAccountNo" => "3685000212345677",
+                    "virtualAccountNo" => "3702010212345677",
                     "inquiryRequestId" => "REQ-003"
                 ]
             ],
@@ -97,9 +97,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/inquiry",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "9999999999",
-                    "virtualAccountNo" => "3685009999999999",
+                    "virtualAccountNo" => "3702019999999999",
                     "inquiryRequestId" => "REQ-004"
                 ]
             ],
@@ -108,9 +108,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/payment",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3685000212345679",
+                    "virtualAccountNo" => "3702010212345679",
                     "paidAmount" => ["value" => "40000.00", "currency" => "IDR"],
                     "paymentRequestId" => "PAY-001",
                     "latestTransactionStatus" => "00"
@@ -121,9 +121,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/payment",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "9999999999",
-                    "virtualAccountNo" => "3685009999999999",
+                    "virtualAccountNo" => "3702019999999999",
                     "paidAmount" => ["value" => "40000.00", "currency" => "IDR"],
                     "paymentRequestId" => "PAY-002"
                 ]
@@ -133,9 +133,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/payment",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3685000212345679",
+                    "virtualAccountNo" => "3702010212345679",
                     "paidAmount" => ["value" => "1000.00", "currency" => "IDR"], 
                     "paymentRequestId" => "PAY-003",
                     "latestTransactionStatus" => "00"
@@ -146,9 +146,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/payment",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3685000212345679",
+                    "virtualAccountNo" => "3702010212345679",
                     "paidAmount" => ["value" => "150000.00", "currency" => "IDR"],
                     "paymentRequestId" => "PAY-004",
                     "latestTransactionStatus" => "00"
@@ -159,9 +159,9 @@ class FaspayUatSimulatorController extends Controller
                 "url" => $baseUrl . "/payment",
                 "headers" => $baseHeaders,
                 "payload" => [
-                    "partnerServiceId" => "368500",
+                    "partnerServiceId" => "370201",
                     "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3685000212345679",
+                    "virtualAccountNo" => "3702010212345679",
                     "trx_id" => "TRX-UAT-999",
                     "payment_status_code" => "2"
                 ]

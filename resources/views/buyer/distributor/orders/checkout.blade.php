@@ -198,19 +198,25 @@
 
                                                 <div class="divider-2 mb-4"></div>
 
-                                                <div class="order-totals">
+                                                <div class="order-totals p-4 bg-light border-radius-10 mb-4">
                                                     <div class="d-flex justify-content-between mb-2">
-                                                        <span class="text-muted font-sm">Subtotal</span>
-                                                        <span class="font-sm fw-bold">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                                                        <h6 class="text-muted mb-0">Subtotal</h6>
+                                                        <h6 class="fw-bold mb-0" id="checkout-subtotal">Rp {{ number_format($subtotal, 0, ',', '.') }}</h6>
                                                     </div>
-                                                    <div class="d-flex justify-content-between mb-2">
-                                                        <span class="text-muted font-sm">Ongkos Kirim</span>
-                                                        <span class="font-sm fw-bold" id="shipping-cost-display">Rp {{ number_format($shippingCost, 0, ',', '.') }}</span>
+                                                    @if(isset($discountAmount) && $discountAmount > 0)
+                                                    <div class="d-flex justify-content-between mb-2 mt-2">
+                                                        <h6 class="text-success mb-0">Diskon ({{ floatval($discountPercent) }}%)</h6>
+                                                        <h6 class="text-success fw-bold mb-0" id="checkout-discount-amount">- Rp {{ number_format($discountAmount, 0, ',', '.') }}</h6>
                                                     </div>
-                                                    <div class="divider-2 mt-2 mb-3"></div>
-                                                    <div class="d-flex justify-content-between mb-4">
-                                                        <h5 class="mb-0">Total</h5>
-                                                        <h4 class="mb-0 text-brand" id="total-amount-display">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                                                    @endif
+                                                    <div class="d-flex justify-content-between mb-2 mt-2">
+                                                        <h6 class="text-muted mb-0">Ongkos Kirim</h6>
+                                                        <h6 class="fw-bold mb-0" id="shipping-cost-display">Rp {{ number_format($shippingCost, 0, ',', '.') }}</h6>
+                                                    </div>
+                                                    <div class="divider-2 mt-3 mb-3"></div>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h5 class="mb-0">Total Pembayaran</h5>
+                                                        <h3 class="mb-0 text-brand" id="total-amount-display">Rp {{ number_format($total, 0, ',', '.') }}</h3>
                                                     </div>
                                                 </div>
 
@@ -284,7 +290,10 @@ $(document).ready(function() {
                                 <div class="card border border-radius-10 shadow-none p-3 h-100">
                                     <div class="d-flex justify-content-between mb-2">
                                         <h6 class="mb-0 font-sm">${service.name}</h6>
-                                        <span class="text-brand font-sm fw-bold">${service.cost_formatted}</span>
+                                        <div class="text-end">
+                                            ${service.has_discount ? `<span class="text-muted font-xs text-decoration-line-through me-1">${service.original_cost_formatted}</span><br>` : ''}
+                                            <span class="text-brand font-sm fw-bold">${service.cost_formatted}</span>
+                                        </div>
                                     </div>
                                     <p class="font-xs text-muted mb-0">Estimasi ${service.estimated_days}</p>
                                 </div>
@@ -318,7 +327,16 @@ $(document).ready(function() {
                 service_code: serviceCode
             },
             success: function(response) {
-                $('#shipping-cost-display').text(response.shipping_cost_formatted);
+                if (response.discount_formatted) {
+                    $('#checkout-discount-amount').text(response.discount_formatted);
+                }
+                
+                if (response.has_shipping_discount) {
+                    $('#shipping-cost-display').html(`<span class="text-muted font-xs text-decoration-line-through me-1" style="font-weight:normal;">${response.original_shipping_cost_formatted}</span> <br> ${response.shipping_cost_formatted}`);
+                } else {
+                    $('#shipping-cost-display').text(response.shipping_cost_formatted);
+                }
+                
                 $('#total-amount-display').text(response.total_formatted);
             }
         });

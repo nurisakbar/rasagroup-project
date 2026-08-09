@@ -232,7 +232,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group @error('monthly_target') has-error @enderror">
-                                    <label for="monthly_target">Target Belanja Bulanan</label>
+                                    <label for="monthly_target">Cash in Advance (CIA)</label>
                                     <div class="input-group">
                                         <span class="input-group-addon">Rp</span>
                                         <input type="text" class="form-control rupiah-format" id="monthly_target" name="monthly_target" value="{{ number_format(old('monthly_target', 0), 0, ',', '.') }}" placeholder="Contoh: 50.000.000">

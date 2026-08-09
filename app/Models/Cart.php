@@ -152,10 +152,10 @@ class Cart extends Model
             return 0.0;
         }
         if ($this->showsLargeUnitInCart()) {
-            return (float) $product->price * (float) $product->unitsPerLargeEffective();
+            return (float) $product->final_price * (float) $product->unitsPerLargeEffective();
         }
 
-        return (float) $product->price;
+        return (float) $product->final_price;
     }
 
     /**

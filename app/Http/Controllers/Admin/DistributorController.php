@@ -165,9 +165,16 @@ class DistributorController extends Controller
                 ->with('error', 'Pengajuan tidak ditemukan atau sudah diproses.');
         }
 
+        // Clean currency inputs
+        if ($request->has('monthly_target')) {
+            $request->merge(['monthly_target' => str_replace('.', '', $request->monthly_target)]);
+        }
+        if ($request->has('credit_limit')) {
+            $request->merge(['credit_limit' => str_replace('.', '', $request->credit_limit)]);
+        }
+
         $validated = $request->validate([
             'hub_name' => ['required', 'string', 'max:255'],
-            'province_id' => ['required'],
             'regency_id' => ['required'],
             'district_id' => ['required'],
             'village_id' => ['nullable'],
@@ -256,6 +263,13 @@ class DistributorController extends Controller
      */
     public function store(Request $request)
     {
+        // Clean currency inputs
+        if ($request->has('monthly_target')) {
+            $request->merge(['monthly_target' => str_replace('.', '', $request->monthly_target)]);
+        }
+        if ($request->has('credit_limit')) {
+            $request->merge(['credit_limit' => str_replace('.', '', $request->credit_limit)]);
+        }
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
@@ -670,6 +684,14 @@ class DistributorController extends Controller
     {
         if (!$distributor->isDistributor()) {
             abort(404);
+        }
+
+        // Clean currency inputs
+        if ($request->has('monthly_target')) {
+            $request->merge(['monthly_target' => str_replace('.', '', $request->monthly_target)]);
+        }
+        if ($request->has('credit_limit')) {
+            $request->merge(['credit_limit' => str_replace('.', '', $request->credit_limit)]);
         }
 
         $validated = $request->validate([

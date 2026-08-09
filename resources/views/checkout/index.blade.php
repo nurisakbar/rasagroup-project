@@ -357,9 +357,19 @@
                                     @foreach($carts as $cart)
                                         @php
                                             $checkoutUser = Auth::user();
-                                            $unitPrice = $checkoutUser->getProductPrice($cart->product);
-                                            $retailUnit = (float) $cart->product->price;
-                                            $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit;
+                                            if (!$checkoutUser->isDistributor()) {
+                                                $discountService = app(\App\Services\DiscountService::class);
+                                                $discountData = $discountService->calculateCartItemDiscount($cart, $checkoutUser);
+                                                $unitPrice = $discountData['final_price'];
+                                                $retailUnit = $discountData['original_price'];
+                                                $discountPercentage = $discountData['discount_percentage'];
+                                                $showRetailStrike = $discountData['discount_amount'] > 0;
+                                            } else {
+                                                $unitPrice = $checkoutUser->getProductPrice($cart->product);
+                                                $retailUnit = (float) $cart->product->price;
+                                                $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit;
+                                                $discountPercentage = $showRetailStrike ? round((1 - ($unitPrice / $retailUnit)) * 100, 1) : 0;
+                                            }
                                         @endphp
                                         <tr class="rg-checkout-item">
                                             <td class="image product-thumbnail rg-checkout-item-thumb">
@@ -373,16 +383,25 @@
                                                 <div class="rg-checkout-item-meta">
                                                     <span class="rg-checkout-item-qty">{{ $cart->quantity }} ×</span>
                                                     <span class="rg-checkout-item-unit">
-                                                        @if($showRetailStrike)
-                                                            <span class="rg-checkout-item-unit-retail">Rp {{ number_format($retailUnit, 0, ',', '.') }}</span>
-                                                        @endif
                                                         <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="rg-checkout-item-price">
-                                                <span class="rg-checkout-item-price-label">Subtotal</span>
-                                                <strong class="rg-checkout-item-price-value text-brand">Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}</strong>
+                                            <td class="rg-checkout-item-price text-end">
+                                                <span class="rg-checkout-item-price-label d-block text-muted" style="font-size: 0.85em;">Subtotal</span>
+                                                @if($showRetailStrike)
+                                                    <div class="d-flex flex-column align-items-end">
+                                                        <span class="rg-checkout-item-unit-retail text-muted text-decoration-line-through" style="font-size: 0.85em;">
+                                                            Rp {{ number_format($retailUnit * $cart->quantity, 0, ',', '.') }}
+                                                        </span>
+                                                        <strong class="rg-checkout-item-price-value text-brand">
+                                                            Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}
+                                                        </strong>
+                                                        <span class="badge bg-danger mt-1">-{{ $discountPercentage }}%</span>
+                                                    </div>
+                                                @else
+                                                    <strong class="rg-checkout-item-price-value text-brand">Rp {{ number_format($unitPrice * $cart->quantity, 0, ',', '.') }}</strong>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

@@ -153,7 +153,7 @@ class CartController extends Controller
         }
 
         $total = $carts->sum(function ($cart) {
-            return $cart->product->price * $cart->quantity;
+            return $cart->product->final_price * $cart->quantity;
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
@@ -201,13 +201,13 @@ class CartController extends Controller
         $cart->refresh()->load('product');
         $carts = $this->currentRegularCarts();
         $total = $carts->sum(function ($c) {
-            return $c->product->price * $c->quantity;
+            return $c->product->final_price * $c->quantity;
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
 
         $product = $cart->product;
-        $lineSubtotal = (float) ($product->price * $cart->quantity);
+        $lineSubtotal = (float) ($product->final_price * $cart->quantity);
         $cartCountSum = (int) $carts->sum('quantity');
 
         return response()->json([
@@ -240,7 +240,7 @@ class CartController extends Controller
     {
         $carts = $this->currentRegularCarts();
         $total = $carts->sum(function ($c) {
-            return $c->product->price * $c->quantity;
+            return $c->product->final_price * $c->quantity;
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
@@ -338,7 +338,7 @@ class CartController extends Controller
             throw $e;
         }
 
-        if ((float) $product->price <= 0) {
+        if ((float) $product->final_price <= 0) {
             return $request->ajax()
                 ? response()->json(['error' => 'Produk ini belum memiliki harga.'], 422)
                 : back()->with('error', 'Produk ini belum memiliki harga.');

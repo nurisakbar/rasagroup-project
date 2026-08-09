@@ -17,7 +17,8 @@
                     <i class="fi-rs-box {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Kelola Stock
                 </a>
             </li>
-            <li class="nav-item">
+            {{-- Point Of Sales disembunyikan sesuai permintaan --}}
+            <li class="nav-item d-none">
                 <a class="nav-link {{ Route::is('distributor.pos.*') ? 'active' : '' }}" href="{{ route('distributor.pos.index') }}">
                     <i class="fi-rs-computer {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Point Of Sales
                 </a>

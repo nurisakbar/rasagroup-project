@@ -258,7 +258,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group @error('monthly_target') has-error @enderror">
-                                    <label for="monthly_target">Target Belanja Bulanan</label>
+                                    <label for="monthly_target">Cash in Advance (CIA)</label>
                                     <div class="input-group">
                                         <span class="input-group-addon">Rp</span>
                                         <input type="number" class="form-control" id="monthly_target" name="monthly_target" value="{{ old('monthly_target') }}" placeholder="Contoh: 50000000">

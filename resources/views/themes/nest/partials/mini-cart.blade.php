@@ -10,7 +10,7 @@
     <li>
         <div class="shopping-cart-img">
             <a href="{{ route('products.show', $cartItem->product) }}">
-                <img alt="{{ $cartItem->product->name }}" src="{{ $cartItem->product->image_url ? $cartItem->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
+                <img alt="{{ $cartItem->product->name }}" src="{{ $cartItem->product->image_url ? $cartItem->product->image_url : asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" onerror="this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}'">
             </a>
         </div>
         <div class="shopping-cart-title">

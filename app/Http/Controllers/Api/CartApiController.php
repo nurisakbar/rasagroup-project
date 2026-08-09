@@ -51,7 +51,7 @@ class CartApiController extends Controller
             ->get();
 
         $subtotal = $carts->sum(function ($cart) {
-            return $cart->product->price * $cart->quantity;
+            return $cart->product->final_price * $cart->quantity;
         });
 
         $items = $carts->map(function ($cart) {
@@ -64,7 +64,8 @@ class CartApiController extends Controller
                     'id' => $cart->product->id,
                     'code' => $cart->product->code,
                     'name' => $cart->product->display_name,
-                    'price' => (float) $cart->product->price,
+                    'price' => (float) $cart->product->final_price,
+                    'price_formatted' => 'Rp ' . number_format($cart->product->final_price, 0, ',', '.'),
                     'unit' => $cart->product->unit,
                     'image' => $imageUrl,
                     'brand' => $cart->product->brand ? [
@@ -83,7 +84,8 @@ class CartApiController extends Controller
                 'quantity' => $cart->quantity,
                 'order_uom' => $cart->order_uom,
                 'quantity_ordered' => $cart->quantity_ordered,
-                'subtotal' => (float) ($cart->product->price * $cart->quantity),
+                'subtotal' => (float) ($cart->product->final_price * $cart->quantity),
+                'subtotal_formatted' => 'Rp ' . number_format($cart->product->final_price * $cart->quantity, 0, ',', '.'),
             ];
         });
 
@@ -118,7 +120,7 @@ class CartApiController extends Controller
         $product = Product::findOrFail($validated['product_id']);
         $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
 
-        if ((float) $product->price <= 0) {
+        if ((float) $product->final_price <= 0) {
             return response()->json([
                 'success' => false,
                 'message' => 'Produk ini belum memiliki harga.',
@@ -165,7 +167,7 @@ class CartApiController extends Controller
                 'product' => [
                     'id' => $cart->product->id,
                     'name' => $cart->product->display_name,
-                    'price' => (float) $cart->product->price,
+                    'price' => (float) $cart->product->final_price,
                 ],
                 'warehouse' => [
                     'id' => $cart->warehouse->id,
@@ -174,7 +176,7 @@ class CartApiController extends Controller
                 'quantity' => $cart->quantity,
                 'order_uom' => $cart->order_uom,
                 'quantity_ordered' => $cart->quantity_ordered,
-                'subtotal' => (float) ($cart->product->price * $cart->quantity),
+                'subtotal' => (float) ($cart->product->final_price * $cart->quantity),
             ],
         ], 201);
     }

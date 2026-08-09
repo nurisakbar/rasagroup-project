@@ -20,7 +20,7 @@ class EnsureUserIsAgent
             return redirect()->route('admin.login');
         }
 
-        if (!in_array(Auth::guard('admin')->user()->role, ['agent', 'super_admin'])) {
+        if (!in_array(Auth::guard('admin')->user()->role, ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'])) {
             abort(403, 'Unauthorized access. Admin only.');
         }
 

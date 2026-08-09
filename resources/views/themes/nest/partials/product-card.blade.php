@@ -3,8 +3,8 @@
         <div class="product-img-action-wrap rg-product-media">
             <div class="product-img product-img-zoom">
                 <a href="{{ route('products.show', $product->slug) }}">
-                    <img class="default-img rg-product-img" src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
-                    <img class="hover-img rg-product-img" src="{{ $product->image_url ?? asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
+                    <img class="default-img rg-product-img" src="{{ $product->image_url ?? asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
+                    <img class="hover-img rg-product-img" src="{{ $product->image_url ?? asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';" @if(!$product->image) style="object-fit: contain; padding: 2rem;" @endif />
                 </a>
             </div>
             <div class="product-badges product-badges-position product-badges-mrg">
@@ -50,8 +50,10 @@
             @endif
             <div class="product-card-bottom rg-product-footer">
                 <div class="product-price">
-                    <span>Rp{{ number_format($product->price, 0, ',', '.') }}</span>
-                    @if(isset($product->compare_price) && $product->compare_price > $product->price)
+                    <span>Rp{{ number_format($product->final_price, 0, ',', '.') }}</span>
+                    @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
+                        <span class="old-price">Rp{{ number_format($product->price, 0, ',', '.') }}</span>
+                    @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
                         <span class="old-price">Rp{{ number_format($product->compare_price, 0, ',', '.') }}</span>
                     @endif
                 </div>

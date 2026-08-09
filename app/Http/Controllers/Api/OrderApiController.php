@@ -223,7 +223,17 @@ class OrderApiController extends Controller
         DB::beginTransaction();
         try {
             $orderNumber = $this->generateOrderNumber();
-            $subtotal = $carts->sum(function ($cart) {
+            
+            $discountService = new \App\Services\DiscountService();
+            $tieredDiscountAmount = 0.0;
+            $user = Auth::user();
+
+            $subtotal = $carts->sum(function ($cart) use ($user, $discountService, &$tieredDiscountAmount) {
+                if (!$user->isDistributor()) {
+                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
+                    $tieredDiscountAmount += $discountData['discount_amount'] * $cart->quantity;
+                    return $discountData['final_subtotal'];
+                }
                 return $cart->product->price * $cart->quantity;
             });
 
@@ -306,14 +316,23 @@ class OrderApiController extends Controller
             ]);
 
             foreach ($carts as $cart) {
+                if (!$user->isDistributor()) {
+                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
+                    $price = $discountData['final_price'];
+                    $itemSubtotal = $discountData['final_subtotal'];
+                } else {
+                    $price = $cart->product->price;
+                    $itemSubtotal = $price * $cart->quantity;
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
                     'order_uom' => $cart->order_uom,
                     'quantity_ordered' => $cart->quantity_ordered,
-                    'price' => $cart->product->price,
-                    'subtotal' => $cart->product->price * $cart->quantity,
+                    'price' => $price,
+                    'subtotal' => $itemSubtotal,
                 ]);
 
                 if (! ShopFulfillment::assumeStockReady()) {

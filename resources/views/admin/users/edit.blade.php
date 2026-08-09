@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Super Admin')
-@section('page-title', 'Edit Super Admin')
+@section('title', 'Edit Admin')
+@section('page-title', 'Edit Admin')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.users.index') }}">Super Admin</a></li>
+    <li><a href="{{ route('admin.users.index') }}">Admin Users</a></li>
     <li class="active">Edit</li>
 @endsection
 
@@ -48,9 +48,21 @@
                         <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Ulangi password baru">
                     </div>
 
+                    <div class="form-group @error('role') has-error @enderror">
+                        <label for="role">Role User</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">-- Pilih Role --</option>
+                            <option value="super_admin" {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                            <option value="ecommerce" {{ old('role', $user->role) == 'ecommerce' ? 'selected' : '' }}>eCommerce</option>
+                            <option value="brand_marketing" {{ old('role', $user->role) == 'brand_marketing' ? 'selected' : '' }}>Brand Marketing</option>
+                            <option value="finance" {{ old('role', $user->role) == 'finance' ? 'selected' : '' }}>Finance</option>
+                        </select>
+                        @error('role') <span class="help-block">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="callout callout-warning" style="margin-bottom: 0;">
                         <h4><i class="icon fa fa-warning"></i> Penting</h4>
-                        <p>Mengubah data ini akan berdampak pada hak akses <strong>Super Admin</strong> pengguna tersebut.</p>
+                        <p>Mengubah data ini akan berdampak pada hak akses pengguna tersebut di dalam sistem.</p>
                     </div>
                 </div>
 
