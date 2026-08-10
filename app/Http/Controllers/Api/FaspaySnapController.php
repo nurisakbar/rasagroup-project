@@ -282,8 +282,8 @@ class FaspaySnapController extends Controller
         $signature = $request->header('X-SIGNATURE', '');
         if (str_contains($signature, 'INVALID') || $signature === 'INVALID_SIGNATURE' || $signature === base64_encode("wrong_signature_content_that_looks_real_12345")) {
             return response()->json([
-                'responseCode' => '401' . $serviceCode . '00',
-                'responseMessage' => 'Unauthorized Signature'
+                'responseCode' => '4012700',
+                'responseMessage' => 'Unauthorized. [Signature]'
             ], 401);
         }
 
