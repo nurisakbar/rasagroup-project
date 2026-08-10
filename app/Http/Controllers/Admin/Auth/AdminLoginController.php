@@ -33,8 +33,11 @@ class AdminLoginController extends Controller
             
             $user = Auth::guard('admin')->user();
 
-            // Check if user is agent or super_admin
-            if (!in_array($user->role, ['agent', 'super_admin'])) {
+            // Role yang berhak masuk ke admin.dashboard
+            $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
+
+            // Check if user has admin access
+            if (!in_array($user->role, $adminRoles)) {
                 Auth::guard('admin')->logout();
                 return back()->withErrors([
                     'email' => 'Anda tidak memiliki akses sebagai admin.',

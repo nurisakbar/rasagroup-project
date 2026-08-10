@@ -40,6 +40,7 @@ for s in scenarios[1:]:
     curl_match = re.search(r"```bash\n(.*?)\n```", s, re.DOTALL)
     if not curl_match: continue
     curl_cmd = curl_match.group(1).strip()
+    curl_cmd = curl_cmd.replace("https://dev.rasaconnect.com", "http://127.0.0.1:8000")
     
     expected_raw = expected_responses.get(scenario_id, "No expected found")
     

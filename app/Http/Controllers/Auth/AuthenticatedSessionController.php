@@ -30,11 +30,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Role yang berhak masuk ke admin.dashboard
+        $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
+
         // Merge cart dari session ke user_id saat login
         \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
 
         // Redirect berdasarkan role
-        if (in_array(Auth::user()->role, ['agent', 'super_admin'])) {
+        if (in_array(Auth::user()->role, $adminRoles)) {
+            // Login juga ke guard 'admin' untuk mencegah infinite redirect loop di middleware auth:admin
+            Auth::guard('admin')->login(Auth::user());
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
