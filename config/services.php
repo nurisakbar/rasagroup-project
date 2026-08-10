@@ -76,4 +76,10 @@ return [
         'lalamove_service_type' => env('EKSPEDISIKU_LALAMOVE_SERVICE_TYPE', 'MOTORCYCLE'),
     ],
 
+    'lalamove' => [
+        'api_key' => env('LALAMOVE_API_KEY'),
+        'api_secret' => env('LALAMOVE_API_SECRET'),
+        'base_url' => env('LALAMOVE_BASE_URL', 'https://rest.sandbox.lalamove.com'),
+    ],
+
 ];
