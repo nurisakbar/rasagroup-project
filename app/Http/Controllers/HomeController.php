@@ -15,7 +15,7 @@ class HomeController extends Controller
     public function index()
     {
         $selectedHubId = session('selected_hub_id');
-        $baseQuery = Product::where('status', 'active')
+        $baseQuery = Product::frontendFilter()
             ->whereHas('brand', function ($q) {
                 $q->where('is_active', true);
             })

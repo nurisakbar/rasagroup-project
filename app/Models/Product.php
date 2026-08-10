@@ -62,8 +62,7 @@ class Product extends Model
     protected static function boot()
     {
         parent::boot();
-
-        static::addGlobalScope(new SyncedInJubelioAndQadScope());
+        // static::addGlobalScope(new SyncedInJubelioAndQadScope()); // Moved to frontend controllers only
 
         static::creating(function ($product) {
             if (!$product->slug) {
@@ -247,6 +246,16 @@ class Product extends Model
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
+    public function scopeFrontendFilter($query)
+    {
+        if (auth()->check() && auth()->user()->role === \App\Models\User::ROLE_DISTRIBUTOR) {
+            return $query->whereJsonContains('sync_sources', 'qad');
+        }
+
+        return $query->whereJsonContains('sync_sources', 'jubelio')
+                     ->where('status', 'active');
+    }
+
     public function scopeOrderByInStockFirst($query, ?string $warehouseId = null): void
     {
         if (! \App\Support\ShopFulfillment::showStockOnStorefront()) {

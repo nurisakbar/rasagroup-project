@@ -15,7 +15,7 @@ class ProductController extends Controller
         $selectedHubId = session('selected_hub_id');
 
         $query = Product::with(['category', 'brand', 'warehouseStocks'])
-            ->where('status', 'active')
+            ->frontendFilter()
             ->whereHas('brand', function ($q) {
                 $q->where('is_active', true);
             })
@@ -98,7 +98,7 @@ class ProductController extends Controller
         $products = $query->paginate($perPage)->withQueryString();
         $brands = \App\Models\Brand::where('is_active', true)
             ->whereHas('products', function($q) use ($request) {
-                $q->where('status', 'active');
+                $q->frontendFilter();
                 if ($request->filled('category')) {
                     $q->whereHas('category', function($q2) use ($request) {
                         $q2->where('slug', $request->category);
@@ -110,7 +110,7 @@ class ProductController extends Controller
         $tabCategories = \App\Models\Category::where('is_active', true)
             ->when($request->filled('brand'), function($q) use ($request) {
                 $q->whereHas('products', function($q2) use ($request) {
-                    $q2->where('status', 'active')->whereHas('brand', function($q3) use ($request) {
+                    $q2->frontendFilter()->whereHas('brand', function($q3) use ($request) {
                         $q3->where('slug', $request->brand);
                     });
                 });
@@ -169,7 +169,7 @@ class ProductController extends Controller
         // Get Related Products (Same category, excluding current product)
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->where('status', 'active')
+            ->frontendFilter()
             ->withBuyerPrice()
             ->take(3)
             ->get();
@@ -179,7 +179,7 @@ class ProductController extends Controller
             $moreRelated = Product::where('name', 'like', '%' . substr($product->name, 0, 5) . '%')
                 ->where('id', '!=', $product->id)
                 ->where('category_id', '!=', $product->category_id)
-                ->where('status', 'active')
+                ->frontendFilter()
                 ->withBuyerPrice()
                 ->take(3 - $relatedProducts->count())
                 ->get();
@@ -243,7 +243,7 @@ class ProductController extends Controller
 
         $like = '%' . addcslashes($keyword, '%_\\') . '%';
 
-        $products = Product::where('status', 'active')
+        $products = Product::frontendFilter()
             ->withBuyerPrice()
             ->where(function ($q) use ($like) {
                 $q->where('name', 'like', $like)
