@@ -347,6 +347,12 @@ class FaspaySnapController extends Controller
             
             $minifiedBody = json_encode($bodyData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: $bodyStr;
             $bodyHash = strtolower(hash('sha256', $minifiedBody));
+            
+            \Illuminate\Support\Facades\Log::info('Hash Debug', [
+                'minifiedBody_exact' => $minifiedBody,
+                'minifiedBody_base64' => base64_encode($minifiedBody),
+                'calculated_bodyHash' => $bodyHash
+            ]);
             $timestamp = $request->header('X-TIMESTAMP', '');
             
             // Format Asymmetric (SNAP) for Webhook: HTTPMethod:EndpointUrl:Lowercase(HexEncode(SHA-256(Minify(RequestBody)))):Timestamp
