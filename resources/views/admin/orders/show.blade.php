@@ -777,6 +777,12 @@ $('#btn-track-order').click(function(e) {
                     } else {
                         html += '<p>Tidak ada event tracking.</p>';
                     }
+                    if (carrier.share_link) {
+                        html += '<p style="margin-top: 10px;"><a href="' + carrier.share_link + '" target="_blank" class="btn btn-warning btn-sm"><i class="fa fa-external-link"></i> Lacak di Lalamove</a></p>';
+                    }
+                    if (carrier.lalamove && carrier.lalamove.data && carrier.lalamove.data.driverId) {
+                        html += '<p>Driver ID: <strong>' + carrier.lalamove.data.driverId + '</strong></p>';
+                    }
                     html += '</div></div></div>';
 
                     html += '<ul class="timeline">';

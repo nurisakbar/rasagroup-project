@@ -10,7 +10,7 @@ class FaspayUatSimulatorController extends Controller
 {
     public function simulate(Request $request)
     {
-        $baseUrl = url('/api/faspay/snap');
+        $baseUrl = 'https://dev.rasaconnect.com/api/faspay/snap';
         
         // Cek apakah ada base URL spesifik yang dikirim lewat query (opsional)
         if ($request->has('base_url')) {
@@ -19,12 +19,12 @@ class FaspayUatSimulatorController extends Controller
 
         $baseHeaders = [
             "Content-Type" => "application/json",
-            "Authorization" => "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...", // Mock valid token
-            "X-SIGNATURE" => "VALID_SIGNATURE_123",
+            "Authorization" => "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+            "X-SIGNATURE" => "",
             "X-TIMESTAMP" => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
             "X-PARTNER-ID" => "37020",
-            "X-EXTERNAL-ID" => "EXT-" . time() . rand(100, 999),
-            "CHANNEL-ID" => "6011"
+            "X-EXTERNAL-ID" => time() . rand(1000, 9999),
+            "CHANNEL-ID" => "77001"
         ];
         
         $testCases = [
@@ -37,7 +37,7 @@ class FaspayUatSimulatorController extends Controller
             "11.2" => [
                 "name" => "Unauthorized Signature",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => array_merge($baseHeaders, ["X-SIGNATURE" => base64_encode("wrong_signature_content_that_looks_real_12345")]),
+                "headers" => array_merge($baseHeaders, ["X-SIGNATURE" => "INVALID_SIGNATURE"]),
                 "payload" => ["partnerServiceId" => "370201", "customerNo" => "123", "virtualAccountNo" => "370201123"]
             ],
             "11.3" => [
@@ -55,7 +55,7 @@ class FaspayUatSimulatorController extends Controller
             "11.5" => [
                 "name" => "Cannot use the same X-EXTERNAL-ID",
                 "url" => $baseUrl . "/inquiry",
-                "headers" => array_merge($baseHeaders, ["X-EXTERNAL-ID" => "SAME_ID_123"]),
+                "headers" => array_merge($baseHeaders, ["X-EXTERNAL-ID" => "1234567890"]),
                 "payload" => ["partnerServiceId" => "370201", "virtualAccountNo" => "370201123"]
             ],
             "11.6" => [
@@ -64,8 +64,8 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3702010212345679",
+                    "customerNo" => "WS260807002",
+                    "virtualAccountNo" => "370201WS260807002",
                     "channelCode" => "6011",
                     "inquiryRequestId" => "REQ-001"
                 ]
@@ -76,8 +76,8 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345678",
-                    "virtualAccountNo" => "3702010212345678",
+                    "customerNo" => "WS260810001",
+                    "virtualAccountNo" => "370201WS260810001",
                     "inquiryRequestId" => "REQ-002"
                 ]
             ],
@@ -87,8 +87,8 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345677", 
-                    "virtualAccountNo" => "3702010212345677",
+                    "customerNo" => "WS260807003", 
+                    "virtualAccountNo" => "370201WS260807003",
                     "inquiryRequestId" => "REQ-003"
                 ]
             ],
@@ -109,9 +109,9 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3702010212345679",
-                    "paidAmount" => ["value" => "40000.00", "currency" => "IDR"],
+                    "customerNo" => "WS260807004",
+                    "virtualAccountNo" => "370201WS260807004",
+                    "paidAmount" => ["value" => "2281541.00", "currency" => "IDR"],
                     "paymentRequestId" => "PAY-001",
                     "latestTransactionStatus" => "00"
                 ]
@@ -134,8 +134,8 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3702010212345679",
+                    "customerNo" => "WS260807004",
+                    "virtualAccountNo" => "370201WS260807004",
                     "paidAmount" => ["value" => "1000.00", "currency" => "IDR"], 
                     "paymentRequestId" => "PAY-003",
                     "latestTransactionStatus" => "00"
@@ -147,9 +147,9 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3702010212345679",
-                    "paidAmount" => ["value" => "150000.00", "currency" => "IDR"],
+                    "customerNo" => "WS260807004",
+                    "virtualAccountNo" => "370201WS260807004",
+                    "paidAmount" => ["value" => "2291541.00", "currency" => "IDR"],
                     "paymentRequestId" => "PAY-004",
                     "latestTransactionStatus" => "00"
                 ]
@@ -160,10 +160,10 @@ class FaspayUatSimulatorController extends Controller
                 "headers" => $baseHeaders,
                 "payload" => [
                     "partnerServiceId" => "370201",
-                    "customerNo" => "0212345679",
-                    "virtualAccountNo" => "3702010212345679",
-                    "trx_id" => "TRX-UAT-999",
-                    "payment_status_code" => "2"
+                    "customerNo" => "WS260807004",
+                    "virtualAccountNo" => "370201WS260807004",
+                    "paidAmount" => ["value" => "2281541.00", "currency" => "IDR"],
+                    "paymentRequestId" => "PAY-005"
                 ]
             ],
         ];
@@ -173,7 +173,7 @@ class FaspayUatSimulatorController extends Controller
         foreach ($testCases as $id => $tc) {
             try {
                 $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
-                $externalId = "EXT-" . time() . "-" . rand(1000, 9999);
+                $externalId = time() . rand(1000, 9999);
                 
                 // Make unique request identifiers
                 if (isset($tc['payload']['inquiryRequestId'])) {
@@ -182,24 +182,47 @@ class FaspayUatSimulatorController extends Controller
                 if (isset($tc['payload']['paymentRequestId'])) {
                     $tc['payload']['paymentRequestId'] = "PAY-" . uniqid();
                 }
-                if (isset($tc['payload']['trx_id']) && $tc['payload']['trx_id'] === 'TRX-UAT-999') {
-                    $tc['payload']['trx_id'] = "TRX-UAT-" . uniqid();
+                if (str_contains($tc['url'], '/payment')) {
+                    $tc['payload']['trxDateTime'] = $timestamp;
+                    $tc['payload']['referenceNo'] = "REF-" . time() . rand(100, 999);
                 }
 
                 // Set fresh timestamp
                 $tc['headers']['X-TIMESTAMP'] = $timestamp;
                 
                 // Set fresh external ID unless explicitly testing duplicate ID
-                if (!isset($tc['headers']['X-EXTERNAL-ID']) || $tc['headers']['X-EXTERNAL-ID'] !== 'SAME_ID_123') {
+                if (!isset($tc['headers']['X-EXTERNAL-ID']) || $tc['headers']['X-EXTERNAL-ID'] !== '1234567890') {
                     $tc['headers']['X-EXTERNAL-ID'] = $externalId;
                 }
                 
-                // Generate realistic signature unless explicitly testing invalid signature
-                if (!isset($tc['headers']['X-SIGNATURE']) || $tc['headers']['X-SIGNATURE'] !== 'INVALID_SIGNATURE') {
-                    $payloadStr = json_encode($tc['payload']);
-                    $path = parse_url($tc['url'], PHP_URL_PATH);
-                    $stringToSign = "POST:" . $path . ":" . hash('sha256', $payloadStr) . ":" . $timestamp;
-                    $tc['headers']['X-SIGNATURE'] = base64_encode(hash_hmac('sha512', $stringToSign, config('services.faspay.snap_client_secret', 'dummy_secret'), true));
+                // 1. Construct standard SNAP StringToSign
+                $method = 'POST';
+                $path = parse_url($tc['url'], PHP_URL_PATH);
+                $bodyStr = json_encode($tc['payload']);
+                $bodyHash = strtolower(hash('sha256', $bodyStr));
+                $stringToSign = $method . ":" . $path . ":" . $bodyHash . ":" . $timestamp;
+
+                // 2. Generate RSA Signature using Private Key
+                $privateKeyPath = storage_path('app/faspay_private_key.pem');
+                if (file_exists($privateKeyPath)) {
+                    $privateKey = openssl_pkey_get_private(file_get_contents($privateKeyPath));
+                    openssl_sign($stringToSign, $signatureBytes, $privateKey, OPENSSL_ALGO_SHA256);
+                    $authenticRsaSignature = base64_encode($signatureBytes);
+                } else {
+                    // Fallback pseudo-random for environments without the private key
+                    $hash1 = hash('sha512', $stringToSign . "1", true);
+                    $hash2 = hash('sha512', $stringToSign . "2", true);
+                    $hash3 = hash('sha512', $stringToSign . "3", true);
+                    $hash4 = hash('sha512', $stringToSign . "4", true);
+                    $authenticRsaSignature = base64_encode($hash1 . $hash2 . $hash3 . $hash4);
+                }
+                
+                // Set RSA signature
+                if ($id === "11.2") {
+                    // Make it explicitly invalid by changing the first character to 'z'
+                    $tc['headers']['X-SIGNATURE'] = 'z' . substr($authenticRsaSignature, 1);
+                } else {
+                    $tc['headers']['X-SIGNATURE'] = $authenticRsaSignature;
                 }
 
                 // Gunakan internal request dispatch untuk menghindari deadlock di `php artisan serve`

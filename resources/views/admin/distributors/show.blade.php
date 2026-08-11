@@ -527,7 +527,7 @@
                         </div>
                         <div class="form-group">
                             <label>Berkas <span class="text-danger">*</span></label>
-                            <input type="file" name="file" class="form-control" required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar">
+                            <input type="file" name="file" class="form-control" required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar" onchange="validateFileSize(this)">
                             <p class="help-block small">Maks. 10 MB. PDF, Office, gambar, ZIP/RAR.</p>
                         </div>
                     </div>
@@ -562,8 +562,8 @@
                         </div>
                         <div class="form-group">
                             <label>Ganti berkas</label>
-                            <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar">
-                            <p class="help-block small">Kosongkan jika tidak mengganti file.</p>
+                            <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar" onchange="validateFileSize(this)">
+                            <p class="help-block small">Kosongkan jika tidak mengganti file. Maks. 10 MB.</p>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -643,6 +643,16 @@
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <script>
+function validateFileSize(input) {
+    if (input.files && input.files[0]) {
+        var max_size = 10 * 1024 * 1024; // 10MB
+        if (input.files[0].size > max_size) {
+            alert("Ukuran file maksimal adalah 10 MB. Silakan pilih file yang lebih kecil.");
+            input.value = ""; // Clear the input
+        }
+    }
+}
+
 $(document).ready(function() {
     // Initialize Select2
     if ($.fn.select2) {
