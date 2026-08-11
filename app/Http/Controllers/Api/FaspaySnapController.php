@@ -321,14 +321,24 @@ class FaspaySnapController extends Controller
             $bodyData = json_decode($bodyStr, true);
             
             // WORKAROUND for Faspay Sandbox Simulator Bug:
-            // Sometimes the simulator sends spaces inside strings (e.g. " 370201"), 
-            // but signs the payload without spaces. We trim values to fix the hash.
+            // Faspay's simulator mathematically hashes the partnerServiceId padded to 8 spaces (e.g. "  370201")
+            // but the HTTP JSON body they send only has one space (e.g. " 370201"). 
+            // We forcefully reconstruct their broken hash payload so validation succeeds.
             if (is_array($bodyData)) {
-                array_walk_recursive($bodyData, function(&$item) {
-                    if (is_string($item)) {
-                        $item = ltrim($item); // Faspay simulator usually prepends spaces
+                if (isset($bodyData['partnerServiceId'])) {
+                    $pId = trim($bodyData['partnerServiceId']);
+                    if (strlen($pId) < 8) {
+                        $bodyData['partnerServiceId'] = str_pad($pId, 8, ' ', STR_PAD_LEFT);
                     }
-                });
+                }
+                if (isset($bodyData['virtualAccountNo']) && isset($bodyData['partnerServiceId'])) {
+                    $va = trim($bodyData['virtualAccountNo']);
+                    $pId = trim($bodyData['partnerServiceId']); // The unpadded one for comparison
+                    if (strlen($pId) < 8 && str_starts_with($va, $pId)) {
+                        $customerPart = substr($va, strlen($pId));
+                        $bodyData['virtualAccountNo'] = str_pad($pId, 8, ' ', STR_PAD_LEFT) . $customerPart;
+                    }
+                }
             }
             
             $minifiedBody = json_encode($bodyData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: $bodyStr;
