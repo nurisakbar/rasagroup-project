@@ -316,8 +316,22 @@ class FaspaySnapController extends Controller
             }
             
             $bodyStr = $request->getContent();
+            
             // SNAP BI requires minified RequestBody
-            $minifiedBody = json_encode(json_decode($bodyStr, true), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: $bodyStr;
+            $bodyData = json_decode($bodyStr, true);
+            
+            // WORKAROUND for Faspay Sandbox Simulator Bug:
+            // Sometimes the simulator sends spaces inside strings (e.g. " 370201"), 
+            // but signs the payload without spaces. We trim values to fix the hash.
+            if (is_array($bodyData)) {
+                array_walk_recursive($bodyData, function(&$item) {
+                    if (is_string($item)) {
+                        $item = ltrim($item); // Faspay simulator usually prepends spaces
+                    }
+                });
+            }
+            
+            $minifiedBody = json_encode($bodyData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: $bodyStr;
             $bodyHash = strtolower(hash('sha256', $minifiedBody));
             $timestamp = $request->header('X-TIMESTAMP', '');
             
