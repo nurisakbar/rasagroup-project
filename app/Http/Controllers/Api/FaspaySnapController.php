@@ -270,14 +270,14 @@ class FaspaySnapController extends Controller
                     "merchant" => $merchant,
                     "bill_no" => $bill_no,
                     "response_code" => "00",
-                    "response_desc" => "Success",
+                    "response_desc" => "Sukses",
                     "response_error" => ""
                 ];
                 Log::debug('Faspay SNAP Webhook: Returning Legacy JSON Response', $jsonResponse);
                 return response()->json($jsonResponse);
             }
             
-            $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Success</response_desc><response_error></response_error></faspay>";
+            $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Sukses</response_desc><response_error></response_error></faspay>";
             Log::debug('Faspay SNAP Webhook: Returning Legacy XML Response', ['xml' => $xmlResponse]);
             
             return response($xmlResponse, 200)->header('Content-Type', 'text/xml');
@@ -285,7 +285,7 @@ class FaspaySnapController extends Controller
 
         $responsePayload = [
             'responseCode' => '2002500',
-            'responseMessage' => 'Success',
+            'responseMessage' => 'Successful',
             'virtualAccountData' => [
                 'paymentFlagReason' => [
                     'english' => 'Success',
