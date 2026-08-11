@@ -223,10 +223,15 @@ class FaspaySnapController extends Controller
 
         // Dalam UAT Faspay Legacy, payment_status_code = 2 berarti sukses
         // Dalam SNAP QRIS, biasanya txnStatus = '00' atau 'S'
+        // Dalam SNAP VA, tidak ada field status, hanya ada paidAmount yang menandakan sukses bayar
         $isPaid = false;
         
         if ($status == '2' || $status === '00' || strtoupper((string)$status) === 'S' || strtolower((string)$request->input('type')) === 'payment') {
             $isPaid = true;
+        } else if (!$isLegacy && $paidAmount && $request->has('paidAmount.value')) {
+            // SNAP BI VA Payment Notification implicitly means successful payment
+            $isPaid = true;
+            $status = 'SNAP_IMPLICIT_SUCCESS';
         }
         
         Log::debug('Faspay SNAP Webhook: Payment status resolution', ['raw_status' => $status, 'resolved_isPaid' => $isPaid, 'order_current_status' => $order->payment_status]);
