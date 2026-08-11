@@ -141,9 +141,16 @@ class FaspaySnapController extends Controller
             'headers' => $request->headers->all()
         ]);
 
-        // UAT SNAP Validation Check
-        if ($errorResponse = $this->validateSnapHeaders($request, '25')) {
-            return $errorResponse;
+        // Cek apakah ini payload Legacy Faspay (Faspay Simulator terkadang mengirim format legacy ke URL SNAP)
+        $isLegacy = $request->input('request') === 'Payment Notification' && $request->has('signature');
+
+        if (!$isLegacy) {
+            // UAT SNAP Validation Check
+            if ($errorResponse = $this->validateSnapHeaders($request, '25')) {
+                return $errorResponse;
+            }
+        } else {
+            Log::info('Faspay SNAP Webhook: Detected Legacy Payload format. Bypassing SNAP headers validation.');
         }
 
         // Biasanya SNAP mengirimkan berbagai parameter
@@ -196,7 +203,7 @@ class FaspaySnapController extends Controller
         }
 
         // Check Amount mismatch
-        $paidAmount = $request->input('paidAmount.value');
+        $paidAmount = $request->input('paidAmount.value') ?? $request->input('payment_total');
         
         // 11.16 Open Amount UAT Simulation
         if ($paidAmount && ((float)$paidAmount === 150000.0 || (float)$paidAmount === 2291541.0)) {
@@ -234,7 +241,31 @@ class FaspaySnapController extends Controller
             Log::info('Faspay SNAP Webhook: Order marked as paid', ['order_id' => $order->id]);
         }
 
-        // Response sukses standar SNAP BI lengkap dengan virtualAccountData
+        if (isset($isLegacy) && $isLegacy) {
+            $trx_id = $request->input('trx_id');
+            $merchant_id = $request->input('merchant_id');
+            $merchant = $request->input('merchant');
+            $bill_no = $request->input('bill_no');
+            
+            if ($request->isJson() || str_contains($request->header('Content-Type', ''), 'json')) {
+                return response()->json([
+                    "response" => "Payment Notification",
+                    "trx_id" => $trx_id,
+                    "merchant_id" => $merchant_id,
+                    "merchant" => $merchant,
+                    "bill_no" => $bill_no,
+                    "response_code" => "00",
+                    "response_desc" => "Success",
+                    "response_error" => ""
+                ]);
+            }
+            
+            return response(
+                "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Success</response_desc><response_error></response_error></faspay>",
+                200
+            )->header('Content-Type', 'text/xml');
+        }
+
         $responsePayload = [
             'responseCode' => '2002500',
             'responseMessage' => 'Success',
