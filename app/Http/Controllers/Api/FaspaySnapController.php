@@ -303,7 +303,9 @@ class FaspaySnapController extends Controller
             $bodyHash = strtolower(hash('sha256', $bodyStr));
             $timestamp = $request->header('X-TIMESTAMP', '');
             
-            $stringToSign = $method . ":" . $path . ":" . $bodyHash . ":" . $timestamp;
+            // Format Asymmetric (SNAP): HTTPMethod:EndpointUrl:AccessToken:Lowercase(HexEncode(SHA-256(Minify(RequestBody)))):Timestamp
+            // Untuk Webhook, AccessToken dikosongkan (sehingga menjadi ::)
+            $stringToSign = $method . ":" . $path . "::" . $bodyHash . ":" . $timestamp;
             
             $verifyResult = openssl_verify($stringToSign, base64_decode($signature), $publicKey, OPENSSL_ALGO_SHA256);
             if ($verifyResult === 1) {
