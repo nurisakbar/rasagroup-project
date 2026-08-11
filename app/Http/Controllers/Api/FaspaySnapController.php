@@ -98,7 +98,7 @@ class FaspaySnapController extends Controller
 
         $inquiryRequestId = $request->input('inquiryRequestId', '');
 
-        return response()->json([
+        $responsePayload = [
             'responseCode' => '2002400',
             'responseMessage' => 'success',
             'virtualAccountData' => [
@@ -114,7 +114,11 @@ class FaspaySnapController extends Controller
                     'currency' => 'IDR'
                 ]
             ]
-        ]);
+        ];
+        
+        Log::info('Faspay SNAP Inquiry Response', $responsePayload);
+
+        return response()->json($responsePayload);
     }
 
     /**
@@ -231,7 +235,7 @@ class FaspaySnapController extends Controller
         }
 
         // Response sukses standar SNAP BI lengkap dengan virtualAccountData
-        return response()->json([
+        $responsePayload = [
             'responseCode' => '2002500',
             'responseMessage' => 'Success',
             'virtualAccountData' => [
@@ -263,7 +267,11 @@ class FaspaySnapController extends Controller
                 'flagAdvise' => 'Y',
                 'paymentFlagStatus' => '00'
             ]
-        ]);
+        ];
+        
+        Log::info('Faspay SNAP Notification Response', $responsePayload);
+        
+        return response()->json($responsePayload);
     }
 
     /**
@@ -308,7 +316,9 @@ class FaspaySnapController extends Controller
             }
             
             $bodyStr = $request->getContent();
-            $bodyHash = strtolower(hash('sha256', $bodyStr));
+            // SNAP BI requires minified RequestBody
+            $minifiedBody = json_encode(json_decode($bodyStr, true), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: $bodyStr;
+            $bodyHash = strtolower(hash('sha256', $minifiedBody));
             $timestamp = $request->header('X-TIMESTAMP', '');
             
             // Format Asymmetric (SNAP) for Webhook: HTTPMethod:EndpointUrl:Lowercase(HexEncode(SHA-256(Minify(RequestBody)))):Timestamp
@@ -332,6 +342,12 @@ class FaspaySnapController extends Controller
         }
 
         if (!$isValid) {
+            \Illuminate\Support\Facades\Log::error('Faspay Signature Validation Failed', [
+                'stringToSign' => $stringToSign ?? null,
+                'minifiedBody' => $minifiedBody ?? null,
+                'rawBody' => $bodyStr ?? null,
+                'signature' => $signature
+            ]);
             return response()->json([
                 'responseCode' => '4012700',
                 'responseMessage' => 'Unauthorized. [Signature]'
