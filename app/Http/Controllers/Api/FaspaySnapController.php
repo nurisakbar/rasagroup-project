@@ -299,6 +299,14 @@ class FaspaySnapController extends Controller
             
             $method = $request->method();
             $path = $request->getPathInfo();
+            
+            // Faspay uses exact relative paths for Signature calculation regardless of Merchant Base URL
+            if (str_contains($path, 'inquiry')) {
+                $path = '/v1.0/transfer-va/inquiry';
+            } elseif (str_contains($path, 'payment') || str_contains($path, 'notification')) {
+                $path = '/v1.0/transfer-va/payment';
+            }
+            
             $bodyStr = $request->getContent();
             $bodyHash = strtolower(hash('sha256', $bodyStr));
             $timestamp = $request->header('X-TIMESTAMP', '');
