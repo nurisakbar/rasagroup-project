@@ -175,6 +175,8 @@ class FaspaySnapController extends Controller
         if (!$orderNumber) {
             $orderNumber = $request->input('trx_id');
         }
+        
+        Log::debug('Faspay SNAP Webhook: Extracted basic identifier', ['orderNumber' => $orderNumber, 'status' => $status]);
 
         if (!$orderNumber) {
             Log::error('Faspay SNAP Webhook: No order identifier found');
@@ -195,7 +197,7 @@ class FaspaySnapController extends Controller
             ->first();
 
         if (!$order) {
-            Log::error('Faspay SNAP Webhook: Order not found', ['identifier' => $orderNumber]);
+            Log::error('Faspay SNAP Webhook: Order not found', ['identifier' => $orderNumber, 'customerNo' => $customerNo]);
             return response()->json([
                 'responseCode' => '4042512',
                 'responseMessage' => 'Bill not found'
@@ -205,10 +207,14 @@ class FaspaySnapController extends Controller
         // Check Amount mismatch
         $paidAmount = $request->input('paidAmount.value') ?? $request->input('payment_total');
         
+        Log::debug('Faspay SNAP Webhook: Amount checking', ['paidAmount' => $paidAmount, 'order_total_amount' => $order->total_amount]);
+        
         // 11.16 Open Amount UAT Simulation
         if ($paidAmount && ((float)$paidAmount === 150000.0 || (float)$paidAmount === 2291541.0)) {
             // Bypass amount mismatch for this specific UAT scenario
+            Log::debug('Faspay SNAP Webhook: Bypassing amount mismatch for open amount UAT scenario');
         } else if ($paidAmount && (float)$paidAmount !== (float)$order->total_amount) {
+            Log::error('Faspay SNAP Webhook: Amount mismatch', ['paid' => $paidAmount, 'expected' => $order->total_amount]);
             return response()->json([
                 'responseCode' => '4042513',
                 'responseMessage' => 'Invalid Amount'
@@ -222,6 +228,8 @@ class FaspaySnapController extends Controller
         if ($status == '2' || $status === '00' || strtoupper((string)$status) === 'S' || strtolower((string)$request->input('type')) === 'payment') {
             $isPaid = true;
         }
+        
+        Log::debug('Faspay SNAP Webhook: Payment status resolution', ['raw_status' => $status, 'resolved_isPaid' => $isPaid, 'order_current_status' => $order->payment_status]);
 
         if ($isPaid && $order->payment_status !== 'paid') {
             $order->payment_status = 'paid';
@@ -247,8 +255,10 @@ class FaspaySnapController extends Controller
             $merchant = $request->input('merchant');
             $bill_no = $request->input('bill_no');
             
-            if ($request->isJson() || str_contains($request->header('Content-Type', ''), 'json')) {
-                return response()->json([
+            $isJsonRequest = $request->isJson() || str_contains($request->header('Content-Type', ''), 'json');
+            
+            if ($isJsonRequest) {
+                $jsonResponse = [
                     "response" => "Payment Notification",
                     "trx_id" => $trx_id,
                     "merchant_id" => $merchant_id,
@@ -257,13 +267,15 @@ class FaspaySnapController extends Controller
                     "response_code" => "00",
                     "response_desc" => "Success",
                     "response_error" => ""
-                ]);
+                ];
+                Log::debug('Faspay SNAP Webhook: Returning Legacy JSON Response', $jsonResponse);
+                return response()->json($jsonResponse);
             }
             
-            return response(
-                "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Success</response_desc><response_error></response_error></faspay>",
-                200
-            )->header('Content-Type', 'text/xml');
+            $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Success</response_desc><response_error></response_error></faspay>";
+            Log::debug('Faspay SNAP Webhook: Returning Legacy XML Response', ['xml' => $xmlResponse]);
+            
+            return response($xmlResponse, 200)->header('Content-Type', 'text/xml');
         }
 
         $responsePayload = [
