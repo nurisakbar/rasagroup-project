@@ -324,20 +324,19 @@ class FaspaySnapController extends Controller
             // Faspay's simulator mathematically hashes the partnerServiceId padded to 8 spaces (e.g. "  370201")
             // but the HTTP JSON body they send only has one space (e.g. " 370201"). 
             // We forcefully reconstruct their broken hash payload so validation succeeds.
-            
-            \Illuminate\Support\Facades\Log::info('Faspay UAT Padding Fix (V3) is Active!');
+            \Illuminate\Support\Facades\Log::info('Faspay UAT Padding Fix (V4) is Active!');
             
             if (is_array($bodyData)) {
                 if (isset($bodyData['partnerServiceId'])) {
-                    $pId = trim($bodyData['partnerServiceId']);
+                    $pId = preg_replace('/[^0-9]/', '', $bodyData['partnerServiceId']);
                     if (strlen($pId) < 8) {
                         $bodyData['partnerServiceId'] = str_pad($pId, 8, ' ', STR_PAD_LEFT);
                         \Illuminate\Support\Facades\Log::info('Padded partnerServiceId', ['original' => $pId, 'padded' => $bodyData['partnerServiceId']]);
                     }
                 }
                 if (isset($bodyData['virtualAccountNo']) && isset($bodyData['partnerServiceId'])) {
-                    $va = trim($bodyData['virtualAccountNo']);
-                    $pId = trim($bodyData['partnerServiceId']); // The unpadded one for comparison
+                    $va = preg_replace('/[^0-9]/', '', $bodyData['virtualAccountNo']);
+                    $pId = preg_replace('/[^0-9]/', '', $bodyData['partnerServiceId']);
                     if (strlen($pId) < 8 && str_starts_with($va, $pId)) {
                         $customerPart = substr($va, strlen($pId));
                         $bodyData['virtualAccountNo'] = str_pad($pId, 8, ' ', STR_PAD_LEFT) . $customerPart;
