@@ -21,12 +21,8 @@ class SalesController extends Controller
                 ->addColumn('action', function ($sale) {
                     $editUrl = route('admin.sales.edit', $sale);
                     $deleteUrl = route('admin.sales.destroy', $sale);
-                    $viewOrdersUrl = route('admin.sales.orders', $sale);
                     
                     return '
-                        <a href="' . $viewOrdersUrl . '" class="btn btn-info btn-xs" title="Lihat Order">
-                            <i class="fa fa-eye"></i> Order
-                        </a>
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i> Edit
                         </a>
