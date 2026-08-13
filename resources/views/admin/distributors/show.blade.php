@@ -538,26 +538,34 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach($categories as $idx => $category)
-                                                            @php
-                                                                $discRecord = $distributor->categoryDiscounts
-                                                                    ->where('brand_id', $brand->id)
-                                                                    ->where('category_id', $category->id)
-                                                                    ->first();
-                                                                $discValue = $discRecord ? $discRecord->discount_percentage : '';
-                                                            @endphp
-                                                            <tr>
-                                                                <td class="text-center text-middle">{{ $idx + 1 }}</td>
-                                                                <td class="text-middle"><strong>{{ $category->name }}</strong></td>
-                                                                <td>
-                                                                    <div class="input-group">
-                                                                        <input type="number" step="0.01" min="0" max="100" class="form-control discount-input" data-brand="{{ $brand->id }}" data-category="{{ $category->id }}" name="discounts[{{ $brand->id }}][{{ $category->id }}]" value="{{ $discValue }}" placeholder="0.00">
-                                                                        <span class="input-group-addon">%</span>
-                                                                        <span class="input-group-addon discount-success-msg" id="discount-success-{{ $brand->id }}-{{ $category->id }}" style="display: none; background-color: #00a65a; color: white; border-color: #008d4c; padding: 6px 8px;" title="Tersimpan"><i class="fa fa-check"></i></span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            @endforeach
+                                                            @if($brand->categories->isEmpty())
+                                                                <tr>
+                                                                    <td colspan="3" class="text-center text-muted" style="padding: 20px;">
+                                                                        <em>Brand ini belum memiliki kategori yang dipetakan. Silakan atur kategori di menu <a href="{{ route('admin.brands.index') }}">Master Brand</a>.</em>
+                                                                    </td>
+                                                                </tr>
+                                                            @else
+                                                                @foreach($brand->categories as $idx => $category)
+                                                                @php
+                                                                    $discRecord = $distributor->categoryDiscounts
+                                                                        ->where('brand_id', $brand->id)
+                                                                        ->where('category_id', $category->id)
+                                                                        ->first();
+                                                                    $discValue = $discRecord ? $discRecord->discount_percentage : '';
+                                                                @endphp
+                                                                <tr>
+                                                                    <td class="text-center text-middle">{{ $idx + 1 }}</td>
+                                                                    <td class="text-middle"><strong>{{ $category->name }}</strong></td>
+                                                                    <td>
+                                                                        <div class="input-group">
+                                                                            <input type="number" step="0.01" min="0" max="100" class="form-control discount-input" data-brand="{{ $brand->id }}" data-category="{{ $category->id }}" name="discounts[{{ $brand->id }}][{{ $category->id }}]" value="{{ $discValue }}" placeholder="0.00">
+                                                                            <span class="input-group-addon">%</span>
+                                                                            <span class="input-group-addon discount-success-msg" id="discount-success-{{ $brand->id }}-{{ $category->id }}" style="display: none; background-color: #00a65a; color: white; border-color: #008d4c; padding: 6px 8px;" title="Tersimpan"><i class="fa fa-check"></i></span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                                @endforeach
+                                                            @endif
                                                         </tbody>
                                                     </table>
                                                     @endforeach

@@ -43,6 +43,28 @@
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
+                        
+                        @php
+                            $selectedCategories = is_array(old('categories')) 
+                                ? old('categories') 
+                                : $brand->categories->pluck('id')->toArray();
+                        @endphp
+                        <div class="form-group @error('categories') has-error @enderror">
+                            <label for="categories">Kategori (Opsional)</label>
+                            <div class="pull-right" style="margin-bottom: 5px;">
+                                <button type="button" class="btn btn-xs btn-default btn-select-all" data-target="#categories">Pilih Semua</button>
+                                <button type="button" class="btn btn-xs btn-default btn-deselect-all" data-target="#categories">Hapus Semua</button>
+                            </div>
+                            <select class="form-control select2" id="categories" name="categories[]" multiple="multiple" data-placeholder="Pilih Kategori">
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ in_array($cat->id, $selectedCategories) ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="help-block">Pilih kategori yang dimiliki oleh Brand ini.</p>
+                            @error('categories')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
 
                         <div class="form-group @error('logo') has-error @enderror">
                             <label for="logo">Logo</label>
@@ -94,4 +116,30 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        if ($.fn.select2) {
+            $('.select2').select2({
+                width: '100%'
+            });
+        }
+
+        $('.btn-select-all').click(function() {
+            var target = $(this).data('target');
+            var $select = $(target);
+            $select.find('option').prop('selected', true);
+            $select.trigger('change');
+        });
+
+        $('.btn-deselect-all').click(function() {
+            var target = $(this).data('target');
+            var $select = $(target);
+            $select.find('option').prop('selected', false);
+            $select.trigger('change');
+        });
+    });
+</script>
+@endpush
 

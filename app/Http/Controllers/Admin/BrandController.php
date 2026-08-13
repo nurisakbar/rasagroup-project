@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Brand::withCount('products');
+            $query = Brand::with('categories')->withCount('products');
 
             if ($request->filled('status') && $request->status != '') {
                 $query->where('is_active', $request->status == '1');
@@ -29,7 +30,15 @@ class BrandController extends Controller
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('name_info', function ($brand) {
-                    return '<strong>' . $brand->name . '</strong><br><small class="text-muted">' . $brand->slug . '</small>';
+                    $html = '<strong>' . $brand->name . '</strong><br><small class="text-muted">' . $brand->slug . '</small>';
+                    if ($brand->categories->count() > 0) {
+                        $html .= '<br><div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">';
+                        foreach ($brand->categories as $cat) {
+                            $html .= '<span class="label label-info" style="display: inline-block; margin-bottom: 2px;">' . $cat->name . '</span>';
+                        }
+                        $html .= '</div>';
+                    }
+                    return $html;
                 })
                 ->addColumn('products_count_badge', function ($brand) {
                     return '<span class="badge bg-blue">' . $brand->products_count . ' produk</span>';
@@ -65,7 +74,8 @@ class BrandController extends Controller
 
     public function create()
     {
-        return view('admin.brands.create');
+        $categories = Category::active()->orderBy('name')->get();
+        return view('admin.brands.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -76,6 +86,8 @@ class BrandController extends Controller
             'description' => 'nullable|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:1024',
             'is_active' => 'boolean',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
         if (empty($validated['slug'])) {
@@ -88,7 +100,11 @@ class BrandController extends Controller
 
         $validated['is_active'] = $request->has('is_active');
 
-        Brand::create($validated);
+        $brand = Brand::create($validated);
+
+        if ($request->has('categories')) {
+            $brand->categories()->sync($request->categories);
+        }
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand berhasil ditambahkan.');
@@ -96,7 +112,9 @@ class BrandController extends Controller
 
     public function edit(Brand $brand)
     {
-        return view('admin.brands.edit', compact('brand'));
+        $categories = Category::active()->orderBy('name')->get();
+        $brand->load('categories');
+        return view('admin.brands.edit', compact('brand', 'categories'));
     }
 
     public function update(Request $request, Brand $brand)
@@ -107,6 +125,8 @@ class BrandController extends Controller
             'description' => 'nullable|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:1024',
             'is_active' => 'boolean',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
         if (empty($validated['slug'])) {
@@ -123,6 +143,8 @@ class BrandController extends Controller
         $validated['is_active'] = $request->has('is_active');
 
         $brand->update($validated);
+        
+        $brand->categories()->sync($request->categories ?? []);
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand berhasil diperbarui.');

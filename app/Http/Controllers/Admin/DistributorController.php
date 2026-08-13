@@ -588,7 +588,7 @@ class DistributorController extends Controller
             $targetBelanjaData[$year][$brandId][$month] = $tb->jumlah_target;
         }
 
-        $brands = \App\Models\Brand::active()->orderBy('name')->get();
+        $brands = \App\Models\Brand::with('categories')->active()->orderBy('name')->get();
         $categories = \App\Models\Category::active()->orderBy('name')->get();
         
         $distributor->load('categoryDiscounts');

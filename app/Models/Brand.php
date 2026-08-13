@@ -50,6 +50,11 @@ class Brand extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'brand_category');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
