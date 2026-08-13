@@ -1296,7 +1296,7 @@ class CheckoutController extends Controller
             return (float) $cart->product->final_price * (int) $cart->quantity;
         });
 
-        $user->loadMissing('priceLevel');
+        $user->loadMissing(['priceLevel', 'categoryDiscounts']);
 
         $subtotalAfterDistributor = $retailSubtotal;
         $distributorPriceDiscount = 0.0;
@@ -1305,12 +1305,18 @@ class CheckoutController extends Controller
         $discountService = new \App\Services\DiscountService();
         $tieredDiscountAmount = 0.0;
 
-        if ($user->isDistributor() && $user->priceLevel) {
-            $priceLevelName = $user->priceLevel->name;
+        if ($user->isDistributor()) {
+            $priceLevelName = $user->priceLevel ? $user->priceLevel->name : 'Diskon Kategori / Distributor';
+            
             $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user) {
                 return $user->getProductPrice($cart->product) * (int) $cart->quantity;
             });
+            
             $distributorPriceDiscount = max(0.0, $retailSubtotal - $subtotalAfterDistributor);
+            
+            if ($distributorPriceDiscount == 0) {
+                $priceLevelName = null; // Don't show if there's no discount
+            }
         } else if (!$user->isDistributor()) {
             // Apply tiered discount per SKU for non-distributors
             $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user, $discountService, &$tieredDiscountAmount) {
@@ -1328,7 +1334,6 @@ class CheckoutController extends Controller
             'subtotal_after_distributor' => $subtotalAfterDistributor,
             'price_level_name' => $priceLevelName,
             'show_distributor_pricing' => $user->isDistributor()
-                && $user->priceLevel !== null
                 && $distributorPriceDiscount > 0,
             'show_tiered_discount' => $tieredDiscountAmount > 0,
         ];

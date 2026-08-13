@@ -109,10 +109,8 @@ class ProductController extends Controller
 
         $tabCategories = \App\Models\Category::where('is_active', true)
             ->when($request->filled('brand'), function($q) use ($request) {
-                $q->whereHas('products', function($q2) use ($request) {
-                    $q2->frontendFilter()->whereHas('brand', function($q3) use ($request) {
-                        $q3->where('slug', $request->brand);
-                    });
+                $q->whereHas('brands', function($q2) use ($request) {
+                    $q2->where('slug', $request->brand);
                 });
             })
             ->orderBy('name')
