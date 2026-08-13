@@ -417,7 +417,7 @@
                                     <div class="col-md-4">
                                         <div class="box box-solid box-primary">
                                             <div class="box-header with-border">
-                                                <h3 class="box-title">Pilih Tahun</h3>
+                                                <h3 class="box-title">Pilih Tahun & Brand</h3>
                                             </div>
                                             <div class="box-body">
                                                 <div class="form-group">
@@ -433,18 +433,28 @@
                                                         @endforeach
                                                     </select>
                                                 </div>
+                                                <div class="form-group">
+                                                    <label>Brand</label>
+                                                    <select id="select-target-brand" class="form-control">
+                                                        <option value="all">Semua Brand (Akumulasi)</option>
+                                                        @foreach($brands ?? [] as $brand)
+                                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-8">
                                         <div class="box box-solid" id="box-target-form" style="display: none;">
                                             <div class="box-header with-border">
-                                                <h3 class="box-title">Form Target Belanja Tahun <span id="target-year-title"></span></h3>
+                                                <h3 class="box-title">Form Target Belanja <span id="target-brand-title"></span> Tahun <span id="target-year-title"></span></h3>
                                             </div>
                                             <div class="box-body">
                                                 <form action="{{ route('admin.distributors.target-belanja.update', $distributor) }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="year" id="input-target-year">
+                                                    <input type="hidden" name="brand_id" id="input-target-brand">
                                                     
                                                     <div class="row">
                                                         @php
@@ -457,19 +467,16 @@
                                                         @endphp
                                                         @foreach($months as $num => $name)
                                                             <div class="col-md-6">
-                                                                <div class="form-group">
+                                                                <div class="form-group" style="margin-bottom: 25px; position: relative;">
                                                                     <label>{{ $name }}</label>
                                                                     <div class="input-group">
                                                                         <span class="input-group-addon">Rp</span>
-                                                                        <input type="text" name="targets[{{ $num }}]" id="target-month-{{ $num }}" class="form-control rupiah" placeholder="0">
+                                                                        <input type="text" name="targets[{{ $num }}]" id="target-month-{{ $num }}" class="form-control rupiah target-input" data-month="{{ $num }}" placeholder="0">
                                                                     </div>
+                                                                    <span class="help-block target-success-msg" id="target-success-{{ $num }}" style="display: none; position: absolute; left: 0; bottom: -22px; margin: 0; font-size: 12px; color: #00a65a;"><i class="fa fa-check"></i> Tersimpan</span>
                                                                 </div>
                                                             </div>
                                                         @endforeach
-                                                    </div>
-                                                    
-                                                    <div class="form-group text-right">
-                                                        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan Target</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -477,7 +484,7 @@
                                         
                                         <div class="callout callout-info" id="info-select-year">
                                             <h4><i class="fa fa-info-circle"></i> Info</h4>
-                                            <p>Silakan pilih tahun di samping untuk mengatur target belanja bulanan.</p>
+                                            <p>Silakan pilih tahun dan brand di samping untuk mengatur target belanja bulanan.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -694,15 +701,15 @@ $(document).ready(function() {
             search: "Cari:",
             lengthMenu: "Tampilkan _MENU_ data",
             info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-            infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+            infoEmpty: "Data kosong",
             infoFiltered: "(difilter dari _MAX_ total data)",
             zeroRecords: "Tidak ada data yang cocok",
-            emptyTable: "Tidak ada stock tersedia",
+            emptyTable: "Tidak ada data produk/stock",
             paginate: {
-                first: "Pertama",
+                first: "Awal",
                 previous: "Sebelumnya",
                 next: "Selanjutnya",
-                last: "Terakhir"
+                last: "Akhir"
             }
         }
     });
@@ -726,36 +733,33 @@ $(document).ready(function() {
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'order_number_display', name: 'order_number' },
             { data: 'order_date', name: 'created_at' },
-            { data: 'customer_info', name: 'user.name', orderable: false },
+            { data: 'customer_info', name: 'user.name' },
             { data: 'total_amount_formatted', name: 'total_amount' },
-            { data: 'order_status_badge', name: 'order_status', orderable: false },
-            { data: 'payment_status_badge', name: 'payment_status', orderable: false },
+            { data: 'order_status_badge', name: 'order_status' },
+            { data: 'payment_status_badge', name: 'payment_status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[2, 'desc']],
-        pageLength: 10,
-        lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
+        pageLength: 15,
         language: {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
-            search: "Cari:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-            infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
-            infoFiltered: "(difilter dari _MAX_ total data)",
-            zeroRecords: "Tidak ada data yang cocok",
-            emptyTable: "Tidak ada order tersedia",
+            search: "Cari Pesanan:",
+            lengthMenu: "Tampilkan _MENU_ pesanan",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ pesanan",
+            infoEmpty: "Tidak ada pesanan",
+            emptyTable: "Belum ada riwayat pesanan",
             paginate: {
-                first: "Pertama",
-                previous: "Sebelumnya",
+                first: "Awal",
+                last: "Akhir",
                 next: "Selanjutnya",
-                last: "Terakhir"
+                previous: "Sebelumnya"
             }
         }
     });
 
     // Filter handlers for orders
     $('#btn-filter-orders').click(function() {
-        ordersTable.draw();
+        ordersTable.ajax.reload();
     });
 
     $('#filter-order-status, #filter-payment-status').change(function() {
@@ -775,21 +779,19 @@ $(document).ready(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'nama_display', name: 'nama_dokumen' },
-            { data: 'keterangan_display', name: 'keterangan', orderable: false },
-            { data: 'updated_display', name: 'updated_at' },
-            { data: 'action', orderable: false, searchable: false }
+            { data: 'keterangan_display', name: 'keterangan' },
+            { data: 'updated_display', name: 'updated_at', searchable: false },
+            { data: 'action', name: 'action', orderable: false, searchable: false },
         ],
         order: [[3, 'desc']],
-        pageLength: 10,
         language: {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
             search: "Cari:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-            infoEmpty: "Tidak ada dokumen",
-            zeroRecords: "Tidak ada data",
+            lengthMenu: "Tampil _MENU_ data",
+            info: "Menampilkan _START_ - _END_ dari _TOTAL_",
+            infoEmpty: "Data kosong",
             emptyTable: "Belum ada dokumen",
-            paginate: { first: "Pertama", previous: "Sebelumnya", next: "Selanjutnya", last: "Terakhir" }
+            paginate: { first: "Awal", last: "Akhir", next: ">", previous: "<" }
         }
     });
 
@@ -804,25 +806,56 @@ $(document).ready(function() {
     // Target Belanja
     var targetBelanjaData = @json($targetBelanjaData ?? []);
     
-    $('#select-target-year').change(function() {
-        var year = $(this).val();
+    function updateTargetBelanjaForm() {
+        var year = $('#select-target-year').val();
+        var brandId = $('#select-target-brand').val();
+        var brandText = $('#select-target-brand option:selected').text();
         
-        if (year) {
+        if (year && brandId) {
             $('#input-target-year').val(year);
+            $('#input-target-brand').val(brandId);
             $('#target-year-title').text(year);
+            $('#target-brand-title').text(brandId === 'all' ? '(Akumulasi Semua Brand)' : '- ' + brandText);
             
-            // Reset all inputs to empty
+            // Reset all inputs to empty and set readonly based on brandId
             for(var i=1; i<=12; i++) {
-                $('#target-month-' + i).val('');
+                var $input = $('#target-month-' + i);
+                $input.val('');
+                if (brandId === 'all') {
+                    $input.prop('readonly', true);
+                    $input.attr('placeholder', 'Otomatis (Akumulasi)');
+                } else {
+                    $input.prop('readonly', false);
+                    $input.attr('placeholder', '0');
+                }
             }
+            $('.target-success-msg').hide();
             
             // Fill existing data if any
             if (targetBelanjaData[year]) {
-                var yearData = targetBelanjaData[year];
-                for(var month in yearData) {
-                    // month is '01', '02', etc. parse it to int to match id
-                    var monthInt = parseInt(month, 10);
-                    $('#target-month-' + monthInt).val(formatRupiah(parseFloat(yearData[month]).toString()));
+                if (brandId === 'all') {
+                    var accumulated = {};
+                    for (var bId in targetBelanjaData[year]) {
+                        var bData = targetBelanjaData[year][bId];
+                        for (var monthStr in bData) {
+                            if (!accumulated[monthStr]) accumulated[monthStr] = 0;
+                            accumulated[monthStr] += parseFloat(bData[monthStr]) || 0;
+                        }
+                    }
+                    for (var monthStr in accumulated) {
+                        var monthInt = parseInt(monthStr, 10);
+                        if (accumulated[monthStr] > 0) {
+                            $('#target-month-' + monthInt).val(formatRupiah(accumulated[monthStr].toString()));
+                        }
+                    }
+                } else {
+                    if (targetBelanjaData[year][brandId]) {
+                        var yearBrandData = targetBelanjaData[year][brandId];
+                        for(var monthStr in yearBrandData) {
+                            var monthInt = parseInt(monthStr, 10);
+                            $('#target-month-' + monthInt).val(formatRupiah(parseFloat(yearBrandData[monthStr]).toString()));
+                        }
+                    }
                 }
             }
             
@@ -832,10 +865,61 @@ $(document).ready(function() {
             $('#box-target-form').hide();
             $('#info-select-year').show();
         }
+    }
+    
+    $('#select-target-year, #select-target-brand').change(function() {
+        updateTargetBelanjaForm();
     });
 
     $('.rupiah').on('keyup', function(e) {
         $(this).val(formatRupiah($(this).val()));
+    });
+    
+    $('.target-input').on('blur', function() {
+        var $input = $(this);
+        var month = $input.data('month');
+        var amount = $input.val();
+        var year = $('#input-target-year').val();
+        var brandId = $('#input-target-brand').val();
+        var $successMsg = $('#target-success-' + month);
+        
+        $successMsg.hide();
+        
+        if (!year || !brandId) return;
+
+        var data = {
+            _token: '{{ csrf_token() }}',
+            year: year,
+            brand_id: brandId,
+            targets: {}
+        };
+        data.targets[month] = amount;
+
+        $.ajax({
+            url: "{{ route('admin.distributors.target-belanja.update', $distributor) }}",
+            type: "POST",
+            data: data,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $successMsg.fadeIn().delay(3000).fadeOut();
+                    
+                    if (!targetBelanjaData[year]) {
+                        targetBelanjaData[year] = {};
+                    }
+                    if (!targetBelanjaData[year][brandId]) {
+                        targetBelanjaData[year][brandId] = {};
+                    }
+                    // Ensure proper formatting for month string like '01'
+                    var monthStr = month < 10 ? '0' + month : '' + month;
+                    targetBelanjaData[year][brandId][monthStr] = amount ? amount.replace(/\./g, '') : 0;
+                }
+            },
+            error: function(xhr) {
+                console.error(xhr);
+                alert('Gagal menyimpan data target belanja. Silakan coba lagi.');
+            }
+        });
     });
 
     function formatRupiah(angka, prefix) {

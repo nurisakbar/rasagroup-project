@@ -45,6 +45,7 @@ class RegisteredUserController extends Controller
             'phone' => $request->phone,
             'role' => 'buyer',
             'wa_verification_code' => $waCode,
+            'is_potential_distributor' => $request->has('is_potential_distributor') ? 1 : 0,
         ]);
 
         event(new Registered($user));

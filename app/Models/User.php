@@ -75,6 +75,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'wa_verification_code',
         'qad_customer_code',
         'sales_code',
+        'is_potential_distributor',
     ];
 
     protected static function boot()

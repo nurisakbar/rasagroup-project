@@ -15,6 +15,7 @@ class TargetBelanja extends Model
 
     protected $fillable = [
         'distributor_id',
+        'brand_id',
         'bulan_tahun',
         'jumlah_target',
     ];
@@ -23,4 +24,10 @@ class TargetBelanja extends Model
     {
         return $this->belongsTo(User::class, 'distributor_id');
     }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
+    }
 }
+

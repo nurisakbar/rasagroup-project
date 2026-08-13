@@ -56,6 +56,7 @@
                             <option value="ecommerce" {{ old('role', $user->role) == 'ecommerce' ? 'selected' : '' }}>eCommerce</option>
                             <option value="brand_marketing" {{ old('role', $user->role) == 'brand_marketing' ? 'selected' : '' }}>Brand Marketing</option>
                             <option value="finance" {{ old('role', $user->role) == 'finance' ? 'selected' : '' }}>Finance</option>
+                            <option value="sales_admin" {{ old('role', $user->role) == 'sales_admin' ? 'selected' : '' }}>Sales Admin</option>
                         </select>
                         @error('role') <span class="help-block">{{ $message }}</span> @enderror
                     </div>

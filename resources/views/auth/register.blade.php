@@ -62,6 +62,15 @@
                                         </span>
                                     </div>
                                     
+                                    <div class="form-group mb-20">
+                                        <div class="chek-form">
+                                            <div class="custome-checkbox">
+                                                <input class="form-check-input" type="checkbox" name="is_potential_distributor" id="is_potential_distributor" value="1" {{ old('is_potential_distributor') ? 'checked' : '' }} />
+                                                <label class="form-check-label" for="is_potential_distributor" style="cursor: pointer;"><span style="color: #6A1B1B; font-weight: 500;">Apakah Anda memperkirakan akan melakukan pembelanjaan rutin minimal Rp 400.000.000 / bulan?</span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="login_footer form-group mb-50">
                                         <div class="chek-form">
                                             <div class="custome-checkbox">

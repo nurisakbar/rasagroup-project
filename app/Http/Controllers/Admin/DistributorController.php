@@ -584,10 +584,13 @@ class DistributorController extends Controller
         foreach ($targetBelanjaRaw as $tb) {
             $year = substr($tb->bulan_tahun, 0, 4);
             $month = substr($tb->bulan_tahun, 5, 2);
-            $targetBelanjaData[$year][$month] = $tb->jumlah_target;
+            $brandId = $tb->brand_id ?? 'null';
+            $targetBelanjaData[$year][$brandId][$month] = $tb->jumlah_target;
         }
 
-        return view('admin.distributors.show', compact('distributor', 'stockStats', 'targetBelanjaData'));
+        $brands = \App\Models\Brand::active()->orderBy('name')->get();
+
+        return view('admin.distributors.show', compact('distributor', 'stockStats', 'targetBelanjaData', 'brands'));
     }
 
     /**
@@ -609,11 +612,14 @@ class DistributorController extends Controller
 
         $validated = $request->validate([
             'year' => 'required|digits:4',
+            'brand_id' => 'required|string',
             'targets' => 'required|array',
             'targets.*' => 'nullable|numeric|min:0',
         ]);
 
         $year = $validated['year'];
+        // Note: brand_id from JS can be 'null' (string) for General/Unbranded
+        $brandId = $validated['brand_id'] === 'null' ? null : $validated['brand_id'];
         $targets = $validated['targets'];
 
         foreach ($targets as $month => $amount) {
@@ -627,6 +633,7 @@ class DistributorController extends Controller
                 \App\Models\TargetBelanja::updateOrCreate(
                     [
                         'distributor_id' => $distributor->id,
+                        'brand_id' => $brandId,
                         'bulan_tahun' => $bulanTahun,
                     ],
                     [
@@ -635,10 +642,24 @@ class DistributorController extends Controller
                 );
             } else {
                 // if 0, maybe remove it?
-                \App\Models\TargetBelanja::where('distributor_id', $distributor->id)
-                    ->where('bulan_tahun', $bulanTahun)
-                    ->delete();
+                $query = \App\Models\TargetBelanja::where('distributor_id', $distributor->id)
+                    ->where('bulan_tahun', $bulanTahun);
+                    
+                if ($brandId) {
+                    $query->where('brand_id', $brandId);
+                } else {
+                    $query->whereNull('brand_id');
+                }
+                
+                $query->delete();
             }
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Target belanja berhasil disimpan.'
+            ]);
         }
 
         return redirect()->route('admin.distributors.show', $distributor)
