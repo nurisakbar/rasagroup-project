@@ -14,13 +14,15 @@ return new class extends Migration
         Schema::create('distributor_category_discounts', function (Blueprint $table) {
             $table->id();
             $table->uuid('distributor_id');
+            $table->uuid('brand_id');
             $table->uuid('category_id');
             $table->decimal('discount_percentage', 5, 2)->default(0);
             $table->timestamps();
 
             $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('brand_id')->references('id')->on('brands')->cascadeOnDelete();
             $table->foreign('category_id')->references('id')->on('categories')->cascadeOnDelete();
-            $table->unique(['distributor_id', 'category_id']);
+            $table->unique(['distributor_id', 'brand_id', 'category_id'], 'dist_brand_cat_unique');
         });
     }
 

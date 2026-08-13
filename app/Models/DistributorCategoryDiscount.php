@@ -11,6 +11,7 @@ class DistributorCategoryDiscount extends Model
 
     protected $fillable = [
         'distributor_id',
+        'brand_id',
         'category_id',
         'discount_percentage',
     ];
@@ -18,6 +19,11 @@ class DistributorCategoryDiscount extends Model
     public function distributor()
     {
         return $this->belongsTo(User::class, 'distributor_id');
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     public function category()

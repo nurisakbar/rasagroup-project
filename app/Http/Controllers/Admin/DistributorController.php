@@ -680,29 +680,41 @@ class DistributorController extends Controller
 
         $validated = $request->validate([
             'discounts' => 'nullable|array',
-            'discounts.*' => 'nullable|numeric|min:0|max:100',
+            'discounts.*' => 'nullable|array',
+            'discounts.*.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $discounts = $validated['discounts'] ?? [];
 
-        foreach ($discounts as $categoryId => $percentage) {
-            $percentage = $percentage ?: 0;
+        foreach ($discounts as $brandId => $categoryDiscounts) {
+            foreach ($categoryDiscounts as $categoryId => $percentage) {
+                $percentage = $percentage ?: 0;
 
-            if ($percentage > 0) {
-                \App\Models\DistributorCategoryDiscount::updateOrCreate(
-                    [
-                        'distributor_id' => $distributor->id,
-                        'category_id' => $categoryId,
-                    ],
-                    [
-                        'discount_percentage' => $percentage,
-                    ]
-                );
-            } else {
-                \App\Models\DistributorCategoryDiscount::where('distributor_id', $distributor->id)
-                    ->where('category_id', $categoryId)
-                    ->delete();
+                if ($percentage > 0) {
+                    \App\Models\DistributorCategoryDiscount::updateOrCreate(
+                        [
+                            'distributor_id' => $distributor->id,
+                            'brand_id' => $brandId,
+                            'category_id' => $categoryId,
+                        ],
+                        [
+                            'discount_percentage' => $percentage,
+                        ]
+                    );
+                } else {
+                    \App\Models\DistributorCategoryDiscount::where('distributor_id', $distributor->id)
+                        ->where('brand_id', $brandId)
+                        ->where('category_id', $categoryId)
+                        ->delete();
+                }
             }
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Diskon berhasil disimpan.'
+            ]);
         }
 
         return redirect()->route('admin.distributors.show', ['distributor' => $distributor, 'tab' => 'diskon_kategori'])

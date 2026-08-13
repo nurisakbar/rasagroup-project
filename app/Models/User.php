@@ -339,9 +339,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getProductPrice(Product $product): float
     {
         // Check for specific category discount first (ignores price level if exists)
-        if ($this->isDistributor() && $product->category_id) {
+        if ($this->isDistributor() && $product->category_id && $product->brand_id) {
             // Check if relation is loaded to avoid N+1 if loaded, else query it
-            $categoryDiscount = $this->categoryDiscounts->where('category_id', $product->category_id)->first();
+            $categoryDiscount = $this->categoryDiscounts
+                                     ->where('brand_id', $product->brand_id)
+                                     ->where('category_id', $product->category_id)
+                                     ->first();
             
             if ($categoryDiscount && $categoryDiscount->discount_percentage > 0) {
                 $basePrice = (float) $product->final_price;

@@ -496,50 +496,81 @@
                     <!-- Tab: Diskon Kategori -->
                     <div class="tab-pane {{ $activeTab == 'diskon_kategori' ? 'active' : '' }}" id="tab_diskon_kategori">
                         <div class="row">
-                            <div class="col-md-8">
-                                <h4 class="page-header"><i class="fa fa-percent"></i> Pengaturan Diskon per Kategori</h4>
-                                <div class="box box-solid box-primary">
-                                    <div class="box-header with-border">
-                                        <h3 class="box-title">Daftar Kategori Produk</h3>
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="box box-solid box-primary">
+                                            <div class="box-header with-border">
+                                                <h3 class="box-title">Filter Brand</h3>
+                                            </div>
+                                            <div class="box-body">
+                                                <div class="form-group">
+                                                    <label>Pilih Brand</label>
+                                                    <select id="select-discount-brand" class="form-control">
+                                                        @foreach($brands as $brand)
+                                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <form action="{{ route('admin.distributors.category-discounts.update', $distributor) }}" method="POST">
-                                        @csrf
-                                        <div class="box-body table-responsive p-0">
-                                            <p class="text-muted p-3" style="padding: 10px;">
-                                                <i class="fa fa-info-circle"></i> Isikan nilai diskon dalam persentase (contoh: 15.5 untuk 15.5%). Kosongkan atau isi 0 jika tidak ada diskon khusus. Diskon kategori akan mengabaikan potongan harga Price Level (Retail - Diskon Kategori).
-                                            </p>
-                                            <table class="table table-bordered table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="width: 50px;" class="text-center">No</th>
-                                                        <th>Nama Kategori</th>
-                                                        <th style="width: 250px;">Diskon (%)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($categories as $idx => $category)
-                                                    @php
-                                                        $discRecord = $distributor->categoryDiscounts->where('category_id', $category->id)->first();
-                                                        $discValue = $discRecord ? $discRecord->discount_percentage : '';
-                                                    @endphp
-                                                    <tr>
-                                                        <td class="text-center text-middle">{{ $idx + 1 }}</td>
-                                                        <td class="text-middle"><strong>{{ $category->name }}</strong></td>
-                                                        <td>
-                                                            <div class="input-group">
-                                                                <input type="number" step="0.01" min="0" max="100" class="form-control" name="discounts[{{ $category->id }}]" value="{{ $discValue }}" placeholder="0.00">
-                                                                <span class="input-group-addon">%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                    
+                                    <div class="col-md-8">
+                                        <div class="box box-solid box-primary" id="box-discount-form" style="display: none;">
+                                            <div class="box-header with-border">
+                                                <h3 class="box-title">Daftar Diskon Kategori - <span id="discount-brand-title"></span></h3>
+                                            </div>
+                                            <form id="form-discount-kategori" action="{{ route('admin.distributors.category-discounts.update', $distributor) }}" method="POST">
+                                                @csrf
+                                                <div class="box-body table-responsive p-0">
+                                                    <p class="text-muted p-3" style="padding: 10px; margin-bottom: 0;">
+                                                        <i class="fa fa-info-circle"></i> Isikan nilai diskon dalam persentase (contoh: 15.5 untuk 15.5%). Diskon otomatis tersimpan saat angka diubah.
+                                                    </p>
+                                                    
+                                                    @foreach($brands as $brand)
+                                                    <table class="table table-bordered table-striped discount-brand-table" id="discount-table-{{ $brand->id }}" style="display: none;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width: 50px;" class="text-center">No</th>
+                                                                <th>Nama Kategori</th>
+                                                                <th style="width: 200px;">Diskon (%)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($categories as $idx => $category)
+                                                            @php
+                                                                $discRecord = $distributor->categoryDiscounts
+                                                                    ->where('brand_id', $brand->id)
+                                                                    ->where('category_id', $category->id)
+                                                                    ->first();
+                                                                $discValue = $discRecord ? $discRecord->discount_percentage : '';
+                                                            @endphp
+                                                            <tr>
+                                                                <td class="text-center text-middle">{{ $idx + 1 }}</td>
+                                                                <td class="text-middle"><strong>{{ $category->name }}</strong></td>
+                                                                <td>
+                                                                    <div class="input-group">
+                                                                        <input type="number" step="0.01" min="0" max="100" class="form-control discount-input" data-brand="{{ $brand->id }}" data-category="{{ $category->id }}" name="discounts[{{ $brand->id }}][{{ $category->id }}]" value="{{ $discValue }}" placeholder="0.00">
+                                                                        <span class="input-group-addon">%</span>
+                                                                        <span class="input-group-addon discount-success-msg" id="discount-success-{{ $brand->id }}-{{ $category->id }}" style="display: none; background-color: #00a65a; color: white; border-color: #008d4c; padding: 6px 8px;" title="Tersimpan"><i class="fa fa-check"></i></span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
                                                     @endforeach
-                                                </tbody>
-                                            </table>
+
+                                                </div>
+                                            </form>
                                         </div>
-                                        <div class="box-footer">
-                                            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan Diskon</button>
+
+                                        <div class="callout callout-info" id="info-select-discount-brand">
+                                            <h4><i class="fa fa-info-circle"></i> Info</h4>
+                                            <p>Silakan pilih brand di sebelah kiri untuk mengatur diskon pada kategori-kategori produk tersebut.</p>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -995,6 +1026,67 @@ $(document).ready(function() {
     if ($('#select-target-year').val()) {
         $('#select-target-year').trigger('change');
     }
+
+    // Diskon Kategori - Filter Brand
+    $('#select-discount-brand').change(function() {
+        var brandId = $(this).val();
+        var brandName = $(this).find('option:selected').text();
+        
+        if (brandId) {
+            $('#info-select-discount-brand').hide();
+            $('#box-discount-form').show();
+            $('#discount-brand-title').text(brandName);
+            
+            $('.discount-brand-table').hide();
+            $('#discount-table-' + brandId).show();
+        } else {
+            $('#info-select-discount-brand').show();
+            $('#box-discount-form').hide();
+        }
+    });
+
+    // Cek apakah ada brand pertama yang bisa otomatis di load
+    if ($('#select-discount-brand').length) {
+        $('#select-discount-brand').trigger('change');
+    }
+
+    // Auto save untuk Diskon Kategori
+    $('.discount-input').off('change').on('change', function() {
+        var $input = $(this);
+        var brandId = $input.data('brand');
+        var categoryId = $input.data('category');
+        var val = $input.val();
+        
+        var $form = $('#form-discount-kategori');
+        var url = $form.attr('action');
+        var token = $form.find('input[name="_token"]').val();
+        
+        var data = {
+            _token: token,
+            discounts: {}
+        };
+        data.discounts[brandId] = {};
+        data.discounts[brandId][categoryId] = val;
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if(response.success) {
+                    var $msg = $('#discount-success-' + brandId + '-' + categoryId);
+                    $msg.fadeIn().delay(2000).fadeOut();
+                    
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Diskon berhasil disimpan');
+                    }
+                }
+            },
+            error: function() {
+                alert('Gagal menyimpan diskon, silakan coba lagi.');
+            }
+        });
+    });
 });
 </script>
 @endpush
