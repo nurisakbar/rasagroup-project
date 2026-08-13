@@ -641,7 +641,11 @@ class CheckoutController extends Controller
         ]);
 
         $user = Auth::user();
-        $allowedPayments = ['xendit', 'faspay', 'manual_transfer', 'faspay_qris', 'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va'];
+        $allowedPayments = [
+            'xendit', 'faspay', 'manual_transfer', 'faspay_qris', 
+            'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va',
+            'faspay_sinarmas_va', 'faspay_maybank_va', 'faspay_danamon_va', 'faspay_bsi_va', 'faspay_bca_va'
+        ];
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
         }
@@ -1030,16 +1034,45 @@ class CheckoutController extends Controller
                         } else {
                             Log::error('Failed to generate Faspay QRIS', ['order_id' => $order->id]);
                         }
+                    } elseif ($request->payment_method === 'faspay_bca_va') {
+                        // BCA VA uses Legacy API
+                        $faspayService = new \App\Services\FaspayService();
+                        $invoice = $faspayService->createBill($order, $user, '702');
+                        if ($invoice && isset($invoice['bill_no'])) {
+                            $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
+                            $order->faspay_redirect_url = $invoice['redirect_url'];
+                            $order->payment_method = 'faspay_bca_va';
+                            $order->save();
+                            $faspayInvoiceUrl = $order->faspay_redirect_url;
+                            
+                            Log::info('Faspay BCA VA Invoice created', ['order_id' => $order->id, 'bill_no' => $order->faspay_bill_no]);
+                        } else {
+                            Log::error('Failed to generate Faspay BCA VA', ['order_id' => $order->id]);
+                        }
                     } else {
                         // VA Static Flow
                         // Prefix mapping
-                        $prefixes = [
-                            'faspay_permata_va' => '370201',
-                            'faspay_mandiri_va' => '37020002',
-                            'faspay_bri_va'     => '370202',
-                            'faspay_cimb_va'    => '370204',
-                            'faspay_bni_va'     => '9881236387',
-                        ];
+                        $isProd = config('services.faspay.env') === 'production' || env('FASPAY_ENV') === 'production';
+                        
+                        if ($isProd) {
+                            $prefixes = [
+                                'faspay_mandiri_va'  => '88558010',
+                                'faspay_sinarmas_va' => '885648',
+                                'faspay_permata_va'  => '735161',
+                                'faspay_maybank_va'  => '78218052',
+                                'faspay_danamon_va'  => '797039',
+                                'faspay_bsi_va'      => '12601021',
+                                'faspay_cimb_va'     => '222550',
+                            ];
+                        } else {
+                            $prefixes = [
+                                'faspay_permata_va'  => '370201',
+                                'faspay_mandiri_va'  => '37020002',
+                                'faspay_bri_va'      => '370202',
+                                'faspay_cimb_va'     => '370204',
+                                'faspay_bni_va'      => '9881236387',
+                            ];
+                        }
                         $prefix = $prefixes[$request->payment_method] ?? '370200';
                         $targetLength = 16;
                         $prefixLength = strlen($prefix);

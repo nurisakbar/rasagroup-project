@@ -183,11 +183,16 @@
                                                 <div>
                                                     @php
                                                         $bankNames = [
-                                                            'faspay_permata_va' => 'Bank Permata',
-                                                            'faspay_mandiri_va' => 'Bank Mandiri',
-                                                            'faspay_bri_va' => 'Bank BRI',
-                                                            'faspay_bni_va' => 'Bank BNI',
-                                                            'faspay_cimb_va' => 'Bank CIMB Niaga',
+                                                            'faspay_mandiri_va'  => 'Bank Mandiri',
+                                                            'faspay_sinarmas_va' => 'Bank Sinarmas',
+                                                            'faspay_permata_va'  => 'Bank Permata',
+                                                            'faspay_maybank_va'  => 'Bank Maybank',
+                                                            'faspay_danamon_va'  => 'Bank Danamon',
+                                                            'faspay_bsi_va'      => 'Bank BSI',
+                                                            'faspay_cimb_va'     => 'Bank CIMB Niaga',
+                                                            'faspay_bca_va'      => 'Bank BCA',
+                                                            'faspay_bri_va'      => 'Bank BRI',
+                                                            'faspay_bni_va'      => 'Bank BNI',
                                                         ];
                                                         $bankName = $bankNames[$order->payment_method] ?? 'Virtual Account';
                                                     @endphp

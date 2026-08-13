@@ -34,9 +34,10 @@ class FaspayService
      *
      * @param Order $order
      * @param object $user The customer making the purchase
+     * @param string $paymentChannel Optional specific channel code
      * @return array|null Returns ['bill_no' => ..., 'redirect_url' => ...] on success
      */
-    public function createBill(Order $order, $user): ?array
+    public function createBill(Order $order, $user, $paymentChannel = ""): ?array
     {
         try {
             $billNo = $order->order_number;
@@ -85,7 +86,7 @@ class FaspayService
                 "cust_no"           => (string) $user->id,
                 "cust_name"         => $firstName,
                 "cust_lastname"     => $lastName,
-                "payment_channel"   => "", // Let user choose on Faspay page
+                "payment_channel"   => $paymentChannel, // Let user choose on Faspay page if empty
                 "pay_type"          => "1",
                 "bank_userid"       => "",
                 "msisdn"            => $msisdn,
