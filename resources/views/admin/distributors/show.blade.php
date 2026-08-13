@@ -46,10 +46,16 @@
                                             <b><i class="fa fa-tags text-muted" style="width: 20px;"></i> Level Harga</b> <a class="pull-right">{{ $distributor->priceLevel->name ?? 'Harga Normal' }}</a>
                                         </li>
                                         <li class="list-group-item">
-                                            <b><i class="fa fa-clock-o text-muted" style="width: 20px;"></i> TOP</b> <a class="pull-right">{{ $distributor->term_of_payment ?? '0' }} Hari</a>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <b><i class="fa fa-bullseye text-muted" style="width: 20px;"></i> Target Bulanan</b> <a class="pull-right">Rp {{ number_format($distributor->monthly_target ?? 0, 0, ',', '.') }}</a>
+                                            <b><i class="fa fa-money text-muted" style="width: 20px;"></i> Cara Bayar</b> 
+                                            <a class="pull-right">
+                                                @if($distributor->payment_method == 'TOP')
+                                                    TOP ({{ $distributor->term_of_payment ?? '0' }} Hari)
+                                                @elseif($distributor->payment_method == 'CIA')
+                                                    CIA
+                                                @else
+                                                    -
+                                                @endif
+                                            </a>
                                         </li>
                                         <li class="list-group-item" style="border-bottom: 0; padding-bottom: 0;">
                                             <b><i class="fa fa-calendar-check-o text-muted" style="width: 20px;"></i> Terdaftar</b> <a class="pull-right">{{ $distributor->created_at->format('d M Y') }}</a>

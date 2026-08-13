@@ -39,7 +39,6 @@
                                 <th>Kode Sales</th>
                                 <th>Nama</th>
                                 <th>Email</th>
-                                <th>Target Bulanan</th>
                                 <th>Status</th>
                                 <th>Tanggal Daftar</th>
                                 <th>Action</th>
@@ -71,12 +70,11 @@
                 {data: 'sales_code', name: 'sales_code'},
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
-                {data: 'monthly_target', name: 'monthly_target'},
                 {data: 'status', name: 'status', orderable: false, searchable: false},
                 {data: 'created_at', name: 'created_at'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[6, 'desc']],
+            order: [[5, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

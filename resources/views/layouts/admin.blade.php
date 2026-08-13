@@ -165,6 +165,7 @@
           </a>
         </li>
         
+        @if(auth()->user()->role !== 'ecommerce')
         <li class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
           <a href="{{ route('admin.orders.index') }}">
             <i class="fa fa-shopping-cart"></i> <span>LAPORAN PESANAN</span>
@@ -206,6 +207,7 @@
             <i class="fa fa-briefcase"></i> <span>DATA SALES</span>
           </a>
         </li>
+        @endif
         
         <li class="treeview {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') ? 'active menu-open' : '' }}">
           <a href="#">
@@ -224,12 +226,14 @@
             <li class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
               <a href="{{ route('admin.categories.index') }}"><i class="fa fa-folder"></i> KATEGORI</a>
             </li>
+            @if(auth()->user()->role !== 'ecommerce')
             <li class="{{ request()->routeIs('admin.price-levels.*') ? 'active' : '' }}">
               <a href="{{ route('admin.price-levels.index') }}"><i class="fa fa-tags"></i> LEVEL HARGA</a>
             </li>
             <li class="{{ request()->routeIs('admin.menus.*') ? 'active' : '' }}">
               <a href="{{ route('admin.menus.index') }}"><i class="fa fa-list"></i> MENU</a>
             </li>
+            @endif
           </ul>
         </li>
         
@@ -245,17 +249,15 @@
           </a>
         </li>
         
+        @if(auth()->user()->role !== 'ecommerce')
         <li class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
           <a href="{{ route('admin.pages.index') }}">
             <i class="fa fa-file-text"></i> <span>HALAMAN STATIS</span>
           </a>
         </li>
+        @endif
 
-        <li class="{{ request()->routeIs('admin.promos.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.promos.index') }}">
-            <i class="fa fa-ticket"></i> <span>PROMO</span>
-          </a>
-        </li>
+
 
         <li class="{{ request()->routeIs('admin.information-channels.*') ? 'active' : '' }}">
           <a href="{{ route('admin.information-channels.index') }}">
@@ -263,6 +265,7 @@
           </a>
         </li>
 
+        @if(auth()->user()->role !== 'ecommerce')
         <li class="{{ request()->routeIs('admin.discount-tiers.*') ? 'active' : '' }}">
           <a href="{{ route('admin.discount-tiers.index') }}">
             <i class="fa fa-percent"></i> <span>POTONGAN HARGA</span>
@@ -274,6 +277,7 @@
             <i class="fa fa-cog"></i> <span>PENGATURAN</span>
           </a>
         </li>
+        @endif
       </ul>
       <!-- /.sidebar-menu -->
     </section>

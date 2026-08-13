@@ -219,6 +219,19 @@
 
                         <div class="row">
                             <div class="col-md-6">
+                                <div class="form-group @error('payment_method') has-error @enderror">
+                                    <label for="payment_method">Cara Bayar</label>
+                                    <select class="form-control" id="payment_method" name="payment_method">
+                                        <option value="">-- Pilih Cara Bayar --</option>
+                                        <option value="TOP" {{ old('payment_method') == 'TOP' ? 'selected' : '' }}>TOP</option>
+                                        <option value="CIA" {{ old('payment_method') == 'CIA' ? 'selected' : '' }}>CIA</option>
+                                    </select>
+                                    @error('payment_method')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="top_container" style="{{ old('payment_method') == 'TOP' ? '' : 'display: none;' }}">
                                 <div class="form-group @error('term_of_payment') has-error @enderror">
                                     <label for="term_of_payment">Term Of Payment (Hari)</label>
                                     <div class="input-group">
@@ -226,18 +239,6 @@
                                         <span class="input-group-addon">Hari</span>
                                     </div>
                                     @error('term_of_payment')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group @error('monthly_target') has-error @enderror">
-                                    <label for="monthly_target">Cash in Advance (CIA)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">Rp</span>
-                                        <input type="text" class="form-control rupiah-format" id="monthly_target" name="monthly_target" value="{{ number_format(old('monthly_target', 0), 0, ',', '.') }}" placeholder="Contoh: 50.000.000">
-                                    </div>
-                                    @error('monthly_target')
                                         <span class="help-block text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -478,6 +479,16 @@ $(document).ready(function() {
             var val = $(this).val().replace(/\./g, '');
             $(this).val(val);
         });
+    });
+
+    // Toggle TOP container based on payment method
+    $('#payment_method').change(function() {
+        if ($(this).val() === 'TOP') {
+            $('#top_container').show();
+        } else {
+            $('#top_container').hide();
+            $('#term_of_payment').val('');
+        }
     });
 });
 </script>

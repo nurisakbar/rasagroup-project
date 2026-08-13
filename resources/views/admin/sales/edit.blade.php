@@ -46,17 +46,6 @@
                             @enderror
                         </div>
                         
-                        <div class="form-group @error('monthly_target') has-error @enderror">
-                            <label for="monthly_target">Target Bulanan</label>
-                            <div class="input-group">
-                                <span class="input-group-addon">Rp</span>
-                                <input type="text" class="form-control rupiah" id="monthly_target" name="monthly_target" value="{{ old('monthly_target', $sale->monthly_target ? number_format($sale->monthly_target, 0, ',', '.') : '') }}">
-                            </div>
-                            @error('monthly_target')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
                         <div class="form-group @error('password') has-error @enderror">
                             <label for="password">Password (Opsional)</label>
                             <input type="password" class="form-control" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
