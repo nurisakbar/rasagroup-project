@@ -207,6 +207,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(TargetBelanja::class, 'distributor_id');
     }
 
+    public function categoryDiscounts(): HasMany
+    {
+        return $this->hasMany(DistributorCategoryDiscount::class, 'distributor_id');
+    }
+
     public function isSuperAdmin(): bool
     {
         return in_array($this->role, [
@@ -333,6 +338,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getProductPrice(Product $product): float
     {
+        // Check for specific category discount first (ignores price level if exists)
+        if ($this->isDistributor() && $product->category_id) {
+            // Check if relation is loaded to avoid N+1 if loaded, else query it
+            $categoryDiscount = $this->categoryDiscounts->where('category_id', $product->category_id)->first();
+            
+            if ($categoryDiscount && $categoryDiscount->discount_percentage > 0) {
+                $basePrice = (float) $product->final_price;
+                return $basePrice - ($basePrice * ((float) $categoryDiscount->discount_percentage / 100));
+            }
+        }
+
         // If user is distributor and has price level, use price level pricing
         if ($this->isDistributor() && $this->priceLevel) {
             return $this->priceLevel->calculatePriceForProduct($product);

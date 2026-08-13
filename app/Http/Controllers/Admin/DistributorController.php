@@ -589,8 +589,11 @@ class DistributorController extends Controller
         }
 
         $brands = \App\Models\Brand::active()->orderBy('name')->get();
+        $categories = \App\Models\Category::active()->orderBy('name')->get();
+        
+        $distributor->load('categoryDiscounts');
 
-        return view('admin.distributors.show', compact('distributor', 'stockStats', 'targetBelanjaData', 'brands'));
+        return view('admin.distributors.show', compact('distributor', 'stockStats', 'targetBelanjaData', 'brands', 'categories'));
     }
 
     /**
@@ -664,6 +667,46 @@ class DistributorController extends Controller
 
         return redirect()->route('admin.distributors.show', $distributor)
             ->with('success', 'Target belanja tahun ' . $year . ' berhasil diperbarui.');
+    }
+
+    /**
+     * Update category discounts for a distributor.
+     */
+    public function updateCategoryDiscounts(Request $request, User $distributor)
+    {
+        if (!$distributor->isDistributor()) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'discounts' => 'nullable|array',
+            'discounts.*' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $discounts = $validated['discounts'] ?? [];
+
+        foreach ($discounts as $categoryId => $percentage) {
+            $percentage = $percentage ?: 0;
+
+            if ($percentage > 0) {
+                \App\Models\DistributorCategoryDiscount::updateOrCreate(
+                    [
+                        'distributor_id' => $distributor->id,
+                        'category_id' => $categoryId,
+                    ],
+                    [
+                        'discount_percentage' => $percentage,
+                    ]
+                );
+            } else {
+                \App\Models\DistributorCategoryDiscount::where('distributor_id', $distributor->id)
+                    ->where('category_id', $categoryId)
+                    ->delete();
+            }
+        }
+
+        return redirect()->route('admin.distributors.show', ['distributor' => $distributor, 'tab' => 'diskon_kategori'])
+            ->with('success', 'Diskon kategori berhasil diperbarui.');
     }
 
     /**

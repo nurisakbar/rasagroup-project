@@ -16,25 +16,41 @@ class DistributorDocumentController extends Controller
             abort(404);
         }
 
-        $validated = $request->validate([
-            'nama_dokumen' => ['required', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string', 'max:5000'],
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,jpg,jpeg,png,gif,webp,zip,rar'],
-        ], [
-            'file.required' => 'Berkas dokumen wajib diunggah.',
-            'file.max' => 'Ukuran berkas maksimal 10 MB.',
-        ]);
+        try {
+            $validated = $request->validate([
+                'nama_dokumen' => ['required', 'string', 'max:255'],
+                'keterangan' => ['nullable', 'string', 'max:5000'],
+                'file' => ['required', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,jpg,jpeg,png,gif,webp,zip,rar'],
+            ], [
+                'file.required' => 'Berkas dokumen wajib diunggah.',
+                'file.max' => 'Ukuran berkas maksimal 10 MB.',
+            ]);
 
-        $path = $request->file('file')->store('distributor-documents/'.$distributor->id, 'public');
+            $path = $request->file('file')->store('distributor-documents/'.$distributor->id, 'public');
 
-        DistributorDocument::query()->create([
-            'user_id' => $distributor->id,
-            'nama_dokumen' => $validated['nama_dokumen'],
-            'keterangan' => $validated['keterangan'] ?? null,
-            'file_path' => $path,
-        ]);
+            DistributorDocument::query()->create([
+                'user_id' => $distributor->id,
+                'nama_dokumen' => $validated['nama_dokumen'],
+                'keterangan' => $validated['keterangan'] ?? null,
+                'file_path' => $path,
+            ]);
 
-        return back()->with('success', 'Dokumen berhasil ditambahkan.');
+            return back()->with('success', 'Dokumen berhasil ditambahkan.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::debug('Gagal upload dokumen distributor (Validasi)', [
+                'distributor_id' => $distributor->id,
+                'errors' => $e->errors(),
+                'file_size_attempted' => $request->hasFile('file') ? $request->file('file')->getSize() : 'Tidak ada file / Melebihi post_max_size',
+                'max_file_size_allowed' => '10 MB (10240 KB)'
+            ]);
+            throw $e;
+        } catch (\Throwable $th) {
+            \Log::error('Gagal upload dokumen distributor (System Error)', [
+                'distributor_id' => $distributor->id,
+                'message' => $th->getMessage()
+            ]);
+            return back()->with('error', 'Terjadi kesalahan sistem saat mengunggah dokumen.');
+        }
     }
 
     public function update(Request $request, User $distributor, DistributorDocument $document): RedirectResponse

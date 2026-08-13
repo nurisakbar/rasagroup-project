@@ -99,6 +99,7 @@
                     <li class="{{ $activeTab == 'dokumen' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'dokumen']) }}"><i class="fa fa-file-text"></i> Dokumen</a></li>
                     <li class="{{ $activeTab == 'staff' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Kelola Staff</a></li>
                     <li class="{{ $activeTab == 'target_belanja' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'target_belanja']) }}"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
+                    <li class="{{ $activeTab == 'diskon_kategori' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'diskon_kategori']) }}"><i class="fa fa-percent"></i> Diskon Kategori</a></li>
                     <li class="pull-right {{ $activeTab == 'danger' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'danger']) }}" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
                 <div class="tab-content">
@@ -487,6 +488,58 @@
                                             <p>Silakan pilih tahun dan brand di samping untuk mengatur target belanja bulanan.</p>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Diskon Kategori -->
+                    <div class="tab-pane {{ $activeTab == 'diskon_kategori' ? 'active' : '' }}" id="tab_diskon_kategori">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4 class="page-header"><i class="fa fa-percent"></i> Pengaturan Diskon per Kategori</h4>
+                                <div class="box box-solid box-primary">
+                                    <div class="box-header with-border">
+                                        <h3 class="box-title">Daftar Kategori Produk</h3>
+                                    </div>
+                                    <form action="{{ route('admin.distributors.category-discounts.update', $distributor) }}" method="POST">
+                                        @csrf
+                                        <div class="box-body table-responsive p-0">
+                                            <p class="text-muted p-3" style="padding: 10px;">
+                                                <i class="fa fa-info-circle"></i> Isikan nilai diskon dalam persentase (contoh: 15.5 untuk 15.5%). Kosongkan atau isi 0 jika tidak ada diskon khusus. Diskon kategori akan mengabaikan potongan harga Price Level (Retail - Diskon Kategori).
+                                            </p>
+                                            <table class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 50px;" class="text-center">No</th>
+                                                        <th>Nama Kategori</th>
+                                                        <th style="width: 250px;">Diskon (%)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($categories as $idx => $category)
+                                                    @php
+                                                        $discRecord = $distributor->categoryDiscounts->where('category_id', $category->id)->first();
+                                                        $discValue = $discRecord ? $discRecord->discount_percentage : '';
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="text-center text-middle">{{ $idx + 1 }}</td>
+                                                        <td class="text-middle"><strong>{{ $category->name }}</strong></td>
+                                                        <td>
+                                                            <div class="input-group">
+                                                                <input type="number" step="0.01" min="0" max="100" class="form-control" name="discounts[{{ $category->id }}]" value="{{ $discValue }}" placeholder="0.00">
+                                                                <span class="input-group-addon">%</span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="box-footer">
+                                            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan Diskon</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
