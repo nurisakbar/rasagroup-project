@@ -143,6 +143,18 @@ class FaspaySnapController extends Controller
 
         // Cek apakah ini payload Legacy Faspay (Faspay Simulator terkadang mengirim format legacy ke URL SNAP)
         $isLegacy = $request->input('request') === 'Payment Notification' && $request->has('signature');
+        
+        if (!$isLegacy) {
+            $rawContent = $request->getContent();
+            if (!empty($rawContent)) {
+                $decoded = json_decode($rawContent, true);
+                if (is_array($decoded) && isset($decoded['request']) && $decoded['request'] === 'Payment Notification' && isset($decoded['signature'])) {
+                    $isLegacy = true;
+                    // Inject to request so $request->input() works later
+                    $request->merge($decoded); 
+                }
+            }
+        }
 
         if (!$isLegacy) {
             // UAT SNAP Validation Check
