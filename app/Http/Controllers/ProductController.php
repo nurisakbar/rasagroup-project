@@ -61,6 +61,13 @@ class ProductController extends Controller
             $query->whereHas('brand', function($q) use ($request) {
                 $q->where('slug', $request->brand);
             });
+            
+            // "semua yang sesuai dengan mappingan" - restrict products to only mapped categories
+            $query->whereHas('category', function($q) use ($request) {
+                $q->whereHas('brands', function($q2) use ($request) {
+                    $q2->where('slug', $request->brand);
+                });
+            });
         }
 
         // Filter by price range

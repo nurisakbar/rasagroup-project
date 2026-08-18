@@ -29,6 +29,9 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_ECOMMERCE = 'ecommerce';
     const ROLE_BRAND_MARKETING = 'brand_marketing';
     const ROLE_FINANCE = 'finance';
+    const ROLE_CUSTOMER_SERVICE = 'customer_service';
+    const ROLE_IT_APPLICATION = 'it_application';
+    const ROLE_INVENTORY_MANAGER = 'inventory_manager';
 
     protected $keyType = 'string';
     public $incrementing = false;
