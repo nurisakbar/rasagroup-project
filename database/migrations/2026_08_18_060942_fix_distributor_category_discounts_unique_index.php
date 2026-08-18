@@ -14,13 +14,19 @@ return new class extends Migration
         Schema::table('distributor_category_discounts', function (Blueprint $table) {
             // Drop the old incorrectly named unique constraint if it exists
             if (Schema::hasIndex('distributor_category_discounts', 'distributor_category_discounts_distributor_id_category_id_unique')) {
+                // Drop foreign key first because the unique index might be supporting it
+                $table->dropForeign(['distributor_id']);
                 $table->dropUnique('distributor_category_discounts_distributor_id_category_id_unique');
+                $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
             }
 
             // Also check if the array-based index name exists
-            if (Schema::hasIndex('distributor_category_discounts', ['distributor_id', 'category_id'])) {
+            $indexName = $table->getTable() . '_distributor_id_category_id_unique';
+            if (Schema::hasIndex('distributor_category_discounts', $indexName)) {
                 try {
+                    $table->dropForeign(['distributor_id']);
                     $table->dropUnique(['distributor_id', 'category_id']);
+                    $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
                 } catch (\Exception $e) {
                     // Ignore if it was already dropped or doesn't exist
                 }
@@ -41,7 +47,10 @@ return new class extends Migration
         Schema::table('distributor_category_discounts', function (Blueprint $table) {
             // Revert back if necessary
             if (Schema::hasIndex('distributor_category_discounts', 'dist_brand_cat_unique')) {
+                // Drop foreign key first because the unique index might be supporting it
+                $table->dropForeign(['distributor_id']);
                 $table->dropUnique('dist_brand_cat_unique');
+                $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
             }
 
             if (!Schema::hasIndex('distributor_category_discounts', 'distributor_category_discounts_distributor_id_category_id_unique')) {
