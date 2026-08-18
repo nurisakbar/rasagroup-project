@@ -14,10 +14,18 @@ return new class extends Migration
         Schema::table('distributor_category_discounts', function (Blueprint $table) {
             // Drop the old incorrectly named unique constraint if it exists
             if (Schema::hasIndex('distributor_category_discounts', 'distributor_category_discounts_distributor_id_category_id_unique')) {
-                // Drop foreign key first because the unique index might be supporting it
-                $table->dropForeign(['distributor_id']);
-                $table->dropUnique('distributor_category_discounts_distributor_id_category_id_unique');
-                $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
+                try {
+                    // Drop foreign key first because the unique index might be supporting it
+                    $table->dropForeign(['distributor_id']);
+                } catch (\Exception $e) {}
+                
+                try {
+                    $table->dropUnique('distributor_category_discounts_distributor_id_category_id_unique');
+                } catch (\Exception $e) {}
+                
+                try {
+                    $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
+                } catch (\Exception $e) {}
             }
 
             // Also check if the array-based index name exists
@@ -47,10 +55,18 @@ return new class extends Migration
         Schema::table('distributor_category_discounts', function (Blueprint $table) {
             // Revert back if necessary
             if (Schema::hasIndex('distributor_category_discounts', 'dist_brand_cat_unique')) {
-                // Drop foreign key first because the unique index might be supporting it
-                $table->dropForeign(['distributor_id']);
-                $table->dropUnique('dist_brand_cat_unique');
-                $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
+                try {
+                    // Drop foreign key first because the unique index might be supporting it
+                    $table->dropForeign(['distributor_id']);
+                } catch (\Exception $e) {}
+                
+                try {
+                    $table->dropUnique('dist_brand_cat_unique');
+                } catch (\Exception $e) {}
+                
+                try {
+                    $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
+                } catch (\Exception $e) {}
             }
 
             if (!Schema::hasIndex('distributor_category_discounts', 'distributor_category_discounts_distributor_id_category_id_unique')) {
