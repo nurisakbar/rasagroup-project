@@ -124,7 +124,7 @@
               <!-- Menu Footer-->
               <li class="user-footer">
                 <div class="pull-left">
-                  <a href="#" class="btn btn-default btn-flat">Profile</a>
+                  <a href="{{ route('admin.profile.edit') }}" class="btn btn-default btn-flat">Profile</a>
                 </div>
                 <div class="pull-right">
                   <form method="POST" action="{{ route('logout') }}">
@@ -158,6 +158,9 @@
       <!-- Sidebar Menu -->
       <ul class="sidebar-menu" data-widget="tree">
         <li class="header">MAIN MENU</li>
+        @php
+            $adminRole = auth()->user()->role ?? '';
+        @endphp
         
         <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
           <a href="{{ route('admin.dashboard') }}">
@@ -165,13 +168,15 @@
           </a>
         </li>
         
-        @if(auth()->user()->role !== 'ecommerce')
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
           <a href="{{ route('admin.orders.index') }}">
             <i class="fa fa-shopping-cart"></i> <span>LAPORAN PESANAN</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'inventory_manager']))
         <li class="{{ request()->routeIs('admin.warehouses.*') ? 'active' : '' }}">
           <a href="{{ route('admin.warehouses.index') }}">
             <i class="fa fa-building"></i> <span>DATA HUB</span>
@@ -183,25 +188,33 @@
             <i class="fa fa-truck"></i> <span>DISTRIBUTOR</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.driippreneurs.*') ? 'active' : '' }}">
           <a href="{{ route('admin.driippreneurs.index') }}">
             <i class="fa fa-users"></i> <span>AFFILIATOR</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'finance']))
         <li class="{{ request()->routeIs('admin.point-withdrawals.*') ? 'active' : '' }}">
           <a href="{{ route('admin.point-withdrawals.index') }}">
             <i class="fa fa-money"></i> <span>PENARIKAN POIN</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'customer_service']))
         <li class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
           <a href="{{ route('admin.users.index') }}">
             <i class="fa fa-users"></i> <span>DATA PENGGUNA</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
           <a href="{{ route('admin.sales.index') }}">
             <i class="fa fa-briefcase"></i> <span>DATA SALES</span>
@@ -209,7 +222,8 @@
         </li>
         @endif
         
-        <li class="treeview {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') ? 'active menu-open' : '' }}">
+        @if(in_array($adminRole, ['super_admin', 'brand_marketing', 'ecommerce', 'sales_admin', 'it_application']))
+        <li class="treeview {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') || request()->routeIs('admin.menus.*') ? 'active menu-open' : '' }}">
           <a href="#">
             <i class="fa fa-cube"></i> <span>MASTER DATA</span>
             <span class="pull-right-container">
@@ -217,6 +231,7 @@
             </span>
           </a>
           <ul class="treeview-menu">
+            @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
             <li class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
               <a href="{{ route('admin.products.index') }}"><i class="fa fa-shopping-bag"></i> PRODUK</a>
             </li>
@@ -226,30 +241,38 @@
             <li class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
               <a href="{{ route('admin.categories.index') }}"><i class="fa fa-folder"></i> KATEGORI</a>
             </li>
-            @if(auth()->user()->role !== 'ecommerce')
+            @endif
+            @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
             <li class="{{ request()->routeIs('admin.price-levels.*') ? 'active' : '' }}">
               <a href="{{ route('admin.price-levels.index') }}"><i class="fa fa-tags"></i> LEVEL HARGA</a>
             </li>
+            @endif
+            @if(in_array($adminRole, ['super_admin', 'it_application']))
             <li class="{{ request()->routeIs('admin.menus.*') ? 'active' : '' }}">
               <a href="{{ route('admin.menus.index') }}"><i class="fa fa-list"></i> MENU</a>
             </li>
             @endif
           </ul>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
         <li class="{{ request()->routeIs('admin.sliders.*') ? 'active' : '' }}">
           <a href="{{ route('admin.sliders.index') }}">
             <i class="fa fa-image"></i> <span>WEB SLIDER</span>
           </a>
         </li>
+        @endif
 
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.website-popups.*') ? 'active' : '' }}">
           <a href="{{ route('admin.website-popups.index') }}">
             <i class="fa fa-window-maximize"></i> <span>POP UP WEBSITE</span>
           </a>
         </li>
+        @endif
         
-        @if(auth()->user()->role !== 'ecommerce')
+        @if(in_array($adminRole, ['super_admin', 'it_application']))
         <li class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
           <a href="{{ route('admin.pages.index') }}">
             <i class="fa fa-file-text"></i> <span>HALAMAN STATIS</span>
@@ -257,21 +280,23 @@
         </li>
         @endif
 
-
-
+        @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
         <li class="{{ request()->routeIs('admin.information-channels.*') ? 'active' : '' }}">
           <a href="{{ route('admin.information-channels.index') }}">
             <i class="fa fa-info-circle"></i> <span>SALURAN INFORMASI</span>
           </a>
         </li>
+        @endif
 
-        @if(auth()->user()->role !== 'ecommerce')
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.discount-tiers.*') ? 'active' : '' }}">
           <a href="{{ route('admin.discount-tiers.index') }}">
             <i class="fa fa-percent"></i> <span>POTONGAN HARGA</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'it_application']))
         <li class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
           <a href="{{ route('admin.settings.index') }}">
             <i class="fa fa-cog"></i> <span>PENGATURAN</span>

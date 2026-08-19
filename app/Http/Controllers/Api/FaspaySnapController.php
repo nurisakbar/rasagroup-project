@@ -361,7 +361,20 @@ class FaspaySnapController extends Controller
 
         // 2. Pengecekan Signature UAT / Real
         $signature = $request->header('X-SIGNATURE', '');
-        $publicKeyPath = storage_path('app/faspay_public_key.pem');
+        
+        $isProduction = config('services.faspay.env', 'dev') === 'production';
+        $configPath = $isProduction ? config('services.faspay.public_key_prod_path') : config('services.faspay.public_key_dev_path');
+        
+        // Ensure path is absolute (handles both 'storage/app/...' and absolute paths in .env)
+        $publicKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_public_key.pem');
+        
+        \Illuminate\Support\Facades\Log::info('Faspay Signature Validation Config Check', [
+            'env' => config('services.faspay.env', 'dev'),
+            'is_production' => $isProduction,
+            'chosen_key_path' => $publicKeyPath,
+            'key_file_exists' => file_exists($publicKeyPath),
+            'has_signature' => !empty($signature)
+        ]);
         
         $isValid = false;
         if (file_exists($publicKeyPath) && !empty($signature)) {
@@ -420,10 +433,21 @@ class FaspaySnapController extends Controller
             // Format Asymmetric (SNAP) for Webhook: HTTPMethod:EndpointUrl:Lowercase(HexEncode(SHA-256(Minify(RequestBody)))):Timestamp
             $stringToSign = $method . ":" . $path . ":" . $bodyHash . ":" . $timestamp;
             
-            $verifyResult = openssl_verify($stringToSign, base64_decode($signature), $publicKey, OPENSSL_ALGO_SHA256);
-            if ($verifyResult === 1) {
-                $isValid = true;
+            if ($publicKey !== false) {
+                $verifyResult = openssl_verify($stringToSign, base64_decode($signature), $publicKey, OPENSSL_ALGO_SHA256);
+                if ($verifyResult === 1) {
+                    $isValid = true;
+                } else {
+                    \Illuminate\Support\Facades\Log::warning('Faspay Signature Openssl Verify Failed', [
+                        'openssl_error' => openssl_error_string(),
+                        'verifyResult' => $verifyResult
+                    ]);
+                }
+            } else {
+                \Illuminate\Support\Facades\Log::error('Faspay Public Key invalid or could not be read.', ['path' => $publicKeyPath, 'openssl_error' => openssl_error_string()]);
             }
+        } else {
+            \Illuminate\Support\Facades\Log::error('Faspay Signature Validation Failed - Missing Key or Signature', ['path_exists' => file_exists($publicKeyPath), 'signature_empty' => empty($signature)]);
         }
         
         // ALLOW BYPASS FOR UAT TESTING

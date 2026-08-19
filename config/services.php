@@ -55,6 +55,8 @@ return [
         'snap_base_url' => env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0'),
         'snap_client_id' => env('FASPAY_SNAP_CLIENT_ID'),
         'private_key_path' => env('FASPAY_SNAP_PRIVATE_KEY_PATH', 'storage/app/faspay_private_key.pem'),
+        'public_key_dev_path' => env('FASPAY_SNAP_PUBLIC_KEY_DEV_PATH', 'storage/app/faspay_public_key.pem'),
+        'public_key_prod_path' => env('FASPAY_SNAP_PUBLIC_KEY_PROD_PATH', 'storage/app/faspay_public.pem'),
     ],
 
     'rajaongkir' => [

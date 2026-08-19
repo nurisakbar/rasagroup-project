@@ -2,3 +2,5 @@
 !private/
 !public/
 !.gitignore
+!faspay_public.pem
+!faspay_public_key.pem
