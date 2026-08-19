@@ -34,7 +34,7 @@ class AdminLoginController extends Controller
             $user = Auth::guard('admin')->user();
 
             // Role yang berhak masuk ke admin.dashboard
-            $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
+            $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance', 'sales_admin', 'customer_service', 'it_application', 'inventory_manager'];
 
             // Check if user has admin access
             if (!in_array($user->role, $adminRoles)) {

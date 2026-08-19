@@ -186,6 +186,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [App\Http\Controllers\Admin\Auth\AdminLoginController::class, 'destroy'])->name('logout');
 
+        // Admin Profile
+        Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
+
         // Master Data - Brands
         Route::resource('brands', App\Http\Controllers\Admin\BrandController::class)->except(['show']);
         

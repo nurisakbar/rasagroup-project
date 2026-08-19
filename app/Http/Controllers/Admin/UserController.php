@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::whereIn('role', ['super_admin', 'ecommerce', 'brand_marketing', 'finance'])
+            $users = User::whereIn('role', ['super_admin', 'ecommerce', 'brand_marketing', 'finance', 'sales_admin', 'customer_service', 'it_application', 'inventory_manager'])
                 ->select('id', 'name', 'email', 'phone', 'role', 'created_at');
 
             return DataTables::of($users)
@@ -29,6 +29,10 @@ class UserController extends Controller
                         'ecommerce' => '<span class="label label-info">eCommerce</span>',
                         'brand_marketing' => '<span class="label label-primary">Brand Marketing</span>',
                         'finance' => '<span class="label label-warning">Finance</span>',
+                        'sales_admin' => '<span class="label label-success">Sales Admin</span>',
+                        'customer_service' => '<span class="label label-info">Customer Service</span>',
+                        'it_application' => '<span class="label label-default">IT App</span>',
+                        'inventory_manager' => '<span class="label label-warning">Inventory</span>',
                     ];
                     return $labels[$user->role] ?? '<span class="label label-default">' . ucfirst($user->role) . '</span>';
                 })
@@ -77,7 +81,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance',
+            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance,sales_admin,customer_service,it_application,inventory_manager',
         ]);
 
         User::create([
@@ -96,7 +100,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance', 'sales_admin', 'customer_service', 'it_application', 'inventory_manager'];
         if (!in_array($user->role, $allowedRoles)) {
             return redirect()->route('admin.users.index')->with('error', 'Role user ini tidak dapat diubah di sini.');
         }
@@ -109,7 +113,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance', 'sales_admin', 'customer_service', 'it_application', 'inventory_manager'];
         if (!in_array($user->role, $allowedRoles)) {
             abort(403);
         }
@@ -125,7 +129,7 @@ class UserController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance',
+            'role' => 'required|in:super_admin,ecommerce,brand_marketing,finance,sales_admin,customer_service,it_application,inventory_manager',
         ]);
 
         $data = [
@@ -149,7 +153,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance'];
+        $allowedRoles = ['super_admin', 'ecommerce', 'brand_marketing', 'finance', 'sales_admin', 'customer_service', 'it_application', 'inventory_manager'];
         if (!in_array($user->role, $allowedRoles)) {
             abort(403);
         }

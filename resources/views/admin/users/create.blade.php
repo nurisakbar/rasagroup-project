@@ -56,6 +56,9 @@
                             <option value="brand_marketing" {{ old('role') == 'brand_marketing' ? 'selected' : '' }}>Brand Marketing</option>
                             <option value="finance" {{ old('role') == 'finance' ? 'selected' : '' }}>Finance</option>
                             <option value="sales_admin" {{ old('role') == 'sales_admin' ? 'selected' : '' }}>Sales Admin</option>
+                            <option value="customer_service" {{ old('role') == 'customer_service' ? 'selected' : '' }}>Customer Service</option>
+                            <option value="it_application" {{ old('role') == 'it_application' ? 'selected' : '' }}>IT Application</option>
+                            <option value="inventory_manager" {{ old('role') == 'inventory_manager' ? 'selected' : '' }}>Inventory Manager</option>
                         </select>
                         @error('role') <span class="help-block">{{ $message }}</span> @enderror
                     </div>
