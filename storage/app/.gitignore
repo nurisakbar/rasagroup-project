@@ -4,3 +4,4 @@
 !.gitignore
 !faspay_public.pem
 !faspay_public_key.pem
+!37020_server.crt
