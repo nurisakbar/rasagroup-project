@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ManageOrderController extends Controller
 {
@@ -200,6 +201,27 @@ class ManageOrderController extends Controller
         }
 
         return back()->with('info', 'Tidak ada perubahan yang disimpan.');
+    }
+
+    /**
+     * Generate PDF for Surat Jalan.
+     */
+    public function suratJalanPdf(Order $order)
+    {
+        $user = Auth::user();
+        $warehouse = $user->warehouse;
+
+        // Verify the order belongs to user's warehouse
+        if ($order->source_warehouse_id !== $warehouse->id) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);
+
+        $pdf = Pdf::loadView('buyer.distributor.manage-orders.surat-jalan-pdf', compact('warehouse', 'order'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
     }
 
 }

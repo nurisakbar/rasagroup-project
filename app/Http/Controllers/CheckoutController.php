@@ -280,6 +280,20 @@ class CheckoutController extends Controller
         $isShippingDiscounted = true;
         $originalShippingCost = $shippingCost / 0.8;
     }
+    
+    $paymentFees = [
+        'faspay_bca_va' => (float) \App\Models\Setting::get('fee_faspay_bca_va', 0),
+        'faspay_mandiri_va' => (float) \App\Models\Setting::get('fee_faspay_mandiri_va', 0),
+        'faspay_bri_va' => (float) \App\Models\Setting::get('fee_faspay_bri_va', 0),
+        'faspay_bni_va' => (float) \App\Models\Setting::get('fee_faspay_bni_va', 0),
+        'faspay_cimb_va' => (float) \App\Models\Setting::get('fee_faspay_cimb_va', 0),
+        'faspay_permata_va' => (float) \App\Models\Setting::get('fee_faspay_permata_va', 0),
+        'faspay_sinarmas_va' => (float) \App\Models\Setting::get('fee_faspay_sinarmas_va', 0),
+        'faspay_maybank_va' => (float) \App\Models\Setting::get('fee_faspay_maybank_va', 0),
+        'faspay_danamon_va' => (float) \App\Models\Setting::get('fee_faspay_danamon_va', 0),
+        'faspay_bsi_va' => (float) \App\Models\Setting::get('fee_faspay_bsi_va', 0),
+        'faspay_qris' => (float) \App\Models\Setting::get('fee_faspay_qris', 0),
+    ];
 
     return view('checkout.index', compact(
         'carts', 
@@ -305,7 +319,8 @@ class CheckoutController extends Controller
         'allShippingServices',
         'sourceWarehouse',
         'affiliate',
-        'cart_ids'
+        'cart_ids',
+        'paymentFees'
     ));
 }
 
@@ -433,8 +448,23 @@ class CheckoutController extends Controller
             $isShippingDiscounted = true;
             $originalShippingCost = $shippingCost / 0.8;
         }
+        
+        $paymentFees = [
+            'faspay_bca_va' => (float) \App\Models\Setting::get('fee_faspay_bca_va', 0),
+            'faspay_mandiri_va' => (float) \App\Models\Setting::get('fee_faspay_mandiri_va', 0),
+            'faspay_bri_va' => (float) \App\Models\Setting::get('fee_faspay_bri_va', 0),
+            'faspay_bni_va' => (float) \App\Models\Setting::get('fee_faspay_bni_va', 0),
+            'faspay_cimb_va' => (float) \App\Models\Setting::get('fee_faspay_cimb_va', 0),
+            'faspay_permata_va' => (float) \App\Models\Setting::get('fee_faspay_permata_va', 0),
+            'faspay_sinarmas_va' => (float) \App\Models\Setting::get('fee_faspay_sinarmas_va', 0),
+            'faspay_maybank_va' => (float) \App\Models\Setting::get('fee_faspay_maybank_va', 0),
+            'faspay_danamon_va' => (float) \App\Models\Setting::get('fee_faspay_danamon_va', 0),
+            'faspay_bsi_va' => (float) \App\Models\Setting::get('fee_faspay_bsi_va', 0),
+            'faspay_qris' => (float) \App\Models\Setting::get('fee_faspay_qris', 0),
+        ];
 
         return response()->json([
+            'payment_fees' => $paymentFees,
             'shipping_cost' => $shippingCost,
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
             'original_shipping_cost_formatted' => 'Rp ' . number_format($originalShippingCost, 0, ',', '.'),
@@ -923,6 +953,12 @@ class CheckoutController extends Controller
 
             $orderType = $user->isDistributor() ? Order::TYPE_DISTRIBUTOR : Order::TYPE_REGULAR;
 
+            $paymentFee = 0;
+            if (str_starts_with($request->payment_method, 'faspay_')) {
+                $paymentFee = (float) \App\Models\Setting::get('fee_' . $request->payment_method, 0);
+                $total += $paymentFee;
+            }
+
             $order = Order::create([
                 'order_type' => $orderType, // Determine by role
                 'order_number' => $orderNumber,
@@ -936,6 +972,7 @@ class CheckoutController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
+                'payment_fee' => $paymentFee,
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,

@@ -30,7 +30,10 @@
                                         <h3 class="mb-0">Pesanan #{{ $order->order_number }}</h3>
                                         <p class="text-muted font-sm mb-0">Ditempatkan pada {{ $order->created_at->format('d M Y H:i') }}</p>
                                     </div>
-                                    <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{{ route('distributor.manage-orders.surat-jalan-pdf', $order) }}" target="_blank" class="btn btn-sm btn-outline-primary" style="margin-right: 10px;">
+                                            <i class="fa fa-print"></i> Cetak Surat Jalan
+                                        </a>
                                         @if($order->order_type === 'pos')
                                             <span class="badge bg-info">OFFLINE (POS)</span>
                                         @elseif($order->order_type === 'distributor')
@@ -95,6 +98,12 @@
                                                                 <td colspan="3" class="text-end">Ongkos Kirim:</td>
                                                                 <td class="text-end">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                                                             </tr>
+                                                            @if($order->payment_fee > 0)
+                                                            <tr>
+                                                                <td colspan="3" class="text-end">Biaya Layanan:</td>
+                                                                <td class="text-end">Rp {{ number_format($order->payment_fee, 0, ',', '.') }}</td>
+                                                            </tr>
+                                                            @endif
                                                             <tr class="text-brand fs-6">
                                                                 <td colspan="3" class="text-end">Total:</td>
                                                                 <td class="text-end">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>

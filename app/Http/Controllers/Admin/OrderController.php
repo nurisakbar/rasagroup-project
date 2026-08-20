@@ -195,6 +195,16 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order', 'expeditions'));
     }
 
+    public function printSuratJalan(Order $order)
+    {
+        $order->load(['user', 'items.product', 'address']);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.surat-jalan', compact('order'));
+        $pdf->setPaper('a4', 'portrait');
+        
+        return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
+    }
+
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([

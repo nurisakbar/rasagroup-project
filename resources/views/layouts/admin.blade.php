@@ -204,6 +204,11 @@
             <i class="fa fa-money"></i> <span>PENARIKAN POIN</span>
           </a>
         </li>
+        <li class="{{ request()->routeIs('admin.payment-fees.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.payment-fees.index') }}">
+            <i class="fa fa-credit-card"></i> <span>BIAYA LAYANAN</span>
+          </a>
+        </li>
         @endif
         
         @if(in_array($adminRole, ['super_admin', 'customer_service']))

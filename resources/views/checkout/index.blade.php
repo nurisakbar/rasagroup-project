@@ -544,6 +544,14 @@
                                         </small>
                                     </td>
                                 </tr>
+                                <tr id="paymentFeeRow" class="rg-checkout-total-row" style="display: none;">
+                                    <th class="cart_total_label align-middle py-3">
+                                        <h6 class="text-muted mb-0">Biaya Layanan</h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle py-3">
+                                        <h5 class="text-brand mb-0" id="paymentFeeDisplay">Rp 0</h5>
+                                    </td>
+                                </tr>
                                 <tr class="rg-checkout-total-row rg-checkout-total-final">
                                     <th class="cart_total_label align-middle pt-4 pb-2">
                                         <h4 class="text-brand mb-0">Total</h4>
@@ -1071,6 +1079,10 @@
 @push('scripts')
 <script>
     window.checkoutTotalWithoutShipping = {{ (float) ($subtotal - $discountAmount) }};
+    var paymentFees = @json($paymentFees ?? []);
+    var currentBaseTotal = {{ (float) $total }};
+    var currentPaymentFee = 0;
+    
     var currentAddressId = '{{ $defaultAddress?->id ?? '' }}';
     var currentExpeditionId = '{{ $defaultExpedition?->id ?? '' }}';
     var currentServiceCode = @json($defaultService['code'] ?? null);
@@ -1306,7 +1318,18 @@
                 } else {
                     $('#shippingCostDisplay').text(data.shipping_cost_formatted);
                 }
-                $('#totalDisplay').text(data.total_formatted);
+                if (data.payment_fees) {
+                    paymentFees = data.payment_fees;
+                }
+                currentBaseTotal = parseFloat(data.total);
+                
+                var checkedPayment = $('input[name="payment_method"]:checked').val();
+                if (checkedPayment) {
+                    selectPayment(checkedPayment);
+                } else {
+                    $('#totalDisplay').text(data.total_formatted);
+                }
+
                 $('#subtotalDisplay').text(data.subtotal_formatted);
                 if (data.total_weight_formatted) {
                     $('#totalWeightDisplay').text('Berat: ' + data.total_weight_formatted);
@@ -1417,7 +1440,34 @@
         if(cardId) {
              $('#' + cardId).addClass('active');
         }
+        else if (method.startsWith('faspay_')) {
+             var eleId = method.replace('faspay_', 'card-faspay-');
+             if ($('#' + eleId).length) $('#' + eleId).addClass('active');
+        }
+        
+        if (method.startsWith('faspay_') && paymentFees[method]) {
+            currentPaymentFee = parseFloat(paymentFees[method]);
+        } else {
+            currentPaymentFee = 0;
+        }
+        
+        if (currentPaymentFee > 0) {
+            $('#paymentFeeRow').show();
+            $('#paymentFeeDisplay').text('Rp ' + currentPaymentFee.toLocaleString('id-ID').replace(/,/g, '.'));
+        } else {
+            $('#paymentFeeRow').hide();
+        }
+        
+        var newTotal = currentBaseTotal + currentPaymentFee;
+        $('#totalDisplay').text('Rp ' + newTotal.toLocaleString('id-ID').replace(/,/g, '.'));
     }
+
+    $(document).ready(function() {
+        var checkedPayment = $('input[name="payment_method"]:checked').val();
+        if (checkedPayment) {
+            selectPayment(checkedPayment);
+        }
+    });
 
     $('#checkoutForm').on('submit', function(e) {
         var btn = $('#submitBtn');

@@ -451,6 +451,12 @@
                                 <th colspan="3" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
+                            @if($order->payment_fee > 0)
+                            <tr>
+                                <th colspan="3" class="text-right">Biaya Layanan:</th>
+                                <td class="text-right">Rp {{ number_format($order->payment_fee, 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
                             <tr style="font-size: 16px;">
                                 <th colspan="3" class="text-right">Total:</th>
                                 <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>

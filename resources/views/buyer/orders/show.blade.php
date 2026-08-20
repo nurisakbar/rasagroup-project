@@ -468,6 +468,12 @@
                                                             <span class="text-muted font-sm">Ongkos Kirim</span>
                                                             <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</span>
                                                         </div>
+                                                        @if($order->payment_fee > 0)
+                                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                                            <span class="text-muted font-sm">Biaya Layanan</span>
+                                                            <span class="font-sm text-dark fw-bold">Rp {{ number_format($order->payment_fee, 0, ',', '.') }}</span>
+                                                        </div>
+                                                        @endif
                                                         <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                                                             <h5 class="mb-0 text-dark fw-bold">Total Harga</h5>
                                                             <h5 class="mb-0 text-brand fw-bold text-nowrap">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h5>

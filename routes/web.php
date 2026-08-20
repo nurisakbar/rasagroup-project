@@ -260,6 +260,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Admin\OrderController::class, 'printSuratJalan'])->name('orders.surat-jalan');
         Route::put('/orders/{order}', [App\Http\Controllers\Admin\OrderController::class, 'update'])->name('orders.update');
         Route::put('/orders/{order}/status', [App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::put('/orders/{order}/tracking', [App\Http\Controllers\Admin\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
@@ -279,6 +280,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/settings/general', [App\Http\Controllers\Admin\SettingController::class, 'updateGeneral'])->name('settings.update-general');
         Route::put('/settings/driippreneur-point-rate', [App\Http\Controllers\Admin\SettingController::class, 'updateDriippreneurPointRate'])->name('settings.update-driippreneur-point-rate');
         Route::put('/settings/expeditions', [App\Http\Controllers\Admin\SettingController::class, 'updateExpeditions'])->name('settings.update-expeditions');
+        
+        // Payment Fees (Finance)
+        Route::get('/payment-fees', [App\Http\Controllers\Admin\PaymentFeeController::class, 'index'])->name('payment-fees.index');
+        Route::put('/payment-fees', [App\Http\Controllers\Admin\PaymentFeeController::class, 'update'])->name('payment-fees.update');
 
         // DRiiPPreneur Management
         Route::get('/driippreneurs', [App\Http\Controllers\Admin\DriippreneurController::class, 'index'])->name('driippreneurs.index');
@@ -431,6 +436,7 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         // Manage Orders (Orders masuk ke warehouse distributor)
         Route::get('/manage-orders', [App\Http\Controllers\Distributor\ManageOrderController::class, 'index'])->name('manage-orders.index');
         Route::get('/manage-orders/{order}', [App\Http\Controllers\Distributor\ManageOrderController::class, 'show'])->name('manage-orders.show');
+        Route::get('/manage-orders/{order}/surat-jalan', [App\Http\Controllers\Distributor\ManageOrderController::class, 'suratJalanPdf'])->name('manage-orders.surat-jalan-pdf');
         Route::put('/manage-orders/{order}', [App\Http\Controllers\Distributor\ManageOrderController::class, 'update'])->name('manage-orders.update');
 
         // Order Management

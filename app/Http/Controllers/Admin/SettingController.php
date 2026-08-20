@@ -49,7 +49,7 @@ class SettingController extends Controller
         $hubs = Warehouse::where('is_active', true)->get();
         $payment_confirmation_email = Setting::get('payment_confirmation_email');
         $distributor_default_hub = Setting::get('distributor_default_hub');
-
+        
         return view('admin.settings.index', compact('expeditions', 'hubs', 'payment_confirmation_email', 'distributor_default_hub'));
     }
 

@@ -81,7 +81,7 @@ class FaspayService
                 "bill_desc"         => "Pembayaran Pesanan #" . $billNo,
                 "bill_currency"     => "IDR",
                 "bill_gross"        => (string) ((int) $order->subtotal), // Ensure integer string
-                "bill_miscfee"      => (string) ((int) $order->shipping_cost),
+                "bill_miscfee"      => (string) ((int) ($order->total_amount - $order->subtotal)),
                 "bill_total"        => (string) ((int) $order->total_amount),
                 "cust_no"           => (string) $user->id,
                 "cust_name"         => $firstName,
