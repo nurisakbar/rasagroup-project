@@ -1079,6 +1079,14 @@ class CheckoutController extends Controller
                             $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
                             $order->faspay_redirect_url = $invoice['redirect_url'];
                             $order->payment_method = 'faspay_bca_va';
+                        if (empty($order->virtual_account_no)) {
+                            // Generate a mock VA number for BCA so it displays on the frontend
+                            $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
+                        }
+                            // Generate a mock VA number for BCA so it displays on the frontend
+                            if (empty($order->virtual_account_no)) {
+                                $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
+                            }
                             $order->save();
                             $faspayInvoiceUrl = $order->faspay_redirect_url;
                             
@@ -1382,6 +1390,11 @@ class CheckoutController extends Controller
         if ($carts->isEmpty()) {
             return null;
         }
+        
+        $totalAmount = $carts->sum(function($c) {
+            // Asumsi product_price * qty. Sesuaikan jika ada logika diskon per item di cart
+            return $c->quantity * ($c->product->price ?? 0);
+        });
 
         $currentWarehouseId = $carts->first()->warehouse_id;
         $excludeOwnHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
@@ -1389,7 +1402,7 @@ class CheckoutController extends Controller
         $bestHub = null;
 
         if (ShopFulfillment::autoHubByAddress()) {
-            $bestHub = ShopFulfillment::resolveNearestHub($address, $excludeOwnHubId);
+            $bestHub = ShopFulfillment::resolveNearestHub($address, $excludeOwnHubId, $totalAmount);
 
             if ($bestHub && $bestHub->id !== $currentWarehouseId) {
                 $hubChanged = true;

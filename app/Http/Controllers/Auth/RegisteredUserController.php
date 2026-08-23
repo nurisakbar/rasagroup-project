@@ -34,6 +34,7 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'max:20', 'unique:'.User::class],
+            'sales_code' => ['nullable', 'string', 'max:255'],
         ]);
 
         $waCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -43,9 +44,10 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => 'buyer',
+            'role' => !empty($request->sales_code) ? 'outlet' : 'buyer',
             'wa_verification_code' => $waCode,
             'is_potential_distributor' => $request->has('is_potential_distributor') ? 1 : 0,
+            'sales_code' => $request->sales_code,
         ]);
 
         event(new Registered($user));

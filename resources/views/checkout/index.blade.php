@@ -585,7 +585,7 @@
                     <div class="mb-20">
                         <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Kode Sales</h6>
                         <div class="form-group mb-0">
-                            <input type="text" name="sales_code" class="form-control" placeholder="Masukkan kode sales (Opsional)" value="{{ old('sales_code') }}">
+                            <input type="text" name="sales_code" class="form-control" placeholder="Masukkan kode sales (Opsional)" value="{{ old('sales_code', Auth::user()?->sales_code) }}">
                             @error('sales_code')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror

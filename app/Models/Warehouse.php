@@ -219,16 +219,34 @@ class Warehouse extends Model
      *
      * @param  string|null  $excludeWarehouseId  Mis. hub distributor sendiri — tidak dipilih untuk pengiriman belanja.
      */
-    public static function findBestHubForAddress(Address $address, ?string $excludeWarehouseId = null): ?self
+    public static function findBestHubForAddress(Address $address, ?string $excludeWarehouseId = null, float $totalAmount = 0): ?self
     {
-        $exclude = $excludeWarehouseId;
+                $exclude = $excludeWarehouseId;
+        
+        // Custom Logic: If total >= 25,000,000 force MM2100 hub
+        if ($totalAmount >= 25000000) {
+            $mm2100 = self::where('is_active', true)->where('name', 'like', '%MM2100%')->first();
+            if ($mm2100) {
+                return $mm2100;
+            }
+        }
         $user = $address->user;
         
+        // User role mapping
+        $rolesAllowed = ['umum', 'ecommerce']; // default for regular users
+        
+        if ($user) {
+            if ($user->isDistributor()) {
+                $rolesAllowed = ['distributor']; // STRICTLY distributor only
+            } elseif ($user->isOutlet()) {
+                $rolesAllowed = ['outlet']; // STRICTLY outlet only
+            }
+        }
 
-        $queryBuilder = function () use ($exclude, $isDistributor) {
+        $queryBuilder = function () use ($exclude, $rolesAllowed) {
             return self::where('is_active', true)
                 ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
-                ->where('target_role', $isDistributor ? 1 : 0);
+                ->whereIn('target_role', $rolesAllowed);
         };
 
         // 1. Try Same District

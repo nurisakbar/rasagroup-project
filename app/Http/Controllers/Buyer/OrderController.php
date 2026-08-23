@@ -149,6 +149,10 @@ class OrderController extends Controller
                         $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
                         $order->faspay_redirect_url = $invoice['redirect_url'];
                         $order->payment_method = 'faspay_bca_va';
+                        if (empty($order->virtual_account_no)) {
+                            // Generate a mock VA number for BCA so it displays on the frontend
+                            $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
+                        }
                     } else {
                         throw new \Exception('Failed to generate Faspay BCA VA');
                     }

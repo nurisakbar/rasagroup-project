@@ -320,17 +320,25 @@
                                                 </div>
                                             </div>
                                             
-                                            <div class="p-25 border-radius-12 mb-20 text-center" style="background: #F8F9FA; border: 1.5px dashed #E2E2E2;">
-                                                <div class="mb-15">
-                                                    <span class="font-sm d-block mb-5" style="color: #4b5563;">Nomor Virtual Account</span>
-                                                    <h2 class="mb-0 va-number" style="color: #6A1B1B; letter-spacing: 1.5px; font-weight: 700; word-break: break-all;">{{ $order->virtual_account_no }}</h2>
+                                            @if($order->virtual_account_no)
+                                                <div class="p-25 border-radius-12 mb-20 text-center" style="background: #F8F9FA; border: 1.5px dashed #E2E2E2;">
+                                                    <div class="mb-15">
+                                                        <span class="font-sm d-block mb-5" style="color: #4b5563;">Nomor Virtual Account</span>
+                                                        <h2 class="mb-0 va-number" style="color: #6A1B1B; letter-spacing: 1.5px; font-weight: 700; word-break: break-all;">{{ $order->virtual_account_no }}</h2>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="text-center mt-20">
-                                                <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('{{ $order->virtual_account_no }}', this)">
-                                                    <i class="fi-rs-copy mr-5"></i> Salin Nomor VA
-                                                </button>
-                                            </div>
+                                                <div class="text-center mt-20">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('{{ $order->virtual_account_no }}', this)">
+                                                        <i class="fi-rs-copy mr-5"></i> Salin Nomor VA
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <div class="p-25 border-radius-12 mb-20 text-center" style="background: #F8F9FA; border: 1.5px dashed #E2E2E2;">
+                                                    <div class="mb-15">
+                                                        <p class="mb-0 text-muted">Nomor Virtual Account akan ditampilkan di halaman pembayaran BCA.</p>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         @endif
                                         <div class="text-center mt-25 pt-20 border-top">
                                             <p class="mb-0 font-sm" style="color: #4b5563;">

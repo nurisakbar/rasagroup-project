@@ -22,8 +22,8 @@ final class ShopFulfillment
         return (bool) config('shop.show_stock_on_storefront', false);
     }
 
-    public static function resolveNearestHub(Address $address, ?string $excludeWarehouseId = null): ?Warehouse
+    public static function resolveNearestHub(Address $address, ?string $excludeWarehouseId = null, float $totalAmount = 0): ?Warehouse
     {
-        return Warehouse::findBestHubForAddress($address, $excludeWarehouseId);
+        return Warehouse::findBestHubForAddress($address, $excludeWarehouseId, $totalAmount);
     }
 }
