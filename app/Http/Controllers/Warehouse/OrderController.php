@@ -131,9 +131,14 @@ class OrderController extends Controller
                 })
                 ->addColumn('action', function ($order) {
                     $showUrl = route('warehouse.orders.show', $order);
-                    return '<a href="' . $showUrl . '" class="btn btn-info btn-xs" title="Detail">
+                    $printUrl = route('warehouse.orders.surat-jalan-pdf', $order);
+                    $html = '<a href="' . $showUrl . '" class="btn btn-info btn-xs" title="Detail" style="margin-right: 4px;">
                         <i class="fa fa-eye"></i>
                     </a>';
+                    $html .= '<a href="' . $printUrl . '" target="_blank" class="btn btn-primary btn-xs" title="Cetak Surat Jalan">
+                        <i class="fa fa-print"></i>
+                    </a>';
+                    return $html;
                 })
                 ->rawColumns(['order_number_display', 'customer_info', 'order_type_badge', 'items_info', 'total_amount_formatted', 'order_status_badge', 'payment_status_badge', 'expedition_info', 'action'])
                 ->make(true);
@@ -491,6 +496,23 @@ class OrderController extends Controller
         ]);
 
         return back()->with('error', $error);
+    }
+
+    /**
+     * Generate PDF for Surat Jalan.
+     */
+    public function suratJalanPdf(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);
+        
+        $warehouse = auth()->user()->warehouse;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.distributor.manage-orders.surat-jalan-pdf', compact('warehouse', 'order'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
     }
 }
 

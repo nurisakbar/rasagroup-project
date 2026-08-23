@@ -211,21 +211,23 @@ class WarehouseController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {
-                    return '<strong>' . e($warehouse->name) . '</strong>';
-                })
-                ->addColumn('kode_hub_display', function ($warehouse) {
-                    return $warehouse->kode_hub
-                        ? e($warehouse->kode_hub)
-                        : '<span class="text-muted">-</span>';
-                })
-                ->addColumn('sync_sources_info', function ($warehouse) {
-                    return $warehouse->syncSourceBadgesHtml();
+                    $html = '<strong>' . e($warehouse->name) . '</strong>';
+                    $kodeHub = $warehouse->kode_hub ? e($warehouse->kode_hub) : '-';
+                    $sumber = $warehouse->syncSourceBadgesHtml();
+                    $html .= '<br><small class="text-muted">' . $kodeHub . ' &mdash; ' . $sumber . '</small>';
+                    return $html;
                 })
                 ->addColumn('location_info', function ($warehouse) {
-                    if ($warehouse->regency && $warehouse->province) {
-                        return '<i class="fa fa-map-marker text-red"></i> ' . $warehouse->regency->name . ', ' . $warehouse->province->name;
-                    }
-                    return '<span class="text-muted">-</span>';
+                    $jalan = $warehouse->address ? e($warehouse->address) : '-';
+                    $desa = $warehouse->village_name ? e($warehouse->village_name) : '-';
+                    $kecamatan = $warehouse->district_name ? e($warehouse->district_name) : '-';
+                    $kabupaten = $warehouse->regency_name ? e($warehouse->regency_name) : '-';
+                    $provinsi = $warehouse->province_name ? e($warehouse->province_name) : '-';
+
+                    $baris1 = $jalan . ', ' . $desa;
+                    $baris2 = $kecamatan . ', ' . $kabupaten . ', ' . $provinsi;
+
+                    return '<i class="fa fa-map-marker text-red"></i> ' . $baris1 . '<br><small class="text-muted">' . $baris2 . '</small>';
                 })
                 ->addColumn('phone_display', function ($warehouse) {
                     return $warehouse->phone ?? '-';
@@ -256,7 +258,7 @@ class WarehouseController extends Controller
                         </a>
                     ';
                 })
-                ->rawColumns(['name_info', 'kode_hub_display', 'sync_sources_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
+                ->rawColumns(['name_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
                 ->make(true);
         }
 
@@ -294,6 +296,7 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'target_role' => 'required|string|in:ecommerce,distributor,outlet,umum',
             // User data
             'user_name' => 'required|string|max:255',
             'user_email' => 'required|email|unique:users,email',
@@ -315,6 +318,7 @@ class WarehouseController extends Controller
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'is_active' => $request->has('is_active'),
+            'gudang_order_distributor' => $request->boolean('gudang_order_distributor'),
         ]);
 
         // Create user for this warehouse
@@ -405,9 +409,11 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'target_role' => 'required|string|in:ecommerce,distributor,outlet,umum',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+        $validated['gudang_order_distributor'] = $request->boolean('gudang_order_distributor');
 
         $warehouse->update($validated);
 

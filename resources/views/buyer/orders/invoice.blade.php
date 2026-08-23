@@ -165,6 +165,28 @@
             </table>
         </div>
 
+        @if($order->sales || $order->affiliate)
+        <div class="info-section">
+            <table>
+                <tr>
+                    @if($order->sales)
+                    <td>
+                        <div class="section-title">Sales Person</div>
+                        <strong>{{ $order->sales->name }}</strong> ({{ $order->sales_code }})<br>
+                        {{ $order->sales->email }}
+                    </td>
+                    @endif
+                    @if($order->affiliate)
+                    <td>
+                        <div class="section-title">Kode Referal</div>
+                        {{ $order->affiliate->referral_code }}
+                    </td>
+                    @endif
+                </tr>
+            </table>
+        </div>
+        @endif
+
         <table class="items-table">
             <thead>
                 <tr>

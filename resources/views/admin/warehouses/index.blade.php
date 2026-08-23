@@ -79,9 +79,7 @@
                             <tr>
                                 <th width="5%">No</th>
                                 <th>Nama Hub</th>
-                                <th>Kode Hub</th>
-                                <th>Sumber</th>
-                                <th>Lokasi</th>
+                                <th>Alamat</th>
                                 <th>Telepon</th>
                                 <th>Jenis Produk</th>
                                 <th>Total Stock</th>
@@ -119,8 +117,6 @@ $(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'name_info', name: 'name' },
-            { data: 'kode_hub_display', name: 'kode_hub' },
-            { data: 'sync_sources_info', name: 'sync_sources', orderable: false, searchable: false },
             { data: 'location_info', name: 'location', orderable: false, searchable: false },
             { data: 'phone_display', name: 'phone', orderable: false },
             { data: 'products_info', name: 'products_count', orderable: false, searchable: false },

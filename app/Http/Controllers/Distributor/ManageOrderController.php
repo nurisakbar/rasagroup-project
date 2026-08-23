@@ -99,9 +99,13 @@ class ManageOrderController extends Controller
                     return '<span class="label label-' . $paymentClass . '">' . ucfirst($order->payment_status) . '</span>';
                 })
                 ->addColumn('action', function ($order) {
-                    return '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-info btn-xs">
+                    $html = '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-info btn-xs" style="margin-right: 4px;">
                         <i class="fa fa-eye"></i> Detail
                     </a>';
+                    $html .= '<a href="' . route('distributor.manage-orders.surat-jalan-pdf', $order) . '" target="_blank" class="btn btn-primary btn-xs">
+                        <i class="fa fa-print"></i> Cetak
+                    </a>';
+                    return $html;
                 })
                 ->rawColumns(['order_info', 'buyer_info', 'expedition_info', 'total_formatted', 'status_badge', 'payment_badge', 'action'])
                 ->orderColumn('created_at', function ($query, $order) {

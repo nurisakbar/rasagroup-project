@@ -88,6 +88,14 @@
                                 </span>
                             </td>
                         </tr>
+                        @if($order->received_at)
+                        <tr>
+                            <th>Waktu Pesanan Diterima</th>
+                            <td>
+                                <span class="text-success"><i class="fa fa-check-circle"></i> {{ $order->received_at->format('d M Y, H:i') }} WIB</span>
+                            </td>
+                        </tr>
+                        @endif
                         @if($order->notes)
                         <tr>
                             <th>Catatan</th>
@@ -514,21 +522,6 @@
                         <!-- Current Status Display -->
                         <div class="form-group">
                             <label>Status Pesanan Saat Ini</label>
-                            @php
-                                $statusClass = [
-                                    'pending' => 'warning',
-                                    'processing' => 'info',
-                                    'shipped' => 'primary',
-                                    'delivered' => 'success',
-                                    'completed' => 'success',
-                                    'cancelled' => 'danger',
-                                ][$order->order_status] ?? 'default';
-                            @endphp
-                            <div class="text-center" style="margin-bottom: 10px;">
-                                <span class="label label-{{ $statusClass }}" style="font-size: 14px; padding: 8px 15px;">
-                                    {{ strtoupper($order->order_status) }}
-                                </span>
-                            </div>
                             <select name="order_status" id="order_status" class="form-control">
                                 <option value="">-- Pilih Status Baru (Opsional) --</option>
                                 <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -577,39 +570,7 @@
 
                         <hr>
 
-                        <!-- Payment Status -->
-                        <div class="form-group">
-                            <label>Status Pembayaran Saat Ini</label>
-                            @php
-                                $paymentClass = [
-                                    'pending' => 'warning',
-                                    'paid' => 'success',
-                                    'failed' => 'danger',
-                                    'refunded' => 'info',
-                                ][$order->payment_status] ?? 'default';
-                            @endphp
-                            <div class="text-center" style="margin-bottom: 10px;">
-                                <span class="label label-{{ $paymentClass }}" style="font-size: 14px; padding: 8px 15px;">
-                                    {{ strtoupper($order->payment_status) }}
-                                </span>
-                                <p class="text-muted" style="margin-top: 5px; margin-bottom: 0;">
-                                    <i class="fa fa-{{ $order->payment_method == 'transfer' ? 'bank' : 'money' }}"></i>
-                                    {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ($order->payment_method == 'cod' ? 'COD (Bayar di Tempat)' : ucfirst($order->payment_method)) }}
-                                </p>
-                            </div>
-                            <select name="payment_status" id="payment_status" class="form-control">
-                                <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
-                                <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
-                                <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
-                            </select>
-                            <p class="help-block">
-                                <small class="text-muted">
-                                    <i class="fa fa-info-circle"></i> Update status pembayaran setelah konfirmasi
-                                </small>
-                            </p>
-                        </div>
+
 
                         <hr>
 
@@ -691,12 +652,10 @@ $(document).ready(function() {
     // Store original values
     var originalOrderStatus = $('#order_status').val();
     var originalTrackingNumber = $('#tracking_number').val();
-    var originalPaymentStatus = $('#payment_status').val();
     
     $('#updateOrderForm').on('submit', function(e) {
         var orderStatus = $('#order_status').val();
         var trackingNumber = $('#tracking_number').val();
-        var paymentStatus = $('#payment_status').val();
         
         // Check if at least one field has changed
         var hasChanges = false;
@@ -706,10 +665,6 @@ $(document).ready(function() {
         }
         
         if (trackingNumber !== originalTrackingNumber) {
-            hasChanges = true;
-        }
-        
-        if (paymentStatus && paymentStatus !== originalPaymentStatus) {
             hasChanges = true;
         }
         

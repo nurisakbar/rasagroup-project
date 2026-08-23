@@ -102,6 +102,7 @@
                     <li class="{{ $activeTab == 'info' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'info']) }}"><i class="fa fa-info-circle"></i> Info Umum</a></li>
                     <li class="{{ $activeTab == 'stock' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'stock']) }}"><i class="fa fa-cubes"></i> Monitoring Stock</a></li>
                     <li class="{{ $activeTab == 'orders' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'orders']) }}"><i class="fa fa-shopping-cart"></i> Riwayat Order</a></li>
+                    <li class="{{ $activeTab == 'addresses' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'addresses']) }}"><i class="fa fa-map-marker"></i> Alamat Pengiriman</a></li>
                     <li class="{{ $activeTab == 'dokumen' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'dokumen']) }}"><i class="fa fa-file-text"></i> Dokumen</a></li>
                     <li class="{{ $activeTab == 'staff' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Kelola Staff</a></li>
                     <li class="{{ $activeTab == 'target_belanja' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'target_belanja']) }}"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
@@ -319,6 +320,30 @@
                                         <th>Status Pesanan</th>
                                         <th>Status Pembayaran</th>
                                         <th width="80px">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Alamat Pengiriman -->
+                    <div class="tab-pane {{ $activeTab == 'addresses' ? 'active' : '' }}" id="tab_addresses">
+                        <div class="row" style="margin-bottom: 15px;">
+                            <div class="col-md-12">
+                                <h4 class="page-header" style="margin-top: 0;"><i class="fa fa-map-marker"></i> Daftar Alamat Pengiriman</h4>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="addresses-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">No</th>
+                                        <th>Label / Nama Toko</th>
+                                        <th>Penerima & Kontak</th>
+                                        <th>Alamat Lengkap</th>
+                                        <th>Keterangan (Notes)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -862,6 +887,41 @@ $(document).ready(function() {
 
     $('#filter-order-status, #filter-payment-status').change(function() {
         ordersTable.draw();
+    });
+
+    // Addresses DataTable
+    var addressesTable = $('#addresses-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.distributors.show', $distributor) }}",
+            data: function(d) {
+                d.type = 'addresses';
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'store_name_display', name: 'store_name' },
+            { data: 'recipient_info', name: 'recipient_name' },
+            { data: 'full_address_display', name: 'address_detail' },
+            { data: 'notes_display', name: 'notes' }
+        ],
+        order: [[1, 'asc']],
+        pageLength: 10,
+        language: {
+            processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
+            search: "Cari Alamat:",
+            lengthMenu: "Tampilkan _MENU_ alamat",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ alamat",
+            infoEmpty: "Tidak ada alamat",
+            emptyTable: "Belum ada alamat pengiriman",
+            paginate: {
+                first: "Awal",
+                last: "Akhir",
+                next: "Selanjutnya",
+                previous: "Sebelumnya"
+            }
+        }
     });
 
     // Dokumen distributor

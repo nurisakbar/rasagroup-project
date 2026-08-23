@@ -125,6 +125,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/orders/{order}/track', [App\Http\Controllers\Buyer\OrderController::class, 'trackOrder'])->name('orders.track');
     Route::get('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'confirmPaymentForm'])->name('orders.confirm-payment');
     Route::post('/orders/{order}/confirm-payment', [App\Http\Controllers\Buyer\OrderController::class, 'storePaymentConfirmation'])->name('orders.confirm-payment.store');
+    Route::post('/orders/{order}/change-payment', [App\Http\Controllers\Buyer\OrderController::class, 'changePaymentMethod'])->name('orders.change-payment');
     Route::post('/orders/{order}/confirm-receipt', [App\Http\Controllers\Buyer\OrderController::class, 'confirmReceipt'])->name('orders.confirm-receipt');
     Route::get('/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [App\Http\Controllers\Buyer\ProfileController::class, 'edit'])->name('profile.edit');
@@ -147,6 +148,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/addresses/get-regencies', [App\Http\Controllers\Buyer\AddressController::class, 'getRegencies'])->name('addresses.get-regencies');
     Route::get('/addresses/get-districts', [App\Http\Controllers\Buyer\AddressController::class, 'getDistricts'])->name('addresses.get-districts');
     Route::get('/addresses/get-villages', [App\Http\Controllers\Buyer\AddressController::class, 'getVillages'])->name('addresses.get-villages');
+    Route::post('/addresses/match-location', [App\Http\Controllers\Buyer\AddressController::class, 'matchLocation'])->name('addresses.match-location');
     
     // Distributor Application
     Route::get('/distributor/apply', [App\Http\Controllers\Buyer\DistributorApplicationController::class, 'create'])->name('distributor.apply');
@@ -352,6 +354,7 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         Route::get('/orders', [App\Http\Controllers\Warehouse\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'update'])->name('orders.update');
+        Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Warehouse\OrderController::class, 'suratJalanPdf'])->name('orders.surat-jalan-pdf');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
@@ -455,8 +458,11 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/orders/success/{order}', [App\Http\Controllers\Distributor\OrderController::class, 'success'])->name('orders.success');
         Route::get('/orders/history', [App\Http\Controllers\Distributor\OrderController::class, 'history'])->name('orders.history');
         Route::get('/orders/{order}', [App\Http\Controllers\Distributor\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Distributor\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
         Route::get('/orders/{order}/confirm-payment', [App\Http\Controllers\Distributor\OrderController::class, 'confirmPaymentForm'])->name('orders.confirm-payment');
+        Route::post('/orders/{order}/confirm-receipt', [App\Http\Controllers\Distributor\OrderController::class, 'confirmReceipt'])->name('orders.confirm-receipt');
         Route::post('/orders/{order}/confirm-payment', [App\Http\Controllers\Distributor\OrderController::class, 'storePaymentConfirmation'])->name('orders.confirm-payment.store');
+        Route::post('/orders/{order}/change-payment', [App\Http\Controllers\Distributor\OrderController::class, 'changePaymentMethod'])->name('orders.change-payment');
         Route::post('/orders/{order}/convert-to-stock', [App\Http\Controllers\Distributor\OrderController::class, 'convertToStock'])->name('orders.convert-to-stock');
     });
 });

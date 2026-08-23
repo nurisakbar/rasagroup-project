@@ -21,10 +21,11 @@ class SettingController extends Controller
     {
         // Fetch couriers from EkspedisiKu API
         $courierRes = $this->ekspedisiku->getCouriers();
-        $apiCourierCodes = ['self_pickup'];
+        $apiCourierCodes = ['self_pickup', 'kurir_toko'];
 
         \App\Models\Expedition::updateOrCreate(
             ['code' => 'self_pickup'],
+            ['code' => 'kurir_toko'],
             [
                 'name' => 'Ambil Sendiri (Self Pickup)',
             ]

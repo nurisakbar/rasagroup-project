@@ -194,8 +194,7 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
 <style>
     .form-label-custom { font-family: 'Fira Sans', sans-serif; font-weight: 600; color: #253D4E; margin-bottom: 8px; font-size: 14px; display: block; }
     .custom-input, .custom-textarea {
@@ -561,7 +560,7 @@ $(document).ready(function() {
                     } else {
                         $('#village_container').fadeOut();
                         // Scroll to address detail if village is skipped
-                        $('textarea[name="address_detail"]').focus();
+                        $('[name="address_detail"]').focus();
                     }
                 },
                 error: function(xhr, status, error) {
@@ -593,137 +592,285 @@ $(document).ready(function() {
     });
 });
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <script>
-$(document).ready(function() {
-    // Map Initialization
+let map;
+let marker;
+
+function initMap() {
     let defaultLat = -6.200000; // Jakarta default
     let defaultLng = 106.816666;
     let currentLat = $('#latitude').val() ? parseFloat($('#latitude').val()) : defaultLat;
     let currentLng = $('#longitude').val() ? parseFloat($('#longitude').val()) : defaultLng;
 
-    // Use a small timeout to ensure container is fully rendered before leaflet computes size
-    setTimeout(function() {
-        const map = L.map('map').setView([currentLat, currentLng], 13);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+    const myLatlng = { lat: currentLat, lng: currentLng };
 
-        let marker = L.marker([currentLat, currentLng], {draggable: true}).addTo(map);
+    map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 13,
+        center: myLatlng,
+    });
 
-        function updateInputs(lat, lng) {
-            $('#latitude').val(lat.toFixed(6));
-            $('#longitude').val(lng.toFixed(6));
-        }
+    marker = new google.maps.Marker({
+        position: myLatlng,
+        map: map,
+        draggable: true,
+    });
 
-        // Add Search Control (Geocoder)
-        L.Control.geocoder({
-            defaultMarkGeocode: false,
-            placeholder: 'Cari gedung, jalan, kota...',
-        })
-        .on('markgeocode', function(e) {
-            const latlng = e.geocode.center;
-            map.setView(latlng, 16);
-            marker.setLatLng(latlng);
-            updateInputs(latlng.lat, latlng.lng);
-        })
-        .addTo(map);
+    function updateInputs(lat, lng, doReverseGeocode = false) {
+        $('#latitude').val(lat.toFixed(6));
+        $('#longitude').val(lng.toFixed(6));
 
-        // Drag marker event
-        marker.on('dragend', function (e) {
-            const position = marker.getLatLng();
-            updateInputs(position.lat, position.lng);
-        });
-
-        // Click map event
-        map.on('click', function(e) {
-            marker.setLatLng(e.latlng);
-            updateInputs(e.latlng.lat, e.latlng.lng);
-        });
-
-        // Geolocation
-        $('#btn-get-location').on('click', function() {
-            const btn = $(this);
-            const status = $('#location-status');
-
-            if (!navigator.geolocation) {
-                status.text('Geolokasi tidak didukung oleh browser Anda.').css('color', '#c53030');
-                return;
-            }
-
-            btn.prop('disabled', true).html('<i class="fi-rs-refresh spin mr-5"></i> Mendapatkan lokasi...');
-            status.text('');
-
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                updateInputs(lat, lng);
-                marker.setLatLng([lat, lng]);
-                map.setView([lat, lng], 15);
-                
-                status.text('Koordinat berhasil didapatkan!').css('color', '#3BB77E');
-                btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Perbarui Koordinat');
-            }, function(error) {
-                let msg = 'Terjadi kesalahan.';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED: msg = 'Akses lokasi ditolak.'; break;
-                    case error.POSITION_UNAVAILABLE: msg = 'Informasi lokasi tidak tersedia.'; break;
-                    case error.TIMEOUT: msg = 'Waktu permintaan habis.'; break;
-                }
-                status.text(msg).css('color', '#c53030');
-                btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Coba Lagi');
-            });
-        });
-
-        // Auto-center map based on dropdown selection
-        function searchMapByAddress() {
-            let queryParts = [];
+        if (doReverseGeocode) {
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
             
-            const village = $('#village_id').find('option:selected').text();
-            if ($('#village_id').val() && village !== '' && !village.includes('--')) queryParts.push(village);
-            
-            const district = $('#district_id').find('option:selected').text();
-            if ($('#district_id').val() && district !== '' && !district.includes('--')) queryParts.push(district);
-            
-            const regency = $('#regency_id').find('option:selected').text();
-            if ($('#regency_id').val() && regency !== '' && !regency.includes('--')) queryParts.push(regency);
-            
-            const province = $('#province_id').find('option:selected').text();
-            if ($('#province_id').val() && province !== '' && !province.includes('--')) queryParts.push(province);
-            
-            if (queryParts.length > 0) {
-                queryParts.push('Indonesia');
-                const query = queryParts.join(', ');
-                
-                $.getJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), function(data) {
-                    if (data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    const formattedAddress = results[0].formatted_address;
+                    const components = results[0].address_components;
+                    
+                    // Ask user for confirmation as requested
+                    if (confirm('Apakah Anda ingin menggunakan alamat ini?\n\n' + formattedAddress)) {
+                        // 2. Extract components for backend matching and form filling
+                        let provinceName = '', regencyName = '', districtName = '', villageName = '';
+                        let postalCode = '', route = '', streetNumber = '', premise = '', neighborhood = '';
+                        let sublocalities = [];
                         
-                        let zoomLevel = 11;
-                        if ($('#village_id').val()) zoomLevel = 17;
-                        else if ($('#district_id').val()) zoomLevel = 15;
-                        else if ($('#regency_id').val()) zoomLevel = 12;
+                        components.forEach(component => {
+                            if (component.types.includes('administrative_area_level_1')) provinceName = component.long_name;
+                            if (component.types.includes('administrative_area_level_2')) regencyName = component.long_name;
+                            if (component.types.includes('administrative_area_level_3')) districtName = component.long_name;
+                            if (component.types.includes('administrative_area_level_4') || component.types.includes('locality')) villageName = component.long_name;
+                            if (component.types.includes('postal_code')) postalCode = component.long_name;
+                            if (component.types.includes('route')) route = component.long_name;
+                            if (component.types.includes('street_number')) streetNumber = component.long_name;
+                            if (component.types.includes('premise')) premise = component.long_name;
+                            if (component.types.includes('neighborhood')) neighborhood = component.long_name;
+                            
+                            // Capture RT/RW/Dusun/Kampung
+                            if (component.types.includes('sublocality_level_1') || 
+                                component.types.includes('sublocality_level_2') || 
+                                component.types.includes('sublocality_level_3') || 
+                                component.types.includes('sublocality_level_4') || 
+                                component.types.includes('sublocality_level_5')) {
+                                sublocalities.push(component.long_name);
+                            }
+                        });
+
+                        // 1. Fill address detail automatically
+                        // Kita utamakan nama jalan/gedung yang spesifik, jika tidak ada, gunakan alamat lengkap dari google
+                        let detailParts = [];
+                        if (premise) detailParts.push(premise);
+                        if (route) detailParts.push(route + (streetNumber ? ' No. ' + streetNumber : ''));
+                        if (neighborhood) detailParts.push(neighborhood);
+                        if (sublocalities.length > 0) detailParts.push(sublocalities.join(', '));
                         
-                        map.setView([lat, lon], zoomLevel);
-                        marker.setLatLng([lat, lon]);
-                        updateInputs(lat, lon);
+                        if (detailParts.length > 0) {
+                            // Tambah village name agar lebih jelas
+                            if (villageName && !detailParts.includes(villageName)) detailParts.push(villageName);
+                            $('[name="address_detail"]').val(detailParts.join(', '));
+                        } else {
+                            // Fallback jika google maps tidak mendeteksi nama jalan secara spesifik
+                            $('[name="address_detail"]').val(formattedAddress);
+                        }
+
+                        // Isi kode pos jika ada
+                        if (postalCode) {
+                            $('input[name="postal_code"]').val(postalCode);
+                        }
+
+                        // 3. Call Backend to match location
+                        $.ajax({
+                            url: '{{ route("buyer.addresses.match-location") }}',
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                province: provinceName,
+                                regency: regencyName,
+                                district: districtName,
+                                village: villageName
+                            },
+                            success: function(res) {
+                                if (res.success && res.data) {
+                                    // Inject and select options without triggering cascading AJAX
+                                    
+                                    // Helper to set option silently
+                                    function setOption(selectId, id, text) {
+                                        let select = $(selectId);
+                                        if (select.find("option[value='" + id + "']").length) {
+                                            select.val(id).trigger('change.select2');
+                                        } else {
+                                            let newOption = new Option(text, id, true, true);
+                                            select.append(newOption).trigger('change.select2');
+                                        }
+                                        select.prop('disabled', false);
+                                    }
+
+                                    setOption('#province_id', res.data.province_id, res.data.province_name);
+                                    setOption('#regency_id', res.data.regency_id, res.data.regency_name);
+                                    setOption('#district_id', res.data.district_id, res.data.district_name);
+                                    
+                                    $('#village_container').fadeIn();
+                                    setOption('#village_id', res.data.village_id, res.data.village_name);
+                                } else {
+                                    alert('Alamat berhasil didapatkan, namun sistem tidak menemukan kecocokan wilayah di database untuk otomatis mengisi dropdown Provinsi/Kab/Kecamatan. Silakan pilih secara manual.');
+                                }
+                            },
+                            error: function() {
+                                alert('Terjadi kesalahan saat mencocokkan wilayah. Silakan pilih secara manual.');
+                            }
+                        });
                     }
-                });
-            }
+                }
+            });
         }
-        
-        // Listen to dropdown changes to update map
-        $('#province_id, #regency_id, #district_id, #village_id').on('change', function() {
-            setTimeout(searchMapByAddress, 500);
-        });
+    }
 
-    }, 500); // 500ms delay for UI render
-});
+    // Drag marker event
+    marker.addListener("dragend", (event) => {
+        updateInputs(event.latLng.lat(), event.latLng.lng(), true);
+    });
+
+    // Click map event
+    map.addListener("click", (event) => {
+        marker.setPosition(event.latLng);
+        updateInputs(event.latLng.lat(), event.latLng.lng(), true);
+    });
+
+    // Click marker event
+    marker.addListener("click", (event) => {
+        updateInputs(event.latLng.lat(), event.latLng.lng(), true);
+    });
+
+    // Add Search Box
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = "pac-input";
+    input.placeholder = "Cari gedung, jalan, kota...";
+    input.style.marginTop = "10px";
+    input.style.width = "60%";
+    input.style.padding = "10px";
+    input.style.borderRadius = "4px";
+    input.style.border = "1px solid #ccc";
+    input.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+    input.style.fontSize = "14px";
+    input.style.textOverflow = "ellipsis";
+    
+    // Cegah form ter-submit saat tekan Enter di kolom pencarian
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+        }
+    });
+
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+
+    const searchBox = new google.maps.places.SearchBox(input);
+    map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+    });
+
+    searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+        if (places.length == 0) {
+            return;
+        }
+
+        const place = places[0];
+        if (!place.geometry || !place.geometry.location) {
+            return;
+        }
+
+        if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);
+        }
+        marker.setPosition(place.geometry.location);
+        updateInputs(place.geometry.location.lat(), place.geometry.location.lng(), true);
+    });
+
+    // Auto-center map based on dropdown selection
+    function searchMapByAddress() {
+        let queryParts = [];
+        
+        const village = $('#village_id').find('option:selected').text();
+        if ($('#village_id').val() && village !== '' && !village.includes('--')) queryParts.push(village);
+        
+        const district = $('#district_id').find('option:selected').text();
+        if ($('#district_id').val() && district !== '' && !district.includes('--')) queryParts.push(district);
+        
+        const regency = $('#regency_id').find('option:selected').text();
+        if ($('#regency_id').val() && regency !== '' && !regency.includes('--')) queryParts.push(regency);
+        
+        const province = $('#province_id').find('option:selected').text();
+        if ($('#province_id').val() && province !== '' && !province.includes('--')) queryParts.push(province);
+        
+        if (queryParts.length > 0) {
+            queryParts.push('Indonesia');
+            const query = queryParts.join(', ');
+            
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: query }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    const loc = results[0].geometry.location;
+                    let zoomLevel = 11;
+                    if ($('#village_id').val()) zoomLevel = 17;
+                    else if ($('#district_id').val()) zoomLevel = 15;
+                    else if ($('#regency_id').val()) zoomLevel = 12;
+                    
+                    map.setCenter(loc);
+                    map.setZoom(zoomLevel);
+                    marker.setPosition(loc);
+                    updateInputs(loc.lat(), loc.lng());
+                }
+            });
+        }
+    }
+    
+    // Listen to dropdown changes to update map
+    $('#province_id, #regency_id, #district_id, #village_id').on('change', function() {
+        setTimeout(searchMapByAddress, 500);
+    });
+
+    // Geolocation
+    $('#btn-get-location').on('click', function() {
+        const btn = $(this);
+        const status = $('#location-status');
+
+        if (!navigator.geolocation) {
+            status.text('Geolokasi tidak didukung oleh browser Anda.').css('color', '#c53030');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<i class="fi-rs-refresh spin mr-5"></i> Mendapatkan lokasi...');
+        status.text('');
+
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            updateInputs(lat, lng, true);
+            const pos = new google.maps.LatLng(lat, lng);
+            marker.setPosition(pos);
+            map.setCenter(pos);
+            map.setZoom(15);
+            
+            status.text('Koordinat berhasil didapatkan!').css('color', '#3BB77E');
+            btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Perbarui Koordinat');
+        }, function(error) {
+            let msg = 'Terjadi kesalahan.';
+            switch(error.code) {
+                case error.PERMISSION_DENIED: msg = 'Akses lokasi ditolak.'; break;
+                case error.POSITION_UNAVAILABLE: msg = 'Informasi lokasi tidak tersedia.'; break;
+                case error.TIMEOUT: msg = 'Waktu permintaan habis.'; break;
+            }
+            status.text(msg).css('color', '#c53030');
+            btn.prop('disabled', false).html('<i class="fi-rs-marker mr-5"></i> Coba Lagi');
+        });
+    });
+}
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&callback=initMap&libraries=places&v=weekly" async defer></script>
 @endpush
 @endsection

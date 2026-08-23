@@ -92,16 +92,29 @@
     <table class="info-table">
         <tr>
             <td width="60%">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">PT Multi Citra Rasa (Rasa Group)</div>
-                <div style="line-height: 1.4;">
-                Jl. Mandala Timur No.11, RT.12/RW.4, Tomang,<br>
-                RT.12/RW.4, Kota, Kec. Grogol petamburan,<br>
-                Kota Jakarta Barat, Daerah Khusus Ibukota<br>
-                Jakarta 11440<br>
-                Jakarta<br>
-                Jakarta, 11440<br>
-                Indonesia
-                </div>
+                @if(isset($warehouse) && $warehouse)
+                    <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">{{ $warehouse->name }}</div>
+                    <div style="line-height: 1.4;">
+                        {{ $warehouse->address }}<br>
+                        @if($warehouse->district) Kec. {{ $warehouse->district->name }}, @endif
+                        @if($warehouse->city) {{ $warehouse->city->name }}, @endif
+                        @if($warehouse->province) {{ $warehouse->province->name }} @endif
+                        <br>
+                        {{ $warehouse->postal_code }}<br>
+                        {{ $warehouse->phone }}
+                    </div>
+                @else
+                    <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">PT Multi Citra Rasa (Rasa Group)</div>
+                    <div style="line-height: 1.4;">
+                    Jl. Mandala Timur No.11, RT.12/RW.4, Tomang,<br>
+                    RT.12/RW.4, Kota, Kec. Grogol petamburan,<br>
+                    Kota Jakarta Barat, Daerah Khusus Ibukota<br>
+                    Jakarta 11440<br>
+                    Jakarta<br>
+                    Jakarta, 11440<br>
+                    Indonesia
+                    </div>
+                @endif
             </td>
             <td width="40%">
                 <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Kepada Yth: {{ $order->user->name }}</div>

@@ -178,8 +178,7 @@ class DistributorController extends Controller
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
@@ -274,13 +273,9 @@ class DistributorController extends Controller
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+
             // User data
             'user_name' => ['required', 'string', 'max:255'],
-            'user_email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'user_phone' => ['nullable', 'string', 'max:20'],
-            'user_password' => ['required', 'string', 'min:8', 'confirmed'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
@@ -303,12 +298,13 @@ class DistributorController extends Controller
             'is_active' => true,
         ]);
 
-        // Create the user
+        // Create the user (main distributor profile)
+        $uuid = (string) Str::uuid();
         User::create([
             'name' => $validated['user_name'],
-            'email' => $validated['user_email'],
-            'phone' => $validated['user_phone'],
-            'password' => Hash::make($validated['user_password']),
+            'email' => 'distributor_' . substr($warehouse->id, 0, 8) . '@system.local',
+            'phone' => $validated['hub_phone'],
+            'password' => Hash::make(Str::random(16)),
             'role' => User::ROLE_DISTRIBUTOR,
             'warehouse_id' => $warehouse->id,
             'price_level_id' => $validated['price_level_id'] ?? null,
@@ -488,6 +484,42 @@ class DistributorController extends Controller
                     </a>';
                 })
                 ->rawColumns(['order_number_display', 'customer_info', 'order_status_badge', 'payment_status_badge', 'action'])
+                ->make(true);
+        }
+
+        if ($request->ajax() && $request->get('type') === 'addresses') {
+            $query = \App\Models\Address::with(['province', 'regency', 'district', 'village'])
+                ->where('user_id', $distributor->id);
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('store_name_display', function ($address) {
+                    $html = '<strong>' . e($address->store_name) . '</strong>';
+                    if ($address->label) {
+                        $html .= '<br><span class="label label-info" style="font-size: 10px;">' . e($address->label) . '</span>';
+                    }
+                    if ($address->is_default) {
+                        $html .= ' <span class="label label-success" style="font-size: 10px;">Utama</span>';
+                    }
+                    return $html;
+                })
+                ->addColumn('recipient_info', function ($address) {
+                    $html = e($address->recipient_name);
+                    if ($address->phone) {
+                        $html .= '<br><small class="text-muted"><i class="fa fa-phone"></i> ' . e($address->phone) . '</small>';
+                    }
+                    return $html;
+                })
+                ->addColumn('full_address_display', function ($address) {
+                    return e($address->full_address);
+                })
+                ->addColumn('notes_display', function ($address) {
+                    if ($address->notes) {
+                        return '<span class="text-muted small">' . e($address->notes) . '</span>';
+                    }
+                    return '-';
+                })
+                ->rawColumns(['store_name_display', 'recipient_info', 'notes_display'])
                 ->make(true);
         }
 
@@ -772,13 +804,9 @@ class DistributorController extends Controller
             'address' => ['nullable', 'string'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+
             // User data
             'user_name' => ['required', 'string', 'max:255'],
-            'user_email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $distributor->id],
-            'user_phone' => ['nullable', 'string', 'max:20'],
-            'user_password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
@@ -805,17 +833,12 @@ class DistributorController extends Controller
         // Update user
         $userData = [
             'name' => $validated['user_name'],
-            'email' => $validated['user_email'],
-            'phone' => $validated['user_phone'],
+            'phone' => $validated['hub_phone'],
             'price_level_id' => $validated['price_level_id'] ?? null,
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
         ];
-
-        if ($request->filled('user_password')) {
-            $userData['password'] = Hash::make($validated['user_password']);
-        }
 
         $distributor->update($userData);
 

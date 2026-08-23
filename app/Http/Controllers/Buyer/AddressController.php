@@ -330,6 +330,68 @@ class AddressController extends Controller
     }
 
     /**
+     * Match location components to WilayahAdministratif.
+     */
+    public function matchLocation(Request $request)
+    {
+        $province = $request->input('province', '');
+        $regency = $request->input('regency', '');
+        $district = $request->input('district', '');
+        $village = $request->input('village', '');
+
+        $districtClean = trim(str_replace(['Kecamatan ', 'District'], '', $district));
+        $villageClean = trim(str_replace(['Kelurahan ', 'Desa ', 'Village'], '', $village));
+        
+        $regencyClean = trim(str_replace(['Kota ', 'Kabupaten ', 'Regency', 'City'], '', $regency));
+        // Remove directional words to get core name (e.g. "West Bandung" -> "Bandung")
+        $regencyCore = trim(str_replace(['West', 'East', 'North', 'South', 'Central', 'Barat', 'Timur', 'Utara', 'Selatan', 'Pusat'], '', $regencyClean));
+
+        $matched = null;
+
+        // Strategy 1: Village and District (Most accurate, avoids translation issues)
+        if ($villageClean && $districtClean) {
+            $matched = \App\Models\WilayahAdministratif::where('district_name', 'like', '%' . $districtClean . '%')
+                ->where('village_name', 'like', '%' . $villageClean . '%')
+                ->first();
+        }
+
+        // Strategy 2: District and Core Regency
+        if (!$matched && $districtClean && $regencyCore) {
+            $matched = \App\Models\WilayahAdministratif::where('regency_name', 'like', '%' . $regencyCore . '%')
+                ->where('district_name', 'like', '%' . $districtClean . '%')
+                ->first();
+        }
+
+        // Strategy 3: Core Regency and Province Core
+        if (!$matched && $regencyCore) {
+            $provinceCore = trim(str_replace(['West', 'East', 'North', 'South', 'Central', 'Java', 'Kalimantan', 'Sumatera', 'Sulawesi'], '', $province));
+            $query = \App\Models\WilayahAdministratif::where('regency_name', 'like', '%' . $regencyCore . '%');
+            if ($provinceCore) {
+                $query->where('province_name', 'like', '%' . $provinceCore . '%');
+            }
+            $matched = $query->first();
+        }
+
+        if ($matched) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'province_id' => $matched->province_id,
+                    'province_name' => $matched->province_name,
+                    'regency_id' => $matched->regency_id,
+                    'regency_name' => $matched->regency_name,
+                    'district_id' => $matched->district_id,
+                    'district_name' => $matched->district_name,
+                    'village_id' => $matched->village_id,
+                    'village_name' => $matched->village_name,
+                ]
+            ]);
+        }
+
+        return response()->json(['success' => false]);
+    }
+
+    /**
      * Select address for shopping session (AJAX).
      */
     public function selectForShopping(Request $request)

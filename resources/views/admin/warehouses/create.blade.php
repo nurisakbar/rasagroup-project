@@ -142,15 +142,28 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>&nbsp;</label>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                            <strong>Hub Aktif</strong>
-                                        </label>
-                                    </div>
+                                <div class="form-group @error('target_role') has-error @enderror">
+                                    <label for="target_role">Gudang Order</label>
+                                    <select class="form-control" id="target_role" name="target_role">
+                                        <option value="umum" {{ old('target_role') == 'umum' ? 'selected' : '' }}>Umum</option>
+                                        <option value="ecommerce" {{ old('target_role') == 'ecommerce' ? 'selected' : '' }}>eCommerce</option>
+                                        <option value="distributor" {{ old('target_role') == 'distributor' ? 'selected' : '' }}>Distributor</option>
+                                        <option value="outlet" {{ old('target_role') == 'outlet' ? 'selected' : '' }}>Outlet</option>
+                                    </select>
+                                    <p class="help-block">Tentukan peruntukan order hub ini</p>
+                                    @error('target_role')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
+                                    <strong>Hub Aktif</strong>
+                                </label>
                             </div>
                         </div>
 

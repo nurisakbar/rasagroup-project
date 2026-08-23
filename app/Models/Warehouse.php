@@ -34,10 +34,12 @@ class Warehouse extends Model
         'latitude',
         'longitude',
         'is_active',
+        'target_role',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        
         'sync_sources' => 'array',
     ];
 
@@ -220,11 +222,18 @@ class Warehouse extends Model
     public static function findBestHubForAddress(Address $address, ?string $excludeWarehouseId = null): ?self
     {
         $exclude = $excludeWarehouseId;
+        $user = $address->user;
+        
+
+        $queryBuilder = function () use ($exclude, $isDistributor) {
+            return self::where('is_active', true)
+                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+                ->where('target_role', $isDistributor ? 1 : 0);
+        };
 
         // 1. Try Same District
         if ($address->district_id) {
-            $hub = self::where('is_active', true)
-                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+            $hub = $queryBuilder()
                 ->where('district_id', $address->district_id)
                 ->first();
             if ($hub) {
@@ -234,8 +243,7 @@ class Warehouse extends Model
 
         // 2. Try Same Regency
         if ($address->regency_id) {
-            $hub = self::where('is_active', true)
-                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+            $hub = $queryBuilder()
                 ->where('regency_id', $address->regency_id)
                 ->first();
             if ($hub) {
@@ -245,8 +253,7 @@ class Warehouse extends Model
 
         // 3. Try Same Province
         if ($address->province_id) {
-            $hub = self::where('is_active', true)
-                ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+            $hub = $queryBuilder()
                 ->where('province_id', $address->province_id)
                 ->first();
             if ($hub) {
@@ -255,8 +262,7 @@ class Warehouse extends Model
         }
 
         // 4. Fallback: any active hub (respect exclusion; hindari fallback ke hub sendiri distributor)
-        return self::where('is_active', true)
-            ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+        return $queryBuilder()
             ->orderBy('name')
             ->first();
     }

@@ -839,7 +839,7 @@ class CheckoutController extends Controller
 
             // Auto-resolve if service mismatch happens on self_pickup or single available service
             if ($shippingCost < 0 && !empty($availableServices)) {
-                if ($expedition->code === 'self_pickup' || count($availableServices) === 1) {
+                if (in_array($expedition->code, ['self_pickup', 'kurir_toko']) || count($availableServices) === 1) {
                     $autoService = $availableServices[0];
                     \Log::info("Store: Auto-resolving expedition service mismatch for {$expedition->code} (requested: {$request->expedition_service}). Using service: {$autoService}");
                     $request->merge(['expedition_service' => $autoService]);
@@ -1423,14 +1423,15 @@ class CheckoutController extends Controller
         Address $address,
         float $totalWeightGrams
     ): ?array {
-        if ($expedition->code === 'self_pickup') {
+        if (in_array($expedition->code, ['self_pickup', 'kurir_toko'])) {
+            $isKurirToko = $expedition->code === 'kurir_toko';
             return [
                 'data' => [
                     [
-                        'code' => 'self_pickup',
-                        'name' => 'Self Pickup',
-                        'service' => 'Self Pickup',
-                        'description' => 'Ambil Sendiri di Hub',
+                        'code' => $expedition->code,
+                        'name' => $isKurirToko ? 'Kurir Toko' : 'Self Pickup',
+                        'service' => $isKurirToko ? 'Kurir Toko' : 'Self Pickup',
+                        'description' => $isKurirToko ? 'Pengiriman oleh Kurir Toko' : 'Ambil Sendiri di Hub',
                         'cost' => 0,
                         'etd' => '-',
                     ]
@@ -1487,7 +1488,7 @@ class CheckoutController extends Controller
             return $dbCodes;
         }
 
-        $activeEkspedisiKuCodes = ['self_pickup'];
+        $activeEkspedisiKuCodes = ['self_pickup', 'kurir_toko'];
         foreach ($courierRes['data'] as $courier) {
             if (($courier['is_active'] ?? false) === true && ! empty($courier['id'])) {
                 $activeEkspedisiKuCodes[] = $courier['id'];

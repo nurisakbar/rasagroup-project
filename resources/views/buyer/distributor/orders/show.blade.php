@@ -31,7 +31,9 @@
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
                                     <div class="d-flex align-items-center gap-2">
-                                        
+                                        <a href="{{ route('distributor.orders.invoice', $order->id) }}" class="btn btn-sm btn-brand rounded font-sm px-3 py-2" style="white-space: nowrap; min-width: max-content;">
+                                            <i class="fi-rs-download mr-5"></i> Download Invoice
+                                        </a>
                                         <div class="badge-group">
                                             @php
                                                 $statusClass = match($order->order_status) {
@@ -43,7 +45,7 @@
                                                     default => 'bg-secondary',
                                                 };
                                                 $statusLabel = match($order->order_status) {
-                                                    'pending' => $order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran',
+                                                    'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
                                                     'processing' => 'Sedang Diproses',
                                                     'shipped' => 'Dalam Pengiriman',
                                                     'delivered' => 'Selesai',
@@ -124,6 +126,7 @@
 
                             @php
                                 $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
                             @endphp
                             @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
@@ -273,6 +276,14 @@
                                                 </div>
                                                 @endif
                                             </div>
+                                            
+                                            @if($order->payment_status === 'pending')
+                                                <div class="mt-4 pt-3 border-top text-center">
+                                                    <a href="{{ route('distributor.orders.success', $order) }}" class="btn btn-outline-brand rounded-pill w-100 mb-10">
+                                                        <i class="fi-rs-info mr-5"></i> Lihat Instruksi & Cara Bayar
+                                                    </a>
+                                                </div>
+                                            @endif
 
                                             @if($order->payment_status === 'pending' && in_array($order->payment_method, ['manual_transfer', 'transfer']))
                                                 <div class="mt-4 pt-3 border-top text-center">
@@ -294,6 +305,7 @@
                                 <!-- Shipping Status Card -->
                                 @php
                                     $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
@@ -316,12 +328,18 @@
                                                     <span class="text-dark font-sm">{{ $isSelfPickup ? 'Info Pengambilan' : 'Nomor Resi' }}</span>
                                                     @if($isSelfPickup)
                                                         <span class="badge rounded-pill bg-success px-3 py-2 text-white font-sm" style="white-space: nowrap;"><i class="fi-rs-check mr-5"></i> Ambil Sendiri di Gudang</span>
-                                                    @elseif($order->tracking_number)
+                                                    @elseif($order->tracking_number || ($isKurirToko && in_array($order->order_status, ['shipped', 'delivered'])))
                                                         <div class="text-end">
-                                                            <span class="fw-bold font-sm text-brand d-block">{{ $order->tracking_number }}</span>
-                                                            <a href="javascript:void(0)" class="font-xs text-info fw-bold" id="btn-track-order">
-                                                                <i class="fi-rs-search mr-5"></i> Lacak Sekarang
-                                                            </a>
+                                                            @if($order->tracking_number)
+                                                                <span class="fw-bold font-sm text-brand d-block">{{ $order->tracking_number }}</span>
+                                                            @endif
+                                                            
+                                                            @if(!$isKurirToko && $order->tracking_number)
+                                                                <a href="javascript:void(0)" class="font-xs text-info fw-bold" id="btn-track-order">
+                                                                    <i class="fi-rs-search mr-5"></i> Lacak Sekarang
+                                                                </a>
+
+                                                            @endif
                                                         </div>
                                                     @else
                                                         <span class="text-dark font-sm fw-bold">Belum tersedia</span>
@@ -348,6 +366,17 @@
                                                 <div class="info-item d-flex justify-content-between">
                                                     <span class="text-dark font-sm">Waktu Diterima</span>
                                                     <span class="fw-bold font-sm {{ $order->received_at ? 'text-success' : 'text-dark' }}">{{ $order->received_at ? $order->received_at->format('d M Y, H:i') . ' WIB' : '-' }}</span>
+                                                </div>
+                                                @endif
+                                                
+                                                @if(isset($isKurirToko) && $isKurirToko && in_array($order->order_status, ['shipped', 'delivered']) && $order->order_status !== 'completed')
+                                                <div class="mt-4 pt-3 border-top">
+                                                    <form action="{{ route('distributor.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan sudah diterima dengan baik dan selesai?');">
+                                                        @csrf
+                                                        <button type="submit" class="btn w-100 shadow-sm" style="background-color: #3bb77e; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600;">
+                                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Pesanan Diterima
+                                                        </button>
+                                                    </form>
                                                 </div>
                                                 @endif
                                             </div>

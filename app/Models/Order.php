@@ -98,6 +98,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'affiliate_id');
     }
 
+    public function sales(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_code', 'sales_code');
+    }
+
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class)->withTrashed();

@@ -138,35 +138,7 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group @error('latitude') has-error @enderror">
-                                    <label for="latitude">Latitude</label>
-                                    <input type="text" class="form-control" id="latitude" name="latitude" value="{{ old('latitude', $distributor->warehouse->latitude ?? '') }}" placeholder="Contoh: -6.123456">
-                                    @error('latitude')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group @error('longitude') has-error @enderror">
-                                    <label for="longitude">Longitude</label>
-                                    <input type="text" class="form-control" id="longitude" name="longitude" value="{{ old('longitude', $distributor->warehouse->longitude ?? '') }}" placeholder="Contoh: 106.123456">
-                                    @error('longitude')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <button type="button" class="btn btn-sm btn-info" id="btn-get-coordinates">
-                                <i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini
-                            </button>
-                            <button type="button" class="btn btn-sm btn-success" id="btn-geocode">
-                                <i class="fa fa-search"></i> Cari dari Kota/Kecamatan
-                            </button>
-                        </div>
-                        <div class="help-block">Latitude dan Longitude sangat penting agar sistem dapat mendeteksi hub terdekat dari pembeli.</div>
+
 
                         <div class="form-group @error('hub_phone') has-error @enderror">
                             <label for="hub_phone">Nomor Telepon Hub</label>
@@ -184,55 +156,16 @@
                         <h3 class="box-title"><i class="fa fa-user"></i> Akun Distributor</h3>
                     </div>
                     <div class="box-body">
+                        <div class="callout callout-info">
+                            <p><i class="fa fa-info-circle"></i> Detail entitas distributor utama. Akun staff untuk login dikelola melalui tab "Kelola Staff".</p>
+                        </div>
+
                         <div class="form-group @error('user_name') has-error @enderror">
-                            <label for="user_name">Nama Distributor <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="user_name" name="user_name" value="{{ old('user_name', $distributor->name) }}" placeholder="Nama lengkap" required>
+                            <label for="user_name">Nama Distributor / Perusahaan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="user_name" name="user_name" value="{{ old('user_name', $distributor->name) }}" placeholder="Nama perusahaan atau perorangan" required>
                             @error('user_name')
                                 <span class="help-block text-danger">{{ $message }}</span>
                             @enderror
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group @error('user_email') has-error @enderror">
-                                    <label for="user_email">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="user_email" name="user_email" value="{{ old('user_email', $distributor->email) }}" placeholder="Email untuk login" required>
-                                    @error('user_email')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group @error('user_phone') has-error @enderror">
-                                    <label for="user_phone">No. HP</label>
-                                    <input type="text" class="form-control" id="user_phone" name="user_phone" value="{{ old('user_phone', $distributor->phone) }}" placeholder="Nomor HP">
-                                    @error('user_phone')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="callout callout-warning">
-                            <p><i class="fa fa-warning"></i> Kosongkan password jika tidak ingin mengubahnya.</p>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group @error('user_password') has-error @enderror">
-                                    <label for="user_password">Password Baru</label>
-                                    <input type="password" class="form-control" id="user_password" name="user_password" placeholder="Minimal 8 karakter" minlength="8">
-                                    @error('user_password')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="user_password_confirmation">Konfirmasi Password Baru</label>
-                                    <input type="password" class="form-control" id="user_password_confirmation" name="user_password_confirmation" placeholder="Ulangi password">
-                                </div>
-                            </div>
                         </div>
 
                         <div class="form-group @error('price_level_id') has-error @enderror">
@@ -421,67 +354,7 @@ $(document).ready(function() {
         }
     });
 
-    // Geolocation for coordinates
-    $('#btn-get-coordinates').click(function() {
-        if ("geolocation" in navigator) {
-            $(this).html('<i class="fa fa-spinner fa-spin"></i> Mendeteksi...').prop('disabled', true);
-            navigator.geolocation.getCurrentPosition(function(position) {
-                $('#latitude').val(position.coords.latitude.toFixed(8));
-                $('#longitude').val(position.coords.longitude.toFixed(8));
-                $('#btn-get-coordinates').html('<i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini').prop('disabled', false);
-                alert('Lokasi berhasil dideteksi!');
-            }, function(error) {
-                console.error("Error detecting location: ", error);
-                $('#btn-get-coordinates').html('<i class="fa fa-map-marker"></i> Ambil dari Lokasi Saya Saat Ini').prop('disabled', false);
-                alert('Gagal mendeteksi lokasi. Pastikan izin lokasi diberikan.');
-            });
-        } else {
-            alert('Browser Anda tidak mendukung geolokasi.');
-        }
-    });
 
-    // Geocode from selected city/district
-    $('#btn-geocode').click(function() {
-        var province = $('#province_id option:selected').text();
-        var regency = $('#regency_id option:selected').text();
-        var district = $('#district_id option:selected').text();
-        
-        if (!regency || regency.includes('Pilih')) {
-            alert('Silakan pilih Kabupaten/Kota terlebih dahulu.');
-            return;
-        }
-
-        var query = "";
-        if (district && !district.includes('Pilih')) query += district + ", ";
-        query += regency + ", " + province + ", Indonesia";
-
-        var btn = $(this);
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Mencari...').prop('disabled', true);
-
-        $.ajax({
-            url: 'https://nominatim.openstreetmap.org/search',
-            type: 'GET',
-            data: {
-                q: query,
-                format: 'json',
-                limit: 1
-            },
-            success: function(data) {
-                if (data && data.length > 0) {
-                    $('#latitude').val(parseFloat(data[0].lat).toFixed(8));
-                    $('#longitude').val(parseFloat(data[0].lon).toFixed(8));
-                    alert('Berhasil menemukan koordinat untuk: ' + query);
-                } else {
-                    alert('Gagal menemukan koordinat untuk lokasi tersebut.');
-                }
-                btn.html('<i class="fa fa-search"></i> Cari dari Kota/Kecamatan').prop('disabled', false);
-            },
-            error: function() {
-                alert('Gagal menghubungi layanan pencarian lokasi.');
-                btn.html('<i class="fa fa-search"></i> Cari dari Kota/Kecamatan').prop('disabled', false);
-            }
-        });
-    });
 
     // Rupiah Formatter
     function formatRupiah(angka, prefix) {

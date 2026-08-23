@@ -45,7 +45,7 @@
                                                     default => 'bg-secondary',
                                                 };
                                                 $statusLabel = match($order->order_status) {
-                                                    'pending' => $order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran',
+                                                    'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
                                                     'processing' => 'Sedang Diproses',
                                                     'shipped' => 'Dalam Pengiriman',
                                                     'delivered' => 'Selesai',
@@ -126,6 +126,7 @@
 
                             @php
                                 $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
                             @endphp
                             @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
@@ -274,18 +275,47 @@
                                                     <span class="fw-bold font-sm text-brand">{{ $order->affiliate->referral_code }}</span>
                                                 </div>
                                                 @endif
+                                                @if($order->sales)
+                                                <div class="info-item mb-3 pb-2 border-bottom">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="text-dark font-sm">Sales Person</span>
+                                                        <span class="badge bg-info text-white">{{ $order->sales_code }}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold font-sm text-dark"><i class="fi-rs-user mr-5"></i>{{ $order->sales->name }}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                                        <span class="font-xs text-muted"><i class="fi-rs-envelope mr-5"></i>{{ $order->sales->email }}</span>
+                                                    </div>
+                                                </div>
+                                                @endif
                                             </div>
 
-                                            @if($order->payment_status === 'pending' && in_array($order->payment_method, ['manual_transfer', 'transfer']))
+                                            @if($order->payment_status === 'pending')
                                                 <div class="mt-4 pt-3 border-top text-center">
-                                                    @if($order->payment_proof)
-                                                        <div class="alert alert-info font-sm mb-0 rounded-pill">
-                                                            <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
-                                                        </div>
+                                                    @if(in_array($order->payment_method, ['manual_transfer', 'transfer']))
+                                                        @if($order->payment_proof)
+                                                            <div class="alert alert-info font-sm mb-0 rounded-pill">
+                                                                <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
+                                                            </div>
+                                                        @else
+                                                            <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100 mb-2">
+                                                                <i class="fi-rs-upload mr-5"></i> Konfirmasi Pembayaran Manual
+                                                            </a>
+                                                        @endif
                                                     @else
-                                                        <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100">
-                                                            <i class="fi-rs-upload mr-5"></i> Konfirmasi Pembayaran Manual
+                                                        @php $paymentUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url; @endphp
+                                                        @if($paymentUrl)
+                                                        <a href="{{ $paymentUrl }}" target="_blank" class="btn btn-brand rounded-pill w-100 mb-2">
+                                                            <i class="fi-rs-money mr-5"></i> Lanjutkan Pembayaran
                                                         </a>
+                                                        @endif
+                                                    @endif
+                                                    
+                                                    @if(!$order->payment_proof)
+                                                    <button type="button" class="btn btn-outline-brand rounded-pill w-100 mt-2" data-bs-toggle="modal" data-bs-target="#changePaymentModal">
+                                                        <i class="fi-rs-refresh mr-5"></i> Ganti Metode Pembayaran
+                                                    </button>
                                                     @endif
                                                 </div>
                                             @endif
@@ -296,6 +326,7 @@
                                 <!-- Shipping Status Card -->
                                 @php
                                     $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
@@ -321,9 +352,11 @@
                                                     @elseif($order->tracking_number)
                                                         <div class="text-end">
                                                             <span class="fw-bold font-sm text-brand d-block">{{ $order->tracking_number }}</span>
+                                                            @if(!$isKurirToko)
                                                             <a href="javascript:void(0)" class="font-xs text-info fw-bold" id="btn-track-order">
                                                                 <i class="fi-rs-search mr-5"></i> Lacak Sekarang
                                                             </a>
+                                                            @endif
                                                         </div>
                                                     @else
                                                         <span class="text-dark font-sm fw-bold">Belum tersedia</span>
@@ -350,6 +383,17 @@
                                                 <div class="info-item d-flex justify-content-between">
                                                     <span class="text-dark font-sm">Waktu Diterima</span>
                                                     <span class="fw-bold font-sm {{ $order->received_at ? 'text-success' : 'text-dark' }}">{{ $order->received_at ? $order->received_at->format('d M Y, H:i') . ' WIB' : '-' }}</span>
+                                                </div>
+                                                @endif
+                                                
+                                                @if(isset($isKurirToko) && $isKurirToko && in_array($order->order_status, ['shipped', 'delivered']) && $order->order_status !== 'completed')
+                                                <div class="mt-4 pt-3 border-top">
+                                                    <form action="{{ route('orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan sudah diterima dengan baik dan selesai?');">
+                                                        @csrf
+                                                        <button type="submit" class="btn w-100 shadow-sm" style="background-color: #3bb77e; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600;">
+                                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Pesanan Diterima
+                                                        </button>
+                                                    </form>
                                                 </div>
                                                 @endif
                                             </div>
@@ -685,12 +729,87 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+
+
+
+
+
+
+
+
+
+
+<!-- Modal Ganti Metode Pembayaran -->
+<div class="modal fade" id="changePaymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title">Ganti Metode Pembayaran</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ route('buyer.orders.change-payment', $order) }}" method="POST">
+        @csrf
+        <div class="modal-body p-4">
+            @php $activeGateway = config('services.active_payment_gateway', 'xendit'); @endphp
+            
+            @if($activeGateway === 'xendit')
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_xendit" value="xendit" {{ $order->payment_method === 'xendit' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_xendit" style="cursor: pointer;">
+                        <i class="fi-rs-credit-card mr-5"></i> Xendit (Virtual Account, QRIS, E-Wallet)
+                    </label>
+                </div>
+            @endif
+
+            @if($activeGateway === 'faspay')
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_qris" style="cursor: pointer;">
+                        <i class="fi-rs-smartphone mr-5"></i> QRIS (Faspay)
+                    </label>
+                </div>
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bca" style="cursor: pointer;">
+                        <i class="fi-rs-bank mr-5"></i> BCA Virtual Account (Faspay)
+                    </label>
+                </div>
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_mandiri" style="cursor: pointer;">
+                        <i class="fi-rs-bank mr-5"></i> Mandiri Virtual Account (Faspay)
+                    </label>
+                </div>
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bri" value="faspay_bri_va" {{ $order->payment_method === 'faspay_bri_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bri" style="cursor: pointer;">
+                        <i class="fi-rs-bank mr-5"></i> BRI Virtual Account (Faspay)
+                    </label>
+                </div>
+                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bni" style="cursor: pointer;">
+                        <i class="fi-rs-bank mr-5"></i> BNI Virtual Account (Faspay)
+                    </label>
+                </div>
+            @endif
+
+            <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
+                <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_manual" value="manual_transfer" {{ in_array($order->payment_method, ['manual_transfer', 'transfer']) ? 'checked' : '' }} required>
+                <label class="form-check-label fw-bold w-100 ms-2" for="pay_manual" style="cursor: pointer;">
+                    <i class="fi-rs-document-text mr-5"></i> Transfer Bank Manual (Upload Bukti)
+                </label>
+            </div>
+            
+            <p class="text-danger font-sm mt-3 mb-0"><i class="fi-rs-info mr-5"></i><strong>Perhatian:</strong> Mengganti metode pembayaran akan membatalkan kode bayar yang lama dan membuat instruksi bayar baru.</p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-brand rounded-pill">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 @endsection
-
-
-
-
-
-
-
-
