@@ -17,7 +17,9 @@ class FaspaySnapService
     {
         $this->baseUrl = config('services.faspay.snap_base_url');
         $this->clientId = config('services.faspay.snap_client_id');
-        $this->privateKeyPath = base_path(config('services.faspay.private_key_path'));
+        $isProduction = config('services.faspay.env', 'dev') === 'production';
+        $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
+        $this->privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
     }
 
     /**
@@ -108,7 +110,9 @@ class FaspaySnapService
         $endpoint = '/v1.0/qr/qr-mpm-generate';
         $url = config('services.faspay.snap_base_url', 'https://debit-sandbox.faspay.co.id/v1.0') . '/qr/qr-mpm-generate';
         $partnerId = config('services.faspay.snap_client_id') ?: config('services.faspay.merchant_id');
-        $privateKeyPath = base_path(config('services.faspay.private_key_path', 'storage/app/faspay_private_key.pem'));
+        $isProduction = config('services.faspay.env', 'dev') === 'production';
+        $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
+        $privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
         $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
 
         $payload = [

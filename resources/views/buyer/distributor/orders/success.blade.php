@@ -293,7 +293,7 @@
                                             <div class="text-center mb-20">
                                                 <h5 class="mb-15" style="color: #253D4E;">Scan QRIS untuk Membayar</h5>
                                                 @if($order->virtual_account_no)
-                                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode($order->virtual_account_no) }}" alt="QRIS Barcode" style="max-width: 250px; border: 2px solid #ECECEC; padding: 10px; border-radius: 10px;">
+                                                    <img src="{{ $order->virtual_account_no }}" alt="QRIS Barcode" style="max-width: 250px; border: 2px solid #ECECEC; padding: 10px; border-radius: 10px;">
                                                 @else
                                                     <p class="text-danger">Gagal memuat QRIS. Silakan hubungi admin.</p>
                                                 @endif
