@@ -39,7 +39,22 @@ class FaspaySnapService
         $stringToSign = $this->clientId . '|' . $timestamp;
         
         $privateKey = file_get_contents($this->privateKeyPath);
-        openssl_sign($stringToSign, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        
+        Log::debug('Faspay B2B Token: Key Debug Info', [
+            'path' => $this->privateKeyPath,
+            'exists' => file_exists($this->privateKeyPath),
+            'header' => substr(trim($privateKey), 0, 30) // To check if it says PUBLIC or PRIVATE
+        ]);
+
+        $keyResource = openssl_pkey_get_private($privateKey);
+        if (!$keyResource) {
+            $error = openssl_error_string();
+            Log::error('Faspay B2B Token Error: Invalid private key at path ' . $this->privateKeyPath, [
+                'openssl_error' => $error
+            ]);
+            throw new \Exception("Faspay Private Key configuration is invalid or missing at path: " . $this->privateKeyPath . ". OpenSSL Error: " . $error);
+        }
+        openssl_sign($stringToSign, $signature, $keyResource, OPENSSL_ALGO_SHA256);
         $signatureBase64 = base64_encode($signature);
 
         $headers = [
@@ -97,7 +112,20 @@ class FaspaySnapService
         $hashPayload = strtolower(hash('sha256', $minifyPayload));
         $stringToSign = $method . ":" . $endpoint . ":" . $hashPayload . ":" . $timestamp;
         
-        openssl_sign($stringToSign, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        Log::debug('Faspay Transaction Signature: Key Debug Info', [
+            'header' => substr(trim($privateKey), 0, 30) // To check if it says PUBLIC or PRIVATE
+        ]);
+
+        $keyResource = openssl_pkey_get_private($privateKey);
+        if (!$keyResource) {
+            $error = openssl_error_string();
+            Log::error('Faspay Signature Error: Supplied key is empty or cannot be coerced into a private key.', [
+                'openssl_error' => $error
+            ]);
+            throw new \Exception("Faspay Private Key configuration is invalid or missing. Ensure FASPAY_SNAP_PRIVATE_KEY_DEV_PATH (or PROD_PATH) points to a valid private key. OpenSSL Error: " . $error);
+        }
+        
+        openssl_sign($stringToSign, $signature, $keyResource, OPENSSL_ALGO_SHA256);
         return base64_encode($signature);
     }
 
@@ -114,6 +142,12 @@ class FaspaySnapService
         $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
         $privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
         $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
+        
+        Log::debug('Faspay QRIS Generation: Path Debug Info', [
+            'env_config' => $configPath,
+            'resolved_path' => $privateKeyPath,
+            'file_exists' => file_exists($privateKeyPath)
+        ]);
 
         $payload = [
             'partnerReferenceNo' => (string) $order->order_number,
