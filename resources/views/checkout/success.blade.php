@@ -146,8 +146,9 @@
 
                         <!-- Payment Information -->
                         @if($order->payment_method !== 'term_of_payment')
-                            <div class="text-start mb-50">
-                                <h4 class="mb-20" style="font-weight: 700; color: #253D4E;">Instruksi Pembayaran</h4>
+                            @if($order->payment_status === 'pending')
+                                <div class="text-start mb-50">
+                                    <h4 class="mb-20" style="font-weight: 700; color: #253D4E;">Instruksi Pembayaran</h4>
                                 
                                 @if($order->payment_status === 'pending')
                                     <div class="alert mb-30 p-30 text-center" style="border-radius: 15px; border: 1.5px solid #ffedd5; background: linear-gradient(145deg, #fffcf8 0%, #fff7ed 100%); box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.05);">
@@ -512,7 +513,21 @@
                                         </script>
                                     @endif
                                 @endif
-                            </div>
+                                </div>
+                            @elseif($order->payment_status === 'paid')
+                                <div class="text-start mb-50">
+                                    <div class="p-40 border-radius-20 bg-white shadow-sm text-center" style="border: 1px solid #ECECEC;">
+                                        <div class="icon-wrap mx-auto mb-20" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(34, 197, 94, 0.1); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fi-rs-check" style="font-size: 36px; color: #22c55e;"></i>
+                                        </div>
+                                        <h3 class="mb-15" style="color: #253D4E; font-weight: 700;">Pembayaran Berhasil!</h3>
+                                        <p class="mb-25 font-md text-muted">Terima kasih, pembayaran pesanan Anda telah kami terima.</p>
+                                        <div class="d-inline-block px-4 py-2" style="background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                                            Status Pesanan: <strong style="color: #22c55e; letter-spacing: 1px;">PAID</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
 
                                                 <div class="d-flex flex-column flex-md-row justify-content-center align-items-stretch align-items-md-center gap-3 mt-10">
