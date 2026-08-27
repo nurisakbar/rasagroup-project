@@ -172,6 +172,23 @@ class FaspayWebhookController extends Controller
         }
 
         if ($order) {
+            $status = $request->input('status');
+            $signature = $request->input('signature');
+
+            if ($status === '2' && $signature && $order->payment_status !== 'paid') {
+                $faspayService = new \App\Services\FaspayService();
+                $expectedSignature = $faspayService->generateCallbackSignature($order->faspay_bill_no ?? $order->order_number, $status);
+                
+                if (strtolower($signature) === strtolower($expectedSignature)) {
+                    $order->payment_status = 'paid';
+                    $order->order_status = 'processing';
+                    $order->save();
+                    Log::info('Order updated to paid via Faspay Return URL', ['order_id' => $order->id]);
+                } else {
+                    Log::warning('Faspay Return URL invalid signature', ['received' => $signature, 'expected' => $expectedSignature]);
+                }
+            }
+
             if (auth()->check()) {
                 return redirect()->route('checkout.success', $order)
                     ->with('success', 'Pembayaran pesanan #' . $order->order_number . ' sedang diproses/telah berhasil.');

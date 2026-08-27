@@ -92,3 +92,7 @@ Route::prefix('v1.0/qr')->group(function () {
     Route::post('/qr-mpm-notify', [\App\Http\Controllers\Api\FaspaySnapController::class, 'qrMpmNotify'])->name('api.v1.qr.notify');
 });
 
+Route::prefix('v1.0/debit')->group(function () {
+    Route::post('/notify', [\App\Http\Controllers\Api\FaspaySnapController::class, 'debitNotify'])->name('api.v1.debit.notify');
+});
+

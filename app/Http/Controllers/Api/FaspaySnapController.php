@@ -462,6 +462,112 @@ class FaspaySnapController extends Controller
         
         return response()->json($responsePayload);
     }
+    public function debitNotify(Request $request)
+    {
+        Log::info('Faspay SNAP Direct Debit Notification Received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
+
+        // UAT SNAP Validation Check untuk Service Code 54 (Direct Debit Notify)
+        if ($errorResponse = $this->validateSnapHeaders($request, '54')) {
+            return $errorResponse;
+        }
+
+        $orderNumber = $request->input('originalPartnerReferenceNo') ?? $request->input('partnerReferenceNo') ?? $request->input('customerNo') ?? $request->input('trx_id');
+        $status = $request->input('latestTransactionStatus', $request->input('txnStatus'));
+
+        if (!$orderNumber) {
+            $rawContent = $request->getContent();
+            if (!empty($rawContent)) {
+                $decoded = json_decode($rawContent, true);
+                if (is_array($decoded)) {
+                    $orderNumber = $decoded['originalPartnerReferenceNo'] ?? $decoded['partnerReferenceNo'] ?? $decoded['customerNo'] ?? $decoded['trx_id'] ?? null;
+                    $status = $decoded['latestTransactionStatus'] ?? $decoded['txnStatus'] ?? null;
+                }
+            }
+        }
+
+        Log::debug('Faspay SNAP Direct Debit Webhook: Extracted identifier', ['orderNumber' => $orderNumber, 'status' => $status]);
+
+        if (!$orderNumber) {
+            Log::error('Faspay SNAP Direct Debit Webhook: No order identifier found');
+            return response()->json([
+                'responseCode' => '4005400',
+                'responseMessage' => 'Bad Request: No reference found'
+            ], 400);
+        }
+
+        $order = Order::with('user')
+            ->where('order_number', $orderNumber)
+            ->orWhere('id', $orderNumber)
+            ->first();
+
+        if (!$order) {
+            Log::error('Faspay SNAP Direct Debit Webhook: Order not found', ['identifier' => $orderNumber]);
+            return response()->json([
+                'responseCode' => '4045412',
+                'responseMessage' => 'Bill not found'
+            ], 404);
+        }
+
+        $paidAmount = $request->input('paidAmount.value') ?? $request->input('txnAmount.value') ?? $request->input('totalAmount.value');
+        if ($paidAmount && (float)$paidAmount !== (float)$order->total_amount) {
+            Log::error('Faspay SNAP Direct Debit Webhook: Amount mismatch', ['paid' => $paidAmount, 'expected' => $order->total_amount]);
+            return response()->json([
+                'responseCode' => '4045413',
+                'responseMessage' => 'Invalid Amount'
+            ], 404);
+        }
+
+        $isPaid = false;
+        if ($status === '00' || strtoupper((string)$status) === 'S') {
+            $isPaid = true;
+        } else if ($paidAmount && ($request->has('paidAmount.value') || $request->has('txnAmount.value') || $request->has('totalAmount.value'))) {
+            $isPaid = true; // Implicit success
+        }
+
+        if ($isPaid && $order->payment_status !== 'paid') {
+            $order->payment_status = 'paid';
+            $order->order_status = 'processing';
+            
+            if (!str_starts_with((string)$order->order_number, 'WSUAT')) {
+                $order->save();
+                
+                try {
+                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                } catch (\Exception $e) {
+                    Log::error('Faspay Direct Debit Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                }
+            }
+
+            Log::info('Faspay SNAP Direct Debit Webhook: Order marked as paid', ['order_id' => $order->id]);
+        }
+
+        $responsePayload = [
+            'responseCode' => '2005400',
+            'responseMessage' => 'Successful',
+            'originalReferenceNo' => $request->input('originalReferenceNo', 'DB' . time()),
+            'originalPartnerReferenceNo' => $orderNumber,
+            'approvalCode' => '123456'
+        ];
+        
+        $snapService = new \App\Services\FaspaySnapService();
+        $signature = $snapService->generateSymmetricSignature(
+            'POST',
+            $request->path(),
+            $request->bearerToken() ?? '',
+            $responsePayload,
+            date('c')
+        );
+
+        return response()->json($responsePayload)
+            ->withHeaders([
+                'X-TIMESTAMP' => date('c'),
+                'X-SIGNATURE' => $signature,
+                'X-PARTNER-ID' => config('services.faspay.partner_id', '37020')
+            ]);
+    }
 
     /**
      * Validasi Header SNAP BI untuk kebutuhan UAT Simulator.
