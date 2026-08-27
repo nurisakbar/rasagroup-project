@@ -1076,9 +1076,10 @@ class CheckoutController extends Controller
                         $debitData = $snapService->directDebitPayment($order, $total, '812');
                         if ($debitData && isset($debitData['responseCode']) && $debitData['responseCode'] === '2005400') {
                             $order->payment_method = 'faspay_direct_debit';
-                            $order->faspay_redirect_url = $debitData['redirectUrl'] ?? null;
+                            $order->faspay_redirect_url = $debitData['webRedirectUrl'] ?? $debitData['redirectUrl'] ?? null;
                             $order->save();
-                            Log::info('Faspay Direct Debit generated successfully', ['order_id' => $order->id]);
+                            $faspayInvoiceUrl = $order->faspay_redirect_url;
+                            Log::info('Faspay Direct Debit generated successfully', ['order_id' => $order->id, 'url' => $faspayInvoiceUrl]);
                         } else {
                             Log::error('Failed to generate Faspay Direct Debit', ['order_id' => $order->id]);
                         }
