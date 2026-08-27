@@ -231,7 +231,7 @@ class FaspaySnapService
                 'channelCode' => $paymentChannelUid,
                 'paymentChannelUid' => $paymentChannelUid,
                 'customerName' => $order->user->name ?? 'Customer Rasa Group',
-                'description' => 'Payment #' . $order->order_number
+                'billDescription' => 'Payment #' . $order->order_number
             ]
         ];
 
