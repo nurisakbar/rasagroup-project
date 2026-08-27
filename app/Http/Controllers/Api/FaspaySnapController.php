@@ -335,6 +335,104 @@ class FaspaySnapController extends Controller
     }
 
     /**
+     * Webhook Notification untuk Faspay SNAP (QRIS MPM)
+     */
+    public function qrMpmNotify(Request $request)
+    {
+        Log::info('Faspay SNAP QR MPM Notification Received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
+
+        // UAT SNAP Validation Check untuk Service Code 47 (QRIS Notify)
+        if ($errorResponse = $this->validateSnapHeaders($request, '47')) {
+            return $errorResponse;
+        }
+
+        $orderNumber = $request->input('originalPartnerReferenceNo') ?? $request->input('partnerReferenceNo') ?? $request->input('customerNo') ?? $request->input('trx_id');
+        $status = $request->input('latestTransactionStatus', $request->input('txnStatus'));
+
+        if (!$orderNumber) {
+            $rawContent = $request->getContent();
+            if (!empty($rawContent)) {
+                $decoded = json_decode($rawContent, true);
+                if (is_array($decoded)) {
+                    $orderNumber = $decoded['originalPartnerReferenceNo'] ?? $decoded['partnerReferenceNo'] ?? $decoded['customerNo'] ?? $decoded['trx_id'] ?? null;
+                    $status = $decoded['latestTransactionStatus'] ?? $decoded['txnStatus'] ?? null;
+                }
+            }
+        }
+
+        Log::debug('Faspay SNAP QR Webhook: Extracted identifier', ['orderNumber' => $orderNumber, 'status' => $status]);
+
+        if (!$orderNumber) {
+            Log::error('Faspay SNAP QR Webhook: No order identifier found');
+            return response()->json([
+                'responseCode' => '4004700',
+                'responseMessage' => 'Bad Request: No reference found'
+            ], 400);
+        }
+
+        $order = Order::with('user')
+            ->where('order_number', $orderNumber)
+            ->orWhere('id', $orderNumber)
+            ->first();
+
+        if (!$order) {
+            Log::error('Faspay SNAP QR Webhook: Order not found', ['identifier' => $orderNumber]);
+            return response()->json([
+                'responseCode' => '4044712',
+                'responseMessage' => 'Bill not found'
+            ], 404);
+        }
+
+        $paidAmount = $request->input('paidAmount.value') ?? $request->input('txnAmount.value');
+        if ($paidAmount && (float)$paidAmount !== (float)$order->total_amount) {
+            Log::error('Faspay SNAP QR Webhook: Amount mismatch', ['paid' => $paidAmount, 'expected' => $order->total_amount]);
+            return response()->json([
+                'responseCode' => '4044713',
+                'responseMessage' => 'Invalid Amount'
+            ], 404);
+        }
+
+        $isPaid = false;
+        if ($status === '00' || strtoupper((string)$status) === 'S') {
+            $isPaid = true;
+        } else if ($paidAmount && ($request->has('paidAmount.value') || $request->has('txnAmount.value'))) {
+            $isPaid = true; // Implicit success
+        }
+
+        if ($isPaid && $order->payment_status !== 'paid') {
+            $order->payment_status = 'paid';
+            $order->order_status = 'processing';
+            
+            if (!str_starts_with((string)$order->order_number, 'WSUAT')) {
+                $order->save();
+                
+                try {
+                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                } catch (\Exception $e) {
+                    Log::error('Faspay QR Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                }
+            }
+
+            Log::info('Faspay SNAP QR Webhook: Order marked as paid', ['order_id' => $order->id]);
+        }
+
+        $responsePayload = [
+            'responseCode' => '2004700',
+            'responseMessage' => 'Successful',
+            'originalReferenceNo' => $request->input('originalReferenceNo', 'QR' . time()),
+            'originalPartnerReferenceNo' => $orderNumber,
+            'approvalCode' => '123456'
+        ];
+        
+        Log::info('Faspay SNAP QR MPM Notification Response', $responsePayload);
+        
+        return response()->json($responsePayload);
+    }
+
+    /**
      * Validasi Header SNAP BI untuk kebutuhan UAT Simulator.
      */
     private function validateSnapHeaders(Request $request, $serviceCode)
@@ -388,6 +486,8 @@ class FaspaySnapController extends Controller
                 $path = '/v1.0/transfer-va/inquiry';
             } elseif (str_contains($path, 'payment') || str_contains($path, 'notification')) {
                 $path = '/v1.0/transfer-va/payment';
+            } elseif (str_contains($path, 'qr-mpm-notify')) {
+                $path = '/v1.0/qr/qr-mpm-notify';
             }
             
             $bodyStr = $request->getContent();

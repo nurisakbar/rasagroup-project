@@ -88,3 +88,7 @@ Route::prefix('v1.0/transfer-va')->group(function () {
     Route::post('/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('api.v1.payment');
 });
 
+Route::prefix('v1.0/qr')->group(function () {
+    Route::post('/qr-mpm-notify', [\App\Http\Controllers\Api\FaspaySnapController::class, 'qrMpmNotify'])->name('api.v1.qr.notify');
+});
+
