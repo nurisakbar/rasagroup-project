@@ -167,7 +167,11 @@ class FaspaySnapService
 
         $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
 
+        $b2bData = $this->getB2bToken();
+        $b2bToken = $b2bData['accessToken'] ?? '';
+
         $headers = [
+            'Authorization' => 'Bearer ' . $b2bToken,
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
@@ -185,6 +189,127 @@ class FaspaySnapService
         }
 
         Log::error('Faspay SNAP QRIS Error', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload,
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Direct Debit Payment (Host-to-Host)
+     */
+    public function directDebitPayment($order, $amount, $paymentChannelUid = '812')
+    {
+        $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+        $endpoint = '/v1.0/debit/payment-host-to-host';
+        $url = config('services.faspay.snap_base_url', 'https://debit-sandbox.faspay.co.id/v1.0') . '/debit/payment-host-to-host';
+        $partnerId = config('services.faspay.snap_client_id') ?: config('services.faspay.merchant_id');
+        $isProduction = config('services.faspay.env', 'dev') === 'production';
+        $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
+        $privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
+        $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
+        
+        // Ensure amount is string with 2 decimal places
+        $amountStr = number_format($amount, 2, '.', '');
+        
+        $payload = [
+            'partnerReferenceNo' => (string) $order->order_number,
+            'merchantId' => $partnerId,
+            'amount' => [
+                'value' => $amountStr,
+                'currency' => 'IDR'
+            ],
+            'customerEmail' => $order->user->email ?? 'customer@rasagroup.co.id',
+            'customerPhone' => $order->user->phone ?? '081234567890',
+            'additionalInfo' => [
+                'paymentChannelUid' => $paymentChannelUid,
+                'customerName' => $order->user->name ?? 'Customer Rasa Group',
+                'description' => 'Payment #' . $order->order_number
+            ]
+        ];
+
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
+
+        $b2bData = $this->getB2bToken();
+        $b2bToken = $b2bData['accessToken'] ?? '';
+
+        $headers = [
+            'Authorization' => 'Bearer ' . $b2bToken,
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'X-PARTNER-ID' => $partnerId,
+            'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
+            'CHANNEL-ID' => '77001',
+            'Content-Type' => 'application/json'
+        ];
+
+        $response = Http::withoutVerifying()
+            ->withHeaders($headers)
+            ->post($url, $payload);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error('Faspay SNAP Direct Debit Error', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload,
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Direct Debit Payment Status
+     */
+    public function directDebitPaymentStatus($order)
+    {
+        $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+        $endpoint = '/v1.0/debit/status';
+        $url = config('services.faspay.snap_base_url', 'https://debit-sandbox.faspay.co.id/v1.0') . '/debit/status';
+        $partnerId = config('services.faspay.snap_client_id') ?: config('services.faspay.merchant_id');
+        $isProduction = config('services.faspay.env', 'dev') === 'production';
+        $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
+        $privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
+        $privateKey = file_exists($privateKeyPath) ? file_get_contents($privateKeyPath) : '';
+        
+        $payload = [
+            'originalPartnerReferenceNo' => (string) $order->order_number,
+            'merchantId' => $partnerId,
+            'serviceCode' => '54'
+        ];
+
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
+
+        $b2bData = $this->getB2bToken();
+        $b2bToken = $b2bData['accessToken'] ?? '';
+
+        $headers = [
+            'Authorization' => 'Bearer ' . $b2bToken,
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'X-PARTNER-ID' => $partnerId,
+            'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
+            'CHANNEL-ID' => '77001',
+            'Content-Type' => 'application/json'
+        ];
+
+        $response = Http::withoutVerifying()
+            ->withHeaders($headers)
+            ->post($url, $payload);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error('Faspay SNAP Direct Debit Status Error', [
             'url' => $url,
             'headers' => $headers,
             'payload' => $payload,

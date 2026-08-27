@@ -218,6 +218,17 @@
                                         <p class="font-sm text-muted">Bayar menggunakan e-Wallet (OVO, Dana, ShopeePay, LinkAja) atau m-Banking yang mendukung QRIS.</p>
                                     </div>
                                 </div>
+                                <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_direct_debit')" id="card-faspay-direct-debit">
+                                    <div class="custom-radio">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="faspay_direct_debit" id="payDirectDebit">
+                                        <label class="form-check-label" for="payDirectDebit">
+                                            <strong class="mr-5">Direct Debit</strong>
+                                        </label>
+                                    </div>
+                                    <div class="payment-content pl-20 mt-10" style="display: none;">
+                                        <p class="font-sm text-muted">Bayar langsung menggunakan akun Bank Anda melalui sistem Host-to-Host (BCA, Mandiri, dll).</p>
+                                    </div>
+                                </div>
                                 <div class="payment-option mb-10 payment-method-card" id="card-faspay-va-group">
                                     <div class="custom-radio" onclick="selectPayment('faspay_va_group')" style="cursor: pointer;">
                                         <input class="form-check-input" type="radio" name="payment_group" value="virtual_account" id="payVAGroup">
@@ -1491,7 +1502,7 @@
              $('#payVAGroup').prop('checked', false);
         }
         else if (method.startsWith('faspay_')) {
-             if (method !== 'faspay_qris') {
+             if (method !== 'faspay_qris' && method !== 'faspay_direct_debit') {
                  $('#card-faspay-va-group').addClass('active');
                  $('#payVAGroup').prop('checked', true);
                  $('#va-options-container').slideDown();

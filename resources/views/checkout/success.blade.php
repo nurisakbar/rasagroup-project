@@ -294,6 +294,21 @@
                                                     <p class="text-danger">Gagal memuat QRIS. Silakan hubungi admin.</p>
                                                 @endif
                                             </div>
+                                        @elseif($order->payment_method === 'faspay_direct_debit')
+                                            <div class="text-center mb-20">
+                                                <div class="icon-wrap mx-auto mb-15" style="width: 65px; height: 65px; border-radius: 50%; background: rgba(106, 27, 27, 0.05); display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fi-rs-credit-card" style="font-size: 28px; color: #6A1B1B;"></i>
+                                                </div>
+                                                <h5 class="mb-15" style="color: #253D4E;">Lanjutkan Pembayaran Direct Debit</h5>
+                                                @if($order->faspay_redirect_url)
+                                                    <p class="text-muted mb-25" style="font-size: 15px;">Silakan klik tombol di bawah ini untuk dialihkan ke portal pembayaran bank Anda dengan aman.</p>
+                                                    <a href="{{ $order->faspay_redirect_url }}" class="btn btn-primary px-5 py-3" style="border-radius: 8px; font-weight: 600;" target="_blank" rel="noopener">
+                                                        <i class="fi-rs-sign-out mr-10"></i> Bayar Sekarang
+                                                    </a>
+                                                @else
+                                                    <p class="text-danger mt-10">Tautan pembayaran sedang diproses atau gagal dimuat. Harap periksa email Anda atau hubungi admin.</p>
+                                                @endif
+                                            </div>
                                         @else
                                             <div class="d-flex align-items-center mb-25">
                                                 <div class="icon-wrap mr-15" style="width: 45px; height: 45px; border-radius: 50%; background: rgba(106, 27, 27, 0.05); display: flex; align-items: center; justify-content: center;">

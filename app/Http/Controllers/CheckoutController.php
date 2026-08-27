@@ -672,7 +672,7 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $allowedPayments = [
-            'xendit', 'faspay', 'manual_transfer', 'faspay_qris', 
+            'xendit', 'faspay', 'manual_transfer', 'faspay_qris', 'faspay_direct_debit', 
             'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va',
             'faspay_sinarmas_va', 'faspay_maybank_va', 'faspay_danamon_va', 'faspay_bsi_va', 'faspay_bca_va'
         ];
@@ -1070,6 +1070,17 @@ class CheckoutController extends Controller
                             Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id]);
                         } else {
                             Log::error('Failed to generate Faspay QRIS', ['order_id' => $order->id]);
+                        }
+                    } elseif ($request->payment_method === 'faspay_direct_debit') {
+                        $snapService = new \App\Services\FaspaySnapService();
+                        $debitData = $snapService->directDebitPayment($order, $total, '812');
+                        if ($debitData && isset($debitData['responseCode']) && $debitData['responseCode'] === '2005400') {
+                            $order->payment_method = 'faspay_direct_debit';
+                            $order->faspay_redirect_url = $debitData['redirectUrl'] ?? null;
+                            $order->save();
+                            Log::info('Faspay Direct Debit generated successfully', ['order_id' => $order->id]);
+                        } else {
+                            Log::error('Failed to generate Faspay Direct Debit', ['order_id' => $order->id]);
                         }
                     } elseif ($request->payment_method === 'faspay_bca_va') {
                         // BCA VA uses Legacy API
