@@ -225,6 +225,7 @@ class FaspaySnapService
             ],
             'customerEmail' => $order->user->email ?? 'customer@rasagroup.co.id',
             'customerPhone' => $order->user->phone ?? '081234567890',
+            'validUpTo' => now()->addHours(24)->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
             'additionalInfo' => [
                 'paymentChannelUid' => $paymentChannelUid,
                 'customerName' => $order->user->name ?? 'Customer Rasa Group',
