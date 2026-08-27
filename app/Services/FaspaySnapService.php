@@ -228,6 +228,7 @@ class FaspaySnapService
             'validUpTo' => now()->addHours(24)->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
             'additionalInfo' => [
                 'billDate' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+                'channelCode' => $paymentChannelUid,
                 'paymentChannelUid' => $paymentChannelUid,
                 'customerName' => $order->user->name ?? 'Customer Rasa Group',
                 'description' => 'Payment #' . $order->order_number
