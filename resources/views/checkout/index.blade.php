@@ -424,19 +424,10 @@
                                     @foreach($carts as $cart)
                                         @php
                                             $checkoutUser = Auth::user();
-                                            if (!$checkoutUser->isDistributor()) {
-                                                $discountService = app(\App\Services\DiscountService::class);
-                                                $discountData = $discountService->calculateCartItemDiscount($cart, $checkoutUser);
-                                                $unitPrice = $discountData['final_price'];
-                                                $retailUnit = $discountData['original_price'];
-                                                $discountPercentage = $discountData['discount_percentage'];
-                                                $showRetailStrike = $discountData['discount_amount'] > 0;
-                                            } else {
-                                                $unitPrice = $checkoutUser->getProductPrice($cart->product);
-                                                $retailUnit = (float) $cart->product->price;
-                                                $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit;
-                                                $discountPercentage = $showRetailStrike ? round((1 - ($unitPrice / $retailUnit)) * 100, 1) : 0;
-                                            }
+                                            $unitPrice = $checkoutUser->getProductPrice($cart->product);
+                                            $retailUnit = (float) $cart->product->price;
+                                            $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $unitPrice < $retailUnit;
+                                            $discountPercentage = $showRetailStrike ? round((1 - ($unitPrice / $retailUnit)) * 100, 1) : 0;
                                         @endphp
                                         <tr class="rg-checkout-item">
                                             <td class="image product-thumbnail rg-checkout-item-thumb">
@@ -488,38 +479,26 @@
                                 }
                             </style>
                             <tbody>
-                                <tr id="distributorRetailRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
-                                    <th class="cart_total_label align-middle pb-3">
-                                        <h6 class="text-muted mb-0">Subtotal katalog (referensi)</h6>
-                                    </th>
-                                    <td class="cart_total_amount text-end align-middle pb-3">
-                                        <h5 class="text-muted mb-0" id="retailSubtotalDisplay">Rp {{ number_format($retailSubtotal ?? $subtotal, 0, ',', '.') }}</h5>
-                                    </td>
-                                </tr>
-                                <tr id="distributorDiscountRow" class="rg-checkout-total-row" style="{{ !empty($showDistributorPricing) ? '' : 'display: none;' }}">
-                                    <th class="cart_total_label align-middle pb-3">
-                                        <h6 class="text-muted mb-0">Potongan distributor <span id="distributorLevelLabel">@if(!empty($priceLevelName))({{ $priceLevelName }})@endif</span></h6>
-                                    </th>
-                                    <td class="cart_total_amount text-end align-middle pb-3">
-                                        <h5 class="text-danger mb-0" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount ?? 0, 0, ',', '.') }}</h5>
-                                    </td>
-                                </tr>
                                 <tr class="rg-checkout-total-row">
                                     <th class="cart_total_label align-middle pb-3">
                                         <h6 class="text-muted mb-0">Subtotal</h6>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle pb-3">
-                                        <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
+                                        <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($retailSubtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
-                                <tr id="discountRow" class="rg-checkout-total-row" style="{{ $discountAmount > 0 ? '' : 'display: none;' }}">
-                                    <th class="cart_total_label align-middle py-3">
-                                        <h6 class="text-muted mb-0">Potongan Harga (<span id="discountPercentDisplay">{{ $discountPercent }}</span>%)</h6>
-                                    </th>
-                                    <td class="cart_total_amount text-end align-middle py-3">
-                                        <h5 class="text-danger mb-0" id="discountAmountDisplay">-Rp {{ number_format($discountAmount, 0, ',', '.') }}</h5>
-                                    </td>
-                                </tr>
+                                @if(!empty($tieredDiscountDetails))
+                                    @foreach($tieredDiscountDetails as $discount)
+                                    <tr class="rg-checkout-total-row tiered-discount-row">
+                                        <th class="cart_total_label align-middle py-3">
+                                            <h6 class="text-muted mb-0">Diskon {{ $discount['group_name'] }} ({{ $discount['percentage'] }}%)</h6>
+                                        </th>
+                                        <td class="cart_total_amount text-end align-middle py-3">
+                                            <h5 class="text-danger mb-0">-Rp {{ number_format($discount['discount_amount'], 0, ',', '.') }}</h5>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                @endif
                                 <tr class="rg-checkout-total-row rg-checkout-shipping-row">
                                     <th class="cart_total_label align-middle py-3">
                                         <h6 class="text-muted mb-2">Ongkos Kirim</h6>
@@ -1242,10 +1221,7 @@
                 }
     
                 data.services.forEach(function(service, index) {
-                    var isSelected = index === 0;
-                    if (isSelected) {
-                        currentServiceCode = String(service.code);
-                    }
+                    var isSelected = false; // User must explicitly select
                     
                     var serviceHtml = `
                         <div class="col-md-6 mb-10">
@@ -1278,7 +1254,14 @@
                         $('#sourceWarehouseName').text(data.warehouse.name);
                         $('#sourceWarehouseLocation').text(data.warehouse.location);
                     }
-                    updateShipping();
+                    
+                    // Reset shipping displays until user selects a service
+                    $('#shippingCostDisplay').text('-');
+                    $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID'));
+                    $('#estimatedDelivery').text('-');
+                    
+                    // If we previously auto-called updateShipping() here, we remove it
+                    // updateShipping(); 
                 } else {
                      // Reset shipping displays if no services
                     $('#shippingCostDisplay').text('-');

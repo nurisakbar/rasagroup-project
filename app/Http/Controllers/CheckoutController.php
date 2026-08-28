@@ -120,6 +120,7 @@ class CheckoutController extends Controller
         $retailSubtotal = $pricing['retail_subtotal'];
         $distributorPriceDiscount = $pricing['distributor_price_discount'];
         $tieredDiscountAmount = $pricing['tiered_discount_amount'];
+        $tieredDiscountDetails = $pricing['tiered_discount_details'];
         $showTieredDiscount = $pricing['show_tiered_discount'];
         $subtotal = $pricing['subtotal_after_distributor'];
         $priceLevelName = $pricing['price_level_name'];
@@ -253,15 +254,9 @@ class CheckoutController extends Controller
 
     // \Log::info('=== END CHECKOUT DEBUG ===');
     
-    // Calculate discount
-    $totalQuantity = $carts->sum('quantity');
-    $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
+    // Disable old DiscountTier logic as per new category-based discount rule
     $discountAmount = 0;
     $discountPercent = 0;
-    if ($applicableDiscount) {
-        $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
-        $discountPercent = $applicableDiscount->discount_percent;
-    }
 
     $total = $subtotal - $discountAmount + $shippingCost;
 
@@ -301,6 +296,7 @@ class CheckoutController extends Controller
         'retailSubtotal',
         'distributorPriceDiscount',
         'tieredDiscountAmount',
+        'tieredDiscountDetails',
         'showTieredDiscount',
         'priceLevelName',
         'showDistributorPricing',
@@ -874,14 +870,9 @@ class CheckoutController extends Controller
             }
             
             // Calculate discount
-            $totalQuantity = $carts->sum('quantity');
-            $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
+            // Disable old DiscountTier logic as per new category-based discount rule
             $discountAmount = 0;
             $discountPercent = 0;
-            if ($applicableDiscount) {
-                $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
-                $discountPercent = $applicableDiscount->discount_percent;
-            }
 
             $total = $subtotal - $discountAmount + $shippingCost;
 
@@ -936,13 +927,15 @@ class CheckoutController extends Controller
                 ];
             }
 
-            // Add discount as item (if any)
-            if ($discountAmount > 0) {
-                $xenditItems[] = [
-                    'name' => 'Potongan Harga (' . $discountPercent . '%)',
-                    'quantity' => 1,
-                    'price' => -$discountAmount, // Negative amount for discount
-                ];
+            // Add tiered discounts as items (if any)
+            if (!empty($pricing['tiered_discount_details'])) {
+                foreach ($pricing['tiered_discount_details'] as $discount) {
+                    $xenditItems[] = [
+                        'name' => 'Diskon ' . $discount['group_name'] . ' (' . $discount['percentage'] . '%)',
+                        'quantity' => 1,
+                        'price' => -$discount['discount_amount'], // Negative amount for discount
+                    ];
+                }
             }
 
             $orderNotes = $request->notes;
@@ -1000,12 +993,7 @@ class CheckoutController extends Controller
             $discountService = new \App\Services\DiscountService();
 
             foreach ($carts as $cart) {
-                if (!$user->isDistributor()) {
-                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
-                    $lineUnit = $discountData['final_price'];
-                } else {
-                    $lineUnit = $user->getProductPrice($cart->product);
-                }
+                $lineUnit = $user->getProductPrice($cart->product);
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -1349,8 +1337,8 @@ class CheckoutController extends Controller
      */
     private function cartPricingBreakdown(User $user, $carts): array
     {
-        $retailSubtotal = (float) $carts->sum(function ($cart) {
-            return (float) $cart->product->final_price * (int) $cart->quantity;
+        $retailSubtotal = (float) $carts->sum(function ($cart) use ($user) {
+            return $user->getProductPrice($cart->product) * (int) $cart->quantity;
         });
 
         $user->loadMissing(['priceLevel', 'categoryDiscounts']);
@@ -1361,33 +1349,36 @@ class CheckoutController extends Controller
 
         $discountService = new \App\Services\DiscountService();
         $tieredDiscountAmount = 0.0;
+        $tieredDiscountDetails = [];
 
         if ($user->isDistributor()) {
             $priceLevelName = $user->priceLevel ? $user->priceLevel->name : 'Diskon Kategori / Distributor';
             
-            $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user) {
-                return $user->getProductPrice($cart->product) * (int) $cart->quantity;
-            });
+            // Subdistributor / Reseller also gets cart-level category discounts?
+            // User requested to use cart level discount. We will calculate it here.
+            $discountData = $discountService->calculateCartDiscount($carts, $user);
+            $tieredDiscountAmount = $discountData['total_discount_amount'];
+            $tieredDiscountDetails = $discountData['discount_details'];
+            $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
             
-            $distributorPriceDiscount = max(0.0, $retailSubtotal - $subtotalAfterDistributor);
+            $distributorPriceDiscount = $tieredDiscountAmount; // Show as tiered discount instead? Or combine?
             
-            if ($distributorPriceDiscount == 0) {
+            if ($tieredDiscountAmount == 0) {
                 $priceLevelName = null; // Don't show if there's no discount
             }
         } else if (!$user->isDistributor()) {
-            // Apply tiered discount per SKU for non-distributors
-            $subtotalAfterDistributor = (float) $carts->sum(function ($cart) use ($user, $discountService, &$tieredDiscountAmount) {
-                $discountData = $discountService->calculateCartItemDiscount($cart, $user);
-                // Accumulate total discount amount from all items
-                $tieredDiscountAmount += $discountData['discount_amount'] * $cart->quantity;
-                return $discountData['final_subtotal'];
-            });
+            // Apply grouped category tiered discount for non-distributors
+            $discountData = $discountService->calculateCartDiscount($carts, $user);
+            $tieredDiscountAmount = $discountData['total_discount_amount'];
+            $tieredDiscountDetails = $discountData['discount_details'];
+            $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
         }
 
         return [
             'retail_subtotal' => $retailSubtotal,
             'distributor_price_discount' => $distributorPriceDiscount,
             'tiered_discount_amount' => $tieredDiscountAmount,
+            'tiered_discount_details' => $tieredDiscountDetails,
             'subtotal_after_distributor' => $subtotalAfterDistributor,
             'price_level_name' => $priceLevelName,
             'show_distributor_pricing' => $user->isDistributor()
@@ -1398,15 +1389,13 @@ class CheckoutController extends Controller
 
     private function syncWarehouseByAddress(Address $address): ?array
     {
-        $carts = Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->get();
+        $carts = Cart::with(['product'])->where('user_id', Auth::id())->where('cart_type', 'regular')->get();
         if ($carts->isEmpty()) {
             return null;
         }
         
-        $totalAmount = $carts->sum(function($c) {
-            // Asumsi product_price * qty. Sesuaikan jika ada logika diskon per item di cart
-            return $c->quantity * ($c->product->price ?? 0);
-        });
+        $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
+        $totalAmount = $pricing['retail_subtotal'];
 
         $currentWarehouseId = $carts->first()->warehouse_id;
         $excludeOwnHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();

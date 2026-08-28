@@ -19,98 +19,96 @@ class DiscountService
     private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'PUREE', 'TEA', 'TOPPING', 'JELLY', 'RAMOE'];
 
     /**
-     * Hitung diskon untuk satu baris Cart (per SKU)
-     *
-     * @param Cart $cartItem
-     * @param User $user
-     * @return array
+     * Menentukan grup kategori untuk sebuah produk.
+     * Mengembalikan 'syrup_sauce', 'others', atau null jika tidak masuk kriteria.
      */
-    public function calculateCartItemDiscount(Cart $cartItem, User $user): array
+    public function getProductCategoryGroup(Product $product): ?string
     {
-        $product = $cartItem->product;
-        $quantity = $cartItem->quantity;
-        
-        // Default harga asli
-        $originalPrice = $user->getProductPrice($product);
-        $originalSubtotal = $originalPrice * $quantity;
-        
-        // 1. Cek apakah user berhak mendapat diskon berjenjang (Bukan distributor)
-        if ($user->role === 'distributor') {
-            return [
-                'original_price' => $originalPrice,
-                'discount_percentage' => 0,
-                'discount_amount' => 0,
-                'final_price' => $originalPrice,
-                'original_subtotal' => $originalSubtotal,
-                'final_subtotal' => $originalSubtotal,
-            ];
-        }
-
-        // 2. Hitung jumlah karton (1 karton = 6 item)
-        $karton = floor($quantity / 6);
-        if ($karton < 1) {
-            // Belum memenuhi minimum order quantity (MOQ)
-            return [
-                'original_price' => $originalPrice,
-                'discount_percentage' => 0,
-                'discount_amount' => 0,
-                'final_price' => $originalPrice,
-                'original_subtotal' => $originalSubtotal,
-                'final_subtotal' => $originalSubtotal,
-            ];
-        }
-
-        // 3. Tentukan tipe customer (Subdist/Reseller atau Outlet)
-        $customerType = $this->getCustomerType($user);
-
-        // 4. Tentukan grup kategori produk
         $categoryName = $product->category ? $product->category->name : '';
         $isSyrupSauce = in_array(strtoupper($categoryName), array_map('strtoupper', self::GROUP_SYRUP_SAUCE));
         $isOthers = in_array(strtoupper($categoryName), array_map('strtoupper', self::GROUP_OTHERS));
 
-        // Jika tidak masuk ke grup manapun, tidak ada diskon
-        if (!$isSyrupSauce && !$isOthers) {
-            return [
-                'original_price' => $originalPrice,
-                'discount_percentage' => 0,
-                'discount_amount' => 0,
-                'final_price' => $originalPrice,
-                'original_subtotal' => $originalSubtotal,
-                'final_subtotal' => $originalSubtotal,
-            ];
+        if ($isSyrupSauce) return 'syrup_sauce';
+        if ($isOthers) return 'others';
+
+        return null;
+    }
+
+    /**
+     * Menghitung diskon berjenjang untuk seluruh isi keranjang berdasarkan akumulasi kategori produk.
+     * Mengembalikan array berisi subtotal dan rincian diskon per kategori.
+     *
+     * @param \Illuminate\Support\Collection<int, Cart> $carts
+     * @param User $user
+     * @return array
+     */
+    public function calculateCartDiscount($carts, User $user): array
+    {
+        // Pengelompokan kuantitas dan subtotal
+        $groupStats = [
+            'syrup_sauce' => ['quantity' => 0, 'subtotal' => 0],
+            'others'      => ['quantity' => 0, 'subtotal' => 0],
+        ];
+
+        // Hitung total kuantitas per grup dan subtotal per grup
+        foreach ($carts as $cartItem) {
+            $product = $cartItem->product;
+            $quantity = $cartItem->quantity;
+            $originalPrice = $user->getProductPrice($product);
+            $subtotal = $originalPrice * $quantity;
+
+            $group = $this->getProductCategoryGroup($product);
+            if ($group) {
+                $groupStats[$group]['quantity'] += $quantity;
+                $groupStats[$group]['subtotal'] += $subtotal;
+            }
         }
 
-        // 5. Hitung persentase diskon
-        $discountPercentage = 0;
-        if ($customerType === 'subdist') {
-            if ($karton > 50) {
-                $discountPercentage = $isSyrupSauce ? 15 : 8;
+        $customerType = $this->getCustomerType($user);
+        $discountDetails = [];
+        $totalDiscountAmount = 0;
+
+        foreach ($groupStats as $group => $stats) {
+            if ($stats['quantity'] == 0) continue;
+
+            $karton = floor($stats['quantity'] / 6);
+            if ($karton < 1) continue;
+
+            $isSyrupSauce = ($group === 'syrup_sauce');
+            $discountPercentage = 0;
+
+            if ($customerType === 'subdist') {
+                if ($karton > 50) {
+                    $discountPercentage = $isSyrupSauce ? 15 : 8;
+                }
+            } else { // Outlet
+                if ($karton >= 1 && $karton <= 2) {
+                    $discountPercentage = $isSyrupSauce ? 2.5 : 2;
+                } elseif ($karton >= 3 && $karton <= 8) {
+                    $discountPercentage = $isSyrupSauce ? 5 : 4;
+                } elseif ($karton >= 9 && $karton <= 18) {
+                    $discountPercentage = $isSyrupSauce ? 7.5 : 5;
+                } elseif ($karton >= 19) {
+                    $discountPercentage = $isSyrupSauce ? 10 : 6;
+                }
             }
-        } else {
-            // Outlet
-            if ($karton >= 1 && $karton <= 2) {
-                $discountPercentage = $isSyrupSauce ? 2.5 : 2;
-            } elseif ($karton >= 3 && $karton <= 8) {
-                $discountPercentage = $isSyrupSauce ? 5 : 4;
-            } elseif ($karton >= 9 && $karton <= 18) {
-                $discountPercentage = $isSyrupSauce ? 7.5 : 5;
-            } elseif ($karton >= 19) { // Asumsi >30 juga mentok di sini
-                $discountPercentage = $isSyrupSauce ? 10 : 6;
+
+            if ($discountPercentage > 0) {
+                $discountAmount = ($stats['subtotal'] * $discountPercentage) / 100;
+                $totalDiscountAmount += $discountAmount;
+                
+                $groupName = $isSyrupSauce ? 'Syrup & Sauce' : 'Powder, Pulp & Lainnya';
+                $discountDetails[] = [
+                    'group_name' => $groupName,
+                    'percentage' => $discountPercentage,
+                    'discount_amount' => $discountAmount,
+                ];
             }
         }
-
-        // 6. Kalkulasi harga akhir
-        $discountAmount = ($originalPrice * $discountPercentage) / 100;
-        $finalPrice = $originalPrice - $discountAmount;
-        $finalSubtotal = $finalPrice * $quantity;
 
         return [
-            'original_price' => $originalPrice,
-            'discount_percentage' => $discountPercentage,
-            'discount_amount' => $discountAmount,
-            'final_price' => $finalPrice,
-            'original_subtotal' => $originalSubtotal,
-            'final_subtotal' => $finalSubtotal,
+            'discount_details' => $discountDetails,
+            'total_discount_amount' => $totalDiscountAmount,
         ];
     }
 
@@ -119,14 +117,10 @@ class DiscountService
      */
     private function getCustomerType(User $user): string
     {
-        // Secara default, pembeli biasa (buyer) dianggap Outlet
         $type = 'outlet';
-        
-        // Jika ada identifier khusus untuk subdistributor/reseller, tambahkan di sini
         if ($user->sub_role === 'reseller' || $user->sub_role === 'subdist') {
             $type = 'subdist';
         }
-
         return $type;
     }
 }

@@ -225,17 +225,15 @@ class OrderApiController extends Controller
             $orderNumber = $this->generateOrderNumber();
             
             $discountService = new \App\Services\DiscountService();
-            $tieredDiscountAmount = 0.0;
             $user = Auth::user();
 
-            $subtotal = $carts->sum(function ($cart) use ($user, $discountService, &$tieredDiscountAmount) {
-                if (!$user->isDistributor()) {
-                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
-                    $tieredDiscountAmount += $discountData['discount_amount'] * $cart->quantity;
-                    return $discountData['final_subtotal'];
-                }
-                return $cart->product->price * $cart->quantity;
+            $retailSubtotal = (float) $carts->sum(function ($cart) use ($user) {
+                return $user->getProductPrice($cart->product) * (int) $cart->quantity;
             });
+
+            $discountData = $discountService->calculateCartDiscount($carts, $user);
+            $tieredDiscountAmount = $discountData['total_discount_amount'];
+            $subtotal = $retailSubtotal - $tieredDiscountAmount;
 
             $totalWeight = $carts->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -316,14 +314,8 @@ class OrderApiController extends Controller
             ]);
 
             foreach ($carts as $cart) {
-                if (!$user->isDistributor()) {
-                    $discountData = $discountService->calculateCartItemDiscount($cart, $user);
-                    $price = $discountData['final_price'];
-                    $itemSubtotal = $discountData['final_subtotal'];
-                } else {
-                    $price = $cart->product->price;
-                    $itemSubtotal = $price * $cart->quantity;
-                }
+                $price = $user->getProductPrice($cart->product);
+                $itemSubtotal = $price * $cart->quantity;
 
                 OrderItem::create([
                     'order_id' => $order->id,
