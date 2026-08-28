@@ -35,6 +35,11 @@ Route::prefix('v1.0/transfer-va')->group(function () {
     Route::post('/payment', [\App\Http\Controllers\Api\FaspaySnapController::class, 'payment'])->name('web.faspay.v1.payment');
 });
 
+// Faspay SNAP BI (V1.0) QRIS Webhook
+Route::prefix('v1.0/qr')->group(function () {
+    Route::post('/qr-mpm-notify', [\App\Http\Controllers\Api\FaspaySnapController::class, 'qrMpmNotify'])->name('web.faspay.v1.qr.notify');
+});
+
 
 // Redirect old dashboard based on user role
 Route::get('/dashboard', function () {

@@ -249,7 +249,23 @@ class Warehouse extends Model
                 ->whereIn('target_role', $rolesAllowed);
         };
 
-        // 1. Try Same District
+        // 1. Try finding nearest by Latitude/Longitude first
+        if ($address->latitude && $address->longitude) {
+            $lat = (float) $address->latitude;
+            $lng = (float) $address->longitude;
+
+            $hub = $queryBuilder()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderByRaw("POW(latitude - ?, 2) + POW(longitude - ?, 2) ASC", [$lat, $lng])
+                ->first();
+                
+            if ($hub) {
+                return $hub;
+            }
+        }
+
+        // 2. Try Same District
         if ($address->district_id) {
             $hub = $queryBuilder()
                 ->where('district_id', $address->district_id)
@@ -259,7 +275,7 @@ class Warehouse extends Model
             }
         }
 
-        // 2. Try Same Regency
+        // 3. Try Same Regency
         if ($address->regency_id) {
             $hub = $queryBuilder()
                 ->where('regency_id', $address->regency_id)
@@ -269,7 +285,7 @@ class Warehouse extends Model
             }
         }
 
-        // 3. Try Same Province
+        // 4. Try Same Province
         if ($address->province_id) {
             $hub = $queryBuilder()
                 ->where('province_id', $address->province_id)
@@ -279,8 +295,9 @@ class Warehouse extends Model
             }
         }
 
-        // 4. Fallback: any active hub (respect exclusion; hindari fallback ke hub sendiri distributor)
+        // 5. Fallback: any active hub (respect exclusion; hindari fallback ke hub sendiri distributor)
         return $queryBuilder()
+            ->orderByRaw("CASE WHEN name LIKE '%MM2100%' THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->first();
     }
