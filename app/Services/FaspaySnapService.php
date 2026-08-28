@@ -15,9 +15,15 @@ class FaspaySnapService
     
     public function __construct()
     {
+        $isProduction = config('services.faspay.env', 'dev') === 'production' || config('services.faspay.env', 'dev') === 'prod';
+        
         $this->baseUrl = config('services.faspay.snap_base_url');
+        // Auto-switch to production URL if env is production and URL is still pointing to sandbox
+        if ($isProduction && str_contains($this->baseUrl, 'sandbox')) {
+            $this->baseUrl = 'https://debit.faspay.co.id/v1.0';
+        }
+        
         $this->clientId = config('services.faspay.snap_client_id');
-        $isProduction = config('services.faspay.env', 'dev') === 'production';
         $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
         $this->privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
     }
