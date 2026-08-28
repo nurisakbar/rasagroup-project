@@ -221,7 +221,8 @@ class Warehouse extends Model
      */
     public static function findBestHubForAddress(Address $address, ?string $excludeWarehouseId = null, float $totalAmount = 0): ?self
     {
-                $exclude = $excludeWarehouseId;
+        $exclude = $excludeWarehouseId;
+        $user = $address->user;
         
         // Custom Logic: If total >= 25,000,000 force MM2100 hub
         if ($totalAmount >= 25000000) {
@@ -230,7 +231,6 @@ class Warehouse extends Model
                 return $mm2100;
             }
         }
-        $user = $address->user;
         
         // User role mapping
         $rolesAllowed = ['umum', 'ecommerce']; // default for regular users
