@@ -211,7 +211,9 @@ class CheckoutController extends Controller
                     $isDiscounted = false;
                     
                     if ($firstExpCode === 'jne') {
+                        $weightKg = max(1, ceil($totalWeight / 1000));
                         $isDiscounted = true;
+                        $originalCost = $originalCost * $weightKg;
                         $cost = $originalCost * 0.8;
                     }
 
@@ -406,6 +408,8 @@ class CheckoutController extends Controller
                     $shippingCost = $originalShippingCost;
                     
                     if ($expedition->code === 'jne') {
+                        $weightKg = max(1, ceil($totalWeight / 1000));
+                        $originalShippingCost = $originalShippingCost * $weightKg;
                         $shippingCost = $originalShippingCost * 0.8;
                     }
 
@@ -1467,7 +1471,7 @@ class CheckoutController extends Controller
             return $this->ekspedisiku->calculateCost(
                 $sourceWarehouse->district_id,
                 $address->district_id,
-                max(1000, $totalWeightGrams),
+                max(1, $totalWeightGrams / 1000),
                 $expedition->code,
                 [
                     'warehouse' => $sourceWarehouse,
