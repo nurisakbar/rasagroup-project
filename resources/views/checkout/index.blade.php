@@ -1351,11 +1351,11 @@
                     $('#totalDisplay').text(data.total_formatted);
                 }
 
-                $('#subtotalDisplay').text(data.subtotal_formatted);
+                $('#subtotalDisplay').text(data.retail_subtotal_formatted);
                 if (data.total_weight_formatted) {
-                    $('#totalWeightDisplay').text('Berat: ' + data.total_weight_formatted);
+                    $('#totalWeightDisplay').text('Berat Total: ' + data.total_weight_formatted);
                 }
-                window.checkoutTotalWithoutShipping = parseFloat(data.subtotal) - parseFloat(data.discount_amount);
+                window.checkoutTotalWithoutShipping = parseFloat(data.retail_subtotal) - (parseFloat(data.tiered_discount_amount) || 0);
 
                 if (data.show_distributor_pricing) {
                     $('#distributorRetailRow').show();
