@@ -511,11 +511,18 @@
                                                     <span class="text-muted text-decoration-line-through me-1" style="font-size: 0.7em;">Rp {{ number_format($originalShippingCost, 0, ',', '.') }}</span>
                                                 @endif
                                                 Rp {{ number_format($shippingCost, 0, ',', '.') }}
+                                                @php
+                                                    $weightKg = max(1, ceil($totalWeight / 1000));
+                                                    $tariffPerKg = (isset($originalShippingCost) ? $originalShippingCost : $shippingCost) / $weightKg;
+                                                @endphp
+                                                <div class="font-xs text-muted mt-1">
+                                                    (Rp {{ number_format($tariffPerKg, 0, ',', '.') }} / kg &times; {{ $weightKg }} kg)
+                                                </div>
                                             @else
                                                 -
                                             @endif
                                         </h5>
-                                        <small class="text-muted d-block mt-1" id="totalWeightDisplay">Berat: {{ number_format($totalWeight / 1000, 1) }} kg</small>
+                                        <small class="text-muted d-block mt-1" id="totalWeightDisplay">Berat Total: {{ number_format($totalWeight / 1000, 1) }} kg</small>
                                         <small class="text-muted d-block mt-1" id="estimatedDelivery">
                                              @if($defaultService)
                                                 Estimasi: {{ $defaultService['estimated_days'] }}
@@ -1313,16 +1320,24 @@
                 service_code: currentServiceCode
             },
             success: function(data) {
-                if (data.error) {
+        if (data.error) {
                     alert(data.error);
                     return;
                 }
                 
                 // Update displays
+                let tariffHtml = '';
+                if (data.shipping_cost > 0 && data.total_weight > 0) {
+                    let weightKg = Math.max(1, Math.ceil(data.total_weight / 1000));
+                    let originalCost = data.is_shipping_discounted ? data.original_shipping_cost : data.shipping_cost;
+                    let tariffPerKg = originalCost / weightKg;
+                    let formattedTariff = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(tariffPerKg);
+                    tariffHtml = `<div class="font-xs text-muted mt-1">(${formattedTariff} / kg &times; ${weightKg} kg)</div>`;
+                }
                 if (data.is_shipping_discounted) {
-                    $('#shippingCostDisplay').html(`<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.7em;">${data.original_shipping_cost_formatted}</span> ${data.shipping_cost_formatted}`);
+                    $('#shippingCostDisplay').html(`<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.7em;">${data.original_shipping_cost_formatted}</span> ${data.shipping_cost_formatted}${tariffHtml}`);
                 } else {
-                    $('#shippingCostDisplay').text(data.shipping_cost_formatted);
+                    $('#shippingCostDisplay').html(`${data.shipping_cost_formatted}${tariffHtml}`);
                 }
                 if (data.payment_fees) {
                     paymentFees = data.payment_fees;

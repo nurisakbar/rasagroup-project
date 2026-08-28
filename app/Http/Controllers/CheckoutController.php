@@ -461,7 +461,9 @@ class CheckoutController extends Controller
 
         return response()->json([
             'payment_fees' => $paymentFees,
+            'total_weight' => $totalWeight,
             'shipping_cost' => $shippingCost,
+            'original_shipping_cost' => $originalShippingCost,
             'shipping_cost_formatted' => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
             'original_shipping_cost_formatted' => 'Rp ' . number_format($originalShippingCost, 0, ',', '.'),
             'is_shipping_discounted' => $isShippingDiscounted,
