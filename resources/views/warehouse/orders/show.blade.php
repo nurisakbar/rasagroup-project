@@ -238,18 +238,34 @@
                                 @endif
                             </td>
                         </tr>
+                        @php
+                            $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
+                            $ekspedisikuCouriers = ['lion_parcel', 'lalamove', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress', 'borzo'];
+                            $supportsEkspedisiBooking = $order->expedition && in_array($order->expedition->code, $ekspedisikuCouriers, true);
+                            // EkspedisiKu Pickup API currently only supports Lion Parcel
+                            $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel'], true);
+                            $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
+                            $colClass = $supportsPickup ? 'col-md-4' : 'col-md-6';
+                        @endphp
+
+                        @if($isSelfPickup)
+                        <tr>
+                            <th>Ambil Sendiri (Self Pickup)</th>
+                            <td>
+                                <strong>Jadwal Siap Diambil:</strong> 
+                                @if($order->pickup_ready_at)
+                                    <span class="text-success" style="font-size: 15px;">{{ \Carbon\Carbon::parse($order->pickup_ready_at)->format('d M Y, H:i') }}</span>
+                                @else
+                                    <span class="text-muted">Menunggu konfirmasi gudang</span>
+                                @endif
+                                <br>
+                                <strong>Catatan Pengambilan:</strong> {{ $order->pickup_note ?? '-' }}
+                            </td>
+                        </tr>
+                        @else
                         <tr>
                             <th>Nomor Resi</th>
                             <td>
-                                @php
-                                    $ekspedisikuCouriers = ['lion_parcel', 'lalamove', 'jne', 'jnt', 'sicepat', 'sap', 'ninja', 'idexpress', 'borzo'];
-                                    $supportsEkspedisiBooking = $order->expedition && in_array($order->expedition->code, $ekspedisikuCouriers, true);
-                                    // EkspedisiKu Pickup API currently only supports Lion Parcel
-                                    $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel'], true);
-                                    $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
-                                    $colClass = $supportsPickup ? 'col-md-4' : 'col-md-6';
-                                @endphp
-
                                 @if($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
                                     @if($isLalamove)
@@ -260,6 +276,7 @@
                                 @endif
                             </td>
                         </tr>
+                        @endif
                         @if($supportsEkspedisiBooking)
                         <tr>
                             <td colspan="2" style="padding: 15px;">
@@ -526,8 +543,8 @@
                                 <option value="">-- Pilih Status Baru (Opsional) --</option>
                                 <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="processing" {{ $order->order_status === 'processing' ? 'selected' : '' }}>Processing</option>
-                                <option value="shipped" {{ $order->order_status === 'shipped' ? 'selected' : '' }}>Shipped</option>
-                                <option value="delivered" {{ $order->order_status === 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                <option value="shipped" {{ $order->order_status === 'shipped' ? 'selected' : '' }}>{{ isset($isSelfPickup) && $isSelfPickup ? 'Siap Diambil (Ready for Pickup)' : 'Shipped' }}</option>
+                                <option value="delivered" {{ $order->order_status === 'delivered' ? 'selected' : '' }}>{{ isset($isSelfPickup) && $isSelfPickup ? 'Sudah Diambil (Picked Up)' : 'Delivered' }}</option>
                                 <option value="completed" {{ $order->order_status === 'completed' ? 'selected' : '' }}>Completed</option>
                                 <option value="cancelled" {{ $order->order_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                             </select>
@@ -541,6 +558,25 @@
                         <hr>
 
                         <!-- Tracking Number -->
+                        @if(isset($isSelfPickup) && $isSelfPickup)
+                        <div class="form-group">
+                            <label for="pickup_ready_at">Rencana Waktu Ambil / Kapan Siap Diambil</label>
+                            @if($order->pickup_ready_at)
+                                <div class="callout callout-info" style="margin-bottom: 10px; padding: 10px;">
+                                    <strong>Waktu Siap:</strong> {{ \Carbon\Carbon::parse($order->pickup_ready_at)->format('d M Y, H:i') }}
+                                </div>
+                            @endif
+                            <input type="datetime-local" class="form-control" id="pickup_ready_at" name="pickup_ready_at" 
+                                   value="{{ $order->pickup_ready_at ? \Carbon\Carbon::parse($order->pickup_ready_at)->format('Y-m-d\TH:i') : '' }}">
+                            <p class="help-block">
+                                <small class="text-info"><i class="fa fa-info-circle"></i> Info estimasi kapan barang siap diambil pembeli.</small>
+                            </p>
+                        </div>
+                        <div class="form-group">
+                            <label for="pickup_note">Catatan Pengambilan (Opsional)</label>
+                            <textarea class="form-control" id="pickup_note" name="pickup_note" rows="2" placeholder="Cth: Harap bawa KTP saat mengambil">{{ $order->pickup_note }}</textarea>
+                        </div>
+                        @else
                         <div class="form-group">
                             <label for="tracking_number">Nomor Resi Pengiriman</label>
                             @if($order->tracking_number)
@@ -567,6 +603,7 @@
                                 </small>
                             @endif
                         </div>
+                        @endif
 
                         <hr>
 
@@ -652,10 +689,14 @@ $(document).ready(function() {
     // Store original values
     var originalOrderStatus = $('#order_status').val();
     var originalTrackingNumber = $('#tracking_number').val();
+    var originalPickupReadyAt = $('#pickup_ready_at').val();
+    var originalPickupNote = $('#pickup_note').val();
     
     $('#updateOrderForm').on('submit', function(e) {
         var orderStatus = $('#order_status').val();
         var trackingNumber = $('#tracking_number').val();
+        var pickupReadyAt = $('#pickup_ready_at').val();
+        var pickupNote = $('#pickup_note').val();
         
         // Check if at least one field has changed
         var hasChanges = false;
@@ -664,7 +705,15 @@ $(document).ready(function() {
             hasChanges = true;
         }
         
-        if (trackingNumber !== originalTrackingNumber) {
+        if ($('#tracking_number').length && trackingNumber !== originalTrackingNumber) {
+            hasChanges = true;
+        }
+
+        if ($('#pickup_ready_at').length && pickupReadyAt !== originalPickupReadyAt) {
+            hasChanges = true;
+        }
+
+        if ($('#pickup_note').length && pickupNote !== originalPickupNote) {
             hasChanges = true;
         }
         

@@ -117,9 +117,14 @@
                 @endif
             </td>
             <td width="40%">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Kepada Yth: {{ $order->user->name }}</div>
+                @php
+                    $addressLines = explode("\n", str_replace("\r\n", "\n", $order->shipping_address));
+                    $recipientName = array_shift($addressLines);
+                    $remainingAddress = implode("\n", $addressLines);
+                @endphp
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Kepada Yth: {{ $recipientName }}</div>
                 <div style="line-height: 1.4;">
-                    {!! nl2br(e($order->shipping_address)) !!}
+                    {!! nl2br(e($remainingAddress)) !!}
                 </div>
             </td>
         </tr>

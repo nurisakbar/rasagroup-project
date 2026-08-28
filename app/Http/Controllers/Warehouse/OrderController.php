@@ -204,6 +204,8 @@ class OrderController extends Controller
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
             'tracking_number' => 'nullable|string|max:100',
             'payment_status' => 'nullable|in:pending,paid,failed,refunded',
+            'pickup_ready_at' => 'nullable|date',
+            'pickup_note' => 'nullable|string',
         ]);
 
         $updateData = [];
@@ -250,6 +252,15 @@ class OrderController extends Controller
             }
             
             $messages[] = 'Nomor resi';
+        }
+
+        // Update pickup info
+        if ($request->has('pickup_ready_at') && $request->filled('pickup_ready_at')) {
+            $updateData['pickup_ready_at'] = $request->pickup_ready_at;
+            $messages[] = 'Waktu ambil';
+        }
+        if ($request->has('pickup_note')) {
+            $updateData['pickup_note'] = $request->pickup_note;
         }
 
         // Update payment status
