@@ -572,6 +572,22 @@
                                 <small class="text-info"><i class="fa fa-info-circle"></i> Info estimasi kapan barang siap diambil pembeli.</small>
                             </p>
                         </div>
+                        
+                        @if($order->pickup_ready_at)
+                        <div class="form-group">
+                            <label for="shipped_at">Waktu Diserahkan (Barang Diambil)</label>
+                            @if($order->shipped_at)
+                                <div class="callout callout-success" style="margin-bottom: 10px; padding: 10px;">
+                                    <strong>Waktu Diserahkan:</strong> {{ \Carbon\Carbon::parse($order->shipped_at)->format('d M Y, H:i') }}
+                                </div>
+                            @endif
+                            <input type="datetime-local" class="form-control" id="shipped_at" name="shipped_at" 
+                                   value="{{ $order->shipped_at ? \Carbon\Carbon::parse($order->shipped_at)->format('Y-m-d\TH:i') : '' }}">
+                            <p class="help-block">
+                                <small class="text-success"><i class="fa fa-check-circle"></i> Kapan barang aktual diserahkan kepada pembeli.</small>
+                            </p>
+                        </div>
+                        @endif
                         <div class="form-group">
                             <label for="pickup_note">Catatan Pengambilan (Opsional)</label>
                             <textarea class="form-control" id="pickup_note" name="pickup_note" rows="2" placeholder="Cth: Harap bawa KTP saat mengambil">{{ $order->pickup_note }}</textarea>
@@ -691,12 +707,14 @@ $(document).ready(function() {
     var originalTrackingNumber = $('#tracking_number').val();
     var originalPickupReadyAt = $('#pickup_ready_at').val();
     var originalPickupNote = $('#pickup_note').val();
+    var originalShippedAt = $('#shipped_at').val();
     
     $('#updateOrderForm').on('submit', function(e) {
         var orderStatus = $('#order_status').val();
         var trackingNumber = $('#tracking_number').val();
         var pickupReadyAt = $('#pickup_ready_at').val();
         var pickupNote = $('#pickup_note').val();
+        var shippedAt = $('#shipped_at').val();
         
         // Check if at least one field has changed
         var hasChanges = false;
@@ -714,6 +732,10 @@ $(document).ready(function() {
         }
 
         if ($('#pickup_note').length && pickupNote !== originalPickupNote) {
+            hasChanges = true;
+        }
+
+        if ($('#shipped_at').length && shippedAt !== originalShippedAt) {
             hasChanges = true;
         }
         

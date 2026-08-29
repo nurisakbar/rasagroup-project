@@ -206,6 +206,7 @@ class OrderController extends Controller
             'payment_status' => 'nullable|in:pending,paid,failed,refunded',
             'pickup_ready_at' => 'nullable|date',
             'pickup_note' => 'nullable|string',
+            'shipped_at' => 'nullable|date',
         ]);
 
         $updateData = [];
@@ -261,6 +262,16 @@ class OrderController extends Controller
         }
         if ($request->has('pickup_note')) {
             $updateData['pickup_note'] = $request->pickup_note;
+        }
+        if ($request->has('shipped_at') && $request->filled('shipped_at')) {
+            $updateData['shipped_at'] = $request->shipped_at;
+            $messages[] = 'Waktu diserahkan';
+            
+            // If it's self pickup and shipped_at is set, automatically set status to delivered/shipped? 
+            // The user requested to be able to input it. We can just save it.
+            if (!isset($updateData['order_status']) && in_array($order->order_status, ['pending', 'processing'])) {
+                $updateData['order_status'] = 'shipped'; // Auto status update if they input 'waktu diserahkan'
+            }
         }
 
         // Update payment status

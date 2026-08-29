@@ -66,6 +66,33 @@
                                     <th>Layanan</th>
                                     <td>{{ $order->expedition_service }}</td>
                                 </tr>
+                                @if($order->expedition && $order->expedition->code === 'self_pickup')
+                                    @if($order->pickup_ready_at)
+                                        <tr>
+                                            <th>Waktu Siap Diambil</th>
+                                            <td>{{ \Carbon\Carbon::parse($order->pickup_ready_at)->format('d M Y, H:i') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($order->shipped_at)
+                                        <tr>
+                                            <th>Waktu Diserahkan</th>
+                                            <td>{{ \Carbon\Carbon::parse($order->shipped_at)->format('d M Y, H:i') }}</td>
+                                        </tr>
+                                    @endif
+                                @else
+                                    @if($order->tracking_number)
+                                        <tr>
+                                            <th>Nomor Resi</th>
+                                            <td><strong>{{ $order->tracking_number }}</strong></td>
+                                        </tr>
+                                    @endif
+                                    @if($order->shipped_at)
+                                        <tr>
+                                            <th>Dikirim Pada</th>
+                                            <td>{{ \Carbon\Carbon::parse($order->shipped_at)->format('d M Y, H:i') }}</td>
+                                        </tr>
+                                    @endif
+                                @endif
                             </table>
                         </div>
                     </div>
