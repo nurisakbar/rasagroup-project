@@ -194,7 +194,7 @@
             @endif
 
             <!-- Convert to Stock -->
-            @if(in_array($order->order_status, ['delivered', 'completed']) && $warehouse)
+            @if($order->order_status === 'completed' && $warehouse)
             <div class="box box-success">
                 <div class="box-header with-border">
                     <h3 class="box-title"><i class="fa fa-cubes"></i> Konversi ke Stock</h3>
@@ -239,14 +239,14 @@
                     </form>
                 </div>
             </div>
-            @elseif(!in_array($order->order_status, ['delivered', 'completed']))
+            @elseif($order->order_status !== 'completed')
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h3 class="box-title"><i class="fa fa-info-circle"></i> Informasi</h3>
                 </div>
                 <div class="box-body">
                     <p class="text-muted">
-                        <i class="fa fa-info-circle"></i> Fitur konversi ke stock hanya tersedia untuk pesanan yang sudah berstatus <strong>Delivered</strong> atau <strong>Completed</strong>.
+                        <i class="fa fa-info-circle"></i> Fitur konversi ke stock hanya tersedia untuk pesanan yang sudah berstatus <strong>Completed</strong>.
                     </p>
                     <p class="text-muted">
                         Status pesanan saat ini: <strong>{{ ucfirst($order->order_status) }}</strong>

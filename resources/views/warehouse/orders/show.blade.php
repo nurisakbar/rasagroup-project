@@ -744,6 +744,24 @@ $(document).ready(function() {
             alert('Tidak ada perubahan yang dilakukan. Silakan ubah setidaknya satu field sebelum menyimpan.');
             return false;
         }
+
+        if (orderStatus === 'shipped') {
+            if ($('#pickup_ready_at').length && !pickupReadyAt) {
+                e.preventDefault();
+                alert('Rencana Waktu Ambil / Kapan Siap Diambil harus diisi jika status pesanan adalah "Siap Diambil".');
+                $('#pickup_ready_at').focus();
+                return false;
+            }
+        }
+
+        if (orderStatus === 'delivered') {
+            if ($('#shipped_at').length && !shippedAt) {
+                e.preventDefault();
+                alert('Waktu Diserahkan (Barang Diambil) wajib diisikan jika status pesanan adalah "Sudah Diambil".');
+                $('#shipped_at').focus();
+                return false;
+            }
+        }
     });
 
     var warehouseDebugCsrf = $('meta[name="csrf-token"]').attr('content');

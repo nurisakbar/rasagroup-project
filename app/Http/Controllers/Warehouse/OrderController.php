@@ -209,6 +209,20 @@ class OrderController extends Controller
             'shipped_at' => 'nullable|date',
         ]);
 
+        $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
+        if ($isSelfPickup && $request->filled('order_status')) {
+            if ($request->order_status === 'shipped') {
+                if (!$request->filled('pickup_ready_at') && !$order->pickup_ready_at) {
+                    return back()->with('error', 'Rencana Waktu Ambil / Kapan Siap Diambil harus diisi jika status pesanan adalah "Siap Diambil".');
+                }
+            }
+            if ($request->order_status === 'delivered') {
+                if (!$request->filled('shipped_at') && !$order->shipped_at) {
+                    return back()->with('error', 'Waktu Diserahkan (Barang Diambil) wajib diisikan jika status pesanan adalah "Sudah Diambil".');
+                }
+            }
+        }
+
         $updateData = [];
         $messages = [];
 
