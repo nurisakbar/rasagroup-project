@@ -208,6 +208,11 @@ class WarehouseController extends Controller
                 $query->whereJsonContains('sync_sources', $request->sync_source);
             }
 
+            // Filter by active_only toggle
+            if ($request->filled('active_only') && $request->active_only == '1') {
+                $query->where('is_active', true);
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {

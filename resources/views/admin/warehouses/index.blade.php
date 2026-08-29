@@ -8,6 +8,62 @@
     <li class="active">Hub</li>
 @endsection
 
+@push('styles')
+<style>
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  margin-bottom: 0;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: #2196F3;
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+.slider.round {
+  border-radius: 20px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+</style>
+@endpush
+
 
 
 @section('content')
@@ -16,18 +72,27 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Daftar Hub</h3>
-                    <div class="box-tools" style="display: flex; gap: 5px;">
-                        @include('admin.partials.sync-qad-jubelio')
-                        @if(app()->environment('local'))
-                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllWarehouses()" title="Hanya tersedia di APP_ENV=local">
-                                <i class="fa fa-trash"></i> Hapus Semua
-                            </button>
-                            <form id="delete-all-warehouses-form" action="{{ route('admin.warehouses.destroy-all') }}" method="POST" style="display: none;">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="confirm" id="delete-all-warehouses-confirm-input" value="">
-                            </form>
-                        @endif
+                    <div class="box-tools" style="display: flex; gap: 15px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 13px;">Tampilkan Hanya Gudang Aktif</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-active-only" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            @include('admin.partials.sync-qad-jubelio')
+                            @if(app()->environment('local'))
+                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllWarehouses()" title="Hanya tersedia di APP_ENV=local">
+                                    <i class="fa fa-trash"></i> Hapus Semua
+                                </button>
+                                <form id="delete-all-warehouses-form" action="{{ route('admin.warehouses.destroy-all') }}" method="POST" style="display: none;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="confirm" id="delete-all-warehouses-confirm-input" value="">
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <!-- Filter -->
@@ -112,6 +177,7 @@ $(function() {
                 d.regency_id = $('#filter-regency').val();
                 d.status = $('#filter-status').val();
                 d.sync_source = $('#filter-sync-source').val();
+                d.active_only = $('#toggle-active-only').is(':checked') ? 1 : 0;
             }
         },
         columns: [
@@ -182,6 +248,12 @@ $(function() {
         $('#filter-regency').html('<option value="">Semua Kabupaten/Kota</option>').prop('disabled', true);
         $('#filter-status').val('');
         $('#filter-sync-source').val('');
+        $('#toggle-active-only').prop('checked', true);
+        table.draw();
+    });
+
+    // Toggle active only
+    $('#toggle-active-only').on('change', function() {
         table.draw();
     });
 
