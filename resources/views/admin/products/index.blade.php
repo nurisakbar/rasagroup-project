@@ -12,18 +12,96 @@
 <style>
     .filter-box { margin-bottom: 0; }
     #products-table_length { margin-bottom: 15px; }
+
+    /* Toggle Switch Styles */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      margin-bottom: 0;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+    input:checked + .slider:before {
+      -webkit-transform: translateX(20px);
+      -ms-transform: translateX(20px);
+      transform: translateX(20px);
+    }
+    .slider.round {
+      border-radius: 20px;
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
 </style>
 @endpush
 
 @section('content')
-    <!-- Filter Box -->
     <div class="box box-default filter-box">
         <div class="box-header with-border">
-            <h3 class="box-title"><i class="fa fa-filter"></i> Filter & Aksi</h3>
-            <div class="box-tools pull-right">
-                <button type="button" class="btn btn-box-tool" data-widget="collapse">
-                    <i class="fa fa-minus"></i>
-                </button>
+            <h3 class="box-title" style="margin-top: 5px;"><i class="fa fa-filter"></i> Filter & Aksi</h3>
+            <div class="box-tools pull-right" style="display: flex; gap: 15px; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 13px;">Tampilkan Hanya Produk Aktif</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-active-only" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
+                        <i class="fa fa-plus"></i> Tambah
+                    </a>
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
+                        <i class="fa fa-file-excel-o"></i> Update dari Excel
+                    </button>
+                    @include('admin.partials.sync-qad-jubelio')
+                    @if(app()->environment('local'))
+                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllProducts()" title="Hanya tersedia di APP_ENV=local">
+                            <i class="fa fa-trash"></i> Hapus Semua
+                        </button>
+                        <form id="delete-all-products-form" action="{{ route('admin.products.destroy-all') }}" method="POST" style="display: none;">
+                            @csrf
+                            @method('DELETE')
+                            <input type="hidden" name="confirm" id="delete-all-confirm-input" value="">
+                        </form>
+                    @endif
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse" style="margin-left: 10px;">
+                        <i class="fa fa-minus"></i>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="box-body">
@@ -80,29 +158,6 @@
                         <button type="button" id="btn-reset" class="btn btn-default">
                             <i class="fa fa-times"></i> Reset
                         </button>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12 text-right">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fa fa-plus"></i> Tambah
-                        </a>
-                        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
-                            <i class="fa fa-file-excel-o"></i> Update dari Excel
-                        </button>
-                        @include('admin.partials.sync-qad-jubelio')
-                        @if(app()->environment('local'))
-                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllProducts()" title="Hanya tersedia di APP_ENV=local">
-                                <i class="fa fa-trash"></i> Hapus Semua
-                            </button>
-                            <form id="delete-all-products-form" action="{{ route('admin.products.destroy-all') }}" method="POST" style="display: none;">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="confirm" id="delete-all-confirm-input" value="">
-                            </form>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -194,6 +249,7 @@ $(document).ready(function() {
                 d.brand_id = $('#filter-brand').val();
                 d.category_id = $('#filter-category').val();
                 d.sync_source = $('#filter-sync-source').val();
+                d.active_only = $('#toggle-active-only').is(':checked') ? 1 : 0;
             }
         },
         columns: [
@@ -244,6 +300,12 @@ $(document).ready(function() {
         $('#filter-brand').val('').trigger('change');
         $('#filter-category').val('').trigger('change');
         $('#filter-sync-source').val('');
+        $('#toggle-active-only').prop('checked', true);
+        table.draw();
+    });
+
+    // Toggle active only
+    $('#toggle-active-only').on('change', function() {
         table.draw();
     });
 

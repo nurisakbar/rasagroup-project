@@ -2,6 +2,37 @@
 
 @section('title', 'Daftar')
 
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        background: #ffffff;
+        border: none;
+        border-radius: 12px;
+        height: 55px;
+        padding: 12px 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 55px;
+        right: 15px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 31px;
+        padding-left: 0;
+        color: #495057;
+    }
+    .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
+    .select2-selection {
+        width: 100% !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
@@ -28,6 +59,7 @@
                                 </div>
                                 <form method="POST" action="{{ route('register') }}">
                                     @csrf
+
                                     <div class="form-group mb-20">
                                         <input type="text" required="" name="name" placeholder="Nama Lengkap *" value="{{ old('name') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
                                         @error('name')
@@ -63,7 +95,19 @@
                                     </div>
                                     
                                     <div class="form-group mb-20">
-                                        <input type="text" name="sales_code" placeholder="Kode Sales (Opsional)" value="{{ old('sales_code') }}" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
+                                            @php
+                                                $currentSalesCode = old('sales_code');
+                                                $salesName = '';
+                                                if ($currentSalesCode) {
+                                                    $salesUser = \App\Models\User::where('sales_code', $currentSalesCode)->where('role', 'sales')->first();
+                                                    $salesName = $salesUser ? ' - ' . $salesUser->name : '';
+                                                }
+                                            @endphp
+                                            @if($currentSalesCode)
+                                                <option value="{{ $currentSalesCode }}" selected="selected">{{ $currentSalesCode }}{{ $salesName }}</option>
+                                            @endif
+                                        </select>
                                         @error('sales_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
@@ -110,7 +154,32 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $(document).ready(function() {
+        $('#sales_code').select2({
+            placeholder: 'Masukkan Nama Sales (Opsional)',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: '{{ route('sales.search') }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+
     function togglePassword(inputId, iconId) {
         const passwordInput = document.getElementById(inputId);
         const toggleIcon = document.getElementById(iconId);

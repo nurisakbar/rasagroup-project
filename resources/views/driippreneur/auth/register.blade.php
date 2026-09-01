@@ -104,6 +104,17 @@
         <span class="fa fa-phone form-control-feedback"></span>
       </div>
       <div class="form-group has-feedback">
+        <input type="text" name="sales_code" list="sales_list" class="form-control" placeholder="Kode Sales (Opsional)" value="{{ old('sales_code') }}" autocomplete="off">
+        <span class="fa fa-user-secret form-control-feedback"></span>
+        <datalist id="sales_list">
+          @if(isset($salesUsers))
+            @foreach($salesUsers as $sales)
+              <option value="{{ $sales->sales_code }}">{{ $sales->sales_code }} - {{ $sales->name }}</option>
+            @endforeach
+          @endif
+        </datalist>
+      </div>
+      <div class="form-group has-feedback">
         <input type="password" name="password" class="form-control" placeholder="Password (minimal 8 karakter)" required>
         <span class="fa fa-lock form-control-feedback"></span>
       </div>

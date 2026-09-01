@@ -16,7 +16,11 @@ class DriippreneurRegisterController extends Controller
      */
     public function create()
     {
-        return view('driippreneur.auth.register');
+        $salesUsers = User::where('role', User::ROLE_SALES)
+                          ->whereNotNull('sales_code')
+                          ->get(['sales_code', 'name']);
+
+        return view('driippreneur.auth.register', compact('salesUsers'));
     }
 
     /**
@@ -29,6 +33,7 @@ class DriippreneurRegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::min(8)],
+            'sales_code' => ['nullable', 'string', 'max:255'],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'email.required' => 'Email wajib diisi.',
@@ -46,6 +51,7 @@ class DriippreneurRegisterController extends Controller
             'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
             'role' => User::ROLE_DRIIPPRENEUR,
+            'sales_code' => $validated['sales_code'] ?? null,
         ]);
 
         Auth::login($user);

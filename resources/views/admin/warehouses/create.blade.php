@@ -144,11 +144,17 @@
                             <div class="col-md-6">
                                 <div class="form-group @error('target_role') has-error @enderror">
                                     <label for="target_role">Gudang Order</label>
-                                    <select class="form-control" id="target_role" name="target_role">
-                                        <option value="umum" {{ old('target_role') == 'umum' ? 'selected' : '' }}>Umum</option>
-                                        <option value="ecommerce" {{ old('target_role') == 'ecommerce' ? 'selected' : '' }}>eCommerce</option>
-                                        <option value="distributor" {{ old('target_role') == 'distributor' ? 'selected' : '' }}>Distributor</option>
-                                        <option value="outlet" {{ old('target_role') == 'outlet' ? 'selected' : '' }}>Outlet</option>
+                                    <select class="form-control select2" id="target_role" name="target_role[]" multiple="multiple" data-placeholder="Pilih Gudang Order (Bisa lebih dari 1)">
+                                        @php
+                                            $selectedRoles = old('target_role', ['umum']);
+                                            if (!is_array($selectedRoles)) {
+                                                $selectedRoles = [$selectedRoles];
+                                            }
+                                        @endphp
+                                        <option value="umum" {{ in_array('umum', $selectedRoles) ? 'selected' : '' }}>Umum</option>
+                                        <option value="ecommerce" {{ in_array('ecommerce', $selectedRoles) ? 'selected' : '' }}>eCommerce</option>
+                                        <option value="distributor" {{ in_array('distributor', $selectedRoles) ? 'selected' : '' }}>Distributor</option>
+                                        <option value="outlet" {{ in_array('outlet', $selectedRoles) ? 'selected' : '' }}>Outlet</option>
                                     </select>
                                     <p class="help-block">Tentukan peruntukan order hub ini</p>
                                     @error('target_role')

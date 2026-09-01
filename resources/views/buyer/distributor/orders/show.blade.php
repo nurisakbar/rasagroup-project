@@ -28,6 +28,20 @@
                                 <a href="{{ route('distributor.orders.history') }}" class="text-brand font-sm fw-bold mb-10 d-inline-block">
                                     <i class="fi-rs-arrow-left mr-5"></i> Kembali ke Daftar Pesanan
                                 </a>
+
+                                @if(session('success'))
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="fi-rs-check-circle mr-5"></i> {{ session('success') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                                @endif
+                                @if(session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fi-rs-cross-circle mr-5"></i> {{ session('error') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                                @endif
+
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
                                     <div class="d-flex align-items-center gap-2">
@@ -218,12 +232,39 @@
                             </div>
                             @endif
 
-                            @if(in_array($order->order_status, ['delivered', 'completed']))
+                            @if(!in_array($order->order_status, ['completed']) && (!empty($order->shipped_at) || in_array($order->order_status, ['shipped', 'delivered'])))
+                            <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
+                                <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center" style="background-color: #fff9e6; border: 2px solid #ffcc00; border-radius: 15px;">
+                                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-3">
+                                        <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px; min-width: 48px;">
+                                            <i class="fi-rs-box font-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 text-dark fw-bold font-md">Konfirmasi Pesanan Diterima</h6>
+                                            <span class="text-muted font-sm">
+                                                Barang sudah diserahkan/dikirim. Harap konfirmasi penerimaan agar pesanan selesai.
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <form action="{{ route('distributor.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan ini sudah diterima?');">
+                                        @csrf
+                                        <button type="submit" class="btn fw-bold px-4 py-3 shadow-sm text-white" style="border-radius: 10px; background-color: #ff9900; border-color: #ff9900; white-space: nowrap;">
+                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Diterima
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            @endif
+
+                            @php
+                                $isConvertedToStock = \App\Models\WarehouseStockHistory::where('order_id', $order->id)->exists();
+                            @endphp
+                            @if($order->order_status === 'completed' && !$isConvertedToStock)
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
                                 <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center" style="background-color: #e8f8f0; border: 2px solid #3bb77e; border-radius: 15px;">
                                     <div class="d-flex align-items-center mb-3 mb-md-0 me-md-3">
                                         <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px; min-width: 48px;">
-                                            <i class="fi-rs-box-check font-lg"></i>
+                                            <i class="fi-rs-check font-lg"></i>
                                         </div>
                                         <div>
                                             <h6 class="mb-1 text-dark fw-bold font-md">Pesanan Tiba!</h6>

@@ -928,6 +928,12 @@ class OrderController extends Controller
             return back()->with('error', 'Pesanan tidak memiliki item.');
         }
 
+        // Check if order has already been converted to stock
+        $alreadyConverted = \App\Models\WarehouseStockHistory::where('order_id', $order->id)->exists();
+        if ($alreadyConverted) {
+            return back()->with('error', 'Pesanan ini sudah dikonversi ke stok warehouse.');
+        }
+
         DB::beginTransaction();
         try {
             $convertedItems = [];

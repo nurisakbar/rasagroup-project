@@ -13,6 +13,8 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\WhatsAppVerificationController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('sales/search', [RegisteredUserController::class, 'searchSales'])->name('sales.search');
+
 Route::middleware('guest')->group(function () {
     Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
     Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
@@ -21,6 +23,7 @@ Route::middleware('guest')->group(function () {
         ->name('register');
 
     Route::post('register', [RegisteredUserController::class, 'store']);
+
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

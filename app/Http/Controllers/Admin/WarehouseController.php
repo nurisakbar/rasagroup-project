@@ -301,7 +301,8 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
-            'target_role' => 'required|string|in:ecommerce,distributor,outlet,umum',
+            'target_role' => 'required|array',
+            'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
             // User data
             'user_name' => 'required|string|max:255',
             'user_email' => 'required|email|unique:users,email',
@@ -414,7 +415,8 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
-            'target_role' => 'required|string|in:ecommerce,distributor,outlet,umum',
+            'target_role' => 'required|array',
+            'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
         ]);
 
         $validated['is_active'] = $request->has('is_active');

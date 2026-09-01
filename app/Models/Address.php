@@ -109,4 +109,19 @@ class Address extends Model
 
         return implode(', ', array_filter($parts));
     }
+
+    public function isJabodetabek(): bool
+    {
+        if (!$this->regency_id) {
+            return false;
+        }
+        $jabodetabekRegencyIds = [
+            '3171', '3172', '3173', '3174', '3175', // Jakarta
+            '3201', '3271', // Bogor
+            '3276', // Depok
+            '3603', '3671', '3674', // Tangerang
+            '3216', '3275' // Bekasi
+        ];
+        return in_array($this->regency_id, $jabodetabekRegencyIds);
+    }
 }

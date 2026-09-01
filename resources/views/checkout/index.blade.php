@@ -3,6 +3,37 @@
 
 @section('title', 'Checkout')
 
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        background: #ffffff;
+        border: 1px solid #ececec;
+        border-radius: 12px;
+        height: 55px;
+        padding: 12px 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 55px;
+        right: 15px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 31px;
+        padding-left: 0;
+        color: #495057;
+    }
+    .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
+    .select2-selection {
+        width: 100% !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
@@ -89,6 +120,7 @@
                                          data-address-id="{{ $address->id }}"
                                          data-recipient="{{ $address->recipient_name }}"
                                          data-full-address="{{ $address->full_address }}"
+                                         data-is-jabodetabek="{{ $address->isJabodetabek() ? 1 : 0 }}"
                                          onclick="selectAddress('{{ $address->id }}')">
                                         <div class="custom-radio">
                                             <input class="form-check-input" type="radio" name="address_id" 
@@ -135,6 +167,7 @@
                             <div class="col-md-4 col-6 mb-10">
                                 <div class="card-radio-btn expedition-card {{ $isDefaultExpedition ? 'active' : '' }}" 
                                      data-expedition-id="{{ $expedition->id }}"
+                                     data-expedition-code="{{ $expedition->code }}"
                                      onclick="selectExpedition('{{ $expedition->id }}')">
                                     <input type="radio" name="expedition_id" value="{{ $expedition->id }}" 
                                            id="exp{{ $expedition->id }}" class="d-none"
@@ -573,9 +606,21 @@
 
                     <!-- Sales Code -->
                     <div class="mb-20">
-                        <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Kode Sales</h6>
+                        <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Nama Sales</h6>
                         <div class="form-group mb-0">
-                            <input type="text" name="sales_code" class="form-control" placeholder="Masukkan kode sales (Opsional)" value="{{ old('sales_code', Auth::user()?->sales_code) }}">
+                            <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
+                                @php
+                                    $currentSalesCode = old('sales_code', Auth::user()?->sales_code);
+                                    $salesName = '';
+                                    if ($currentSalesCode) {
+                                        $salesUser = \App\Models\User::where('sales_code', $currentSalesCode)->where('role', 'sales')->first();
+                                        $salesName = $salesUser ? ' - ' . $salesUser->name : '';
+                                    }
+                                @endphp
+                                @if($currentSalesCode)
+                                    <option value="{{ $currentSalesCode }}" selected="selected">{{ $currentSalesCode }}{{ $salesName }}</option>
+                                @endif
+                            </select>
                             @error('sales_code')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
@@ -1079,7 +1124,29 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $(document).ready(function() {
+        $('#sales_code').select2({
+            placeholder: 'Masukkan Nama Sales (Opsional)',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: '{{ route('sales.search') }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.results };
+                },
+                cache: true
+            }
+        });
+    });
+
+
     window.checkoutTotalWithoutShipping = {{ (float) ($subtotal - $discountAmount) }};
     var paymentFees = @json($paymentFees ?? []);
     var currentBaseTotal = {{ (float) $total }};
@@ -1131,6 +1198,35 @@
         setSubmitEnabled(true);
     });
     
+    function checkKurirTokoVisibility() {
+        if (!currentAddressId) return;
+        var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
+        var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
+        var isDistributor = {{ Auth::user()->isDistributor() ? 'true' : 'false' }};
+        
+        var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
+        if (kurirTokoCard.length) {
+            if (isJabodetabek && isDistributor) {
+                kurirTokoCard.parent().show();
+            } else {
+                kurirTokoCard.parent().hide();
+                
+                if (kurirTokoCard.hasClass('active') || currentExpeditionId == kurirTokoCard.data('expedition-id')) {
+                    var firstAvailable = $('.expedition-card:visible').first();
+                    if (firstAvailable.length) {
+                        var newExpId = firstAvailable.data('expedition-id');
+                        $('.expedition-card').removeClass('active');
+                        firstAvailable.addClass('active');
+                        $('#exp' + newExpId).prop('checked', true);
+                        currentExpeditionId = newExpId;
+                    } else {
+                        currentExpeditionId = null;
+                    }
+                }
+            }
+        }
+    }
+
     function selectAddress(addressId) {
         currentAddressId = addressId;
         
@@ -1152,6 +1248,8 @@
         if (fullAddress) {
             $('#shippingAddress').text(fullAddress);
         }
+        
+        checkKurirTokoVisibility();
         
         // Reload services
         if (currentExpeditionId) {
@@ -1194,6 +1292,11 @@
         servicesLoading = true;
         setSubmitEnabled(false);
         currentServiceCode = '';
+        
+        var expCard = $('.expedition-card[data-expedition-id="'+expeditionId+'"]');
+        var expName = expCard.length ? expCard.find('.fw-bold').text() : '';
+        $('#expeditionInfo').text(expName + ' - (Pilih Layanan)');
+        
         serviceList.html('<div class="col-12"><div class="text-center py-3"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Loading...</span></div> Memuat layanan...</div></div>');
     
         $.ajax({
@@ -1215,6 +1318,7 @@
                 
                 if (data.services.length === 0) {
                     serviceList.html('<div class="col-12"><div class="alert alert-warning py-2 small"><i class="fi-rs-info"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>');
+                    $('#expeditionInfo').text(expName + ' - (Tidak ada layanan)');
                     servicesLoading = false;
                     setSubmitEnabled(false);
                     return;
@@ -1551,6 +1655,9 @@
     $(function() {
         var checkedExpedition = $('input[name="expedition_id"]:checked').val();
         var serverExpedition = @json($defaultExpedition?->id ?? null);
+        
+        checkKurirTokoVisibility();
+        
         if (checkedExpedition && checkedExpedition !== serverExpedition) {
             currentExpeditionId = ''; // Reset so selectExpedition fetches correct services
             selectExpedition(checkedExpedition);

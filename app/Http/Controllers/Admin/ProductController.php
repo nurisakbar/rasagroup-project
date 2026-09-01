@@ -35,9 +35,14 @@ class ProductController extends Controller
         if ($request->ajax()) {
             $query = Product::with(['creator', 'brand', 'category']);
 
-            // Filter by status
+            // Filter by status (dropdown)
             if ($request->filled('status') && $request->status != '') {
                 $query->where('status', $request->status);
+            }
+
+            // Filter by active_only (toggle)
+            if ($request->has('active_only') && $request->active_only == '1') {
+                $query->where('status', 'active');
             }
 
             // Filter by brand

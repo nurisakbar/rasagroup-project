@@ -186,9 +186,20 @@ class FaspaySnapService
             'Content-Type' => 'application/json'
         ];
 
+        Log::debug('Faspay SNAP QRIS Request', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload,
+        ]);
+
         $response = Http::withoutVerifying()
             ->withHeaders($headers)
             ->post($url, $payload);
+
+        Log::debug('Faspay SNAP QRIS Response', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
 
         if ($response->successful()) {
             return $response->json();

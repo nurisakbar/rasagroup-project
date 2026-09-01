@@ -39,7 +39,7 @@ class Warehouse extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        
+        'target_role' => 'array',
         'sync_sources' => 'array',
     ];
 
@@ -246,7 +246,11 @@ class Warehouse extends Model
         $queryBuilder = function () use ($exclude, $rolesAllowed) {
             return self::where('is_active', true)
                 ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
-                ->whereIn('target_role', $rolesAllowed);
+                ->where(function ($q) use ($rolesAllowed) {
+                    foreach ($rolesAllowed as $role) {
+                        $q->orWhereJsonContains('target_role', $role);
+                    }
+                });
         };
 
         // 1. Try finding nearest by Latitude/Longitude first

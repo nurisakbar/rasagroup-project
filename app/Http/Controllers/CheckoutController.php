@@ -1445,13 +1445,20 @@ class CheckoutController extends Controller
     ): ?array {
         if (in_array($expedition->code, ['self_pickup', 'kurir_toko'])) {
             $isKurirToko = $expedition->code === 'kurir_toko';
+            
+            if ($isKurirToko) {
+                if (!\Illuminate\Support\Facades\Auth::user()?->isDistributor() || !$address->isJabodetabek()) {
+                    return null; // Tidak tersedia jika bukan distributor atau bukan jabodetabek
+                }
+            }
+
             return [
                 'data' => [
                     [
                         'code' => $expedition->code,
                         'name' => $isKurirToko ? 'Kurir Toko' : 'Self Pickup',
                         'service' => $isKurirToko ? 'Kurir Toko' : 'Self Pickup',
-                        'description' => $isKurirToko ? 'Pengiriman oleh Kurir Toko' : 'Ambil Sendiri di Hub',
+                        'description' => $isKurirToko ? 'Pengiriman oleh Kurir Toko' : 'Pickup dari ' . ($sourceWarehouse?->name ?? 'Gudang Pusat'),
                         'cost' => 0,
                         'etd' => '-',
                     ]
