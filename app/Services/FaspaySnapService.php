@@ -303,7 +303,7 @@ class FaspaySnapService
         $payload = [
             'originalPartnerReferenceNo' => (string) $order->order_number,
             'merchantId' => $partnerId,
-            'serviceCode' => '54'
+            'serviceCode' => '55'
         ];
 
         $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
@@ -324,6 +324,16 @@ class FaspaySnapService
         $response = Http::withoutVerifying()
             ->withHeaders($headers)
             ->post($url, $payload);
+
+        // UAT Logging for Scenario 19.14
+        Log::info("Faspay UAT Simulation Result - Scenario 19.14", [
+            'scenario' => 'Direct Debit Payment Status',
+            'request_url' => $url,
+            'request_headers' => $headers,
+            'request_payload' => $payload,
+            'http_code' => $response->status(),
+            'response_body' => $response->json() ?? $response->body()
+        ]);
 
         if ($response->successful()) {
             return $response->json();
