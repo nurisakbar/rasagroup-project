@@ -145,7 +145,7 @@
                             @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
                                 <div class="card-body p-4" style="background-color: #f0faf5; border: 1px solid #cceadd; border-radius: 15px;">
-                                    <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-shopping-bag mr-5"></i>Tahapan Pengambilan Pesanan (Self Pickup)</h6>
+                                    <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-shopping-bag mr-5"></i>Tahapan Pengambilan Pesanan</h6>
                                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center position-relative pt-2">
                                         <!-- Step 1: Disiapkan -->
                                         @php
@@ -353,7 +353,7 @@
                                         <div class="card-header bg-info-light border-0 p-3">
                                             <h5 class="mb-0 text-info font-md">
                                                 <i class="{{ $isSelfPickup ? 'fi-rs-shopping-bag' : 'fi-rs-truck-side' }} mr-10"></i>
-                                                {{ $isSelfPickup ? 'Status Pengambilan (Self Pickup)' : 'Status Pengiriman' }}
+                                                {{ $isSelfPickup ? 'Status Pengambilan' : 'Status Pengiriman' }}
                                             </h5>
                                         </div>
                                         <div class="card-body p-4">

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Imports\ProductsImport;
+use App\Exports\ActiveProductsExport;
+use App\Imports\ActiveProductsImport;
 use App\Jobs\RunMasterSyncJob;
 use App\Jobs\SyncJubelioProductContent;
 use App\Models\Brand;
@@ -221,6 +223,33 @@ class ProductController extends Controller
                 'success' => false,
                 'message' => 'Gagal memulai import: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function exportActive()
+    {
+        return Excel::download(new ActiveProductsExport, 'active_products.xlsx');
+    }
+
+    public function importActive(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'file.required' => 'File Excel wajib diupload.',
+            'file.mimes' => 'File harus berformat Excel (.xlsx, .xls) atau CSV.',
+            'file.max' => 'Ukuran file maksimal 10MB.',
+        ]);
+
+        try {
+            Excel::import(new ActiveProductsImport, $request->file('file'));
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Produk aktif berhasil di-update dari Excel.');
+        } catch (\Exception $e) {
+            Log::error('ProductController: Import Active error', [
+                'error' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Gagal import file: ' . $e->getMessage());
         }
     }
 

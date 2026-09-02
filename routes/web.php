@@ -207,6 +207,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('categories', App\Http\Controllers\Admin\CategoryController::class)->except(['show']);
 
         // Products CRUD (Master Data)
+        Route::get('/products/export-active', [App\Http\Controllers\Admin\ProductController::class, 'exportActive'])->name('products.export-active');
+        Route::post('/products/import-active', [App\Http\Controllers\Admin\ProductController::class, 'importActive'])->name('products.import-active');
         Route::post('/products/import', [App\Http\Controllers\Admin\ProductController::class, 'import'])->name('products.import');
         Route::get('/products/import-status', [App\Http\Controllers\Admin\ProductController::class, 'importStatus'])->name('products.import-status');
         Route::get('/products/template', [App\Http\Controllers\Admin\ProductController::class, 'downloadTemplate'])->name('products.template');

@@ -23,7 +23,7 @@ class FaspaySnapService
             $this->baseUrl = 'https://debit.faspay.co.id/v1.0';
         }
         
-        $this->clientId = config('services.faspay.snap_client_id');
+        $this->clientId = config('services.faspay.snap_client_id') ?: config('services.faspay.merchant_id');
         $configPath = $isProduction ? config('services.faspay.private_key_prod_path') : config('services.faspay.private_key_dev_path');
         $this->privateKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
     }

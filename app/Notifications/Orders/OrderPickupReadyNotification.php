@@ -44,7 +44,7 @@ class OrderPickupReadyNotification extends Notification implements ShouldQueue
                  ->line('Catatan / Instruksi Gudang: ' . $note)
                  ->line('Silakan ikuti instruksi di atas untuk pengambilan atau penerimaan stok barang pesanan Anda.');
         } else {
-            $mail->line('Pesanan Anda #' . $this->order->order_number . ' telah selesai disiapkan oleh gudang dan sekarang berstatus SIAP UNTUK DIAMBIL (Ready / Self Pickup).')
+            $mail->line('Pesanan Anda #' . $this->order->order_number . ' telah selesai disiapkan oleh gudang dan sekarang berstatus SIAP UNTUK DIAMBIL (Ready / Ambil Sendiri).')
                  ->line('Jadwal Siap Diambil: ' . $readyTime)
                  ->line('Catatan / Instruksi Gudang: ' . $note)
                  ->line('Silakan datang ke lokasi gudang kami sesuai jadwal dan instruksi di atas untuk pengambilan barang pesanan Anda.');

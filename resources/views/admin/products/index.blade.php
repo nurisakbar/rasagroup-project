@@ -84,8 +84,14 @@
                     <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Tambah
                     </a>
-                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
-                        <i class="fa fa-file-excel-o"></i> Update dari Excel
+                    <a href="{{ route('admin.products.export-active') }}" class="btn btn-success btn-sm" title="Export Produk Aktif">
+                        <i class="fa fa-download"></i> Export Active
+                    </a>
+                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#importActiveModal" title="Update Produk Aktif">
+                        <i class="fa fa-upload"></i> Import Active
+                    </button>
+                    <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#importModal" title="Fungsi Import Lama (Create/Update)">
+                        <i class="fa fa-file-excel-o"></i> Import
                     </button>
                     @include('admin.partials.sync-qad-jubelio')
                     @if(app()->environment('local'))
@@ -224,6 +230,32 @@
                         <a href="{{ route('admin.products.template') }}" class="btn btn-default pull-left"><i class="fa fa-download"></i> Download Template</a>
                         <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                         <button type="submit" id="btn-import-submit" class="btn btn-primary">Upload & Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import Active Excel -->
+    <div class="modal fade" id="importActiveModal" tabindex="-1" role="dialog" aria-labelledby="importActiveModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('admin.products.import-active') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="importActiveModalLabel">Update Produk Aktif dari Excel</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>File Excel</label>
+                            <input type="file" name="file" class="form-control" accept=".xls,.xlsx,.csv" required>
+                            <small class="text-muted">Penting: Gunakan file Excel hasil dari tombol <strong>Export Active</strong>. Kolom Product ID jangan diubah.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Upload & Update</button>
                     </div>
                 </form>
             </div>
