@@ -559,7 +559,8 @@ class FaspaySnapController extends Controller
                             $request->path(),
                             $request->bearerToken() ?? '',
                             $responsePayload,
-                            date('c')
+                            date('c'),
+                            config('services.faspay.snap_client_secret', '')
                         );
 
                         $response = response()->json($responsePayload)
@@ -723,7 +724,7 @@ class FaspaySnapController extends Controller
                 'signature' => $signature
             ]);
             return response()->json([
-                'responseCode' => '4012700',
+                'responseCode' => '401' . $serviceCode . '00',
                 'responseMessage' => 'Unauthorized. [Signature]'
             ], 401);
         }

@@ -267,11 +267,21 @@ class FaspaySnapService
             'Content-Type' => 'application/json'
         ];
 
+        \Log::info('Faspay SNAP Direct Debit Request', [
+            'url' => $url,
+            'headers' => $headers,
+            'payload' => $payload
+        ]);
+
         $response = Http::withoutVerifying()
             ->withHeaders($headers)
             ->post($url, $payload);
 
         if ($response->successful()) {
+            \Log::info('Faspay SNAP Direct Debit Response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
             return $response->json();
         }
 
