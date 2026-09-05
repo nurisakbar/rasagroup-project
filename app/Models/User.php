@@ -262,6 +262,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === self::ROLE_SALES;
     }
 
+    public function getFaspayCompany(): string
+    {
+        if ($this->isDistributor()) {
+            return \App\Services\FaspayConfig::COMPANY_MCR;
+        }
+
+        return \App\Services\FaspayConfig::COMPANY_RDI;
+    }
+
     /**
      * Rekening bank untuk penarikan poin afiliasi / syarat daftar Affiliator (bukan data distributor).
      */

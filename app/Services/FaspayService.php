@@ -8,17 +8,27 @@ use Illuminate\Support\Facades\Log;
 
 class FaspayService
 {
+    protected string $company;
+    protected array $companyConfig;
     protected string $merchantId;
     protected string $userId;
     protected string $password;
     protected string $env;
 
-    public function __construct()
+    public function __construct(?string $company = null)
     {
-        $this->merchantId = config('services.faspay.merchant_id');
-        $this->userId = config('services.faspay.user_id');
-        $this->password = config('services.faspay.password');
-        $this->env = config('services.faspay.env');
+        $this->company = $company ? strtolower($company) : FaspayConfig::getDefaultCompany();
+        $this->companyConfig = FaspayConfig::getCompanyConfig($this->company);
+
+        $this->merchantId = (string) ($this->companyConfig['merchant_id'] ?? config('services.faspay.merchant_id', '37020'));
+        $this->userId = (string) ($this->companyConfig['user_id'] ?? config('services.faspay.user_id', 'bot37020'));
+        $this->password = (string) ($this->companyConfig['password'] ?? config('services.faspay.password', ''));
+        $this->env = (string) ($this->companyConfig['env'] ?? config('services.faspay.env', 'dev'));
+    }
+
+    public function getCompany(): string
+    {
+        return $this->company;
     }
 
     protected function getBaseUrl(): string
@@ -39,6 +49,11 @@ class FaspayService
      */
     public function createBill(Order $order, $user, $paymentChannel = ""): ?array
     {
+        // If order specifies a different company, delegate to instance for that company
+        if (!empty($order->company) && $order->company !== $this->company) {
+            return (new self($order->company))->createBill($order, $user, $paymentChannel);
+        }
+
         try {
             $billNo = $order->order_number . '-' . strtoupper(substr(md5(uniqid()), 0, 4));
             $billDate = date('Y-m-d H:i:s');
@@ -68,14 +83,13 @@ class FaspayService
             }
 
             // Fallback phone number
-                        $msisdn = $user->phone ?? '08000000000';
-            $safeAddress = preg_replace('/[
-]+/', ' ', substr($order->shipping_address ?? 'Alamat', 0, 100));
+            $msisdn = $user->phone ?? '08000000000';
+            $safeAddress = preg_replace('/[\r\n]+/', ' ', substr($order->shipping_address ?? 'Alamat', 0, 100));
 
             $data = [
                 'request'           => 'Transmisi Info Detil Pembelian',
                 'merchant_id'       => $this->merchantId,
-                'merchant'          => config('app.name', 'Faspay Store'),
+                'merchant'          => FaspayConfig::getCompanyName($this->company),
                 'bill_no'           => $billNo,
                 'bill_reff'         => (string) $order->id,
                 'bill_date'         => $billDate,
@@ -109,7 +123,7 @@ class FaspayService
                 "signature"         => $signature
             ];
 
-            Log::info('Faspay createBill Request', ['bill_no' => $billNo, 'data' => $data]);
+            Log::info('Faspay createBill Request', ['company' => $this->company, 'bill_no' => $billNo, 'data' => $data]);
 
             // Endpoint POST json
             $url = $this->getBaseUrl() . '/cvr/300011/10';
@@ -117,11 +131,11 @@ class FaspayService
             try {
                 $response = Http::withoutVerifying()->timeout(15)->post($url, $data);
 
-                                if ($response->successful()) {
+                if ($response->successful()) {
                     $responseData = $response->json();
                     
                     // Fallback for BCA VA Sandbox Issue (Code 96)
-                    if ($responseData['response_code'] === '96' && $paymentChannel == '702') {
+                    if (isset($responseData['response_code']) && $responseData['response_code'] === '96' && $paymentChannel == '702') {
                         \Log::warning('Mocking Faspay BCA VA response due to Sandbox Code 96');
                         return [
                             'bill_no' => $billNo,
@@ -129,8 +143,7 @@ class FaspayService
                         ];
                     }
 
-                    $responseData = $response->json();
-                    Log::info('Faspay createBill Response', ['response' => $responseData]);
+                    Log::info('Faspay createBill Response', ['company' => $this->company, 'response' => $responseData]);
 
                     if (isset($responseData['redirect_url'])) {
                         return [
@@ -142,17 +155,19 @@ class FaspayService
                     }
                 } else {
                     Log::error('Faspay API Error', [
+                        'company' => $this->company,
                         'status' => $response->status(),
                         'body' => $response->body()
                     ]);
                 }
             } catch (\Illuminate\Http\Client\ConnectionException $e) {
-                Log::error('Faspay Connection Error', ['error' => $e->getMessage()]);
+                Log::error('Faspay Connection Error', ['company' => $this->company, 'error' => $e->getMessage()]);
                 throw $e;
             }
 
         } catch (\Exception $e) {
             Log::error('Faspay Service Exception', [
+                'company' => $this->company,
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

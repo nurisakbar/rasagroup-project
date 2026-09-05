@@ -21,36 +21,56 @@ class FaspayWebhookController extends Controller
                 'auth_user' => $request->getUser()
             ]);
 
-            // Basic Auth Validation for Legacy Faspay Webhook
+            // Basic Auth Validation for Legacy Faspay Webhook (supports RDI & MCR)
             $authUser = $request->getUser();
             $authPass = $request->getPassword();
             
-            $expectedUser = config('services.faspay.user_id');
-            $expectedPass = config('services.faspay.password');
+            $companies = config('services.faspay.companies', []);
+            $matchedCompany = null;
 
-            if ($authUser !== $expectedUser || $authPass !== $expectedPass) {
+            foreach ($companies as $code => $cfg) {
+                $expectedUser = $cfg['user_id'] ?? null;
+                $expectedPass = $cfg['password'] ?? null;
+                if (!empty($expectedUser) && $authUser === $expectedUser && $authPass === $expectedPass) {
+                    $matchedCompany = $code;
+                    break;
+                }
+            }
+
+            // Fallback check against default/flat keys
+            if (!$matchedCompany) {
+                $defaultUser = config('services.faspay.user_id');
+                $defaultPass = config('services.faspay.password');
+                if ($authUser === $defaultUser && $authPass === $defaultPass) {
+                    $matchedCompany = \App\Services\FaspayConfig::getDefaultCompany();
+                }
+            }
+
+            if (!$matchedCompany) {
                 Log::warning('Faspay Webhook Basic Auth Failed', [
                     'user' => $authUser
                 ]);
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
+            $companyConfig = \App\Services\FaspayConfig::getCompanyConfig($matchedCompany);
             $billNo = $data['bill_no'] ?? null;
             $paymentStatusCode = $data['payment_status_code'] ?? null;
             $signature = $data['signature'] ?? null;
             $trxId = $data['trx_id'] ?? '';
-            $merchantId = config('services.faspay.merchant_id');
+            $merchantId = $companyConfig['merchant_id'] ?? config('services.faspay.merchant_id');
 
             if (!$billNo || !$paymentStatusCode) {
                 return $this->jsonResponse($trxId, $merchantId, $billNo, '01', 'Failed');
             }
 
-            // Verify signature (optional but recommended)
-            $faspayService = new FaspayService();
+            // Verify signature (using the matched company credentials)
+            $faspayService = new FaspayService($matchedCompany);
             $expectedSignature = $faspayService->generateCallbackSignature($billNo, $paymentStatusCode);
             
             if ($signature && strtolower($signature) !== strtolower($expectedSignature)) {
                 Log::warning('Faspay webhook signature verification failed', [
+                    'company' => $matchedCompany,
                     'expected' => $expectedSignature,
                     'received' => $signature
                 ]);
@@ -176,7 +196,7 @@ class FaspayWebhookController extends Controller
             $signature = $request->input('signature');
 
             if ($status === '2' && $signature && $order->payment_status !== 'paid') {
-                $faspayService = new \App\Services\FaspayService();
+                $faspayService = new \App\Services\FaspayService($order->company);
                 $expectedSignature = $faspayService->generateCallbackSignature($order->faspay_bill_no ?? $order->order_number, $status);
                 
                 if (strtolower($signature) === strtolower($expectedSignature)) {

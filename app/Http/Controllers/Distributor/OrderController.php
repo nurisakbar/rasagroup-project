@@ -635,6 +635,7 @@ class OrderController extends Controller
                 'points_credited' => false,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,
+                'company' => \Illuminate\Support\Facades\Auth::user()->getFaspayCompany(),
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
                 'notes' => $request->notes,
@@ -726,8 +727,10 @@ class OrderController extends Controller
             $order->virtual_account_no = null;
 
             if (str_starts_with($request->payment_method, 'faspay_')) {
+                $orderCompany = $order->company ?: \App\Services\FaspayConfig::getDefaultCompany();
+
                 if ($request->payment_method === 'faspay_qris') {
-                    $snapService = new \App\Services\FaspaySnapService();
+                    $snapService = new \App\Services\FaspaySnapService($orderCompany);
                     $qrisData = $snapService->generateQris($order, $total);
                     if ($qrisData && (isset($qrisData['qrUrl']) || isset($qrisData['additionalInfo']['qrImageUrl']))) {
                         $order->virtual_account_no = $qrisData['qrUrl'] ?? $qrisData['additionalInfo']['qrImageUrl'];
@@ -736,7 +739,7 @@ class OrderController extends Controller
                         throw new \Exception('Failed to generate Faspay QRIS');
                     }
                 } elseif ($request->payment_method === 'faspay_bca_va') {
-                    $faspayService = new \App\Services\FaspayService();
+                    $faspayService = new \App\Services\FaspayService($orderCompany);
                     $invoice = $faspayService->createBill($order, $user, '702');
                     if ($invoice && isset($invoice['bill_no'])) {
                         $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
@@ -750,29 +753,7 @@ class OrderController extends Controller
                         throw new \Exception('Failed to generate Faspay BCA VA');
                     }
                 } else {
-                    $envType = env('FASPAY_ENV', 'development');
-                    if ($envType === 'production') {
-                        $prefixes = [
-                            'faspay_permata_va'  => '864003',
-                            'faspay_mandiri_va'  => '881682',
-                            'faspay_bri_va'      => '121568',
-                            'faspay_bni_va'      => '8583',
-                            'faspay_sinarmas_va' => '979803',
-                            'faspay_maybank_va'  => '270425',
-                            'faspay_danamon_va'  => '797039',
-                            'faspay_bsi_va'      => '12601021',
-                            'faspay_cimb_va'     => '222550',
-                        ];
-                    } else {
-                        $prefixes = [
-                            'faspay_permata_va'  => '370201',
-                            'faspay_mandiri_va'  => '37020002',
-                            'faspay_bri_va'      => '370202',
-                            'faspay_cimb_va'     => '370204',
-                            'faspay_bni_va'      => '9881236387',
-                        ];
-                    }
-                    $prefix = $prefixes[$request->payment_method] ?? '370200';
+                    $prefix = \App\Services\FaspayConfig::getVaPrefix($request->payment_method, $orderCompany);
                     $targetLength = 16;
                     $prefixLength = strlen($prefix);
                     $freeDigitsLength = $targetLength - $prefixLength;

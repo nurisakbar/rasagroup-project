@@ -74,7 +74,11 @@ class WarehouseApiController extends Controller
         $cacheKey = 'api_warehouse_products_' . $warehouse . '_' . md5(json_encode($request->all()));
         
         return Cache::remember($cacheKey, 86400, function () use ($request, $warehouse) {
-            $warehouseModel = Warehouse::with(['wilayah'])->find($warehouse);
+            $warehouseModel = Warehouse::with(['wilayah'])
+                ->where(function ($q) use ($warehouse) {
+                    $q->where('id', $warehouse)->orWhere('slug', $warehouse);
+                })
+                ->first();
 
             if (!$warehouseModel) {
                 return response()->json([

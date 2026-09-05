@@ -34,6 +34,7 @@ class Order extends Model
         'total_amount',
         'shipping_address',
         'payment_method',
+        'company',
         'payment_status',
         'paid_at',
         'order_status',

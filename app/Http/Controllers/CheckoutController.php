@@ -975,6 +975,7 @@ class CheckoutController extends Controller
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,
+                'company' => $user->getFaspayCompany(),
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
                 'notes' => $orderNotes,
@@ -990,6 +991,7 @@ class CheckoutController extends Controller
                 'order_number' => $order->order_number,
                 'total_amount' => $total,
                 'payment_method' => $request->payment_method,
+                'company' => $order->company,
                 'expedition_service' => $request->expedition_service,
             ]);
 
@@ -1049,82 +1051,59 @@ class CheckoutController extends Controller
                 
                 Log::info('Checkout Debug: Entering Gateway block.', [
                     'active_gateway' => $activeGateway,
-                    'method' => $request->payment_method
+                    'method' => $request->payment_method,
+                    'company' => $order->company
                 ]);
 
                 if (str_starts_with($request->payment_method, 'faspay_')) {
+                    $orderCompany = $order->company ?: \App\Services\FaspayConfig::getDefaultCompany();
+
                     // Faspay SNAP Flow (Direct UI)
                     if ($request->payment_method === 'faspay_qris') {
-                        $snapService = new \App\Services\FaspaySnapService();
+                        $snapService = new \App\Services\FaspaySnapService($orderCompany);
                         $qrisData = $snapService->generateQris($order, $total);
                         if ($qrisData && (isset($qrisData['qrUrl']) || isset($qrisData['additionalInfo']['qrImageUrl']))) {
                             $order->virtual_account_no = $qrisData['qrUrl'] ?? $qrisData['additionalInfo']['qrImageUrl'];
                             $order->payment_method = 'faspay_qris';
                             $order->save();
-                            Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id]);
+                            Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id, 'company' => $orderCompany]);
                         } else {
-                            Log::error('Failed to generate Faspay QRIS', ['order_id' => $order->id]);
+                            Log::error('Failed to generate Faspay QRIS', ['order_id' => $order->id, 'company' => $orderCompany]);
                         }
                     } elseif ($request->payment_method === 'faspay_direct_debit') {
-                        $snapService = new \App\Services\FaspaySnapService();
+                        $snapService = new \App\Services\FaspaySnapService($orderCompany);
                         $debitData = $snapService->directDebitPayment($order, $total, '812');
                         if ($debitData && isset($debitData['responseCode']) && $debitData['responseCode'] === '2005400') {
                             $order->payment_method = 'faspay_direct_debit';
                             $order->faspay_redirect_url = $debitData['webRedirectUrl'] ?? $debitData['redirectUrl'] ?? null;
                             $order->save();
                             $faspayInvoiceUrl = $order->faspay_redirect_url;
-                            Log::info('Faspay Direct Debit generated successfully', ['order_id' => $order->id, 'url' => $faspayInvoiceUrl]);
+                            Log::info('Faspay Direct Debit generated successfully', ['order_id' => $order->id, 'url' => $faspayInvoiceUrl, 'company' => $orderCompany]);
                         } else {
-                            Log::error('Failed to generate Faspay Direct Debit', ['order_id' => $order->id]);
+                            Log::error('Failed to generate Faspay Direct Debit', ['order_id' => $order->id, 'company' => $orderCompany]);
                         }
                     } elseif ($request->payment_method === 'faspay_bca_va') {
                         // BCA VA uses Legacy API
-                        $faspayService = new \App\Services\FaspayService();
+                        $faspayService = new \App\Services\FaspayService($orderCompany);
                         $invoice = $faspayService->createBill($order, $user, '702');
                         if ($invoice && isset($invoice['bill_no'])) {
                             $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
                             $order->faspay_redirect_url = $invoice['redirect_url'];
                             $order->payment_method = 'faspay_bca_va';
-                        if (empty($order->virtual_account_no)) {
-                            // Generate a mock VA number for BCA so it displays on the frontend
-                            $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
-                        }
-                            // Generate a mock VA number for BCA so it displays on the frontend
                             if (empty($order->virtual_account_no)) {
+                                // Generate a mock VA number for BCA so it displays on the frontend
                                 $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
                             }
                             $order->save();
                             $faspayInvoiceUrl = $order->faspay_redirect_url;
                             
-                            Log::info('Faspay BCA VA Invoice created', ['order_id' => $order->id, 'bill_no' => $order->faspay_bill_no]);
+                            Log::info('Faspay BCA VA Invoice created', ['order_id' => $order->id, 'bill_no' => $order->faspay_bill_no, 'company' => $orderCompany]);
                         } else {
-                            Log::error('Failed to generate Faspay BCA VA', ['order_id' => $order->id]);
+                            Log::error('Failed to generate Faspay BCA VA', ['order_id' => $order->id, 'company' => $orderCompany]);
                         }
                     } else {
-                        // VA Static Flow
-                        // Prefix mapping
-                        $isProd = config('services.faspay.env') === 'production' || env('FASPAY_ENV') === 'production';
-                        
-                        if ($isProd) {
-                            $prefixes = [
-                                'faspay_mandiri_va'  => '88558010',
-                                'faspay_sinarmas_va' => '885648',
-                                'faspay_permata_va'  => '735161',
-                                'faspay_maybank_va'  => '78218052',
-                                'faspay_danamon_va'  => '797039',
-                                'faspay_bsi_va'      => '12601021',
-                                'faspay_cimb_va'     => '222550',
-                            ];
-                        } else {
-                            $prefixes = [
-                                'faspay_permata_va'  => '370201',
-                                'faspay_mandiri_va'  => '37020002',
-                                'faspay_bri_va'      => '370202',
-                                'faspay_cimb_va'     => '370204',
-                                'faspay_bni_va'      => '9881236387',
-                            ];
-                        }
-                        $prefix = $prefixes[$request->payment_method] ?? '370200';
+                        // VA Static Flow using FaspayConfig
+                        $prefix = \App\Services\FaspayConfig::getVaPrefix($request->payment_method, $orderCompany);
                         $targetLength = 16;
                         $prefixLength = strlen($prefix);
                         $freeDigitsLength = $targetLength - $prefixLength;
@@ -1143,7 +1122,7 @@ class CheckoutController extends Controller
                         $order->payment_method = $request->payment_method;
                         $order->save();
                         
-                        Log::info('Faspay Static VA generated', ['order_id' => $order->id, 'va' => $vaNumber]);
+                        Log::info('Faspay Static VA generated', ['order_id' => $order->id, 'va' => $vaNumber, 'company' => $orderCompany]);
                     }
                 } elseif ($activeGateway === 'xendit') {
                     $xenditService = new \App\Services\XenditService();

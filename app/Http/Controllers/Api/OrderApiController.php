@@ -306,6 +306,7 @@ class OrderApiController extends Controller
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $validated['payment_method'],
+                'company' => $user->getFaspayCompany(),
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
                 'notes' => $validated['notes'] ?? null,
@@ -378,7 +379,7 @@ class OrderApiController extends Controller
                         ], 500);
                     }
                 } else {
-                    $faspayService = new \App\Services\FaspayService();
+                    $faspayService = new \App\Services\FaspayService($order->company);
                     
                     $invoice = $faspayService->createBill($order, $user);
 

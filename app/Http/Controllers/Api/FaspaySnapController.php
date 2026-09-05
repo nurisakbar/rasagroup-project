@@ -164,8 +164,10 @@ class FaspaySnapController extends Controller
         } else {
             Log::info('Faspay SNAP Webhook: Detected Legacy Payload format. Performing Legacy Signature validation.');
             
-            $userId = config('services.faspay.user_id') ?: env('FASPAY_USER_ID', 'bot37020');
-            $password = config('services.faspay.password') ?: env('FASPAY_PASSWORD', 'p@ssw0rd');
+            $company = \App\Services\FaspayConfig::resolveCompanyFromRequest($request);
+            $companyConfig = \App\Services\FaspayConfig::getCompanyConfig($company);
+            $userId = $companyConfig['user_id'] ?: env('FASPAY_USER_ID', 'bot37020');
+            $password = $companyConfig['password'] ?: env('FASPAY_PASSWORD', 'p@ssw0rd');
             $billNo = $request->input('bill_no', '');
             $paymentStatusCode = $request->input('payment_status_code', '');
             
@@ -553,21 +555,23 @@ class FaspaySnapController extends Controller
                             'approvalCode' => '123456'
                         ];
                         
-                        $snapService = new \App\Services\FaspaySnapService();
+                        $orderCompany = $order->company ?: \App\Services\FaspayConfig::getDefaultCompany();
+                        $companyConfig = \App\Services\FaspayConfig::getCompanyConfig($orderCompany);
+                        $snapService = new \App\Services\FaspaySnapService($orderCompany);
                         $signature = $snapService->generateSymmetricSignature(
                             'POST',
                             $request->path(),
                             $request->bearerToken() ?? '',
                             $responsePayload,
                             date('c'),
-                            config('services.faspay.snap_client_secret', '')
+                            $companyConfig['snap_client_secret'] ?? config('services.faspay.snap_client_secret', '')
                         );
 
                         $response = response()->json($responsePayload)
                             ->withHeaders([
                                 'X-TIMESTAMP' => date('c'),
                                 'X-SIGNATURE' => $signature,
-                                'X-PARTNER-ID' => config('services.faspay.partner_id', '37020')
+                                'X-PARTNER-ID' => $companyConfig['snap_client_id'] ?: ($companyConfig['merchant_id'] ?? '37020')
                             ]);
                     }
                 }
@@ -590,7 +594,7 @@ class FaspaySnapController extends Controller
     /**
      * Validasi Header SNAP BI untuk kebutuhan UAT Simulator.
      */
-    private function validateSnapHeaders(Request $request, $serviceCode)
+    private function validateSnapHeaders(Request $request, $serviceCode, ?Order $order = null)
     {
                 // Pengecekan Channel ID
         $channelId = $request->header('CHANNEL-ID', '');
@@ -615,14 +619,27 @@ class FaspaySnapController extends Controller
         // 2. Pengecekan Signature UAT / Real
         $signature = $request->header('X-SIGNATURE', '');
         
-        $isProduction = config('services.faspay.env', 'dev') === 'production';
-        $configPath = $isProduction ? config('services.faspay.public_key_prod_path') : config('services.faspay.public_key_dev_path');
+        $company = \App\Services\FaspayConfig::resolveCompanyFromRequest($request, $order);
+        $companyConfig = \App\Services\FaspayConfig::getCompanyConfig($company);
+
+        $env = $companyConfig['env'] ?? config('services.faspay.env', 'dev');
+        $isProduction = in_array(strtolower($env), ['production', 'prod']);
+        $configPath = $isProduction 
+            ? ($companyConfig['public_key_prod_path'] ?? null) 
+            : ($companyConfig['public_key_dev_path'] ?? null);
         
         // Ensure path is absolute (handles both 'storage/app/...' and absolute paths in .env)
-        $publicKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_public_key.pem');
+        $publicKeyPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/37020_server.crt');
+        if (!file_exists($publicKeyPath)) {
+            $fallbackCert = base_path('storage/app/37020_server.crt');
+            if (file_exists($fallbackCert)) {
+                $publicKeyPath = $fallbackCert;
+            }
+        }
         
         \Illuminate\Support\Facades\Log::info('Faspay Signature Validation Config Check', [
-            'env' => config('services.faspay.env', 'dev'),
+            'company' => $company,
+            'env' => $env,
             'is_production' => $isProduction,
             'chosen_key_path' => $publicKeyPath,
             'key_file_exists' => file_exists($publicKeyPath),

@@ -1,0 +1,208 @@
+{
+    "19.2": {
+        "timestamp": "2026-09-03T15:02:01+07:00",
+        "external_id": "202609030802010001",
+        "signature": "INVALID_CcG++KWcIfCDc8nP91pcDQlWZzIIz0bU7eGqnDLHYB3KnLnX8KjecmFok1NFgzuSL9yimnfsu+HWWqnMJfzWBSdAFM2Di6hcXGbJOKNKAsu85aciZ21o46udooB6NtjPqJPpjYmxFFLS4omrTflrUSSXWohW7xosScFtnyqZYFJ8F6qhBMTC/Sii0ZvMOpw+sE6cJxhh9qXfQywfNlZ554EbF4VftgmIpElPcAPmFISdu16N+1OZqp3zCgh3lIFg/5Qg98erzl7G4/4FopGdYYsHEVfdfIEMQlKM0rgI9cRbjb2hxgTdBQbg2iKQ2cdB2PXSN6kHz11G1Hg==",
+        "payload": {
+            "partnerReferenceNo": "WS260903001",
+            "merchantId": "37020",
+            "amount": {
+                "value": "60000.00",
+                "currency": "IDR"
+            },
+            "customerEmail": "nuris.akbar@gmail.com",
+            "customerPhone": "08969935552",
+            "validUpTo": "2026-09-04T15:02:30+07:00",
+            "additionalInfo": {
+                "billDate": "2026-09-03T15:02:30+07:00",
+                "channelCode": "812",
+                "paymentChannelUid": "812",
+                "customerName": "Nuris Akbar",
+                "billDescription": "Payment #WS260903001"
+            }
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+    },
+    "19.3": {
+        "timestamp": "2026-09-03T15:02:02+07:00",
+        "external_id": "202609030802020002",
+        "signature": "mewWFRGcJdXjUHoTvULrZBBPNCfPwiR86UiH1ETXwYIqsp6DOc1s6ZGtiGlgG6C6cnqY8eTbRcEPGPDCUqNZcaEXNvLnu8ZhFO+iZXWogmkgvC1wC2QP5X3IT2KKwrk8sNeVDITmWC2jNc0GIHlud4HSGGPNx1sMJ/6+O/4NnksAqBcNi68Z18PVSdthw/YhbyBRuMNWtG2aaixlJVDs3Dla+RU03kNyHdStEbalHjgA0oEVfhAkgZraPaYL0+CPF3LnBLkHmTvJIf22PsB2iLkCmskudmg6undMlhcFPqVIp9nclEn1ECPiWjzpysw/NA97+Vjzcq7Ik9tAD/d76g==",
+        "payload": {
+            "partnerReferenceNo": "WS260903001",
+            "amount": {
+                "value": "60000.00",
+                "currency": "IDR"
+            },
+            "customerEmail": "nuris.akbar@gmail.com",
+            "customerPhone": "08969935552",
+            "validUpTo": "2026-09-04T15:02:30+07:00",
+            "additionalInfo": {
+                "billDate": "2026-09-03T15:02:30+07:00",
+                "channelCode": "812",
+                "paymentChannelUid": "812",
+                "customerName": "Nuris Akbar",
+                "billDescription": "Payment #WS260903001"
+            }
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+    },
+    "19.4": {
+        "timestamp": "2026-09-03T15:02:03+07:00",
+        "external_id": "202609030802030003",
+        "signature": "djPXkdvZeFMaJTg44nZC1XQpvJerwPbeEYoYZXyRiuUBXxu5ejbVCdgrnN5EDE3srIPXnu0GbsCSaUyMczwiTSUC67O6lfRR9VHP05dtKNvPOYnm4spVWyod06MksVvas3qEpd9ekgaVxdNF18+q+q1CIztOpS45ht/Auz0YfbXs3740OAj/1YfWKY3w4hNTiwzQUlEKSU4VHEB+L/U0HhDd+HyHnCW7qg2qtT49+7gPf543v6Q/dS7AQW8EYc4zIfpKI4Y/vZv5FTRzsKrkcbWb0G0rvPbpJVP/zFs1jsIXnihDeH++k4M+hFk7F+/cLfNLixYk+f9TFWDMpZFadw==",
+        "payload": {
+            "partnerReferenceNo": "WS260903001",
+            "merchantId": "37020",
+            "amount": {
+                "value": "abc",
+                "currency": "IDR"
+            },
+            "customerEmail": "nuris.akbar@gmail.com",
+            "customerPhone": "08969935552",
+            "validUpTo": "2026-09-04T15:02:30+07:00",
+            "additionalInfo": {
+                "billDate": "2026-09-03T15:02:30+07:00",
+                "channelCode": "812",
+                "paymentChannelUid": "812",
+                "customerName": "Nuris Akbar",
+                "billDescription": "Payment #WS260903001"
+            }
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+    },
+    "19.5": {
+        "attempt1": {
+            "timestamp": "2026-09-03T15:02:04+07:00",
+            "external_id": "202609030802040004",
+            "signature": "QpXtXop3Ll6iFUJoTReMpTtol03J1y97/Jwb5OUsiF9CcoH/evzN7WGpFdIurWQU02b/Rdjc4zYTyPlmWTBvsgCdS3mlyYBLkrAwuEGsN/y0L+erCVy5HymGRSJljZJxbmZhor7SCeNLQTGLE8zBdc9xe+4NThhgLiHbgfWNhL/OxHQvuWv9Kc/N/EQ6Ygp7f7/F6cJmfn7367a+Emm4VmXfu51Xc660TugAE4z9qlckAAo4jrRqT/qednMZQLzk0rMkvfdDqFsJ/VKFc2+IIKFcQbthYZfRXHlQA1L1spdV8uGyuNiUUdla+sA25PlQJfNqlMV8uv7fy6KZTuGTWQ==",
+            "payload": {
+                "partnerReferenceNo": "WS260903001",
+                "merchantId": "37020",
+                "amount": {
+                    "value": "60000.00",
+                    "currency": "IDR"
+                },
+                "customerEmail": "nuris.akbar@gmail.com",
+                "customerPhone": "08969935552",
+                "validUpTo": "2026-09-04T15:02:30+07:00",
+                "additionalInfo": {
+                    "billDate": "2026-09-03T15:02:30+07:00",
+                    "channelCode": "812",
+                    "paymentChannelUid": "812",
+                    "customerName": "Nuris Akbar",
+                    "billDescription": "Payment #WS260903001"
+                }
+            },
+            "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+        },
+        "attempt2": {
+            "timestamp": "2026-09-03T15:02:05+07:00",
+            "external_id": "202609030802040004",
+            "signature": "j9y1t7vDSSQCe8WFrMYQ2erAYDO4zvxsMUnemA0vqy/5J4hOiIkb9gmCjobjG79w+reASxZFbHC6w/Uzf4789wjpo5HA8GQrswO+CquqJR2JS6Lnex3OedhTwbniAvfowdeiHv3sCv8KbvK9+QWkvJSMBPktUvNdnDZXxlPdDfjYTLG07zncPqa29n4BnHbaqHHMd2F6hDQ1SCqAL3jtGK+8koArf1rj9i+lT1LcMnV2yaQtsNBEPzUQszHUBaZVb/cRO91ZR7mHNNC3udGEr3v9vbP91ciAPxpfgsnLeZ1jDJMTACH5yuf2ZuTfyL25dCgOLMzrj/1YoNWXEFc63A==",
+            "payload": {
+                "partnerReferenceNo": "WS260903001",
+                "merchantId": "37020",
+                "amount": {
+                    "value": "60000.00",
+                    "currency": "IDR"
+                },
+                "customerEmail": "nuris.akbar@gmail.com",
+                "customerPhone": "08969935552",
+                "validUpTo": "2026-09-04T15:02:30+07:00",
+                "additionalInfo": {
+                    "billDate": "2026-09-03T15:02:30+07:00",
+                    "channelCode": "812",
+                    "paymentChannelUid": "812",
+                    "customerName": "Nuris Akbar",
+                    "billDescription": "Payment #WS260903001"
+                }
+            },
+            "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+        }
+    },
+    "19.6": {
+        "timestamp": "2026-09-03T15:02:30+07:00",
+        "external_id": "202609030802305541",
+        "signature": "Kvg42huui5HFi/x2Udu/OLMt7390RhHTpMVazohEOwZzk51E5J2WnqCA3H9FFRUi1bXlcJblxVgW7umpRwjhV6mDYV8GQlUAHgXBnM+lelTk234JobTUbxJhtW/WwjIkykQfz3zOh5U2H3V/NjDmYIF1jy3ljpP6+UtZYaC7srPiBkLRxXj+v/bc79lOD4BzPmZtTPKaeBCco2ZR6CsqYlhHssMfP2DV4xBaEDCmCGHKOr9Kh4DWWX+N/ULQQq9S6ESX9VHiWrpHMqTd6xmXITdJ7wDMU05cLWHYTenxnOTl6wrJXUYJ8okCyElhkLZOWI8BxZ3fG18fgFvXAul4dw==",
+        "payload": {
+            "partnerReferenceNo": "WS260903001",
+            "merchantId": "37020",
+            "amount": {
+                "value": "60000.00",
+                "currency": "IDR"
+            },
+            "customerEmail": "nuris.akbar@gmail.com",
+            "customerPhone": "08969935552",
+            "validUpTo": "2026-09-04T15:02:30+07:00",
+            "additionalInfo": {
+                "billDate": "2026-09-03T15:02:30+07:00",
+                "channelCode": "812",
+                "paymentChannelUid": "812",
+                "customerName": "Nuris Akbar",
+                "billDescription": "Payment #WS260903001"
+            }
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host",
+        "response": {
+            "responseCode": "2005400",
+            "responseMessage": "Request has been processed successfully",
+            "referenceNo": "3702081255404571",
+            "partnerReferenceNo": "WS260903001",
+            "webRedirectUrl": "https://debit-sandbox.faspay.co.id/pws/100003/0830000010100000/838e5b7744a80ba06a38e69b4c738d052169aa21?trx_id=3702081255404571&merchant_id=37020&bill_no=WS260903001",
+            "additionalInfo": {
+                "merchantId": "37020",
+                "amount": {
+                    "value": "60000.00",
+                    "currency": "IDR"
+                }
+            }
+        }
+    },
+    "19.7": {
+        "timestamp": "2026-09-03T15:02:06+07:00",
+        "external_id": "202609030802060006",
+        "signature": "eyGRIwW+Tf3NdirSWkKUMRz/rL7CDf6FueBIBGo/NoT4bO4XdEJIAW/DIJymeScLpWbhspImFSKQYXTvqVhwFm1nLGZKCWe9zYQvLAiAPSImUG1Dvday73hhuKWGd/cswbfnfkOePn5h7Wa95M9QfSXajRyh/FHWNLkQKI7g7iVHgdjGGLoICh+n5XdZJ1QHB16FKfeJY9fcWNQ7uRsQALARskX0jjbngpBtooOUGXusLLpdNs69KfUom8dhSk49kLkwtBuvNbV2u3nWMhkOMskjwYGwmVqLp/dWCnXGjEwxEjwP5w0q2j+9ZApfR+GRZWSi3Rh0/BoVNt6MCk9InQ==",
+        "payload": {
+            "partnerReferenceNo": "WS260903001",
+            "merchantId": "99999",
+            "amount": {
+                "value": "60000.00",
+                "currency": "IDR"
+            },
+            "customerEmail": "nuris.akbar@gmail.com",
+            "customerPhone": "08969935552",
+            "validUpTo": "2026-09-04T15:02:30+07:00",
+            "additionalInfo": {
+                "billDate": "2026-09-03T15:02:30+07:00",
+                "channelCode": "812",
+                "paymentChannelUid": "812",
+                "customerName": "Nuris Akbar",
+                "billDescription": "Payment #WS260903001"
+            }
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/payment-host-to-host"
+    },
+    "19.13": {
+        "timestamp": "2026-09-03T15:02:07+07:00",
+        "external_id": "202609030802070007",
+        "signature": "HREHRxTnZOA7Xwq8g1E6Cl+7e0lU58fckLWul8a1cpnx0t4WZEYayiuTJb5CtOrlxE9Xv8p86qOeXIjFBSZ4vFcLW4tgKIH5i+Y70ewvE+UQqoTqRQ7iXiCO5L8xxohYXaxI0X6QcrzQQANVMvYsRXjCqVOiPiOx6N7ldjCDu33OfUT2WjEOcqFRMTkrTK2mMCcuCn+T5lE5h8hZxXj7KRgPd4xz1D++QIQtEe4vLx/ntBINmWczVF8d5dox9kZi1+/bW7cRbxHJseYLGp44EJUn55YiK2tSpsTnePsnEUJaaFgJ21RjRzUamvfd2ouo9chZIL+wReD56hpb3AI/lQ==",
+        "payload": {
+            "originalReferenceNo": "3702081255404571",
+            "originalPartnerReferenceNo": "WS260903001",
+            "merchantId": "37020",
+            "serviceCode": "55"
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/status"
+    },
+    "19.14": {
+        "timestamp": "2026-09-03T15:02:08+07:00",
+        "external_id": "202609030802080008",
+        "signature": "FJfdRxR5CJzWowTjURm8q8olqpAwpRAXRoiyoedcz+ql0R+IXBDJi8/Suj7yImHzeLX1zEGtDt38dTFYwhHp+YoVctUy08Ty2YD8mJoDaz0oN1LpUS4pUX5Uf5TwvN/BsN90amdZiph1V+4xQgJMK+HgApsNIiT5fUUHmrQDtm+ssdx3obe/j5vsUJ4k8gNYH+PbQJd1S19ddFWAn4YLx/uy3OCxE6meO+myMsGbum/XZO6+VGqUzU7kfmBckocBwrBedwh0sPX3PCcQqAQpa8X2qjULm+iQUyBkaa6P40hLFxFXFXNEY7fSOPoVdc3RC5avjLxBvqFFt5YsdRiUzQ==",
+        "payload": {
+            "originalPartnerReferenceNo": "WS260903999",
+            "merchantId": "37020",
+            "serviceCode": "55"
+        },
+        "url": "https://debit-sandbox.faspay.co.id/v1.0/debit/status"
+    }
+}

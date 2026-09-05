@@ -6,18 +6,12 @@ log_file = '/Applications/MAMP/htdocs/rasagroup/laravel(2).log'
 template_file = '/Applications/MAMP/htdocs/rasagroup/Faspay VA - Skenario Functional Test_V.3.0 static(2).xlsx'
 output_file = '/Applications/MAMP/htdocs/rasagroup/faspay_uat_mantap.xlsx'
 
-# 1. Parse log file
+# 1. Parse JSON file
 results = {}
-with open(log_file, 'r') as f:
-    for line in f:
-        if "Faspay UAT Simulation Result - Scenario [" in line:
-            try:
-                scenario_id = line.split("Scenario [")[1].split("]")[0]
-                json_str = line.split("] {", 1)[1]
-                data = json.loads("{" + json_str.strip())
-                results[scenario_id] = data
-            except Exception as e:
-                pass
+with open('faspay_sim_results.json', 'r') as f:
+    data = json.load(f)
+    if 'results' in data:
+        results = data['results']
 
 # 2. Open Excel Template using openpyxl to preserve formatting
 wb = openpyxl.load_workbook(template_file)
@@ -40,12 +34,22 @@ for row in range(7, sheet.max_row + 1):
         
         # Build Request String
         req_str = f"url:\n{data.get('request_url', '')}\n\n"
-        req_str += f"header:\n{json.dumps(data.get('request_headers', {}), indent=2)}\n\n"
-        req_str += f"body:\n{json.dumps(data.get('request_payload', {}), indent=2)}"
+        headers = data.get('request_headers', {})
+        header_str = '\n'.join([f"{k}: {v}" for k, v in headers.items() if k.lower() != 'authorization'])
+        req_str += f"header:\n{header_str}\n\n"
         
-        # Build Response String
-        res_str = f"http_code: {data.get('http_code', '')}\n"
-        res_str += f"{json.dumps(data.get('response_body', {}), indent=2)}"
+        # Build Body
+        payload = data.get('request_payload', {})
+        if isinstance(payload, list) and len(payload) == 0:
+            req_str += "body:\n[]"
+        else:
+            req_str += f"body:\n{json.dumps(payload, separators=(',', ':'))}"
+        
+        # Build Response String (No http_code prefix)
+        if data.get('response_body') is None:
+            res_str = ""
+        else:
+            res_str = json.dumps(data.get('response_body', {}), separators=(',', ':'))
         
         # Write to cells
         sheet.cell(row=row, column=COL_REQ).value = req_str

@@ -1,0 +1,78 @@
+{
+  "No": {
+    "req": "Request",
+    "res": "Response"
+  },
+  "11.1": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: eG5UnQEkKC2PWbhpsUpXc1u3UjZlex11tby5uphWwSP1xucADBGgZCamypWvLDOkUacYgDtBcmjmgY5VcnW3Hg==\nX-TIMESTAMP: 2026-08-08T09:15:16+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 5155680325111574\nCHANNEL-ID: 77001\n\nbody:\n[]",
+    "res": "{\"responseCode\":\"4012401\",\"responseMessage\":\"Access Token Invalid\"}"
+  },
+  "11.2": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: Tz2OqyOURERLt7xJLX7gFfx48/oZOnh3pGJg8Rvhv6sR/Kf3LHJayXwq0oCPva/tzD9ECdmxNo8ui0PaiWgcrg==INVALID\nX-TIMESTAMP: 2026-08-08T09:16:50+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 7298633320014554\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"123\",\"virtualAccountNo\":\"370201123\"}",
+    "res": "{\"responseCode\":\"4012700\",\"responseMessage\":\"Unauthorized. [Signature]\"}"
+  },
+  "11.3": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: cA1GcwSBGXROo25xvEdPDoPyGIdeO0L/h2S79gP5Jh1zPYXrSm96hrvi9qJ1mQ9edj4vCoBztNfhdMPxqEGuUg==\nX-TIMESTAMP: 2026-08-08T09:18:09+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 5801423559239069\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\"}",
+    "res": "{\"responseCode\":\"4002402\",\"responseMessage\":\"Missing Mandatory Field {virtualAccountNo}\"}"
+  },
+  "11.4": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: GyM47w/Yb9TlO97g2zIzLgOXmTd+fVXm4/ZI9AWfEyZuc064eXPfBXUIKCoWccIaC9B/Y2WEIx6L+tYpnF/CCw==\nX-TIMESTAMP: 2026-08-08T09:21:00+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 5173978444842198\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"virtualAccountNo\":370201123}",
+    "res": "{\"responseCode\":\"4002401\",\"responseMessage\":\"Invalid Field Format {virtualAccountNo}\"}"
+  },
+  "11.5": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: MAJx77nKP9Un0vrDl3EoDll7FyaUBNecndf8tO3rC8WgvqXIuXNwmP4kNNsd2gnNMKXpQkJUzrua8JSdwu4ddQ==\nX-TIMESTAMP: 2026-08-08T09:22:06+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 5173978444842198\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"virtualAccountNo\":\"370201123\"}",
+    "res": "{\"responseCode\":\"4092400\",\"responseMessage\":\"Conflict\"}"
+  },
+  "11.6": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: 4KPehqirQtR1aSwbkDjB/DhZbMRdSn1BbPDMWgUaCvSadcwDeECwxGCHbdmBO+5vZCZSjqpIZCXGe8LZN14fIA==\nX-TIMESTAMP: 2026-08-08T09:25:30+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 4259052996664946\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"channelCode\":\"6011\",\"inquiryRequestId\":\"REQ-6a7605bdd9a92\"}",
+    "res": "{\"responseCode\":\"2002400\",\"responseMessage\":\"success\",\"virtualAccountData\":{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"virtualAccountName\":\"Customer Rasa Group\",\"virtualAccountEmail\":\"customer@rasagroup.co.id\",\"virtualAccountPhone\":\"6281234567890\",\"inquiryRequestId\":\"REQ-6a7605bdd9a92\",\"totalAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"}}}"
+  },
+  "11.7": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: wwg7shMhXhw0lIByiIsFElNtnNxT9Kty61zHg11bVEt6hTNM4kZrQTFlTJQtckOZo5khSHN/Xbib6I9NwyrJFg==\nX-TIMESTAMP: 2026-08-08T09:26:56+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 7616725035888393\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345678\",\"virtualAccountNo\":\"3702010212345678\",\"inquiryRequestId\":\"REQ-6a7605bddaa85\"}",
+    "res": "{\"responseCode\":\"4042414\",\"responseMessage\":\"Bill has been paid\"}"
+  },
+  "11.8": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: G6YK0FsZCsgtO7+hlW1fzXaVKvpYbgKZXbISL7DqQPwVidrHDFWRNKxZYYbyZHshJcifz1exR0wdYg0VdsEN7A==\nX-TIMESTAMP: 2026-08-08T09:31:10+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 2253241651443449\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345677\",\"virtualAccountNo\":\"3702010212345677\",\"inquiryRequestId\":\"REQ-6a7605bddb048\"}",
+    "res": "{\"responseCode\":\"4042419\",\"responseMessage\":\"Bill expired\"}"
+  },
+  "11.9": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/inquiry\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: JB6FIT2Qgqwibjc3ptMWJXbT/XJYpl6YT6ESLEJvbLiTfbI7NEDSZMRgSm0NI0GyMpf1PlRtYxHrxtUZ8aA4Xg==\nX-TIMESTAMP: 2026-08-08T09:34:26+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 4933160237114571\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"9999999999\",\"virtualAccountNo\":\"3702019999999999\",\"inquiryRequestId\":\"REQ-6a7605bddb6a3\"}",
+    "res": "{\"responseCode\":\"4042412\",\"responseMessage\":\"Bill not found\"}"
+  },
+  "11.10": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/payment\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: z4iSbQkYIWTLYf2NFDP+ovgDbQ9Amm/o1Xvr0TMLBlnj7Tp4nDqDsLQeIp39STdkzwO9eBBdtL1A63B2kXZhOA==\nX-TIMESTAMP: 2026-08-08T09:38:15+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 1629632523125723\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paidAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"},\"paymentRequestId\":\"2b9ffefd-f969-40c4-8f67-b18ef8355cf4\",\"latestTransactionStatus\":\"00\",\"trxDateTime\":\"2026-08-08T09:41:32+07:00\",\"referenceNo\":\"2453639759126168\"}",
+    "res": "{\"responseCode\":\"2002500\",\"responseMessage\":\"success\",\"virtualAccountData\":{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paymentRequestId\":\"2b9ffefd-f969-40c4-8f67-b18ef8355cf4\",\"paidAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"}}}"
+  },
+  "11.11": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/payment\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: GkbhCgDrnLo3U5OxiTEk7v+FrJ9G022+pwWC/yXaKcKA+JQrU/C1VfLfefyd0odWL5wEvm/2MAVbUU2eBGHDpA==\nX-TIMESTAMP: 2026-08-08T09:39:13+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 2886051848601923\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"9999999999\",\"virtualAccountNo\":\"3702019999999999\",\"paidAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"},\"paymentRequestId\":\"5a4fe851-c0f6-4955-a791-9fe0169f7cbb\",\"trxDateTime\":\"2026-08-08T09:43:01+07:00\",\"referenceNo\":\"3135951652231523\"}",
+    "res": "{\"responseCode\":\"4042512\",\"responseMessage\":\"Bill not found\"}"
+  },
+  "11.12": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/payment\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: QjdDxKkMEDyEjh8gDK0OzdNQiOGtn0jk3xDyn64FdyeY9dyGUh1qNQ4ekk4PvGbgkOIcFuWbmduURXU7IMr5qA==\nX-TIMESTAMP: 2026-08-08T09:41:18+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 1385653212190399\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paidAmount\":{\"value\":\"1000.00\",\"currency\":\"IDR\"},\"paymentRequestId\":\"fb2f93ab-5871-4344-9af7-e3de4368b2fa\",\"latestTransactionStatus\":\"00\",\"trxDateTime\":\"2026-08-08T09:45:02+07:00\",\"referenceNo\":\"7221304357762879\"}",
+    "res": "{\"responseCode\":\"4042513\",\"responseMessage\":\"Invalid Amount\"}"
+  },
+  "11.13": {
+    "req": "url:\n\nheader:\n\nbody: ",
+    "res": null
+  },
+  "11.14": {
+    "req": "url:\n\nheader:\n\nbody: ",
+    "res": null
+  },
+  "11.15": {
+    "req": "url:\n\nheader:\n\nbody: ",
+    "res": null
+  },
+  "Additional Scenario": {
+    "req": null,
+    "res": null
+  },
+  "11.16": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/payment\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: ADZsi+TPAjGxYFfkZzfxweHW4UDkpjJFc1XBZ6+R7c2I5+rQvI+1cg7mYg4gzEFuibZSwAUT5GuQt2MCpJMjCA==\nX-TIMESTAMP: 2026-08-08T09:43:18+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 6082957891640381\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paidAmount\":{\"value\":\"150000.00\",\"currency\":\"IDR\"},\"paymentRequestId\":\"a6c78e92-b668-430f-bdf8-96b87610f440\",\"latestTransactionStatus\":\"00\",\"trxDateTime\":\"2026-08-08T09:48:57+07:00\",\"referenceNo\":\"8548137543030533\"}",
+    "res": "{\"responseCode\":\"2002500\",\"responseMessage\":\"success\",\"virtualAccountData\":{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paymentRequestId\":\"a6c78e92-b668-430f-bdf8-96b87610f440\",\"paidAmount\":{\"value\":\"150000.00\",\"currency\":\"IDR\"}}}"
+  },
+  "11.17": {
+    "req": "url:\nhttps://dev.rasaconnect.com/api/faspay/snap/payment\n\nheader:\nContent-Type: application/json\nX-SIGNATURE: TUS1bmVLk5VmS+WtEBRXwZZ72osbyQpWeVslD9FTjEKFjRCdvirt1QrOUnKFVMlje47pXSkLoCQ7uKIU04YiQg==\nX-TIMESTAMP: 2026-08-08T09:45:43+07:00\nX-PARTNER-ID: 37020\nX-EXTERNAL-ID: 5816465432517933\nCHANNEL-ID: 77001\n\nbody:\n{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paidAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"},\"paymentRequestId\":\"26612d40-cc81-4a67-954a-d2d7e3432cf7\",\"trxDateTime\":\"2026-08-08T09:50:49+07:00\",\"referenceNo\":\"8801051703042084\"}",
+    "res": "{\"responseCode\":\"2002500\",\"responseMessage\":\"success\",\"virtualAccountData\":{\"partnerServiceId\":\"370201\",\"customerNo\":\"0212345679\",\"virtualAccountNo\":\"3702010212345679\",\"paymentRequestId\":\"26612d40-cc81-4a67-954a-d2d7e3432cf7\",\"paidAmount\":{\"value\":\"40000.00\",\"currency\":\"IDR\"}}}"
+  }
+}

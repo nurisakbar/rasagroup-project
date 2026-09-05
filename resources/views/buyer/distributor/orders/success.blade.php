@@ -234,7 +234,7 @@
                                             </div>
                                             <div>
                                                 <span class="font-sm d-block mb-5" style="color: #4b5563;">Atas Nama</span>
-                                                <h5 class="mb-0" style="color: #253D4E;">RASA DISTRIBUSI INDONESIA PT</h5>
+                                                <h5 class="mb-0" style="color: #253D4E;">{{ strtoupper(\App\Services\FaspayConfig::getCompanyName($order->company ?? 'rdi')) }}</h5>
                                             </div>
                                         </div>
                                         <div class="mt-30 text-center">
@@ -259,7 +259,7 @@
                                                         <li>Pilih <strong>Transfer Antar Rekening / BCA</strong>.</li>
                                                         <li>Masukkan nomor rekening <strong>6371759899</strong>.</li>
                                                         <li>Masukkan jumlah pembayaran <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong> dengan tepat.</li>
-                                                        <li>Periksa kembali data transaksi (Pastikan nama penerima <strong>RASA DISTRIBUSI INDONESIA PT</strong>).</li>
+                                                        <li>Periksa kembali data transaksi (Pastikan nama penerima <strong>{{ strtoupper(\App\Services\FaspayConfig::getCompanyName($order->company ?? 'rdi')) }}</strong>).</li>
                                                         <li>Masukkan PIN m-BCA Anda lalu tap <strong>OK</strong>.</li>
                                                     </ol>
                                                 </div>
@@ -279,7 +279,7 @@
                                                         <li>Pilih menu <strong>Transfer</strong> dan kemudian <strong>Ke Rek BCA</strong>.</li>
                                                         <li>Masukkan nomor rekening <strong>6371759899</strong>.</li>
                                                         <li>Masukkan nominal transfer sebesar <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong> dengan tepat.</li>
-                                                        <li>Layar ATM akan menampilkan detail transaksi. Pastikan penerima adalah <strong>RASA DISTRIBUSI INDONESIA PT</strong>.</li>
+                                                        <li>Layar ATM akan menampilkan detail transaksi. Pastikan penerima adalah <strong>{{ strtoupper(\App\Services\FaspayConfig::getCompanyName($order->company ?? 'rdi')) }}</strong>.</li>
                                                         <li>Pilih <strong>Ya</strong> untuk menyelesaikan transaksi.</li>
                                                     </ol>
                                                 </div>

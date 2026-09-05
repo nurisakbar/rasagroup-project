@@ -18,11 +18,12 @@ return new class extends Migration
             //
         });
 
-        // Use DB::statement because Blueprint doesn't support modifying enum directly
-        \Illuminate\Support\Facades\DB::statement("
-            ALTER TABLE `orders`
-            MODIFY `order_type` ENUM('regular', 'distributor', 'pos') NOT NULL DEFAULT 'regular'
-        ");
+        if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement("
+                ALTER TABLE `orders`
+                MODIFY `order_type` ENUM('regular', 'distributor', 'pos') NOT NULL DEFAULT 'regular'
+            ");
+        }
     }
 
     /**
