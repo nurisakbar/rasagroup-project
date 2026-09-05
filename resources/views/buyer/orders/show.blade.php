@@ -304,7 +304,7 @@
                                                             </a>
                                                         @endif
                                                     @else
-                                                        @php $paymentUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url; @endphp
+                                                        @php $paymentUrl = $order->faspay_redirect_url; @endphp
                                                         @if($paymentUrl)
                                                         <a href="{{ $paymentUrl }}" target="_blank" class="btn btn-brand rounded-pill w-100 mb-2">
                                                             <i class="fi-rs-money mr-5"></i> Lanjutkan Pembayaran
@@ -751,16 +751,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <form action="{{ route('buyer.orders.change-payment', $order) }}" method="POST">
         @csrf
         <div class="modal-body p-4">
-            @php $activeGateway = config('services.active_payment_gateway', 'xendit'); @endphp
+            @php $activeGateway = config('services.active_payment_gateway', 'faspay'); @endphp
             
-            @if($activeGateway === 'xendit')
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_xendit" value="xendit" {{ $order->payment_method === 'xendit' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_xendit" style="cursor: pointer;">
-                        <i class="fi-rs-credit-card mr-5"></i> Xendit (Virtual Account, QRIS, E-Wallet)
-                    </label>
-                </div>
-            @endif
+
 
             @if($activeGateway === 'faspay')
                 <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">

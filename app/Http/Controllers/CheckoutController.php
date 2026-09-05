@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Jobs\ProcessCheckoutSuccessJob;
-use App\Services\XenditService;
+use App\Services\FaspayService;
 use App\Support\QadWsOrderNumberGenerator;
 use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
@@ -674,7 +674,7 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $allowedPayments = [
-            'xendit', 'faspay', 'manual_transfer', 'faspay_qris', 'faspay_direct_debit', 
+            'faspay', 'manual_transfer', 'faspay_qris', 'faspay_direct_debit', 
             'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va',
             'faspay_sinarmas_va', 'faspay_maybank_va', 'faspay_danamon_va', 'faspay_bsi_va', 'faspay_bca_va'
         ];
@@ -913,36 +913,7 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Prepare items for Xendit invoice
-            $xenditItems = [];
-            foreach ($carts as $cart) {
-                $lineUnit = $user->getProductPrice($cart->product);
-                $xenditItems[] = [
-                    'name' => $cart->product->display_name,
-                    'quantity' => $cart->quantity,
-                    'price' => $lineUnit,
-                ];
-            }
-            
-            // Add shipping as item
-            if ($shippingCost > 0) {
-                $xenditItems[] = [
-                    'name' => 'Ongkos Kirim',
-                    'quantity' => 1,
-                    'price' => $shippingCost,
-                ];
-            }
 
-            // Add tiered discounts as items (if any)
-            if (!empty($pricing['tiered_discount_details'])) {
-                foreach ($pricing['tiered_discount_details'] as $discount) {
-                    $xenditItems[] = [
-                        'name' => 'Diskon ' . $discount['group_name'] . ' (' . $discount['percentage'] . '%)',
-                        'quantity' => 1,
-                        'price' => -$discount['discount_amount'], // Negative amount for discount
-                    ];
-                }
-            }
 
             $orderNotes = $request->notes;
             if ($request->payment_method === 'term_of_payment' && $user->term_of_payment) {
@@ -1031,9 +1002,8 @@ class CheckoutController extends Controller
             }
             $deletedCartCount = $deleteQuery->delete();
 
-            // Handle Faspay/Xendit payment (to get invoice URL)
+            // Handle Faspay payment (to get invoice URL)
             $faspayInvoiceUrl = null;
-            $xenditInvoiceUrl = null;
             
             Log::info('--- CHECKOUT DEBUG ---', [
                 'order_id' => $order->id,
@@ -1046,7 +1016,7 @@ class CheckoutController extends Controller
             if ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
                 Log::info('Checkout Debug: TOP selected, skipping gateway.');
-            } elseif ($request->payment_method === 'xendit' || str_starts_with($request->payment_method, 'faspay')) {
+            } elseif (str_starts_with($request->payment_method, 'faspay')) {
                 $activeGateway = config('services.active_payment_gateway');
                 
                 Log::info('Checkout Debug: Entering Gateway block.', [
@@ -1124,33 +1094,6 @@ class CheckoutController extends Controller
                         
                         Log::info('Faspay Static VA generated', ['order_id' => $order->id, 'va' => $vaNumber, 'company' => $orderCompany]);
                     }
-                } elseif ($activeGateway === 'xendit') {
-                    $xenditService = new \App\Services\XenditService();
-                    $customer = [
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $address->phone ?? $user->phone,
-                    ];
-
-                    $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
-
-                    if ($invoice && isset($invoice['id'])) {
-                        $xenditInvoiceId = $invoice['id'];
-                        $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
-
-                        $order->xendit_invoice_id = $xenditInvoiceId;
-                        $order->xendit_invoice_url = $xenditInvoiceUrl;
-                        $order->save();
-
-                        Log::info('Xendit invoice created and saved to order', [
-                            'order_id' => $order->id,
-                            'invoice_id' => $xenditInvoiceId,
-                        ]);
-                    } else {
-                        DB::rollBack();
-                        Log::error('Failed to create Xendit invoice', ['order_id' => $order->id]);
-                        return redirect()->back()->with('error', 'Gagal membuat invoice pembayaran. Silakan coba lagi.');
-                    }
                 } else {
                     $faspayService = new \App\Services\FaspayService();
                     
@@ -1179,7 +1122,7 @@ class CheckoutController extends Controller
                 }
             } 
             // QAD sync (customer + SO) should only run after payment is PAID/SETTLED.
-            // For Xendit, this is handled by the webhook (and success-page backup).
+            // For Faspay, this is handled by the webhook (and success-page backup).
             // This prevents creating QAD customers for users who haven't completed a purchase.
 
             DB::commit();
@@ -1227,11 +1170,6 @@ class CheckoutController extends Controller
 
             // Redirect based on generated invoice URL rather than request parameter 
             // (in case frontend sent outdated payment_method due to cached views)
-            if (isset($xenditInvoiceUrl) && $xenditInvoiceUrl) {
-                // Redirect to Xendit payment page
-                Log::info('Checkout Debug: Redirecting to Xendit', ['url' => $xenditInvoiceUrl]);
-                return redirect($xenditInvoiceUrl);
-            }
 
             if (isset($faspayInvoiceUrl) && $faspayInvoiceUrl) {
                 // Redirect to Faspay payment page
@@ -1301,7 +1239,7 @@ class CheckoutController extends Controller
             'payment_status' => $order->payment_status,
             'order_status' => $order->order_status,
             'payment_method' => $order->payment_method,
-            'payment_url' => $order->faspay_redirect_url ?? $order->xendit_invoice_url,
+            'payment_url' => $order->faspay_redirect_url,
         ]);
     }
 

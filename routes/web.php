@@ -16,7 +16,6 @@ Route::get('/saluran-informasi/{slug}', [App\Http\Controllers\InformationChannel
 Route::post('/saluran-informasi/{slug}/comment', [App\Http\Controllers\InformationChannelController::class, 'storeComment'])->name('information-channels.comment')->middleware('auth');
 
 // Xendit & Faspay Webhook (no CSRF protection needed)
-Route::post('/webhooks/xendit', [App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 Route::post('/webhooks/faspay', [App\Http\Controllers\FaspayWebhookController::class, 'handle'])->name('webhooks.faspay');
 Route::post('/webhooks/faspay/ewallet', [App\Http\Controllers\FaspayWebhookController::class, 'handle'])->name('webhooks.faspay.ewallet');
 

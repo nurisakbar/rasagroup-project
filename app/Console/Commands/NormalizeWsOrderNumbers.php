@@ -10,30 +10,27 @@ use Illuminate\Support\Facades\Cache;
 class NormalizeWsOrderNumbers extends Command
 {
     protected $signature = 'orders:normalize-ws-numbers
-                            {--dry-run : Hanya menampilkan perubahan tanpa menyimpan}
-                            {--skip-xendit : Lewati pesanan yang punya xendit_invoice_id (fallback webhook external_id tidak dipakai)}';
+                            {--dry-run : Lakukan simulasi tanpa update ke database}';
 
     protected $description = 'Ubah semua order_number non-WS ke format WS###### dan selaraskan qid_sales_order_number';
 
     public function handle(): int
     {
         $dry = (bool) $this->option('dry-run');
-        $skipXendit = (bool) $this->option('skip-xendit');
 
-        $seconds = max(120, (int) config('qidapi.ws_order_number_lock_seconds', 15) * 10);
-
-        return (int) Cache::lock(QadWsOrderNumberGenerator::LOCK_KEY, $seconds)->block($seconds, function () use ($dry, $skipXendit): int {
-            return $this->runLocked($dry, $skipXendit);
+        // Prevent concurrent execution
+        $seconds = 60 * 10;
+        return (int) Cache::lock(QadWsOrderNumberGenerator::LOCK_KEY, $seconds)->block($seconds, function () use ($dry): int {
+            return $this->runLocked($dry);
         });
     }
 
-    private function runLocked(bool $dry, bool $skipXendit): int
+    private function runLocked(bool $dry): int
     {
         $wsPattern = '/^WS\d{6}$/';
 
         $fixQid = 0;
         $renumber = 0;
-        $skipped = 0;
 
         $m = QadWsOrderNumberGenerator::currentMaxSequence();
 
@@ -59,13 +56,6 @@ class NormalizeWsOrderNumbers extends Command
                 continue;
             }
 
-            if ($skipXendit && $order->xendit_invoice_id) {
-                $this->warn("[skip xendit] {$order->id} {$num}");
-                $skipped++;
-
-                continue;
-            }
-
             $m++;
             if ($m > 999999) {
                 $this->error('Urutan WS melampaui 999999. Sesuaikan data secara manual.');
@@ -85,11 +75,7 @@ class NormalizeWsOrderNumbers extends Command
             $renumber++;
         }
 
-        $this->info("Selesai. qid diselaraskan: {$fixQid}, nomor diubah ke WS: {$renumber}, dilewati: {$skipped}");
-
-        if ($skipped > 0) {
-            $this->comment('Hapus --skip-xendit untuk menormalisasi sisa pesanan (webhook Xendit tetap cocok lewat xendit_invoice_id).');
-        }
+        $this->info("Selesai. qid diselaraskan: {$fixQid}, nomor diubah ke WS: {$renumber}");
 
         return self::SUCCESS;
     }

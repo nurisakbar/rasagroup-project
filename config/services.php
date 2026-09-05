@@ -14,9 +14,7 @@ return [
     |
     */
 
-    'active_payment_gateway' => env('ACTIVE_PAYMENT_GATEWAY', 'xendit'),
-
-
+    'active_payment_gateway' => env('ACTIVE_PAYMENT_GATEWAY', 'faspay'),
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
@@ -38,12 +36,6 @@ return [
         ],
     ],
 
-    'xendit' => [
-        'secret_key' => env('XENDIT_SECRET_KEY'),
-        'public_key' => env('XENDIT_PUBLIC_KEY'),
-        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
-    ],
-
     'faspay' => [
         'default' => env('FASPAY_DEFAULT_COMPANY', 'rdi'),
 
@@ -56,10 +48,8 @@ return [
         'qris_partner_id' => env('FASPAY_RDI_QRIS_PARTNER_ID', env('FASPAY_QRIS_PARTNER_ID', '37020')),
         'snap_base_url' => env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0'),
         'snap_client_id' => env('FASPAY_RDI_SNAP_CLIENT_ID', env('FASPAY_SNAP_CLIENT_ID', '37020')),
-        'private_key_dev_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_DEV_PATH', env('FASPAY_SNAP_PRIVATE_KEY_DEV_PATH', 'storage/app/faspay_private_key_dev.pem')),
-        'private_key_prod_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_PROD_PATH', env('FASPAY_SNAP_PRIVATE_KEY_PROD_PATH', 'storage/app/faspay_private_key.pem')),
-        'public_key_dev_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_DEV_PATH', env('FASPAY_SNAP_PUBLIC_KEY_DEV_PATH', 'storage/app/37020_server.crt')),
-        'public_key_prod_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_PROD_PATH', env('FASPAY_SNAP_PUBLIC_KEY_PROD_PATH', 'storage/app/37020_server.crt')),
+        'private_key_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_PATH', env('FASPAY_SNAP_PRIVATE_KEY_PATH', 'storage/app/faspay_private_key.pem')),
+        'public_key_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_PATH', env('FASPAY_SNAP_PUBLIC_KEY_PATH', 'storage/app/37020_server.crt')),
 
         // Multi-company credentials
         'companies' => [
@@ -74,29 +64,18 @@ return [
                 'qris_partner_id' => env('FASPAY_RDI_QRIS_PARTNER_ID', env('FASPAY_QRIS_PARTNER_ID', '37020')),
                 'snap_base_url' => env('FASPAY_RDI_SNAP_BASE_URL', env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0')),
                 'snap_client_id' => env('FASPAY_RDI_SNAP_CLIENT_ID', env('FASPAY_SNAP_CLIENT_ID', '37020')),
-                'private_key_dev_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_DEV_PATH', env('FASPAY_SNAP_PRIVATE_KEY_DEV_PATH', 'storage/app/faspay_private_key_dev.pem')),
-                'private_key_prod_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_PROD_PATH', env('FASPAY_SNAP_PRIVATE_KEY_PROD_PATH', 'storage/app/faspay_private_key.pem')),
-                'public_key_dev_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_DEV_PATH', env('FASPAY_SNAP_PUBLIC_KEY_DEV_PATH', 'storage/app/37020_server.crt')),
-                'public_key_prod_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_PROD_PATH', env('FASPAY_SNAP_PUBLIC_KEY_PROD_PATH', 'storage/app/37020_server.crt')),
+                'private_key_path' => env('FASPAY_RDI_SNAP_PRIVATE_KEY_PATH', env('FASPAY_SNAP_PRIVATE_KEY_PATH', 'storage/app/faspay_private_key.pem')),
+                'public_key_path' => env('FASPAY_RDI_SNAP_PUBLIC_KEY_PATH', env('FASPAY_SNAP_PUBLIC_KEY_PATH', 'storage/app/37020_server.crt')),
                 'va_prefixes' => [
-                    'dev' => [
-                        'faspay_permata_va'  => '370201',
-                        'faspay_mandiri_va'  => '37020002',
-                        'faspay_bri_va'      => '370202',
-                        'faspay_cimb_va'     => '370204',
-                        'faspay_bni_va'      => '9881236387',
-                    ],
-                    'production' => [
-                        'faspay_mandiri_va'  => '88558010',
-                        'faspay_sinarmas_va' => '885648',
-                        'faspay_permata_va'  => '735161',
-                        'faspay_maybank_va'  => '78218052',
-                        'faspay_danamon_va'  => '797039',
-                        'faspay_bsi_va'      => '12601021',
-                        'faspay_cimb_va'     => '222550',
-                        'faspay_bri_va'      => '121568',
-                        'faspay_bni_va'      => '8583',
-                    ],
+                    'faspay_permata_va'  => env('FASPAY_RDI_VA_PERMATA', '370201'),
+                    'faspay_mandiri_va'  => env('FASPAY_RDI_VA_MANDIRI', '37020002'),
+                    'faspay_bri_va'      => env('FASPAY_RDI_VA_BRI', '370202'),
+                    'faspay_cimb_va'     => env('FASPAY_RDI_VA_CIMB', '370204'),
+                    'faspay_bni_va'      => env('FASPAY_RDI_VA_BNI', '9881236387'),
+                    'faspay_sinarmas_va' => env('FASPAY_RDI_VA_SINARMAS', '885648'),
+                    'faspay_maybank_va'  => env('FASPAY_RDI_VA_MAYBANK', '78218052'),
+                    'faspay_danamon_va'  => env('FASPAY_RDI_VA_DANAMON', '797039'),
+                    'faspay_bsi_va'      => env('FASPAY_RDI_VA_BSI', '12601021'),
                 ],
             ],
 
@@ -111,37 +90,21 @@ return [
                 'qris_partner_id' => env('FASPAY_MCR_QRIS_PARTNER_ID'),
                 'snap_base_url' => env('FASPAY_MCR_SNAP_BASE_URL', env('FASPAY_SNAP_BASE_URL', 'https://debit-sandbox.faspay.co.id/v1.0')),
                 'snap_client_id' => env('FASPAY_MCR_SNAP_CLIENT_ID'),
-                'private_key_dev_path' => env('FASPAY_MCR_SNAP_PRIVATE_KEY_DEV_PATH', 'storage/app/faspay/mcr/faspay_private_key_dev.pem'),
-                'private_key_prod_path' => env('FASPAY_MCR_SNAP_PRIVATE_KEY_PROD_PATH', 'storage/app/faspay/mcr/faspay_private_key.pem'),
-                'public_key_dev_path' => env('FASPAY_MCR_SNAP_PUBLIC_KEY_DEV_PATH', 'storage/app/faspay/mcr/faspay_public_key_dev.pem'),
-                'public_key_prod_path' => env('FASPAY_MCR_SNAP_PUBLIC_KEY_PROD_PATH', 'storage/app/faspay/mcr/faspay_public_key.pem'),
+                'private_key_path' => env('FASPAY_MCR_SNAP_PRIVATE_KEY_PATH', 'storage/app/faspay/mcr/faspay_private_key.pem'),
+                'public_key_path' => env('FASPAY_MCR_SNAP_PUBLIC_KEY_PATH', 'storage/app/faspay/mcr/faspay_public_key.pem'),
                 'va_prefixes' => [
-                    'dev' => [
-                        'faspay_permata_va'  => env('FASPAY_MCR_VA_DEV_PERMATA', '370201'),
-                        'faspay_mandiri_va'  => env('FASPAY_MCR_VA_DEV_MANDIRI', '37020002'),
-                        'faspay_bri_va'      => env('FASPAY_MCR_VA_DEV_BRI', '370202'),
-                        'faspay_cimb_va'     => env('FASPAY_MCR_VA_DEV_CIMB', '370204'),
-                        'faspay_bni_va'      => env('FASPAY_MCR_VA_DEV_BNI', '9881236387'),
-                    ],
-                    'production' => [
-                        'faspay_mandiri_va'  => env('FASPAY_MCR_VA_PROD_MANDIRI'),
-                        'faspay_sinarmas_va' => env('FASPAY_MCR_VA_PROD_SINARMAS'),
-                        'faspay_permata_va'  => env('FASPAY_MCR_VA_PROD_PERMATA'),
-                        'faspay_maybank_va'  => env('FASPAY_MCR_VA_PROD_MAYBANK'),
-                        'faspay_danamon_va'  => env('FASPAY_MCR_VA_PROD_DANAMON'),
-                        'faspay_bsi_va'      => env('FASPAY_MCR_VA_PROD_BSI'),
-                        'faspay_cimb_va'     => env('FASPAY_MCR_VA_PROD_CIMB'),
-                        'faspay_bri_va'      => env('FASPAY_MCR_VA_PROD_BRI'),
-                        'faspay_bni_va'      => env('FASPAY_MCR_VA_PROD_BNI'),
-                    ],
+                    'faspay_permata_va'  => env('FASPAY_MCR_VA_PERMATA', '371161'),
+                    'faspay_mandiri_va'  => env('FASPAY_MCR_VA_MANDIRI', '37116001'),
+                    'faspay_bri_va'      => env('FASPAY_MCR_VA_BRI', '371162'),
+                    'faspay_cimb_va'     => env('FASPAY_MCR_VA_CIMB', '371164'),
+                    'faspay_bni_va'      => env('FASPAY_MCR_VA_BNI', '9881236387'),
+                    'faspay_sinarmas_va' => env('FASPAY_MCR_VA_SINARMAS', '371164'),
+                    'faspay_maybank_va'  => env('FASPAY_MCR_VA_MAYBANK', '37116002'),
+                    'faspay_danamon_va'  => env('FASPAY_MCR_VA_DANAMON', '371165'),
+                    'faspay_bsi_va'      => env('FASPAY_MCR_VA_BSI', '37116003'),
                 ],
             ],
         ],
-    ],
-
-    'rajaongkir' => [
-        'key' => env('RAJAONGKIR_KEY'),
-        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),
     ],
 
     'google' => [

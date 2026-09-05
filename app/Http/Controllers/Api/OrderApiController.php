@@ -10,7 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
-use App\Services\XenditService;
+use App\Services\FaspayService;
 use App\Support\QadWsOrderNumberGenerator;
 use App\Support\ShopFulfillment;
 use Illuminate\Http\Request;
@@ -149,7 +149,7 @@ class OrderApiController extends Controller
             'address_id' => 'required|exists:addresses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
-            'payment_method' => 'required|in:xendit,faspay,manual_transfer',
+            'payment_method' => 'required|in:faspay,manual_transfer',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -273,24 +273,6 @@ class OrderApiController extends Controller
                 $pointsEarned = (int)$pointRate * $totalItems;
             }
 
-            // Prepare items for Xendit invoice
-            $xenditItems = [];
-            foreach ($carts as $cart) {
-                $xenditItems[] = [
-                    'name' => $cart->product->display_name,
-                    'quantity' => $cart->quantity,
-                    'price' => $cart->product->price,
-                ];
-            }
-
-            // Add shipping as item
-            if ($shippingCost > 0) {
-                $xenditItems[] = [
-                    'name' => 'Ongkos Kirim',
-                    'quantity' => 1,
-                    'price' => $shippingCost,
-                ];
-            }
 
             $order = Order::create([
                 'order_type' => Order::TYPE_REGULAR,
@@ -345,68 +327,34 @@ class OrderApiController extends Controller
             $faspayInvoiceUrl = null;
             $faspayBillNo = null;
 
-            if ($validated['payment_method'] === 'xendit' || $validated['payment_method'] === 'faspay') {
-                $activeGateway = config('services.active_payment_gateway');
+            if ($validated['payment_method'] === 'faspay') {
+                $faspayService = new \App\Services\FaspayService($order->company);
+                
+                $invoice = $faspayService->createBill($order, $user);
 
-                if ($activeGateway === 'xendit') {
-                    $xenditService = new \App\Services\XenditService();
-                    $customer = [
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $address->phone ?? $user->phone,
-                    ];
-
-                    $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
-
-                    if ($invoice && isset($invoice['id'])) {
-                        $xenditInvoiceId = $invoice['id'];
-                        $xenditInvoiceUrl = $invoice['invoice_url'] ?? null;
-
-                        $order->xendit_invoice_id = $xenditInvoiceId;
-                        $order->xendit_invoice_url = $xenditInvoiceUrl;
-                        $order->save();
-
-                        Log::info('Xendit invoice created and saved to order via API', [
-                            'order_id' => $order->id,
-                            'invoice_id' => $xenditInvoiceId,
-                        ]);
-                    } else {
-                        DB::rollBack();
-                        Log::error('Failed to create Xendit invoice via API', ['order_id' => $order->id]);
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
-                        ], 500);
-                    }
-                } else {
-                    $faspayService = new \App\Services\FaspayService($order->company);
+                if ($invoice && isset($invoice['redirect_url'])) {
+                    $faspayBillNo = $invoice['bill_no'] ?? $order->order_number;
+                    $faspayInvoiceUrl = $invoice['redirect_url'];
                     
-                    $invoice = $faspayService->createBill($order, $user);
-
-                    if ($invoice && isset($invoice['redirect_url'])) {
-                        $faspayBillNo = $invoice['bill_no'] ?? $order->order_number;
-                        $faspayInvoiceUrl = $invoice['redirect_url'];
-                        
-                        // Update order with invoice information
-                        $order->faspay_bill_no = $faspayBillNo;
-                        $order->faspay_redirect_url = $faspayInvoiceUrl;
-                        $order->save();
-                        
-                        // Log for debugging
-                        Log::info('Faspay invoice saved to order', [
-                            'order_id' => $order->id,
-                            'bill_no' => $order->faspay_bill_no,
-                            'redirect_url' => $order->faspay_redirect_url,
-                            'virtual_account_no' => $order->virtual_account_no,
-                        ]);
-                    } else {
-                        DB::rollBack();
-                        Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
-                        ], 500);
-                    }
+                    // Update order with invoice information
+                    $order->faspay_bill_no = $faspayBillNo;
+                    $order->faspay_redirect_url = $faspayInvoiceUrl;
+                    $order->save();
+                    
+                    // Log for debugging
+                    Log::info('Faspay invoice saved to order', [
+                        'order_id' => $order->id,
+                        'bill_no' => $order->faspay_bill_no,
+                        'redirect_url' => $order->faspay_redirect_url,
+                        'virtual_account_no' => $order->virtual_account_no,
+                    ]);
+                } else {
+                    DB::rollBack();
+                    Log::error('Failed to create Faspay invoice', ['order_id' => $order->id]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Gagal membuat invoice pembayaran. Silakan coba lagi.'
+                    ], 500);
                 }
             }
 
@@ -444,7 +392,7 @@ class OrderApiController extends Controller
                 }
             }
             
-            // Note: Thank you notification will be sent after payment is successful via Xendit webhook
+            // Note: Thank you notification will be sent after payment is successful via webhook
 
             $order->load(['items.product', 'address', 'expedition', 'sourceWarehouse']);
 
@@ -460,8 +408,7 @@ class OrderApiController extends Controller
                     'payment_method' => $order->payment_method,
                     'payment_status' => $order->payment_status,
                     'order_status' => $order->order_status,
-                    'xendit_invoice_url' => $xenditInvoiceUrl,
-                    'xendit_invoice_id' => $xenditInvoiceId,
+                    'faspay_bill_no' => $faspayBillNo,
                     'faspay_invoice_url' => $faspayInvoiceUrl ?? null,
                     'items' => $order->items->map(function ($item) {
                         return [
@@ -521,8 +468,7 @@ class OrderApiController extends Controller
                 'payment_method' => $order->payment_method,
                 'payment_status' => $order->payment_status,
                 'order_status' => $order->order_status,
-                'xendit_invoice_url' => $order->xendit_invoice_url,
-                'xendit_invoice_id' => $order->xendit_invoice_id,
+                'faspay_redirect_url' => $order->faspay_redirect_url,
                 'notes' => $order->notes,
                 'points_earned' => $order->points_earned,
                 'created_at' => $order->created_at->toISOString(),

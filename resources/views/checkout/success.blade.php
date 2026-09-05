@@ -411,24 +411,24 @@
                                         </div>
                                         
                                         
-                                @elseif($order->payment_method === 'xendit' || $order->payment_method === 'faspay')
-                                    <div id="checkout-xendit-root">
+                                @elseif($order->payment_method === 'faspay')
+                                    <div id="checkout-faspay-root">
                                         <p id="checkout-payment-sync-hint" class="text-center font-sm mb-20" style="color: #4b5563; display: none;">
                                             <span class="d-inline-block animate-pulse" style="animation: checkoutPulse 1.2s ease-in-out infinite;">Memverifikasi status pembayaran…</span>
                                         </p>
-                                        <div id="checkout-xendit-paid-pane" class="p-30 border-radius-20 text-center" style="background-color: #e8f5e9; border: 1px solid #c8e6c9; {{ $order->payment_status === 'paid' ? '' : 'display: none;' }}">
+                                        <div id="checkout-faspay-paid-pane" class="p-30 border-radius-20 text-center" style="background-color: #e8f5e9; border: 1px solid #c8e6c9; {{ $order->payment_status === 'paid' ? '' : 'display: none;' }}">
                                             <h6 class="mb-10" style="color: #2e7d32;"><i class="fi-rs-check-circle mr-10"></i>Pembayaran Berhasil!</h6>
                                             <p class="mb-0" style="color: #2e7d32;">Terima kasih, pembayaran Anda telah kami terima secara otomatis.</p>
                                         </div>
-                                        <div id="checkout-xendit-failed-pane" class="p-30 border-radius-20 text-center" style="background-color: #ffebee; border: 1px solid #ffcdd2; {{ in_array($order->payment_status, ['failed', 'refunded'], true) ? '' : 'display: none;' }}">
+                                        <div id="checkout-faspay-failed-pane" class="p-30 border-radius-20 text-center" style="background-color: #ffebee; border: 1px solid #ffcdd2; {{ in_array($order->payment_status, ['failed', 'refunded'], true) ? '' : 'display: none;' }}">
                                             <h6 class="mb-10" style="color: #c62828;"><i class="fi-rs-close-circle mr-10"></i>Pembayaran tidak berhasil</h6>
                                             <p class="mb-0" style="color: #5d4037;">Status: {{ strtoupper($order->payment_status) }}. Silakan buat pesanan baru atau hubungi kami jika Anda sudah membayar.</p>
                                         </div>
-                                        @php $paymentUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url; @endphp
-                                        <div id="checkout-xendit-pending-pane" class="p-30 border-radius-20 text-center" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1); {{ ($order->payment_status === 'paid' || in_array($order->payment_status, ['failed', 'refunded'], true) || ! $paymentUrl) ? 'display: none;' : '' }}">
+                                        @php $paymentUrl = $order->faspay_redirect_url; @endphp
+                                        <div id="checkout-faspay-pending-pane" class="p-30 border-radius-20 text-center" style="background-color: rgba(106, 27, 27, 0.03); border: 1px solid rgba(106, 27, 27, 0.1); {{ ($order->payment_status === 'paid' || in_array($order->payment_status, ['failed', 'refunded'], true) || ! $paymentUrl) ? 'display: none;' : '' }}">
                                             <p class="mb-15 text-brand" style="font-size: 16px;"><strong>Selesaikan Pembayaran Anda</strong></p>
                                             <p class="mb-20 text-dark">Pesanan ini sedang menunggu pembayaran. Silakan klik tombol di bawah untuk melanjutkan ke halaman pembayaran.</p>
-                                            <a id="checkout-xendit-pay-link" href="{{ $paymentUrl }}" class="btn" target="_blank">Bayar Sekarang</a>
+                                            <a id="checkout-faspay-pay-link" href="{{ $paymentUrl }}" class="btn" target="_blank">Bayar Sekarang</a>
                                         </div>
                                     </div>
                                     @if($order->payment_status === 'pending')
@@ -452,10 +452,10 @@
                                                 var token = document.querySelector('meta[name="csrf-token"]');
                                                 token = token ? token.getAttribute('content') : '';
                                                 var syncHint = document.getElementById('checkout-payment-sync-hint');
-                                                var paidPane = document.getElementById('checkout-xendit-paid-pane');
-                                                var pendingPane = document.getElementById('checkout-xendit-pending-pane');
-                                                var failedPane = document.getElementById('checkout-xendit-failed-pane');
-                                                var payLink = document.getElementById('checkout-xendit-pay-link');
+                                                var paidPane = document.getElementById('checkout-faspay-paid-pane');
+                                                var pendingPane = document.getElementById('checkout-faspay-pending-pane');
+                                                var failedPane = document.getElementById('checkout-faspay-failed-pane');
+                                                var payLink = document.getElementById('checkout-faspay-pay-link');
                                                 var ticks = 0;
                                                 function show(el, on) { if (el) el.style.display = on ? '' : 'none'; }
                                                 function apply(data) {
@@ -579,18 +579,8 @@
       <form action="{{ route('buyer.orders.change-payment', $order) }}" method="POST">
         @csrf
         <div class="modal-body p-4">
-            @php $activeGateway = config('services.active_payment_gateway', 'xendit'); @endphp
             
-            @if($activeGateway === 'xendit')
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_xendit" value="xendit" {{ $order->payment_method === 'xendit' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_xendit" style="cursor: pointer;">
-                        <i class="fi-rs-credit-card mr-5"></i> Xendit (Virtual Account, QRIS, E-Wallet)
-                    </label>
-                </div>
-            @endif
-
-            @if($activeGateway === 'faspay')
+            @if(true)
                 <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
                     <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
                     <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_qris" style="cursor: pointer;">

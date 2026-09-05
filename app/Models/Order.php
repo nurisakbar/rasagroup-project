@@ -59,8 +59,6 @@ class Order extends Model
         'affiliate_points',
         'discount_percent',
         'discount_amount',
-        'xendit_invoice_id',
-        'xendit_invoice_url',
         'preferred_shipping_date',
         'payment_proof',
         'payment_submit_note',

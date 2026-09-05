@@ -45,7 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Exclude webhooks, Return URL, and Faspay SNAP routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
-            'webhooks/xendit',
+
             'webhooks/faspay',
             'webhooks/faspay/*',
             'v1.0/*',

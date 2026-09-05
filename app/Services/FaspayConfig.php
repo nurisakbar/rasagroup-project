@@ -55,10 +55,8 @@ class FaspayConfig
             'env' => config('services.faspay.env', 'dev'),
             'snap_base_url' => config('services.faspay.snap_base_url'),
             'snap_client_id' => config('services.faspay.snap_client_id'),
-            'private_key_dev_path' => config('services.faspay.private_key_dev_path'),
-            'private_key_prod_path' => config('services.faspay.private_key_prod_path'),
-            'public_key_dev_path' => config('services.faspay.public_key_dev_path'),
-            'public_key_prod_path' => config('services.faspay.public_key_prod_path'),
+            'private_key_path' => config('services.faspay.private_key_path'),
+            'public_key_path' => config('services.faspay.public_key_path'),
             'va_partner_id' => config('services.faspay.va_partner_id', '37020'),
             'qris_partner_id' => config('services.faspay.qris_partner_id', '37020'),
             'va_prefixes' => [],
@@ -80,42 +78,14 @@ class FaspayConfig
     public static function getVaPrefix(string $paymentMethod, ?string $company = null, ?string $forcedEnv = null): string
     {
         $config = self::getCompanyConfig($company);
-        $env = $forcedEnv ?: ($config['env'] ?? config('services.faspay.env', 'dev'));
-        $isProd = in_array(strtolower($env), ['prod', 'production']);
-        $envKey = $isProd ? 'production' : 'dev';
-
-        $prefixes = $config['va_prefixes'][$envKey] ?? [];
+        $prefixes = $config['va_prefixes'] ?? [];
 
         if (isset($prefixes[$paymentMethod])) {
             return $prefixes[$paymentMethod];
         }
 
-        // Fallback default prefixes for sandbox / dev
-        if (!$isProd) {
-            $defaultDevPrefixes = [
-                'faspay_permata_va'  => '370201',
-                'faspay_mandiri_va'  => '37020002',
-                'faspay_bri_va'      => '370202',
-                'faspay_cimb_va'     => '370204',
-                'faspay_bni_va'      => '9881236387',
-            ];
-            return $defaultDevPrefixes[$paymentMethod] ?? '370200';
-        }
-
-        // Fallback default prefixes for production
-        $defaultProdPrefixes = [
-            'faspay_mandiri_va'  => '88558010',
-            'faspay_sinarmas_va' => '885648',
-            'faspay_permata_va'  => '735161',
-            'faspay_maybank_va'  => '78218052',
-            'faspay_danamon_va'  => '797039',
-            'faspay_bsi_va'      => '12601021',
-            'faspay_cimb_va'     => '222550',
-            'faspay_bri_va'      => '121568',
-            'faspay_bni_va'      => '8583',
-        ];
-
-        return $defaultProdPrefixes[$paymentMethod] ?? '370200';
+        // Fallback default prefix
+        return '370200';
     }
 
     /**

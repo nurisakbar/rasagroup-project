@@ -720,8 +720,6 @@ class OrderController extends Controller
             \DB::beginTransaction();
 
             // Clear old payment URLs if any
-            $order->xendit_invoice_url = null;
-            $order->xendit_invoice_id = null;
             $order->faspay_redirect_url = null;
             $order->faspay_bill_no = null;
             $order->virtual_account_no = null;
@@ -767,32 +765,6 @@ class OrderController extends Controller
                     
                     $order->virtual_account_no = $prefix . $freeDigits;
                     $order->payment_method = $request->payment_method;
-                }
-            } elseif ($activeGateway === 'xendit' && in_array($request->payment_method, ['xendit'])) {
-                $xenditService = new \App\Services\XenditService();
-                $customer = [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $order->address->phone ?? $user->phone,
-                ];
-
-                $xenditItems = $order->items->map(function ($item) {
-                    return [
-                        'name' => $item->product_name,
-                        'quantity' => $item->quantity,
-                        'price' => $item->price,
-                        'category' => 'Product'
-                    ];
-                })->toArray();
-
-                $invoice = $xenditService->createInvoice($order, $customer, $xenditItems);
-
-                if ($invoice && isset($invoice['id'])) {
-                    $order->xendit_invoice_id = $invoice['id'];
-                    $order->xendit_invoice_url = $invoice['invoice_url'] ?? null;
-                    $order->payment_method = 'xendit';
-                } else {
-                    throw new \Exception('Failed to create Xendit invoice');
                 }
             } else {
                 $order->payment_method = $request->payment_method;

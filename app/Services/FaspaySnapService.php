@@ -33,20 +33,15 @@ class FaspaySnapService
         $this->clientId = $this->companyConfig['snap_client_id'] ?: ($this->companyConfig['merchant_id'] ?? '37020');
         $this->partnerId = $this->clientId;
 
-        $configPath = $isProduction 
-            ? ($this->companyConfig['private_key_prod_path'] ?? null) 
-            : ($this->companyConfig['private_key_dev_path'] ?? null);
+        $configPath = $this->companyConfig['private_key_path'] ?? null;
 
         $resolvedPath = ($configPath && str_starts_with($configPath, '/')) ? $configPath : base_path($configPath ?? 'storage/app/faspay_private_key.pem');
 
         // Fallback to legacy path if company-specific key does not exist
         if (!file_exists($resolvedPath)) {
-            $legacyDev = base_path('storage/app/faspay_private_key_dev.pem');
-            $legacyProd = base_path('storage/app/faspay_private_key.pem');
-            if (!$isProduction && file_exists($legacyDev)) {
-                $resolvedPath = $legacyDev;
-            } elseif (file_exists($legacyProd)) {
-                $resolvedPath = $legacyProd;
+            $legacyPath = base_path('storage/app/faspay_private_key.pem');
+            if (file_exists($legacyPath)) {
+                $resolvedPath = $legacyPath;
             }
         }
 

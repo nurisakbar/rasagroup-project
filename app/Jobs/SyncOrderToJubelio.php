@@ -474,7 +474,7 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
     private function mapPaymentMethod(): ?string
     {
         return match ($this->order->payment_method) {
-            'xendit' => 'online',
+            'faspay' => 'online',
             'manual_transfer' => 'transfer',
             'term_of_payment' => 'credit',
             default => $this->order->payment_method,

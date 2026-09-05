@@ -44,6 +44,46 @@ class WACloudHelper
     }
 
     /**
+     * Send WhatsApp template message
+     * 
+     * @param string $phone Phone number
+     * @param string $templateName Name of the template
+     * @param string $languageCode Language code (default: en_US)
+     * @param array $components Template components
+     * @return array|null
+     */
+    public static function sendTemplate(string $phone, string $templateName, string $languageCode = 'en_US', array $components = []): ?array
+    {
+        try {
+            $metaService = app(\App\Services\MetaWhatsAppService::class);
+            $result = $metaService->sendTemplate($phone, $templateName, $languageCode, $components);
+            
+            if ($result['success']) {
+                Log::info('WhatsApp template message sent via Meta API', [
+                    'phone' => $phone,
+                    'template' => $templateName,
+                ]);
+                return $result;
+            }
+
+            Log::error('Failed to send WhatsApp template via Meta API', [
+                'phone' => $phone,
+                'template' => $templateName,
+                'message' => $result['message'] ?? 'Unknown error'
+            ]);
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to send WhatsApp template message via helper', [
+                'phone' => $phone,
+                'template' => $templateName,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Send WhatsApp document message
      * 
      * @param string $phone Phone number (can be in any format, will be auto-formatted)
@@ -211,7 +251,7 @@ class WACloudHelper
                 'order_number' => $order->order_number,
                 'phone' => $phone,
                 'payment_method' => $order->payment_method,
-                'has_xendit_url' => !empty($order->xendit_invoice_url),
+                'has_faspay_url' => !empty($order->faspay_redirect_url),
             ]);
             
             $result = self::sendText($phone, $message);
@@ -257,28 +297,38 @@ class WACloudHelper
 
         try {
             $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
-            $message = self::buildThankYouMessage($order);
+            $name = ($order->user && $order->user->name) ? $order->user->name : $order->address->recipient_name;
             
-            Log::info('Sending thank you notification via WhatsApp', [
+            Log::info('Sending thank you notification via WhatsApp Template', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'phone' => $phone,
             ]);
+
+            $components = [
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        ['type' => 'text', 'text' => $name],
+                        ['type' => 'text', 'text' => $order->order_number],
+                        ['type' => 'text', 'text' => $order->created_at->format('M j, Y')],
+                    ]
+                ]
+            ];
             
-            $result = self::sendText($phone, $message);
+            $result = self::sendTemplate($phone, 'jaspers_market_order_confirmation_v1', 'en_US', $components);
             
             if ($result) {
-                Log::info('Thank you notification sent via WhatsApp', [
+                Log::info('Thank you notification sent via WhatsApp Template', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'phone' => $phone,
-                    'message_id' => $result['message_id'] ?? null,
                 ]);
             }
             
             return $result;
         } catch (\Exception $e) {
-            Log::error('Failed to send thank you notification via WhatsApp', [
+            Log::error('Failed to send thank you notification via WhatsApp Template', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
@@ -498,9 +548,7 @@ class WACloudHelper
         };
 
         $methodLabel = match ($order->payment_method) {
-            'xendit' => 'Pembayaran online (Xendit)',
-            'faspay' => 'Pembayaran online (Faspay)',
-            'manual_transfer' => 'Transfer bank manual',
+            'manual_transfer' => 'Transfer Manual (BCA)',
             'term_of_payment' => 'Term of payment / tempo',
             default => ucfirst(str_replace('_', ' ', (string) $order->payment_method)),
         };
@@ -812,11 +860,9 @@ class WACloudHelper
         $message .= "💳 *CARA PEMBAYARAN*\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        if ($order->payment_method === 'xendit' || $order->payment_method === 'faspay') {
-            $message .= "Metode: *Pembayaran Online*\n\n";
-            
-            // Link pembayaran bisa dari faspay (atau xendit lama)
-            $invoiceUrl = $order->faspay_redirect_url ?? $order->xendit_invoice_url;
+        if ($order->payment_method === 'faspay') {
+            // Link pembayaran dari faspay
+            $invoiceUrl = $order->faspay_redirect_url;
             
             if ($invoiceUrl) {
                 $message .= "🔗 *Link Pembayaran:*\n";

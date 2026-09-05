@@ -383,10 +383,10 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('{{ config('services.active_payment_gateway') }}')" id="card-xendit">
-                                    <div class="custom-radio">
-                                        <input class="form-check-input" type="radio" name="payment_method" value="{{ config('services.active_payment_gateway') }}" id="payXendit" checked>
-                                        <label class="form-check-label" for="payXendit">
+                                <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('{{ config('services.active_payment_gateway') }}')" id="card-faspay">
+                                    <div class="form-check d-flex align-items-center">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="{{ config('services.active_payment_gateway') }}" id="payFaspay" checked>
+                                        <label class="form-check-label" for="payFaspay">
                                             <strong class="mr-5">Pembayaran Online (Otomatis)</strong>
                                             <img src="{{ asset('themes/nest-frontend/assets/imgs/theme/payment-method.png') }}" alt="" style="height: 20px;">
                                         </label>
@@ -1578,7 +1578,7 @@
         
         // Map method to card ID
         var cardId = '';
-        if(method === 'xendit') cardId = 'card-xendit';
+        if(method === 'faspay') cardId = 'card-faspay';
         else if(method === 'manual_transfer') cardId = 'card-transfer';
         else if(method === 'term_of_payment') cardId = 'card-tot';
         else if(method === 'cod') cardId = 'card-cod';
