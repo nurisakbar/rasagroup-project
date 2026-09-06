@@ -251,6 +251,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateStock'])->name('warehouses.update-stock');
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');
         Route::post('/warehouses/{warehouse}/users', [App\Http\Controllers\Admin\WarehouseController::class, 'addUser'])->name('warehouses.add-user');
+        Route::put('/warehouses/{warehouse}/users/{user}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateUser'])->name('warehouses.update-user');
         Route::delete('/warehouses/{warehouse}/users/{user}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeUser'])->name('warehouses.remove-user');
         Route::post('/warehouses/{warehouse}/operational-hours/generate', [App\Http\Controllers\Admin\WarehouseController::class, 'generateOperationalHours'])->name('warehouses.operational-hours.generate');
         Route::get('/get-regencies', [App\Http\Controllers\Admin\WarehouseController::class, 'getRegencies'])->name('get-regencies');

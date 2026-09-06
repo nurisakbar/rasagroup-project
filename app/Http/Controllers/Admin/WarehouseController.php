@@ -630,6 +630,36 @@ class WarehouseController extends Controller
     /**
      * Remove user from warehouse.
      */
+    public function updateUser(Request $request, Warehouse $warehouse, User $user)
+    {
+        if ($user->warehouse_id !== $warehouse->id) {
+            return back()->with('error', 'User tidak terdaftar di warehouse ini.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'sub_role' => 'required|in:admin,staff',
+        ]);
+
+        $data = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'sub_role' => $validated['sub_role'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
+
+        return back()->with('success', 'User warehouse berhasil diperbarui.');
+    }
+
     public function removeUser(Warehouse $warehouse, User $user)
     {
         if ($user->warehouse_id !== $warehouse->id) {

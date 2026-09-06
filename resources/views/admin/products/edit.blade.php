@@ -116,7 +116,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group @error('reseller_point') has-error @enderror">
-                                    <label for="reseller_point"><i class="fa fa-star"></i> Poin per Unit</label>
+                                    <label for="reseller_point"><i class="fa fa-star"></i> Rupiah Per Unit</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="reseller_point" name="reseller_point" value="{{ old('reseller_point', $product->reseller_point) }}" step="1" min="0" placeholder="0">
                                         <span class="input-group-addon">PTS</span>

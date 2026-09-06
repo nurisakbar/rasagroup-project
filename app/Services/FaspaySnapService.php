@@ -67,80 +67,6 @@ class FaspaySnapService
         return '';
     }
 
-    /**
-     * Generate SNAP B2B Access Token using RSA-SHA256 (with 14-minute caching per company)
-     */
-    public function getB2bToken($forceRefresh = false)
-    {
-        $cacheKey = 'faspay_snap_b2b_token_' . $this->company;
-
-        if (!$forceRefresh && Cache::has($cacheKey)) {
-            $cached = Cache::get($cacheKey);
-            if ($cached && isset($cached['accessToken'])) {
-                return $cached;
-            }
-        }
-
-        $url = rtrim($this->baseUrl, '/') . '/access-token/b2b';
-        $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
-        $stringToSign = $this->clientId . '|' . $timestamp;
-        
-        $privateKey = $this->getPrivateKey();
-        
-        Log::debug('Faspay B2B Token: Key Debug Info', [
-            'company' => $this->company,
-            'path' => $this->privateKeyPath,
-            'exists' => file_exists($this->privateKeyPath),
-            'header' => substr(trim($privateKey), 0, 30) // To check if it says PUBLIC or PRIVATE
-        ]);
-
-        $keyResource = openssl_pkey_get_private($privateKey);
-        if (!$keyResource) {
-            $error = openssl_error_string();
-            Log::error('Faspay B2B Token Error: Invalid private key at path ' . $this->privateKeyPath, [
-                'company' => $this->company,
-                'openssl_error' => $error
-            ]);
-            throw new \Exception("Faspay Private Key configuration is invalid or missing for [{$this->company}] at path: " . $this->privateKeyPath . ". OpenSSL Error: " . $error);
-        }
-        openssl_sign($stringToSign, $signature, $keyResource, OPENSSL_ALGO_SHA256);
-        $signatureBase64 = base64_encode($signature);
-
-        $headers = [
-            'X-TIMESTAMP' => $timestamp,
-            'X-CLIENT-KEY' => $this->clientId,
-            'X-SIGNATURE' => $signatureBase64,
-            'Content-Type' => 'application/json',
-        ];
-
-        $payload = [
-            'grantType' => 'client_credentials',
-            'additionalInfo' => (object) [],
-        ];
-
-        $response = Http::withoutVerifying()
-            ->withHeaders($headers)
-            ->post($url, $payload);
-
-        if ($response->successful()) {
-            $data = $response->json();
-            if (isset($data['accessToken'])) {
-                Cache::put($cacheKey, $data, 840); // 14 mins cache
-            }
-            return $data;
-        }
-
-        Log::error('Faspay SNAP B2B Token Error', [
-            'company' => $this->company,
-            'url' => $url,
-            'headers' => $headers,
-            'payload' => $payload,
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
-
-        return null;
-    }
 
     /**
      * Generate SNAP Symmetric Signature (HMAC-SHA512)
@@ -222,11 +148,7 @@ class FaspaySnapService
 
         $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
 
-        $b2bData = $this->getB2bToken();
-        $b2bToken = $b2bData['accessToken'] ?? '';
-
         $headers = [
-            'Authorization' => 'Bearer ' . $b2bToken,
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
@@ -308,9 +230,6 @@ class FaspaySnapService
 
         $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
 
-        $b2bData = $this->getB2bToken();
-        $b2bToken = $b2bData['accessToken'] ?? '';
-
         $headers = [
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
@@ -376,11 +295,7 @@ class FaspaySnapService
 
         $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
 
-        $b2bData = $this->getB2bToken();
-        $b2bToken = $b2bData['accessToken'] ?? '';
-
         $headers = [
-            'Authorization' => 'Bearer ' . $b2bToken,
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,

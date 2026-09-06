@@ -230,10 +230,13 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center">
-                                                    <form action="{{ route('admin.warehouses.remove-user', [$warehouse, $user]) }}" method="POST" onsubmit="return confirm('Hapus staff ini?')">
+                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#editUserModal-{{ $user->id }}" title="Edit Staff">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                    <form action="{{ route('admin.warehouses.remove-user', [$warehouse, $user]) }}" method="POST" onsubmit="return confirm('Hapus staff ini?')" style="display:inline-block;">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-xs">
+                                                        <button type="submit" class="btn btn-danger btn-xs" title="Hapus Staff">
                                                             <i class="fa fa-trash"></i>
                                                         </button>
                                                     </form>
@@ -353,6 +356,60 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit User Modals -->
+    @foreach($warehouse->users as $user)
+    <div class="modal fade" id="editUserModal-{{ $user->id }}" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('admin.warehouses.update-user', [$warehouse, $user]) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fa fa-edit"></i> Edit Staff Hub</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit_name_{{ $user->id }}">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_name_{{ $user->id }}" name="name" value="{{ $user->name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_email_{{ $user->id }}">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="edit_email_{{ $user->id }}" name="email" value="{{ $user->email }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_password_{{ $user->id }}">Password <small class="text-muted">(Kosongkan jika tidak ingin mengubah password)</small></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="edit_password_{{ $user->id }}" name="password" minlength="8">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default toggle-password" type="button">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_sub_role_{{ $user->id }}">Level Akses <span class="text-danger">*</span></label>
+                            <select class="form-control" id="edit_sub_role_{{ $user->id }}" name="sub_role" required>
+                                <option value="admin" {{ $user->sub_role == 'admin' ? 'selected' : '' }}>Admin Hub</option>
+                                <option value="staff" {{ $user->sub_role == 'staff' ? 'selected' : '' }}>Staff Hub</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_phone_{{ $user->id }}">No. Telepon</label>
+                            <input type="text" class="form-control" id="edit_phone_{{ $user->id }}" name="phone" value="{{ $user->phone }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endforeach
 
     @push('scripts')
     <script>
