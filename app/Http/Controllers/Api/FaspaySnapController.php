@@ -294,6 +294,14 @@ class FaspaySnapController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Faspay Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
                 }
+
+                // Send WhatsApp Notifications
+                try {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+                } catch (\Exception $e) {
+                    Log::error('Faspay Webhook: Failed to dispatch WA notifications', ['error' => $e->getMessage()]);
+                }
             }
 
             Log::info('Faspay SNAP Webhook: Order marked as paid', ['order_id' => $order->id]);
@@ -447,6 +455,14 @@ class FaspaySnapController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Faspay QR Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
                 }
+
+                // Send WhatsApp Notifications
+                try {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+                } catch (\Exception $e) {
+                    Log::error('Faspay QR Webhook: Failed to dispatch WA notifications', ['error' => $e->getMessage()]);
+                }
             }
 
             Log::info('Faspay SNAP QR Webhook: Order marked as paid', ['order_id' => $order->id]);
@@ -541,6 +557,14 @@ class FaspaySnapController extends Controller
                                     \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
                                 } catch (\Exception $e) {
                                     Log::error('Faspay Direct Debit Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                                }
+
+                                // Send WhatsApp Notifications
+                                try {
+                                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
+                                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+                                } catch (\Exception $e) {
+                                    Log::error('Faspay Direct Debit Webhook: Failed to dispatch WA notifications', ['error' => $e->getMessage()]);
                                 }
                             }
 

@@ -325,7 +325,29 @@ class WACloudHelper
         try {
             $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
             $name = ($order->user && $order->user->name) ? $order->user->name : $order->address->recipient_name;
+            $provider = env('WHATSAPP_PROVIDER', 'wacloud');
             
+            if ($provider !== 'meta') {
+                $message = self::buildThankYouMessage($order);
+                Log::info('Sending thank you notification via WhatsApp Text', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                ]);
+                
+                $result = self::sendText($phone, $message);
+                
+                if ($result) {
+                    Log::info('Thank you notification sent via WhatsApp Text', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'phone' => $phone,
+                    ]);
+                }
+                
+                return $result;
+            }
+
             Log::info('Sending thank you notification via WhatsApp Template', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
@@ -355,7 +377,7 @@ class WACloudHelper
             
             return $result;
         } catch (\Exception $e) {
-            Log::error('Failed to send thank you notification via WhatsApp Template', [
+            Log::error('Failed to send thank you notification via WhatsApp', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
