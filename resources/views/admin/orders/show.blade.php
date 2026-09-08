@@ -509,13 +509,40 @@
                                 ][$order->payment_status] ?? 'default';
                             @endphp
 
+                            @if($order->isAwaitingFinanceApproval())
+                                <div class="alert alert-warning" style="margin-bottom: 12px;">
+                                    <i class="fa fa-lock"></i>
+                                    <strong>Term of Payment</strong> — Finance Approval: <strong>0</strong> (belum di-approve).
+                                    @if(in_array(auth()->user()->role, ['super_admin', 'finance']))
+                                        <form action="{{ route('admin.orders.approve-finance', $order) }}" method="POST" style="margin-top: 10px;" onsubmit="return confirm('Setujui TOP ini (Finance Approval = 1) dan lepaskan ke hub?');">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fa fa-check"></i> Approve Finance (set ke 1)
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="alert {{ $order->finance_approved ? 'alert-success' : 'alert-default' }}" style="margin-bottom: 12px; padding: 10px;">
+                                    <i class="fa fa-{{ $order->finance_approved ? 'check-circle' : 'clock-o' }}"></i>
+                                    Finance Approval: <strong>{{ $order->finance_approved ? '1' : '0' }}</strong>
+                                    @if($order->finance_approved && $order->finance_approved_at)
+                                        @if($order->financeApprover)
+                                            — oleh <strong>{{ $order->financeApprover->name }}</strong>
+                                        @endif
+                                        pada {{ $order->finance_approved_at->format('d M Y H:i') }}
+                                    @endif
+                                </div>
+                            @endif
+
                             <select name="payment_status" id="payment_status" class="form-control">
                                 <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->payment_status === 'pending' && $order->payment_method !== 'term_of_payment' ? 'selected' : '' }}>Pending</option>
+                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
                                 <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
                                 <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
-                                <option value="term_of_payment" {{ $order->payment_status === 'term_of_payment' || ($order->payment_status === 'pending' && $order->payment_method === 'term_of_payment') ? 'selected' : '' }}>Term Of Payment</option>
+                                <option value="term_of_payment" {{ $order->payment_status === 'term_of_payment' ? 'selected' : '' }}>Term Of Payment (Approved)</option>
                             </select>
                         </div>
 
@@ -534,7 +561,7 @@
                                     'cancelled' => 'danger',
                                 ][$order->order_status] ?? 'default';
                             @endphp
-                            @if($order->payment_status === 'paid' || $order->payment_method === 'term_of_payment')
+                            @if($order->isReleasedToHub())
                                 <select name="order_status" id="order_status" class="form-control">
                                     <option value="">-- Pilih Status Baru (Opsional) --</option>
                                     <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -547,11 +574,22 @@
                             @else
                                 <div class="form-control" style="background-color: #e9ecef; cursor: not-allowed; display: flex; align-items: center; height: auto;">
                                     <span class="label label-{{ $statusClass }}" style="margin-right: 10px;">{{ ucfirst($order->order_status) }}</span>
-                                    <span class="text-muted"><i class="fa fa-lock"></i> Terkunci (Menunggu Pembayaran)</span>
+                                    <span class="text-muted"><i class="fa fa-lock"></i>
+                                        @if($order->isAwaitingFinanceApproval())
+                                            Terkunci (Menunggu Approval Finance)
+                                        @else
+                                            Terkunci (Menunggu Pembayaran)
+                                        @endif
+                                    </span>
                                 </div>
                                 <input type="hidden" name="order_status" value="{{ $order->order_status }}">
                                 <div class="alert alert-warning" style="margin-top: 10px; margin-bottom: 0; padding: 10px; border-radius: 5px;">
-                                    <i class="fa fa-warning"></i> Status pesanan hanya dapat diubah setelah pembayaran lunas/terkonfirmasi.
+                                    <i class="fa fa-warning"></i>
+                                    @if($order->isAwaitingFinanceApproval())
+                                        Status pesanan hanya dapat diubah setelah finance menyetujui Term of Payment.
+                                    @else
+                                        Status pesanan hanya dapat diubah setelah pembayaran lunas/terkonfirmasi.
+                                    @endif
                                 </div>
                             @endif
                         </div>

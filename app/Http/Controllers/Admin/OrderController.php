@@ -69,11 +69,19 @@ class OrderController extends Controller
 
             if ($request->filled('tab_status') && $request->tab_status != '') {
                 if ($request->tab_status === 'menunggu_pembayaran') {
-                    $query->where('payment_status', 'pending')->whereNull('payment_proof');
+                    $query->where('payment_status', 'pending')
+                        ->whereNull('payment_proof')
+                        ->where(function ($q) {
+                            $q->whereNull('payment_method')
+                                ->orWhere('payment_method', '!=', 'term_of_payment');
+                        });
+                } elseif ($request->tab_status === 'menunggu_persetujuan_finance') {
+                    $query->where('payment_method', 'term_of_payment')
+                        ->where('finance_approved', false);
                 } elseif ($request->tab_status === 'menunggu_konfirmasi') {
                     $query->where('payment_status', 'pending')->whereNotNull('payment_proof');
                 } elseif ($request->tab_status === 'sedang_diproses') {
-                    $query->whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing']);
+                    $query->where('finance_approved', true)->whereIn('order_status', ['pending', 'processing']);
                 } elseif ($request->tab_status === 'dikirim') {
                     $query->where('order_status', 'shipped');
                 } elseif ($request->tab_status === 'selesai') {
@@ -96,7 +104,10 @@ class OrderController extends Controller
                     return $html;
                 })
                 ->addColumn('buyer_info', function ($order) {
-                    return $order->user->name . '<br><small class="text-muted">' . $order->user->email . '</small>';
+                    $html = $order->user->name . '<br><small class="text-muted">' . $order->user->email . '</small>';
+                    $arOutstanding = $order->user->ar_outstanding ?? 0;
+                    $html .= '<br><small class="text-muted">AR Outstanding: <strong>Rp ' . number_format($arOutstanding, 0, ',', '.') . '</strong></small>';
+                    return $html;
                 })
                 ->addColumn('expedition_info', function ($order) {
                     if ($order->expedition) {
@@ -135,23 +146,39 @@ class OrderController extends Controller
                     return '<span class="label label-' . $statusClass . '">' . ucfirst($order->order_status) . '</span>';
                 })
                 ->addColumn('payment_badge', function ($order) {
-                    if ($order->payment_status === 'pending' && $order->payment_proof) {
-                        return '<span class="label label-warning" style="background-color: #ff851b !important; font-size: 11px;"><i class="fa fa-bell"></i> PERLU KONFIRMASI</span>';
+                    if ($order->payment_method === 'term_of_payment') {
+                        $html = '<span class="label label-primary">Term Of Payment</span>';
+                    } elseif ($order->payment_status === 'pending' && $order->payment_proof) {
+                        $html = '<span class="label label-warning" style="background-color: #ff851b !important; font-size: 11px;"><i class="fa fa-bell"></i> PERLU KONFIRMASI</span>';
+                    } else {
+                        $paymentClass = [
+                            'pending' => 'warning',
+                            'paid' => 'success',
+                            'failed' => 'danger',
+                            'refunded' => 'info',
+                            'term_of_payment' => 'primary',
+                        ][$order->payment_status] ?? 'default';
+                        $html = '<span class="label label-' . $paymentClass . '">' . ucwords(str_replace('_', ' ', $order->payment_status)) . '</span>';
                     }
-                    $paymentClass = [
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'failed' => 'danger',
-                        'refunded' => 'info',
-                        'term_of_payment' => 'primary',
-                    ][$order->payment_status] ?? 'default';
-                    return '<span class="label label-' . $paymentClass . '">' . ucwords(str_replace('_', ' ', $order->payment_status)) . '</span>';
+
+                    // Status approval finance: tampilkan 1 jika sudah approve; jika TOP belum approve tampilkan label menunggu
+                    if ($order->finance_approved) {
+                        $html .= '<br><small class="text-muted">Finance Approval:</small> <span class="label label-success" style="font-size: 10px;">1</span>';
+                    } elseif ($order->isAwaitingFinanceApproval()) {
+                        $html .= '<br><span class="label label-warning" style="background-color: #f39c12 !important; font-size: 10px; margin-top: 2px; display: inline-block;"><i class="fa fa-lock"></i> Menunggu Approval Finance</span>';
+                    }
+
+                    return $html;
                 })
                 ->addColumn('action', function ($order) {
                     $btn = '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-info btn-xs" style="margin-right: 3px;">
                         <i class="fa fa-eye"></i> Detail
                     </a>';
-                    if ($order->payment_status === 'pending' && $order->payment_proof) {
+                    if ($order->isAwaitingFinanceApproval()) {
+                        $btn .= '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-warning btn-xs" title="Approve Finance" style="margin-right: 3px;">
+                            <i class="fa fa-check"></i> Approve
+                        </a>';
+                    } elseif ($order->payment_status === 'pending' && $order->payment_proof) {
                         $btn .= '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-warning btn-xs" title="Verifikasi Bukti Bayar" style="background-color: #ff851b; border-color: #ff851b;">
                             <i class="fa fa-check-square-o"></i> Verifikasi
                         </a>';
@@ -165,9 +192,12 @@ class OrderController extends Controller
                 ->with([
                     'counts' => [
                         'semua' => (clone $baseQuery)->count(),
-                        'menunggu_pembayaran' => (clone $baseQuery)->where('payment_status', 'pending')->whereNull('payment_proof')->count(),
+                        'menunggu_pembayaran' => (clone $baseQuery)->where('payment_status', 'pending')->whereNull('payment_proof')->where(function ($q) {
+                            $q->whereNull('payment_method')->orWhere('payment_method', '!=', 'term_of_payment');
+                        })->count(),
+                        'menunggu_persetujuan_finance' => (clone $baseQuery)->where('payment_method', 'term_of_payment')->where('finance_approved', false)->count(),
                         'menunggu_konfirmasi' => (clone $baseQuery)->where('payment_status', 'pending')->whereNotNull('payment_proof')->count(),
-                        'sedang_diproses' => (clone $baseQuery)->whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing'])->count(),
+                        'sedang_diproses' => (clone $baseQuery)->where('finance_approved', true)->whereIn('order_status', ['pending', 'processing'])->count(),
                         'dikirim' => (clone $baseQuery)->where('order_status', 'shipped')->count(),
                         'selesai' => (clone $baseQuery)->whereIn('order_status', ['delivered', 'completed'])->count(),
                     ]
@@ -180,29 +210,34 @@ class OrderController extends Controller
             ->get(['id', 'name']);
 
         $countSemua = Order::count();
-        $countMenungguPembayaran = Order::where('payment_status', 'pending')->whereNull('payment_proof')->count();
+        $countMenungguPembayaran = Order::where('payment_status', 'pending')->whereNull('payment_proof')->where(function ($q) {
+            $q->whereNull('payment_method')->orWhere('payment_method', '!=', 'term_of_payment');
+        })->count();
+        $countMenungguPersetujuanFinance = Order::where('payment_method', 'term_of_payment')->where('finance_approved', false)->count();
         $countMenungguKonfirmasi = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
-        $countSedangDiproses = Order::whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing'])->count();
+        $countSedangDiproses = Order::where('finance_approved', true)->whereIn('order_status', ['pending', 'processing'])->count();
         $countDikirim = Order::where('order_status', 'shipped')->count();
         $countSelesai = Order::whereIn('order_status', ['delivered', 'completed'])->count();
 
-        return view('admin.orders.index', compact('warehouses', 'countSemua', 'countMenungguPembayaran', 'countMenungguKonfirmasi', 'countSedangDiproses', 'countDikirim', 'countSelesai'));
+        return view('admin.orders.index', compact('warehouses', 'countSemua', 'countMenungguPembayaran', 'countMenungguPersetujuanFinance', 'countMenungguKonfirmasi', 'countSedangDiproses', 'countDikirim', 'countSelesai'));
     }
 
     public function show(Order $order)
     {
-        $order->load(['user', 'items.product', 'expedition', 'address', 'sourceWarehouse']);
+        $order->load(['user', 'items.product', 'expedition', 'address', 'sourceWarehouse', 'financeApprover']);
         $expeditions = \App\Models\Expedition::where('is_active', true)->get();
         return view('admin.orders.show', compact('order', 'expeditions'));
     }
 
     public function printSuratJalan(Order $order)
     {
-        $order->load(['user', 'items.product', 'address']);
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.surat-jalan', compact('order'));
+        $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);
+
+        $warehouse = $order->sourceWarehouse;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.distributor.manage-orders.surat-jalan-pdf', compact('warehouse', 'order'));
         $pdf->setPaper('a4', 'portrait');
-        
+
         return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
     }
 
@@ -278,6 +313,12 @@ class OrderController extends Controller
             $order->creditPoints();
         }
 
+        if ($request->payment_status === 'term_of_payment' && $order->payment_method === 'term_of_payment' && !$order->finance_approved) {
+            $updateData['finance_approved'] = true;
+            $updateData['finance_approved_at'] = now();
+            $updateData['finance_approved_by'] = auth()->id();
+        }
+
         $order->update($updateData);
 
         // Dispatch background jobs for notifications only when payment status actually changed to paid
@@ -289,7 +330,38 @@ class OrderController extends Controller
             \App\Support\SalesOrderSyncDispatcher::dispatch($order);
         }
 
+        // TOP approved by finance → release to hub
+        if ($order->wasChanged('finance_approved') && $order->finance_approved && $order->payment_method === 'term_of_payment') {
+            $this->notifyHubAfterFinanceApproval($order);
+        }
+
         return back()->with('success', 'Status pembayaran berhasil diperbarui.');
+    }
+
+    /**
+     * Approve Term of Payment order by finance — then release to hub.
+     */
+    public function approveFinance(Order $order)
+    {
+        if ($order->payment_method !== 'term_of_payment') {
+            return back()->with('error', 'Pesanan ini bukan Term of Payment.');
+        }
+
+        $result = $order->approveFinanceBy(auth()->user());
+
+        if (!$result['success']) {
+            return back()->with('info', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Notify warehouse/hub after finance approves TOP.
+     */
+    private function notifyHubAfterFinanceApproval(Order $order): void
+    {
+        $order->notifyHubAfterFinanceApproval();
     }
 
     /**
@@ -365,6 +437,12 @@ class OrderController extends Controller
                 $updateData['paid_at'] = now();
                 $order->creditPoints();
             }
+
+            if ($request->payment_status === 'term_of_payment' && $order->payment_method === 'term_of_payment' && !$order->finance_approved) {
+                $updateData['finance_approved'] = true;
+                $updateData['finance_approved_at'] = now();
+                $updateData['finance_approved_by'] = auth()->id();
+            }
             
             $messages[] = 'Status pembayaran';
         }
@@ -421,6 +499,10 @@ class OrderController extends Controller
 
                 // Sync to QAD
                 \App\Support\SalesOrderSyncDispatcher::dispatch($order);
+            }
+
+            if ($order->wasChanged('finance_approved') && $order->finance_approved && $order->payment_method === 'term_of_payment') {
+                $this->notifyHubAfterFinanceApproval($order);
             }
 
             if ($request->ajax()) {

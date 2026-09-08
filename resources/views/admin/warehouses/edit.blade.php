@@ -18,7 +18,7 @@
                 </div>
                 <!-- /.box-header -->
                 <!-- form start -->
-                <form role="form" action="{{ route('admin.warehouses.update', $warehouse) }}" method="POST">
+                <form role="form" action="{{ route('admin.warehouses.update', $warehouse) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="box-body">
@@ -180,6 +180,20 @@
                             </select>
                             <p class="help-block">Tentukan peruntukan order hub ini</p>
                             @error('target_role')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group @error('signature') has-error @enderror">
+                            <label for="signature">Tanda Tangan</label>
+                            @if($warehouse->signature)
+                                <div style="margin-bottom: 10px;">
+                                    <img src="{{ asset('storage/' . $warehouse->signature) }}" alt="Tanda Tangan" style="max-height: 100px; border: 1px solid #ddd; padding: 5px; background: #fff;">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control" id="signature" name="signature" accept="image/*">
+                            <p class="help-block">Upload gambar tanda tangan (JPEG, PNG, JPG, GIF, SVG, WEBP). Maks. 2MB.</p>
+                            @error('signature')
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>

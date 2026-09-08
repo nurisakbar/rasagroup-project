@@ -107,6 +107,7 @@
             <div class="nav-tabs-custom">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#tab_menunggu_pembayaran" data-toggle="tab" class="order-tab" data-tab="menunggu_pembayaran"><i class="fa fa-hourglass-start"></i> MENUNGGU PEMBAYARAN <span class="label label-warning" id="count-menunggu-pembayaran">{{ number_format($countMenungguPembayaran) }}</span></a></li>
+                    <li><a href="#tab_menunggu_persetujuan_finance" data-toggle="tab" class="order-tab" data-tab="menunggu_persetujuan_finance"><i class="fa fa-lock"></i> MENUNGGU APPROVAL FINANCE <span class="label label-warning" id="count-menunggu-persetujuan-finance" style="background-color: #f39c12;">{{ number_format($countMenungguPersetujuanFinance) }}</span></a></li>
                     <li><a href="#tab_menunggu_konfirmasi" data-toggle="tab" class="order-tab" data-tab="menunggu_konfirmasi"><i class="fa fa-check-square-o"></i> MENUNGGU KONFIRMASI PEMBAYARAN <span class="label label-info" id="count-menunggu-konfirmasi">{{ number_format($countMenungguKonfirmasi) }}</span></a></li>
                     <li><a href="#tab_sedang_diproses" data-toggle="tab" class="order-tab" data-tab="sedang_diproses"><i class="fa fa-cogs"></i> SEDANG DIPROSES <span class="label label-primary" id="count-sedang-diproses">{{ number_format($countSedangDiproses) }}</span></a></li>
                     <li><a href="#tab_dikirim" data-toggle="tab" class="order-tab" data-tab="dikirim"><i class="fa fa-truck"></i> DIKIRIM <span class="label bg-purple" id="count-dikirim">{{ number_format($countDikirim) }}</span></a></li>
@@ -172,6 +173,7 @@ $(document).ready(function() {
             if (json && json.counts) {
                 $('#count-semua').text(json.counts.semua.toLocaleString('id-ID'));
                 $('#count-menunggu-pembayaran').text(json.counts.menunggu_pembayaran.toLocaleString('id-ID'));
+                $('#count-menunggu-persetujuan-finance').text((json.counts.menunggu_persetujuan_finance || 0).toLocaleString('id-ID'));
                 $('#count-menunggu-konfirmasi').text(json.counts.menunggu_konfirmasi.toLocaleString('id-ID'));
                 $('#count-sedang-diproses').text(json.counts.sedang_diproses.toLocaleString('id-ID'));
                 $('#count-dikirim').text(json.counts.dikirim.toLocaleString('id-ID'));

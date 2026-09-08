@@ -183,6 +183,12 @@
           </a>
         </li>
         
+        <li class="{{ request()->routeIs('admin.armadas.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.armadas.index') }}">
+            <i class="fa fa-motorcycle"></i> <span>ARMADA PENGIRIMAN</span>
+          </a>
+        </li>
+        
         <li class="{{ request()->routeIs('admin.distributors.*') ? 'active' : '' }}">
           <a href="{{ route('admin.distributors.index') }}">
             <i class="fa fa-truck"></i> <span>DISTRIBUTOR</span>
@@ -198,6 +204,14 @@
         </li>
         @endif
         
+        @if($adminRole === 'finance')
+        <li class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.orders.index') }}">
+            <i class="fa fa-exchange"></i> <span>TRANSAKSI</span>
+          </a>
+        </li>
+        @endif
+
         @if(in_array($adminRole, ['super_admin', 'finance']))
         <li class="{{ request()->routeIs('admin.point-withdrawals.*') ? 'active' : '' }}">
           <a href="{{ route('admin.point-withdrawals.index') }}">

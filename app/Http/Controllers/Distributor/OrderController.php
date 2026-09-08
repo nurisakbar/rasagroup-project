@@ -663,7 +663,10 @@ class OrderController extends Controller
                 ->delete();
 
             // Sync to QAD (Ensure customer is registered and SO is created)
-            \App\Support\SalesOrderSyncDispatcher::dispatch($order);
+            // TOP: sync setelah finance approve
+            if ($order->payment_method !== 'term_of_payment') {
+                \App\Support\SalesOrderSyncDispatcher::dispatch($order);
+            }
 
             DB::commit();
 
@@ -678,13 +681,10 @@ class OrderController extends Controller
                 'expedition',
                 'sourceWarehouse',
             ]);
-            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
 
-            if ($order->payment_method === 'term_of_payment' && $order->sourceWarehouse) {
-                $staffMembers = $order->sourceWarehouse->users;
-                if ($staffMembers && $staffMembers->isNotEmpty()) {
-                    \Illuminate\Support\Facades\Notification::send($staffMembers, new \App\Notifications\Orders\NewTopOrderNotification($order));
-                }
+            // TOP: notifikasi hub dikirim setelah finance approve
+            if ($order->payment_method !== 'term_of_payment') {
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             }
 
             return redirect()->route('distributor.orders.success', $order)

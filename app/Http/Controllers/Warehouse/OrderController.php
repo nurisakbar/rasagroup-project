@@ -27,6 +27,10 @@ class OrderController extends Controller
         if (!$warehouse || $order->source_warehouse_id !== $warehouse->id) {
             abort(403, 'Akses ditolak.');
         }
+
+        if (!$order->isReleasedToHub()) {
+            abort(403, 'Pesanan belum disetujui finance / belum siap diproses.');
+        }
     }
 
     /**
@@ -39,16 +43,12 @@ class OrderController extends Controller
 
         if ($request->ajax()) {
             $query = Order::with(['user', 'expedition', 'items.product'])
-                ->where('source_warehouse_id', $warehouse->id);
+                ->where('source_warehouse_id', $warehouse->id)
+                ->where('finance_approved', true);
 
             // Filter by order status
             if ($request->filled('order_status') && $request->order_status != '') {
                 $query->where('order_status', $request->order_status);
-            }
-
-            // Filter by payment status
-            if ($request->filled('payment_status') && $request->payment_status != '') {
-                $query->where('payment_status', $request->payment_status);
             }
 
             // Filter by date range
@@ -148,15 +148,18 @@ class OrderController extends Controller
         $today = now()->format('Y-m-d');
         
         $totalOrders = Order::where('source_warehouse_id', $warehouse->id)
+            ->where('finance_approved', true)
             ->whereDate('created_at', $today)
             ->count();
             
         $pendingOrders = Order::where('source_warehouse_id', $warehouse->id)
+            ->where('finance_approved', true)
             ->where('order_status', 'pending')
             ->whereDate('created_at', $today)
             ->count();
             
         $processingOrders = Order::where('source_warehouse_id', $warehouse->id)
+            ->where('finance_approved', true)
             ->where('order_status', 'processing')
             ->whereDate('created_at', $today)
             ->count();

@@ -383,13 +383,10 @@ class OrderApiController extends Controller
 
             // Dispatch background job to send payment notification
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
-            \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
 
-            if ($order->payment_method === 'term_of_payment' && $order->sourceWarehouse) {
-                $staffMembers = $order->sourceWarehouse->users;
-                if ($staffMembers && $staffMembers->isNotEmpty()) {
-                    \Illuminate\Support\Facades\Notification::send($staffMembers, new \App\Notifications\Orders\NewTopOrderNotification($order));
-                }
+            // TOP: notifikasi hub dikirim setelah finance approve; non-TOP pakai warehouse_new_order setelah bayar
+            if ($order->payment_method !== 'term_of_payment') {
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             }
             
             // Note: Thank you notification will be sent after payment is successful via webhook
@@ -625,6 +622,113 @@ class OrderApiController extends Controller
                         'subtotal' => (float) $item->subtotal,
                     ];
                 }),
+            ],
+        ]);
+    }
+
+    /**
+     * Update finance approval status.
+     *
+     * POST /api/orders/finance-approval
+     * Body: user_id, order_id (atau transaksi_id)
+     */
+    public function updateFinanceApproval(Request $request): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'user_id' => 'required|string|exists:users,id',
+            'order_id' => 'required_without:transaksi_id|nullable|string',
+            'transaksi_id' => 'required_without:order_id|nullable|string',
+            'finance_approved' => 'nullable|in:0,1,true,false',
+        ], [
+            'user_id.required' => 'user_id wajib diisi',
+            'user_id.exists' => 'user_id tidak ditemukan',
+            'order_id.required_without' => 'order_id atau transaksi_id wajib diisi',
+            'transaksi_id.required_without' => 'order_id atau transaksi_id wajib diisi',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = \App\Models\User::find($request->user_id);
+        if (!$user || !in_array($user->role, [\App\Models\User::ROLE_FINANCE, \App\Models\User::ROLE_SUPER_ADMIN], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak memiliki akses finance approval.',
+            ], 403);
+        }
+
+        $orderKey = $request->input('order_id') ?: $request->input('transaksi_id');
+        $order = Order::where('id', $orderKey)
+            ->orWhere('order_number', $orderKey)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan.',
+            ], 404);
+        }
+
+        // Default: approve (1). Bisa kirim finance_approved=0 untuk revoke.
+        $approve = true;
+        if ($request->has('finance_approved')) {
+            $approve = filter_var($request->input('finance_approved'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($approve === null) {
+                $approve = in_array((string) $request->input('finance_approved'), ['1', 'true'], true);
+            }
+        }
+
+        if ($approve) {
+            $result = $order->approveFinanceBy($user);
+
+            $order->refresh();
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'finance_approved' => (int) $order->finance_approved,
+                    'finance_approved_at' => $order->finance_approved_at?->toDateTimeString(),
+                    'finance_approved_by' => $order->finance_approved_by,
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
+                ],
+            ], $result['success'] ? 200 : 409);
+        }
+
+        // Revoke approval (set ke 0) — hanya jika belum diproses lebih lanjut
+        if (in_array($order->order_status, ['shipped', 'delivered', 'completed'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak dapat membatalkan approval: pesanan sudah diproses lebih lanjut.',
+            ], 422);
+        }
+
+        $order->update([
+            'finance_approved' => false,
+            'finance_approved_at' => null,
+            'finance_approved_by' => null,
+            'payment_status' => $order->payment_method === 'term_of_payment' ? 'pending' : $order->payment_status,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Finance approval dibatalkan (0).',
+            'data' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'finance_approved' => 0,
+                'finance_approved_at' => null,
+                'finance_approved_by' => null,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
             ],
         ]);
     }

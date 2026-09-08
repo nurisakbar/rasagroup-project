@@ -76,6 +76,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'term_of_payment',
         'monthly_target',
         'credit_limit',
+        'ar_outstanding',
         'payment_method',
         'wa_verified_at',
         'wa_verification_code',

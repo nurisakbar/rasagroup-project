@@ -26,6 +26,7 @@ class Warehouse extends Model
         'postal_code',
         'phone',
         'description',
+        'signature',
         'sync_sources',
         'province_id',
         'regency_id',

@@ -128,4 +128,19 @@ return [
         'base_url' => env('LALAMOVE_BASE_URL', 'https://rest.sandbox.lalamove.com'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Finance Approval External Notification
+    |--------------------------------------------------------------------------
+    | POST otomatis ke pihak eksternal saat transaksi butuh approval finance
+    | (contoh: order Term of Payment dengan finance_approved = 0).
+    */
+    'finance_approval' => [
+        'webhook_url' => env('FINANCE_APPROVAL_WEBHOOK_URL'),
+        'webhook_token' => env('FINANCE_APPROVAL_WEBHOOK_TOKEN'),
+        'webhook_secret' => env('FINANCE_APPROVAL_WEBHOOK_SECRET'),
+        'timeout' => env('FINANCE_APPROVAL_WEBHOOK_TIMEOUT', 15),
+        'enabled' => env('FINANCE_APPROVAL_WEBHOOK_ENABLED', true),
+    ],
+
 ];

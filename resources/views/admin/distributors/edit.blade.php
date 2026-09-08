@@ -225,6 +225,18 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('ar_outstanding') has-error @enderror">
+                                    <label for="ar_outstanding">AR Outstanding</label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rp</span>
+                                        <input type="text" class="form-control rupiah-format" id="ar_outstanding" name="ar_outstanding" value="{{ number_format(old('ar_outstanding', $distributor->ar_outstanding ?? 0), 0, ',', '.') }}" placeholder="Contoh: 50.000.000">
+                                    </div>
+                                    @error('ar_outstanding')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="box-footer">

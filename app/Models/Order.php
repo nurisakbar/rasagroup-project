@@ -63,6 +63,9 @@ class Order extends Model
         'payment_proof',
         'payment_submit_note',
         'payment_submitted_at',
+        'finance_approved',
+        'finance_approved_at',
+        'finance_approved_by',
         'qad_so_number',
         'qid_sales_order_number',
         'jubelio_salesorder_id',
@@ -85,11 +88,38 @@ class Order extends Model
         'ekspedisiku_pickup_requested_at' => 'datetime',
         'preferred_shipping_date' => 'date',
         'payment_submitted_at' => 'datetime',
+        'finance_approved' => 'boolean',
+        'finance_approved_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Order $order) {
+            // Pembayaran lunas → otomatis finance approved (1)
+            if ($order->isDirty('payment_status') && $order->payment_status === 'paid' && !$order->finance_approved) {
+                $order->finance_approved = true;
+                if (empty($order->finance_approved_at)) {
+                    $order->finance_approved_at = now();
+                }
+            }
+        });
+
+        static::created(function (Order $order) {
+            // Notifikasi eksternal otomatis untuk transaksi yang butuh approval finance
+            if ($order->isAwaitingFinanceApproval() && config('services.finance_approval.enabled', true)) {
+                \App\Jobs\NotifyExternalFinanceApprovalNeeded::dispatch($order);
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function financeApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'finance_approved_by');
     }
 
     public function affiliate(): BelongsTo
@@ -142,8 +172,89 @@ class Order extends Model
             'paid' => 'success',
             'failed' => 'danger',
             'refunded' => 'info',
+            'term_of_payment' => 'primary',
             default => 'default',
         };
+    }
+
+    /**
+     * TOP order menunggu persetujuan finance (finance_approved = 0).
+     */
+    public function isAwaitingFinanceApproval(): bool
+    {
+        return $this->payment_method === 'term_of_payment' && !$this->finance_approved;
+    }
+
+    /**
+     * Order sudah boleh diproses hub (finance_approved = 1).
+     */
+    public function isReleasedToHub(): bool
+    {
+        return (bool) $this->finance_approved;
+    }
+
+    /**
+     * Label status approval finance (0 / 1).
+     */
+    public function financeApprovalLabel(): string
+    {
+        return $this->finance_approved ? '1' : '0';
+    }
+
+    /**
+     * Approve finance (set finance_approved = 1) and release order to hub.
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function approveFinanceBy(User $approver): array
+    {
+        if ($this->finance_approved) {
+            return [
+                'success' => false,
+                'message' => 'Transaksi sudah di-approve finance sebelumnya.',
+            ];
+        }
+
+        $updateData = [
+            'finance_approved' => true,
+            'finance_approved_at' => now(),
+            'finance_approved_by' => $approver->id,
+        ];
+
+        // TOP: set payment_status ke term_of_payment saat approve
+        if ($this->payment_method === 'term_of_payment' && $this->payment_status === 'pending') {
+            $updateData['payment_status'] = 'term_of_payment';
+        }
+
+        $this->update($updateData);
+        $this->notifyHubAfterFinanceApproval();
+
+        return [
+            'success' => true,
+            'message' => 'Finance approval berhasil. Transaksi siap diproses hub.',
+        ];
+    }
+
+    /**
+     * Notifikasi hub + sync setelah finance approve.
+     */
+    public function notifyHubAfterFinanceApproval(): void
+    {
+        \App\Jobs\SendWhatsAppNotification::dispatch($this, 'warehouse_notification');
+
+        $this->loadMissing('sourceWarehouse.users');
+
+        if ($this->sourceWarehouse) {
+            $staffMembers = $this->sourceWarehouse->users;
+            if ($staffMembers && $staffMembers->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send(
+                    $staffMembers,
+                    new \App\Notifications\Orders\NewTopOrderNotification($this)
+                );
+            }
+        }
+
+        \App\Support\SalesOrderSyncDispatcher::dispatch($this);
     }
 
     /**

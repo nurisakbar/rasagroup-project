@@ -248,6 +248,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Warehouses CRUD
         Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
+        Route::resource('armadas', App\Http\Controllers\Admin\ArmadaController::class);
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
         Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
@@ -280,6 +281,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/orders/{order}/status', [App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::put('/orders/{order}/tracking', [App\Http\Controllers\Admin\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
         Route::put('/orders/{order}/payment', [App\Http\Controllers\Admin\OrderController::class, 'updatePayment'])->name('orders.update-payment');
+        Route::put('/orders/{order}/approve-finance', [App\Http\Controllers\Admin\OrderController::class, 'approveFinance'])->name('orders.approve-finance');
         Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Admin\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Admin\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');

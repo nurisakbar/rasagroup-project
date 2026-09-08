@@ -71,7 +71,7 @@
         </div>
         <div class="box-body">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label>Status Pesanan</label>
                         <select id="filter-order-status" class="form-control">
@@ -85,25 +85,13 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Status Pembayaran</label>
-                        <select id="filter-payment-status" class="form-control">
-                            <option value="">-- Semua Status --</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="failed">Failed</option>
-                            <option value="refunded">Refunded</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label>Dari Tanggal</label>
                         <input type="date" id="filter-date-from" class="form-control" value="{{ now()->format('Y-m-d') }}">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label>Sampai Tanggal</label>
                         <input type="date" id="filter-date-to" class="form-control" value="{{ now()->format('Y-m-d') }}">
@@ -164,7 +152,6 @@ $(document).ready(function() {
             url: "{{ route('warehouse.orders.index') }}",
             data: function(d) {
                 d.order_status = $('#filter-order-status').val();
-                d.payment_status = $('#filter-payment-status').val();
                 d.date_from = $('#filter-date-from').val();
                 d.date_to = $('#filter-date-to').val();
             }
@@ -204,18 +191,13 @@ $(document).ready(function() {
     });
 
     // Filter handlers
-    $('#filter-order-status, #filter-payment-status').change(function() {
-        table.draw();
-    });
-
-    $('#filter-date-from, #filter-date-to').change(function() {
+    $('#filter-order-status, #filter-date-from, #filter-date-to').change(function() {
         table.draw();
     });
 
     // Reset button
     $('#btn-reset').click(function() {
         $('#filter-order-status').val('');
-        $('#filter-payment-status').val('');
         $('#filter-date-from').val('{{ now()->format("Y-m-d") }}');
         $('#filter-date-to').val('{{ now()->format("Y-m-d") }}');
         table.draw();

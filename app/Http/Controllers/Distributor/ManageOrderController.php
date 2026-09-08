@@ -25,7 +25,8 @@ class ManageOrderController extends Controller
 
         if ($request->ajax()) {
             $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah'])
-                ->where('source_warehouse_id', $warehouse->id);
+                ->where('source_warehouse_id', $warehouse->id)
+                ->where('finance_approved', true);
 
             // Filter by status
             if ($request->filled('status') && $request->status != '') {
@@ -130,6 +131,10 @@ class ManageOrderController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
+        if (!$order->isReleasedToHub()) {
+            abort(403, 'Pesanan belum disetujui finance / belum siap diproses.');
+        }
+
         $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);
 
         return view('buyer.distributor.manage-orders.show', compact('warehouse', 'order'));
@@ -146,6 +151,10 @@ class ManageOrderController extends Controller
         // Verify the order belongs to user's warehouse
         if ($order->source_warehouse_id !== $warehouse->id) {
             abort(403, 'Akses ditolak.');
+        }
+
+        if (!$order->isReleasedToHub()) {
+            abort(403, 'Pesanan belum disetujui finance / belum siap diproses.');
         }
 
         $request->validate([
@@ -218,6 +227,10 @@ class ManageOrderController extends Controller
         // Verify the order belongs to user's warehouse
         if ($order->source_warehouse_id !== $warehouse->id) {
             abort(403, 'Akses ditolak.');
+        }
+
+        if (!$order->isReleasedToHub()) {
+            abort(403, 'Pesanan belum disetujui finance / belum siap diproses.');
         }
 
         $order->load(['user', 'items.product.brand', 'items.product.category', 'address', 'sourceWarehouse', 'expedition']);

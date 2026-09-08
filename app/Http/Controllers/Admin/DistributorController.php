@@ -263,6 +263,9 @@ class DistributorController extends Controller
         if ($request->has('credit_limit')) {
             $request->merge(['credit_limit' => str_replace('.', '', $request->credit_limit)]);
         }
+        if ($request->has('ar_outstanding')) {
+            $request->merge(['ar_outstanding' => str_replace('.', '', $request->ar_outstanding)]);
+        }
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
@@ -280,6 +283,7 @@ class DistributorController extends Controller
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Create the warehouse/hub first
@@ -313,6 +317,7 @@ class DistributorController extends Controller
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
+            'ar_outstanding' => $validated['ar_outstanding'] ?? null,
         ]);
 
         // Sync all active products to warehouse stock
@@ -792,6 +797,9 @@ class DistributorController extends Controller
         if ($request->has('credit_limit')) {
             $request->merge(['credit_limit' => str_replace('.', '', $request->credit_limit)]);
         }
+        if ($request->has('ar_outstanding')) {
+            $request->merge(['ar_outstanding' => str_replace('.', '', $request->ar_outstanding)]);
+        }
 
         $validated = $request->validate([
             // Hub data
@@ -811,6 +819,7 @@ class DistributorController extends Controller
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Update hub
@@ -838,11 +847,12 @@ class DistributorController extends Controller
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
+            'ar_outstanding' => $validated['ar_outstanding'] ?? null,
         ];
 
         $distributor->update($userData);
 
-        return redirect()->route('admin.distributors.index')
+        return redirect()->route('admin.distributors.edit', $distributor)
             ->with('success', 'Distributor berhasil diperbarui.');
     }
 

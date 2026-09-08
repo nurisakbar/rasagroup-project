@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use App\Services\EkspedisiKuService;
 use App\Services\JubelioStockSyncService;
@@ -235,7 +236,12 @@ class WarehouseController extends Controller
                     return '<i class="fa fa-map-marker text-red"></i> ' . $baris1 . '<br><small class="text-muted">' . $baris2 . '</small>';
                 })
                 ->addColumn('phone_display', function ($warehouse) {
-                    return $warehouse->phone ?? '-';
+                    $html = $warehouse->phone ?? '-';
+                    $defaultHubId = \App\Models\Setting::get('distributor_default_hub');
+                    if ($warehouse->id === $defaultHubId) {
+                        $html .= '<br><span class="label label-warning" style="margin-top: 5px; display: inline-block;">Gudang Order</span>';
+                    }
+                    return $html;
                 })
                 ->addColumn('products_info', function ($warehouse) {
                     return '<span class="badge bg-blue">' . ($warehouse->products_count ?? 0) . ' produk</span>';
@@ -263,7 +269,7 @@ class WarehouseController extends Controller
                         </a>
                     ';
                 })
-                ->rawColumns(['name_info', 'location_info', 'products_info', 'stock_info', 'status_info', 'action'])
+                ->rawColumns(['name_info', 'location_info', 'phone_display', 'products_info', 'stock_info', 'status_info', 'action'])
                 ->make(true);
         }
 
@@ -408,6 +414,7 @@ class WarehouseController extends Controller
             'postal_code' => 'nullable|string|max:10|regex:/^[0-9]{0,10}$/',
             'phone' => 'nullable|string|max:20',
             'description' => 'nullable|string|max:1000',
+            'signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'province_id' => 'nullable',
             'regency_id' => 'nullable',
             'district_id' => 'nullable',
@@ -422,9 +429,18 @@ class WarehouseController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['gudang_order_distributor'] = $request->boolean('gudang_order_distributor');
 
+        if ($request->hasFile('signature')) {
+            if ($warehouse->signature) {
+                Storage::disk('public')->delete($warehouse->signature);
+            }
+            $validated['signature'] = $request->file('signature')->store('warehouses/signatures', 'public');
+        } else {
+            unset($validated['signature']);
+        }
+
         $warehouse->update($validated);
 
-        return redirect()->route('admin.warehouses.index')
+        return redirect()->route('admin.warehouses.edit', $warehouse)
             ->with('success', 'Warehouse berhasil diperbarui.');
     }
 

@@ -274,6 +274,7 @@
         <div class="extra-info-section">
             <div style="margin-bottom: 2px;">Komentar :</div>
             <div>Asuransi: <span style="margin-left: 10px;">0</span></div>
+            <div>Berat: <span style="margin-left: 10px;">1.3 kg</span></div>
         </div>
         
         <div class="tt-order">
@@ -301,11 +302,23 @@
                     <td class="col-seller">10000117</td>
                     <td class="col-qty">1</td>
                 </tr>
+                <tr>
+                    <td class="col-name">DRiPP Caramel Syrup - Perasa Minuman Berbentuk Sirup Caramel Untuk HORECA</td>
+                    <td class="col-sku">Default</td>
+                    <td class="col-seller">10000118</td>
+                    <td class="col-qty">2</td>
+                </tr>
+                <tr>
+                    <td class="col-name">DRiPP Hazelnut Syrup - Perasa Minuman Berbentuk Sirup Hazelnut Untuk HORECA</td>
+                    <td class="col-sku">Default</td>
+                    <td class="col-seller">10000119</td>
+                    <td class="col-qty">1</td>
+                </tr>
             </tbody>
         </table>
 
         <div class="qty-total">
-            Qty Total: 1
+            Qty Total: 4
         </div>
 
         <!-- Footer -->

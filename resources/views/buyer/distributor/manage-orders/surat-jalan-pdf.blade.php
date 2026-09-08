@@ -170,5 +170,30 @@
             </td>
         </tr>
     </table>
+
+    <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
+        <tr>
+            <td width="50%" style="text-align: center; vertical-align: top; padding: 0 20px;">
+                <div style="margin-bottom: 6px;">Penerima,</div>
+                <div style="height: 80px;">&nbsp;</div>
+                <div style="border-top: 1px solid #333; width: 70%; margin: 0 auto; padding-top: 6px;">
+                    ( .............................. )
+                </div>
+            </td>
+            <td width="50%" style="text-align: center; vertical-align: top; padding: 0 20px;">
+                <div style="margin-bottom: 6px;">Hormat kami,</div>
+                <div style="height: 80px; line-height: 80px;">
+                    @if(!empty($warehouse?->signature) && file_exists(public_path('storage/' . $warehouse->signature)))
+                        <img src="{{ public_path('storage/' . $warehouse->signature) }}" alt="Tanda Tangan" style="height: 70px; width: auto; max-width: 160px; vertical-align: middle;">
+                    @else
+                        &nbsp;
+                    @endif
+                </div>
+                <div style="border-top: 1px solid #333; width: 70%; margin: 0 auto; padding-top: 6px;">
+                    <strong>{{ $warehouse->name ?? 'Petugas Gudang' }}</strong>
+                </div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
