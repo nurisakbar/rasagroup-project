@@ -35,10 +35,8 @@ class WarehouseApiController extends Controller
                 $query->where('regency_id', $request->regency_id);
             }
 
-            // Filter by active status
-            if ($request->filled('is_active')) {
-                $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
-            }
+            // Always filter by active status for API
+            $query->where('is_active', true);
 
             // Search by name
             if ($request->filled('search')) {
@@ -78,6 +76,7 @@ class WarehouseApiController extends Controller
                 ->where(function ($q) use ($warehouse) {
                     $q->where('id', $warehouse)->orWhere('slug', $warehouse);
                 })
+                ->where('is_active', true)
                 ->first();
 
             if (!$warehouseModel) {
@@ -94,12 +93,8 @@ class WarehouseApiController extends Controller
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->select('warehouse_stocks.*');
 
-        // Filter by product status
-        if ($request->filled('product_status')) {
-            $query->where('products.status', $request->product_status);
-        } else {
-            $query->where('products.status', 'active');
-        }
+        // Only show active products
+        $query->where('products.status', 'active');
 
         // Search by product name, code, or commercial name
         if ($request->filled('search')) {
@@ -241,21 +236,17 @@ class WarehouseApiController extends Controller
                 $query->where('regency_id', $request->regency_id);
             }
 
-            // Filter by active status
-            if ($request->filled('is_active')) {
-                $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
-            } else {
-                // Default: only active warehouses
-                $query->where('is_active', true);
-            }
+            // Always only show active warehouses
+            $query->where('is_active', true);
+
 
             // Search by name
             if ($request->filled('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
-            // Filter by product status
-            $productStatus = $request->get('product_status', 'active');
+            // Filter by product status (force active)
+            $productStatus = 'active';
 
             // Filter by stock availability
             $stockAvailable = $request->filled('stock_available') 
