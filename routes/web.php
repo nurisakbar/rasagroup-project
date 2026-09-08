@@ -483,3 +483,4 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
 // Faspay UAT Simulator (Development)
 Route::get('/faspay/simulate-uat', [\App\Http\Controllers\FaspayUatSimulatorController::class, 'simulate']);
 
+Route::get('/test-print-label', function () { return view('admin.orders.print_label'); });

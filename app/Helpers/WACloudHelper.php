@@ -779,11 +779,11 @@ class WACloudHelper
      */
     private static function buildThankYouMessage(\App\Models\Order $order): string
     {
-        $message = "🎉 *Pembayaran Berhasil!*\n\n";
+        $message = "*Pembayaran Berhasil!*\n\n";
         
         $message .= "Terima kasih! Pembayaran untuk pesanan *#{$order->order_number}* telah berhasil kami terima.\n\n";
         
-        $message .= "📦 *Informasi Pengiriman:*\n";
+        $message .= "*Informasi Pengiriman:*\n";
         $message .= "Pesanan Anda akan segera kami proses dan dikirim ke alamat:\n";
         
         if ($order->address) {
@@ -817,7 +817,7 @@ class WACloudHelper
         
         // Add expedition info if available
         if ($order->expedition) {
-            $message .= "🚚 *Ekspedisi:* {$order->expedition->name}\n";
+            $message .= "*Ekspedisi:* {$order->expedition->name}\n";
             
             // Get service name
             $serviceName = $order->expedition_service;
@@ -847,11 +847,11 @@ class WACloudHelper
         $message .= "Anda akan menerima notifikasi update melalui WhatsApp ketika pesanan sudah dikirim.\n\n";
         
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-        $message .= "📞 *Butuh Bantuan?*\n";
+        $message .= "*Butuh Bantuan?*\n";
         $message .= "Jika ada pertanyaan atau perubahan pesanan, silakan hubungi customer service kami.\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        $message .= "Terima kasih telah mempercayakan Rasa Group untuk kebutuhan Anda! 🙏\n";
+        $message .= "Terima kasih telah mempercayakan Rasa Group untuk kebutuhan Anda!\n";
         $message .= "Kami berharap Anda puas dengan produk dan layanan kami.";
         
         return $message;
@@ -885,7 +885,7 @@ class WACloudHelper
         $message .= "Hubungi customer service kami jika Anda menemui kendala dalam pengiriman.\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        $message .= "Terima kasih telah berbelanja di Rasa Group! 🙏";
+        $message .= "Terima kasih telah berbelanja di Rasa Group!";
         
         return $message;
     }
@@ -1015,7 +1015,7 @@ class WACloudHelper
      */
     private static function buildPaymentMessage(\App\Models\Order $order): string
     {
-        $message = "📦 *Pesanan #{$order->order_number} Berhasil Dibuat*\n\n";
+        $message = "*Pesanan #{$order->order_number} Berhasil Dibuat*\n\n";
         
         $message .= "Terima kasih telah berbelanja di Rasa Group!\n\n";
         
@@ -1032,7 +1032,7 @@ class WACloudHelper
             }
         }
         
-        $message .= "📋 *Rincian Pembayaran:*\n";
+        $message .= "*Rincian Pembayaran:*\n";
         $message .= "Subtotal: Rp " . number_format($order->subtotal, 0, ',', '.') . "\n";
         
         if ($order->shipping_cost > 0) {
@@ -1045,7 +1045,7 @@ class WACloudHelper
         
         // Add expedition information
         if ($order->expedition) {
-            $message .= "🚚 *Informasi Pengiriman:*\n";
+            $message .= "*Informasi Pengiriman:*\n";
             $message .= "Ekspedisi: *{$order->expedition->name}*\n";
             
             // Get service name from expedition_service code
@@ -1072,7 +1072,7 @@ class WACloudHelper
         }
         
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-        $message .= "💳 *CARA PEMBAYARAN*\n";
+        $message .= "*CARA PEMBAYARAN*\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
         if ($order->payment_method === 'faspay') {
@@ -1128,11 +1128,11 @@ class WACloudHelper
         }
         
         $message .= "\n━━━━━━━━━━━━━━━━━━━━\n";
-        $message .= "📞 *Butuh Bantuan?*\n";
+        $message .= "*Butuh Bantuan?*\n";
         $message .= "Hubungi customer service kami untuk pertanyaan lebih lanjut.\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
-        $message .= "Terima kasih atas kepercayaan Anda! 🙏";
+        $message .= "Terima kasih atas kepercayaan Anda!";
         
         return $message;
     }
@@ -1225,7 +1225,7 @@ class WACloudHelper
     private static function buildDriippreneurStatusMessage(\App\Models\User $user): string
     {
         if ($user->driippreneur_status === 'approved') {
-            $message = "🎉 *Selamat, Akun Affiliator Anda Disetujui!*\n\n";
+            $message = "*Selamat, Akun Affiliator Anda Disetujui!*\n\n";
             $message .= "Halo *{$user->name}*,\n\n";
             $message .= "Kabar gembira! Permohonan Anda untuk menjadi *Affiliator Rasa Group (DRiiPPreneur)* telah disetujui.\n\n";
             $message .= "Sekarang Anda sudah bisa mulai berbagi link affiliasi dan mendapatkan poin dari setiap transaksi yang berhasil.\n\n";
@@ -1234,10 +1234,10 @@ class WACloudHelper
             $message .= "2. Buka menu 'Affiliasi' atau 'Dashboard DRiiPPreneur'\n";
             $message .= "3. Bagikan link produk atau kode referral Anda kepada rekan-rekan\n\n";
             $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-            $message .= "📞 *Butuh Bantuan?*\n";
+            $message .= "*Butuh Bantuan?*\n";
             $message .= "Jika ada pertanyaan seputar program affiliasi, jangan ragu untuk menghubungi tim support kami.\n";
             $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
-            $message .= "Mari tumbuh sukses bersama Rasa Group! 🙏";
+            $message .= "Mari tumbuh sukses bersama Rasa Group!";
         } else {
             $message = "📢 *Update Status Aplikasi Affiliator*\n\n";
             $message .= "Halo *{$user->name}*,\n\n";
@@ -1249,7 +1249,7 @@ class WACloudHelper
             
             $message .= "Terima kasih telah tertarik dengan program kami. Anda masih bisa melengkapi data yang kurang dan mencoba mengajukan kembali di kemudian hari.\n\n";
             $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-            $message .= "📞 *Butuh Bantuan?*\n";
+            $message .= "*Butuh Bantuan?*\n";
             $message .= "Hubungi kami jika Anda memiliki pertanyaan lebih lanjut.\n";
             $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
             $message .= "Terima kasih, tim Rasa Group.";
