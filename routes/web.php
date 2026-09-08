@@ -69,6 +69,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Affiliator Auth Routes
+Route::middleware('guest')->group(function () {
+    Route::get('/register/affiliator', [App\Http\Controllers\Affiliator\Auth\AffiliatorRegisterController::class, 'create'])->name('affiliator.register');
+    Route::post('/register/affiliator', [App\Http\Controllers\Affiliator\Auth\AffiliatorRegisterController::class, 'store']);
+});
+
 require __DIR__.'/auth.php';
 
 // Public Routes
@@ -388,7 +394,7 @@ Route::prefix('driippreneur')->name('driippreneur.')->group(function () {
         Route::get('/register', [App\Http\Controllers\Driippreneur\Auth\DriippreneurRegisterController::class, 'create'])->name('register');
         Route::post('/register', [App\Http\Controllers\Driippreneur\Auth\DriippreneurRegisterController::class, 'store']);
     });
-
+    
     // DRiiPPreneur Logout
     Route::post('/logout', [App\Http\Controllers\Driippreneur\Auth\DriippreneurLoginController::class, 'destroy'])
         ->middleware('auth')

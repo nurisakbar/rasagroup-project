@@ -132,7 +132,7 @@
                                                                     'refunded' => 'bg-info',
                                                                 ][$order->payment_status] ?? 'bg-secondary';
                                                             @endphp
-                                                            <span class="badge {{ $paymentClass }}">{{ ucfirst($order->payment_status) }}</span>
+                                                            <span class="badge {{ $paymentClass }}">{{ ucwords(str_replace('_', ' ', $order->payment_status)) }}</span>
                                                         </td>
                                                         <td class="text-end pr-10">
                                                             @if($order->order_type === \App\Models\Order::TYPE_DISTRIBUTOR)

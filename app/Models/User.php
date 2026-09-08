@@ -23,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_AGENT = 'agent';
     const ROLE_WAREHOUSE = 'warehouse';
     const ROLE_DRIIPPRENEUR = 'driippreneur';
+    const ROLE_AFFILIATOR = 'affiliator';
     const ROLE_DISTRIBUTOR = 'distributor';
     const ROLE_OUTLET = 'outlet';
     const ROLE_SUPER_ADMIN = 'super_admin';
@@ -235,6 +236,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isWarehouse(): bool
     {
         return $this->role === self::ROLE_WAREHOUSE;
+    }
+
+    public function isAffiliator()
+    {
+        return $this->role === self::ROLE_AFFILIATOR;
     }
 
     public function isDriippreneur(): bool

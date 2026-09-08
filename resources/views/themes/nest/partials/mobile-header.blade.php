@@ -33,6 +33,7 @@
                             <li><a href="{{ route('menus.index') }}">MENU PAKET</a></li>
                             <li><a href="{{ route('contact') }}">HUBUNGI KAMI</a></li>
                             <li><a href="{{ route('information-channels.index') }}">SALURAN INFORMASI</a></li>
+                            <li><a href="{{ route('affiliator.register') }}">AFFILIATOR</a></li>
 
 
 

@@ -1307,6 +1307,11 @@
                 address_id: currentAddressId
             },
             success: function(data) {
+                if (data.warehouse) {
+                    $('#sourceWarehouseName').text(data.warehouse.name);
+                    $('#sourceWarehouseLocation').text(data.warehouse.location);
+                }
+
                 if (data.error) {
                     serviceList.html('<div class="col-12"><div class="alert alert-danger">' + data.error + '</div></div>');
                     servicesLoading = false;
@@ -1316,6 +1321,11 @@
                 
                 serviceList.empty();
                 
+                if (data.warehouse) {
+                    $('#sourceWarehouseName').text(data.warehouse.name);
+                    $('#sourceWarehouseLocation').text(data.warehouse.location);
+                }
+
                 if (data.services.length === 0) {
                     serviceList.html('<div class="col-12"><div class="alert alert-warning py-2 small"><i class="fi-rs-info"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>');
                     $('#expeditionInfo').text(expName + ' - (Tidak ada layanan)');
@@ -1353,12 +1363,6 @@
                 
                 // Update displays if services found
                 if (data.services.length > 0) {
-                    // Update Warehouse info if returned (keeps Geolocation info in sync)
-                    if (data.warehouse) {
-                        $('#sourceWarehouseName').text(data.warehouse.name);
-                        $('#sourceWarehouseLocation').text(data.warehouse.location);
-                    }
-                    
                     // Reset shipping displays until user selects a service
                     $('#shippingCostDisplay').text('-');
                     $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID'));

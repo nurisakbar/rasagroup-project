@@ -434,6 +434,125 @@ class OrderApiController extends Controller
     }
 
     /**
+     * Get list of orders with filters (Admin / User)
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $userId = $this->getUserId($request);
+        
+        $query = Order::with([
+            'items.product.brand', 
+            'items.product.category', 
+            'address.village', 
+            'address.district', 
+            'address.regency', 
+            'address.province', 
+            'expedition', 
+            'sourceWarehouse', 
+            'user'
+        ]);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        
+        if ($request->filled('order_status')) {
+            $query->where('order_status', $request->order_status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
+
+        $data = $orders->getCollection()->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'order_type' => $order->order_type,
+                'subtotal' => (float) $order->subtotal,
+                'shipping_cost' => (float) $order->shipping_cost,
+                'total_amount' => (float) $order->total_amount,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'order_status' => $order->order_status,
+                'faspay_redirect_url' => $order->faspay_redirect_url,
+                'notes' => $order->notes,
+                'points_earned' => $order->points_earned,
+                'created_at' => $order->created_at->toISOString(),
+                'user' => $order->user ? [
+                    'id' => $order->user->id,
+                    'name' => $order->user->name,
+                    'email' => $order->user->email,
+                    'phone' => $order->user->phone,
+                ] : null,
+                'address' => $order->address ? [
+                    'id' => $order->address->id,
+                    'label' => $order->address->label,
+                    'recipient_name' => $order->address->recipient_name,
+                    'phone' => $order->address->phone,
+                    'full_address' => $order->address->full_address,
+                    'village' => $order->address->village->name ?? null,
+                    'district' => $order->address->district->name ?? null,
+                    'regency' => $order->address->regency->name ?? null,
+                    'province' => $order->address->province->name ?? null,
+                    'postal_code' => $order->address->postal_code,
+                ] : null,
+                'expedition' => $order->expedition ? [
+                    'id' => $order->expedition->id,
+                    'name' => $order->expedition->name,
+                    'service' => $order->expedition_service,
+                ] : null,
+                'warehouse' => $order->sourceWarehouse ? [
+                    'id' => $order->sourceWarehouse->id,
+                    'name' => $order->sourceWarehouse->name,
+                ] : null,
+                'items' => $order->items->map(function ($item) {
+                    $imageUrl = $item->product->image_url ?? null;
+                    return [
+                        'id' => $item->id,
+                        'product' => [
+                            'id' => $item->product->id,
+                            'code' => $item->product->code,
+                            'name' => $item->product->name,
+                            'price' => (float) $item->product->price,
+                            'image' => $imageUrl,
+                            'brand' => $item->product->brand->name ?? null,
+                            'category' => $item->product->category->name ?? null,
+                        ],
+                        'quantity' => $item->quantity,
+                        'price' => (float) $item->price,
+                        'subtotal' => (float) $item->subtotal,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+            ]
+        ]);
+    }
+
+    /**
      * Get order details
      * 
      * @param Request $request

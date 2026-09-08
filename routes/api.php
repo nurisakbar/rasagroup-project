@@ -53,6 +53,7 @@ Route::prefix('addresses')->group(function () {
 
 // Order routes (public - no authentication required)
 Route::prefix('orders')->group(function () {
+    Route::get('/', [OrderApiController::class, 'index'])->name('api.orders.index');
     Route::get('/expeditions', [OrderApiController::class, 'getExpeditions'])->name('api.orders.expeditions');
     Route::post('/expeditions/services', [OrderApiController::class, 'getExpeditionServices'])->name('api.orders.expedition-services');
     Route::post('/', [OrderApiController::class, 'store'])->name('api.orders.store');

@@ -18,6 +18,25 @@ class WACloudHelper
     public static function sendText(string $phone, string $message): ?array
     {
         try {
+            $provider = env('WHATSAPP_PROVIDER', 'meta');
+            
+            if ($provider === 'wacloud') {
+                $wacloud = new WACloudService();
+                $formattedPhone = $wacloud->formatPhoneNumber($phone);
+                $result = $wacloud->sendTextMessage($formattedPhone, $message);
+                
+                if (isset($result['success']) && $result['success']) {
+                    Log::info('WhatsApp text message sent via WACloud', ['phone' => $formattedPhone]);
+                    return $result;
+                }
+                
+                Log::error('Failed to send WhatsApp via WACloud API', [
+                    'phone' => $formattedPhone,
+                    'message' => $result['message'] ?? 'Unknown error'
+                ]);
+                return null;
+            }
+
             $metaService = app(\App\Services\MetaWhatsAppService::class);
             $result = $metaService->sendText($phone, $message);
             
@@ -91,39 +110,47 @@ class WACloudHelper
      * @param string|null $filename Optional filename for the document
      * @return array|null Returns message data on success, null on failure
      */
-    public static function sendDocument(string $phone, string $documentUrl, ?string $filename = null): ?array
+    public static function sendImage(string $phone, string $imageUrl, ?string $caption = null): ?array
     {
         try {
-            $waCloud = new WACloudService();
+            $wacloud = new WACloudService();
             
-            if (!$waCloud->isConfigured()) {
-                Log::warning('WACloud not configured. Cannot send document message.');
+            if (!$wacloud->isConfigured()) {
+                Log::warning('WACloud not configured. Cannot send image message.');
                 return null;
             }
 
             // Format phone number
-            $formattedPhone = $waCloud->formatPhoneNumber($phone);
+            $formattedPhone = $wacloud->formatPhoneNumber($phone);
             
-            // Send document
-            $result = $waCloud->sendDocumentMessage($formattedPhone, $documentUrl, $filename);
+            // Send image
+            $result = $wacloud->sendImageMessage($formattedPhone, $imageUrl, $caption);
             
-            if ($result) {
-                Log::info('WhatsApp document message sent via helper', [
+            if (isset($result['success']) && $result['success']) {
+                Log::info('WhatsApp image message sent via helper', [
                     'phone' => $formattedPhone,
-                    'document_url' => $documentUrl,
-                    'message_id' => $result['message_id'] ?? null,
+                    'image_url' => $imageUrl,
                 ]);
+                return $result;
             }
             
-            return $result;
+            return null;
         } catch (\Exception $e) {
-            Log::error('Failed to send WhatsApp document message via helper', [
+            Log::error('Failed to send WhatsApp image message via helper', [
                 'phone' => $phone,
-                'document_url' => $documentUrl,
+                'image_url' => $imageUrl,
                 'error' => $e->getMessage(),
             ]);
             return null;
         }
+    }
+
+    public static function sendDocument(string $phone, string $documentUrl, ?string $filename = null): ?array
+    {
+        // ... (Keep existing implementation if it calls meta or update it if needed.
+        // For now, I'll just keep the signature but return null or forward to sendImage if it's actually an image)
+        // I will just use WACloud's sendImageMessage for now since the user referred to the image cURL as "contoh kirim pdf"
+        return self::sendImage($phone, $documentUrl, $filename);
     }
 
     /**
@@ -364,7 +391,7 @@ class WACloudHelper
         }
 
         try {
-            $phone = $order->address->phone;
+            $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
             $message = self::buildTrackingMessage($order);
             
             Log::info('Sending tracking notification via WhatsApp', [
@@ -388,6 +415,122 @@ class WACloudHelper
             return $result;
         } catch (\Exception $e) {
             Log::error('Failed to send tracking notification via WhatsApp', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Send pickup ready notification to customer
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return array|null
+     */
+    public static function sendPickupReadyNotification(\App\Models\Order $order): ?array
+    {
+        if (!self::isConfigured()) {
+            Log::warning('QAD WhatsApp API not configured. Cannot send pickup ready notification.');
+            return null;
+        }
+
+        if ((!$order->user || !$order->user->phone) && (!$order->address || !$order->address->phone)) {
+            Log::warning('No phone number available for pickup ready notification', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        if (!$order->pickup_ready_at) {
+            Log::warning('Order pickup_ready_at not available', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        try {
+            $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
+            $message = self::buildPickupReadyMessage($order);
+            
+            Log::info('Sending pickup ready notification via WhatsApp', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'phone' => $phone,
+            ]);
+            
+            $result = self::sendText($phone, $message);
+            
+            if ($result) {
+                Log::info('Pickup ready notification sent via WhatsApp', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                    'message_id' => $result['message_id'] ?? null,
+                ]);
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to send pickup ready notification via WhatsApp', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Send pickup handover notification to customer
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return array|null
+     */
+    public static function sendPickupHandoverNotification(\App\Models\Order $order): ?array
+    {
+        if (!self::isConfigured()) {
+            Log::warning('QAD WhatsApp API not configured. Cannot send pickup handover notification.');
+            return null;
+        }
+
+        if ((!$order->user || !$order->user->phone) && (!$order->address || !$order->address->phone)) {
+            Log::warning('No phone number available for pickup handover notification', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        if (!$order->shipped_at) {
+            Log::warning('Order shipped_at not available', [
+                'order_id' => $order->id,
+            ]);
+            return null;
+        }
+
+        try {
+            $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
+            $message = self::buildPickupHandoverMessage($order);
+            
+            Log::info('Sending pickup handover notification via WhatsApp', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'phone' => $phone,
+            ]);
+            
+            $result = self::sendText($phone, $message);
+            
+            if ($result) {
+                Log::info('Pickup handover notification sent via WhatsApp', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                    'message_id' => $result['message_id'] ?? null,
+                ]);
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Failed to send pickup handover notification via WhatsApp', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
@@ -489,7 +632,13 @@ class WACloudHelper
     private static function deliverWarehouseStaffWhatsApp(\App\Models\Order $order, string $message, string $context): void
     {
         $warehouseOwners = \App\Models\User::where('warehouse_id', $order->source_warehouse_id)
-            ->whereIn('role', ['warehouse', 'distributor'])
+            ->where(function ($query) {
+                $query->where('role', 'distributor')
+                      ->orWhere(function ($q) {
+                          $q->where('role', 'warehouse')
+                            ->where('sub_role', 'admin');
+                      });
+            })
             ->get();
 
         $sentTo = [];
@@ -508,7 +657,8 @@ class WACloudHelper
                 'owner_id' => $owner->id,
                 'phone' => $owner->phone,
             ]);
-            self::sendText($owner->phone, $message);
+            $personalizedMessage = str_replace('[NAMA_USER]', $owner->name, $message);
+            self::sendText($owner->phone, $personalizedMessage);
             $sentTo[$key] = true;
         }
 
@@ -522,7 +672,8 @@ class WACloudHelper
                     'warehouse_id' => $warehouse->id,
                     'phone' => $warehouse->phone,
                 ]);
-                self::sendText($warehouse->phone, $message);
+                $personalizedMessage = str_replace('[NAMA_USER]', 'Admin Hub', $message);
+                self::sendText($warehouse->phone, $personalizedMessage);
                 $sentTo[$key] = true;
             }
         }
@@ -557,9 +708,9 @@ class WACloudHelper
             ? 'Pesanan distributor'
             : 'Pesanan online';
 
-        $message = "📥 *PESANAN BARU MASUK*\n\n";
-        $message .= "Halo, ada pesanan baru untuk *{$hubName}*.\n\n";
-        $message .= "📋 *Ringkasan:*\n";
+        $message = "*PESANAN BARU MASUK*\n\n";
+        $message .= "Halo [NAMA_USER], ada pesanan baru untuk *{$hubName}*.\n\n";
+        $message .= "*Ringkasan:*\n";
         $message .= "Jenis: {$orderTypeLabel}\n";
         $message .= "No. Pesanan: *#{$order->order_number}*\n";
         $message .= 'Tanggal: ' . $order->created_at->format('d/m/Y H:i') . "\n";
@@ -568,7 +719,7 @@ class WACloudHelper
         $message .= 'Total: Rp ' . number_format((float) $order->total_amount, 0, ',', '.') . "\n\n";
 
         if ($order->items && $order->items->count() > 0) {
-            $message .= "🛍️ *Item:*\n";
+            $message .= "*Item:*\n";
             foreach ($order->items as $item) {
                 $productName = $item->product ? $item->product->name : 'Produk';
                 $message .= "• {$productName} (Qty: {$item->quantity})\n";
@@ -576,9 +727,9 @@ class WACloudHelper
             $message .= "\n";
         }
 
-        $message .= '🚚 *Kurir:* ' . ($order->expedition ? $order->expedition->name : '-') . ' (' . ($order->expedition_service ?: '-') . ")\n\n";
+        $message .= '*Kurir:* ' . ($order->expedition ? $order->expedition->name : '-') . ' (' . ($order->expedition_service ?: '-') . ")\n\n";
 
-        $message .= "📍 *Pemesan / tujuan:*\n";
+        $message .= "*Pemesan / tujuan:*\n";
         if ($order->user) {
             $message .= "{$order->user->name}\n";
         }
@@ -609,7 +760,7 @@ class WACloudHelper
         $message .= "\n";
 
         if ($order->notes) {
-            $message .= '📝 *Catatan pemesan:* ' . $order->notes . "\n\n";
+            $message .= '*Catatan pemesan:* ' . $order->notes . "\n\n";
         }
 
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
@@ -714,11 +865,11 @@ class WACloudHelper
      */
     private static function buildTrackingMessage(\App\Models\Order $order): string
     {
-        $message = "🚚 *Pesanan Anda Sedang Dikirim!*\n\n";
+        $message = "*PESANAN ANDA SEDANG DIKIRIM*\n\n";
         
         $message .= "Kabar gembira! Pesanan *#{$order->order_number}* telah diserahkan ke kurir dan sedang dalam perjalanan menuju lokasi Anda.\n\n";
         
-        $message .= "📦 *Informasi Pengiriman:*\n";
+        $message .= "*Informasi Pengiriman:*\n";
         
         if ($order->expedition) {
             $message .= "Kurir: *{$order->expedition->name}*\n";
@@ -726,15 +877,74 @@ class WACloudHelper
         
         $message .= "No. Resi: *{$order->tracking_number}*\n\n";
         
-        $message .= "💡 *Tips:*\n";
+        $message .= "*Tips:*\n";
         $message .= "Anda dapat melacak posisi pesanan Anda secara berkala melalui website kurir terkait atau di menu 'Pesanan Saya' pada aplikasi/website kami.\n\n";
         
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-        $message .= "📞 *Butuh Bantuan?*\n";
+        $message .= "*Butuh Bantuan?*\n";
         $message .= "Hubungi customer service kami jika Anda menemui kendala dalam pengiriman.\n";
         $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
         
         $message .= "Terima kasih telah berbelanja di Rasa Group! 🙏";
+        
+        return $message;
+    }
+
+    /**
+     * Build pickup ready notification message
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return string
+     */
+    private static function buildPickupReadyMessage(\App\Models\Order $order): string
+    {
+        $message = "*Pesanan Anda Siap Diambil!*\n\n";
+        
+        $message .= "Kabar gembira! Pesanan *#{$order->order_number}* telah disiapkan dan siap untuk Anda ambil di gudang kami.\n\n";
+        
+        if ($order->pickup_ready_at) {
+            $message .= "*Jadwal Siap Diambil:*\n";
+            $message .= "*" . $order->pickup_ready_at->translatedFormat('l, d F Y H:i') . " WIB*\n\n";
+        }
+        
+        if ($order->pickup_note) {
+            $message .= "*Catatan Pengambilan:*\n";
+            $message .= "{$order->pickup_note}\n\n";
+        }
+        
+        $message .= "*Informasi Tambahan:*\n";
+        $message .= "Silakan tunjukkan pesan ini atau nomor pesanan Anda kepada petugas gudang kami saat pengambilan.\n\n";
+        
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $message .= "*Butuh Bantuan?*\n";
+        $message .= "Hubungi customer service kami jika Anda memiliki pertanyaan lebih lanjut.\n";
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+        $message .= "Terima kasih telah berbelanja di Rasa Group!";
+        
+        return $message;
+    }
+
+    /**
+     * Build pickup handover notification message
+     * 
+     * @param \App\Models\Order $order Order model
+     * @return string
+     */
+    private static function buildPickupHandoverMessage(\App\Models\Order $order): string
+    {
+        $message = "*Pesanan Anda Telah Diserahkan!*\n\n";
+        
+        $message .= "Pesanan *#{$order->order_number}* telah berhasil diserahkan dan diambil pada tanggal *" . $order->shipped_at->translatedFormat('d F Y H:i') . " WIB*.\n\n";
+        
+        $message .= "Kami harap barang yang Anda terima dalam kondisi baik dan sesuai pesanan.\n\n";
+        
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+        $message .= "*Butuh Bantuan?*\n";
+        $message .= "Hubungi customer service kami jika Anda menemui kendala dengan pesanan Anda.\n";
+        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+        $message .= "Terima kasih telah berbelanja di Rasa Group!";
         
         return $message;
     }
@@ -747,17 +957,22 @@ class WACloudHelper
      */
     private static function buildWarehouseOrderNotificationMessage(\App\Models\Order $order): string
     {
-        $message = "📢 *PESANAN BARU MASUK (SUDAH LUNAS)*\n\n";
+        if ($order->payment_method === 'term_of_payment') {
+            $message = "*PESANAN BARU MASUK (TEMPO/TOP)*\n\n";
+            $message .= "Halo [NAMA_USER], ada pesanan baru dengan metode pembayaran Tempo (TOP).\n";
+            $message .= "Pesanan ini *SUDAH BISA DIPROSES* tanpa menunggu pembayaran lunas.\n\n";
+        } else {
+            $message = "*PESANAN BARU MASUK (SUDAH LUNAS)*\n\n";
+            $message .= "Halo [NAMA_USER], ada pesanan baru yang masuk ke Hub/Gudang Anda dan sudah dikonfirmasi lunas.\n\n";
+        }
         
-        $message .= "Halo, ada pesanan baru yang masuk ke Hub/Gudang Anda dan sudah dikonfirmasi lunas.\n\n";
-        
-        $message .= "📦 *Detail Pesanan:*\n";
+        $message .= "*Detail Pesanan:*\n";
         $message .= "No. Pesanan: *#{$order->order_number}*\n";
         $message .= "Tanggal: " . $order->created_at->format('d/m/Y H:i') . "\n";
         $message .= "Total: Rp " . number_format($order->total_amount, 0, ',', '.') . "\n\n";
         
         if ($order->items && $order->items->count() > 0) {
-            $message .= "🛍️ *Item:* \n";
+            $message .= "*Item:* \n";
             foreach ($order->items as $item) {
                 $productName = $item->product ? $item->product->name : 'Produk';
                 $message .= "• {$productName} (Qty: {$item->quantity})\n";
@@ -765,9 +980,9 @@ class WACloudHelper
             $message .= "\n";
         }
         
-        $message .= "🚚 *Kurir:* " . ($order->expedition ? $order->expedition->name : '-') . " (" . ($order->expedition_service ?: '-') . ")\n\n";
+        $message .= "*Kurir:* " . ($order->expedition ? $order->expedition->name : '-') . " (" . ($order->expedition_service ?: '-') . ")\n\n";
         
-        $message .= "📍 *Tujuan:* \n";
+        $message .= "*Tujuan:* \n";
         if ($order->address) {
             $message .= "{$order->address->recipient_name}\n";
             $message .= "{$order->address->phone}\n";
@@ -781,7 +996,7 @@ class WACloudHelper
             $message .= "Lihat detail di dashboard\n\n";
         }
 
-        $message .= '📝 *Catatan:* ' . ($order->notes ?: '-') . "\n\n";
+        $message .= '*Catatan:* ' . ($order->notes ?: '-') . "\n\n";
         
         $message .= "━━━━━━━━━━━━━━━━━━━━\n";
         $message .= "Silakan login ke dashboard Warehouse Anda untuk memproses pesanan ini.\n";

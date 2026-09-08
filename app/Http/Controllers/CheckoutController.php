@@ -1152,7 +1152,13 @@ class CheckoutController extends Controller
                 // Dispatch background job to send payment notification
                 try {
                     \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
-                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
+                    
+                    if ($order->payment_method === 'term_of_payment') {
+                        // TOP langsung dikirimkan notifikasi ke admin hub untuk diproses (tanpa menunggu lunas)
+                        \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
+                    }
+                    // Untuk selain term_of_payment, notifikasi gudang baru akan dikirim
+                    // SETELAH pembayaran diterima (melalui webhook Faspay atau verifikasi manual Admin)
                 } catch (\Exception $exNotification) {
                     Log::warning('Checkout Debug: Gagal dispatch WhatsApp notification (non-fatal)', [
                         'order_id' => $order->id,

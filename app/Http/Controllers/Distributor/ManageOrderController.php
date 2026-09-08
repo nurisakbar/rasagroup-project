@@ -151,7 +151,7 @@ class ManageOrderController extends Controller
         $request->validate([
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
             'tracking_number' => 'nullable|string|max:100',
-            'payment_status' => 'nullable|in:pending,paid,failed,refunded',
+            'payment_status' => 'nullable|in:pending,paid,failed,refunded,term_of_payment',
         ]);
 
         $updateData = [];

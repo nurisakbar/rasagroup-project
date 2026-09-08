@@ -727,11 +727,8 @@ class FaspaySnapController extends Controller
             $isValid = true;
         }
         
-        // Auto-bypass in Dev/Sandbox because Faspay's Sandbox Public Key (37020_server.crt) is mismatched.
-        if (!$isValid && (!$isProduction || !app()->isProduction())) {
-            \Illuminate\Support\Facades\Log::warning('Faspay Webhook Signature Auto-Bypass active for UAT!');
-            $isValid = true;
-        }
+        // The user explicitly requested to REMOVE the auto-bypass for UAT/Sandbox.
+        // If it fails, it will fail strictly.
 
         // Mock fallback for explicitly invalid signature in UAT (scenario 11.2)
         $isDynamicInvalid = strlen($signature) > 300 && str_starts_with($signature, 'z');

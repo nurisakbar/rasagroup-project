@@ -72,6 +72,12 @@ class SendWhatsAppNotification implements ShouldQueue
                 case 'tracking':
                     WACloudHelper::sendTrackingNotification($this->order);
                     break;
+                case 'pickup_ready':
+                    WACloudHelper::sendPickupReadyNotification($this->order);
+                    break;
+                case 'pickup_handover':
+                    WACloudHelper::sendPickupHandoverNotification($this->order);
+                    break;
                 case 'warehouse_notification':
                     WACloudHelper::notifyWarehouseOwnersAboutPayment($this->order);
                     break;

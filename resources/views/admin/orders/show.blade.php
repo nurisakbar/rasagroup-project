@@ -41,6 +41,11 @@
                         </form>
                     </div>
                     @endif
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <a href="{{ route('admin.orders.surat-jalan', $order) }}" target="_blank" class="btn btn-xs btn-default" title="Cetak Surat Jalan">
+                            <i class="fa fa-print"></i> Cetak Surat Jalan
+                        </a>
+                    </div>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">
@@ -500,15 +505,17 @@
                                     'paid' => 'success',
                                     'failed' => 'danger',
                                     'refunded' => 'info',
+                                    'term_of_payment' => 'primary',
                                 ][$order->payment_status] ?? 'default';
                             @endphp
 
                             <select name="payment_status" id="payment_status" class="form-control">
                                 <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="pending" {{ $order->payment_status === 'pending' && $order->payment_method !== 'term_of_payment' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
                                 <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
                                 <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
+                                <option value="term_of_payment" {{ $order->payment_status === 'term_of_payment' || ($order->payment_status === 'pending' && $order->payment_method === 'term_of_payment') ? 'selected' : '' }}>Term Of Payment</option>
                             </select>
                         </div>
 
@@ -527,7 +534,7 @@
                                     'cancelled' => 'danger',
                                 ][$order->order_status] ?? 'default';
                             @endphp
-                            @if($order->payment_status === 'paid')
+                            @if($order->payment_status === 'paid' || $order->payment_method === 'term_of_payment')
                                 <select name="order_status" id="order_status" class="form-control">
                                     <option value="">-- Pilih Status Baru (Opsional) --</option>
                                     <option value="pending" {{ $order->order_status === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -572,7 +579,6 @@
                                 <i class="fa fa-shopping-bag"></i> <strong>Ambil Sendiri di Gudang</strong><br>
                                 <small>Tentukan kapan pesanan siap diambil dan berikan catatan instruksi untuk pembeli.</small>
                             </div>
-                            @if($order->payment_status === 'paid')
                                 <label for="pickup_ready_at" style="font-weight: 600;"><i class="fa fa-calendar-check-o text-success"></i> 1. Tanggal & Waktu Siap Diambil (Ready)</label>
                                 <input type="datetime-local" class="form-control" id="pickup_ready_at" name="pickup_ready_at" 
                                        value="{{ $order->pickup_ready_at ? $order->pickup_ready_at->format('Y-m-d\TH:i') : '' }}" style="margin-bottom: 12px; font-size: 14px; padding: 8px;">
@@ -591,8 +597,7 @@
                                 <small class="text-info" style="display: block; margin-top: 6px;">
                                     <i class="fa fa-info-circle"></i> Mengisi waktu diserahkan/diambil akan otomatis mengubah status pesanan menjadi Dikirim (Diserahkan).
                                 </small>
-                            @endif
-                        </div>
+                            </div>
                         @else
                         <div class="form-group">
                             <label for="tracking_number">Nomor Resi Pengiriman</label>

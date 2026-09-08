@@ -68,11 +68,15 @@
                         
                         <div class="mb-40 p-30 border-radius-20" style="background-color: #F8F9FA; border: 1.5px dashed #ECECEC;">
                             <div class="row align-items-center">
-                                <div class="col-md-6 text-md-start text-center mb-md-0 mb-3">
+                                <div class="col-md-4 text-md-start text-center mb-md-0 mb-3">
                                     <span class="font-md d-block mb-1" style="color: #4b5563;">Nomor Pesanan</span>
                                     <h4 style="font-weight: 700; color: #6A1B1B; margin: 0;">{{ $order->order_number }}</h4>
                                 </div>
-                                <div class="col-md-6 text-md-end text-center">
+                                <div class="col-md-4 text-center mb-md-0 mb-3">
+                                    <span class="font-md d-block mb-1" style="color: #4b5563;">Merchant (Provider)</span>
+                                    <h4 style="font-weight: 700; color: #6A1B1B; margin: 0;">{{ strtoupper($order->company ?? 'RDI') }}</h4>
+                                </div>
+                                <div class="col-md-4 text-md-end text-center">
                                     <span class="font-md d-block mb-1" style="color: #4b5563;">Total Pembayaran</span>
                                     <h4 style="font-weight: 700; color: #6A1B1B; margin: 0;">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</h4>
                                 </div>

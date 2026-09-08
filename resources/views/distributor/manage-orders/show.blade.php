@@ -266,6 +266,7 @@
                                     'paid' => 'success',
                                     'failed' => 'danger',
                                     'refunded' => 'info',
+                                    'term_of_payment' => 'primary',
                                 ][$order->payment_status] ?? 'default';
                             @endphp
                             <div class="text-center" style="margin-bottom: 10px;">
@@ -274,15 +275,22 @@
                                 </span>
                                 <p class="text-muted" style="margin-top: 5px; margin-bottom: 0;">
                                     <i class="fa fa-{{ $order->payment_method == 'transfer' ? 'bank' : 'money' }}"></i>
-                                    {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ($order->payment_method == 'cod' ? 'COD (Bayar di Tempat)' : ucfirst($order->payment_method)) }}
+                                    @if($order->payment_method === 'term_of_payment')
+                                        Term Of Payment ({{ $order->user->term_of_payment ?? 0 }} Hari)
+                                    @elseif($order->payment_method === 'cod')
+                                        COD (Bayar di Tempat)
+                                    @else
+                                        {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ucfirst(str_replace('_', ' ', $order->payment_method)) }}
+                                    @endif
                                 </p>
                             </div>
                             <select name="payment_status" id="payment_status" class="form-control">
                                 <option value="">-- Pilih Status Pembayaran Baru (Opsional) --</option>
-                                <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="pending" {{ $order->payment_status === 'pending' && $order->payment_method !== 'term_of_payment' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid (Lunas)</option>
                                 <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed (Gagal)</option>
                                 <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
+                                <option value="term_of_payment" {{ $order->payment_status === 'term_of_payment' || ($order->payment_status === 'pending' && $order->payment_method === 'term_of_payment') ? 'selected' : '' }}>Term Of Payment</option>
                             </select>
                         </div>
 

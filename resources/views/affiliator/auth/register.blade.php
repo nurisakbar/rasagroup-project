@@ -1,0 +1,182 @@
+@extends('themes.nest.layouts.app')
+
+@section('title', 'Daftar Affiliator')
+
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        background: #ffffff;
+        border: none;
+        border-radius: 12px;
+        height: 55px;
+        padding: 12px 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 55px;
+        right: 15px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 31px;
+        padding-left: 0;
+        color: #495057;
+    }
+    .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
+    .select2-selection {
+        width: 100% !important;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="page-header breadcrumb-wrap">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
+            <span></span> Daftar Affiliator
+        </div>
+    </div>
+</div>
+<div class="page-content pt-150 pb-150" style="background-color: #F2EAE1;">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 pr-30 d-none d-lg-block">
+                        <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Register Affiliator" />
+                    </div>
+                    <div class="col-lg-6 col-md-8">
+                        <div class="login_wrap widget-taber-content background-white p-30 border-radius-20">
+                            <div class="padding_eight_all">
+                                <div class="heading_s1">
+                                    <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Daftar Affiliator</h1>
+                                    <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Sudah punya akun? <a href="{{ route('login') }}" style="color: #6A1B1B; font-weight: 600;">Masuk di sini</a></p>
+                                </div>
+                                <form method="POST" action="{{ route('affiliator.register') }}">
+                                    @csrf
+
+                                    <div class="form-group mb-20">
+                                        <input type="text" required="" name="name" placeholder="Nama Lengkap *" value="{{ old('name') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        @error('name')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-20">
+                                        <input type="email" required="" name="email" placeholder="Email *" value="{{ old('email') }}" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        @error('email')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-20">
+                                        <input type="text" required="" name="phone" placeholder="Nomor WhatsApp (Contoh: 08123456789) *" value="{{ old('phone') }}" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" />
+                                        @error('phone')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-20 position-relative">
+                                        <input id="password" required="" type="password" name="password" placeholder="Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 50px 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
+                                        <span class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7E7E7E;">
+                                            <i class="fi-rs-eye" id="toggleIcon1"></i>
+                                        </span>
+                                        @error('password')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group mb-20 position-relative">
+                                        <input id="password_confirmation" required="" type="password" name="password_confirmation" placeholder="Konfirmasi Kata Sandi *" style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 50px 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
+                                        <span class="password-toggle" onclick="togglePassword('password_confirmation', 'toggleIcon2')" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7E7E7E;">
+                                            <i class="fi-rs-eye" id="toggleIcon2"></i>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="form-group mb-20">
+                                        <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
+                                            @php
+                                                $currentSalesCode = old('sales_code');
+                                                $salesName = '';
+                                                if ($currentSalesCode) {
+                                                    $salesUser = \App\Models\User::where('sales_code', $currentSalesCode)->where('role', 'sales')->first();
+                                                    $salesName = $salesUser ? ' - ' . $salesUser->name : '';
+                                                }
+                                            @endphp
+                                            @if($currentSalesCode)
+                                                <option value="{{ $currentSalesCode }}" selected="selected">{{ $currentSalesCode }}{{ $salesName }}</option>
+                                            @endif
+                                        </select>
+                                        @error('sales_code')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="login_footer form-group mb-50">
+                                        <div class="chek-form">
+                                            <div class="custome-checkbox">
+                                                <input class="form-check-input" type="checkbox" name="terms" id="exampleCheckbox12" value="" required />
+                                                <label class="form-check-label" for="exampleCheckbox12"><span style="color: #6A1B1B; font-weight: 500;">Saya setuju Syarat & Ketentuan</span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%; background-color: rgba(111, 23, 21, 1); color: #ffffff; border-radius: 12px; height: 55px; font-weight: 700; border: none;">Daftar Akun</button>
+                                    </div>
+                                    
+                                    <p class="font-xs text-muted mt-30 text-center">Data pribadi Anda akan dilindungi dan digunakan sesuai dengan kebijakan privasi kami.</p>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#sales_code').select2({
+            placeholder: 'Masukkan Nama Sales (Opsional)',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: '{{ route('sales.search') }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+
+    function togglePassword(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fi-rs-eye');
+            toggleIcon.classList.add('fi-rs-eye-crossed');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fi-rs-eye-crossed');
+            toggleIcon.classList.add('fi-rs-eye');
+        }
+    }
+</script>
+@endpush

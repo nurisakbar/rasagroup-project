@@ -73,7 +73,7 @@ class OrderController extends Controller
                 } elseif ($request->tab_status === 'menunggu_konfirmasi') {
                     $query->where('payment_status', 'pending')->whereNotNull('payment_proof');
                 } elseif ($request->tab_status === 'sedang_diproses') {
-                    $query->where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing']);
+                    $query->whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing']);
                 } elseif ($request->tab_status === 'dikirim') {
                     $query->where('order_status', 'shipped');
                 } elseif ($request->tab_status === 'selesai') {
@@ -143,8 +143,9 @@ class OrderController extends Controller
                         'paid' => 'success',
                         'failed' => 'danger',
                         'refunded' => 'info',
+                        'term_of_payment' => 'primary',
                     ][$order->payment_status] ?? 'default';
-                    return '<span class="label label-' . $paymentClass . '">' . ucfirst($order->payment_status) . '</span>';
+                    return '<span class="label label-' . $paymentClass . '">' . ucwords(str_replace('_', ' ', $order->payment_status)) . '</span>';
                 })
                 ->addColumn('action', function ($order) {
                     $btn = '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-info btn-xs" style="margin-right: 3px;">
@@ -166,7 +167,7 @@ class OrderController extends Controller
                         'semua' => (clone $baseQuery)->count(),
                         'menunggu_pembayaran' => (clone $baseQuery)->where('payment_status', 'pending')->whereNull('payment_proof')->count(),
                         'menunggu_konfirmasi' => (clone $baseQuery)->where('payment_status', 'pending')->whereNotNull('payment_proof')->count(),
-                        'sedang_diproses' => (clone $baseQuery)->where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing'])->count(),
+                        'sedang_diproses' => (clone $baseQuery)->whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing'])->count(),
                         'dikirim' => (clone $baseQuery)->where('order_status', 'shipped')->count(),
                         'selesai' => (clone $baseQuery)->whereIn('order_status', ['delivered', 'completed'])->count(),
                     ]
@@ -181,7 +182,7 @@ class OrderController extends Controller
         $countSemua = Order::count();
         $countMenungguPembayaran = Order::where('payment_status', 'pending')->whereNull('payment_proof')->count();
         $countMenungguKonfirmasi = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
-        $countSedangDiproses = Order::where('payment_status', 'paid')->whereIn('order_status', ['pending', 'processing'])->count();
+        $countSedangDiproses = Order::whereIn('payment_status', ['paid', 'term_of_payment'])->whereIn('order_status', ['pending', 'processing'])->count();
         $countDikirim = Order::where('order_status', 'shipped')->count();
         $countSelesai = Order::whereIn('order_status', ['delivered', 'completed'])->count();
 
@@ -265,7 +266,7 @@ class OrderController extends Controller
     public function updatePayment(Request $request, Order $order)
     {
         $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed,refunded',
+            'payment_status' => 'required|in:pending,paid,failed,refunded,term_of_payment',
         ]);
 
         $updateData = ['payment_status' => $request->payment_status];
@@ -299,7 +300,7 @@ class OrderController extends Controller
         $request->validate([
             'order_status' => 'nullable|in:pending,processing,shipped,delivered,completed,cancelled',
             'tracking_number' => 'nullable|string|max:100',
-            'payment_status' => 'nullable|in:pending,paid,failed,refunded',
+            'payment_status' => 'nullable|in:pending,paid,failed,refunded,term_of_payment',
             'pickup_ready_at' => 'nullable|date',
             'shipped_at' => 'nullable|date',
             'pickup_note' => 'nullable|string|max:1000',
@@ -394,8 +395,22 @@ class OrderController extends Controller
             $this->sendOrderTransitionNotifications($order, $oldStatus, $oldPickupReady, $oldShippedAt);
 
             // Dispatch background job for tracking notification
-            if (isset($updateData['tracking_number'])) {
-                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'tracking');
+            if (isset($updateData['tracking_number']) && $updateData['tracking_number'] !== null) {
+                if ($order->wasChanged('tracking_number')) {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'tracking');
+                }
+            }
+
+            if (isset($updateData['pickup_ready_at']) && $updateData['pickup_ready_at'] !== null) {
+                if ($order->wasChanged('pickup_ready_at')) {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'pickup_ready');
+                }
+            }
+
+            if (isset($updateData['shipped_at']) && $updateData['shipped_at'] !== null) {
+                if ($order->wasChanged('shipped_at')) {
+                    \App\Jobs\SendWhatsAppNotification::dispatch($order, 'pickup_handover');
+                }
             }
 
             $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
