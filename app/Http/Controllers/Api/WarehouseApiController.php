@@ -23,7 +23,11 @@ class WarehouseApiController extends Controller
         return Cache::remember($cacheKey, 86400, function () use ($request) {
             $query = Warehouse::with(['wilayah'])
                 ->withCount('stocks as products_count')
-                ->withSum('stocks', 'stock');
+                ->withSum('stocks', 'stock')
+                ->where(function ($q) {
+                    $q->whereJsonContains('sync_sources', 'qad')
+                      ->orWhereJsonContains('sync_sources', 'jubelio');
+                });
 
             // Filter by province
             if ($request->filled('province_id')) {
@@ -77,6 +81,10 @@ class WarehouseApiController extends Controller
                     $q->where('id', $warehouse)->orWhere('slug', $warehouse);
                 })
                 ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereJsonContains('sync_sources', 'qad')
+                      ->orWhereJsonContains('sync_sources', 'jubelio');
+                })
                 ->first();
 
             if (!$warehouseModel) {
@@ -224,7 +232,11 @@ class WarehouseApiController extends Controller
         $cacheKey = 'api_warehouses_with_products_' . md5(json_encode($request->all()));
         
         return Cache::remember($cacheKey, 86400, function () use ($request) {
-            $query = Warehouse::with(['wilayah']);
+            $query = Warehouse::with(['wilayah'])
+                ->where(function ($q) {
+                    $q->whereJsonContains('sync_sources', 'qad')
+                      ->orWhereJsonContains('sync_sources', 'jubelio');
+                });
 
             // Filter by province
             if ($request->filled('province_id')) {
