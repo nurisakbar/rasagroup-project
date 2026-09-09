@@ -141,7 +141,7 @@ class FaspaySnapService
             'additionalInfo' => [
                 'billDate' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
                 'billDescription' => 'Payment #' . $order->order_number,
-                'channelCode' => '836',
+                'channelCode' => '711',
                 'phoneNo' => $order->user->phone ?? '081234567890'
             ]
         ];
