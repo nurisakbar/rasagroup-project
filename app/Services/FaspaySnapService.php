@@ -153,7 +153,7 @@ class FaspaySnapService
             'X-SIGNATURE' => $signature,
             'X-PARTNER-ID' => $partnerId,
             'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
-            'CHANNEL-ID' => '77001',
+            'CHANNEL-ID' => $this->company === FaspayConfig::COMPANY_MCR ? '836' : '77001',
             'Content-Type' => 'application/json'
         ];
 
