@@ -85,7 +85,7 @@ class FaspaySnapService
     public function generateTransactionAsymmetricSignature($method, $endpoint, $payload, $timestamp, $privateKey = null)
     {
         $privateKey = $privateKey ?: $this->getPrivateKey();
-        $minifyPayload = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $minifyPayload = is_string($payload) ? $payload : json_encode($payload, JSON_UNESCAPED_SLASHES);
         $hashPayload = strtolower(hash('sha256', $minifyPayload));
         $stringToSign = $method . ":" . $endpoint . ":" . $hashPayload . ":" . $timestamp;
         
@@ -146,7 +146,8 @@ class FaspaySnapService
             ]
         ];
 
-        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $payload, $timestamp, $privateKey);
+        $requestBody = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $requestBody, $timestamp, $privateKey);
 
         $headers = [
             'X-TIMESTAMP' => $timestamp,
@@ -166,7 +167,8 @@ class FaspaySnapService
 
         $response = Http::withoutVerifying()
             ->withHeaders($headers)
-            ->post($url, $payload);
+            ->withBody($requestBody, 'application/json')
+            ->post($url);
 
         Log::debug('Faspay SNAP QRIS Response', [
             'company' => $this->company,
