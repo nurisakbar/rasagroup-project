@@ -148,10 +148,10 @@ class SyncCustomerToQad implements ShouldQueue
         $street1 = $this->sanitizeStreet((string) ($this->addressSnapshot['street1'] ?? '-'));
         $street2 = $this->sanitizeStreet((string) ($this->addressSnapshot['street2'] ?? '-'));
 
-        $nameShort = substr($name, 0, 20);
-        $cityShort = substr($city, 0, 30);
-        $street1Short = substr($street1, 0, 30);
-        $street2Short = substr($street2, 0, 30);
+        $nameShort = substr($name, 0, 24);
+        $cityShort = substr($city, 0, 24);
+        $street1Short = substr($street1, 0, 24);
+        $street2Short = substr($street2, 0, 24);
 
         if ($useMinimal) {
             $name = $customerCode;
@@ -177,7 +177,7 @@ class SyncCustomerToQad implements ShouldQueue
             'customerCode' => $customerCode,
             'isActive' => true,
             'isBusinessRelationActive' => true,
-            'businessRelationName' => $name,
+            'businessRelationName' => substr($name, 0, 24),
             'invoiceControlGLProfileCode' => '12101',
             'creditNoteControlGLProfileCode' => '12101',
             'prePaymentControlGLProfileCode' => '12101',

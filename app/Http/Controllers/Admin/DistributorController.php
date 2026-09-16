@@ -284,6 +284,7 @@ class DistributorController extends Controller
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
             'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
+            'aturan_minimal_masa_berlaku' => ['nullable', 'integer', 'min:0'],
         ]);
 
         // Create the warehouse/hub first
@@ -318,6 +319,7 @@ class DistributorController extends Controller
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
+            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? null,
         ]);
 
         // Sync all active products to warehouse stock
@@ -820,6 +822,7 @@ class DistributorController extends Controller
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
             'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
+            'aturan_minimal_masa_berlaku' => ['nullable', 'integer', 'min:0'],
         ]);
 
         // Update hub
@@ -848,6 +851,7 @@ class DistributorController extends Controller
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
+            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? null,
         ];
 
         $distributor->update($userData);

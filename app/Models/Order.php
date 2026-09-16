@@ -71,6 +71,7 @@ class Order extends Model
         'jubelio_salesorder_id',
         'jubelio_salesorder_no',
         'sales_code',
+        'qad_sync_history',
     ];
 
     protected $casts = [
@@ -90,6 +91,7 @@ class Order extends Model
         'payment_submitted_at' => 'datetime',
         'finance_approved' => 'boolean',
         'finance_approved_at' => 'datetime',
+        'qad_sync_history' => 'array',
     ];
 
     protected static function booted(): void

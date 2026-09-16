@@ -55,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'distributor_province_id',
         'distributor_regency_id',
         'distributor_address',
+        'aturan_minimal_masa_berlaku',
         'driippreneur_status',
         'driippreneur_province_id',
         'driippreneur_regency_id',

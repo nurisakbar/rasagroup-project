@@ -134,6 +134,7 @@ class QadHubSyncService
 
         $items = QadResponseHelper::list($response);
         $processed = 0;
+        $stockMap = [];
 
         foreach ($items as $item) {
             $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
@@ -143,6 +144,13 @@ class QadHubSyncService
                 continue;
             }
 
+            if (!isset($stockMap[$itemCode])) {
+                $stockMap[$itemCode] = 0;
+            }
+            $stockMap[$itemCode] += $qty;
+        }
+
+        foreach ($stockMap as $itemCode => $totalQty) {
             $product = ProductCodeMatcher::findProduct($itemCode);
             if (! $product) {
                 continue;
@@ -154,7 +162,7 @@ class QadHubSyncService
                     'product_id' => $product->id,
                 ],
                 [
-                    'stock' => max(0, $qty),
+                    'stock' => max(0, $totalQty),
                 ]
             );
 

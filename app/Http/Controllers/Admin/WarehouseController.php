@@ -356,7 +356,9 @@ class WarehouseController extends Controller
 
         // Get stocks with product information
         $query = WarehouseStock::with('product')
-            ->whereHas('product')
+            ->whereHas('product', function($q) {
+                $q->where('status', 'active');
+            })
             ->where('warehouse_id', $warehouse->id);
         
         // Search filter
@@ -376,8 +378,47 @@ class WarehouseController extends Controller
             ->whereNotIn('id', $existingProductIds)
             ->orderBy('name')
             ->get();
+            
+        $qadBatches = [];
+        if ($request->tab == 'stock' && $warehouse->kode_hub) {
+            try {
+                $qad = app(\App\Services\QadService::class);
+                $response = $qad->getAllInventory([
+                    'location' => $warehouse->kode_hub,
+                    'search' => '',
+                    'batch' => '',
+                    'length' => 1000,
+                ]);
+                
+                if (class_exists(\App\Support\QadResponseHelper::class)) {
+                    $items = \App\Support\QadResponseHelper::list($response);
+                } else {
+                    $items = $response['data'] ?? [];
+                }
+                
+                foreach ($items as $item) {
+                    $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
+                    $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
+                    $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
+                    $expired = $item['expired_short'] ?? $item['expired'] ?? null;
+                    
+                    if ($itemCode && $lotSerial) {
+                        if (!isset($qadBatches[$itemCode])) {
+                            $qadBatches[$itemCode] = [];
+                        }
+                        $qadBatches[$itemCode][] = [
+                            'lot_serial' => $lotSerial,
+                            'qty' => $qty,
+                            'expired' => $expired,
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to fetch realtime batch from QAD: ' . $e->getMessage());
+            }
+        }
         
-        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts'));
+        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'qadBatches'));
     }
 
     public function edit(Warehouse $warehouse)

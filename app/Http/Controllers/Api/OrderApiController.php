@@ -734,6 +734,151 @@ class OrderApiController extends Controller
     }
 
     /**
+     * Update order status pengiriman.
+     *
+     * PUT /api/orders/{id}/status
+     * Body: order_status
+     */
+    public function updateStatus(Request $request, string $id): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_status' => 'required|in:pending,processing,shipped,delivered,completed,cancelled',
+        ], [
+            'order_status.required' => 'Status pengiriman wajib diisi.',
+            'order_status.in' => 'Status pengiriman tidak valid.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $order = Order::where('id', $id)
+            ->orWhere('order_number', $id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        $updateData = ['order_status' => $request->order_status];
+
+        // If status changed to shipped and no shipped_at date, set it
+        if ($request->order_status === 'shipped' && !$order->shipped_at) {
+            $updateData['shipped_at'] = now();
+        }
+
+        if (in_array($request->order_status, ['delivered', 'completed']) && !$order->received_at) {
+            $updateData['received_at'] = now();
+        }
+
+        // If order is completed, credit points
+        if ($request->order_status === 'completed') {
+            $order->creditPoints();
+        }
+
+        $oldStatus = $order->order_status;
+        $order->update($updateData);
+
+        // Notifications
+        if ($oldStatus !== $request->order_status && $order->user) {
+            if ($request->order_status === 'processing') {
+                $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+            } elseif ($request->order_status === 'shipped') {
+                $order->user->notify(new \App\Notifications\Orders\OrderShippedNotification($order));
+            } elseif ($request->order_status === 'completed') {
+                $order->user->notify(new \App\Notifications\Orders\OrderCompletedNotification($order));
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status pengiriman berhasil diperbarui.',
+            'data' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'order_status' => $order->order_status,
+                'shipped_at' => $order->shipped_at ? $order->shipped_at->toISOString() : null,
+                'received_at' => $order->received_at ? $order->received_at->toISOString() : null,
+            ]
+        ]);
+    }
+
+    /**
+     * Request approval to EDMS system
+     *
+     * POST /api/orders/{id}/edms-approval
+     */
+    public function requestEdmsApproval(Request $request, string $id): JsonResponse
+    {
+        $order = Order::with(['user', 'items.product'])->where('id', $id)
+            ->orWhere('order_number', $id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        // Build payload for EDMS
+        $payload = [
+            'transaction_id' => $order->id,
+            'transaction_number' => $order->order_number,
+            'user_id' => $order->user_id,
+            'customer_name' => $order->user ? $order->user->name : 'Unknown',
+            'amount' => (float) $order->total_amount,
+            'payment_method' => $order->payment_method,
+            'status' => 'pending_approval',
+            'items' => $order->items->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product ? $item->product->display_name : 'Unknown',
+                    'quantity' => $item->quantity,
+                    'price' => (float) $item->price,
+                    'subtotal' => (float) $item->subtotal,
+                ];
+            })->toArray(),
+            'requested_at' => now()->toDateTimeString(),
+        ];
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::post('https://edms.rasagroupoffice.com/api/v1/approval_notification', $payload);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Notifikasi approval berhasil dikirim ke EDMS.',
+                    'data' => [
+                        'edms_response' => $response->json(),
+                        'payload' => $payload,
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim notifikasi ke EDMS.',
+                'error' => $response->body()
+            ], $response->status() ?: 500);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat terhubung ke EDMS.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Calculate shipping cost
      */
     private function calculateShippingCost($provinceId, $totalWeight, $expeditionMultiplier = 1.0, $serviceMultiplier = 1.0)

@@ -145,7 +145,7 @@
                                         <tr>
                                             <td class="text-center">
                                                 @if($stock->product->image)
-                                                    <img src="{{ asset($stock->product->image_url) }}" alt="{{ $stock->product->display_name }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                    <img src="{{ asset($stock->product->image_url) }}" alt="Img" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.src='{{ asset('img/no-image.png') }}'; this.onerror=null;">
                                                 @else
                                                     <div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
                                                         <i class="fa fa-image text-muted"></i>
@@ -156,6 +156,21 @@
                                                 <strong>{{ $stock->product->name }}</strong>
                                                 @if($stock->product->status !== 'active')
                                                     <span class="label label-warning">Nonaktif</span>
+                                                @endif
+                                                
+                                                @if(isset($qadBatches[$stock->product->code]) && count($qadBatches[$stock->product->code]) > 0)
+                                                    <div style="margin-top: 5px;">
+                                                        @foreach($qadBatches[$stock->product->code] as $batch)
+                                                            <div>
+                                                                <em>Batch : {{ $batch['lot_serial'] }} 
+                                                                @if(!empty($batch['expired']))
+                                                                    - Expired : {{ $batch['expired'] }}
+                                                                @endif
+                                                                </em> 
+                                                                - Jumlah : {{ number_format($batch['qty']) }}
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 @endif
                                             </td>
                                             <td><code>{{ $stock->product->code }}</code></td>

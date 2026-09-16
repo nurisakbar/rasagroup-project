@@ -237,6 +237,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'invalid_items' => $linesBuild['invalid_items'],
             ]);
 
+            $this->appendSyncLog(
+                [],
+                ['error' => 'Abort create SO because one or more item prices are invalid (<= 0).', 'invalid_items' => $linesBuild['invalid_items']],
+                1,
+                'failed'
+            );
+
             return;
         }
         $lines = $linesBuild['lines'];
@@ -295,9 +302,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'shipDate' => $headerDateIso,
                 'promiseDate' => $headerDateIso,
                 'creditTermsCode' => 'CIA',
-                'remarks' => ($this->order->notes !== null && trim((string) $this->order->notes) !== '')
+                'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
                     ? (string) $this->order->notes
-                    : (string) $this->order->order_number,
+                    : (string) $this->order->order_number, 0, 24),
                 'purchaseOrderNumber' => $purchaseOrderNumber,
                 'taxClass' => 'PPN',
                 'isTaxable' => true,
@@ -355,10 +362,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
             if ($soNumber) {
                 $this->order->update(['qad_so_number' => $soNumber]);
+                $this->appendSyncLog($payload, $result, $attempt, 'success');
                 Log::info('SyncOrderToQad: Sales Order created in QAD', ['qad_so' => $soNumber]);
 
                 return;
             }
+
+            $this->appendSyncLog($payload, $result, $attempt, 'failed');
 
             $errorMsg = json_encode(is_array($result) ? ($result['error'] ?? $result) : []);
             $retryable = str_contains(strtolower($errorMsg), 'badrequest')
@@ -379,6 +389,26 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'order_id' => $this->order->id,
             'response' => $result,
         ]);
+    }
+
+    protected function appendSyncLog(array $payload, $response, int $attempt, ?string $status = null): void
+    {
+        $history = $this->order->qad_sync_history ?? [];
+
+        if ($status === null) {
+            $isError = is_array($response) ? ($response['error']['isError'] ?? false) : false;
+            $status = $isError ? 'failed' : 'success';
+        }
+
+        $history[] = [
+            'attempt' => $attempt,
+            'timestamp' => now()->toDateTimeString(),
+            'status' => $status,
+            'payload' => $payload,
+            'response' => $response,
+        ];
+
+        $this->order->update(['qad_sync_history' => $history]);
     }
 
     /**
@@ -545,9 +575,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'shipDate' => $headerDateIso,
             'promiseDate' => $headerDateIso,
             'creditTermsCode' => 'CIA',
-            'remarks' => ($this->order->notes !== null && trim((string) $this->order->notes) !== '')
+            'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
                 ? (string) $this->order->notes
-                : (string) $this->order->order_number,
+                : (string) $this->order->order_number, 0, 24),
             'purchaseOrderNumber' => $purchaseOrderNumber,
             'taxClass' => 'PPN',
             'isTaxable' => true,

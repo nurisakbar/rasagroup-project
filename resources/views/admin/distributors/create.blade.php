@@ -204,6 +204,18 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('aturan_minimal_masa_berlaku') has-error @enderror">
+                                    <label for="aturan_minimal_masa_berlaku">Aturan Minimal Masa Berlaku (Bulan)</label>
+                                    <input type="number" class="form-control" id="aturan_minimal_masa_berlaku" name="aturan_minimal_masa_berlaku" value="{{ old('aturan_minimal_masa_berlaku') }}" placeholder="Contoh: 6">
+                                    @error('aturan_minimal_masa_berlaku')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="box-footer">
                         <button type="submit" class="btn btn-primary btn-lg">

@@ -214,6 +214,76 @@
                         </tr>
                         @endif
                     </table>
+
+                    @if(!empty($order->qad_sync_history) && is_array($order->qad_sync_history))
+                    <div style="margin-top: 15px;">
+                        <h4>Riwayat Sinkronisasi QAD</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px;">Waktu</th>
+                                        <th style="width: 70px;">Attempt</th>
+                                        <th style="width: 100px;">Status</th>
+                                        <th>Respons / Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(array_reverse($order->qad_sync_history) as $history)
+                                    <tr>
+                                        <td>{{ \Carbon\Carbon::parse($history['timestamp'] ?? '')->format('d M Y H:i:s') }}</td>
+                                        <td>{{ $history['attempt'] ?? '-' }}</td>
+                                        <td>
+                                            @if(($history['status'] ?? '') === 'success')
+                                                <span class="label label-success">Success</span>
+                                            @else
+                                                <span class="label label-danger">Failed</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @php
+                                                $responseStr = '-';
+                                                if (isset($history['response'])) {
+                                                    if (is_array($history['response'])) {
+                                                        // Check for specific error message in array
+                                                        if (isset($history['response']['error']['errorMessages'])) {
+                                                            $errs = $history['response']['error']['errorMessages'];
+                                                            $responseStr = is_array($errs) ? implode(', ', $errs) : $errs;
+                                                        } elseif (isset($history['response']['error']) && is_string($history['response']['error'])) {
+                                                            $responseStr = $history['response']['error'];
+                                                        } else {
+                                                            $responseStr = json_encode($history['response'], JSON_PRETTY_PRINT);
+                                                        }
+                                                    } else {
+                                                        $responseStr = $history['response'];
+                                                    }
+                                                }
+                                            @endphp
+                                            @if(($history['status'] ?? '') !== 'success')
+                                                <div class="text-danger" style="font-size: 13px; font-family: monospace;">{{ $responseStr }}</div>
+                                            @else
+                                                <div class="text-success" style="font-size: 13px; font-family: monospace;">Berhasil ({{ $responseStr }})</div>
+                                            @endif
+
+                                            <div class="text-muted" style="margin-top:5px; font-size:11px;">
+                                                <a href="#" onclick="$(this).next('div').toggle(); return false;">[Lihat Detail JSON Payload & Response]</a>
+                                                <div style="display:none; margin-top:5px;">
+                                                    <strong>Payload:</strong>
+                                                    <a href="#" onclick="var text = $(this).next('pre').text(); navigator.clipboard.writeText(text).then(function() { alert('Payload disalin!'); }); return false;" class="pull-right" style="margin-bottom: 2px;"><i class="fa fa-copy"></i> Copy Payload</a>
+                                                    <pre style="font-size:10px; background-color:#f9f9f9; padding:5px; border:1px solid #ccc; max-height:200px; overflow-y:auto; margin-bottom: 10px; white-space: pre-wrap;">{{ json_encode($history['payload'] ?? [], JSON_PRETTY_PRINT) }}</pre>
+
+                                                    <strong>Response:</strong>
+                                                    <pre style="font-size:10px; background-color:#f9f9f9; padding:5px; border:1px solid #ccc; max-height:200px; overflow-y:auto; white-space: pre-wrap;">{{ json_encode($history['response'] ?? [], JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endif
