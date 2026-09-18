@@ -317,6 +317,8 @@ class OrderController extends Controller
             $updateData['finance_approved'] = true;
             $updateData['finance_approved_at'] = now();
             $updateData['finance_approved_by'] = auth()->id();
+            
+            \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
         }
 
         $order->update($updateData);
@@ -442,6 +444,8 @@ class OrderController extends Controller
                 $updateData['finance_approved'] = true;
                 $updateData['finance_approved_at'] = now();
                 $updateData['finance_approved_by'] = auth()->id();
+                
+                \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
             }
             
             $messages[] = 'Status pembayaran';

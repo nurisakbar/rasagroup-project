@@ -747,6 +747,81 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Integration Logs Box -->
+            <div class="box box-info shadow-sm" style="border-top-color: #00c0ef;">
+                <div class="box-header with-border" style="background-color: #f8f9fa;">
+                    <h3 class="box-title" style="font-weight: 600;"><i class="fa fa-history text-info"></i> Riwayat Integrasi Sistem</h3>
+                </div>
+                <div class="box-body" style="font-size: 13px;">
+                    <ul class="timeline timeline-inverse" style="margin-bottom: 0;">
+                        <!-- Finance Approval Log -->
+                        <li>
+                            <i class="fa {{ $order->finance_approved ? 'fa-check bg-green' : 'fa-clock-o bg-yellow' }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa fa-calendar"></i> {{ $order->finance_approved_at ? $order->finance_approved_at->format('d M H:i') : 'Menunggu' }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>Approval Finance</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($order->finance_approved)
+                                        <span class="label label-success">Disetujui</span>
+                                        @if($order->financeApprover)
+                                            oleh {{ $order->financeApprover->name }}
+                                        @else
+                                            (Auto-Approve System)
+                                        @endif
+                                    @else
+                                        @if($order->payment_method === 'term_of_payment')
+                                            <span class="label label-warning">Pending Approval</span>
+                                            <br><small class="text-muted">Webhook notifikasi telah ditembakkan ke EDMS.</small>
+                                        @else
+                                            <span class="text-muted">Tidak Berlaku (Bukan TOP)</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- WMS Sync Log -->
+                        <li>
+                            @php
+                                $wmsColor = 'bg-gray';
+                                $wmsIcon = 'fa-cloud-upload';
+                                if(in_array($order->wms_so_status, ['SUCCESS', 'PROCESSING', 'QUEUED'])) {
+                                    $wmsColor = 'bg-blue';
+                                    $wmsIcon = 'fa-check';
+                                } elseif($order->wms_so_status === 'FAILED') {
+                                    $wmsColor = 'bg-red';
+                                    $wmsIcon = 'fa-times';
+                                }
+                            @endphp
+                            <i class="fa {{ $wmsIcon }} {{ $wmsColor }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->wms_so_synced_at ? \Carbon\Carbon::parse($order->wms_so_synced_at)->format('d M H:i') : '-' }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>WMS Sales Order</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($order->wms_so_status)
+                                        Status WMS: <strong>{{ $order->wms_so_status }}</strong>
+                                        @if($order->wms_so_failure_reason)
+                                            <div style="margin-top: 5px; padding: 5px; background: #fff3f3; border: 1px solid #ffcccc; border-radius: 4px; color: #cc0000; font-size: 12px; word-wrap: break-word;">
+                                                <strong>Error:</strong> {{ $order->wms_so_failure_reason }}
+                                            </div>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">Belum dikirim ke WMS</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fa fa-clock-o bg-gray"></i>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 

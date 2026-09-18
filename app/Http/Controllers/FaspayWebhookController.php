@@ -99,6 +99,10 @@ class FaspayWebhookController extends Controller
                             'paid_at' => now(),
                         ]);
 
+                        if ($order->payment_method !== 'term_of_payment') {
+                            \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+                        }
+
                         if ($order->order_status === 'pending') {
                             $order->update(['order_status' => 'processing']);
                         }
@@ -201,9 +205,14 @@ class FaspayWebhookController extends Controller
                 
                 if (strtolower($signature) === strtolower($expectedSignature)) {
                     $order->payment_status = 'paid';
+                    $order->paid_at = now();
                     $order->order_status = 'processing';
                     $order->save();
                     Log::info('Order updated to paid via Faspay Return URL', ['order_id' => $order->id]);
+                    
+                    if ($order->payment_method !== 'term_of_payment') {
+                        \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+                    }
                 } else {
                     Log::warning('Faspay Return URL invalid signature', ['received' => $signature, 'expected' => $expectedSignature]);
                 }

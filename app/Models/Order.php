@@ -21,6 +21,8 @@ class Order extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
+    public bool $auto_approved_at_creation = false;
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -29,6 +31,7 @@ class Order extends Model
         'expedition_id',
         'expedition_service',
         'source_warehouse_id',
+        'source_qad_location_code',
         'subtotal',
         'shipping_cost',
         'total_amount',
@@ -72,6 +75,9 @@ class Order extends Model
         'jubelio_salesorder_no',
         'sales_code',
         'qad_sync_history',
+        'wms_so_status',
+        'wms_so_synced_at',
+        'wms_so_failure_reason',
     ];
 
     protected $casts = [
@@ -106,10 +112,31 @@ class Order extends Model
             }
         });
 
+        static::creating(function (Order $order) {
+            // Auto approve TOP orders if below credit limit
+            if ($order->payment_method === 'term_of_payment' && !$order->finance_approved) {
+                $user = $order->user ?? \App\Models\User::find($order->user_id);
+                if ($user && $user->credit_limit !== null) {
+                    $accumulatedDebt = $user->getAccumulatedTopDebt();
+                    if (($accumulatedDebt + (float)$order->total_amount) <= (float)$user->credit_limit) {
+                        $order->finance_approved = true;
+                        $order->finance_approved_at = now();
+                        $order->finance_approved_by = null;
+                        $order->payment_status = 'term_of_payment';
+                        $order->auto_approved_at_creation = true; // Flag for after-creation notification
+                    }
+                }
+            }
+        });
+
         static::created(function (Order $order) {
             // Notifikasi eksternal otomatis untuk transaksi yang butuh approval finance
             if ($order->isAwaitingFinanceApproval() && config('services.finance_approval.enabled', true)) {
                 \App\Jobs\NotifyExternalFinanceApprovalNeeded::dispatch($order);
+            }
+            
+            if (!empty($order->auto_approved_at_creation)) {
+                $order->notifyHubAfterFinanceApproval();
             }
         });
     }
@@ -257,6 +284,7 @@ class Order extends Model
         }
 
         \App\Support\SalesOrderSyncDispatcher::dispatch($this);
+        \App\Jobs\SendSalesOrderToWmsJob::dispatch($this);
     }
 
     /**

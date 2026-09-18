@@ -134,7 +134,8 @@
                                         <th>Produk</th>
                                         <th>Kode Produk</th>
                                         <th>Harga</th>
-                                        <th width="120" class="text-center">Stok</th>
+                                        <th width="120" class="text-center">Stok (Jubelio)</th>
+                                        <th width="120" class="text-center">Fisik (QAD)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -177,17 +178,35 @@
                                             <td>Rp {{ number_format($stock->product->price, 0, ',', '.') }}</td>
                                             <td class="text-center">
                                                 @if($stock->stock <= 10)
-                                                    <span class="badge bg-red" style="font-size: 14px; padding: 5px 10px;">{{ number_format($stock->stock) }}</span>
+                                                    <span class="badge bg-red" style="font-size: 14px; padding: 5px 10px;" title="Stok Jubelio (Database)">{{ number_format($stock->stock) }}</span>
                                                 @elseif($stock->stock <= 50)
-                                                    <span class="badge bg-yellow" style="font-size: 14px; padding: 5px 10px;">{{ number_format($stock->stock) }}</span>
+                                                    <span class="badge bg-yellow" style="font-size: 14px; padding: 5px 10px;" title="Stok Jubelio (Database)">{{ number_format($stock->stock) }}</span>
                                                 @else
-                                                    <span class="badge bg-green" style="font-size: 14px; padding: 5px 10px;">{{ number_format($stock->stock) }}</span>
+                                                    <span class="badge bg-green" style="font-size: 14px; padding: 5px 10px;" title="Stok Jubelio (Database)">{{ number_format($stock->stock) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                @php
+                                                    $qadTotal = 0;
+                                                    if(isset($qadBatches[$stock->product->code])) {
+                                                        foreach($qadBatches[$stock->product->code] as $b) {
+                                                            $qadTotal += $b['qty'];
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($qadTotal > 0)
+                                                    <span class="badge bg-purple" style="font-size: 14px; padding: 5px 10px;" title="Total dari QAD API">{{ number_format($qadTotal) }}</span>
+                                                    @if($stock->stock != $qadTotal)
+                                                        <br><small class="text-danger"><i class="fa fa-warning"></i> Selisih</small>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">-</span>
                                                 @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">
+                                            <td colspan="7" class="text-center">
                                                 <div style="padding: 40px;">
                                                     <i class="fa fa-search fa-3x text-muted"></i>
                                                     <p class="text-muted mt-3">Tidak ada data stok yang ditemukan.</p>

@@ -20,6 +20,7 @@ class Warehouse extends Model
 
     protected $fillable = [
         'kode_hub',
+        'qad_location_code',
         'name',
         'slug',
         'address',

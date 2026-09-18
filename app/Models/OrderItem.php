@@ -23,12 +23,14 @@ class OrderItem extends Model
         'quantity_ordered',
         'price',
         'subtotal',
+        'allocated_batches',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'quantity_ordered' => 'integer',
+        'allocated_batches' => 'array',
     ];
 
     /**

@@ -99,6 +99,7 @@ class CheckoutController extends Controller
             ?? $addresses->firstWhere('is_default', true) 
             ?? $addresses->first();
 
+        $stockWarnings = [];
         // Re-detect best Hub based on default address
         if ($defaultAddress) {
             $syncResult = $this->syncWarehouseByAddress($defaultAddress);
@@ -109,6 +110,9 @@ class CheckoutController extends Controller
                     ->where('user_id', Auth::id())
                     ->where('cart_type', 'regular')
                     ->get();
+            }
+            if ($syncResult && isset($syncResult['stock_warnings'])) {
+                $stockWarnings = $syncResult['stock_warnings'];
             }
         }
 
@@ -318,7 +322,8 @@ class CheckoutController extends Controller
         'sourceWarehouse',
         'affiliate',
         'cart_ids',
-        'paymentFees'
+        'paymentFees',
+        'stockWarnings'
     ));
 }
 
@@ -656,6 +661,21 @@ class CheckoutController extends Controller
         return response()->json($responsePayload);
     }
 
+    public function checkStock(Request $request)
+    {
+        $address = Address::find($request->address_id);
+        if (!$address) {
+            return response()->json(['error' => 'Alamat tidak ditemukan'], 400);
+        }
+
+        $syncResult = $this->syncWarehouseByAddress($address);
+
+        return response()->json([
+            'stock_warnings' => $syncResult['stock_warnings'] ?? [],
+            'hub_changed' => $syncResult['hub_changed'] ?? false,
+        ]);
+    }
+
     // Hardcoded logic removed in favor of RajaOngkirService
 
     public function store(Request $request)
@@ -929,6 +949,68 @@ class CheckoutController extends Controller
                 $total += $paymentFee;
             }
 
+            $qadLocationCode = $sourceWarehouse->qad_location_code ?? $sourceWarehouse->kode_hub;
+            $qadBatches = [];
+            
+            if ($qadLocationCode) {
+                try {
+                    $qad = app(\App\Services\QadService::class);
+                    $response = $qad->getAllInventory([
+                        'location' => $qadLocationCode,
+                        'search' => '',
+                        'batch' => '',
+                        'length' => 1000,
+                    ]);
+                    
+                    $items = class_exists(\App\Support\QadResponseHelper::class) 
+                        ? \App\Support\QadResponseHelper::list($response) 
+                        : ($response['data'] ?? []);
+                    
+                    $minBulan = $user->aturan_minimal_masa_berlaku ?? 0;
+                    $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
+
+                    foreach ($items as $item) {
+                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
+                        $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
+                        
+                        $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
+                        $isValid = true;
+                        
+                        if ($minBulan > 0 && $expiredStr) {
+                            try {
+                                $expDate = \Carbon\Carbon::parse($expiredStr);
+                                if ($expDate->lt($minDate)) {
+                                    $isValid = false;
+                                }
+                            } catch (\Exception $e) {
+                                $isValid = false;
+                            }
+                        }
+
+                        if ($isValid && $itemCode && $qty > 0) {
+                            if (!isset($qadBatches[$itemCode])) {
+                                $qadBatches[$itemCode] = [];
+                            }
+                            $qadBatches[$itemCode][] = [
+                                'lot_serial' => $item['lot_serial'] ?? null,
+                                'qty' => $qty,
+                                'expired' => $expiredStr,
+                            ];
+                        }
+                    }
+                    
+                    foreach ($qadBatches as $code => &$batches) {
+                        usort($batches, function($a, $b) {
+                            $timeA = strtotime($a['expired'] ?? '2099-12-31');
+                            $timeB = strtotime($b['expired'] ?? '2099-12-31');
+                            return $timeA <=> $timeB;
+                        });
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('QAD batch fetch failed at checkout: ' . $e->getMessage());
+                }
+            }
+
             $order = Order::create([
                 'order_type' => $orderType, // Determine by role
                 'order_number' => $orderNumber,
@@ -938,6 +1020,7 @@ class CheckoutController extends Controller
                 'expedition_id' => $expedition->id,
                 'expedition_service' => $request->expedition_service,
                 'source_warehouse_id' => $sourceWarehouse->id,
+                'source_qad_location_code' => $qadLocationCode,
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
@@ -974,6 +1057,27 @@ class CheckoutController extends Controller
             foreach ($carts as $cart) {
                 $lineUnit = $user->getProductPrice($cart->product);
 
+                $allocatedBatches = [];
+                $productCode = $cart->product->code;
+                $qtyNeeded = $cart->quantity;
+                
+                if (isset($qadBatches[$productCode])) {
+                    foreach ($qadBatches[$productCode] as &$batch) {
+                        if ($qtyNeeded <= 0) break;
+                        
+                        if ($batch['qty'] > 0) {
+                            $take = min($qtyNeeded, $batch['qty']);
+                            $allocatedBatches[] = [
+                                'lot_serial' => $batch['lot_serial'],
+                                'qty' => $take,
+                                'expired' => $batch['expired']
+                            ];
+                            $batch['qty'] -= $take;
+                            $qtyNeeded -= $take;
+                        }
+                    }
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
@@ -982,6 +1086,7 @@ class CheckoutController extends Controller
                     'quantity_ordered' => $cart->quantity_ordered,
                     'price' => $lineUnit,
                     'subtotal' => $lineUnit * $cart->quantity,
+                    'allocated_batches' => !empty($allocatedBatches) ? $allocatedBatches : null,
                 ]);
 
                 // Stok lokal tidak dikurangi — asumsi ready; fulfillment via Jubelio/QAD
@@ -1346,10 +1451,88 @@ class CheckoutController extends Controller
 
         $currentHub = $bestHub ?: Warehouse::find($currentWarehouseId);
 
+        $stockWarnings = [];
+        if ($currentHub) {
+            // Fetch QAD stock real-time
+            $qadStock = null;
+            $qadLocationCode = $currentHub->qad_location_code ?? $currentHub->kode_hub;
+            
+            if ($qadLocationCode) {
+                try {
+                    $qad = app(\App\Services\QadService::class);
+                    $response = $qad->getAllInventory([
+                        'location' => $qadLocationCode,
+                        'search' => '',
+                        'batch' => '',
+                        'length' => 1000,
+                    ]);
+                    
+                    if (class_exists(\App\Support\QadResponseHelper::class)) {
+                        $items = \App\Support\QadResponseHelper::list($response);
+                    } else {
+                        $items = $response['data'] ?? [];
+                    }
+                    
+                    $minBulan = \Illuminate\Support\Facades\Auth::user()?->aturan_minimal_masa_berlaku ?? 0;
+                    $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
+
+                    $qadStock = [];
+                    foreach ($items as $item) {
+                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
+                        $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
+                        
+                        $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
+                        if ($minBulan > 0 && $expiredStr) {
+                            try {
+                                $expDate = \Carbon\Carbon::parse($expiredStr);
+                                if ($expDate->lt($minDate)) {
+                                    continue;
+                                }
+                            } catch (\Exception $e) {
+                                continue;
+                            }
+                        }
+
+                        if ($itemCode) {
+                            $qadStock[$itemCode] = ($qadStock[$itemCode] ?? 0) + $qty;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('QAD stock check failed at checkout: ' . $e->getMessage());
+                }
+            }
+
+            foreach ($carts as $cart) {
+                // Get stock for this product in current hub
+                $dbStock = \App\Models\WarehouseStock::where('warehouse_id', $currentHub->id)
+                    ->where('product_id', $cart->product_id)
+                    ->sum('stock');
+                    
+                $productCode = $cart->product->code;
+                
+                // If QAD location is configured and we fetched it successfully, use minimum of both to be safe
+                if ($qadLocationCode && $qadStock !== null && !empty($qadStock)) {
+                    $actualQadStock = $qadStock[$productCode] ?? 0;
+                    $finalStock = min($dbStock, $actualQadStock);
+                } else {
+                    $finalStock = $dbStock;
+                }
+                    
+                if ($cart->quantity > $finalStock) {
+                    $stockWarnings[] = [
+                        'cart_id' => $cart->id,
+                        'product_name' => $cart->product->name,
+                        'requested_qty' => $cart->quantity,
+                        'available_qty' => $finalStock
+                    ];
+                }
+            }
+        }
+
         return [
             'hub_changed' => $hubChanged,
             'warehouse' => $currentHub,
-            'stock_warnings' => [],
+            'stock_warnings' => $stockWarnings,
         ];
     }
 

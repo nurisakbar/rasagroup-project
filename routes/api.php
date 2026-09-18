@@ -59,6 +59,8 @@ Route::prefix('orders')->group(function () {
     Route::post('/finance-approval', [OrderApiController::class, 'updateFinanceApproval'])->name('api.orders.finance-approval');
     Route::post('/', [OrderApiController::class, 'store'])->name('api.orders.store');
     Route::get('/{id}', [OrderApiController::class, 'show'])->name('api.orders.show');
+    Route::put('/{id}/status', [OrderApiController::class, 'updateStatus'])->name('api.orders.update-status');
+    Route::post('/{id}/edms-approval', [OrderApiController::class, 'requestEdmsApproval'])->name('api.orders.edms-approval');
 });
 
 // Ongkir route

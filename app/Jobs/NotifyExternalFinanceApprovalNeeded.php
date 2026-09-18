@@ -95,6 +95,13 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
         $user = $order->user;
 
         return [
+            // Required by EDMS
+            'transaction_id' => $order->id,
+            'transaction_number' => $order->order_number,
+            'customer_name' => $user?->name ?? 'Unknown',
+            'amount' => (float) $order->total_amount,
+
+            // Original payload structure
             'event' => 'finance_approval_needed',
             'timestamp' => now()->toIso8601String(),
             'order' => [

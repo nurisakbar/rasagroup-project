@@ -31,6 +31,22 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('qad_location_code') has-error @enderror">
+                            <label for="qad_location_code">Kode Lokasi QAD</label>
+                            <select class="form-control select2" id="qad_location_code" name="qad_location_code" style="width: 100%;">
+                                <option value="">-- Pilih Lokasi QAD (Kosongkan jika tidak terhubung) --</option>
+                                @foreach($qadLocations as $loc)
+                                    <option value="{{ $loc['location'] }}" {{ old('qad_location_code', $warehouse->qad_location_code) == $loc['location'] ? 'selected' : '' }}>
+                                        {{ $loc['location'] }} - {{ $loc['description'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="help-block">Digunakan untuk menarik data stok (batch/lot serial) dari QAD.</p>
+                            @error('qad_location_code')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('province_id') has-error @enderror">

@@ -19,6 +19,9 @@ class SyncCustomerToQad implements ShouldQueue
 
     protected User $user;
     protected array $addressSnapshot;
+    
+    public array $lastPayload = [];
+    public ?array $lastResponse = null;
 
     public function __construct(User $user, array $addressSnapshot = [])
     {
@@ -113,14 +116,21 @@ class SyncCustomerToQad implements ShouldQueue
     {
         $result = null;
         foreach ($payloadCandidates as $idx => $payload) {
+            $this->lastPayload = $payload;
             Log::info('SyncCustomerToQad: Creating customer in QID', [
                 'user_id' => $userId,
                 'candidate' => $idx + 1,
                 'payload' => $payload,
             ]);
             $result = $qadService->createCustomer($payload);
+            $this->lastResponse = $result;
             if ($this->extractCreatedCustomerCode($result) !== null) {
                 break;
+            } else {
+                Log::warning('SyncCustomerToQad: createCustomer candidate failed', [
+                    'candidate' => $idx + 1,
+                    'result' => $result,
+                ]);
             }
         }
 

@@ -162,6 +162,41 @@ input:checked + .slider:before {
         </div>
     </div>
 
+    <!-- QAD Locations Modal -->
+    <div class="modal fade" id="qadLocationsModal" tabindex="-1" role="dialog" aria-labelledby="qadLocationsModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="qadLocationsModalLabel">Daftar Gudang QAD</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="qad-locations-loading" class="text-center" style="display: none; padding: 20px;">
+                        <i class="fa fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2">Memuat data dari QAD...</p>
+                    </div>
+                    <div id="qad-locations-error" class="alert alert-danger" style="display: none;"></div>
+                    <div id="qad-locations-content" style="display: none;">
+                        <table class="table table-bordered table-striped" id="qad-locations-table">
+                            <thead>
+                                <tr>
+                                    <th>Kode Lokasi (Location)</th>
+                                    <th>Deskripsi (Description)</th>
+                                    <th>Status (Tstatus)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -270,6 +305,45 @@ function confirmDeleteAllWarehouses() {
     }
     document.getElementById('delete-all-warehouses-confirm-input').value = typed;
     document.getElementById('delete-all-warehouses-form').submit();
+}
+
+function showQadLocations() {
+    $('#qadLocationsModal').modal('show');
+    $('#qad-locations-loading').show();
+    $('#qad-locations-error').hide();
+    $('#qad-locations-content').hide();
+    $('#qad-locations-table tbody').empty();
+
+    $.ajax({
+        url: "{{ route('admin.warehouses.qad-locations') }}",
+        type: 'GET',
+        success: function(response) {
+            $('#qad-locations-loading').hide();
+            if (response.success) {
+                var tbody = $('#qad-locations-table tbody');
+                if (response.data.length > 0) {
+                    $.each(response.data, function(index, loc) {
+                        tbody.append(
+                            '<tr>' +
+                                '<td><strong>' + loc.location + '</strong></td>' +
+                                '<td>' + (loc.description || '-') + '</td>' +
+                                '<td>' + (loc.tstatus || '-') + '</td>' +
+                            '</tr>'
+                        );
+                    });
+                } else {
+                    tbody.append('<tr><td colspan="3" class="text-center">Tidak ada data lokasi QAD ditemukan</td></tr>');
+                }
+                $('#qad-locations-content').show();
+            } else {
+                $('#qad-locations-error').text(response.message || 'Gagal memuat data').show();
+            }
+        },
+        error: function(xhr) {
+            $('#qad-locations-loading').hide();
+            $('#qad-locations-error').text('Terjadi kesalahan jaringan atau server').show();
+        }
+    });
 }
 </script>
 @endpush

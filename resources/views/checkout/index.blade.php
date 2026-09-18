@@ -477,6 +477,14 @@
                                                         <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
                                                     </span>
                                                 </div>
+                                                @php
+                                                    $warning = collect($stockWarnings ?? [])->firstWhere('cart_id', $cart->id);
+                                                @endphp
+                                                <div class="stock-warning-message text-danger small mt-1 fw-bold" id="stock-warning-{{ $cart->id }}" style="{{ $warning ? '' : 'display: none;' }}">
+                                                    @if($warning)
+                                                        Stok tidak cukup! (Tersedia: {{ $warning['available_qty'] }})
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="rg-checkout-item-price text-end">
                                                 <span class="rg-checkout-item-price-label d-block text-muted" style="font-size: 0.85em;">Subtotal</span>
@@ -605,6 +613,7 @@
                     <div class="divider-2 mt-20 mb-20"></div>
 
                     <!-- Sales Code -->
+                    @if(!Auth::check() || !Auth::user()->isDistributor())
                     <div class="mb-20">
                         <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Nama Sales</h6>
                         <div class="form-group mb-0">
@@ -626,6 +635,7 @@
                             @enderror
                         </div>
                     </div>
+                    @endif
                     
                     <!-- Notes -->
                     <div class="mb-20">
@@ -1251,9 +1261,24 @@
         
         checkKurirTokoVisibility();
         
-        // Reload services
+        // Reload services or just check stock
         if (currentExpeditionId) {
             loadExpeditionServices(currentExpeditionId);
+        } else {
+            // Check stock directly if no expedition selected
+            $.ajax({
+                url: '{{ route("checkout.check-stock") }}',
+                type: 'GET',
+                data: { address_id: currentAddressId },
+                success: function(data) {
+                    handleStockWarnings(data.stock_warnings);
+                    if (data.hub_changed) {
+                        var currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('address_id', currentAddressId);
+                        window.location.href = currentUrl.toString();
+                    }
+                }
+            });
         }
     }
     
@@ -1325,6 +1350,15 @@
                     $('#sourceWarehouseName').text(data.warehouse.name);
                     $('#sourceWarehouseLocation').text(data.warehouse.location);
                 }
+                
+                if (data.hub_changed) {
+                    var currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('address_id', currentAddressId);
+                    window.location.href = currentUrl.toString();
+                    return;
+                }
+                
+                handleStockWarnings(data.stock_warnings);
 
                 if (data.services.length === 0) {
                     serviceList.html('<div class="col-12"><div class="alert alert-warning py-2 small"><i class="fi-rs-info"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>');
@@ -1378,7 +1412,10 @@
                 }
 
                 servicesLoading = false;
-                setSubmitEnabled(true);
+                
+                // Submit is enabled only if no stock warnings
+                var hasWarning = $('.stock-warning-msg:visible').length > 0;
+                setSubmitEnabled(!hasWarning);
             },
             error: function(xhr) {
                 console.error('Error:', xhr);
@@ -1476,38 +1513,13 @@
                     $('#sourceWarehouseLocation').text(data.warehouse.location);
                 }
 
-                // Handle Hub changes and Stock warnings
-                $('#checkoutAlertContainer').empty();
-                if (data.hub_changed) {
-                    const hubAlert = `
-                        <div class="alert alert-info alert-dismissible fade show mb-30" role="alert">
-                            <i class="fi-rs-info mr-10"></i> Sumber pengiriman diubah ke <strong>${data.warehouse.name}</strong> menyesuaikan alamat Anda.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>`;
-                    $('#checkoutAlertContainer').append(hubAlert);
-                }
-
-                if (data.stock_warnings && data.stock_warnings.length > 0) {
-                    // Hide session alerts if we are showing new stock warnings from AJAX
-                    $('#sessionAlerts').empty();
-                    
-                    const warningHtml = data.stock_warnings.join('<br>');
-                    const removeBtnHtml = `
-                        <div class="mt-15">
-                            <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
-                            </form>
-                        </div>`;
-                        
-                    const stockAlert = `
-                        <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
-                            <i class="fi-rs-exclamation mr-10"></i> <strong>Peringatan Stok:</strong><br>${warningHtml}
-                            ${removeBtnHtml}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>`;
-                    $('#checkoutAlertContainer').append(stockAlert);
+                // Use shared stock warning handler
+                var hasStockWarning = handleStockWarnings(data.stock_warnings);
+                
+                if (hasStockWarning) {
+                    setSubmitEnabled(false);
+                } else {
+                    setSubmitEnabled(true);
                 }
 
                 // Update discount if present in response
@@ -1669,7 +1681,58 @@
             syncCheckoutShippingStateFromForm();
         }
         
-        setSubmitEnabled(true);
+        @if(!empty($stockWarnings))
+            setSubmitEnabled(false);
+        @else
+            setSubmitEnabled(true);
+        @endif
     });
+    
+    function handleStockWarnings(warnings) {
+        $('.stock-warning-message').hide().text('');
+        var hasWarning = false;
+        
+        // Remove old AJAX stock alerts, but keep hub change alerts
+        $('#checkoutAlertContainer .alert-warning').remove();
+        
+        if (warnings && warnings.length > 0) {
+            $('#sessionAlerts').empty();
+            let warningListHtml = [];
+            
+            warnings.forEach(function(warning) {
+                var warningDiv = $('#stock-warning-' + warning.cart_id);
+                if (warningDiv.length) {
+                    warningDiv.text('Stok tidak cukup! (Tersedia: ' + warning.available_qty + ')').show();
+                    hasWarning = true;
+                }
+                warningListHtml.push('- ' + warning.product_name + ' (Pesan: ' + warning.requested_qty + ', Tersedia: ' + warning.available_qty + ')');
+            });
+            
+            const warningHtml = warningListHtml.join('<br>');
+            const removeBtnHtml = `
+                <div class="mt-15">
+                    <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
+                    </form>
+                </div>`;
+                
+            const stockAlert = `
+                <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
+                    <i class="fi-rs-exclamation mr-10"></i> <strong>Peringatan Stok:</strong><br>${warningHtml}
+                    ${removeBtnHtml}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>`;
+            $('#checkoutAlertContainer').append(stockAlert);
+        }
+        
+        var anyVisible = $('.stock-warning-message:visible').length > 0;
+        if (anyVisible || hasWarning) {
+            setSubmitEnabled(false);
+            return true;
+        }
+        return false;
+    }
 </script>
 @endpush

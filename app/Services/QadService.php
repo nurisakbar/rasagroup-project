@@ -44,7 +44,7 @@ class QadService extends QidApiService
 
     public function createBusinessRelation(array $payload)
     {
-        return $this->post('/api/master/business-relation/create', $payload);
+        return $this->post('/api/master/business-relation/create', $payload, true);
     }
 
     public function updateBusinessRelation(array $payload)
@@ -71,12 +71,12 @@ class QadService extends QidApiService
 
     public function createCustomer(array $payload)
     {
-        return $this->post('/api/master/customer/create', $payload);
+        return $this->post('/api/master/customer/create', $payload, true);
     }
 
     public function createCustomerData(array $payload)
     {
-        return $this->post('/api/master/customer/create-data', $payload);
+        return $this->post('/api/master/customer/create-data', $payload, true);
     }
 
     public function updateCustomer(array $payload)

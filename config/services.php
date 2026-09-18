@@ -23,6 +23,11 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'wms' => [
+        'api_url' => env('WMS_EXTERNAL_API_URL', 'https://wmsrcapi-dev.rasagroupoffice.com/api/v1/external'),
+        'api_key' => env('WMS_EXTERNAL_API_KEY', ''),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

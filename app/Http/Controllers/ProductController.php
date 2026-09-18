@@ -231,7 +231,7 @@ class ProductController extends Controller
             ->orWhere('id', $identifier)
             ->firstOrFail();
 
-        if ((float) $product->price <= 0) {
+        if ($product->status !== 'active' || (float) $product->price <= 0) {
             abort(404);
         }
             

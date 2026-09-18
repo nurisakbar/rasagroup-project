@@ -138,6 +138,22 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Get QAD Locations.
+     */
+    public function getQadLocations()
+    {
+        try {
+            $qad = app(\App\Services\QadService::class);
+            $response = $qad->getInventoryLocation([]);
+            $locations = $response['data'] ?? [];
+            return response()->json(['success' => true, 'data' => $locations]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('QAD Locations Fetch Exception', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Sync warehouse stocks from Jubelio all-stocks API.
      */
     public function syncStockJubelio(JubelioStockSyncService $stockSync)
@@ -285,7 +301,12 @@ class WarehouseController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        return view('admin.warehouses.create', compact('provinces'));
+
+        $qad = app(\App\Services\QadService::class);
+        $qadResponse = $qad->getInventoryLocation([]);
+        $qadLocations = $qadResponse['data'] ?? [];
+
+        return view('admin.warehouses.create', compact('provinces', 'qadLocations'));
     }
 
     /**
@@ -306,6 +327,7 @@ class WarehouseController extends Controller
             'village_id' => 'nullable',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'qad_location_code' => 'nullable|string|max:50',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
             'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
@@ -329,6 +351,7 @@ class WarehouseController extends Controller
             'village_id' => $validated['village_id'] ?? null,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
+            'qad_location_code' => $validated['qad_location_code'] ?? null,
             'is_active' => $request->has('is_active'),
             'gudang_order_distributor' => $request->boolean('gudang_order_distributor'),
         ]);
@@ -380,11 +403,12 @@ class WarehouseController extends Controller
             ->get();
             
         $qadBatches = [];
-        if ($request->tab == 'stock' && $warehouse->kode_hub) {
+        $qadLocationCode = $warehouse->qad_location_code ?? $warehouse->kode_hub;
+        if ($request->tab == 'stock' && $qadLocationCode) {
             try {
                 $qad = app(\App\Services\QadService::class);
                 $response = $qad->getAllInventory([
-                    'location' => $warehouse->kode_hub,
+                    'location' => $qadLocationCode,
                     'search' => '',
                     'batch' => '',
                     'length' => 1000,
@@ -441,7 +465,11 @@ class WarehouseController extends Controller
             : null;
         $villages = isset($villageRes['data']) ? $villageRes['data'] : [];
 
-        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages'));
+        $qad = app(\App\Services\QadService::class);
+        $qadResponse = $qad->getInventoryLocation([]);
+        $qadLocations = $qadResponse['data'] ?? [];
+
+        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages', 'qadLocations'));
     }
 
     /**
@@ -462,6 +490,7 @@ class WarehouseController extends Controller
             'village_id' => 'nullable',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'qad_location_code' => 'nullable|string|max:50',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
             'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',

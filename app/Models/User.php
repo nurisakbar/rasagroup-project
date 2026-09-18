@@ -403,4 +403,16 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $this->notify(new \App\Notifications\VerifyEmailNotification);
     }
+
+    /**
+     * Get the total accumulated debt from unpaid TOP (Term of Payment) orders.
+     */
+    public function getAccumulatedTopDebt(): float
+    {
+        return (float) $this->orders()
+            ->where('payment_method', 'term_of_payment')
+            ->where('payment_status', '!=', 'paid')
+            ->whereNotIn('order_status', ['cancelled'])
+            ->sum('total_amount');
+    }
 }

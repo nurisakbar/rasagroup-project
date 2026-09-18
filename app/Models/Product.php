@@ -248,12 +248,13 @@ class Product extends Model
      */
     public function scopeFrontendFilter($query)
     {
+        $query->where('status', 'active');
+        
         if (auth()->check() && auth()->user()->role === \App\Models\User::ROLE_DISTRIBUTOR) {
             return $query->whereJsonContains('sync_sources', 'qad');
         }
 
-        return $query->whereJsonContains('sync_sources', 'jubelio')
-                     ->where('status', 'active');
+        return $query->whereJsonContains('sync_sources', 'jubelio');
     }
 
     public function scopeOrderByInStockFirst($query, ?string $warehouseId = null): void

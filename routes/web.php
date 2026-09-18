@@ -121,6 +121,7 @@ Route::middleware(['auth', 'wa.verified'])->group(function () {
     Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [App\Http\Controllers\CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/calculate-shipping', [App\Http\Controllers\CheckoutController::class, 'calculateShipping'])->name('checkout.calculate-shipping');
+    Route::get('/checkout/check-stock', [App\Http\Controllers\CheckoutController::class, 'checkStock'])->name('checkout.check-stock');
     Route::get('/checkout/expedition-services', [App\Http\Controllers\CheckoutController::class, 'getExpeditionServices'])->name('checkout.expedition-services');
     Route::get('/checkout/success/{order}', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/checkout/success/{order}/payment-status', [App\Http\Controllers\CheckoutController::class, 'successPaymentStatus'])->name('checkout.success.payment-status');
@@ -247,13 +248,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Warehouses CRUD
         Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');
+        Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
+        Route::get('/warehouses/qad-locations', [App\Http\Controllers\Admin\WarehouseController::class, 'getQadLocations'])->name('warehouses.qad-locations');
+        Route::post('/warehouses/sync-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncJubelio'])->name('warehouses.sync-jubelio');
+        Route::post('/warehouses/sync-stock-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockJubelio'])->name('warehouses.sync-stock-jubelio');
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::resource('armadas', App\Http\Controllers\Admin\ArmadaController::class);
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
-        Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
-        Route::post('/warehouses/sync-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncJubelio'])->name('warehouses.sync-jubelio');
-        Route::post('/warehouses/sync-stock-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockJubelio'])->name('warehouses.sync-stock-jubelio');
         Route::post('/warehouses/{warehouse}/sync-stock-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockQid'])->name('warehouses.sync-stock-qid');
         Route::put('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateStock'])->name('warehouses.update-stock');
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');
