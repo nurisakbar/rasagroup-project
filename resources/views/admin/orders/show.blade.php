@@ -584,13 +584,11 @@
                                     <i class="fa fa-lock"></i>
                                     <strong>Term of Payment</strong> — Finance Approval: <strong>0</strong> (belum di-approve).
                                     @if(in_array(auth()->user()->role, ['super_admin', 'finance']))
-                                        <form action="{{ route('admin.orders.approve-finance', $order) }}" method="POST" style="margin-top: 10px;" onsubmit="return confirm('Setujui TOP ini (Finance Approval = 1) dan lepaskan ke hub?');">
-                                            @csrf
-                                            @method('PUT')
-                                            <button type="submit" class="btn btn-success btn-sm">
+                                        <div style="margin-top: 10px;">
+                                            <button type="button" onclick="if(confirm('Setujui TOP ini (Finance Approval = 1) dan lepaskan ke hub?')) { document.getElementById('approveFinanceForm').submit(); }" class="btn btn-success btn-sm">
                                                 <i class="fa fa-check"></i> Approve Finance (set ke 1)
                                             </button>
-                                        </form>
+                                        </div>
                                     @endif
                                 </div>
                             @else
@@ -744,6 +742,12 @@
                         <p class="text-muted text-center" style="margin-top: 10px; font-size: 12px;">
                             <i class="fa fa-info-circle"></i> Hanya field yang diubah yang akan diperbarui
                         </p>
+                    </form>
+
+                    <!-- Hidden form for Approve Finance -->
+                    <form id="approveFinanceForm" action="{{ route('admin.orders.approve-finance', $order) }}" method="POST" style="display: none;">
+                        @csrf
+                        @method('PUT')
                     </form>
                 </div>
             </div>

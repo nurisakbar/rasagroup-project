@@ -349,10 +349,14 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'payload' => $payload,
             ]);
 
-            // SIMULASI: Gunakan dummy / hardcode response berhasil agar pesanan dianggap sukses tersinkronisasi
-            Log::info('SyncOrderToQad: SIMULASI MODE - Bypass create SO API to prevent 400 Bad Request');
-            $result = ['data' => ['salesOrderNumber' => $qidSalesOrderNumber]];
-            $soNumber = $qidSalesOrderNumber;
+            // Melakukan request beneran ke QAD
+            $qadService = app(\App\Services\QadService::class);
+            $result = $qadService->post($createEndpointPath, $payload);
+            
+            $soNumber = null;
+            if (is_array($result) && !empty($result['data']['salesOrderNumber'])) {
+                $soNumber = $result['data']['salesOrderNumber'];
+            }
 
             Log::info('SyncOrderToQad: Create SO response', [
                 'order_id' => $this->order->id,

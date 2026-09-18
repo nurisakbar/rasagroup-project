@@ -355,6 +355,10 @@ class OrderController extends Controller
             return back()->with('info', $result['message']);
         }
 
+        // Trigger sync ke QAD dan WMS
+        \App\Support\SalesOrderSyncDispatcher::dispatch($order);
+        \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+
         return back()->with('success', $result['message']);
     }
 
