@@ -290,6 +290,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Admin\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
         Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Admin\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
+        Route::post('/orders/{order}/check-qad', [App\Http\Controllers\Admin\OrderController::class, 'checkQadStatus'])->name('orders.check-qad');
+        Route::post('/orders/{order}/check-wms', [App\Http\Controllers\Admin\OrderController::class, 'checkWmsStatus'])->name('orders.check-wms');
 
         // Menus Management
         Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);

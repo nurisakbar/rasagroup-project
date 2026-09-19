@@ -216,8 +216,17 @@
                     </table>
 
                     @if(!empty($order->qad_sync_history) && is_array($order->qad_sync_history))
-                    <div style="margin-top: 15px;">
-                        <h4>Riwayat Sinkronisasi QAD</h4>
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0;">Riwayat Sinkronisasi QAD</h4>
+                        <div>
+                            <form action="{{ route('admin.orders.check-qad', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Memeriksa...';">
+                                @csrf
+                                <button type="submit" class="btn btn-xs btn-primary" title="Tarik data terbaru dari API QAD"><i class="fa fa-refresh"></i> Cek Status Terkini</button>
+                            </form>
+                            <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#modalCurlQad"><i class="fa fa-code"></i> Lihat cURL</button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px;">
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-condensed">
                                 <thead>
@@ -809,6 +818,13 @@
                                 <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
                                     @if($order->wms_so_status)
                                         Status WMS: <strong>{{ $order->wms_so_status }}</strong>
+                                        <div style="margin-top: 5px;">
+                                            <form action="{{ route('admin.orders.check-wms', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Memeriksa...';">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-primary" title="Cek status terbaru ke WMS"><i class="fa fa-refresh"></i> Cek Status Terkini</button>
+                                            </form>
+                                            <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#modalCurlWms"><i class="fa fa-code"></i> Lihat cURL</button>
+                                        </div>
                                         @if($order->wms_so_failure_reason)
                                             <div style="margin-top: 5px; padding: 5px; background: #fff3f3; border: 1px solid #ffcccc; border-radius: 4px; color: #cc0000; font-size: 12px; word-wrap: break-word;">
                                                 <strong>Error:</strong> {{ $order->wms_so_failure_reason }}
@@ -832,6 +848,47 @@
     <div class="row">
         <div class="col-md-12">
             <a href="{{ route('admin.orders.index') }}" class="btn btn-default">Kembali</a>
+        </div>
+    </div>
+
+    <!-- Modal cURL QAD -->
+    <div class="modal fade" id="modalCurlQad" tabindex="-1" role="dialog" aria-labelledby="modalCurlQadLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalCurlQadLabel"><i class="fa fa-code"></i> Format cURL QAD</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Berikut adalah format cURL yang digunakan untuk mengambil detail Sales Order dari QAD:</p>
+                    <div style="position: relative;">
+                        <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlQadText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
+                        <pre id="curlQadText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET '{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/get?SalesOrderCode={{ $order->qid_sales_order_number ?? $order->order_number }}' \
+--header 'Content-Type: application/json'</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cURL WMS -->
+    <div class="modal fade" id="modalCurlWms" tabindex="-1" role="dialog" aria-labelledby="modalCurlWmsLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalCurlWmsLabel"><i class="fa fa-code"></i> Format cURL WMS</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Berikut adalah format cURL yang digunakan untuk mengecek status pesanan di WMS:</p>
+                    <div style="position: relative;">
+                        <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlWmsText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
+                        <pre id="curlWmsText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET '{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders/{{ $order->order_number }}/status' \
+--header 'x-api-key: {{ config('services.wms.api_key') }}' \
+--header 'Accept: application/json'</pre>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection

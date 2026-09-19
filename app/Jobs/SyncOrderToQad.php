@@ -275,6 +275,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             $soNumber = $existingSo['salesOrderNumber'] ?? $existingSo['salesOrderCode'] ?? null;
             if ($soNumber) {
                 $this->order->update(['qad_so_number' => $soNumber]);
+                $this->appendSyncLog([], ['message' => 'Sales Order already exists in QAD, linked existing', 'data' => $existingSo], 1, 'success');
                 Log::info("SyncOrderToQad: Sales Order already exists in QAD, linked existing", ['qad_so' => $soNumber]);
                 return;
             }

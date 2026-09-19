@@ -749,6 +749,81 @@ class OrderController extends Controller
         }
     }
 
+    public function checkQadStatus(Order $order)
+    {
+        try {
+            $qadService = app(\App\Services\QadService::class);
+            $soNumber = $order->qid_sales_order_number ?? $order->order_number;
+            $response = $qadService->getSalesOrder($soNumber);
+
+            $status = 'failed';
+            $isFound = false;
+
+            if (is_array($response) && !($response['error']['isError'] ?? false)) {
+                if (isset($response['data']) && !empty($response['data'])) {
+                    $status = 'success';
+                    $isFound = true;
+                }
+            }
+
+            $history = is_array($order->qad_sync_history) ? $order->qad_sync_history : [];
+            $history[] = [
+                'timestamp' => now()->toIso8601String(),
+                'attempt' => 'manual_check',
+                'status' => $status,
+                'response' => $isFound ? ['message' => 'Sales Order found in QAD', 'data' => $response['data']] : $response,
+            ];
+
+            $order->qad_sync_history = $history;
+            
+            if ($isFound) {
+                $qadSoNumber = $response['data']['salesOrderNumber'] ?? $response['data']['salesOrderCode'] ?? null;
+                if ($qadSoNumber) {
+                    $order->qad_so_number = $qadSoNumber;
+                }
+            }
+
+            $order->save();
+
+            return back()->with('success', 'Status QAD berhasil dicek dan riwayat diperbarui.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat mengecek status QAD: ' . $e->getMessage());
+        }
+    }
+
+    public function checkWmsStatus(Order $order)
+    {
+        $apiUrl = config('services.wms.api_url');
+        $apiKey = config('services.wms.api_key');
+
+        if (empty($apiUrl) || empty($apiKey)) {
+            return back()->with('error', 'WMS API is not configured.');
+        }
+
+        try {
+            $url = rtrim($apiUrl, '/') . '/sales-orders/' . $order->order_number . '/status';
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'x-api-key' => $apiKey,
+                'Accept' => 'application/json',
+            ])->get($url);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+                $status = $responseData['data']['status'] ?? 'QUEUED';
+                
+                $order->wms_so_status = $status;
+                $order->wms_so_failure_reason = $responseData['data']['failure_reason'] ?? null;
+                $order->save();
+
+                return back()->with('success', 'Status WMS berhasil diperbarui menjadi: ' . $status);
+            } else {
+                return back()->with('error', 'Gagal mengecek status WMS: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat mengecek status WMS: ' . $e->getMessage());
+        }
+    }
+
     protected function sendOrderTransitionNotifications(Order $order, $oldStatus, $oldPickupReady, $oldShippedAt = null)
     {
         if (!$order->user) {
