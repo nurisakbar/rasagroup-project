@@ -203,8 +203,8 @@
                             <strong>{{ $item->product->display_name }}</strong><br>
                             <span style="color: #777; font-size: 10px;">SKU: {{ $item->sku ?? '-' }}</span>
                         </td>
-                        <td style="text-align: center;">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                        <td style="text-align: center;">{{ $item->quantity }} {{ $item->product->unit ?? 'pcs' }}</td>
+                        <td style="text-align: center;">Rp {{ number_format($item->orderedPrice(), 0, ',', '.') }}</td>
+                        <td style="text-align: center;">{{ $item->orderedQuantityDescription() }}</td>
                         <td style="text-align: right;">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach

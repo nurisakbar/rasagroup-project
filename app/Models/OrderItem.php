@@ -45,11 +45,9 @@ class OrderItem extends Model
 
         if ($this->order_uom === 'large' && $p && filled($p->large_unit) && $this->quantity_ordered !== null) {
             return sprintf(
-                '%d %s (= %d %s)',
+                '%d %s',
                 (int) $this->quantity_ordered,
-                $p->large_unit,
-                $base,
-                $unit
+                $p->large_unit
             );
         }
 
@@ -58,6 +56,14 @@ class OrderItem extends Model
         }
 
         return sprintf('%d %s', $base, $unit);
+    }
+
+    public function orderedPrice(): float
+    {
+        if ($this->quantity_ordered > 0) {
+            return $this->subtotal / $this->quantity_ordered;
+        }
+        return $this->price;
     }
 
     public function order(): BelongsTo
