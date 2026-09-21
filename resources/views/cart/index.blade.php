@@ -80,7 +80,12 @@
                         </thead>
                         <tbody>
                             @foreach($carts as $cart)
-                                <tr class="pt-30 rg-cart-item" data-cart-row="{{ $cart->id }}" data-price="{{ $cart->product->price }}" data-weight="{{ $cart->product->weight ?? 0 }}">
+                                @php
+                                    $multiplier = $cart->showsLargeUnitInCart() ? $cart->product->unitsPerLargeEffective() : 1;
+                                    $itemPrice = $cart->displayUnitPrice();
+                                    $itemWeight = ($cart->product->weight ?? 0) * $multiplier;
+                                @endphp
+                                <tr class="pt-30 rg-cart-item" data-cart-row="{{ $cart->id }}" data-price="{{ $itemPrice }}" data-weight="{{ $itemWeight }}">
                                     <td class="custome-checkbox pl-30 rg-cart-checkbox">
                                         <input class="form-check-input cart-item-checkbox" type="checkbox" name="cart_ids[]" id="cartCheckbox{{ $cart->id }}" value="{{ $cart->id }}" checked>
                                         <label class="form-check-label" for="cartCheckbox{{ $cart->id }}"></label>
@@ -93,7 +98,7 @@
                                         @if($cart->product->weight)
                                         <div class="product-meta mt-5">
                                             <small class="rg-cart-weight">
-                                                Berat: {{ $cart->product->formatted_weight }}
+                                                Berat: {{ $itemWeight >= 1000 ? number_format($itemWeight / 1000, 1) . ' kg' : $itemWeight . ' gram' }}
                                             </small>
                                         </div>
                                         @endif

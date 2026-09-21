@@ -307,9 +307,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             $payload = [
                 'domainCode' => 'MCR',
                 'salesOrderNumber' => $qidSalesOrderNumber,
-                'billToCustomerCode' => $user->qad_customer_code,
-                'soldToCustomerCode' => $user->qad_customer_code,
-                'shipToCustomerCode' => $user->qad_customer_code,
+                'billToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+                'soldToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+                'shipToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
                 'orderDate' => $headerDateIso,
                 'dueDate' => $headerDateIso,
                 'requiredDate' => $headerDateIso,
@@ -352,7 +352,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
             // Melakukan request beneran ke QAD
             $qadService = app(\App\Services\QadService::class);
-            $result = $qadService->post($createEndpointPath, $payload);
+            $result = $qadService->createSalesOrder($payload);
             
             $soNumber = null;
             if (is_array($result) && !empty($result['data']['salesOrderNumber'])) {
@@ -600,9 +600,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $payload = [
             'domainCode' => 'MCR',
             'salesOrderNumber' => $qidSalesOrderNumber,
-            'billToCustomerCode' => $user->qad_customer_code,
-            'soldToCustomerCode' => $user->qad_customer_code,
-            'shipToCustomerCode' => $user->qad_customer_code,
+            'billToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+            'soldToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+            'shipToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
             'orderDate' => $headerDateIso,
             'dueDate' => $headerDateIso,
             'requiredDate' => $headerDateIso,

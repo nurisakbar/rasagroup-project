@@ -997,6 +997,36 @@ class DistributorController extends Controller
         return back()->with('success', 'Staff distributor berhasil ditambahkan.');
     }
 
+    public function updateUser(Request $request, User $distributor, User $user)
+    {
+        if ($user->warehouse_id !== $distributor->warehouse_id) {
+            return back()->with('error', 'User tidak terdaftar di distributor ini.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'sub_role' => 'required|in:admin,staff',
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'sub_role' => $validated['sub_role'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
+
+        return back()->with('success', 'Staff distributor berhasil diubah.');
+    }
+
     /**
      * Remove staff user from distributor.
      */

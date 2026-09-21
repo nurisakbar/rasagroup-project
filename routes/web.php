@@ -339,6 +339,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/distributors/{distributor}/documents/{document}', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'destroy'])->name('distributors.documents.destroy');
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
         Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
+        Route::put('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'updateUser'])->name('distributors.update-user');
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');
         Route::post('/distributors/{distributor}/target-belanja', [App\Http\Controllers\Admin\DistributorController::class, 'updateTargetBelanja'])->name('distributors.target-belanja.update');
         Route::post('/distributors/{distributor}/category-discounts', [App\Http\Controllers\Admin\DistributorController::class, 'updateCategoryDiscounts'])->name('distributors.category-discounts.update');

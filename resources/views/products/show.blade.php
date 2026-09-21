@@ -82,16 +82,21 @@
                                     
                                     <!-- Price -->
                                     <div class="product-detail-price-block mb-3">
+                                        @php
+                                            $isDistributor = auth()->check() && auth()->user()->isDistributor();
+                                            $multiplier = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->unitsPerLargeEffective() : 1;
+                                            $unitLabel = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->large_unit : $product->unit;
+                                        @endphp
                                         <div class="product-price primary-color">
-                                            <span class="current-price text-brand product-detail-price-amount" id="display-price">Rp {{ number_format($product->final_price, 0, ',', '.') }}</span>
-                                            <span class="text-muted font-sm" id="display-unit-label">/ {{ $product->unit }}</span>
+                                            <span class="current-price text-brand product-detail-price-amount" id="display-price">Rp {{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
+                                            <span class="text-muted font-sm" id="display-unit-label">/ {{ $unitLabel }}</span>
                                             @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
                                                 <div class="product-detail-price-promo mt-2">
-                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->price, 0, ',', '.') }}</del></span>
+                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->price * $multiplier, 0, ',', '.') }}</del></span>
                                                 </div>
                                             @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
                                                 <div class="product-detail-price-promo mt-2">
-                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->compare_price, 0, ',', '.') }}</del></span>
+                                                    <span class="old-price font-md ms-2"><del>Rp {{ number_format($product->compare_price * $multiplier, 0, ',', '.') }}</del></span>
                                                 </div>
                                             @endif
                                         </div>
@@ -225,7 +230,7 @@
                                         </div>
                                         <div class="form-group mt-3 product-detail-subtotal-row">
                                             <span class="product-detail-subtotal-label">Subtotal</span>
-                                            <span id="subtotal" class="text-brand product-detail-subtotal-amount">Rp {{ number_format($product->final_price, 0, ',', '.') }}</span>
+                                            <span id="subtotal" class="text-brand product-detail-subtotal-amount">Rp {{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
                                         </div>
                                     </form>
                                 </div>

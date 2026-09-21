@@ -1,0 +1,12 @@
+{
+    "error": {
+        "isError": true,
+        "errorType": "BAD_REQUEST",
+        "errorId": null,
+        "errorMessages": [
+            "Location is mandatory!"
+        ]
+    },
+    "message": null,
+    "data": null
+}

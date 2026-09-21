@@ -974,7 +974,12 @@ class CheckoutController extends Controller
                         $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
                         
                         $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
+                        $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
                         $isValid = true;
+                        
+                        if ($lotSerial && strpos($lotSerial, '-') !== false) {
+                            $isValid = false;
+                        }
                         
                         if ($minBulan > 0 && $expiredStr) {
                             try {
@@ -1078,12 +1083,15 @@ class CheckoutController extends Controller
                     }
                 }
 
+                $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;
+                $quantityOrdered = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
-                    'order_uom' => $cart->order_uom,
-                    'quantity_ordered' => $cart->quantity_ordered,
+                    'order_uom' => $orderUom,
+                    'quantity_ordered' => $quantityOrdered,
                     'price' => $lineUnit,
                     'subtotal' => $lineUnit * $cart->quantity,
                     'allocated_batches' => !empty($allocatedBatches) ? $allocatedBatches : null,
@@ -1121,6 +1129,11 @@ class CheckoutController extends Controller
             if ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
                 Log::info('Checkout Debug: TOP selected, skipping gateway.');
+                
+                if (!empty($order->auto_approved_at_creation)) {
+                    Log::info('Checkout Debug: TOP order auto approved, triggering hub notification and sync jobs.', ['order_id' => $order->id]);
+                    $order->notifyHubAfterFinanceApproval();
+                }
             } elseif (str_starts_with($request->payment_method, 'faspay')) {
                 $activeGateway = config('services.active_payment_gateway');
                 
@@ -1480,6 +1493,11 @@ class CheckoutController extends Controller
                     foreach ($items as $item) {
                         $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
                         $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
+                        $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
+                        
+                        if ($lotSerial && strpos($lotSerial, '-') !== false) {
+                            continue;
+                        }
                         
                         $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
                         if ($minBulan > 0 && $expiredStr) {

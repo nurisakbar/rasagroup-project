@@ -242,6 +242,8 @@ class Warehouse extends Model
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
             } elseif ($user->isOutlet()) {
                 $rolesAllowed = ['outlet']; // STRICTLY outlet only
+            } elseif ($user->isBuyer()) {
+                $rolesAllowed = ['ecommerce']; // STRICTLY buyer -> ecommerce
             }
         }
 

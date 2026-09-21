@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+set timeout 20
+set src [lindex $argv 0]
+set dest [lindex $argv 1]
+
+spawn scp -P 2122 $src debian@116.206.199.251:$dest
+expect {
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+    "password:" {
+        send "STTIndo26\r"
+    }
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+}
+expect eof

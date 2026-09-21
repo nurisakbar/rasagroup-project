@@ -109,12 +109,21 @@ class Cart extends Model
     {
         $this->loadMissing('product');
         $product = $this->product;
-        if ($this->order_uom !== 'large' || ! $product || ! $product->hasDualUnitOrdering()) {
+        if (! $product || ! $product->hasDualUnitOrdering()) {
             return false;
         }
-        if ($this->quantity_ordered === null || $this->quantity_ordered < 1) {
-            return false;
+        
+        $isDistributor = \Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->isDistributor();
+        
+        if (! $isDistributor) {
+            if ($this->order_uom !== 'large') {
+                return false;
+            }
+            if ($this->quantity_ordered === null || $this->quantity_ordered < 1) {
+                return false;
+            }
         }
+
         $per = $product->unitsPerLargeEffective();
 
         return $per > 1 && (int) $this->quantity % $per === 0;
@@ -124,7 +133,12 @@ class Cart extends Model
     public function cartQuantityInputValue(): int
     {
         if ($this->showsLargeUnitInCart()) {
-            return (int) $this->quantity_ordered;
+            if ($this->quantity_ordered) {
+                return (int) $this->quantity_ordered;
+            }
+            if ($this->product && $this->product->unitsPerLargeEffective() > 0) {
+                return (int) ($this->quantity / $this->product->unitsPerLargeEffective());
+            }
         }
 
         return (int) $this->quantity;

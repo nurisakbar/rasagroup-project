@@ -48,13 +48,22 @@
                     Berlaku: {{ $promoAwal->format('d M Y H:i') }} – {{ $promoAkhir->format('d M Y H:i') }}
                 </div>
             @endif
+            @php
+                $isDistributor = auth()->check() && auth()->user()->isDistributor();
+                $multiplier = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->unitsPerLargeEffective() : 1;
+                $unitLabel = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->large_unit : $product->unit;
+            @endphp
             <div class="product-card-bottom rg-product-footer">
                 <div class="product-price">
-                    <span>Rp{{ number_format($product->final_price, 0, ',', '.') }}</span>
+                    <span>{{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
+                    @if($unitLabel)
+                        <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
+                    @endif
+                    <br>
                     @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
-                        <span class="old-price">Rp{{ number_format($product->price, 0, ',', '.') }}</span>
+                        <span class="old-price">{{ number_format($product->price * $multiplier, 0, ',', '.') }}</span>
                     @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
-                        <span class="old-price">Rp{{ number_format($product->compare_price, 0, ',', '.') }}</span>
+                        <span class="old-price">{{ number_format($product->compare_price * $multiplier, 0, ',', '.') }}</span>
                     @endif
                 </div>
                 <div class="add-cart rg-add-cart-row">

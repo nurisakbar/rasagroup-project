@@ -647,12 +647,15 @@ class OrderController extends Controller
 
             foreach ($carts as $cart) {
                 $productPrice = $cart->product->price;
+                $orderUom = $cart->showsLargeUnitInCart() ? 'large' : $cart->order_uom;
+                $quantityOrdered = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
-                    'order_uom' => $cart->order_uom,
-                    'quantity_ordered' => $cart->quantity_ordered,
+                    'order_uom' => $orderUom,
+                    'quantity_ordered' => $quantityOrdered,
                     'price' => $productPrice,
                     'subtotal' => $productPrice * $cart->quantity,
                 ]);

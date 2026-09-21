@@ -134,10 +134,6 @@ class Order extends Model
             if ($order->isAwaitingFinanceApproval() && config('services.finance_approval.enabled', true)) {
                 \App\Jobs\NotifyExternalFinanceApprovalNeeded::dispatch($order);
             }
-            
-            if (!empty($order->auto_approved_at_creation)) {
-                $order->notifyHubAfterFinanceApproval();
-            }
         });
     }
 
@@ -158,7 +154,8 @@ class Order extends Model
 
     public function sales(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'sales_code', 'sales_code');
+        return $this->belongsTo(User::class, 'sales_code', 'sales_code')
+                    ->where('role', User::ROLE_SALES ?? 'sales');
     }
 
     public function address(): BelongsTo

@@ -300,12 +300,15 @@ class OrderApiController extends Controller
                 $price = $user->getProductPrice($cart->product);
                 $itemSubtotal = $price * $cart->quantity;
 
+                $orderUom = $cart->showsLargeUnitInCart() ? 'large' : $cart->order_uom;
+                $quantityOrdered = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $cart->product_id,
                     'quantity' => $cart->quantity,
-                    'order_uom' => $cart->order_uom,
-                    'quantity_ordered' => $cart->quantity_ordered,
+                    'order_uom' => $orderUom,
+                    'quantity_ordered' => $quantityOrdered,
                     'price' => $price,
                     'subtotal' => $itemSubtotal,
                 ]);

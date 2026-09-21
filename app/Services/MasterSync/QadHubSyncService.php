@@ -139,6 +139,11 @@ class QadHubSyncService
         foreach ($items as $item) {
             $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
             $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
+            $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
+
+            if ($lotSerial && strpos($lotSerial, '-') !== false) {
+                continue;
+            }
 
             if (! $itemCode) {
                 continue;

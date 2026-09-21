@@ -426,6 +426,10 @@ class WarehouseController extends Controller
                     $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
                     $expired = $item['expired_short'] ?? $item['expired'] ?? null;
                     
+                    if ($lotSerial && strpos($lotSerial, '-') !== false) {
+                        continue;
+                    }
+                    
                     if ($itemCode && $lotSerial) {
                         if (!isset($qadBatches[$itemCode])) {
                             $qadBatches[$itemCode] = [];

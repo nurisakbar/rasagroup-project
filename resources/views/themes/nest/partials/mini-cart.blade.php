@@ -2,7 +2,7 @@
     $miniCarts = auth()->check() 
         ? \App\Models\Cart::with('product')->where('user_id', auth()->id())->where('cart_type', 'regular')->latest()->get()
         : \App\Models\Cart::with('product')->where('session_id', session()->getId())->where('cart_type', 'regular')->latest()->get();
-    $miniCartTotal = $miniCarts->sum(function($item) { return $item->product->price * $item->quantity; });
+    $miniCartTotal = $miniCarts->sum(function($item) { return $item->product->final_price * $item->quantity; });
 @endphp
 
 <ul>

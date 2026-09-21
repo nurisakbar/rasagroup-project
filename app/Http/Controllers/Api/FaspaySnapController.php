@@ -333,9 +333,16 @@ class FaspaySnapController extends Controller
                 
                 // Sync dengan Jubelio/QAD
                 try {
-                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                    \App\Support\SalesOrderSyncDispatcher::dispatch($order);
                 } catch (\Exception $e) {
-                    Log::error('Faspay Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                    Log::error('Faspay Webhook: Failed to dispatch SalesOrderSyncDispatcher', ['error' => $e->getMessage()]);
+                }
+
+                // Sync dengan WMS
+                try {
+                    \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+                } catch (\Exception $e) {
+                    Log::error('Faspay Webhook: Failed to dispatch WMS sync job', ['error' => $e->getMessage()]);
                 }
 
                 // Send WhatsApp Notifications
@@ -494,9 +501,16 @@ class FaspaySnapController extends Controller
                 $order->save();
                 
                 try {
-                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                    \App\Support\SalesOrderSyncDispatcher::dispatch($order);
                 } catch (\Exception $e) {
-                    Log::error('Faspay QR Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                    Log::error('Faspay QR Webhook: Failed to dispatch SalesOrderSyncDispatcher', ['error' => $e->getMessage()]);
+                }
+
+                // Sync dengan WMS
+                try {
+                    \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+                } catch (\Exception $e) {
+                    Log::error('Faspay QR Webhook: Failed to dispatch WMS sync job', ['error' => $e->getMessage()]);
                 }
 
                 // Send WhatsApp Notifications
@@ -597,9 +611,16 @@ class FaspaySnapController extends Controller
                                 $order->save();
                                 
                                 try {
-                                    \App\Jobs\SyncOrderToJubelio::dispatchSync($order);
+                                    \App\Support\SalesOrderSyncDispatcher::dispatch($order);
                                 } catch (\Exception $e) {
-                                    Log::error('Faspay Direct Debit Webhook: Failed to dispatch sync job', ['error' => $e->getMessage()]);
+                                    Log::error('Faspay Direct Debit Webhook: Failed to dispatch SalesOrderSyncDispatcher', ['error' => $e->getMessage()]);
+                                }
+
+                                // Sync dengan WMS
+                                try {
+                                    \App\Jobs\SendSalesOrderToWmsJob::dispatch($order);
+                                } catch (\Exception $e) {
+                                    Log::error('Faspay Direct Debit Webhook: Failed to dispatch WMS sync job', ['error' => $e->getMessage()]);
                                 }
 
                                 // Send WhatsApp Notifications

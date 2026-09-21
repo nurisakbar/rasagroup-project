@@ -419,13 +419,64 @@
                                             <td>{{ $staff->created_at->format('d M Y') }}</td>
                                             <td>
                                                 @if($staff->id !== $distributor->id)
-                                                <form action="{{ route('admin.distributors.remove-user', [$distributor, $staff]) }}" method="POST" onsubmit="return confirm('Hapus akun ini?');">
+                                                <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-edit-staff-{{ $staff->id }}">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <form action="{{ route('admin.distributors.remove-user', [$distributor, $staff]) }}" method="POST" onsubmit="return confirm('Hapus akun ini?');" style="display:inline-block;">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-danger btn-xs">
                                                         <i class="fa fa-trash"></i>
                                                     </button>
                                                 </form>
+
+                                                <!-- Modal Edit Staff -->
+                                                <div class="modal fade" id="modal-edit-staff-{{ $staff->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                                    <div class="modal-dialog" role="document">
+                                                        <div class="modal-content">
+                                                            <form action="{{ route('admin.distributors.update-user', [$distributor, $staff]) }}" method="POST">
+                                                                @csrf
+                                                                @method('PUT')
+                                                                <div class="modal-header">
+                                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                    <h4 class="modal-title"><i class="fa fa-edit"></i> Edit Staff Distributor</h4>
+                                                                </div>
+                                                                <div class="modal-body text-left">
+                                                                    <div class="form-group">
+                                                                        <label for="name_{{ $staff->id }}">Nama Lengkap <span class="text-danger">*</span></label>
+                                                                        <input type="text" class="form-control" id="name_{{ $staff->id }}" name="name" value="{{ $staff->name }}" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="email_{{ $staff->id }}">Email <span class="text-danger">*</span></label>
+                                                                        <input type="email" class="form-control" id="email_{{ $staff->id }}" name="email" value="{{ $staff->email }}" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="password_{{ $staff->id }}">Password Baru</label>
+                                                                        <input type="password" class="form-control" id="password_{{ $staff->id }}" name="password" minlength="8">
+                                                                        <small class="text-muted">Kosongkan jika tidak ingin mengubah password.</small>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="sub_role_{{ $staff->id }}">Level Akses <span class="text-danger">*</span></label>
+                                                                        <select class="form-control" id="sub_role_{{ $staff->id }}" name="sub_role" required>
+                                                                            <option value="admin" {{ $staff->sub_role === 'admin' ? 'selected' : '' }}>Admin Distributor</option>
+                                                                            <option value="staff" {{ $staff->sub_role === 'staff' ? 'selected' : '' }}>Staff Distributor</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="phone_{{ $staff->id }}">No. Telepon</label>
+                                                                        <input type="text" class="form-control" id="phone_{{ $staff->id }}" name="phone" value="{{ $staff->phone }}">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-warning">
+                                                                        <i class="fa fa-save"></i> Simpan Perubahan
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 @endif
                                             </td>
                                         </tr>

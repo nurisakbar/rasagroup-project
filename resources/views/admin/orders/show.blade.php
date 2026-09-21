@@ -851,6 +851,37 @@
         </div>
     </div>
 
+    @php
+        $qadSyncHistory = $order->qad_sync_history;
+        $lastQadSync = is_array($qadSyncHistory) ? end($qadSyncHistory) : null;
+        $qadPayload = $lastQadSync['payload'] ?? null;
+        $qadResponse = $lastQadSync['response'] ?? null;
+
+        // Build WMS Payload representation based on current items
+        $wmsItems = [];
+        foreach ($order->items as $item) {
+            $batchesPayload = [];
+            if (!empty($item->allocated_batches) && is_array($item->allocated_batches)) {
+                foreach ($item->allocated_batches as $batch) {
+                    $batchesPayload[] = [
+                        'batch_number' => $batch['lot_serial'] ?? '',
+                        'location_code' => $order->source_qad_location_code ?? '',
+                        'quantity' => (float) ($batch['qty'] ?? 0),
+                    ];
+                }
+            }
+            $wmsItems[] = [
+                'item_code' => $item->product->code ?? '',
+                'quantity' => (float) $item->quantity,
+                'batches' => $batchesPayload,
+            ];
+        }
+        $wmsPayload = [
+            'so_number' => $order->order_number,
+            'items' => $wmsItems,
+        ];
+    @endphp
+
     <!-- Modal cURL QAD -->
     <div class="modal fade" id="modalCurlQad" tabindex="-1" role="dialog" aria-labelledby="modalCurlQadLabel">
         <div class="modal-dialog modal-lg" role="document">
@@ -860,12 +891,23 @@
                     <h4 class="modal-title" id="modalCurlQadLabel"><i class="fa fa-code"></i> Format cURL QAD</h4>
                 </div>
                 <div class="modal-body">
-                    <p>Berikut adalah format cURL yang digunakan untuk mengambil detail Sales Order dari QAD:</p>
-                    <div style="position: relative;">
+                    <p><strong>1. Cek Status (GET)</strong></p>
+                    <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlQadText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlQadText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET '{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/get?SalesOrderCode={{ $order->qid_sales_order_number ?? $order->order_number }}' \
---header 'Content-Type: application/json'</pre>
+                        <pre id="curlQadText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/get?SalesOrderCode={{ $order->qid_sales_order_number ?? $order->order_number }}" \
+--header "Content-Type: application/json"</pre>
                     </div>
+
+                    <p><strong>2. Kirim Data (POST)</strong></p>
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlQadPostText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
+                        <pre id="curlQadPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/create" \
+--header "Content-Type: application/json" \
+--data-raw '{!! $qadPayload ? json_encode($qadPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : "{}" !!}'</pre>
+                    </div>
+
+                    <p><strong>3. Respons Terakhir dari QAD (History)</strong></p>
+                    <pre style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">{!! $qadResponse ? json_encode($qadResponse, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : "Belum ada respons" !!}</pre>
                 </div>
             </div>
         </div>
@@ -880,13 +922,27 @@
                     <h4 class="modal-title" id="modalCurlWmsLabel"><i class="fa fa-code"></i> Format cURL WMS</h4>
                 </div>
                 <div class="modal-body">
-                    <p>Berikut adalah format cURL yang digunakan untuk mengecek status pesanan di WMS:</p>
-                    <div style="position: relative;">
+                    <p><strong>1. Cek Status (GET)</strong></p>
+                    <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlWmsText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlWmsText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET '{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders/{{ $order->order_number }}/status' \
---header 'x-api-key: {{ config('services.wms.api_key') }}' \
---header 'Accept: application/json'</pre>
+                        <pre id="curlWmsText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders/{{ $order->order_number }}/status" \
+--header "x-api-key: {{ config('services.wms.api_key') }}" \
+--header "Accept: application/json"</pre>
                     </div>
+
+                    <p><strong>2. Kirim Data (POST)</strong></p>
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlWmsPostText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
+                        <pre id="curlWmsPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders" \
+--header "x-api-key: {{ config('services.wms.api_key') }}" \
+--header "Accept: application/json" \
+--header "Content-Type: application/json" \
+--data-raw '{!! json_encode($wmsPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) !!}'</pre>
+                    </div>
+
+                    <p><strong>3. Respons Terakhir dari WMS (History)</strong></p>
+                    <pre style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">Status: {{ $order->wms_so_status ?? 'N/A' }}
+Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
                 </div>
             </div>
         </div>

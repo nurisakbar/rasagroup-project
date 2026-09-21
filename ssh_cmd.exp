@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+set timeout 20
+set cmd [lindex $argv 0]
+
+spawn ssh -p 2122 debian@116.206.199.251 "$cmd"
+expect {
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+    "password:" {
+        send "STTIndo26\r"
+    }
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+}
+expect eof

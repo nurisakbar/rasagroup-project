@@ -156,7 +156,6 @@ class QidApiService
     {
         return [
             'Authorization' => 'Bearer ' . $this->getToken(),
-            'Content-Type'  => 'application/json',
             // Prefer JSON; some QID routes return JSON while Postman used text/plain for login only.
             'Accept'        => 'application/json, text/plain;q=0.9',
         ];

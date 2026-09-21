@@ -112,8 +112,17 @@
                                                         </div>
                                                         <h2 class="fs-6 mt-1 mb-2"><a href="#">{{ Str::limit($product->display_name, 35) }}</a></h2>
                                                         <div class="product-card-bottom">
+                                                            @php
+                                                                $isDistributor = auth()->check() && auth()->user()->isDistributor();
+                                                                $multiplier = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->unitsPerLargeEffective() : 1;
+                                                                $unitLabel = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->large_unit : $product->unit;
+                                                                $price = Auth::user()->getProductPrice($product) * $multiplier;
+                                                            @endphp
                                                             <div class="product-price">
-                                                                <span class="fs-6">Rp {{ number_format(Auth::user()->getProductPrice($product), 0, ',', '.') }}</span>
+                                                                <span class="fs-6">Rp {{ number_format($price, 0, ',', '.') }}</span>
+                                                                @if($unitLabel)
+                                                                    <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
+                                                                @endif
                                                             </div>
                                                         </div>
                                                         <form action="{{ route('distributor.orders.add-to-cart') }}" method="POST" class="mt-3">

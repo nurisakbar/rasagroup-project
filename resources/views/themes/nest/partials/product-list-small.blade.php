@@ -14,15 +14,24 @@
             </div>
             <span class="font-small ml-5 text-muted"> ({{ number_format($product->rating ?? 0, 1) }})</span>
         </div>
+        @php
+            $isDistributor = auth()->check() && auth()->user()->isDistributor();
+            $multiplier = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->unitsPerLargeEffective() : 1;
+            $unitLabel = ($isDistributor && $product->hasDualUnitOrdering()) ? $product->large_unit : $product->unit;
+        @endphp
         <div class="product-price">
-            <span>Rp{{ number_format($product->final_price, 0, ',', '.') }}</span>
+            <span>{{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
+            @if($unitLabel)
+                <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
+            @endif
             @if(\App\Support\ShopFulfillment::showStockOnStorefront() && session('selected_hub_id'))
                 <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
             @endif
+            <br>
             @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
-                <span class="old-price">Rp{{ number_format($product->price, 0, ',', '.') }}</span>
+                <span class="old-price">{{ number_format($product->price * $multiplier, 0, ',', '.') }}</span>
             @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
-                <span class="old-price">Rp{{ number_format($product->compare_price, 0, ',', '.') }}</span>
+                <span class="old-price">{{ number_format($product->compare_price * $multiplier, 0, ',', '.') }}</span>
             @endif
         </div>
     </div>

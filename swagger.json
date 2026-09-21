@@ -1,0 +1,700 @@
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.0",
+    "paths": {
+      "/api/v1/external/batch-items": {
+        "post": {
+          "description": "Daftar batch beserta jumlah stok dan tanggal kedaluwarsanya, dikelompokkan per lokasi dan item, diurutkan dari yang paling dekat kedaluwarsa. Batch bersaldo nol tidak ditampilkan. Halaman dihitung per grup lokasi-item, bukan per batch.",
+          "operationId": "ExternalBatchController_getExternalBatchExpiry_v1",
+          "parameters": [],
+          "requestBody": {
+            "required": false,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalBatchExpiryDto"
+                },
+                "examples": {
+                  "semuaFilter": {
+                    "summary": "1. Semua filter terisi — hapus baris yang tidak dipakai",
+                    "description": "Tidak ada field yang wajib. Contoh ini menampilkan seluruh filter yang tersedia supaya bisa langsung diedit; buang saja yang tidak diperlukan.",
+                    "value": {
+                      "item_code": "FG-SS-250",
+                      "batch_number": "2409",
+                      "location_code": "FG007",
+                      "expired_from": "2026-09-01",
+                      "expired_to": "2026-12-31",
+                      "page": 1,
+                      "per_page": 50
+                    }
+                  },
+                  "satuLokasi": {
+                    "summary": "2. Semua batch di satu location",
+                    "value": {
+                      "location_code": "FG007",
+                      "page": 1,
+                      "per_page": 100
+                    }
+                  },
+                  "akanExpired": {
+                    "summary": "3. Item tertentu yang kedaluwarsa sampai akhir tahun",
+                    "value": {
+                      "item_code": "FG-SS-250",
+                      "expired_to": "2026-12-31",
+                      "page": 1,
+                      "per_page": 50
+                    }
+                  },
+                  "rentangTanggal": {
+                    "summary": "4. Semua item yang kedaluwarsa dalam satu rentang",
+                    "value": {
+                      "expired_from": "2026-10-01",
+                      "expired_to": "2026-10-31",
+                      "page": 1,
+                      "per_page": 100
+                    }
+                  },
+                  "tanpaFilter": {
+                    "summary": "5. Tanpa filter — seluruh lokasi yang terbuka",
+                    "value": {}
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Berhasil mengambil data batch per lokasi + item",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": true,
+                      "message": "success",
+                      "statusCode": 200,
+                      "data": [
+                        {
+                          "location": {
+                            "code": "FG001",
+                            "title": "Gudang FG",
+                            "item": {
+                              "code": "FG-SS-250",
+                              "batches": [
+                                {
+                                  "code": "F1MSJP 311226",
+                                  "quantity": 480,
+                                  "expired_at": "2026-10-02"
+                                },
+                                {
+                                  "code": "F1MSJP 201126",
+                                  "quantity": 156,
+                                  "expired_at": "2026-11-20"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "location": {
+                            "code": "FG001",
+                            "title": "Gudang FG",
+                            "item": {
+                              "code": "FG-KC-500",
+                              "batches": [
+                                {
+                                  "code": "F1MKCP 141126",
+                                  "quantity": 1200,
+                                  "expired_at": "2026-11-14"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "location": {
+                            "code": "FG007",
+                            "title": "HUB 00001",
+                            "item": {
+                              "code": "FG-SS-250",
+                              "batches": [
+                                {
+                                  "code": "F1MSJP 311226",
+                                  "quantity": 120,
+                                  "expired_at": "2026-10-02"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      "meta": {
+                        "pagination": {
+                          "total": 128,
+                          "per_page": 50,
+                          "current_page": 1,
+                          "last_page": 3,
+                          "from": 1,
+                          "to": 50
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Parameter query tidak valid",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 400,
+                      "message": [
+                        "location_code must be one of the following values: FG001, FG007, FG008, FG009, FG011, FG012, MT-PLACE",
+                        "expired_from must be a valid ISO 8601 date string"
+                      ],
+                      "error": "Bad Request"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Header x-api-key tidak ada atau tidak berlaku",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 401,
+                      "message": "API key tidak valid."
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Kesalahan server yang tidak terduga",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 500,
+                      "message": "internal server error"
+                    }
+                  }
+                }
+              }
+            },
+            "503": {
+              "description": "Layanan belum tersedia",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 503,
+                      "message": "Layanan belum tersedia. Hubungi tim WMS."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "API_KEY": []
+            }
+          ],
+          "summary": "Stok batch & tanggal kedaluwarsa",
+          "tags": [
+            "Inventory"
+          ]
+        }
+      },
+      "/api/v1/external/sales-orders": {
+        "post": {
+          "description": "Balasan `202` berarti diterima dan masuk antrean — hasil akhirnya dipantau lewat endpoint status.\n\nMengirim nomor SO yang sama lagi aman: selama belum gagal, balasannya `200` dengan status yang tersimpan dan tidak diproses ulang. SO yang gagal boleh dikirim ulang.\n\n",
+          "operationId": "ExternalSoController_submit_v1",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitExternalSoDto"
+                },
+                "examples": {
+                  "satuItem": {
+                    "summary": "Satu item dari dua batch",
+                    "value": {
+                      "so_number": "SO-2026-00123",
+                      "items": [
+                        {
+                          "item_code": "FG-SS-250",
+                          "quantity": 600,
+                          "batches": [
+                            {
+                              "batch_number": "F1MSJP 311226",
+                              "location_code": "FG001",
+                              "quantity": 480
+                            },
+                            {
+                              "batch_number": "F1MSJP 201126",
+                              "location_code": "FG001",
+                              "quantity": 120
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "beberapaItem": {
+                    "summary": "Beberapa item sekaligus",
+                    "value": {
+                      "so_number": "SO-2026-00124",
+                      "items": [
+                        {
+                          "item_code": "FG-SS-250",
+                          "quantity": 480,
+                          "batches": [
+                            {
+                              "batch_number": "F1MSJP 311226",
+                              "location_code": "FG001",
+                              "quantity": 480
+                            }
+                          ]
+                        },
+                        {
+                          "item_code": "FG-KC-500",
+                          "quantity": 1200,
+                          "batches": [
+                            {
+                              "batch_number": "F1MKCP 141126",
+                              "location_code": "FG011",
+                              "quantity": 1200
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Nomor SO ini sudah pernah diterima; status tersimpan dikembalikan",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": true,
+                      "message": "Sales order ini sudah pernah diterima.",
+                      "statusCode": 200,
+                      "data": {
+                        "so_number": "SO-2026-00123",
+                        "status": "SUCCESS",
+                        "failure_reason": null,
+                        "submitted_at": "2026-09-17T08:12:00.000Z",
+                        "processed_at": "2026-09-17T08:12:14.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "202": {
+              "description": "Diterima dan masuk antrean",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": true,
+                      "message": "Sales order diterima dan masuk antrean.",
+                      "statusCode": 202,
+                      "data": {
+                        "so_number": "SO-2026-00123",
+                        "status": "QUEUED",
+                        "failure_reason": null,
+                        "submitted_at": "2026-09-17T08:12:00.000Z",
+                        "processed_at": null
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Payload salah bentuk",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "statusCode": 400,
+                      "message": [
+                        "items.0.batches.0.location_code must be one of the following values: FG001, FG007, FG008, FG009, FG011, FG012, MT-PLACE",
+                        "items.0.quantity must be an integer number"
+                      ],
+                      "error": "Bad Request"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Header x-api-key tidak ada atau tidak berlaku",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 401,
+                      "message": "API key tidak valid."
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Nomor SO tidak bisa dipakai oleh pengirim ini",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 409,
+                      "message": "Sales Order SO-2026-00123 tidak bisa diproses."
+                    }
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Isi kiriman tidak bisa diterima: item tidak dikenal, batch tidak ditemukan, stok tidak cukup, lokasi hub, atau jumlah batch tidak sama dengan quantity item. Tidak ada yang tersimpan.\n\nLokasi FG007, FG008, dan FG009 adalah hub: bisa dilihat lewat endpoint batch, tetapi belum didukung sebagai lokasi asal batch di sini.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "examples": {
+                      "stokKurang": {
+                        "summary": "Stok batch tidak cukup",
+                        "value": {
+                          "success": false,
+                          "statusCode": 422,
+                          "message": "Stok batch F1MSJP 311226 di lokasi FG001 tidak cukup: diminta 680, tersedia 500."
+                        }
+                      },
+                      "lokasiHub": {
+                        "summary": "Lokasi hub belum didukung",
+                        "value": {
+                          "success": false,
+                          "statusCode": 422,
+                          "message": "Lokasi FG007 adalah hub dan belum didukung untuk pembuatan SO lewat API. Hubungi tim WMS."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Kesalahan server yang tidak terduga",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "statusCode": 500,
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            },
+            "503": {
+              "description": "Layanan belum tersedia",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 503,
+                      "message": "Layanan belum tersedia. Hubungi tim WMS."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "API_KEY": []
+            }
+          ],
+          "summary": "Kirim Sales Order",
+          "tags": [
+            "Sales Order"
+          ]
+        }
+      },
+      "/api/v1/external/sales-orders/{soNumber}/status": {
+        "get": {
+          "description": "Status pemrosesan Sales Order yang pernah dikirim: `QUEUED`, `PROCESSING`, `SUCCESS`, atau `FAILED`. Kalau gagal, `failure_reason` menjelaskan sebabnya; perbaiki lalu kirim ulang nomor SO yang sama.",
+          "operationId": "ExternalSoController_status_v1",
+          "parameters": [
+            {
+              "name": "soNumber",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "example": "SO-2026-00123",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Status ditemukan",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": true,
+                      "message": "success",
+                      "statusCode": 200,
+                      "data": {
+                        "so_number": "SO-2026-00123",
+                        "status": "FAILED",
+                        "failure_reason": "Sales Order tidak ditemukan di sistem pusat.",
+                        "submitted_at": "2026-09-17T08:12:00.000Z",
+                        "processed_at": "2026-09-17T08:12:14.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Header x-api-key tidak ada atau tidak berlaku",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 401,
+                      "message": "API key tidak valid."
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Nomor SO tidak pernah dikirim oleh pengirim ini",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 404,
+                      "message": "Sales Order SO-2026-00123 tidak ditemukan."
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Kesalahan server yang tidak terduga",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "statusCode": 500,
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            },
+            "503": {
+              "description": "Layanan belum tersedia",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "success": false,
+                      "statusCode": 503,
+                      "message": "Layanan belum tersedia. Hubungi tim WMS."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "API_KEY": []
+            }
+          ],
+          "summary": "Status Sales Order",
+          "tags": [
+            "Sales Order"
+          ]
+        }
+      }
+    },
+    "info": {
+      "title": "WMS External API",
+      "description": "Semua request wajib membawa header `x-api-key` berisi key yang diterbitkan untuk Anda.",
+      "version": "1.0",
+      "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+      "securitySchemes": {
+        "API_KEY": {
+          "type": "apiKey",
+          "in": "header",
+          "name": "x-api-key"
+        }
+      },
+      "schemas": {
+        "SubmitExternalSoDto": {
+          "type": "object",
+          "properties": {
+            "so_number": {
+              "type": "string",
+              "description": "Nomor Sales Order; harus sudah ada di sistem pusat",
+              "example": "SO123456"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ExternalSoItemDto"
+              }
+            }
+          },
+          "required": [
+            "so_number",
+            "items"
+          ]
+        },
+        "ExternalSoItemDto": {
+          "type": "object",
+          "properties": {
+            "item_code": {
+              "type": "string",
+              "description": "Kode item",
+              "example": "FG-SS-250"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Jumlah item; harus sama dengan total quantity seluruh batch-nya",
+              "example": 600
+            },
+            "batches": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ExternalSoBatchDto"
+              }
+            }
+          },
+          "required": [
+            "item_code",
+            "quantity",
+            "batches"
+          ]
+        },
+        "ExternalSoBatchDto": {
+          "type": "object",
+          "properties": {
+            "batch_number": {
+              "type": "string",
+              "description": "Nomor batch",
+              "example": "F1MSJP 311226"
+            },
+            "location_code": {
+              "type": "string",
+              "enum": [
+                "FG001",
+                "FG007",
+                "FG008",
+                "FG009",
+                "FG011",
+                "FG012",
+                "MT-PLACE"
+              ],
+              "description": "Lokasi asal stok batch",
+              "example": "FG001"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Jumlah yang diambil dari batch ini",
+              "example": 480
+            }
+          },
+          "required": [
+            "batch_number",
+            "location_code",
+            "quantity"
+          ]
+        },
+        "ExternalBatchExpiryDto": {
+          "type": "object",
+          "properties": {
+            "item_code": {
+              "type": "string",
+              "description": "Filter kode item (cocok persis)",
+              "example": "FG-SS-250"
+            },
+            "batch_number": {
+              "type": "string",
+              "description": "Filter nomor batch (cocok sebagian)",
+              "example": "2409"
+            },
+            "location_code": {
+              "type": "string",
+              "enum": [
+                "FG001",
+                "FG007",
+                "FG008",
+                "FG009",
+                "FG011",
+                "FG012",
+                "MT-PLACE"
+              ],
+              "description": "Persempit ke satu lokasi. Hilangkan untuk mendapat semua lokasi.",
+              "example": "FG001"
+            },
+            "expired_from": {
+              "type": "string",
+              "description": "Batas awal tanggal kedaluwarsa (YYYY-MM-DD), inklusif",
+              "example": "2026-09-01"
+            },
+            "expired_to": {
+              "type": "string",
+              "description": "Batas akhir tanggal kedaluwarsa (YYYY-MM-DD), inklusif",
+              "example": "2026-12-31"
+            },
+            "page": {
+              "type": "number",
+              "description": "Halaman, mulai dari 1",
+              "example": 1
+            },
+            "per_page": {
+              "type": "number",
+              "description": "Jumlah baris per halaman, maksimum 100",
+              "example": 50
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerUrl": "/api/external/docs-json",
+  "customOptions": {
+    "persistAuthorization": true
+  }
+}
