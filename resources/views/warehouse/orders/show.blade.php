@@ -250,7 +250,7 @@
 
                         @if($isSelfPickup)
                         <tr>
-                            <th>Ambil Sendiri</th>
+                            <th>Pengambilan Ditempat</th>
                             <td>
                                 <strong>Jadwal Siap Diambil:</strong> 
                                 @if($order->pickup_ready_at)

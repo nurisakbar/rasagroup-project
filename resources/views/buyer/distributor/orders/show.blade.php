@@ -140,7 +140,7 @@
 
                             @php
                                 $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
-                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'diantar ketempat');
                             @endphp
                             @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
@@ -346,7 +346,7 @@
                                 <!-- Shipping Status Card -->
                                 @php
                                     $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
-                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'kurir toko');
+                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'diantar ketempat');
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
@@ -362,13 +362,13 @@
                                                     <span class="text-dark font-sm">{{ $isSelfPickup ? 'Metode Pengambilan' : 'Kurir & Layanan' }}</span>
                                                     <span class="fw-bold font-sm text-dark text-end">
                                                         {{ $order->expedition ? $order->expedition->name : '-' }} 
-                                                        <br><small class="text-dark fw-bold">({{ $order->expedition_service ?? ($isSelfPickup ? 'Ambil Sendiri' : 'Standard') }})</small>
+                                                        <br><small class="text-dark fw-bold">({{ $order->expedition_service ?? ($isSelfPickup ? 'Pengambilan Ditempat' : 'Standard') }})</small>
                                                     </span>
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom align-items-center">
                                                     <span class="text-dark font-sm">{{ $isSelfPickup ? 'Info Pengambilan' : 'Nomor Resi' }}</span>
                                                     @if($isSelfPickup)
-                                                        <span class="badge rounded-pill bg-success px-3 py-2 text-white font-sm" style="white-space: nowrap;"><i class="fi-rs-check mr-5"></i> Ambil Sendiri di Gudang</span>
+                                                        <span class="badge rounded-pill bg-success px-3 py-2 text-white font-sm" style="white-space: nowrap;"><i class="fi-rs-check mr-5"></i> Pengambilan Ditempat di Gudang</span>
                                                     @elseif($order->tracking_number || ($isKurirToko && in_array($order->order_status, ['shipped', 'delivered'])))
                                                         <div class="text-end">
                                                             @if($order->tracking_number)

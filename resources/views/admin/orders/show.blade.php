@@ -334,7 +334,7 @@
                                 @endphp
 
                                 @if($isSelfPickup)
-                                    <span class="label label-success" style="font-size: 12px;"><i class="fa fa-shopping-bag"></i> Tidak Ada Resi (Ambil Sendiri)</span>
+                                    <span class="label label-success" style="font-size: 12px;"><i class="fa fa-shopping-bag"></i> Tidak Ada Resi (Pengambilan Ditempat)</span>
                                 @elseif($order->tracking_number)
                                     <strong style="font-size: 16px; letter-spacing: 1px;">{{ $order->tracking_number }}</strong>
                                     @if($isLalamove)
@@ -689,9 +689,9 @@
                         <!-- Tracking Number -->
                         @if($isSelfPickup)
                         <div class="form-group">
-                            <label>Jadwal & Info Pengambilan (Ambil Sendiri)</label>
+                            <label>Jadwal & Info Pengambilan (Pengambilan Ditempat)</label>
                             <div class="callout callout-success" style="margin-bottom: 15px; padding: 10px;">
-                                <i class="fa fa-shopping-bag"></i> <strong>Ambil Sendiri di Gudang</strong><br>
+                                <i class="fa fa-shopping-bag"></i> <strong>Pengambilan Ditempat di Gudang</strong><br>
                                 <small>Tentukan kapan pesanan siap diambil dan berikan catatan instruksi untuk pembeli.</small>
                             </div>
                                 <label for="pickup_ready_at" style="font-weight: 600;"><i class="fa fa-calendar-check-o text-success"></i> 1. Tanggal & Waktu Siap Diambil (Ready)</label>

@@ -13,21 +13,7 @@
     </div>
 </div>
 <div class="container mb-80 mt-50 rg-cart-page">
-    <div class="row">
-        <div class="col-lg-8 mb-40">
-            <h1 class="heading-2 mb-10">Keranjang Belanja Anda</h1>
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="text-body mb-0">Ada <span class="text-brand">{{ $carts->count() }}</span> produk di keranjang Anda</h6>
-                @if(!$carts->isEmpty())
-                    <h6 class="text-body mb-0">
-                        Total berat:
-                        <span class="text-brand fw-bold js-cart-page-total-weight">{{ $totalWeightFormatted }}</span>
-                    </h6>
-                @endif
-            </div>
 
-        </div>
-    </div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert" style="background-color: rgba(22, 199, 154, 1); color: white; border: none;">
@@ -122,7 +108,6 @@
                                                 </div>
                                             </form>
                                             <span class="d-block font-xs text-muted mt-5 rg-cart-unit-label">{{ $cart->cartQuantityUnitLabel() }}</span>
-                                            <span class="d-block font-xs text-muted js-cart-base-equiv rg-cart-base-equiv" style="{{ $cart->showsLargeUnitInCart() ? '' : 'display:none;' }}">@if($cart->showsLargeUnitInCart())(= {{ number_format($cart->quantity) }} {{ $cart->product->unit }})@endif</span>
                                         </div>
                                     </td>
                                     <td class="price rg-cart-subtotal" data-title="Subtotal">
@@ -521,16 +506,6 @@
                         var subEl = row.querySelector('.js-cart-line-subtotal');
                         if (subEl && line.line_subtotal_formatted) {
                             subEl.textContent = line.line_subtotal_formatted;
-                        }
-                        var eq = row.querySelector('.js-cart-base-equiv');
-                        if (eq) {
-                            if (line.shows_base_equiv && line.base_equiv_formatted) {
-                                eq.textContent = line.base_equiv_formatted;
-                                eq.style.display = 'block';
-                            } else {
-                                eq.textContent = '';
-                                eq.style.display = 'none';
-                            }
                         }
                     }
                     if (typeof window.calculateCartTotals === 'function') {

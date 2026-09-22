@@ -44,11 +44,11 @@
 
                 <div class="mobile-social-icon mt-40 mb-50 pt-20 border-top">
                     <h6 class="mb-15">Ikuti Kami</h6>
-                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
-                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-twitter-white.svg') }}" alt="" /></a>
-                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
-                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
-                    <a href="#" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
+                    <a href="https://web.facebook.com/profile.php?id=100080673773420" target="_blank" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-facebook-white.svg') }}" alt="" /></a>
+                    <a href="#" target="_blank" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-twitter-white.svg') }}" alt="" /></a>
+                    <a href="https://www.instagram.com/drippflavour" target="_blank" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-instagram-white.svg') }}" alt="" /></a>
+                    <a href="#" target="_blank" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-pinterest-white.svg') }}" alt="" /></a>
+                    <a href="https://www.youtube.com/@rasagroup4229" target="_blank" style="background-color: var(--primary-rasa) !important;"><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-youtube-white.svg') }}" alt="" /></a>
                 </div>
                 <div class="site-copyright">Copyright {{ date('Y') }} © Rasa Group. Seluruh hak cipta dilindungi.</div>
             </div>

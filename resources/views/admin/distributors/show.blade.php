@@ -400,7 +400,7 @@
                                             <th>Telepon</th>
                                             <th>Level Akses</th>
                                             <th>Tanggal Gabung</th>
-                                            <th width="50">Aksi</th>
+                                            <th width="80px">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -418,7 +418,6 @@
                                             </td>
                                             <td>{{ $staff->created_at->format('d M Y') }}</td>
                                             <td>
-                                                @if($staff->id !== $distributor->id)
                                                 <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-edit-staff-{{ $staff->id }}">
                                                     <i class="fa fa-edit"></i>
                                                 </button>
@@ -444,15 +443,18 @@
                                                                 <div class="modal-body text-left">
                                                                     <div class="form-group">
                                                                         <label for="name_{{ $staff->id }}">Nama Lengkap <span class="text-danger">*</span></label>
-                                                                        <input type="text" class="form-control" id="name_{{ $staff->id }}" name="name" value="{{ $staff->name }}" required>
+                                                                        <input type="text" class="form-control" id="name_{{ $staff->id }}" name="name" value="{{ $staff->name }}" placeholder="Masukkan nama lengkap" required>
                                                                     </div>
                                                                     <div class="form-group">
                                                                         <label for="email_{{ $staff->id }}">Email <span class="text-danger">*</span></label>
-                                                                        <input type="email" class="form-control" id="email_{{ $staff->id }}" name="email" value="{{ $staff->email }}" required>
+                                                                        <input type="email" class="form-control" id="email_{{ $staff->id }}" name="email" value="{{ $staff->email }}" placeholder="Masukkan alamat email" required>
                                                                     </div>
                                                                     <div class="form-group">
                                                                         <label for="password_{{ $staff->id }}">Password Baru</label>
-                                                                        <input type="password" class="form-control" id="password_{{ $staff->id }}" name="password" minlength="8">
+                                                                        <div class="input-group">
+                                                                            <input type="password" class="form-control" id="password_{{ $staff->id }}" name="password" placeholder="Masukkan password baru" minlength="8">
+                                                                            <span class="input-group-addon" style="cursor: pointer;" onclick="togglePassword('password_{{ $staff->id }}', this)"><i class="fa fa-eye"></i></span>
+                                                                        </div>
                                                                         <small class="text-muted">Kosongkan jika tidak ingin mengubah password.</small>
                                                                     </div>
                                                                     <div class="form-group">
@@ -464,7 +466,7 @@
                                                                     </div>
                                                                     <div class="form-group">
                                                                         <label for="phone_{{ $staff->id }}">No. Telepon</label>
-                                                                        <input type="text" class="form-control" id="phone_{{ $staff->id }}" name="phone" value="{{ $staff->phone }}">
+                                                                        <input type="text" class="form-control" id="phone_{{ $staff->id }}" name="phone" value="{{ $staff->phone }}" placeholder="Masukkan no. telepon">
                                                                     </div>
                                                                 </div>
                                                                 <div class="modal-footer">
@@ -477,7 +479,6 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                @endif
                                             </td>
                                         </tr>
                                         @empty
@@ -769,15 +770,18 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="name">Nama Lengkap <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Masukkan nama lengkap" required>
                         </div>
                         <div class="form-group">
                             <label for="email">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Masukkan alamat email" required>
                         </div>
                         <div class="form-group">
                             <label for="password">Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password" minlength="8" required>
+                                <span class="input-group-addon" style="cursor: pointer;" onclick="togglePassword('password', this)"><i class="fa fa-eye"></i></span>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="sub_role">Level Akses <span class="text-danger">*</span></label>
@@ -788,7 +792,7 @@
                         </div>
                         <div class="form-group">
                             <label for="phone">No. Telepon</label>
-                            <input type="text" class="form-control" id="phone" name="phone">
+                            <input type="text" class="form-control" id="phone" name="phone" placeholder="Masukkan no. telepon">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1213,6 +1217,20 @@ $(document).ready(function() {
         });
     });
 });
+
+function togglePassword(inputId, iconElement) {
+    var input = document.getElementById(inputId);
+    var icon = iconElement.querySelector('i');
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
 </script>
 @endpush
 

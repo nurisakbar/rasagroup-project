@@ -46,11 +46,7 @@
 </div>
 
 <div class="container mb-80 mt-50 checkout-page">
-    <div class="row">
-        <div class="col-lg-8 mb-40">
-            <h3 class="heading-2 mb-10">Checkout</h3>
-        </div>
-    </div>
+
 
     <div id="sessionAlerts">
         @if(session('error'))
@@ -136,11 +132,12 @@
                                         <div class="payment-content pl-20 mt-10" style="display: block;">
                                             <p class="font-weight-bold">{{ $address->recipient_name }} | {{ $address->phone }}</p>
                                             <p class="checkout-address-detail">{{ $address->address_detail }}</p>
-                                            <p class="checkout-address-location text-small">
+                                            <p class="checkout-address-location text-small mb-10">
                                                 {{ $address->village_name }}, Kec. {{ $address->district_name }}<br>
                                                 {{ $address->regency_name }}, {{ $address->province_name }} 
                                                 @if($address->postal_code) {{ $address->postal_code }} @endif
                                             </p>
+                                            <a href="{{ route('buyer.addresses.edit', ['address' => $address->id, 'origin' => 'checkout']) }}" class="btn btn-sm btn-standar-outline py-1 px-3" style="font-size: 12px; z-index: 2; position: relative;"><i class="fi-rs-edit mr-5"></i>Edit Alamat</a>
                                         </div>
                                     </div>
                                 @endforeach
@@ -397,18 +394,7 @@
                                 </div>
                             @endif
                             
-                            <!-- Manual Transfer -->
-                            <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('manual_transfer')" id="card-transfer">
-                                <div class="custom-radio">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="manual_transfer" id="payTransfer">
-                                    <label class="form-check-label" for="payTransfer">
-                                        <strong>Transfer Bank Manual</strong>
-                                    </label>
-                                </div>
-                                <div class="payment-content pl-20 mt-10" style="display: block;">
-                                    <p class="font-sm text-muted">Transfer manual ke rekening BCA, Mandiri, BNI, atau BRI kami. Memerlukan konfirmasi manual.</p>
-                                </div>
-                            </div>
+
 
                             @if(Auth::user()->isDistributor() && (int) (Auth::user()->term_of_payment ?? 0) > 0)
                             <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('term_of_payment')" id="card-tot">
@@ -493,10 +479,9 @@
                                                 @php
                                                     $warning = collect($stockWarnings ?? [])->firstWhere('cart_id', $cart->id);
                                                 @endphp
-                                                <div class="stock-warning-message text-danger small mt-1 fw-bold" id="stock-warning-{{ $cart->id }}" style="{{ $warning ? '' : 'display: none;' }}">
-                                                    @if($warning)
-                                                        Stok tidak cukup! (Tersedia: {{ $warning['available_qty'] }})
-                                                    @endif
+                                                <div class="stock-warning-message text-danger small mt-1 fw-bold d-flex align-items-center" id="stock-warning-{{ $cart->id }}" style="{{ $warning ? '' : 'display: none;' }}">
+                                                    <span>Stok tidak cukup! (Tersedia: <span class="available-qty">{{ $warning ? $warning['available_qty'] : '' }}</span>)</span>
+                                                    <button type="submit" form="delete-form-{{ $cart->id }}" onclick="return confirm('Hapus item ini dari pesanan?');" class="text-danger border-0 align-baseline ms-2" style="background-color: #fff5f5; color: #c0392b !important; padding: 4px 6px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none; line-height: 1; display: inline-flex; align-items: center; justify-content: center;" title="Hapus Item"><i class="fi-rs-trash"></i></button>
                                                 </div>
                                             </td>
                                             <td class="rg-checkout-item-price text-end">
@@ -679,6 +664,13 @@
         </div>
     </form>
 </div>
+
+@foreach($carts as $cart)
+    <form action="{{ route('cart.destroy', $cart) }}" method="POST" id="delete-form-{{ $cart->id }}" class="d-none">
+        @csrf
+        @method('DELETE')
+    </form>
+@endforeach
 
 <style>
     /* Custom styles for checkout components */
@@ -1715,7 +1707,8 @@
             warnings.forEach(function(warning) {
                 var warningDiv = $('#stock-warning-' + warning.cart_id);
                 if (warningDiv.length) {
-                    warningDiv.text('Stok tidak cukup! (Tersedia: ' + warning.available_qty + ')').show();
+                    warningDiv.find('.available-qty').text(warning.available_qty);
+                    warningDiv.show();
                     hasWarning = true;
                 }
                 warningListHtml.push('- ' + warning.product_name + ' (Pesan: ' + warning.requested_qty + ', Tersedia: ' + warning.available_qty + ')');

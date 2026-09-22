@@ -309,4 +309,39 @@ class Warehouse extends Model
             ->orderBy('name')
             ->first();
     }
+
+    public function getAvailableStock(string $productCode, string $productId): int
+    {
+        $dbStock = \App\Models\WarehouseStock::where('warehouse_id', $this->id)
+            ->where('product_id', $productId)
+            ->value('stock') ?? 0;
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isDistributor = $user && $user->isDistributor();
+
+        $qadLocationCode = $this->qad_location_code ?? $this->kode_hub;
+        if ($qadLocationCode) {
+            $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
+                ->where('item_code', $productCode)
+                ->get();
+                
+            $minBulan = $user?->aturan_minimal_masa_berlaku ?? 0;
+            $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
+            
+            $qadStock = 0;
+            foreach ($items as $item) {
+                if ($item->lot_serial && strpos($item->lot_serial, '-') !== false) continue;
+                if ($minBulan > 0 && $item->expired_date && $item->expired_date->lt($minDate)) continue;
+                $qadStock += (int) $item->qty;
+            }
+            
+            if ($isDistributor) {
+                return (int) $qadStock;
+            }
+            
+            return (int) min($dbStock, $qadStock);
+        }
+
+        return (int) $dbStock;
+    }
 }

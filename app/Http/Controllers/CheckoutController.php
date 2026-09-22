@@ -762,7 +762,8 @@ class CheckoutController extends Controller
         if (! ShopFulfillment::assumeStockReady()) {
             $stockErrors = [];
             
-            $usesJubelio = is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
+            $isDistributor = $user && $user->isDistributor();
+            $usesJubelio = !$isDistributor && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
             $jubelioItems = null;
 
             if ($usesJubelio && $sourceWarehouse->kode_hub) {
@@ -777,11 +778,41 @@ class CheckoutController extends Controller
                     \Illuminate\Support\Facades\Log::warning('Checkout stock validation fallback to local', ['error' => $e->getMessage()]);
                 }
             }
+            
+            $qadLocationCode = $sourceWarehouse->qad_location_code ?? $sourceWarehouse->kode_hub;
+            $qadStock = null;
+            if ($qadLocationCode) {
+                $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)->get();
+                $qadStock = [];
+                $minBulan = $user->aturan_minimal_masa_berlaku ?? 0;
+                $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
+                
+                foreach ($items as $item) {
+                    $itemCode = $item->item_code;
+                    $qty = (int) $item->qty;
+                    $lotSerial = $item->lot_serial;
+                    
+                    if ($lotSerial && strpos($lotSerial, '-') !== false) continue;
+                    
+                    if ($minBulan > 0 && $item->expired_date) {
+                        if ($item->expired_date->lt($minDate)) continue;
+                    }
+                    
+                    if ($itemCode) {
+                        $qadStock[$itemCode] = ($qadStock[$itemCode] ?? 0) + $qty;
+                    }
+                }
+            }
 
             foreach ($carts as $cart) {
                 $productName = $cart->product->display_name;
                 $qty = $cart->quantity;
                 $productCode = $cart->product->code;
+                
+                $stock = \App\Models\WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
+                    ->where('product_id', $cart->product_id)
+                    ->first();
+                $dbStock = $stock ? $stock->stock : 0;
 
                 if ($usesJubelio && $jubelioItems !== null) {
                     $needle = strtoupper(trim((string) $productCode));
@@ -798,15 +829,16 @@ class CheckoutController extends Controller
                     if ($qty > $availableStock) {
                         $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (Jubelio).";
                     }
-                } else {
-                    $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
-                        ->where('product_id', $cart->product_id)
-                        ->first();
-
-                    $availableStock = $stock ? $stock->stock : 0;
-
+                } else if ($qadLocationCode && $qadStock !== null) {
+                    $actualQadStock = $qadStock[$productCode] ?? 0;
+                    $availableStock = $isDistributor ? $actualQadStock : min($dbStock, $actualQadStock);
+                    
                     if ($qty > $availableStock) {
-                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock}.";
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (QAD).";
+                    }
+                } else {
+                    if ($qty > $dbStock) {
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$dbStock}.";
                     }
                 }
             }
@@ -954,17 +986,16 @@ class CheckoutController extends Controller
             
             if ($qadLocationCode) {
                 try {
-                    $qad = app(\App\Services\QadService::class);
-                    $response = $qad->getAllInventory([
-                        'location' => $qadLocationCode,
-                        'search' => '',
-                        'batch' => '',
-                        'length' => 1000,
-                    ]);
-                    
-                    $items = class_exists(\App\Support\QadResponseHelper::class) 
-                        ? \App\Support\QadResponseHelper::list($response) 
-                        : ($response['data'] ?? []);
+                    $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
+                        ->get()
+                        ->map(function ($inv) {
+                            return [
+                                'item_code' => $inv->item_code,
+                                'qty' => $inv->qty,
+                                'lot_serial' => $inv->lot_serial,
+                                'expired_short' => $inv->expired_date ? $inv->expired_date->format('Y-m-d') : null,
+                            ];
+                        })->toArray();
                     
                     $minBulan = $user->aturan_minimal_masa_berlaku ?? 0;
                     $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
@@ -1472,19 +1503,16 @@ class CheckoutController extends Controller
             
             if ($qadLocationCode) {
                 try {
-                    $qad = app(\App\Services\QadService::class);
-                    $response = $qad->getAllInventory([
-                        'location' => $qadLocationCode,
-                        'search' => '',
-                        'batch' => '',
-                        'length' => 1000,
-                    ]);
-                    
-                    if (class_exists(\App\Support\QadResponseHelper::class)) {
-                        $items = \App\Support\QadResponseHelper::list($response);
-                    } else {
-                        $items = $response['data'] ?? [];
-                    }
+                    $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
+                        ->get()
+                        ->map(function ($inv) {
+                            return [
+                                'item_code' => $inv->item_code,
+                                'qty' => $inv->qty,
+                                'lot_serial' => $inv->lot_serial,
+                                'expired_short' => $inv->expired_date ? $inv->expired_date->format('Y-m-d') : null,
+                            ];
+                        })->toArray();
                     
                     $minBulan = \Illuminate\Support\Facades\Auth::user()?->aturan_minimal_masa_berlaku ?? 0;
                     $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
@@ -1529,9 +1557,10 @@ class CheckoutController extends Controller
                 $productCode = $cart->product->code;
                 
                 // If QAD location is configured and we fetched it successfully, use minimum of both to be safe
-                if ($qadLocationCode && $qadStock !== null && !empty($qadStock)) {
+                if ($qadLocationCode && $qadStock !== null) {
                     $actualQadStock = $qadStock[$productCode] ?? 0;
-                    $finalStock = min($dbStock, $actualQadStock);
+                    $isDistributor = \Illuminate\Support\Facades\Auth::user()?->isDistributor() ?? false;
+                    $finalStock = $isDistributor ? $actualQadStock : min($dbStock, $actualQadStock);
                 } else {
                     $finalStock = $dbStock;
                 }
@@ -1571,9 +1600,9 @@ class CheckoutController extends Controller
                 'data' => [
                     [
                         'code' => $expedition->code,
-                        'name' => $isKurirToko ? 'Kurir Toko' : 'Ambil Sendiri',
-                        'service' => $isKurirToko ? 'Kurir Toko' : 'Ambil Sendiri',
-                        'description' => $isKurirToko ? 'Pengiriman oleh Kurir Toko' : 'Pickup dari ' . ($sourceWarehouse?->name ?? 'Gudang Pusat'),
+                        'name' => $isKurirToko ? 'Diantar Ketempat' : 'Pengambilan Ditempat',
+                        'service' => $isKurirToko ? 'Diantar Ketempat' : 'Pengambilan Ditempat',
+                        'description' => $isKurirToko ? 'Diantar Ketempat' : 'Pengambilan Ditempat dari ' . ($sourceWarehouse?->name ?? 'Gudang Pusat'),
                         'cost' => 0,
                         'etd' => '-',
                     ]

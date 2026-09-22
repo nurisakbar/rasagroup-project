@@ -183,7 +183,17 @@ class CartController extends Controller
             ? $product->orderedQuantityToBase($qtyInput, 'large')
             : $qtyInput;
 
-        // Disable stock check against a specific hub while shopping, will be checked during checkout
+        $availableStock = PHP_INT_MAX;
+        $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+        if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
+            $availableStock = $warehouse->getAvailableStock($product->code, $product->id);
+        }
+
+        if ($newBaseQty > $availableStock) {
+            return $this->wantsJsonCartUpdate($request)
+                ? response()->json(['error' => "Stok tidak mencukupi. Tersedia {$availableStock} di gudang pengiriman Anda."], 422)
+                : back()->with('error', "Stok tidak mencukupi. Tersedia {$availableStock} di gudang pengiriman Anda.");
+        }
 
         $cart->quantity = $newBaseQty;
         $cart->syncOrderedMetadataFromBaseQuantity();
@@ -481,8 +491,14 @@ class CartController extends Controller
 
         $existingQty = $cart ? (int) $cart->quantity : 0;
         
-        // Disable stock checking during add to cart (it will be checked at checkout)
-        $availableStock = PHP_INT_MAX; 
+        $availableStock = PHP_INT_MAX;
+        if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
+            $availableStock = $warehouse->getAvailableStock($product->code, $product->id);
+        }
+        
+        if ($existingQty + $requestedBaseQty > $availableStock) {
+            return ['ok' => false, 'error' => "Stok tidak mencukupi. Tersedia {$availableStock} di gudang pengiriman Anda.", 'added' => 0];
+        }
         
         $room = max(0, $availableStock - $existingQty);
         $toAdd = $capToStock ? min($requestedBaseQty, $room) : $requestedBaseQty;
@@ -772,12 +788,11 @@ class CartController extends Controller
         $baseNeeded = $product->orderedQuantityToBase($newOrd, $uom);
 
         if (! ShopFulfillment::assumeStockReady()) {
-            $stock = $product->warehouseStocks()
-                ->where('warehouse_id', $cart->warehouse_id)
-                ->first();
+            $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+            $availableStock = $warehouse ? $warehouse->getAvailableStock($product->code, $product->id) : 0;
 
-            if (! $stock || $stock->stock < $baseNeeded) {
-                return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi.'], 422);
+            if ($baseNeeded > $availableStock) {
+                return response()->json(['success' => false, 'message' => "Stok tidak mencukupi. Tersedia {$availableStock} di gudang pengiriman Anda."], 422);
             }
         }
 
