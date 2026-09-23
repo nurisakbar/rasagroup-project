@@ -319,7 +319,7 @@ class DistributorController extends Controller
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
-            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? null,
+            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? User::DEFAULT_SHELF_LIFE_MONTHS,
         ]);
 
         // Sync all active products to warehouse stock
@@ -851,7 +851,7 @@ class DistributorController extends Controller
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
-            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? null,
+            'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? User::DEFAULT_SHELF_LIFE_MONTHS,
         ];
 
         $distributor->update($userData);

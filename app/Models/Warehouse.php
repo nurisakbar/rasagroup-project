@@ -321,7 +321,7 @@ class Warehouse extends Model
 
         $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(
             $this,
-            (int) ($user?->aturan_minimal_masa_berlaku ?? 0)
+            $user?->shelfLifeMonths() ?? 0
         );
 
         if ($wmsStockMap !== null) {

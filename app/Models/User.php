@@ -25,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_DRIIPPRENEUR = 'driippreneur';
     const ROLE_AFFILIATOR = 'affiliator';
     const ROLE_DISTRIBUTOR = 'distributor';
+    const DEFAULT_SHELF_LIFE_MONTHS = 9;
     const ROLE_OUTLET = 'outlet';
     const ROLE_SUPER_ADMIN = 'super_admin';
     const ROLE_SALES = 'sales';
@@ -253,6 +254,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isDistributor(): bool
     {
         return $this->role === self::ROLE_DISTRIBUTOR;
+    }
+
+    /**
+     * Minimal sisa masa berlaku (bulan). Distributor kosong memakai default 9.
+     */
+    public function shelfLifeMonths(): int
+    {
+        if ($this->aturan_minimal_masa_berlaku !== null) {
+            return (int) $this->aturan_minimal_masa_berlaku;
+        }
+
+        return $this->isDistributor() ? self::DEFAULT_SHELF_LIFE_MONTHS : 0;
     }
 
     public function isBuyer(): bool

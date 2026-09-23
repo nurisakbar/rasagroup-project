@@ -786,7 +786,7 @@ class CheckoutController extends Controller
             $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse);
             $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
                 $sourceWarehouse,
-                (int) ($user->aturan_minimal_masa_berlaku ?? 0)
+                $user->shelfLifeMonths()
             );
 
             foreach ($carts as $cart) {
@@ -978,7 +978,7 @@ class CheckoutController extends Controller
                 try {
                     $wmsBatches = $wms->batchesByItemCode(
                         $wmsLocationCode,
-                        (int) ($user->aturan_minimal_masa_berlaku ?? 0)
+                        $user->shelfLifeMonths()
                     ) ?? [];
                 } catch (\Exception $e) {
                     Log::error('WMS batch fetch failed at checkout: ' . $e->getMessage());
@@ -1440,7 +1440,7 @@ class CheckoutController extends Controller
             $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
             $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
                 $currentHub,
-                (int) ($user?->aturan_minimal_masa_berlaku ?? 0)
+                $user?->shelfLifeMonths() ?? 0
             );
 
             foreach ($carts as $cart) {
