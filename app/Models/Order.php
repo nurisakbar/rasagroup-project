@@ -113,7 +113,7 @@ class Order extends Model
         });
 
         static::creating(function (Order $order) {
-            // Auto approve TOP orders if below credit limit
+            // Auto approve TOP jika AR Outstanding + TOP existing + order baru masih di bawah limit kredit
             if ($order->payment_method === 'term_of_payment' && !$order->finance_approved) {
                 $user = $order->user ?? \App\Models\User::find($order->user_id);
                 if ($user && $user->credit_limit !== null) {

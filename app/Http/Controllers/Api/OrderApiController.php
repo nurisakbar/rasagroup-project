@@ -700,28 +700,12 @@ class OrderApiController extends Controller
     }
 
     /**
-     * Update order status pengiriman.
+     * Tandai pesanan sebagai shipped (dikirim / diserahkan).
      *
      * PUT /api/orders/{id}/status
-     * Body: order_status
      */
     public function updateStatus(Request $request, string $id): JsonResponse
     {
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'order_status' => 'required|in:pending,processing,shipped,delivered,completed,cancelled',
-        ], [
-            'order_status.required' => 'Status pengiriman wajib diisi.',
-            'order_status.in' => 'Status pengiriman tidak valid.',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $order = Order::where('id', $id)
             ->orWhere('order_number', $id)
             ->first();
@@ -733,46 +717,29 @@ class OrderApiController extends Controller
             ], 404);
         }
 
-        $updateData = ['order_status' => $request->order_status];
+        $oldStatus = $order->order_status;
+        $updateData = ['order_status' => 'shipped'];
 
-        // If status changed to shipped and no shipped_at date, set it
-        if ($request->order_status === 'shipped' && !$order->shipped_at) {
+        if (! $order->shipped_at) {
             $updateData['shipped_at'] = now();
         }
 
-        if (in_array($request->order_status, ['delivered', 'completed']) && !$order->received_at) {
-            $updateData['received_at'] = now();
-        }
-
-        // If order is completed, credit points
-        if ($request->order_status === 'completed') {
-            $order->creditPoints();
-        }
-
-        $oldStatus = $order->order_status;
         $order->update($updateData);
+        $order->refresh();
 
-        // Notifications
-        if ($oldStatus !== $request->order_status && $order->user) {
-            if ($request->order_status === 'processing') {
-                $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
-            } elseif ($request->order_status === 'shipped') {
-                $order->user->notify(new \App\Notifications\Orders\OrderShippedNotification($order));
-            } elseif ($request->order_status === 'completed') {
-                $order->user->notify(new \App\Notifications\Orders\OrderCompletedNotification($order));
-            }
+        if ($oldStatus !== 'shipped' && $order->user) {
+            $order->user->notify(new \App\Notifications\Orders\OrderShippedNotification($order));
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Status pengiriman berhasil diperbarui.',
+            'message' => 'Status pesanan diubah menjadi shipped.',
             'data' => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'order_status' => $order->order_status,
-                'shipped_at' => $order->shipped_at ? $order->shipped_at->toISOString() : null,
-                'received_at' => $order->received_at ? $order->received_at->toISOString() : null,
-            ]
+                'shipped_at' => $order->shipped_at?->toISOString(),
+            ],
         ]);
     }
 

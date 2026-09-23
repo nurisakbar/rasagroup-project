@@ -35,20 +35,18 @@ class OrderItem extends Model
 
     /**
      * quantity = satuan terkecil (basis); quantity_ordered + order_uom = pilihan pembeli.
+     * Order distributor ditampilkan dalam satuan terbesar bila qty basis kelipatan konversi.
+     * Qty yang dikirim ke QAD/WMS tetap $this->quantity (satuan terkecil).
      */
     public function orderedQuantityDescription(): string
     {
-        $this->loadMissing('product');
+        $this->loadMissing(['order', 'product']);
         $p = $this->product;
         $base = (int) $this->quantity;
         $unit = $p?->unit ?: 'unit';
 
-        if ($this->order_uom === 'large' && $p && filled($p->large_unit) && $this->quantity_ordered !== null) {
-            return sprintf(
-                '%d %s',
-                (int) $this->quantity_ordered,
-                $p->large_unit
-            );
+        if ($this->displaysLargeUnit()) {
+            return sprintf('%d %s', $this->displayQuantity(), $p->large_unit);
         }
 
         if ($this->order_uom === 'base' && $this->quantity_ordered !== null) {
@@ -56,6 +54,63 @@ class OrderItem extends Model
         }
 
         return sprintf('%d %s', $base, $unit);
+    }
+
+    public function isLargeOrderUom(): bool
+    {
+        $this->loadMissing('product');
+        $uom = strtolower(trim((string) $this->order_uom));
+        if ($uom === 'large') {
+            return true;
+        }
+
+        $large = strtolower(trim((string) ($this->product?->large_unit ?? '')));
+
+        return $large !== '' && $uom === $large;
+    }
+
+    /**
+     * Order distributor: tampilkan & hitung harga per satuan terbesar
+     * jika qty basis kelipatan units_per_large.
+     */
+    public function displaysLargeUnit(): bool
+    {
+        $this->loadMissing(['order', 'product']);
+        $p = $this->product;
+        if (! $p || ! $p->hasDualUnitOrdering()) {
+            return false;
+        }
+
+        $per = $p->unitsPerLargeEffective();
+        if ($per <= 1 || ((int) $this->quantity % $per) !== 0) {
+            return false;
+        }
+
+        if ($this->order && $this->order->order_type === 'distributor') {
+            return true;
+        }
+
+        return $this->isLargeOrderUom();
+    }
+
+    public function displayQuantity(): int
+    {
+        if ($this->displaysLargeUnit()) {
+            if ($this->quantity_ordered) {
+                return (int) $this->quantity_ordered;
+            }
+
+            return (int) ($this->quantity / $this->product->unitsPerLargeEffective());
+        }
+
+        return (int) $this->quantity;
+    }
+
+    public function displayPriceMultiplier(): int
+    {
+        return $this->displaysLargeUnit()
+            ? $this->product->unitsPerLargeEffective()
+            : 1;
     }
 
     public function orderedPrice(): float
@@ -74,6 +129,30 @@ class OrderItem extends Model
         }
 
         return (float) $this->product->price;
+    }
+
+    /**
+     * Harga satuan sebelum diskon (DPP). Pajak dikeluarkan dulu sesuai Setting::tax_percent.
+     * Distributor: dikalikan isi satuan terbesar.
+     */
+    public function unitPriceBeforeDiscount(): float
+    {
+        return \App\Support\TaxAwarePrice::excludingTax($this->catalogUnitPrice())
+            * $this->displayPriceMultiplier();
+    }
+
+    /**
+     * Harga satuan sesudah diskon. Diskon dihitung dari DPP, bukan dari harga termasuk pajak.
+     * Distributor: dikalikan isi satuan terbesar.
+     */
+    public function unitPriceAfterDiscount(): float
+    {
+        $sold = $this->discountedUnitPrice();
+        $base = $this->hasUnitDiscount()
+            ? $sold
+            : \App\Support\TaxAwarePrice::excludingTax($sold);
+
+        return $base * $this->displayPriceMultiplier();
     }
 
     public function discountedUnitPrice(): float

@@ -129,7 +129,11 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
                 'role' => $user?->role,
                 'term_of_payment' => $user?->term_of_payment,
                 'credit_limit' => $user?->credit_limit !== null ? (float) $user->credit_limit : null,
-                'ar_outstanding' => $user?->ar_outstanding !== null ? (float) $user->ar_outstanding : null,
+                'ar_outstanding' => $user?->getArOutstandingAmount(),
+                'existing_top_transactions' => $user?->getExistingTopTransactionTotal($order->id),
+                'accumulated_debt' => $user
+                    ? $user->getAccumulatedTopDebt($order->id) + (float) $order->total_amount
+                    : (float) $order->total_amount,
             ],
             'items' => $order->items->map(function ($item) {
                 return [

@@ -509,12 +509,47 @@
                         </thead>
                         <tbody>
                             @foreach($order->items as $item)
+                                @php
+                                    $priceBefore = $item->unitPriceBeforeDiscount();
+                                    $priceAfter = $item->unitPriceAfterDiscount();
+                                    $lineDiscount = max(0, $priceBefore - $priceAfter);
+                                    $lineDiscountPercent = $priceBefore > 0 ? round(($lineDiscount / $priceBefore) * 100, 1) : 0;
+                                    $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
+                                @endphp
                                 <tr>
-                                    <td>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</td>
-                                    <td class="text-right">@include('partials.order-item-unit-price', ['item' => $item])</td>
+                                    <td>
+                                        {{ $item->product->display_name ?? 'Produk tidak tersedia' }}
+                                        @if(count($batches) > 0)
+                                            <div style="margin-top: 5px;">
+                                                @foreach($batches as $batch)
+                                                    <div>
+                                                        <em>
+                                                            Batch : {{ $batch['lot_serial'] ?? '-' }}
+                                                            @if(!empty($batch['expired']))
+                                                                - Expired : {{ $batch['expired'] }}
+                                                            @endif
+                                                        </em>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
+                                        <strong>Rp {{ number_format($priceAfter, 0, ',', '.') }}</strong>
+                                        @if($lineDiscount > 0.5)
+                                            <div class="text-muted">
+                                                <s>Rp {{ number_format($priceBefore, 0, ',', '.') }}</s>
+                                            </div>
+                                            <div>
+                                                <small class="text-success">Diskon {{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%</small>
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="text-center">
                                         {{ $item->orderedQuantityDescription() }}
-                                        <div class="text-muted small">Basis: {{ number_format($item->quantity) }}</div>
+                                        @if(! $item->displaysLargeUnit())
+                                            <div class="text-muted small">Basis: {{ number_format($item->quantity) }}</div>
+                                        @endif
                                     </td>
                                     <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                 </tr>

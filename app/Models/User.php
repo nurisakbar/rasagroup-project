@@ -409,14 +409,36 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the total accumulated debt from unpaid TOP (Term of Payment) orders.
+     * AR Outstanding dari master distributor (QAD / input admin).
      */
-    public function getAccumulatedTopDebt(): float
+    public function getArOutstandingAmount(): float
     {
-        return (float) $this->orders()
+        return max(0, (float) ($this->ar_outstanding ?? 0));
+    }
+
+    /**
+     * Total order TOP yang masih berjalan di sistem (belum lunas, tidak dibatalkan).
+     */
+    public function getExistingTopTransactionTotal(?string $excludeOrderId = null): float
+    {
+        $query = $this->orders()
             ->where('payment_method', 'term_of_payment')
             ->where('payment_status', '!=', 'paid')
-            ->whereNotIn('order_status', ['cancelled'])
-            ->sum('total_amount');
+            ->whereNotIn('order_status', ['cancelled']);
+
+        if ($excludeOrderId) {
+            $query->where('id', '!=', $excludeOrderId);
+        }
+
+        return (float) $query->sum('total_amount');
+    }
+
+    /**
+     * Total utang yang dipakai cek limit kredit TOP:
+     * AR Outstanding + transaksi TOP existing yang belum lunas.
+     */
+    public function getAccumulatedTopDebt(?string $excludeOrderId = null): float
+    {
+        return $this->getArOutstandingAmount() + $this->getExistingTopTransactionTotal($excludeOrderId);
     }
 }

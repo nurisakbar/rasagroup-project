@@ -137,8 +137,8 @@
             <tr>
                 <th width="5%" style="text-align: center;">NO</th>
                 <th width="15%">SKU</th>
-                <th width="45%">KETERANGAN</th>
-                <th width="15%">Variant</th>
+                <th width="40%">KETERANGAN</th>
+                <th width="20%">BATCH</th>
                 <th width="10%" style="text-align: center;">QTY</th>
                 <th width="10%">UNIT</th>
             </tr>
@@ -146,14 +146,37 @@
         <tbody>
             @php $totalQty = 0; @endphp
             @foreach($order->items as $index => $item)
-            @php $totalQty += $item->quantity; @endphp
+            @php
+                $item->setRelation('order', $order);
+                $useLarge = $item->displaysLargeUnit();
+                $rowQty = $useLarge ? $item->displayQuantity() : (int) $item->quantity;
+                $rowUnit = $useLarge
+                    ? ($item->product->large_unit ?? 'CTN')
+                    : ($item->product->unit ?? 'Buah');
+                $totalQty += $rowQty;
+                $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
+            @endphp
             <tr>
                 <td style="text-align: center;">{{ $index + 1 }}</td>
                 <td>{{ $item->product->code ?? '-' }}</td>
                 <td>{{ $item->product->display_name ?? $item->product->name ?? 'Produk dihapus' }}</td>
-                <td>-</td>
-                <td style="text-align: center;">{{ $item->quantity }}</td>
-                <td>{{ $item->product->unit ?? 'Buah' }}</td>
+                <td>
+                    @if(count($batches) > 0)
+                        @foreach($batches as $batch)
+                            {{ $batch['lot_serial'] ?? '-' }}
+                            @if(!empty($batch['expired']))
+                                <br>Exp: {{ $batch['expired'] }}
+                            @endif
+                            @if(! $loop->last)
+                                <br>
+                            @endif
+                        @endforeach
+                    @else
+                        -
+                    @endif
+                </td>
+                <td style="text-align: center;">{{ $rowQty }}</td>
+                <td>{{ $rowUnit }}</td>
             </tr>
             @endforeach
         </tbody>
