@@ -140,13 +140,14 @@ class SyncCustomerToQad implements ShouldQueue
     private function generateCustomerCode(User $user): string
     {
         for ($i = 0; $i < 40; $i++) {
-            $code = 'ZH' . str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+            // MCR customer codes di QAD berbentuk CS + 5 digit (contoh CS00003), bukan ZH.
+            $code = 'CS' . str_pad((string) random_int(80000, 99999), 5, '0', STR_PAD_LEFT);
             if (! User::query()->where('qad_customer_code', $code)->exists()) {
                 return $code;
             }
         }
 
-        return 'ZH' . strtoupper(substr(str_replace('-', '', (string) $user->getKey()), 0, 8));
+        return 'CS' . strtoupper(substr(str_replace('-', '', (string) $user->getKey()), 0, 5));
     }
 
     private function buildCustomerPayload(User $user, string $customerCode, array $opts = []): array
@@ -155,18 +156,21 @@ class SyncCustomerToQad implements ShouldQueue
 
         $name = (string) ($user->name ?? 'Customer');
         $city = $this->normalizeCityForQad((string) ($this->addressSnapshot['city'] ?? ''));
-        $street1 = $this->sanitizeStreet((string) ($this->addressSnapshot['street1'] ?? '-'));
-        $street2 = $this->sanitizeStreet((string) ($this->addressSnapshot['street2'] ?? '-'));
+        $street1 = $this->sanitizeStreet((string) ($this->addressSnapshot['street1'] ?? ''), '-');
+        $street2 = $this->sanitizeStreet((string) ($this->addressSnapshot['street2'] ?? ''), '');
 
-        $nameShort = substr($name, 0, 24);
-        $cityShort = substr($city, 0, 24);
-        $street1Short = substr($street1, 0, 24);
-        $street2Short = substr($street2, 0, 24);
+        // QAD address name ~28, street ~36 (lihat customer MCR existing + contoh GET QMI).
+        $nameShort = substr($name, 0, 28);
+        $cityShort = substr($city, 0, 28);
+        $street1Short = substr($street1, 0, 36);
+        $street2Short = substr($street2, 0, 36);
 
         if ($useMinimal) {
             $name = $customerCode;
             $nameShort = $customerCode;
-            $street2Short = '-';
+            $street2Short = '';
+        } else {
+            $name = $nameShort;
         }
 
         return [
@@ -204,7 +208,6 @@ class SyncCustomerToQad implements ShouldQueue
             'addressTypeCode' => 'HEADOFFICE',
             'isBusinessRelationFieldsEnabled' => true,
             'customerCurrencyCode' => 'IDR',
-            'isOverruleAllowedSOCreditLimit' => true,
         ];
     }
 
@@ -324,11 +327,11 @@ class SyncCustomerToQad implements ShouldQueue
         return mb_convert_case(mb_strtolower($stripped, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
     }
 
-    private function sanitizeStreet(string $line): string
+    private function sanitizeStreet(string $line, string $empty = '-'): string
     {
         $line = trim($line);
 
-        return $line !== '' ? $line : '-';
+        return $line !== '' ? $line : $empty;
     }
 
     private function normalizePhoneForQad(string $phone): string

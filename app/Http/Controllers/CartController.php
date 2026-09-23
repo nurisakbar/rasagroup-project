@@ -218,7 +218,7 @@ class CartController extends Controller
 
         $product = $cart->product;
         $lineSubtotal = (float) ($product->final_price * $cart->quantity);
-        $cartCountSum = (int) $carts->sum('quantity');
+        $cartCountSum = Cart::badgeCountFromCarts($carts);
 
         return response()->json([
             'success' => true,
@@ -254,7 +254,7 @@ class CartController extends Controller
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
-        $cartCountSum = (int) $carts->sum('quantity');
+        $cartCountSum = Cart::badgeCountFromCarts($carts);
         
         return response()->json([
             'success' => true,
@@ -415,9 +415,7 @@ class CartController extends Controller
         ]);
 
         if ($request->ajax()) {
-            $cartCount = Auth::check() 
-                ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
-                : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+            $cartCount = Cart::badgeCountForCurrentShopper();
 
             $currentCart = Auth::check()
                 ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->where('product_id', $product->id)->first()
@@ -772,9 +770,7 @@ class CartController extends Controller
 
         if ($newOrd <= 0) {
             $cart->delete();
-            $cartCount = Auth::check() 
-                ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
-                : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+            $cartCount = Cart::badgeCountForCurrentShopper();
 
             return response()->json([
                 'success' => true,
@@ -800,9 +796,7 @@ class CartController extends Controller
         $cart->quantity_ordered = $newOrd;
         $cart->save();
 
-        $cartCount = Auth::check() 
-            ? Cart::where('user_id', Auth::id())->where('cart_type', 'regular')->sum('quantity')
-            : Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+        $cartCount = Cart::badgeCountForCurrentShopper();
 
         return response()->json([
             'success' => true,

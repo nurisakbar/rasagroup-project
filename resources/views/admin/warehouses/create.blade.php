@@ -40,7 +40,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="help-block">Digunakan untuk menarik data stok (batch/lot serial) dari QAD.</p>
+                            <p class="help-block">Digunakan untuk menarik data stok (batch/lot serial) dari WMS.</p>
                             @error('qad_location_code')
                                 <span class="help-block text-danger">{{ $message }}</span>
                             @enderror

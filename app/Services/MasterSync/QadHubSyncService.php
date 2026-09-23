@@ -125,34 +125,30 @@ class QadHubSyncService
 
     private function refreshStock(Warehouse $warehouse): int
     {
-        $response = $this->qad->getAllInventory([
-            'location' => $warehouse->kode_hub,
-            'search' => '',
-            'batch' => '',
-            'length' => 1000,
-        ]);
+        $location = \App\Services\WmsService::locationCode($warehouse);
+        if (! $location) {
+            return 0;
+        }
 
-        $items = QadResponseHelper::list($response);
+        $batches = app(\App\Services\WmsService::class)->batchesByItemCode($location);
+        if ($batches === null) {
+            return 0;
+        }
+
         $processed = 0;
         $stockMap = [];
 
-        foreach ($items as $item) {
-            $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-            $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
-            $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
-
-            if ($lotSerial && strpos($lotSerial, '-') !== false) {
-                continue;
-            }
-
+        foreach ($batches as $itemCode => $rows) {
             if (! $itemCode) {
                 continue;
             }
 
-            if (!isset($stockMap[$itemCode])) {
-                $stockMap[$itemCode] = 0;
+            $qty = 0;
+            foreach ($rows as $row) {
+                $qty += (int) ($row['qty'] ?? 0);
             }
-            $stockMap[$itemCode] += $qty;
+
+            $stockMap[$itemCode] = ($stockMap[$itemCode] ?? 0) + $qty;
         }
 
         foreach ($stockMap as $itemCode => $totalQty) {

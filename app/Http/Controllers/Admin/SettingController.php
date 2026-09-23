@@ -51,8 +51,9 @@ class SettingController extends Controller
         $hubs = Warehouse::where('is_active', true)->get();
         $payment_confirmation_email = Setting::get('payment_confirmation_email');
         $distributor_default_hub = Setting::get('distributor_default_hub');
+        $tax_percent = Setting::get('tax_percent', 11);
         
-        return view('admin.settings.index', compact('expeditions', 'hubs', 'payment_confirmation_email', 'distributor_default_hub'));
+        return view('admin.settings.index', compact('expeditions', 'hubs', 'payment_confirmation_email', 'distributor_default_hub', 'tax_percent'));
     }
 
     public function updateExpeditions(Request $request)
@@ -73,10 +74,12 @@ class SettingController extends Controller
         $request->validate([
             'payment_confirmation_email' => 'nullable|email',
             'distributor_default_hub' => 'nullable|exists:warehouses,id',
+            'tax_percent' => 'required|numeric|min:0|max:100',
         ]);
 
         Setting::set('payment_confirmation_email', $request->payment_confirmation_email, 'Email untuk menerima konfirmasi pembayaran');
         Setting::set('distributor_default_hub', $request->distributor_default_hub, 'Hub default untuk pengiriman order distributor');
+        Setting::set('tax_percent', (string) $request->input('tax_percent'), 'Persentase pajak (PPN) default');
 
         return back()->with('success', 'Pengaturan umum berhasil diperbarui.');
     }

@@ -375,7 +375,11 @@ class User extends Authenticatable implements MustVerifyEmail
             
             if ($categoryDiscount && $categoryDiscount->discount_percentage > 0) {
                 $basePrice = (float) $product->final_price;
-                return $basePrice - ($basePrice * ((float) $categoryDiscount->discount_percentage / 100));
+
+                return \App\Support\TaxAwarePrice::applyDiscount(
+                    $basePrice,
+                    (float) $categoryDiscount->discount_percentage
+                );
             }
         }
 

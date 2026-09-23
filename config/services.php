@@ -146,6 +146,7 @@ return [
         'webhook_secret' => env('FINANCE_APPROVAL_WEBHOOK_SECRET'),
         'timeout' => env('FINANCE_APPROVAL_WEBHOOK_TIMEOUT', 15),
         'enabled' => env('FINANCE_APPROVAL_WEBHOOK_ENABLED', true),
+        'x_token' => env('FINANCE_APPROVAL_X_TOKEN'),
     ],
 
 ];

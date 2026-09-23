@@ -14,9 +14,9 @@ class QadTestingManual extends Command
     {
         $this->info("Starting QAD Manual Testing...");
 
-        $customerCode = "ZH00002";
+        $customerCode = "CS80002";
         if ($this->option('new')) {
-            $customerCode = "ZH" . rand(1000, 9999);
+            $customerCode = "CS" . rand(80000, 99999);
             $this->info("Using new customer code: $customerCode");
         }
 
@@ -56,8 +56,7 @@ class QadTestingManual extends Command
             "vatPercentageLevel" => "NONE",
             "addressTypeCode" => "HEADOFFICE",
             "isBusinessRelationFieldsEnabled" => true,
-            "customerCurrencyCode" => "IDR",
-            "isOverruleAllowedSOCreditLimit" => true
+            "customerCurrencyCode" => "IDR"
         ];
 
         $customerResult = $qadService->createCustomer($customerPayload);

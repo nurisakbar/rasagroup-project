@@ -76,8 +76,10 @@ class PriceLevel extends Model
             return (float) $productPriceLevel->price;
         }
 
-        // Otherwise, calculate based on discount percentage
-        $discount = ($product->price * $this->discount_percentage) / 100;
-        return (float) ($product->price - $discount);
+        // Diskon dihitung dari DPP (harga setelah pajak dikeluarkan).
+        return \App\Support\TaxAwarePrice::applyDiscount(
+            (float) $product->price,
+            (float) $this->discount_percentage
+        );
     }
 }

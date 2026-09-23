@@ -402,51 +402,17 @@ class WarehouseController extends Controller
             ->orderBy('name')
             ->get();
             
-        $qadBatches = [];
-        $qadLocationCode = $warehouse->qad_location_code ?? $warehouse->kode_hub;
-        if ($request->tab == 'stock' && $qadLocationCode) {
+        $wmsBatches = [];
+        $wmsLocationCode = $warehouse->qad_location_code ?? $warehouse->kode_hub;
+        if ($request->tab == 'stock' && $wmsLocationCode) {
             try {
-                $qad = app(\App\Services\QadService::class);
-                $response = $qad->getAllInventory([
-                    'location' => $qadLocationCode,
-                    'search' => '',
-                    'batch' => '',
-                    'length' => 1000,
-                ]);
-                
-                if (class_exists(\App\Support\QadResponseHelper::class)) {
-                    $items = \App\Support\QadResponseHelper::list($response);
-                } else {
-                    $items = $response['data'] ?? [];
-                }
-                
-                foreach ($items as $item) {
-                    $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-                    $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
-                    $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
-                    $expired = $item['expired_short'] ?? $item['expired'] ?? null;
-                    
-                    if ($lotSerial && strpos($lotSerial, '-') !== false) {
-                        continue;
-                    }
-                    
-                    if ($itemCode && $lotSerial) {
-                        if (!isset($qadBatches[$itemCode])) {
-                            $qadBatches[$itemCode] = [];
-                        }
-                        $qadBatches[$itemCode][] = [
-                            'lot_serial' => $lotSerial,
-                            'qty' => $qty,
-                            'expired' => $expired,
-                        ];
-                    }
-                }
+                $wmsBatches = app(\App\Services\WmsService::class)->batchesByItemCode($wmsLocationCode) ?? [];
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to fetch realtime batch from QAD: ' . $e->getMessage());
+                Log::error('Failed to fetch realtime batch from WMS: ' . $e->getMessage());
             }
         }
-        
-        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'qadBatches'));
+
+        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches'));
     }
 
     public function edit(Warehouse $warehouse)

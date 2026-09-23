@@ -440,7 +440,7 @@
                                             <br><small class="text-info"><i class="fa fa-bookmark"></i> {{ $item->product->brand->name }}</small>
                                         @endif
                                     </td>
-                                    <td class="text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                    <td class="text-right">@include('partials.order-item-unit-price', ['item' => $item])</td>
                                     <td class="text-center">{{ $item->quantity }}</td>
                                     <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                 </tr>

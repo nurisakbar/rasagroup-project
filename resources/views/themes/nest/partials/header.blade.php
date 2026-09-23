@@ -42,9 +42,7 @@
                                 </div> --}}
                                 <div class="header-action-icon-2">
                                     @php
-                                        $cartCount = auth()->check() 
-                                            ? \App\Models\Cart::where('user_id', auth()->id())->where('cart_type', 'regular')->sum('quantity')
-                                            : \App\Models\Cart::where('session_id', session()->getId())->where('cart_type', 'regular')->sum('quantity');
+                                        $cartCount = \App\Models\Cart::badgeCountForCurrentShopper();
                                     @endphp
                                     <a class="mini-cart-icon" href="{{ route('cart.index') }}">
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />

@@ -66,6 +66,36 @@ class OrderItem extends Model
         return $this->price;
     }
 
+    public function catalogUnitPrice(): float
+    {
+        $this->loadMissing('product');
+        if (! $this->product) {
+            return (float) $this->price;
+        }
+
+        return (float) $this->product->price;
+    }
+
+    public function discountedUnitPrice(): float
+    {
+        return (float) $this->price;
+    }
+
+    public function hasUnitDiscount(): bool
+    {
+        return ($this->catalogUnitPrice() - $this->discountedUnitPrice()) > 0.5;
+    }
+
+    public function unitDiscountPercent(): float
+    {
+        $catalog = $this->catalogUnitPrice();
+        if ($catalog <= 0) {
+            return 0.0;
+        }
+
+        return round((1 - ($this->discountedUnitPrice() / $catalog)) * 100, 1);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

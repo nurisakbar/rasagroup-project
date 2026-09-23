@@ -95,7 +95,7 @@ class QadService extends QidApiService
 
     public function getAllInventory(array $payload)
     {
-        return $this->post('/api/master/inventory/all', $payload);
+        return $this->post('/api/master/inventory/all', $payload, true);
     }
 
     // =========================================================================

@@ -307,9 +307,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             $payload = [
                 'domainCode' => 'MCR',
                 'salesOrderNumber' => $qidSalesOrderNumber,
-                'billToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
-                'soldToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
-                'shipToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+                'billToCustomerCode' => $user->qad_customer_code,
+                'soldToCustomerCode' => $user->qad_customer_code,
+                'shipToCustomerCode' => $user->qad_customer_code,
                 'orderDate' => $headerDateIso,
                 'dueDate' => $headerDateIso,
                 'requiredDate' => $headerDateIso,
@@ -483,6 +483,36 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         return $nextNumber;
     }
 
+    /**
+     * GET /customer/get di QID production sering BadRequest meski customer ada.
+     * Pakai list + exact customerCode sebagai pengecekan eksistensi.
+     */
+    protected function qadCustomerCodeExists(QadService $qadService, string $customerCode): bool
+    {
+        if ($customerCode === '') {
+            return false;
+        }
+
+        $res = $qadService->listCustomer(['customerCode' => $customerCode]);
+        if (! is_array($res) || ($res['error']['isError'] ?? false)) {
+            return false;
+        }
+
+        $data = $res['data'] ?? null;
+        $rows = [];
+        if (is_array($data)) {
+            $rows = array_is_list($data) ? $data : [$data];
+        }
+
+        foreach ($rows as $row) {
+            if (is_array($row) && (string) ($row['customerCode'] ?? '') === $customerCode) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     protected function ensureQadCustomerReady(QadService $qadService, User $user, Address $address): ?User
     {
         $user = $user->fresh();
@@ -491,19 +521,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         if ($user->qad_customer_code) {
-            $sharedSet = (string) config('qidapi.shared_set_code', 'MCR-CUST');
-            $check = $qadService->getCustomer((string) $user->qad_customer_code, $sharedSet);
-            $valid = is_array($check)
-                && ! ($check['error']['isError'] ?? false)
-                && is_array($check['data'] ?? null)
-                && ! empty($check['data']['customerCode'] ?? null);
+            $valid = $this->qadCustomerCodeExists($qadService, (string) $user->qad_customer_code);
 
             if (! $valid) {
                 Log::warning('SyncOrderToQad: Existing qad_customer_code is not valid in QAD, clearing and re-syncing', [
                     'order_id' => $this->order->id,
                     'user_id' => $user->id,
                     'qad_customer_code' => $user->qad_customer_code,
-                    'check' => $check,
                 ]);
                 $user->update(['qad_customer_code' => null]);
                 $user->refresh();
@@ -600,9 +624,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $payload = [
             'domainCode' => 'MCR',
             'salesOrderNumber' => $qidSalesOrderNumber,
-            'billToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
-            'soldToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
-            'shipToCustomerCode' => app()->environment('production') ? $user->qad_customer_code : 'CS00098',
+            'billToCustomerCode' => $user->qad_customer_code,
+            'soldToCustomerCode' => $user->qad_customer_code,
+            'shipToCustomerCode' => $user->qad_customer_code,
             'orderDate' => $headerDateIso,
             'dueDate' => $headerDateIso,
             'requiredDate' => $headerDateIso,

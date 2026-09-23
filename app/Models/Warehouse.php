@@ -319,27 +319,21 @@ class Warehouse extends Model
         $user = \Illuminate\Support\Facades\Auth::user();
         $isDistributor = $user && $user->isDistributor();
 
-        $qadLocationCode = $this->qad_location_code ?? $this->kode_hub;
-        if ($qadLocationCode) {
-            $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
-                ->where('item_code', $productCode)
-                ->get();
-                
-            $minBulan = $user?->aturan_minimal_masa_berlaku ?? 0;
-            $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
-            
-            $qadStock = 0;
-            foreach ($items as $item) {
-                if ($item->lot_serial && strpos($item->lot_serial, '-') !== false) continue;
-                if ($minBulan > 0 && $item->expired_date && $item->expired_date->lt($minDate)) continue;
-                $qadStock += (int) $item->qty;
-            }
-            
+        $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(
+            $this,
+            (int) ($user?->aturan_minimal_masa_berlaku ?? 0)
+        );
+
+        if ($wmsStockMap !== null) {
+            $wmsStock = (int) ($wmsStockMap[$productCode]
+                ?? $wmsStockMap[strtoupper(trim($productCode))]
+                ?? 0);
+
             if ($isDistributor) {
-                return (int) $qadStock;
+                return $wmsStock;
             }
-            
-            return (int) min($dbStock, $qadStock);
+
+            return $wmsStock > 0 ? $wmsStock : (int) $dbStock;
         }
 
         return (int) $dbStock;

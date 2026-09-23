@@ -121,6 +121,7 @@ class CheckoutController extends Controller
         });
 
         $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
+        $catalogSubtotal = $pricing['catalog_subtotal'];
         $retailSubtotal = $pricing['retail_subtotal'];
         $distributorPriceDiscount = $pricing['distributor_price_discount'];
         $tieredDiscountAmount = $pricing['tiered_discount_amount'];
@@ -299,6 +300,7 @@ class CheckoutController extends Controller
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
+        'catalogSubtotal',
         'retailSubtotal',
         'distributorPriceDiscount',
         'tieredDiscountAmount',
@@ -478,6 +480,8 @@ class CheckoutController extends Controller
             'is_shipping_discounted' => $isShippingDiscounted,
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            'catalog_subtotal' => $pricing['catalog_subtotal'] ?? $retailSubtotal,
+            'catalog_subtotal_formatted' => 'Rp ' . number_format($pricing['catalog_subtotal'] ?? $retailSubtotal, 0, ',', '.'),
             'retail_subtotal' => $retailSubtotal,
             'retail_subtotal_formatted' => 'Rp ' . number_format($retailSubtotal, 0, ',', '.'),
             'distributor_price_discount' => $distributorPriceDiscount,
@@ -779,30 +783,11 @@ class CheckoutController extends Controller
                 }
             }
             
-            $qadLocationCode = $sourceWarehouse->qad_location_code ?? $sourceWarehouse->kode_hub;
-            $qadStock = null;
-            if ($qadLocationCode) {
-                $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)->get();
-                $qadStock = [];
-                $minBulan = $user->aturan_minimal_masa_berlaku ?? 0;
-                $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
-                
-                foreach ($items as $item) {
-                    $itemCode = $item->item_code;
-                    $qty = (int) $item->qty;
-                    $lotSerial = $item->lot_serial;
-                    
-                    if ($lotSerial && strpos($lotSerial, '-') !== false) continue;
-                    
-                    if ($minBulan > 0 && $item->expired_date) {
-                        if ($item->expired_date->lt($minDate)) continue;
-                    }
-                    
-                    if ($itemCode) {
-                        $qadStock[$itemCode] = ($qadStock[$itemCode] ?? 0) + $qty;
-                    }
-                }
-            }
+            $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse);
+            $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
+                $sourceWarehouse,
+                (int) ($user->aturan_minimal_masa_berlaku ?? 0)
+            );
 
             foreach ($carts as $cart) {
                 $productName = $cart->product->display_name;
@@ -829,12 +814,16 @@ class CheckoutController extends Controller
                     if ($qty > $availableStock) {
                         $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (Jubelio).";
                     }
-                } else if ($qadLocationCode && $qadStock !== null) {
-                    $actualQadStock = $qadStock[$productCode] ?? 0;
-                    $availableStock = $isDistributor ? $actualQadStock : min($dbStock, $actualQadStock);
+                } else if ($wmsLocationCode && $wmsStock !== null) {
+                    $actualWmsStock = $wmsStock[$productCode]
+                        ?? $wmsStock[strtoupper(trim((string) $productCode))]
+                        ?? 0;
+                    $availableStock = $isDistributor || $actualWmsStock > 0
+                        ? $actualWmsStock
+                        : $dbStock;
                     
                     if ($qty > $availableStock) {
-                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (QAD).";
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (WMS).";
                     }
                 } else {
                     if ($qty > $dbStock) {
@@ -981,69 +970,18 @@ class CheckoutController extends Controller
                 $total += $paymentFee;
             }
 
-            $qadLocationCode = $sourceWarehouse->qad_location_code ?? $sourceWarehouse->kode_hub;
-            $qadBatches = [];
-            
-            if ($qadLocationCode) {
+            $wms = app(\App\Services\WmsService::class);
+            $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse) ?? ($sourceWarehouse->qad_location_code ?? $sourceWarehouse->kode_hub);
+            $wmsBatches = [];
+
+            if ($wmsLocationCode) {
                 try {
-                    $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
-                        ->get()
-                        ->map(function ($inv) {
-                            return [
-                                'item_code' => $inv->item_code,
-                                'qty' => $inv->qty,
-                                'lot_serial' => $inv->lot_serial,
-                                'expired_short' => $inv->expired_date ? $inv->expired_date->format('Y-m-d') : null,
-                            ];
-                        })->toArray();
-                    
-                    $minBulan = $user->aturan_minimal_masa_berlaku ?? 0;
-                    $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
-
-                    foreach ($items as $item) {
-                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-                        $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
-                        
-                        $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
-                        $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
-                        $isValid = true;
-                        
-                        if ($lotSerial && strpos($lotSerial, '-') !== false) {
-                            $isValid = false;
-                        }
-                        
-                        if ($minBulan > 0 && $expiredStr) {
-                            try {
-                                $expDate = \Carbon\Carbon::parse($expiredStr);
-                                if ($expDate->lt($minDate)) {
-                                    $isValid = false;
-                                }
-                            } catch (\Exception $e) {
-                                $isValid = false;
-                            }
-                        }
-
-                        if ($isValid && $itemCode && $qty > 0) {
-                            if (!isset($qadBatches[$itemCode])) {
-                                $qadBatches[$itemCode] = [];
-                            }
-                            $qadBatches[$itemCode][] = [
-                                'lot_serial' => $item['lot_serial'] ?? null,
-                                'qty' => $qty,
-                                'expired' => $expiredStr,
-                            ];
-                        }
-                    }
-                    
-                    foreach ($qadBatches as $code => &$batches) {
-                        usort($batches, function($a, $b) {
-                            $timeA = strtotime($a['expired'] ?? '2099-12-31');
-                            $timeB = strtotime($b['expired'] ?? '2099-12-31');
-                            return $timeA <=> $timeB;
-                        });
-                    }
+                    $wmsBatches = $wms->batchesByItemCode(
+                        $wmsLocationCode,
+                        (int) ($user->aturan_minimal_masa_berlaku ?? 0)
+                    ) ?? [];
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('QAD batch fetch failed at checkout: ' . $e->getMessage());
+                    Log::error('WMS batch fetch failed at checkout: ' . $e->getMessage());
                 }
             }
 
@@ -1056,7 +994,7 @@ class CheckoutController extends Controller
                 'expedition_id' => $expedition->id,
                 'expedition_service' => $request->expedition_service,
                 'source_warehouse_id' => $sourceWarehouse->id,
-                'source_qad_location_code' => $qadLocationCode,
+                'source_qad_location_code' => $wmsLocationCode,
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
@@ -1097,8 +1035,11 @@ class CheckoutController extends Controller
                 $productCode = $cart->product->code;
                 $qtyNeeded = $cart->quantity;
                 
-                if (isset($qadBatches[$productCode])) {
-                    foreach ($qadBatches[$productCode] as &$batch) {
+                $batchKey = array_key_exists($productCode, $wmsBatches)
+                    ? $productCode
+                    : strtoupper(trim((string) $productCode));
+                if (isset($wmsBatches[$batchKey])) {
+                    foreach ($wmsBatches[$batchKey] as &$batch) {
                         if ($qtyNeeded <= 0) break;
                         
                         if ($batch['qty'] > 0) {
@@ -1112,6 +1053,7 @@ class CheckoutController extends Controller
                             $qtyNeeded -= $take;
                         }
                     }
+                    unset($batch);
                 }
 
                 $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;
@@ -1128,7 +1070,7 @@ class CheckoutController extends Controller
                     'allocated_batches' => !empty($allocatedBatches) ? $allocatedBatches : null,
                 ]);
 
-                // Stok lokal tidak dikurangi — asumsi ready; fulfillment via Jubelio/QAD
+                // Stok lokal tidak dikurangi — asumsi ready; fulfillment via Jubelio/WMS
                 if (! ShopFulfillment::assumeStockReady()) {
                     $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
                         ->where('product_id', $cart->product_id)
@@ -1417,6 +1359,10 @@ class CheckoutController extends Controller
 
         $user->loadMissing(['priceLevel', 'categoryDiscounts']);
 
+        $catalogSubtotal = (float) $carts->sum(function ($cart) {
+            return (float) $cart->product->price * (int) $cart->quantity;
+        });
+
         $subtotalAfterDistributor = $retailSubtotal;
         $distributorPriceDiscount = 0.0;
         $priceLevelName = null;
@@ -1426,22 +1372,14 @@ class CheckoutController extends Controller
         $tieredDiscountDetails = [];
 
         if ($user->isDistributor()) {
-            $priceLevelName = $user->priceLevel ? $user->priceLevel->name : 'Diskon Kategori / Distributor';
-            
-            // Subdistributor / Reseller also gets cart-level category discounts?
-            // User requested to use cart level discount. We will calculate it here.
-            $discountData = $discountService->calculateCartDiscount($carts, $user);
-            $tieredDiscountAmount = $discountData['total_discount_amount'];
-            $tieredDiscountDetails = $discountData['discount_details'];
-            $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
-            
-            $distributorPriceDiscount = $tieredDiscountAmount; // Show as tiered discount instead? Or combine?
-            
-            if ($tieredDiscountAmount == 0) {
-                $priceLevelName = null; // Don't show if there's no discount
+            $distributorPriceDiscount = max(0.0, $catalogSubtotal - $retailSubtotal);
+            $subtotalAfterDistributor = $retailSubtotal;
+            if ($distributorPriceDiscount > 0) {
+                $priceLevelName = $user->categoryDiscounts->contains(fn ($d) => (float) $d->discount_percentage > 0)
+                    ? 'Diskon Kategori'
+                    : ($user->priceLevel->name ?? 'Diskon Distributor');
             }
-        } else if (!$user->isDistributor()) {
-            // Apply grouped category tiered discount for non-distributors
+        } else {
             $discountData = $discountService->calculateCartDiscount($carts, $user);
             $tieredDiscountAmount = $discountData['total_discount_amount'];
             $tieredDiscountDetails = $discountData['discount_details'];
@@ -1449,6 +1387,7 @@ class CheckoutController extends Controller
         }
 
         return [
+            'catalog_subtotal' => $catalogSubtotal,
             'retail_subtotal' => $retailSubtotal,
             'distributor_price_discount' => $distributorPriceDiscount,
             'tiered_discount_amount' => $tieredDiscountAmount,
@@ -1497,70 +1436,28 @@ class CheckoutController extends Controller
 
         $stockWarnings = [];
         if ($currentHub) {
-            // Fetch QAD stock real-time
-            $qadStock = null;
-            $qadLocationCode = $currentHub->qad_location_code ?? $currentHub->kode_hub;
-            
-            if ($qadLocationCode) {
-                try {
-                    $items = \App\Models\QadInventory::where('qad_location_code', $qadLocationCode)
-                        ->get()
-                        ->map(function ($inv) {
-                            return [
-                                'item_code' => $inv->item_code,
-                                'qty' => $inv->qty,
-                                'lot_serial' => $inv->lot_serial,
-                                'expired_short' => $inv->expired_date ? $inv->expired_date->format('Y-m-d') : null,
-                            ];
-                        })->toArray();
-                    
-                    $minBulan = \Illuminate\Support\Facades\Auth::user()?->aturan_minimal_masa_berlaku ?? 0;
-                    $minDate = \Carbon\Carbon::now()->addMonths($minBulan);
-
-                    $qadStock = [];
-                    foreach ($items as $item) {
-                        $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-                        $qty = (int) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
-                        $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
-                        
-                        if ($lotSerial && strpos($lotSerial, '-') !== false) {
-                            continue;
-                        }
-                        
-                        $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
-                        if ($minBulan > 0 && $expiredStr) {
-                            try {
-                                $expDate = \Carbon\Carbon::parse($expiredStr);
-                                if ($expDate->lt($minDate)) {
-                                    continue;
-                                }
-                            } catch (\Exception $e) {
-                                continue;
-                            }
-                        }
-
-                        if ($itemCode) {
-                            $qadStock[$itemCode] = ($qadStock[$itemCode] ?? 0) + $qty;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('QAD stock check failed at checkout: ' . $e->getMessage());
-                }
-            }
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
+            $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
+                $currentHub,
+                (int) ($user?->aturan_minimal_masa_berlaku ?? 0)
+            );
 
             foreach ($carts as $cart) {
-                // Get stock for this product in current hub
                 $dbStock = \App\Models\WarehouseStock::where('warehouse_id', $currentHub->id)
                     ->where('product_id', $cart->product_id)
                     ->sum('stock');
-                    
+
                 $productCode = $cart->product->code;
-                
-                // If QAD location is configured and we fetched it successfully, use minimum of both to be safe
-                if ($qadLocationCode && $qadStock !== null) {
-                    $actualQadStock = $qadStock[$productCode] ?? 0;
-                    $isDistributor = \Illuminate\Support\Facades\Auth::user()?->isDistributor() ?? false;
-                    $finalStock = $isDistributor ? $actualQadStock : min($dbStock, $actualQadStock);
+
+                if ($wmsLocationCode && $wmsStock !== null) {
+                    $actualWmsStock = $wmsStock[$productCode]
+                        ?? $wmsStock[strtoupper(trim((string) $productCode))]
+                        ?? 0;
+                    $isDistributor = $user?->isDistributor() ?? false;
+                    $finalStock = $isDistributor || $actualWmsStock > 0
+                        ? $actualWmsStock
+                        : $dbStock;
                 } else {
                     $finalStock = $dbStock;
                 }

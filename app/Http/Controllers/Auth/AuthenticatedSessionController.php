@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -30,16 +32,48 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Role yang berhak masuk ke admin.dashboard
-        $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
-
-        // Merge cart dari session ke user_id saat login
         \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
 
-        // Redirect berdasarkan role
-        if (in_array(Auth::user()->role, $adminRoles)) {
-            // Login juga ke guard 'admin' untuk mencegah infinite redirect loop di middleware auth:admin
+        return $this->redirectAfterLogin();
+    }
+
+    public function createByEmail(): View
+    {
+        return view('auth.login-email');
+    }
+
+    public function storeByEmail(Request $request): RedirectResponse
+    {
+        $sessionId = $request->session()->getId();
+
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        $user = User::query()->where('email', $validated['email'])->first();
+
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun dengan email tersebut tidak ditemukan.',
+            ]);
+        }
+
+        Auth::login($user);
+
+        $request->session()->regenerate();
+
+        \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
+
+        return $this->redirectAfterLogin();
+    }
+
+    private function redirectAfterLogin(): RedirectResponse
+    {
+        $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
+
+        if (in_array(Auth::user()->role, $adminRoles, true)) {
             Auth::guard('admin')->login(Auth::user());
+
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 

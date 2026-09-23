@@ -4,9 +4,7 @@ namespace App\Jobs;
 
 use App\Models\QadInventory;
 use App\Models\Warehouse;
-use App\Services\QadService;
-use App\Support\QadIntegration;
-use App\Support\QadResponseHelper;
+use App\Services\WmsService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -27,15 +25,15 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return 'qad-sync-inventory';
+        return 'wms-sync-inventory';
     }
 
-    public function handle(QadService $qad): void
+    public function handle(WmsService $wms): void
     {
-        Log::info('SyncQadInventoryJob: starting');
+        Log::info('SyncQadInventoryJob: starting (WMS)');
 
-        if (! QadIntegration::isConfigured()) {
-            Log::warning('SyncQadInventoryJob: skipped (QAD API belum dikonfigurasi)');
+        if (! $wms->isConfigured()) {
+            Log::warning('SyncQadInventoryJob: skipped (WMS API belum dikonfigurasi)');
 
             return;
         }
@@ -43,11 +41,11 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
         $warehouses = Warehouse::where('is_active', 1)->get();
 
         $locationCodes = $warehouses->map(function ($warehouse) {
-            return $warehouse->qad_location_code ?: $warehouse->kode_hub;
+            return WmsService::locationCode($warehouse);
         })->filter()->unique()->values()->all();
 
         if (empty($locationCodes)) {
-            Log::info('SyncQadInventoryJob: no QAD location codes found in active warehouses');
+            Log::info('SyncQadInventoryJob: no WMS location codes found in active warehouses');
 
             return;
         }
@@ -57,18 +55,7 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
 
         foreach ($locationCodes as $locationCode) {
             try {
-                QadInventory::where('qad_location_code', $locationCode)->update(['qty' => 0]);
-
-                $response = $qad->getAllInventory([
-                    'location' => $locationCode,
-                    'search' => '',
-                    'batch' => '',
-                    'length' => 10000,
-                ]);
-
-                $items = class_exists(QadResponseHelper::class)
-                    ? QadResponseHelper::list($response)
-                    : ($response['data'] ?? []);
+                $items = $wms->flatBatches($locationCode);
 
                 if (empty($items)) {
                     Log::info('SyncQadInventoryJob: no inventory items returned', [
@@ -80,29 +67,26 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
 
                 $upsertData = [];
                 foreach ($items as $item) {
-                    $itemCode = $item['item_code'] ?? $item['itemCode'] ?? $item['itemID'] ?? $item['itemid'] ?? null;
-                    $qty = (float) ($item['qty'] ?? $item['quantity'] ?? $item['onHand'] ?? 0);
-                    $lotSerial = $item['lot_serial'] ?? $item['lotSerial'] ?? $item['batch'] ?? $item['lot'] ?? null;
+                    $itemCode = $item['item_code'] ?? null;
+                    $lotSerial = $item['lot_serial'] ?? '';
+                    if (! $itemCode) {
+                        continue;
+                    }
 
-                    $expiredStr = $item['expired_short'] ?? $item['expired'] ?? null;
                     $expiredDate = null;
-                    if ($expiredStr) {
+                    if (! empty($item['expired'])) {
                         try {
-                            $expiredDate = Carbon::parse($expiredStr)->format('Y-m-d');
+                            $expiredDate = Carbon::parse($item['expired'])->format('Y-m-d');
                         } catch (\Exception $e) {
                             $expiredDate = null;
                         }
                     }
 
-                    if (! $itemCode) {
-                        continue;
-                    }
-
                     $upsertData[] = [
                         'item_code' => $itemCode,
                         'qad_location_code' => $locationCode,
-                        'lot_serial' => $lotSerial ?: '',
-                        'qty' => $qty,
+                        'lot_serial' => $lotSerial,
+                        'qty' => (float) ($item['qty'] ?? 0),
                         'expired_date' => $expiredDate,
                         'last_sync_at' => $now,
                         'created_at' => $now,
@@ -119,20 +103,26 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
                         );
                     }
                     $totalSynced += count($upsertData);
-                    Log::info('SyncQadInventoryJob: synced location', [
+                    QadInventory::where('qad_location_code', $locationCode)
+                        ->where(function ($query) use ($now) {
+                            $query->whereNull('last_sync_at')
+                                ->orWhere('last_sync_at', '<', $now);
+                        })
+                        ->update(['qty' => 0]);
+                    Log::info('SyncQadInventoryJob: synced location from WMS', [
                         'location' => $locationCode,
                         'items' => count($upsertData),
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::error('SyncQadInventoryJob: error syncing location', [
+                Log::error('SyncQadInventoryJob: error syncing location from WMS', [
                     'location' => $locationCode,
                     'exception' => $e,
                 ]);
             }
         }
 
-        Log::info('SyncQadInventoryJob: completed', [
+        Log::info('SyncQadInventoryJob: completed (WMS)', [
             'total_synced' => $totalSynced,
         ]);
     }

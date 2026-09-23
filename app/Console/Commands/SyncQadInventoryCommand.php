@@ -19,7 +19,7 @@ class SyncQadInventoryCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Dispatch job to synchronize inventory data from QAD to local database';
+    protected $description = 'Dispatch job to synchronize inventory data from WMS to local database';
 
     /**
      * Execute the console command.
@@ -28,7 +28,7 @@ class SyncQadInventoryCommand extends Command
     {
         SyncQadInventoryJob::dispatch();
 
-        $this->info('QAD inventory sync job dispatched to queue.');
+        $this->info('WMS inventory sync job dispatched to queue.');
 
         return Command::SUCCESS;
     }

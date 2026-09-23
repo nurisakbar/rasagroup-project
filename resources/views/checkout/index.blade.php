@@ -452,7 +452,7 @@
                                             $displayQty = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity;
                                             $displayUnit = $cart->showsLargeUnitInCart() ? $cart->cartQuantityUnitLabel() : $cart->product->unit;
                                             
-                                            $showRetailStrike = $checkoutUser->isDistributor() && $checkoutUser->priceLevel && $baseUnitPrice < $baseRetailUnit;
+                                            $showRetailStrike = $checkoutUser->isDistributor() && $baseUnitPrice + 0.5 < $baseRetailUnit;
                                             $discountPercentage = $showRetailStrike ? round((1 - ($baseUnitPrice / $baseRetailUnit)) * 100, 1) : 0;
                                         @endphp
                                         <tr class="rg-checkout-item">
@@ -473,14 +473,24 @@
                                                         ×
                                                     </span>
                                                     <span class="rg-checkout-item-unit">
-                                                        <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
+                                                        @if($showRetailStrike)
+                                                            <span class="text-muted text-decoration-line-through me-1" style="font-size: 0.85em;">Rp {{ number_format($retailUnit, 0, ',', '.') }}</span>
+                                                            <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
+                                                            <span class="badge bg-danger" style="font-size: 0.7em;">-{{ $discountPercentage }}%</span>
+                                                        @else
+                                                            <span class="rg-checkout-item-unit-price">Rp {{ number_format($unitPrice, 0, ',', '.') }}</span>
+                                                        @endif
                                                     </span>
                                                 </div>
                                                 @php
                                                     $warning = collect($stockWarnings ?? [])->firstWhere('cart_id', $cart->id);
+                                                    $showStockWarning = is_array($warning)
+                                                        && isset($warning['available_qty'])
+                                                        && $warning['available_qty'] !== ''
+                                                        && $cart->quantity > (int) $warning['available_qty'];
                                                 @endphp
-                                                <div class="stock-warning-message text-danger small mt-1 fw-bold d-flex align-items-center" id="stock-warning-{{ $cart->id }}" style="{{ $warning ? '' : 'display: none;' }}">
-                                                    <span>Stok tidak cukup! (Tersedia: <span class="available-qty">{{ $warning ? $warning['available_qty'] : '' }}</span>)</span>
+                                                <div class="stock-warning-message text-danger small mt-1 fw-bold align-items-center {{ $showStockWarning ? 'd-flex' : 'd-none' }}" id="stock-warning-{{ $cart->id }}">
+                                                    <span>Stok tidak cukup! (Tersedia: <span class="available-qty">{{ $showStockWarning ? $warning['available_qty'] : '' }}</span>)</span>
                                                     <button type="submit" form="delete-form-{{ $cart->id }}" onclick="return confirm('Hapus item ini dari pesanan?');" class="text-danger border-0 align-baseline ms-2" style="background-color: #fff5f5; color: #c0392b !important; padding: 4px 6px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none; line-height: 1; display: inline-flex; align-items: center; justify-content: center;" title="Hapus Item"><i class="fi-rs-trash"></i></button>
                                                 </div>
                                             </td>
@@ -518,12 +528,30 @@
                                 }
                             </style>
                             <tbody>
+                                @if(!empty($showDistributorPricing) && ($distributorPriceDiscount ?? 0) > 0)
+                                <tr class="rg-checkout-total-row" id="distributorRetailRow">
+                                    <th class="cart_total_label align-middle pb-3">
+                                        <h6 class="text-muted mb-0">Harga normal</h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-muted mb-0 text-decoration-line-through" id="catalogSubtotalDisplay">Rp {{ number_format($catalogSubtotal ?? $retailSubtotal, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
+                                <tr class="rg-checkout-total-row" id="distributorDiscountRow">
+                                    <th class="cart_total_label align-middle pb-3">
+                                        <h6 class="text-muted mb-0">Diskon <span id="distributorLevelLabel">{{ $priceLevelName ? '(' . $priceLevelName . ')' : '' }}</span></h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-danger mb-0" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
+                                @endif
                                 <tr class="rg-checkout-total-row">
                                     <th class="cart_total_label align-middle pb-3">
                                         <h6 class="text-muted mb-0">Subtotal</h6>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle pb-3">
-                                        <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($retailSubtotal, 0, ',', '.') }}</h5>
+                                        <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
                                     </td>
                                 </tr>
                                 @if(!empty($tieredDiscountDetails))
@@ -1486,16 +1514,16 @@
                     $('#totalDisplay').text(data.total_formatted);
                 }
 
-                $('#subtotalDisplay').text(data.retail_subtotal_formatted);
+                $('#subtotalDisplay').text(data.subtotal_formatted);
                 if (data.total_weight_formatted) {
                     $('#totalWeightDisplay').text('Berat Total: ' + data.total_weight_formatted);
                 }
-                window.checkoutTotalWithoutShipping = parseFloat(data.retail_subtotal) - (parseFloat(data.tiered_discount_amount) || 0);
+                window.checkoutTotalWithoutShipping = parseFloat(data.subtotal) || 0;
 
                 if (data.show_distributor_pricing) {
                     $('#distributorRetailRow').show();
                     $('#distributorDiscountRow').show();
-                    $('#retailSubtotalDisplay').text(data.retail_subtotal_formatted);
+                    $('#catalogSubtotalDisplay').text(data.catalog_subtotal_formatted || data.retail_subtotal_formatted);
                     $('#distributorDiscountDisplay').text('-' + data.distributor_price_discount_formatted);
                     if (data.price_level_name) {
                         $('#distributorLevelLabel').text('(' + data.price_level_name + ')');
@@ -1694,7 +1722,13 @@
     });
     
     function handleStockWarnings(warnings) {
-        $('.stock-warning-message').hide().text('');
+        $('.stock-warning-message').each(function() {
+            var $el = $(this);
+            if (!$el.find('.available-qty').length) {
+                $el.html('<span>Stok tidak cukup! (Tersedia: <span class="available-qty"></span>)</span>');
+            }
+            $el.removeClass('d-flex').addClass('d-none');
+        });
         var hasWarning = false;
         
         // Remove old AJAX stock alerts, but keep hub change alerts
@@ -1705,15 +1739,25 @@
             let warningListHtml = [];
             
             warnings.forEach(function(warning) {
+                var requested = Number(warning.requested_qty);
+                var available = Number(warning.available_qty);
+                if (!Number.isFinite(requested) || !Number.isFinite(available) || requested <= available) {
+                    return;
+                }
+
                 var warningDiv = $('#stock-warning-' + warning.cart_id);
                 if (warningDiv.length) {
-                    warningDiv.find('.available-qty').text(warning.available_qty);
-                    warningDiv.show();
+                    if (!warningDiv.find('.available-qty').length) {
+                        warningDiv.html('<span>Stok tidak cukup! (Tersedia: <span class="available-qty"></span>)</span>');
+                    }
+                    warningDiv.find('.available-qty').text(available);
+                    warningDiv.removeClass('d-none').addClass('d-flex');
                     hasWarning = true;
                 }
-                warningListHtml.push('- ' + warning.product_name + ' (Pesan: ' + warning.requested_qty + ', Tersedia: ' + warning.available_qty + ')');
+                warningListHtml.push('- ' + warning.product_name + ' (Pesan: ' + warning.requested_qty + ', Tersedia: ' + available + ')');
             });
-            
+
+            if (warningListHtml.length) {
             const warningHtml = warningListHtml.join('<br>');
             const removeBtnHtml = `
                 <div class="mt-15">
@@ -1731,9 +1775,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>`;
             $('#checkoutAlertContainer').append(stockAlert);
+            }
         }
         
-        var anyVisible = $('.stock-warning-message:visible').length > 0;
+        var anyVisible = $('.stock-warning-message.d-flex').length > 0;
         if (anyVisible || hasWarning) {
             setSubmitEnabled(false);
             return true;

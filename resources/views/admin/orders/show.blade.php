@@ -511,7 +511,7 @@
                             @foreach($order->items as $item)
                                 <tr>
                                     <td>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</td>
-                                    <td class="text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                    <td class="text-right">@include('partials.order-item-unit-price', ['item' => $item])</td>
                                     <td class="text-center">
                                         {{ $item->orderedQuantityDescription() }}
                                         <div class="text-muted small">Basis: {{ number_format($item->quantity) }}</div>
@@ -521,6 +521,20 @@
                             @endforeach
                         </tbody>
                         <tfoot>
+                            @php
+                                $catalogOrderTotal = $order->items->sum(fn ($item) => $item->catalogUnitPrice() * (int) $item->quantity);
+                                $orderDiscountSaved = max(0, $catalogOrderTotal - (float) $order->subtotal);
+                            @endphp
+                            @if($orderDiscountSaved > 0.5)
+                            <tr>
+                                <th colspan="3" class="text-right text-muted">Harga normal:</th>
+                                <td class="text-right text-muted"><s>Rp {{ number_format($catalogOrderTotal, 0, ',', '.') }}</s></td>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-right text-success">Diskon:</th>
+                                <td class="text-right text-success">-Rp {{ number_format($orderDiscountSaved, 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <th colspan="3" class="text-right">Subtotal:</th>
                                 <td class="text-right">Rp {{ number_format($order->subtotal ?? 0, 0, ',', '.') }}</td>

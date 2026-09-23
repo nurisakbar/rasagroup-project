@@ -232,7 +232,7 @@ class Order extends Model
      *
      * @return array{success: bool, message: string}
      */
-    public function approveFinanceBy(User $approver): array
+    public function approveFinanceBy(?User $approver = null): array
     {
         if ($this->finance_approved) {
             return [
@@ -244,7 +244,7 @@ class Order extends Model
         $updateData = [
             'finance_approved' => true,
             'finance_approved_at' => now(),
-            'finance_approved_by' => $approver->id,
+            'finance_approved_by' => $approver?->id,
         ];
 
         // TOP: set payment_status ke term_of_payment saat approve
@@ -280,8 +280,45 @@ class Order extends Model
             }
         }
 
-        \App\Support\SalesOrderSyncDispatcher::dispatch($this);
-        \App\Jobs\SendSalesOrderToWmsJob::dispatch($this);
+        $this->syncSalesOrdersToQadAndWms();
+    }
+
+    /**
+     * Buat sales order di QAD dulu, lalu kirim ke WMS.
+     * Dijalankan langsung (sync) agar tidak bergantung queue worker.
+     */
+    public function syncSalesOrdersToQadAndWms(): void
+    {
+        $this->refresh();
+
+        try {
+            if (\App\Support\QadIntegration::isConfigured() && $this->shouldSyncToQad()) {
+                \App\Jobs\SyncOrderToQad::dispatchSync($this);
+                $this->refresh();
+            } else {
+                \Illuminate\Support\Facades\Log::info('Order sync: skip QAD SO', [
+                    'order_id' => $this->id,
+                    'order_type' => $this->order_type,
+                    'qad_configured' => \App\Support\QadIntegration::isConfigured(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Order sync: QAD SO failed', [
+                'order_id' => $this->id,
+                'order_number' => $this->order_number,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            \App\Jobs\SendSalesOrderToWmsJob::dispatchSync($this);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Order sync: WMS SO failed', [
+                'order_id' => $this->id,
+                'order_number' => $this->order_number,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

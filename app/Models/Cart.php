@@ -129,6 +129,33 @@ class Cart extends Model
         return $per > 1 && (int) $this->quantity % $per === 0;
     }
 
+    /**
+     * Jumlah badge keranjang: satuan besar untuk baris yang tampil CTN, selain itu satuan basis.
+     *
+     * @param  iterable<int, self>  $carts
+     */
+    public static function badgeCountFromCarts(iterable $carts): int
+    {
+        $total = 0;
+        foreach ($carts as $cart) {
+            $total += $cart->cartQuantityInputValue();
+        }
+
+        return $total;
+    }
+
+    public static function badgeCountForCurrentShopper(): int
+    {
+        $query = static::query()->where('cart_type', 'regular')->with('product');
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $query->where('user_id', \Illuminate\Support\Facades\Auth::id());
+        } else {
+            $query->where('session_id', session()->getId());
+        }
+
+        return self::badgeCountFromCarts($query->get());
+    }
+
     /** Nilai untuk input jumlah di halaman keranjang */
     public function cartQuantityInputValue(): int
     {

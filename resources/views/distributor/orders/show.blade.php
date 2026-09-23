@@ -141,7 +141,7 @@
                                     </td>
                                     <td>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</td>
                                     <td class="text-center">{{ $item->quantity }}</td>
-                                    <td class="text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                    <td class="text-right">@include('partials.order-item-unit-price', ['item' => $item])</td>
                                     <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach

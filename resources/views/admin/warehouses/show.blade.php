@@ -1,17 +1,36 @@
 @extends('layouts.admin')
 
-@section('title', 'Detail Hub')
-@section('page-title', 'Detail Hub')
+@section('title', 'Detail Hub — ' . $warehouse->name)
+@section('page-title', $warehouse->name)
 @section('page-description', 'Detail informasi dan stock hub')
 
 @section('breadcrumb')
     <li><a href="{{ route('admin.warehouses.index') }}">Hub</a></li>
-    <li class="active">Detail</li>
+    <li class="active">{{ $warehouse->name }}</li>
 @endsection
 
 @section('content')
     <div class="row">
         <div class="col-md-12">
+            <div class="callout callout-info" style="margin-bottom: 15px;">
+                <h4 style="margin-top: 0;">
+                    <i class="fa fa-building"></i> {{ $warehouse->name }}
+                    @if($warehouse->is_active)
+                        <span class="label label-success">Aktif</span>
+                    @else
+                        <span class="label label-danger">Nonaktif</span>
+                    @endif
+                </h4>
+                <p style="margin-bottom: 0;">
+                    @if($warehouse->qad_location_code)
+                        Lokasi WMS: <strong>{{ $warehouse->qad_location_code }}</strong>
+                    @endif
+                    @if($warehouse->full_location)
+                        @if($warehouse->qad_location_code) &nbsp;|&nbsp; @endif
+                        {{ $warehouse->full_location }}
+                    @endif
+                </p>
+            </div>
             <!-- Custom Tabs -->
             <div class="nav-tabs-custom">
                 <ul class="nav nav-tabs">
@@ -135,7 +154,7 @@
                                         <th>Kode Produk</th>
                                         <th>Harga</th>
                                         <th width="120" class="text-center">Stok (Jubelio)</th>
-                                        <th width="120" class="text-center">Fisik (QAD)</th>
+                                        <th width="120" class="text-center">Fisik (WMS)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -159,9 +178,9 @@
                                                     <span class="label label-warning">Nonaktif</span>
                                                 @endif
                                                 
-                                                @if(isset($qadBatches[$stock->product->code]) && count($qadBatches[$stock->product->code]) > 0)
+                                                @if(isset($wmsBatches[$stock->product->code]) && count($wmsBatches[$stock->product->code]) > 0)
                                                     <div style="margin-top: 5px;">
-                                                        @foreach($qadBatches[$stock->product->code] as $batch)
+                                                        @foreach($wmsBatches[$stock->product->code] as $batch)
                                                             <div>
                                                                 <em>Batch : {{ $batch['lot_serial'] }} 
                                                                 @if(!empty($batch['expired']))
@@ -187,16 +206,16 @@
                                             </td>
                                             <td class="text-center">
                                                 @php
-                                                    $qadTotal = 0;
-                                                    if(isset($qadBatches[$stock->product->code])) {
-                                                        foreach($qadBatches[$stock->product->code] as $b) {
-                                                            $qadTotal += $b['qty'];
+                                                    $wmsTotal = 0;
+                                                    if(isset($wmsBatches[$stock->product->code])) {
+                                                        foreach($wmsBatches[$stock->product->code] as $b) {
+                                                            $wmsTotal += $b['qty'];
                                                         }
                                                     }
                                                 @endphp
-                                                @if($qadTotal > 0)
-                                                    <span class="badge bg-purple" style="font-size: 14px; padding: 5px 10px;" title="Total dari QAD API">{{ number_format($qadTotal) }}</span>
-                                                    @if($stock->stock != $qadTotal)
+                                                @if($wmsTotal > 0)
+                                                    <span class="badge bg-purple" style="font-size: 14px; padding: 5px 10px;" title="Total dari WMS API">{{ number_format($wmsTotal) }}</span>
+                                                    @if($stock->stock != $wmsTotal)
                                                         <br><small class="text-danger"><i class="fa fa-warning"></i> Selisih</small>
                                                     @endif
                                                 @else

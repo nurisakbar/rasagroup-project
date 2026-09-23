@@ -35,4 +35,9 @@ class Setting extends Model
         );
         return $setting;
     }
+
+    public static function taxPercent(): float
+    {
+        return (float) self::get('tax_percent', 11);
+    }
 }

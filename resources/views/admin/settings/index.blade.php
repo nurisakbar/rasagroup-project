@@ -44,6 +44,14 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="tax_percent">Pajak (%)</label>
+                        <input type="number" class="form-control" id="tax_percent" name="tax_percent"
+                            value="{{ old('tax_percent', $tax_percent) }}"
+                            min="0" max="100" step="0.01" required>
+                        <p class="help-block">Persentase pajak (PPN). Default 11. Boleh desimal, contoh 11 atau 11.00.</p>
+                    </div>
+
+                    <div class="form-group">
                         <button type="submit" class="btn btn-primary">
                             <i class="fa fa-save"></i> Simpan Pengaturan Umum
                         </button>

@@ -48,10 +48,12 @@
                     <div class="box-footer" style="padding: 10px;">
                         <h5 style="margin: 5px 0; font-size: 14px; height: 36px; overflow: hidden;">{{ $product->display_name }}</h5>
                         <p style="margin: 5px 0; color: #f39c12; font-weight: bold;">
-                            Rp {{ number_format(Auth::user()->getProductPrice($product), 0, ',', '.') }}
-                            @if(Auth::user()->priceLevel && Auth::user()->getProductPrice($product) != $product->price)
-                                <br><small style="text-decoration: line-through; color: #999; font-weight: normal;">Rp {{ number_format($product->price, 0, ',', '.') }}</small>
+                            @php $distPrice = Auth::user()->getProductPrice($product); @endphp
+                            @if($distPrice + 0.5 < (float) $product->price)
+                                <small style="text-decoration: line-through; color: #999; font-weight: normal;">Rp {{ number_format($product->price, 0, ',', '.') }}</small>
+                                <br>
                             @endif
+                            Rp {{ number_format($distPrice, 0, ',', '.') }}
                         </p>
                         <form action="{{ route('distributor.orders.add-to-cart') }}" method="POST" class="form-inline" style="margin-top: 10px;">
                             @csrf
