@@ -42,6 +42,11 @@
                     </div>
                     @endif
                     <div class="pull-right" style="margin-right: 10px;">
+                        <a href="{{ route('admin.orders.invoice', $order) }}" class="btn btn-xs btn-default" title="Download Proforma Invoice">
+                            <i class="fa fa-download"></i> Download Proforma Invoice
+                        </a>
+                    </div>
+                    <div class="pull-right" style="margin-right: 10px;">
                         <a href="{{ route('admin.orders.surat-jalan', $order) }}" target="_blank" class="btn btn-xs btn-default" title="Cetak Surat Jalan">
                             <i class="fa fa-print"></i> Cetak Surat Jalan
                         </a>
@@ -502,18 +507,28 @@
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th class="text-right">Harga</th>
+                                <th class="text-right">Harga katalog</th>
+                                <th class="text-right">Harga jual</th>
                                 <th class="text-center">Jumlah</th>
                                 <th class="text-right">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $dppBeforeTotal = 0;
+                                $dppAfterTotal = 0;
+                            @endphp
                             @foreach($order->items as $item)
                                 @php
                                     $priceBefore = $item->unitPriceBeforeDiscount();
                                     $priceAfter = $item->unitPriceAfterDiscount();
+                                    $qtyDisplay = max(1, $item->displayQuantity());
+                                    $lineBefore = $priceBefore * $qtyDisplay;
+                                    $lineAfter = $priceAfter * $qtyDisplay;
+                                    $dppBeforeTotal += $lineBefore;
+                                    $dppAfterTotal += $lineAfter;
                                     $lineDiscount = max(0, $priceBefore - $priceAfter);
-                                    $lineDiscountPercent = $priceBefore > 0 ? round(($lineDiscount / $priceBefore) * 100, 1) : 0;
+                                    $lineDiscountPercent = $item->unitDiscountPercent();
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
                                 @endphp
                                 <tr>
@@ -535,13 +550,13 @@
                                         @endif
                                     </td>
                                     <td class="text-right">
+                                        Rp {{ number_format($priceBefore, 0, ',', '.') }}
+                                    </td>
+                                    <td class="text-right">
                                         <strong>Rp {{ number_format($priceAfter, 0, ',', '.') }}</strong>
                                         @if($lineDiscount > 0.5)
-                                            <div class="text-muted">
-                                                <s>Rp {{ number_format($priceBefore, 0, ',', '.') }}</s>
-                                            </div>
                                             <div>
-                                                <small class="text-success">Diskon {{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%</small>
+                                                <small class="text-success">Diskon kategori {{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%</small>
                                             </div>
                                         @endif
                                     </td>
@@ -551,52 +566,42 @@
                                             <div class="text-muted small">Basis: {{ number_format($item->quantity) }}</div>
                                         @endif
                                     </td>
-                                    <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                    <td class="text-right">Rp {{ number_format($lineAfter, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
                             @php
-                                $catalogOrderTotal = $order->items->sum(fn ($item) => $item->catalogUnitPrice() * (int) $item->quantity);
-                                $orderDiscountSaved = max(0, $catalogOrderTotal - (float) $order->subtotal);
+                                $itemDiscountSaved = max(0, $dppBeforeTotal - $dppAfterTotal);
+                                $couponDiscount = (float) ($order->discount_amount ?? 0);
+                                $discountTotal = $itemDiscountSaved + $couponDiscount;
+                                $ppnLabel = \App\Support\TaxAwarePrice::ppnLabel();
+                                $taxPercent = \App\Models\Setting::taxPercent();
+                                $ppnAmount = $taxPercent > 0 ? round($dppAfterTotal * ($taxPercent / 100), 2) : 0;
                             @endphp
-                            @if($orderDiscountSaved > 0.5)
                             <tr>
-                                <th colspan="3" class="text-right text-muted">Harga normal:</th>
-                                <td class="text-right text-muted"><s>Rp {{ number_format($catalogOrderTotal, 0, ',', '.') }}</s></td>
+                                <th colspan="4" class="text-right">Subtotal:</th>
+                                <td class="text-right">Rp {{ number_format($dppBeforeTotal, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
-                                <th colspan="3" class="text-right text-success">Diskon:</th>
-                                <td class="text-right text-success">-Rp {{ number_format($orderDiscountSaved, 0, ',', '.') }}</td>
+                                <th colspan="4" class="text-right">Diskon:</th>
+                                <td class="text-right">-Rp {{ number_format($discountTotal, 0, ',', '.') }}</td>
                             </tr>
-                            @endif
                             <tr>
-                                <th colspan="3" class="text-right">Subtotal:</th>
-                                <td class="text-right">Rp {{ number_format($order->subtotal ?? 0, 0, ',', '.') }}</td>
+                                <th colspan="4" class="text-right">Pajak ({{ $ppnLabel }}):</th>
+                                <td class="text-right">Rp {{ number_format($ppnAmount, 0, ',', '.') }}</td>
                             </tr>
-                            @if($order->discount_amount > 0)
                             <tr>
-                                <th colspan="3" class="text-right text-danger">Potongan Harga ({{ $order->discount_percent }}%):</th>
-                                <td class="text-right text-danger">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</td>
-                            </tr>
-                            @endif
-                            <tr>
-                                <th colspan="3" class="text-right">Ongkos Kirim:</th>
+                                <th colspan="4" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
-                            @if($order->payment_fee > 0)
-                            <tr>
-                                <th colspan="3" class="text-right">Biaya Layanan:</th>
-                                <td class="text-right">Rp {{ number_format($order->payment_fee, 0, ',', '.') }}</td>
-                            </tr>
-                            @endif
                             <tr style="font-size: 16px;">
-                                <th colspan="3" class="text-right">Total:</th>
+                                <th colspan="4" class="text-right">Total:</th>
                                 <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
                             @if($order->order_type === 'distributor')
                             <tr class="bg-yellow">
-                                <th colspan="3" class="text-right"><i class="fa fa-star"></i> Poin Didapat:</th>
+                                <th colspan="4" class="text-right"><i class="fa fa-star"></i> Poin Didapat:</th>
                                 <td class="text-right">
                                     <strong>+{{ number_format($order->points_earned, 0, ',', '.') }}</strong>
                                     @if($order->points_credited)

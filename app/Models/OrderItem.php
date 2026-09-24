@@ -142,17 +142,53 @@ class OrderItem extends Model
     }
 
     /**
-     * Harga satuan sesudah diskon. Diskon dihitung dari DPP, bukan dari harga termasuk pajak.
-     * Distributor: dikalikan isi satuan terbesar.
+     * Persentase diskon kategori pembeli untuk produk baris ini.
+     */
+    public function buyerCategoryDiscountPercent(): float
+    {
+        $this->loadMissing(['order.user.categoryDiscounts', 'product']);
+        if (! $this->order?->user || ! $this->product) {
+            return 0.0;
+        }
+
+        return $this->order->user->categoryDiscountPercentageFor($this->product);
+    }
+
+    /**
+     * Harga jual per satuan basis (DPP). Diskon kategori: pajak dikeluarkan dulu, lalu %.
+     * Dipakai tampilan, kwitansi, dan payload QAD.
+     */
+    public function soldBaseUnitPrice(): float
+    {
+        $percent = $this->buyerCategoryDiscountPercent();
+        if ($percent > 0) {
+            return \App\Support\TaxAwarePrice::applyDiscount(
+                $this->catalogUnitPrice(),
+                $percent
+            );
+        }
+
+        $sold = $this->discountedUnitPrice();
+        if ($sold > 0) {
+            return $this->hasUnitDiscount()
+                ? $sold
+                : \App\Support\TaxAwarePrice::excludingTax($sold);
+        }
+
+        $this->loadMissing(['order.user', 'product']);
+        if ($this->order?->user && $this->product) {
+            return (float) $this->order->user->getProductPrice($this->product);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Harga satuan sesudah diskon (tampilan: dikalikan isi satuan terbesar jika CTN).
      */
     public function unitPriceAfterDiscount(): float
     {
-        $sold = $this->discountedUnitPrice();
-        $base = $this->hasUnitDiscount()
-            ? $sold
-            : \App\Support\TaxAwarePrice::excludingTax($sold);
-
-        return $base * $this->displayPriceMultiplier();
+        return $this->soldBaseUnitPrice() * $this->displayPriceMultiplier();
     }
 
     public function discountedUnitPrice(): float
@@ -167,12 +203,19 @@ class OrderItem extends Model
 
     public function unitDiscountPercent(): float
     {
-        $catalog = $this->catalogUnitPrice();
-        if ($catalog <= 0) {
+        $categoryPercent = $this->buyerCategoryDiscountPercent();
+        if ($categoryPercent > 0) {
+            return round($categoryPercent, 1);
+        }
+
+        $before = $this->unitPriceBeforeDiscount();
+        if ($before <= 0) {
             return 0.0;
         }
 
-        return round((1 - ($this->discountedUnitPrice() / $catalog)) * 100, 1);
+        $after = $this->unitPriceAfterDiscount();
+
+        return round(max(0, (1 - ($after / $before)) * 100), 1);
     }
 
     public function order(): BelongsTo

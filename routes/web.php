@@ -277,7 +277,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/create', [App\Http\Controllers\Admin\ManualOrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [App\Http\Controllers\Admin\ManualOrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/ajax/customers', [App\Http\Controllers\Admin\ManualOrderController::class, 'searchCustomers'])->name('orders.search-customers');
+        Route::get('/orders/ajax/sales', [App\Http\Controllers\Admin\ManualOrderController::class, 'searchSales'])->name('orders.search-sales');
+        Route::get('/orders/ajax/products', [App\Http\Controllers\Admin\ManualOrderController::class, 'searchProducts'])->name('orders.search-products');
+        Route::get('/orders/ajax/product-batches', [App\Http\Controllers\Admin\ManualOrderController::class, 'productBatches'])->name('orders.product-batches');
+        Route::get('/orders/ajax/customers/{user}/addresses', [App\Http\Controllers\Admin\ManualOrderController::class, 'customerAddresses'])->name('orders.customer-addresses');
+        Route::post('/orders/ajax/preview', [App\Http\Controllers\Admin\ManualOrderController::class, 'previewPricing'])->name('orders.preview-pricing');
         Route::get('/orders/{order}', [App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
         Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Admin\OrderController::class, 'printSuratJalan'])->name('orders.surat-jalan');
         Route::put('/orders/{order}', [App\Http\Controllers\Admin\OrderController::class, 'update'])->name('orders.update');
         Route::put('/orders/{order}/status', [App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');

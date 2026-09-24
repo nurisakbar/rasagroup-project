@@ -40,7 +40,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="help-block">Digunakan untuk menarik data stok (batch/lot serial) dari WMS.</p>
+                            <p class="help-block">Kode yang diawali <strong>FG</strong> = gudang QAD (sales order ke QAD). Kode lain atau kosong = Jubelio.</p>
                             @error('qad_location_code')
                                 <span class="help-block text-danger">{{ $message }}</span>
                             @enderror

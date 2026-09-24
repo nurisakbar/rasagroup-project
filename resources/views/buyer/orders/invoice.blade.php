@@ -1,250 +1,191 @@
+@php
+    $invoice = $invoice ?? \App\Support\ProformaInvoice::fromOrder($order);
+    $money = fn ($amount) => 'Rp' . number_format((float) $amount, 0, ',', '.');
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Invoice #{{ $order->order_number }}</title>
+    <title>Proforma Invoice {{ $invoice['invoice_no'] }}</title>
     <style>
+        @page { margin: 42px 48px 48px 48px; }
         body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
+            color: #111827;
             font-size: 12px;
-            line-height: 1.4;
-            color: #333;
+            line-height: 1.45;
             margin: 0;
             padding: 0;
         }
-        .invoice-box {
-            max-width: 800px;
-            margin: auto;
-            padding: 30px;
-        }
-        .header {
-            width: 100%;
-            margin-bottom: 30px;
-        }
-        .header table {
-            width: 100%;
-        }
-        .logo {
+        table { border-collapse: collapse; }
+        .w-100 { width: 100%; }
+        .title {
             font-size: 28px;
-            font-weight: bold;
-            color: #6A1B1B;
+            font-weight: 700;
+            letter-spacing: 2px;
+            line-height: 1.15;
+            color: #111827;
             text-transform: uppercase;
         }
-        .invoice-title {
+        .logo { width: 168px; height: auto; margin-top: 22px; }
+        .barcode { text-align: right; padding-bottom: 8px; }
+        .from {
+            width: 240px;
+            margin-left: auto;
             text-align: right;
-            font-size: 24px;
-            color: #777;
+            font-size: 12px;
+            line-height: 1.55;
+            padding-top: 18px;
+            word-wrap: break-word;
         }
-        .info-section {
+        .from strong, .bill-to strong {
+            font-weight: 700;
+        }
+        .bill-to {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .invoice-no {
+            width: 260px;
+            margin-left: auto;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+            text-align: right;
+        }
+        .order-date {
+            font-size: 13px;
+            text-align: right;
+            margin-top: 6px;
+        }
+        .items {
             width: 100%;
-            margin-bottom: 30px;
+            margin-top: 36px;
         }
-        .info-section table {
-            width: 100%;
-        }
-        .info-section td {
-            vertical-align: top;
-            width: 50%;
-        }
-        .section-title {
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #777;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        .items-table th {
-            background: #f9f9f9;
-            border-bottom: 2px solid #eee;
+        .items th {
             text-align: left;
-            padding: 10px;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 0 6px 12px 6px;
+            border-bottom: 1px solid #111827;
         }
-        .items-table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+        .items td {
+            padding: 11px 6px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
         }
-        .total-section {
-            width: 100%;
+        .items .num, .items .qty, .items .price, .items .total {
+            text-align: right;
+            white-space: nowrap;
         }
-        .total-section table {
-            width: 40%;
-            margin-left: 60%;
+        .items .qty { text-align: center; }
+        .items th.num { width: 6%; text-align: left; }
+        .items th.product { width: 26%; }
+        .items th.qty { width: 12%; text-align: center; }
+        .items th.price, .items th.total { width: 18%; text-align: right; }
+        .totals {
+            width: 46%;
+            margin-left: 54%;
+            margin-top: 8px;
         }
-        .total-section td {
-            padding: 5px 10px;
+        .totals td {
+            padding: 8px 6px;
+            font-size: 12px;
         }
-        .total-row {
-            font-weight: bold;
-            font-size: 14px;
-            color: #6A1B1B;
+        .totals .amount { text-align: right; white-space: nowrap; }
+        .totals .grand td {
+            font-weight: 700;
+            font-size: 13px;
+            padding-top: 12px;
         }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #777;
-            font-size: 10px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .status-paid { background: #e6fcf5; color: #0ca678; }
-        .status-pending { background: #fff9db; color: #f08c00; }
     </style>
 </head>
 <body>
-    <div class="invoice-box">
-        <div class="header">
-            <table>
-                <tr>
-                    <td class="logo">Rasa Group</td>
-                    <td class="invoice-title">INVOICE</td>
-                </tr>
-                <tr>
-                    <td>
-                        Order #{{ $order->order_number }}<br>
-                        Tanggal: {{ $order->created_at->format('d/m/Y') }}
-                    </td>
-                    <td style="text-align: right;">
-                        Status Pembayaran: 
-                        <span class="status-badge {{ $order->payment_status === 'paid' ? 'status-paid' : 'status-pending' }}">
-                            {{ strtoupper($order->payment_status) }}
-                        </span>
-                    </td>
-                </tr>
-            </table>
-        </div>
+    <table class="w-100">
+        <tr>
+            <td width="50%" valign="top">
+                <div class="title">PROFORMA<br>INVOICE</div>
+                <img src="{{ public_path('logorasa.png') }}" class="logo" alt="Rasa Group">
+            </td>
+            <td width="50%" valign="top">
+                <div class="barcode">{!! \App\Support\InvoiceBarcode::html($invoice['invoice_no']) !!}</div>
+                <div class="from">
+                    <strong>From</strong><br>
+                    @foreach($invoice['from_lines'] as $line)
+                        {{ $line }}<br>
+                    @endforeach
+                </div>
+            </td>
+        </tr>
+    </table>
 
-        <div class="info-section">
-            <table>
-                <tr>
-                    <td>
-                        <div class="section-title">Penerima</div>
-                        <strong>{{ $order->user->name }}</strong><br>
-                        {!! nl2br(e($order->shipping_address)) !!}
-                    </td>
-                    <td>
-                        <div class="section-title">Pengirim</div>
-                        <strong>{{ $order->sourceWarehouse->name ?? 'Rasa Group Central' }}</strong><br>
-                        @if($order->sourceWarehouse)
-                            {{ $order->sourceWarehouse->address }}<br>
-                            {{ $order->sourceWarehouse->full_location }}
-                        @else
-                            Jl. Raya Industri No. 1, Jakarta
-                        @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="info-section">
-            <table>
-                <tr>
-                    <td>
-                        <div class="section-title">Metode Pembayaran</div>
-                        {{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}
-                    </td>
-                    <td>
-                        <div class="section-title">Pengiriman</div>
-                        {{ $order->expedition->name ?? '-' }} ({{ $order->expedition_service ?? 'Standard' }})
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        @if($order->sales || $order->affiliate)
-        <div class="info-section">
-            <table>
-                <tr>
-                    @if($order->sales)
-                    <td>
-                        <div class="section-title">Sales Person</div>
-                        <strong>{{ $order->sales->name }}</strong> ({{ $order->sales_code }})<br>
-                        {{ $order->sales->email }}
-                    </td>
-                    @endif
-                    @if($order->affiliate)
-                    <td>
-                        <div class="section-title">Kode Referal</div>
-                        {{ $order->affiliate->referral_code }}
-                    </td>
-                    @endif
-                </tr>
-            </table>
-        </div>
-        @endif
-
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Produk</th>
-                    <th style="text-align: center;">Harga</th>
-                    <th style="text-align: center;">Jumlah</th>
-                    <th style="text-align: right;">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($order->items as $item)
-                    <tr>
-                        <td>
-                            <strong>{{ $item->product->display_name }}</strong><br>
-                            <span style="color: #777; font-size: 10px;">SKU: {{ $item->sku ?? '-' }}</span>
-                        </td>
-                        <td style="text-align: center;">Rp {{ number_format($item->orderedPrice(), 0, ',', '.') }}</td>
-                        <td style="text-align: center;">{{ $item->orderedQuantityDescription() }}</td>
-                        <td style="text-align: right;">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
-                    </tr>
+    <table class="w-100" style="margin-top: 36px;">
+        <tr>
+            <td width="50%" valign="top" class="bill-to">
+                <strong>Bill to</strong><br>
+                {{ $invoice['bill_name'] }}<br>
+                @foreach($invoice['bill_lines'] as $line)
+                    {{ $line }}<br>
                 @endforeach
-            </tbody>
-        </table>
+            </td>
+            <td width="50%" valign="top">
+                <div class="invoice-no">Invoice no: {{ $invoice['invoice_no'] }}</div>
+                <div class="order-date">Order date: {{ $invoice['order_date'] }}</div>
+            </td>
+        </tr>
+    </table>
 
-        <div class="total-section">
-            <table>
+    <table class="items">
+        <thead>
+            <tr>
+                <th class="num">S.No</th>
+                <th class="product">Product</th>
+                <th class="qty">Quantity</th>
+                <th class="price">Harga katalog</th>
+                <th class="price">Harga jual</th>
+                <th class="total">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($invoice['items'] as $item)
                 <tr>
-                    <td>Subtotal</td>
-                    <td style="text-align: right;">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
+                    <td class="num">{{ $item['no'] }}</td>
+                    <td>{{ $item['name'] }}</td>
+                    <td class="qty">{{ $item['quantity'] }}</td>
+                    <td class="price">{{ $money($item['unit_price_before'] ?? $item['unit_price']) }}</td>
+                    <td class="price">{{ $money($item['unit_price_after'] ?? $item['unit_price']) }}</td>
+                    <td class="total">{{ $money($item['total_price']) }}</td>
                 </tr>
-                @if($order->discount_amount > 0)
+            @empty
                 <tr>
-                    <td>Diskon ({{ $order->discount_percent }}%)</td>
-                    <td style="text-align: right; color: red;">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</td>
+                    <td colspan="6">Tidak ada item pada pesanan ini.</td>
                 </tr>
-                @endif
-                <tr>
-                    <td>Ongkos Kirim</td>
-                    <td style="text-align: right;">Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td>TOTAL</td>
-                    <td style="text-align: right;">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
-                </tr>
-            </table>
-        </div>
+            @endforelse
+        </tbody>
+    </table>
 
-        @if($order->notes)
-        <div style="margin-top: 20px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-            <strong>Catatan:</strong><br>
-            {{ $order->notes }}
-        </div>
-        @endif
-
-        <div class="footer">
-            Terima kasih telah berbelanja di Rasa Group.<br>
-            Halaman ini adalah bukti transaksi yang sah.
-        </div>
-    </div>
+    <table class="totals">
+        <tr>
+            <td>Subtotal</td>
+            <td class="amount">{{ $money($invoice['subtotal_before'] ?? $invoice['subtotal']) }}</td>
+        </tr>
+        <tr>
+            <td>Diskon</td>
+            <td class="amount">-{{ $money(($invoice['item_discount'] ?? 0) + ($invoice['discount'] ?? 0)) }}</td>
+        </tr>
+        <tr>
+            <td>{{ $invoice['ppn_label'] }}</td>
+            <td class="amount">{{ $money($invoice['ppn']) }}</td>
+        </tr>
+        <tr>
+            <td>Ongkos Kirim</td>
+            <td class="amount">{{ $money($invoice['shipping'] ?? 0) }}</td>
+        </tr>
+        <tr class="grand">
+            <td>Total</td>
+            <td class="amount">{{ $money($invoice['total']) }}</td>
+        </tr>
+    </table>
 </body>
 </html>

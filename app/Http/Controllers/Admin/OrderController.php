@@ -224,9 +224,20 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['user', 'items.product', 'expedition', 'address', 'sourceWarehouse', 'financeApprover']);
+        $order->load(['user.categoryDiscounts', 'items.product', 'expedition', 'address', 'sourceWarehouse', 'financeApprover']);
         $expeditions = \App\Models\Expedition::where('is_active', true)->get();
         return view('admin.orders.show', compact('order', 'expeditions'));
+    }
+
+    public function downloadInvoice(Order $order)
+    {
+        $order->load(\App\Support\ProformaInvoice::relations());
+        $invoice = \App\Support\ProformaInvoice::fromOrder($order);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('proforma-invoice-' . $order->order_number . '.pdf');
     }
 
     public function printSuratJalan(Order $order)

@@ -374,34 +374,37 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get product price for this user (distributor with price level or regular price).
+     * Diskon kategori distributor untuk produk (brand + kategori).
+     */
+    public function categoryDiscountPercentageFor(Product $product): float
+    {
+        if (! $this->isDistributor() || ! $product->category_id) {
+            return 0.0;
+        }
+
+        $this->loadMissing('categoryDiscounts');
+
+        $row = $this->categoryDiscounts
+            ->where('brand_id', $product->brand_id)
+            ->where('category_id', $product->category_id)
+            ->first();
+
+        return $row ? max(0.0, (float) $row->discount_percentage) : 0.0;
+    }
+
+    /**
+     * Harga jual untuk user ini. Distributor memakai diskon kategori (DPP dulu, baru %).
      */
     public function getProductPrice(Product $product): float
     {
-        // Check for specific category discount first (ignores price level if exists)
-        if ($this->isDistributor() && $product->category_id) {
-            // Check if relation is loaded to avoid N+1 if loaded, else query it
-            $categoryDiscount = $this->categoryDiscounts
-                                     ->where('brand_id', $product->brand_id)
-                                     ->where('category_id', $product->category_id)
-                                     ->first();
-            
-            if ($categoryDiscount && $categoryDiscount->discount_percentage > 0) {
-                $basePrice = (float) $product->final_price;
-
-                return \App\Support\TaxAwarePrice::applyDiscount(
-                    $basePrice,
-                    (float) $categoryDiscount->discount_percentage
-                );
-            }
+        $percent = $this->categoryDiscountPercentageFor($product);
+        if ($percent > 0) {
+            return \App\Support\TaxAwarePrice::applyDiscount(
+                (float) $product->final_price,
+                $percent
+            );
         }
 
-        // If user is distributor and has price level, use price level pricing
-        if ($this->isDistributor() && $this->priceLevel) {
-            return $this->priceLevel->calculatePriceForProduct($product);
-        }
-        
-        // Otherwise return regular price (discounted if applicable)
         return (float) $product->final_price;
     }
 

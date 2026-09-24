@@ -60,11 +60,12 @@ class OrderController extends Controller
             abort(403);
         }
 
-        $order->load(['items.product', 'user', 'sourceWarehouse.province', 'sourceWarehouse.regency', 'expedition', 'sales']);
-        
-        $pdf = Pdf::loadView('buyer.orders.invoice', compact('order'));
-        
-        return $pdf->download('invoice-' . $order->order_number . '.pdf');
+        $order->load(\App\Support\ProformaInvoice::relations());
+        $invoice = \App\Support\ProformaInvoice::fromOrder($order);
+
+        $pdf = Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
+
+        return $pdf->download('proforma-invoice-' . $order->order_number . '.pdf');
     }
 
     public function trackOrder(Order $order)

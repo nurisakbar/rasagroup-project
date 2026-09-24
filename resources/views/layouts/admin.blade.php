@@ -169,9 +169,14 @@
         </li>
         
         @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+        <li class="{{ request()->routeIs('admin.orders.index') || request()->routeIs('admin.orders.show') ? 'active' : '' }}">
           <a href="{{ route('admin.orders.index') }}">
             <i class="fa fa-shopping-cart"></i> <span>LAPORAN PESANAN</span>
+          </a>
+        </li>
+        <li class="{{ request()->routeIs('admin.orders.create') ? 'active' : '' }}">
+          <a href="{{ route('admin.orders.create') }}">
+            <i class="fa fa-plus-square"></i> <span>INPUT TRANSAKSI</span>
           </a>
         </li>
         @endif

@@ -311,7 +311,7 @@ class Order extends Model
         }
 
         try {
-            \App\Jobs\SendSalesOrderToWmsJob::dispatchSync($this);
+            \App\Jobs\SendSalesOrderToWmsJob::dispatch($this);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Order sync: WMS SO failed', [
                 'order_id' => $this->id,
@@ -338,19 +338,29 @@ class Order extends Model
     }
 
     /**
-     * Order dari hub/website (online) → sinkron ke Jubelio.
+     * Hub sumber kode lokasi FG… → sales order ke QAD.
      */
-    public function shouldSyncToJubelio(): bool
+    public function sourceHubSendsSalesOrdersToQad(): bool
     {
-        return $this->order_type === self::TYPE_REGULAR;
+        $this->loadMissing('sourceWarehouse');
+
+        return (bool) $this->sourceWarehouse?->hasQadLocationCode();
     }
 
     /**
-     * Order distributor / POS → sinkron ke QAD.
+     * Hub selain FG (Jubelio) → sales order ke Jubelio.
+     */
+    public function shouldSyncToJubelio(): bool
+    {
+        return ! $this->sourceHubSendsSalesOrdersToQad();
+    }
+
+    /**
+     * Hub kode lokasi FG… → sales order ke QAD.
      */
     public function shouldSyncToQad(): bool
     {
-        return in_array($this->order_type, [self::TYPE_DISTRIBUTOR, self::TYPE_POS], true);
+        return $this->sourceHubSendsSalesOrdersToQad();
     }
 
     /**

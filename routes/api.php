@@ -70,6 +70,8 @@ Route::get('/ongkir', [OngkirApiController::class, 'index'])->name('api.ongkir')
 Route::prefix('webhooks')->group(function () {
     Route::get('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'verify'])->name('api.webhooks.meta.verify');
     Route::post('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'handle'])->name('api.webhooks.meta.handle');
+    Route::get('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'verify'])->name('api.webhooks.lalamove.verify');
+    Route::post('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'handle'])->name('api.webhooks.lalamove.handle');
 });
 
 // Faspay SNAP VA & Payment Notification routes

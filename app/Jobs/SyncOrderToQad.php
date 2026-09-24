@@ -46,7 +46,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     public function __construct(Order $order)
     {
         $this->order = $order->load([
-            'user',
+            'user.categoryDiscounts',
             'items.product',
             'address.province',
             'address.regency',
@@ -69,9 +69,10 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         if (! $this->order->shouldSyncToQad()) {
-            Log::info('SyncOrderToQad: skipped (bukan order distributor/POS)', [
+            Log::info('SyncOrderToQad: skipped (kode lokasi hub bukan FG / bukan QAD)', [
                 'order_id' => $this->order->id,
                 'order_type' => $this->order->order_type,
+                'source_warehouse_id' => $this->order->source_warehouse_id,
             ]);
 
             return;
@@ -155,13 +156,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 $qadMaster = $itemMasterCache[$itemCode];
             }
 
-            $price = (float) ($item->price ?? 0);
-            if ($price <= 0 && $item->relationLoaded('product') && $item->product) {
-                $price = (float) ($item->product->price ?? 0);
-            }
-            if ($price <= 0 && $qadMaster['defaultPrice'] > 0) {
-                $price = $qadMaster['defaultPrice'];
-            }
+            $price = $this->qadLineSoldPrice($item);
 
             if ($price <= 0) {
                 $invalidPriceItems[] = [
@@ -175,8 +170,8 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                     'order_number' => $this->order->order_number,
                     'order_item_id' => $item->id ?? null,
                     'item_code' => $item->product?->code ?? null,
-                    'original_price' => $price,
-                    'product_master_price' => (float) ($item->product?->price ?? 0),
+                    'sold_price' => $price,
+                    'catalog_price' => (float) ($item->product?->price ?? 0),
                 ]);
             }
 
@@ -210,6 +205,63 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         return ['ok' => true, 'lines' => $lines];
+    }
+
+    /**
+     * Harga jual ke QAD: sama dengan hitungan diskon kategori (DPP, bukan harga katalog).
+     */
+    protected function qadLineSoldPrice($item): float
+    {
+        return max(0.0, (float) $item->soldBaseUnitPrice());
+    }
+
+    /**
+     * salespersonCode_01 hanya diisi jika transaksi punya kode sales.
+     */
+    protected function salespersonCodeForQad(): ?string
+    {
+        $code = trim((string) ($this->order->sales_code ?? ''));
+        if ($code === '' || strcasecmp($code, 'null') === 0) {
+            return null;
+        }
+
+        return $code;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $lines
+     * @return array<string, mixed>
+     */
+    protected function buildSalesOrderCreatePayload(User $user, string $qidSalesOrderNumber, string $headerDateIso, string $purchaseOrderNumber, array $lines): array
+    {
+        $payload = [
+            'domainCode' => 'MCR',
+            'salesOrderNumber' => $qidSalesOrderNumber,
+            'billToCustomerCode' => $user->qad_customer_code,
+            'soldToCustomerCode' => $user->qad_customer_code,
+            'shipToCustomerCode' => $user->qad_customer_code,
+            'orderDate' => $headerDateIso,
+            'dueDate' => $headerDateIso,
+            'requiredDate' => $headerDateIso,
+            'shipDate' => $headerDateIso,
+            'promiseDate' => $headerDateIso,
+            'creditTermsCode' => 'CIA',
+            'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
+                ? (string) $this->order->notes
+                : (string) $this->order->order_number, 0, 24),
+            'purchaseOrderNumber' => $purchaseOrderNumber,
+            'taxClass' => 'PPN',
+            'isTaxable' => true,
+            'isSelfBillingEnabled' => true,
+            'salesOrderLines' => $lines,
+        ];
+
+        $salespersonCode = $this->salespersonCodeForQad();
+        if ($salespersonCode !== null) {
+            $payload['salespersonCode_01'] = $salespersonCode;
+        }
+
+        return $payload;
     }
 
     protected function syncSalesOrder(QadService $qadService, User $user): void
@@ -303,29 +355,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             // Tanggal header sama semua seperti payload uji yang berhasil (qid:test-so-format); due baris tetap +7 hari.
             $headerDateIso = $orderDate->format('Y-m-d') . 'T00:00:00.000Z';
 
-            // Selaras swagger SalesOrder_Create + contoh payload internal (tanpa field ekstra di header/baris).
-            $payload = [
-                'domainCode' => 'MCR',
-                'salesOrderNumber' => $qidSalesOrderNumber,
-                'billToCustomerCode' => $user->qad_customer_code,
-                'soldToCustomerCode' => $user->qad_customer_code,
-                'shipToCustomerCode' => $user->qad_customer_code,
-                'orderDate' => $headerDateIso,
-                'dueDate' => $headerDateIso,
-                'requiredDate' => $headerDateIso,
-                'shipDate' => $headerDateIso,
-                'promiseDate' => $headerDateIso,
-                'creditTermsCode' => 'CIA',
-                'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
-                    ? (string) $this->order->notes
-                    : (string) $this->order->order_number, 0, 24),
-                'purchaseOrderNumber' => $purchaseOrderNumber,
-                'taxClass' => 'PPN',
-                'isTaxable' => true,
-                'salespersonCode_01' => 'SLS00001',
-                'isSelfBillingEnabled' => true,
-                'salesOrderLines' => $lines,
-            ];
+            $payload = $this->buildSalesOrderCreatePayload(
+                $user,
+                $qidSalesOrderNumber,
+                $headerDateIso,
+                $purchaseOrderNumber,
+                $lines
+            );
 
             $createEndpointUrl = rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create';
             $createEndpointPath = '/api/transaction/sales-orders/create';
@@ -567,7 +603,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     {
         $this->order->refresh();
         $this->order->load([
-            'user',
+            'user.categoryDiscounts',
             'items.product',
             'address.province',
             'address.regency',
@@ -621,28 +657,13 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $attempt = 1;
         $purchaseOrderNumber = $this->buildPurchaseOrderNumberForQad($attempt);
 
-        $payload = [
-            'domainCode' => 'MCR',
-            'salesOrderNumber' => $qidSalesOrderNumber,
-            'billToCustomerCode' => $user->qad_customer_code,
-            'soldToCustomerCode' => $user->qad_customer_code,
-            'shipToCustomerCode' => $user->qad_customer_code,
-            'orderDate' => $headerDateIso,
-            'dueDate' => $headerDateIso,
-            'requiredDate' => $headerDateIso,
-            'shipDate' => $headerDateIso,
-            'promiseDate' => $headerDateIso,
-            'creditTermsCode' => 'CIA',
-            'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
-                ? (string) $this->order->notes
-                : (string) $this->order->order_number, 0, 24),
-            'purchaseOrderNumber' => $purchaseOrderNumber,
-            'taxClass' => 'PPN',
-            'isTaxable' => true,
-            'salespersonCode_01' => 'SLS00001',
-            'isSelfBillingEnabled' => true,
-            'salesOrderLines' => $lines,
-        ];
+        $payload = $this->buildSalesOrderCreatePayload(
+            $user,
+            $qidSalesOrderNumber,
+            $headerDateIso,
+            $purchaseOrderNumber,
+            $lines
+        );
 
         $endpoint = rtrim((string) config('qidapi.base_url'), '/') . '/api/transaction/sales-orders/create';
 

@@ -43,9 +43,6 @@
                                             <b><i class="fa fa-phone text-muted" style="width: 20px;"></i> No. HP</b> <a class="pull-right">{{ $distributor->phone ?? '-' }}</a>
                                         </li>
                                         <li class="list-group-item">
-                                            <b><i class="fa fa-tags text-muted" style="width: 20px;"></i> Level Harga</b> <a class="pull-right">{{ $distributor->priceLevel->name ?? 'Harga Normal' }}</a>
-                                        </li>
-                                        <li class="list-group-item">
                                             <b><i class="fa fa-money text-muted" style="width: 20px;"></i> Cara Bayar</b> 
                                             <a class="pull-right">
                                                 @if($distributor->payment_method == 'TOP')

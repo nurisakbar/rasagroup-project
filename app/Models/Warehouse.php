@@ -157,6 +157,16 @@ class Warehouse extends Model
         return $this;
     }
 
+    /**
+     * Kode lokasi diawali FG = gudang QAD. Selain itu (kosong atau kode lain) = Jubelio.
+     */
+    public function hasQadLocationCode(): bool
+    {
+        $code = strtoupper(trim((string) ($this->qad_location_code ?? '')));
+
+        return $code !== '' && str_starts_with($code, 'FG');
+    }
+
     public function syncSourceBadgesHtml(): string
     {
         $sources = is_array($this->sync_sources) ? $this->sync_sources : [];

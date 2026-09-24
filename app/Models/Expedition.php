@@ -55,6 +55,12 @@ class Expedition extends Model
                 ['code' => 'REG', 'name' => 'Paket Kilat Khusus', 'multiplier' => 1.0, 'days_add' => 0],
                 ['code' => 'EXPRESS', 'name' => 'Express Next Day', 'multiplier' => 1.5, 'days_add' => -2],
             ],
+            'self_pickup' => [
+                ['code' => 'Pengambilan Ditempat', 'name' => 'Pengambilan Ditempat', 'multiplier' => 0, 'days_add' => 0],
+            ],
+            'kurir_toko' => [
+                ['code' => 'Diantar Ketempat', 'name' => 'Diantar Ketempat', 'multiplier' => 0, 'days_add' => 0],
+            ],
         ];
 
         return $services[$this->code] ?? [

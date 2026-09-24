@@ -70,12 +70,12 @@ class SalesOrderSyncDispatcher
 
     public static function resolveTarget(Order $order): ?string
     {
-        if ($order->shouldSyncToJubelio() && self::isJubelioEnabled()) {
-            return self::TARGET_JUBELIO;
-        }
-
         if ($order->shouldSyncToQad() && self::isQadEnabled()) {
             return self::TARGET_QAD;
+        }
+
+        if ($order->shouldSyncToJubelio() && self::isJubelioEnabled()) {
+            return self::TARGET_JUBELIO;
         }
 
         return null;

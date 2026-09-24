@@ -301,10 +301,7 @@ class WarehouseController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-
-        $qad = app(\App\Services\QadService::class);
-        $qadResponse = $qad->getInventoryLocation([]);
-        $qadLocations = $qadResponse['data'] ?? [];
+        $qadLocations = $this->qadLocationsForForm();
 
         return view('admin.warehouses.create', compact('provinces', 'qadLocations'));
     }
@@ -351,7 +348,9 @@ class WarehouseController extends Controller
             'village_id' => $validated['village_id'] ?? null,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
-            'qad_location_code' => $validated['qad_location_code'] ?? null,
+            'qad_location_code' => filled($validated['qad_location_code'] ?? null)
+                ? trim((string) $validated['qad_location_code'])
+                : null,
             'is_active' => $request->has('is_active'),
             'gudang_order_distributor' => $request->boolean('gudang_order_distributor'),
         ]);
@@ -435,9 +434,7 @@ class WarehouseController extends Controller
             : null;
         $villages = isset($villageRes['data']) ? $villageRes['data'] : [];
 
-        $qad = app(\App\Services\QadService::class);
-        $qadResponse = $qad->getInventoryLocation([]);
-        $qadLocations = $qadResponse['data'] ?? [];
+        $qadLocations = $this->qadLocationsForForm($warehouse);
 
         return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages', 'qadLocations'));
     }
@@ -466,6 +463,9 @@ class WarehouseController extends Controller
             'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
         ]);
 
+        $validated['qad_location_code'] = filled($validated['qad_location_code'] ?? null)
+            ? trim((string) $validated['qad_location_code'])
+            : null;
         $validated['is_active'] = $request->has('is_active');
         $validated['gudang_order_distributor'] = $request->boolean('gudang_order_distributor');
 
@@ -482,6 +482,46 @@ class WarehouseController extends Controller
 
         return redirect()->route('admin.warehouses.edit', $warehouse)
             ->with('success', 'Warehouse berhasil diperbarui.');
+    }
+
+    /**
+     * Opsi kode lokasi QAD untuk form.
+     * Tidak memanggil API QAD live: endpoint inventory/location sering hang (~30s) sampai timeout.
+     *
+     * @return list<array{location: string, description: string}>
+     */
+    protected function qadLocationsForForm(?Warehouse $current = null): array
+    {
+        $locations = [];
+        $seen = [];
+
+        $rows = Warehouse::query()
+            ->orderBy('name')
+            ->get(['name', 'qad_location_code', 'kode_hub']);
+
+        foreach ($rows as $row) {
+            $code = trim((string) ($row->qad_location_code ?: $row->kode_hub));
+            if ($code === '' || isset($seen[$code])) {
+                continue;
+            }
+            $seen[$code] = true;
+            $locations[] = [
+                'location' => $code,
+                'description' => (string) $row->name,
+            ];
+        }
+
+        if ($current) {
+            $code = trim((string) ($current->qad_location_code ?: $current->kode_hub));
+            if ($code !== '' && ! isset($seen[$code])) {
+                array_unshift($locations, [
+                    'location' => $code,
+                    'description' => (string) $current->name,
+                ]);
+            }
+        }
+
+        return $locations;
     }
 
     /**

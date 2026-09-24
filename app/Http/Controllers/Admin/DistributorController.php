@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\DistributorDocument;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\PriceLevel;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
@@ -151,8 +150,7 @@ class DistributorController extends Controller
         $provinceRes = $this->ekspedisiku->getProvinces();
         $provinces = isset($provinceRes['data']) ? $provinceRes['data'] : [];
         
-        $priceLevels = PriceLevel::active()->ordered()->get();
-        return view('admin.distributors.application-detail', compact('user', 'provinces', 'priceLevels'));
+        return view('admin.distributors.application-detail', compact('user', 'provinces'));
     }
 
     /**
@@ -179,7 +177,6 @@ class DistributorController extends Controller
             'postal_code' => ['nullable', 'string', 'max:10'],
             'hub_phone' => ['nullable', 'string', 'max:20'],
 
-            'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
         ]);
@@ -204,7 +201,6 @@ class DistributorController extends Controller
         $user->update([
             'role' => User::ROLE_DISTRIBUTOR,
             'warehouse_id' => $warehouse->id,
-            'price_level_id' => $validated['price_level_id'] ?? null,
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
             'payment_method' => $validated['payment_method'] ?? null,
@@ -250,8 +246,7 @@ class DistributorController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        $priceLevels = PriceLevel::active()->ordered()->get();
-        return view('admin.distributors.create', compact('provinces', 'priceLevels'));
+        return view('admin.distributors.create', compact('provinces'));
     }
 
     /**
@@ -279,7 +274,6 @@ class DistributorController extends Controller
 
             // User data
             'user_name' => ['required', 'string', 'max:255'],
-            'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
@@ -312,7 +306,6 @@ class DistributorController extends Controller
             'password' => Hash::make(Str::random(16)),
             'role' => User::ROLE_DISTRIBUTOR,
             'warehouse_id' => $warehouse->id,
-            'price_level_id' => $validated['price_level_id'] ?? null,
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
             'payment_method' => $validated['payment_method'] ?? null,
@@ -781,9 +774,7 @@ class DistributorController extends Controller
             $villages = $this->getVillagesInternal($distributor->warehouse->district_id);
         }
 
-        $priceLevels = PriceLevel::active()->ordered()->get();
-        
-        return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages', 'priceLevels'));
+        return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages'));
     }
 
     /**
@@ -817,7 +808,6 @@ class DistributorController extends Controller
 
             // User data
             'user_name' => ['required', 'string', 'max:255'],
-            'price_level_id' => ['nullable', 'exists:price_levels,id'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'term_of_payment' => ['nullable', 'integer', 'min:0'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
@@ -846,7 +836,6 @@ class DistributorController extends Controller
         $userData = [
             'name' => $validated['user_name'],
             'phone' => $validated['hub_phone'],
-            'price_level_id' => $validated['price_level_id'] ?? null,
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $validated['term_of_payment'] ?? null,
             'credit_limit' => $validated['credit_limit'] ?? null,

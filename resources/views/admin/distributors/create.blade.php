@@ -134,22 +134,6 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('price_level_id') has-error @enderror">
-                            <label for="price_level_id">Level Harga</label>
-                            <select class="form-control" id="price_level_id" name="price_level_id">
-                                <option value="">-- Pilih Level Harga (Opsional) --</option>
-                                @foreach($priceLevels as $priceLevel)
-                                    <option value="{{ $priceLevel->id }}" {{ old('price_level_id') == $priceLevel->id ? 'selected' : '' }}>
-                                        {{ $priceLevel->name }} (Diskon: {{ number_format($priceLevel->discount_percentage, 2) }}%)
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span class="help-block">Pilih level harga untuk memberikan harga khusus pada distributor ini. Jika tidak dipilih, distributor akan menggunakan harga normal.</span>
-                            @error('price_level_id')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('payment_method') has-error @enderror">
