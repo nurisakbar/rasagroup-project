@@ -999,6 +999,7 @@ class CheckoutController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
+                'pakai_ppn' => $user->usesPpn(),
                 'payment_fee' => $paymentFee,
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,

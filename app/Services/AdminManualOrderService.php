@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Services\WmsService;
 use App\Support\QadWsOrderNumberGenerator;
 use App\Support\SalesOrderSyncDispatcher;
 use App\Support\ShopFulfillment;
@@ -23,9 +24,11 @@ class AdminManualOrderService
     /**
      * @param  array<int, array{product: Product, quantity: int, order_uom: string, quantity_ordered: int}>  $normalizedItems
      */
-    public function preview(User $user, array $normalizedItems, float $shippingCost): array
+    public function preview(User $user, array $normalizedItems, float $shippingCost, ?bool $pakaiPpn = null): array
     {
         $user->loadMissing(['priceLevel', 'categoryDiscounts']);
+        $pakaiPpn ??= $user->usesPpn();
+        $taxPercent = TaxAwarePrice::percentIfEnabled($pakaiPpn);
 
         $lines = [];
         $soldSubtotal = 0.0;
@@ -38,21 +41,28 @@ class AdminManualOrderService
             /** @var Product $product */
             $product = $item['product'];
             $qty = (int) $item['quantity'];
-            $unit = $user->getProductPrice($product);
+            $unit = $this->unitPrice($user, $product, $taxPercent);
             $lineSubtotal = $unit * $qty;
             $catalog = (float) $product->price * $qty;
-            $tax = TaxAwarePrice::breakdown($lineSubtotal, $catalog);
+            $tax = TaxAwarePrice::breakdown($lineSubtotal, $catalog, $taxPercent);
+
+            $catalogInclusive = (float) $product->price;
+            $catalogDpp = TaxAwarePrice::excludingTax($catalogInclusive, $taxPercent);
+            $discountPercent = $user->categoryDiscountPercentageFor($product);
 
             $lines[] = [
                 'product_id' => $product->id,
                 'code' => $product->code,
                 'name' => $product->name,
-                'catalog_price' => (float) $product->price,
+                'catalog_price' => $catalogInclusive,
+                'catalog_dpp' => round($catalogDpp, 2),
+                'discount_percent' => $discountPercent,
                 'unit_price' => $unit,
                 'quantity' => $qty,
                 'order_uom' => $item['order_uom'],
                 'quantity_ordered' => $item['quantity_ordered'],
                 'lot_serial' => $item['lot_serial'] ?? null,
+                'allocated_batches' => $item['allocated_batches'] ?? [],
                 'subtotal' => $lineSubtotal,
                 'dpp' => $tax['dpp'],
                 'ppn' => $tax['ppn'],
@@ -66,7 +76,6 @@ class AdminManualOrderService
         }
 
         $shippingCost = max(0, $shippingCost);
-        $taxPercent = \App\Models\Setting::taxPercent();
 
         return [
             'lines' => $lines,
@@ -77,6 +86,7 @@ class AdminManualOrderService
             'ppn' => round($ppnTotal, 2),
             'ppn_label' => TaxAwarePrice::ppnLabel($taxPercent),
             'tax_percent' => $taxPercent,
+            'pakai_ppn' => $pakaiPpn,
             'shipping_cost' => round($shippingCost, 2),
             'total' => round($inclusiveSubtotal + $shippingCost, 2),
             'order_type' => $user->isDistributor() ? Order::TYPE_DISTRIBUTOR : Order::TYPE_REGULAR,
@@ -105,7 +115,7 @@ class AdminManualOrderService
             $ordered = (int) ($row['quantity_ordered'] ?? 0);
             $baseQty = $product->orderedQuantityToBase($ordered, $uom);
             $lot = trim((string) ($row['lot_serial'] ?? ''));
-            $mergeKey = $product->id . '|' . $lot;
+            $mergeKey = $product->id;
 
             if ($baseQty < 1) {
                 throw ValidationException::withMessages([
@@ -150,7 +160,8 @@ class AdminManualOrderService
      *     notes?: ?string,
      *     sales_code?: ?string,
      *     preferred_shipping_date?: ?string,
-     *     admin_name?: ?string
+     *     admin_name?: ?string,
+     *     pakai_ppn?: bool
      * }  $payload
      */
     public function create(
@@ -166,7 +177,10 @@ class AdminManualOrderService
         $paymentMethod = $payload['payment_method'];
         $this->assertPaymentAllowed($customer, $paymentMethod);
 
-        $pricing = $this->preview($customer, $normalizedItems, (float) $payload['shipping_cost']);
+        $pakaiPpn = array_key_exists('pakai_ppn', $payload)
+            ? (bool) $payload['pakai_ppn']
+            : $customer->usesPpn();
+        $pricing = $this->preview($customer, $normalizedItems, (float) $payload['shipping_cost'], $pakaiPpn);
         $subtotal = $pricing['subtotal'];
         $shippingCost = $pricing['shipping_cost'];
         $total = $pricing['total'];
@@ -203,7 +217,7 @@ class AdminManualOrderService
         }
         $orderNotes = trim($prefix . (filled($orderNotes) ? ' | ' . $orderNotes : ''));
 
-        $this->assertSelectedBatches($warehouse, $customer, $normalizedItems);
+        $this->assertAndAllocateBatches($warehouse, $customer, $normalizedItems);
 
         $order = DB::transaction(function () use (
             $customer,
@@ -220,7 +234,9 @@ class AdminManualOrderService
             $orderType,
             $pointsEarned,
             $shippingAddressText,
-            $orderNotes
+            $orderNotes,
+            $pakaiPpn,
+            $pricing
         ) {
             $orderNumber = QadWsOrderNumberGenerator::generate();
             $wmsLocationCode = WmsService::locationCode($warehouse) ?? ($warehouse->qad_location_code ?? $warehouse->kode_hub);
@@ -248,6 +264,7 @@ class AdminManualOrderService
                 'discount_percent' => 0,
                 'discount_amount' => 0,
                 'shipping_cost' => $shippingCost,
+                'pakai_ppn' => $pakaiPpn,
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $paymentMethod,
@@ -264,12 +281,15 @@ class AdminManualOrderService
 
             foreach ($normalizedItems as $item) {
                 $product = $item['product'];
-                $lineUnit = $customer->getProductPrice($product);
-                $allocatedBatches = [[
-                    'lot_serial' => $item['lot_serial'],
-                    'qty' => $item['quantity'],
-                    'expired' => $item['expired'] ?? null,
-                ]];
+                $lineUnit = $this->unitPrice($customer, $product, $pricing['tax_percent']);
+                $allocatedBatches = $item['allocated_batches'] ?? [];
+                if ($allocatedBatches === [] && filled($item['lot_serial'] ?? null)) {
+                    $allocatedBatches = [[
+                        'lot_serial' => $item['lot_serial'],
+                        'qty' => $item['quantity'],
+                        'expired' => $item['expired'] ?? null,
+                    ]];
+                }
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -358,7 +378,7 @@ class AdminManualOrderService
     /**
      * @param  array<int, array{product: Product, quantity: int, order_uom: string, quantity_ordered: int, lot_serial?: string, expired?: mixed}>  $normalizedItems
      */
-    private function assertSelectedBatches(Warehouse $warehouse, User $customer, array &$normalizedItems): void
+    private function assertAndAllocateBatches(Warehouse $warehouse, User $customer, array &$normalizedItems): void
     {
         $location = WmsService::locationCode($warehouse);
         if (! $location) {
@@ -367,16 +387,47 @@ class AdminManualOrderService
             ]);
         }
 
+        $wms = app(WmsService::class);
+        $pools = [];
+
         foreach ($normalizedItems as $i => $item) {
             $product = $item['product'];
-            $lot = trim((string) ($item['lot_serial'] ?? ''));
-            if ($lot === '') {
+            $productId = $product->id;
+            if (! isset($pools[$productId])) {
+                $pools[$productId] = $wms->batchesForWarehouseItem(
+                    $warehouse,
+                    (string) $product->code,
+                    $customer->shelfLifeMonths()
+                );
+            }
+
+            $taken = $wms->takeFromBatchPool($pools[$productId], (int) $item['quantity']);
+            if ($taken['shortfall'] > 0 || $taken['allocated'] === []) {
+                $available = 0;
+                foreach ($pools[$productId] as $batch) {
+                    $available += (int) ($batch['qty'] ?? 0);
+                }
+                foreach ($taken['allocated'] as $batch) {
+                    $available += (int) ($batch['qty'] ?? 0);
+                }
                 throw ValidationException::withMessages([
-                    'items' => "Batch wajib dipilih untuk {$product->name}.",
+                    'items' => "Stok batch {$product->name} tidak cukup. Butuh {$item['quantity']}, tersedia {$available}.",
                 ]);
             }
 
-            $normalizedItems[$i]['expired'] = $item['expired'] ?? null;
+            $normalizedItems[$i]['allocated_batches'] = $taken['allocated'];
+            $normalizedItems[$i]['lot_serial'] = $taken['allocated'][0]['lot_serial'] ?? '';
+            $normalizedItems[$i]['expired'] = $taken['allocated'][0]['expired'] ?? null;
         }
+    }
+
+    private function unitPrice(User $user, Product $product, float $taxPercent): float
+    {
+        $percent = $user->categoryDiscountPercentageFor($product);
+        if ($percent > 0) {
+            return TaxAwarePrice::applyDiscount((float) $product->final_price, $percent, $taxPercent);
+        }
+
+        return (float) $product->final_price;
     }
 }

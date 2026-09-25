@@ -300,6 +300,7 @@ class PosController extends Controller
                 'source_warehouse_id' => $warehouse->id,
                 'subtotal' => $subtotal,
                 'shipping_cost' => 0,
+                'pakai_ppn' => $user->usesPpn(),
                 'total_amount' => $totalAmount,
                 'shipping_address' => $request->customer_name ? 
                     ($request->customer_name . ($request->customer_phone ? ' - ' . $request->customer_phone : '')) : 

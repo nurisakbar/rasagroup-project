@@ -46,7 +46,7 @@
                                             <b><i class="fa fa-money text-muted" style="width: 20px;"></i> Cara Bayar</b> 
                                             <a class="pull-right">
                                                 @if($distributor->payment_method == 'TOP')
-                                                    TOP ({{ $distributor->term_of_payment ?? '0' }} Hari)
+                                                    TOP ({{ $distributor->term_of_payment ?? '0' }} hari)
                                                 @elseif($distributor->payment_method == 'CIA')
                                                     CIA
                                                 @else

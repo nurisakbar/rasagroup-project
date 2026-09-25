@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\QadService;
 use App\Support\QadBusinessRelationHeadOffice;
+use App\Support\QadExistingCustomer;
 use App\Support\QadIntegration;
 use App\Support\QadWsOrderNumberGenerator;
 use Illuminate\Bus\Queueable;
@@ -192,7 +193,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'discountPercent' => 0,
                 'netPrice' => $linePrice,
                 'dueDate' => $lineDueDate,
-                'isTaxable' => true,
+                'isTaxable' => $this->isTaxableForQad(),
                 'salesAcct' => '41101',
                 'salesCC' => '',
                 'discountAcct' => '41101',
@@ -228,6 +229,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         return $code;
     }
 
+    protected function isTaxableForQad(): bool
+    {
+        return $this->order->usesPpn();
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $lines
      * @return array<string, mixed>
@@ -251,7 +257,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 : (string) $this->order->order_number, 0, 24),
             'purchaseOrderNumber' => $purchaseOrderNumber,
             'taxClass' => 'PPN',
-            'isTaxable' => true,
+            'isTaxable' => $this->isTaxableForQad(),
             'isSelfBillingEnabled' => true,
             'salesOrderLines' => $lines,
         ];
@@ -567,6 +573,19 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 ]);
                 $user->update(['qad_customer_code' => null]);
                 $user->refresh();
+            }
+        }
+
+        if (! $user->qad_customer_code) {
+            $existingCode = QadExistingCustomer::findCode($qadService, $user);
+            if ($existingCode) {
+                $user->update(['qad_customer_code' => $existingCode]);
+                $user->refresh();
+                Log::info('SyncOrderToQad: Existing QAD customer found, using for sales order', [
+                    'order_id' => $this->order->id,
+                    'user_id' => $user->id,
+                    'qad_customer_code' => $existingCode,
+                ]);
             }
         }
 

@@ -285,6 +285,7 @@ class OrderApiController extends Controller
                 'source_warehouse_id' => $sourceWarehouse->id,
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
+                'pakai_ppn' => $user->usesPpn(),
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $validated['payment_method'],

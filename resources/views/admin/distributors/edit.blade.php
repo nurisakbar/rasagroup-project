@@ -168,33 +168,10 @@
                             @enderror
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group @error('payment_method') has-error @enderror">
-                                    <label for="payment_method">Cara Bayar</label>
-                                    <select class="form-control" id="payment_method" name="payment_method">
-                                        <option value="">-- Pilih Cara Bayar --</option>
-                                        <option value="TOP" {{ old('payment_method', $distributor->payment_method) == 'TOP' ? 'selected' : '' }}>TOP</option>
-                                        <option value="CIA" {{ old('payment_method', $distributor->payment_method) == 'CIA' ? 'selected' : '' }}>CIA</option>
-                                    </select>
-                                    @error('payment_method')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6" id="top_container" style="{{ old('payment_method', $distributor->payment_method) == 'TOP' ? '' : 'display: none;' }}">
-                                <div class="form-group @error('term_of_payment') has-error @enderror">
-                                    <label for="term_of_payment">Term Of Payment (Hari)</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="term_of_payment" name="term_of_payment" value="{{ old('term_of_payment', $distributor->term_of_payment) }}" placeholder="Contoh: 30">
-                                        <span class="input-group-addon">Hari</span>
-                                    </div>
-                                    @error('term_of_payment')
-                                        <span class="help-block text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
+                        @include('admin.distributors.partials.payment-terms', [
+                            'currentPaymentMethod' => $distributor->payment_method,
+                            'currentTermDays' => $distributor->term_of_payment,
+                        ])
 
                         <div class="row">
                             <div class="col-md-6">
@@ -229,6 +206,21 @@
                                     <label for="aturan_minimal_masa_berlaku">Shelf life (Bulan)</label>
                                     <input type="number" class="form-control" id="aturan_minimal_masa_berlaku" name="aturan_minimal_masa_berlaku" value="{{ old('aturan_minimal_masa_berlaku', $distributor->aturan_minimal_masa_berlaku ?? 9) }}" placeholder="9">
                                     @error('aturan_minimal_masa_berlaku')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                @php
+                                    $pakaiPpn = (string) old('pakai_ppn', ($distributor->pakai_ppn ?? true) ? '1' : '0');
+                                @endphp
+                                <div class="form-group @error('pakai_ppn') has-error @enderror">
+                                    <label for="pakai_ppn">Pakai PPN</label>
+                                    <select class="form-control" id="pakai_ppn" name="pakai_ppn">
+                                        <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>YA</option>
+                                        <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>Tidak</option>
+                                    </select>
+                                    @error('pakai_ppn')
                                         <span class="help-block text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -398,7 +390,7 @@ $(document).ready(function() {
             $('#top_container').show();
         } else {
             $('#top_container').hide();
-            $('#term_of_payment').val('');
+            $('#credit_terms_code').val('');
         }
     });
 });

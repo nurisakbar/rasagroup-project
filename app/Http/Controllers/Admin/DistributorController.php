@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Log;
 use App\Services\QidApiService;
 use App\Services\EkspedisiKuService;
 use App\Models\WilayahAdministratif;
+use App\Support\QadCreditTerms;
+use App\Support\QadExistingCustomer;
+use Illuminate\Validation\Rule;
 
 class DistributorController extends Controller
 {
@@ -178,7 +181,11 @@ class DistributorController extends Controller
             'hub_phone' => ['nullable', 'string', 'max:20'],
 
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
-            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'credit_terms_code' => [
+                'nullable',
+                'required_if:payment_method,TOP',
+                Rule::in(QadCreditTerms::topCodes()),
+            ],
         ]);
 
         // Create the warehouse/hub
@@ -204,7 +211,7 @@ class DistributorController extends Controller
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
             'payment_method' => $validated['payment_method'] ?? null,
-            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'term_of_payment' => $this->termOfPaymentFromRequest($validated),
         ]);
 
         // Sync all active products to warehouse stock
@@ -275,10 +282,15 @@ class DistributorController extends Controller
             // User data
             'user_name' => ['required', 'string', 'max:255'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
-            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'credit_terms_code' => [
+                'nullable',
+                'required_if:payment_method,TOP',
+                Rule::in(QadCreditTerms::topCodes()),
+            ],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
             'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
             'aturan_minimal_masa_berlaku' => ['nullable', 'integer', 'min:0'],
+            'pakai_ppn' => ['required', 'in:0,1'],
         ]);
 
         // Create the warehouse/hub first
@@ -309,10 +321,11 @@ class DistributorController extends Controller
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
             'payment_method' => $validated['payment_method'] ?? null,
-            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'term_of_payment' => $this->termOfPaymentFromRequest($validated),
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
             'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? User::DEFAULT_SHELF_LIFE_MONTHS,
+            'pakai_ppn' => (bool) (int) ($validated['pakai_ppn'] ?? 1),
         ]);
 
         // Sync all active products to warehouse stock
@@ -809,10 +822,15 @@ class DistributorController extends Controller
             // User data
             'user_name' => ['required', 'string', 'max:255'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
-            'term_of_payment' => ['nullable', 'integer', 'min:0'],
+            'credit_terms_code' => [
+                'nullable',
+                'required_if:payment_method,TOP',
+                Rule::in(QadCreditTerms::topCodes()),
+            ],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
             'ar_outstanding' => ['nullable', 'numeric', 'min:0'],
             'aturan_minimal_masa_berlaku' => ['nullable', 'integer', 'min:0'],
+            'pakai_ppn' => ['required', 'in:0,1'],
         ]);
 
         // Update hub
@@ -837,10 +855,11 @@ class DistributorController extends Controller
             'name' => $validated['user_name'],
             'phone' => $validated['hub_phone'],
             'payment_method' => $validated['payment_method'] ?? null,
-            'term_of_payment' => $validated['term_of_payment'] ?? null,
+            'term_of_payment' => $this->termOfPaymentFromRequest($validated),
             'credit_limit' => $validated['credit_limit'] ?? null,
             'ar_outstanding' => $validated['ar_outstanding'] ?? null,
             'aturan_minimal_masa_berlaku' => $validated['aturan_minimal_masa_berlaku'] ?? User::DEFAULT_SHELF_LIFE_MONTHS,
+            'pakai_ppn' => (bool) (int) ($validated['pakai_ppn'] ?? 1),
         ];
 
         $distributor->update($userData);
@@ -1038,27 +1057,19 @@ class DistributorController extends Controller
     public function syncQadCustomers(Request $request, QidApiService $qid)
     {
         try {
-            $token = $qid->getToken();
-            
-            $endpoint = env('QIDAPI_BASE_URL', 'https://development-qadwebapi.rasagroupoffice.com') . '/api/master/customer/get';
-            
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'accept' => 'application/json'
-            ])->get($endpoint);
+            $result = $qid->get('/api/master/customer/list');
 
-            if (!$response->successful()) {
+            if (! is_array($result)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal mengambil data dari QAD API: ' . $response->body()
+                    'message' => 'Gagal mengambil data dari QAD API.',
                 ], 400);
             }
 
-            $result = $response->json();
             $data = $result['data'] ?? [];
-            
-            // Handle single object vs array of objects
-            $customers = isset($data['customerCode']) ? [$data] : (is_array($data) ? $data : []);
+
+            // GET /customer/get mengembalikan 1 objek; /list mengembalikan array.
+            $customers = QadExistingCustomer::parseList($result);
             
             if (empty($customers)) {
                 return response()->json([
@@ -1069,28 +1080,27 @@ class DistributorController extends Controller
 
             $added = 0;
             $updated = 0;
+            $linked = 0;
 
             foreach ($customers as $c) {
                 if (empty($c['customerCode'])) {
                     continue;
                 }
 
-                $code = $c['customerCode'];
+                $code = trim((string) $c['customerCode']);
                 $name = !empty($c['businessRelationName']) ? $c['businessRelationName'] : (!empty($c['addressName']) ? $c['addressName'] : "Customer " . $code);
-                $email = !empty($c['eMail']) ? $c['eMail'] : strtolower($code) . '@qad-dummy.com';
+                $qadEmail = !empty($c['eMail']) ? trim((string) $c['eMail']) : null;
+                $email = $qadEmail ?: (strtolower($code) . '@qad-dummy.com');
                 $phone = $c['telephone'] ?? null;
                 $address = $c['street1'] ?? null;
                 $postal = $c['zipCode'] ?? null;
 
-                $user = User::where('qad_customer_code', $code)->first();
-                
-                if (!$user) {
-                    $existingEmail = User::where('email', $email)->first();
-                    if ($existingEmail) {
-                        $user = $existingEmail;
-                        $user->qad_customer_code = $code;
-                        $user->save();
-                    }
+                $user = $this->findLocalUserForQadCustomer($code, $qadEmail, $name, $phone);
+
+                if ($user && $this->qadCustomerCodeIsEmpty($user)) {
+                    $user->update(['qad_customer_code' => $code]);
+                    $linked++;
+                    continue;
                 }
 
                 if ($user) {
@@ -1150,9 +1160,11 @@ class DistributorController extends Controller
                 }
             }
 
+            $linked += $this->linkUnlinkedDistributorsFromQad($qid);
+
             return response()->json([
                 'success' => true,
-                'message' => "Sinkronisasi QAD selesai! Ditambahkan: {$added} distributor, Diperbarui: {$updated} distributor."
+                'message' => "Sinkronisasi QAD selesai! Ditambahkan: {$added}, diperbarui: {$updated}, kode customer diisi: {$linked}."
             ]);
         } catch (\Exception $e) {
             Log::error('QAD Sync Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -1161,5 +1173,106 @@ class DistributorController extends Controller
                 'message' => 'Terjadi kesalahan sistem saat sinkronisasi QAD: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function findLocalUserForQadCustomer(string $code, ?string $email, string $name, ?string $phone): ?User
+    {
+        $byCode = User::where('qad_customer_code', $code)->first();
+        if ($byCode) {
+            return $byCode;
+        }
+
+        $unlinked = User::query()
+            ->where('role', User::ROLE_DISTRIBUTOR)
+            ->where(function ($q) {
+                $q->whereNull('qad_customer_code')->orWhere('qad_customer_code', '');
+            });
+
+        $emailNorm = strtolower(trim((string) $email));
+        if ($emailNorm !== '' && ! str_ends_with($emailNorm, '@qad-dummy.com')) {
+            $byEmail = User::query()
+                ->whereRaw('LOWER(email) = ?', [$emailNorm])
+                ->where(function ($q) {
+                    $q->whereNull('qad_customer_code')->orWhere('qad_customer_code', '');
+                })
+                ->first();
+            if ($byEmail) {
+                return $byEmail;
+            }
+        }
+
+        $nameNorm = QadExistingCustomer::normalizeName($name);
+        if ($nameNorm !== '') {
+            $byName = (clone $unlinked)->get(['id', 'name'])->first(
+                fn (User $u) => QadExistingCustomer::normalizeName($u->name) === $nameNorm
+            );
+            if ($byName) {
+                return User::find($byName->id);
+            }
+        }
+
+        $phoneDigits = $this->normalizePhoneDigits($phone);
+        if (strlen($phoneDigits) >= 8) {
+            $byPhone = (clone $unlinked)->whereNotNull('phone')->get(['id', 'phone'])->first(
+                fn (User $u) => $this->normalizePhoneDigits($u->phone) === $phoneDigits
+            );
+            if ($byPhone) {
+                return User::find($byPhone->id);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * /customer/list tanpa filter hanya ~100 baris. Cari customer QAD
+     * untuk distributor lokal yang masih tanpa kode.
+     */
+    private function linkUnlinkedDistributorsFromQad(QidApiService $qid): int
+    {
+        $unlinked = User::query()
+            ->where('role', User::ROLE_DISTRIBUTOR)
+            ->where(function ($q) {
+                $q->whereNull('qad_customer_code')->orWhere('qad_customer_code', '');
+            })
+            ->get();
+
+        $linked = 0;
+        foreach ($unlinked as $user) {
+            $code = QadExistingCustomer::findCode($qid, $user);
+            if ($code === null) {
+                continue;
+            }
+
+            $user->update(['qad_customer_code' => $code]);
+            $linked++;
+        }
+
+        return $linked;
+    }
+
+    private function qadCustomerCodeIsEmpty(User $user): bool
+    {
+        return trim((string) $user->qad_customer_code) === '';
+    }
+
+    private function normalizePhoneDigits(?string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone) ?? '';
+        if (str_starts_with($digits, '62') && strlen($digits) > 8) {
+            $digits = '0' . substr($digits, 2);
+        }
+
+        return $digits;
+    }
+
+    private function termOfPaymentFromRequest(array $validated): ?int
+    {
+        $method = $validated['payment_method'] ?? null;
+        if ($method !== 'TOP') {
+            return $method === 'CIA' ? 0 : null;
+        }
+
+        return QadCreditTerms::daysFromCode($validated['credit_terms_code'] ?? null);
     }
 }

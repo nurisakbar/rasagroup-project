@@ -9,9 +9,9 @@ class TaxAwarePrice
     /**
      * Harga sebelum PPN (DPP). Harga katalog dianggap sudah termasuk pajak.
      */
-    public static function excludingTax(float $inclusivePrice): float
+    public static function excludingTax(float $inclusivePrice, ?float $taxPercent = null): float
     {
-        $taxPercent = Setting::taxPercent();
+        $taxPercent ??= Setting::taxPercent();
         if ($taxPercent <= 0 || $inclusivePrice <= 0) {
             return $inclusivePrice;
         }
@@ -23,13 +23,13 @@ class TaxAwarePrice
      * Diskon dihitung dari harga setelah pajak dikeluarkan.
      * Contoh: 111.000, PPN 11% → DPP 100.000, diskon 20% → 80.000.
      */
-    public static function applyDiscount(float $inclusivePrice, float $discountPercent): float
+    public static function applyDiscount(float $inclusivePrice, float $discountPercent, ?float $taxPercent = null): float
     {
         if ($discountPercent <= 0) {
             return $inclusivePrice;
         }
 
-        $dpp = self::excludingTax($inclusivePrice);
+        $dpp = self::excludingTax($inclusivePrice, $taxPercent);
 
         return round($dpp * (1 - ($discountPercent / 100)), 2);
     }
@@ -40,9 +40,9 @@ class TaxAwarePrice
      *
      * @return array{dpp: float, ppn: float, inclusive: float, tax_percent: float}
      */
-    public static function breakdown(float $soldAmount, float $catalogAmount): array
+    public static function breakdown(float $soldAmount, float $catalogAmount, ?float $taxPercent = null): array
     {
-        $taxPercent = Setting::taxPercent();
+        $taxPercent ??= Setting::taxPercent();
         $soldAmount = max(0, $soldAmount);
         $catalogAmount = max(0, $catalogAmount);
         $hasDiscount = ($catalogAmount - $soldAmount) > 0.5;
@@ -59,7 +59,7 @@ class TaxAwarePrice
             ];
         }
 
-        $dpp = round(self::excludingTax($soldAmount), 2);
+        $dpp = round(self::excludingTax($soldAmount, $taxPercent), 2);
         $ppn = round(max(0, $soldAmount - $dpp), 2);
 
         return [
@@ -68,6 +68,11 @@ class TaxAwarePrice
             'inclusive' => round($soldAmount, 2),
             'tax_percent' => $taxPercent,
         ];
+    }
+
+    public static function percentIfEnabled(?bool $enabled): float
+    {
+        return $enabled === false ? 0.0 : Setting::taxPercent();
     }
 
     public static function ppnLabel(?float $taxPercent = null): string

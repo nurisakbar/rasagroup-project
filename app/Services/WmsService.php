@@ -390,4 +390,75 @@ class WmsService
 
         return $out;
     }
+
+    /**
+     * @return list<array{lot_serial: string, qty: int, expired: ?string}>
+     */
+    public function batchesForWarehouseItem(Warehouse $warehouse, string $productCode, int $minMasaBerlakuBulan = 0): array
+    {
+        $location = self::locationCode($warehouse);
+        if (! $location) {
+            return [];
+        }
+
+        $grouped = $this->batchesByItemCode($location, $minMasaBerlakuBulan) ?? [];
+        $batches = $this->batchesForProduct($grouped, $productCode);
+
+        if ($batches === [] && $minMasaBerlakuBulan > 0) {
+            $grouped = $this->batchesByItemCode($location, 0) ?? [];
+            $batches = $this->batchesForProduct($grouped, $productCode);
+        }
+
+        if ($batches === []) {
+            $locationCandidates = array_values(array_unique(array_filter([
+                $location,
+                $warehouse->qad_location_code,
+                $warehouse->kode_hub,
+            ])));
+            foreach ($locationCandidates as $candidate) {
+                $batches = $this->localBatchesForItem((string) $candidate, $productCode, 0);
+                if ($batches !== []) {
+                    break;
+                }
+            }
+        }
+
+        return array_values($batches);
+    }
+
+    /**
+     * Ambil qty dari pool batch FEFO (pool qty dikurangi).
+     *
+     * @param  list<array{lot_serial: string, qty: int, expired: ?string}>  $pool
+     * @return array{allocated: list<array{lot_serial: string, qty: int, expired: ?string}>, shortfall: int}
+     */
+    public function takeFromBatchPool(array &$pool, int $qtyNeeded): array
+    {
+        $allocated = [];
+        $need = max(0, $qtyNeeded);
+
+        foreach ($pool as &$batch) {
+            if ($need <= 0) {
+                break;
+            }
+            $available = (int) ($batch['qty'] ?? 0);
+            if ($available <= 0) {
+                continue;
+            }
+            $take = min($need, $available);
+            $allocated[] = [
+                'lot_serial' => (string) ($batch['lot_serial'] ?? ''),
+                'qty' => $take,
+                'expired' => $batch['expired'] ?? null,
+            ];
+            $batch['qty'] = $available - $take;
+            $need -= $take;
+        }
+        unset($batch);
+
+        return [
+            'allocated' => $allocated,
+            'shortfall' => $need,
+        ];
+    }
 }

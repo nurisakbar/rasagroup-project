@@ -151,6 +151,14 @@
                     </div>
                     <div class="box-body">
                         <div class="form-group">
+                            <label>Pakai PPN</label>
+                            <select name="pakai_ppn" id="pakai_ppn" class="form-control">
+                                <option value="1" selected>YA</option>
+                                <option value="0">Tidak</option>
+                            </select>
+                            <p class="help-block" id="pakai-ppn-hint">Mengikuti data pelanggan. YA memakai pajak di pengaturan ({{ rtrim(rtrim(number_format(\App\Models\Setting::taxPercent(), 1, ',', '.'), '0'), ',') }}%).</p>
+                        </div>
+                        <div class="form-group">
                             <label>Metode pembayaran <span class="text-danger">*</span></label>
                             <select name="payment_method" id="payment_method" class="form-control" required>
                                 <option value="cash">Tunai (lunas)</option>
@@ -205,7 +213,7 @@
                                         <th width="110">Satuan</th>
                                         <th width="90">Qty</th>
                                         <th width="140" class="text-right">Harga katalog</th>
-                                        <th width="140" class="text-right">Harga jual</th>
+                                        <th width="170" class="text-right">Harga jual</th>
                                         <th width="140" class="text-right">Subtotal</th>
                                         <th width="40"></th>
                                     </tr>
@@ -243,8 +251,36 @@
     var productInsertBusy = false;
     var money = new Intl.NumberFormat('id-ID');
 
+    var defaultTaxPercent = {{ (float) \App\Models\Setting::taxPercent() }};
+    var taxPercent = defaultTaxPercent;
+
     function formatRp(n) {
         return 'Rp ' + money.format(Math.round(n || 0));
+    }
+
+    function formatPct(n) {
+        var s = String(Math.round((n || 0) * 10) / 10);
+        if (s.indexOf('.') >= 0) {
+            s = s.replace(/0+$/, '').replace(/\.$/, '');
+        }
+        return s;
+    }
+
+    function catalogDpp(inclusive) {
+        if (taxPercent <= 0) {
+            return inclusive;
+        }
+        return inclusive / (1 + (taxPercent / 100));
+    }
+
+    function formatHargaJual(item) {
+        var dpp = item.catalog_dpp != null ? item.catalog_dpp : catalogDpp(item.catalog_price);
+        var html = '<div>' + formatRp(dpp) + '</div>';
+        if ((item.discount_percent || 0) > 0) {
+            html += '<div><strong>' + formatRp(item.unit_price) + '</strong>'
+                + ' <small class="text-success">( disc ' + formatPct(item.discount_percent) + '% )</small></div>';
+        }
+        return html;
     }
 
     $('#source_warehouse_id').select2({
@@ -288,6 +324,7 @@
         var d = e.params.data;
         $('#customer-meta').text((d.role || '') + (d.qad_customer_code ? ' · QAD ' + d.qad_customer_code : '') + (d.term_of_payment ? ' · TOP ' + d.term_of_payment + ' hari' : ''));
         toggleTop(d.is_distributor && d.term_of_payment > 0);
+        setPakaiPpn(d.pakai_ppn);
         loadAddresses(d.id);
         setProductSearchEnabled(canAddProducts());
         items = [];
@@ -404,6 +441,22 @@
 
     $('#shipping_cost').on('change', refreshPreview);
     $('#payment_method').on('change', syncPaidUi);
+    $('#pakai_ppn').on('change', function () {
+        syncTaxPercent();
+        if (items.length) {
+            renderItems();
+            refreshPreview();
+        }
+    });
+
+    function setPakaiPpn(value) {
+        $('#pakai_ppn').val(String(value) === '0' ? '0' : '1');
+        syncTaxPercent();
+    }
+
+    function syncTaxPercent() {
+        taxPercent = $('#pakai_ppn').val() === '1' ? defaultTaxPercent : 0;
+    }
 
     function toggleTop(enabled) {
         $('#opt-top').prop('disabled', !enabled);
@@ -439,6 +492,9 @@
                 $sel.append($('<option/>').val(a.id).text(a.text));
             });
             toggleTop(res.is_distributor && res.term_of_payment > 0);
+            if (typeof res.pakai_ppn !== 'undefined') {
+                setPakaiPpn(res.pakai_ppn);
+            }
         });
     }
 
@@ -451,25 +507,62 @@
         return item.order_uom === 'large' ? q * (parseInt(item.units_per_large, 10) || 1) : q;
     }
 
-    function remainingBatchQty(productId, lot, excludeIdx) {
-        var stock = 0;
-        items.forEach(function (item) {
-            if (item.product_id === productId && item.lot_serial === lot) {
-                stock = parseInt(item.batch_qty, 10) || 0;
-            }
-        });
-        items.forEach(function (item, i) {
-            if (i !== excludeIdx && item.product_id === productId && item.lot_serial === lot) {
-                stock -= baseQty(item);
+    function remainingProductQty(item, excludeIdx) {
+        var stock = (item.batches || []).reduce(function (sum, b) {
+            return sum + (parseInt(b.qty, 10) || 0);
+        }, 0);
+        items.forEach(function (other, i) {
+            if (i !== excludeIdx && other.product_id === item.product_id) {
+                stock -= baseQty(other);
             }
         });
         return stock;
     }
 
     function maxOrderable(item, idx) {
-        var remain = remainingBatchQty(item.product_id, item.lot_serial, idx);
+        var remain = remainingProductQty(item, idx);
         var per = item.order_uom === 'large' ? (parseInt(item.units_per_large, 10) || 1) : 1;
         return Math.max(0, Math.floor(remain / per));
+    }
+
+    function allocateFefo(item, qty) {
+        var need = qty;
+        var allocated = [];
+        (item.batches || []).forEach(function (b) {
+            if (need <= 0) {
+                return;
+            }
+            var avail = parseInt(b.qty, 10) || 0;
+            if (avail <= 0) {
+                return;
+            }
+            var take = Math.min(need, avail);
+            allocated.push({
+                lot_serial: b.lot_serial,
+                qty: take,
+                expired: b.expired || null
+            });
+            need -= take;
+        });
+        return allocated;
+    }
+
+    function formatAllocation(allocated) {
+        if (!allocated || !allocated.length) {
+            return '-';
+        }
+        return allocated.map(function (a) {
+            return a.lot_serial + ' × ' + a.qty;
+        }).join(', ');
+    }
+
+    function formatBatchStock(item) {
+        if (!(item.batches || []).length) {
+            return '-';
+        }
+        return item.batches.map(function (b) {
+            return b.lot_serial + ' stok ' + (parseInt(b.qty, 10) || 0) + (b.expired ? ' (exp ' + b.expired + ')' : '');
+        }).join(', ');
     }
 
     function clampQty(idx) {
@@ -518,10 +611,10 @@
             }
             var first = batches[0];
             var exists = items.find(function (i) {
-                return i.product_id === p.id && i.lot_serial === first.lot_serial;
+                return i.product_id === p.id;
             });
             if (exists) {
-                alert('Produk dengan batch ' + first.lot_serial + ' sudah ditambahkan.');
+                alert(p.name + ' sudah ditambahkan. Ubah qty di baris yang ada.');
                 return;
             }
             items.push({
@@ -540,10 +633,11 @@
                 lot_serial: first.lot_serial,
                 batch_qty: first.qty,
                 batch_expired: first.expired,
-                batches: batches
+                batches: batches,
+                allocated_batches: allocateFefo({ batches: batches }, 1)
             });
             if (!clampQty(items.length - 1)) {
-                alert('Qty melebihi stok batch ' + first.lot_serial + '.');
+                alert('Qty melebihi total stok batch ' + p.name + '.');
             }
             renderItems();
             setProductInsertLoading(true, 'Menghitung harga...');
@@ -566,27 +660,19 @@
                 uomSelect += '<option value="large"' + (item.order_uom === 'large' ? ' selected' : '') + '>' + esc(item.large_unit || 'CTN') + '</option>';
             }
             uomSelect += '</select>';
-            var batchSelect = '<select class="form-control input-sm js-batch" data-idx="' + idx + '" name="items[' + idx + '][lot_serial]" required>';
-            (item.batches || []).forEach(function (b) {
-                var label = b.lot_serial + ' · stok ' + b.qty + (b.expired ? ' · exp ' + b.expired : '');
-                batchSelect += '<option value="' + esc(b.lot_serial) + '"' + (b.lot_serial === item.lot_serial ? ' selected' : '') + '>' + esc(label) + '</option>';
-            });
-            batchSelect += '</select>';
-            var batchName = item.lot_serial
-                ? ('Batch: ' + item.lot_serial + (item.batch_expired ? ' (exp ' + item.batch_expired + ')' : '') + ' · stok ' + (item.batch_qty || 0))
-                : 'Batch belum dipilih';
+            item.allocated_batches = allocateFefo(item, baseQty(item));
             $tb.append(
                 '<tr>'
                 + '<td class="text-center">' + (idx + 1) + '</td>'
                 + '<td><strong>' + esc(item.code || '') + '</strong><br>' + esc(item.name)
-                + '<br><small class="text-muted">' + esc(batchName) + '</small>'
+                + '<br><small class="text-muted">Batch: ' + esc(formatBatchStock(item)) + '</small>'
+                + '<br><small class="text-muted">Dipakai: ' + esc(formatAllocation(item.allocated_batches)) + '</small>'
                 + '<input type="hidden" name="items[' + idx + '][product_id]" value="' + item.product_id + '">'
-                + '<div style="margin-top:6px;">' + batchSelect + '</div>'
                 + '</td>'
                 + '<td>' + uomSelect + '<input type="hidden" name="items[' + idx + '][order_uom]" class="js-uom-hidden" value="' + item.order_uom + '"></td>'
                 + '<td><input type="number" min="1" class="form-control input-sm js-qty" data-idx="' + idx + '" name="items[' + idx + '][quantity_ordered]" value="' + item.quantity_ordered + '"></td>'
                 + '<td class="text-right js-catalog">' + formatRp(item.catalog_price) + '</td>'
-                + '<td class="text-right js-price">' + formatRp(item.unit_price) + '</td>'
+                + '<td class="text-right js-price">' + formatHargaJual(item) + '</td>'
                 + '<td class="text-right js-sub">' + formatRp(item.subtotal) + '</td>'
                 + '<td><button type="button" class="btn btn-xs btn-danger js-remove" data-idx="' + idx + '"><i class="fa fa-times"></i></button></td>'
                 + '</tr>'
@@ -600,34 +686,10 @@
         items[idx].order_uom = $('.js-uom[data-idx="' + idx + '"]').val();
         $('.js-uom-hidden').eq(idx).val(items[idx].order_uom);
         if (!clampQty(idx)) {
-            alert('Qty melebihi stok batch ' + items[idx].lot_serial + '. Maksimum ' + items[idx].quantity_ordered + '.');
+            alert('Qty melebihi total stok batch. Maksimum ' + items[idx].quantity_ordered + '.');
             $('.js-qty[data-idx="' + idx + '"]').val(items[idx].quantity_ordered);
         }
-        refreshPreview();
-    });
-
-    $(document).on('change', '.js-batch', function () {
-        var idx = $(this).data('idx');
-        var lot = $(this).val();
-        var item = items[idx];
-        var found = (item.batches || []).find(function (b) { return b.lot_serial === lot; });
-        if (!found) {
-            return;
-        }
-        var dup = items.find(function (other, i) {
-            return i !== idx && other.product_id === item.product_id && other.lot_serial === lot;
-        });
-        if (dup) {
-            alert('Batch ' + lot + ' sudah dipakai di baris lain untuk produk ini.');
-            $(this).val(item.lot_serial);
-            return;
-        }
-        item.lot_serial = found.lot_serial;
-        item.batch_qty = found.qty;
-        item.batch_expired = found.expired;
-        if (!clampQty(idx)) {
-            alert('Qty melebihi stok batch yang dipilih.');
-        }
+        items[idx].allocated_batches = allocateFefo(items[idx], baseQty(items[idx]));
         renderItems();
         refreshPreview();
     });
@@ -650,6 +712,7 @@
                 _token: '{{ csrf_token() }}',
                 user_id: $('#user_id').val(),
                 shipping_cost: $('#shipping_cost').val() || 0,
+                pakai_ppn: $('#pakai_ppn').val(),
                 items: items.map(function (i) {
                     return {
                         product_id: i.product_id,
@@ -669,6 +732,9 @@
                     $('#sum-ppn-label').text(res.ppn_label);
                     $('#table-ppn-label').text(res.ppn_label);
                 }
+                if (typeof res.tax_percent !== 'undefined') {
+                    taxPercent = parseFloat(res.tax_percent) || 0;
+                }
                 $('#sum-ppn').text(formatRp(res.ppn || 0));
                 $('#table-ppn').text(formatRp(res.ppn || 0));
                 $('#sum-shipping').text(formatRp(res.shipping_cost));
@@ -677,6 +743,8 @@
                     var item = items[idx];
                     if (item && item.product_id === line.product_id) {
                         item.catalog_price = line.catalog_price;
+                        item.catalog_dpp = line.catalog_dpp;
+                        item.discount_percent = line.discount_percent;
                         item.unit_price = line.unit_price;
                         item.subtotal = line.subtotal;
                     }
@@ -684,7 +752,7 @@
                 $('#items-table tbody tr:not(#items-empty)').each(function (i) {
                     if (!items[i]) return;
                     $(this).find('.js-catalog').text(formatRp(items[i].catalog_price));
-                    $(this).find('.js-price').text(formatRp(items[i].unit_price));
+                    $(this).find('.js-price').html(formatHargaJual(items[i]));
                     $(this).find('.js-sub').text(formatRp(items[i].subtotal));
                 });
             }
@@ -696,16 +764,16 @@
             alert('Tambahkan minimal satu produk.');
             return false;
         }
-        var missing = items.find(function (i) { return !i.lot_serial; });
+        var missing = items.find(function (i) { return !(i.batches || []).length; });
         if (missing) {
-            alert('Setiap produk wajib punya batch yang dipilih.');
+            alert('Produk ' + missing.name + ' belum punya data batch.');
             return false;
         }
         var over = items.find(function (item, idx) {
-            return baseQty(item) > remainingBatchQty(item.product_id, item.lot_serial, idx);
+            return baseQty(item) > remainingProductQty(item, idx);
         });
         if (over) {
-            alert('Qty ' + over.name + ' melebihi stok batch ' + over.lot_serial + '.');
+            alert('Qty ' + over.name + ' melebihi total stok batch.');
             return false;
         }
         $('#btn-submit').prop('disabled', true).text('Menyimpan...');

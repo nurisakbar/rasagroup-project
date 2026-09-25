@@ -50,11 +50,12 @@ class ManualOrderController extends Controller
                 Rule::exists('users', 'sales_code')->where(fn ($q) => $q->where('role', User::ROLE_SALES)),
             ],
             'preferred_shipping_date' => ['nullable', 'date'],
+            'pakai_ppn' => ['required', 'in:0,1'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity_ordered' => ['required', 'integer', 'min:1'],
             'items.*.order_uom' => ['required', Rule::in(['base', 'large'])],
-            'items.*.lot_serial' => ['required', 'string', 'max:100'],
+            'items.*.lot_serial' => ['nullable', 'string', 'max:100'],
         ]);
 
         $customer = User::with(['priceLevel', 'categoryDiscounts'])->findOrFail($validated['user_id']);
@@ -80,6 +81,7 @@ class ManualOrderController extends Controller
             'sales_code' => $validated['sales_code'] ?? null,
             'preferred_shipping_date' => $validated['preferred_shipping_date'] ?? null,
             'admin_name' => $request->user()->name,
+            'pakai_ppn' => (bool) (int) $validated['pakai_ppn'],
         ]);
 
         return redirect()
@@ -103,7 +105,7 @@ class ManualOrderController extends Controller
             })
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'email', 'phone', 'role', 'term_of_payment', 'qad_customer_code']);
+            ->get(['id', 'name', 'email', 'phone', 'role', 'term_of_payment', 'qad_customer_code', 'pakai_ppn']);
 
         return response()->json([
             'results' => $users->map(function (User $user) {
@@ -123,6 +125,7 @@ class ManualOrderController extends Controller
                     'term_of_payment' => (int) ($user->term_of_payment ?? 0),
                     'qad_customer_code' => $user->qad_customer_code,
                     'is_distributor' => $user->isDistributor(),
+                    'pakai_ppn' => $user->usesPpn() ? 1 : 0,
                 ];
             }),
         ]);
@@ -182,6 +185,7 @@ class ManualOrderController extends Controller
             }),
             'term_of_payment' => (int) ($user->term_of_payment ?? 0),
             'is_distributor' => $user->isDistributor(),
+            'pakai_ppn' => $user->usesPpn() ? 1 : 0,
         ]);
     }
 
@@ -255,30 +259,11 @@ class ManualOrderController extends Controller
             ]);
         }
 
-        $productCode = (string) $product->code;
-        $shelfLife = $customer->shelfLifeMonths();
-        $grouped = $wms->batchesByItemCode($location, $shelfLife) ?? [];
-        $batches = $wms->batchesForProduct($grouped, $productCode);
-
-        // Tab stok gudang tidak memfilter masa berlaku; jika semua batch tersaring, tampilkan seperti di hub.
-        if ($batches === [] && $shelfLife > 0) {
-            $grouped = $wms->batchesByItemCode($location, 0) ?? [];
-            $batches = $wms->batchesForProduct($grouped, $productCode);
-        }
-
-        if ($batches === []) {
-            $locationCandidates = array_values(array_unique(array_filter([
-                $location,
-                $warehouse->qad_location_code,
-                $warehouse->kode_hub,
-            ])));
-            foreach ($locationCandidates as $candidate) {
-                $batches = $wms->localBatchesForItem((string) $candidate, $productCode, 0);
-                if ($batches !== []) {
-                    break;
-                }
-            }
-        }
+        $batches = $wms->batchesForWarehouseItem(
+            $warehouse,
+            (string) $product->code,
+            $customer->shelfLifeMonths()
+        );
 
         return response()->json([
             'batches' => array_values($batches),
@@ -290,6 +275,7 @@ class ManualOrderController extends Controller
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
             'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            'pakai_ppn' => ['nullable', 'in:0,1'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity_ordered' => ['required', 'integer', 'min:1'],
@@ -298,11 +284,15 @@ class ManualOrderController extends Controller
 
         $customer = User::with(['priceLevel', 'categoryDiscounts'])->findOrFail($validated['user_id']);
         $normalized = $service->normalizeItems($validated['items']);
+        $pakaiPpn = array_key_exists('pakai_ppn', $validated)
+            ? (bool) (int) $validated['pakai_ppn']
+            : $customer->usesPpn();
 
         return response()->json($service->preview(
             $customer,
             $normalized,
-            (float) ($validated['shipping_cost'] ?? 0)
+            (float) ($validated['shipping_cost'] ?? 0),
+            $pakaiPpn
         ));
     }
 }

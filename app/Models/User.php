@@ -57,6 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'distributor_regency_id',
         'distributor_address',
         'aturan_minimal_masa_berlaku',
+        'pakai_ppn',
         'driippreneur_status',
         'driippreneur_province_id',
         'driippreneur_regency_id',
@@ -162,6 +163,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'points' => 'integer',
             'driippreneur_applied_at' => 'datetime',
             'date_of_birth' => 'date',
+            'pakai_ppn' => 'boolean',
         ];
     }
 
@@ -266,6 +268,14 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->isDistributor() ? self::DEFAULT_SHELF_LIFE_MONTHS : 0;
+    }
+
+    /**
+     * Default YA. Null dianggap memakai PPN.
+     */
+    public function usesPpn(): bool
+    {
+        return $this->pakai_ppn !== false;
     }
 
     public function isBuyer(): bool

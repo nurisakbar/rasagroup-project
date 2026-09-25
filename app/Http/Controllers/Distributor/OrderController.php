@@ -630,6 +630,7 @@ class OrderController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
+                'pakai_ppn' => \Illuminate\Support\Facades\Auth::user()->usesPpn(),
                 'total_amount' => $total,
                 'points_earned' => $pointsEarned,
                 'points_credited' => false,

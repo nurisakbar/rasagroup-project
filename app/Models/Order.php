@@ -34,6 +34,7 @@ class Order extends Model
         'source_qad_location_code',
         'subtotal',
         'shipping_cost',
+        'pakai_ppn',
         'total_amount',
         'shipping_address',
         'payment_method',
@@ -85,6 +86,7 @@ class Order extends Model
         'discount_percent' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
+        'pakai_ppn' => 'boolean',
         'total_amount' => 'decimal:2',
         'points_credited' => 'boolean',
         'paid_at' => 'datetime',
@@ -361,6 +363,14 @@ class Order extends Model
     public function shouldSyncToQad(): bool
     {
         return $this->sourceHubSendsSalesOrdersToQad();
+    }
+
+    /**
+     * Snapshot PPN pesanan: YA → isTaxable true di QAD.
+     */
+    public function usesPpn(): bool
+    {
+        return $this->pakai_ppn !== false;
     }
 
     /**

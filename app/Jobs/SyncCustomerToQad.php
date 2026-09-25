@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\User;
 use App\Services\QadService;
 use App\Support\QadBusinessRelationHeadOffice;
+use App\Support\QadExistingCustomer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -47,6 +48,19 @@ class SyncCustomerToQad implements ShouldQueue
                 'user_id' => $user->id,
                 'qad_customer_code' => $user->qad_customer_code,
             ]);
+            return;
+        }
+
+        $existingCode = QadExistingCustomer::findCode($qadService, $user);
+        if ($existingCode) {
+            $user->update(['qad_customer_code' => $existingCode]);
+            Log::info('SyncCustomerToQad: Existing QAD customer found, saved locally', [
+                'user_id' => $user->id,
+                'qad_customer_code' => $existingCode,
+            ]);
+            $this->ensureCustomerData($qadService, $existingCode);
+            QadBusinessRelationHeadOffice::patch($qadService, $user->fresh(), $existingCode, $this->addressSnapshot);
+
             return;
         }
 
