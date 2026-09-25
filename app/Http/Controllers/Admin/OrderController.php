@@ -100,7 +100,7 @@ class OrderController extends Controller
                     } else {
                         $html .= '<br><span class="label label-primary" style="font-size: 10px;"><i class="fa fa-globe"></i> ONLINE</span>';
                     }
-                    $html .= '<br><small class="text-muted">' . $order->created_at->format('d M Y H:i') . '</small>';
+                    $html .= '<br><small class="text-muted">' . \App\Support\Wib::format($order->created_at) . ' WIB</small>';
                     return $html;
                 })
                 ->addColumn('buyer_info', function ($order) {

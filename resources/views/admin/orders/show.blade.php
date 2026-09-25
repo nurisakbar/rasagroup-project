@@ -69,7 +69,7 @@
                         </tr>
                         <tr>
                             <th>Tanggal Pesanan</th>
-                            <td>{{ $order->created_at->format('d M Y H:i') }}</td>
+                            <td>{{ \App\Support\Wib::format($order->created_at) }} WIB</td>
                         </tr>
                         @php
                             $isSelfPickupTop = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
@@ -77,19 +77,19 @@
                         @if($order->pickup_ready_at)
                         <tr class="bg-success">
                             <th><i class="fa fa-calendar-check-o"></i> Siap Diambil</th>
-                            <td><strong>{{ $order->pickup_ready_at->format('d M Y H:i') }} WIB</strong></td>
+                            <td><strong>{{ \App\Support\Wib::format($order->pickup_ready_at) }} WIB</strong></td>
                         </tr>
                         @endif
                         @if($order->shipped_at)
                         <tr class="bg-info">
                             <th><i class="fa {{ $isSelfPickupTop ? 'fa-shopping-bag' : 'fa-truck' }}"></i> {{ $isSelfPickupTop ? 'Waktu Diambil Pembeli' : 'Waktu Dikirim' }}</th>
-                            <td><strong>{{ $order->shipped_at->format('d M Y H:i') }} WIB</strong></td>
+                            <td><strong>{{ \App\Support\Wib::format($order->shipped_at) }} WIB</strong></td>
                         </tr>
                         @endif
                         @if($order->received_at)
                         <tr class="bg-success">
                             <th><i class="fa fa-check-circle"></i> Waktu Diterima</th>
-                            <td><strong>{{ $order->received_at->format('d M Y H:i') }} WIB</strong></td>
+                            <td><strong>{{ \App\Support\Wib::format($order->received_at) }} WIB</strong></td>
                         </tr>
                         @endif
                         @if($order->preferred_shipping_date)
@@ -133,7 +133,7 @@
                                     <p class="text-muted mb-0" style="margin-top: 5px;"><small><i class="fa fa-info-circle"></i> Catatan: {{ $order->payment_submit_note }}</small></p>
                                 @endif
                                 @if($order->payment_submitted_at)
-                                    <p class="text-muted mb-0"><small><i class="fa fa-clock-o"></i> Dikirim: {{ \Carbon\Carbon::parse($order->payment_submitted_at)->format('d M Y, H:i') }}</small></p>
+                                    <p class="text-muted mb-0"><small><i class="fa fa-clock-o"></i> Dikirim: {{ \App\Support\Wib::format($order->payment_submitted_at, 'd M Y, H:i') }} WIB</small></p>
                                 @endif
                             </td>
                         </tr>
@@ -245,7 +245,7 @@
                                 <tbody>
                                     @foreach(array_reverse($order->qad_sync_history) as $history)
                                     <tr>
-                                        <td>{{ \Carbon\Carbon::parse($history['timestamp'] ?? '')->format('d M Y H:i:s') }}</td>
+                                        <td>{{ \App\Support\Wib::format($history['timestamp'] ?? null, 'd M Y H:i:s') }} WIB</td>
                                         <td>{{ $history['attempt'] ?? '-' }}</td>
                                         <td>
                                             @if(($history['status'] ?? '') === 'success')
@@ -401,7 +401,7 @@
                                                         @else
                                                             @if($order->ekspedisiku_pickup_status === 'success')
                                                                 <span class="text-success"><i class="fa fa-check-circle fa-2x"></i></span><br>
-                                                                <small style="display:block; margin-top:2px;">Requested: {{ $order->ekspedisiku_pickup_requested_at ? $order->ekspedisiku_pickup_requested_at->format('d M H:i') : '' }}</small>
+                                                                <small style="display:block; margin-top:2px;">Requested: {{ $order->ekspedisiku_pickup_requested_at ? \App\Support\Wib::format($order->ekspedisiku_pickup_requested_at, 'd M H:i') : '' }} WIB</small>
                                                                 <form action="{{ route('admin.orders.cancel-pickup', $order) }}" method="POST" style="margin-top: 8px;">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-xs btn-default text-danger" onclick="return confirm('Cancel request pickup?')">
@@ -454,7 +454,7 @@
                                                             <i class="fa fa-search"></i> Lacak Resi
                                                         </a>
                                                         @if($order->shipped_at)
-                                                            <br><small class="text-muted" style="display:block; margin-top:5px;">Dikirim: {{ $order->shipped_at->format('d M H:i') }}</small>
+                                                            <br><small class="text-muted" style="display:block; margin-top:5px;">Dikirim: {{ \App\Support\Wib::format($order->shipped_at, 'd M H:i') }} WIB</small>
                                                         @endif
                                                     @endif
                                                 </div>
@@ -662,7 +662,7 @@
                                         @if($order->financeApprover)
                                             — oleh <strong>{{ $order->financeApprover->name }}</strong>
                                         @endif
-                                        pada {{ $order->finance_approved_at->format('d M Y H:i') }}
+                                        pada {{ \App\Support\Wib::format($order->finance_approved_at) }} WIB
                                     @endif
                                 </div>
                             @endif
@@ -826,7 +826,7 @@
                         <li>
                             <i class="fa {{ $order->finance_approved ? 'fa-check bg-green' : 'fa-clock-o bg-yellow' }}"></i>
                             <div class="timeline-item border-0">
-                                <span class="time"><i class="fa fa-calendar"></i> {{ $order->finance_approved_at ? $order->finance_approved_at->format('d M H:i') : 'Menunggu' }}</span>
+                                <span class="time"><i class="fa fa-calendar"></i> {{ $order->finance_approved_at ? \App\Support\Wib::format($order->finance_approved_at, 'd M H:i') . ' WIB' : 'Menunggu' }}</span>
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>Approval Finance</strong>
                                 </h3>
@@ -865,7 +865,7 @@
                             @endphp
                             <i class="fa {{ $wmsIcon }} {{ $wmsColor }}"></i>
                             <div class="timeline-item border-0">
-                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->wms_so_synced_at ? \Carbon\Carbon::parse($order->wms_so_synced_at)->format('d M H:i') : '-' }}</span>
+                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->wms_so_synced_at ? \App\Support\Wib::format($order->wms_so_synced_at, 'd M H:i') . ' WIB' : '-' }}</span>
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>WMS Sales Order</strong>
                                 </h3>
