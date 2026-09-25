@@ -21,18 +21,48 @@ class ManualOrderController extends Controller
 
     public function create()
     {
-        $warehouses = Warehouse::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'kode_hub']);
+        return view('admin.orders.create', $this->manualOrderViewData());
+    }
 
-        $expeditions = Expedition::active()->orderBy('name')->get();
+    protected function manualOrderViewData(): array
+    {
+        return [
+            'manualLayout' => 'layouts.admin',
+            'lockWarehouse' => false,
+            'warehouses' => Warehouse::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'kode_hub']),
+            'expeditions' => Expedition::active()->orderBy('name')->get(),
+            'defaultWarehouseId' => null,
+            'manualUrls' => [
+                'store' => route('admin.orders.store'),
+                'index' => route('admin.orders.index'),
+                'searchSales' => route('admin.orders.search-sales'),
+                'searchCustomers' => route('admin.orders.search-customers'),
+                'searchProducts' => route('admin.orders.search-products'),
+                'productBatches' => route('admin.orders.product-batches'),
+                'previewPricing' => route('admin.orders.preview-pricing'),
+                'customerAddresses' => route('admin.orders.customer-addresses', ['user' => '00000000-0000-0000-0000-000000000000']),
+            ],
+        ];
+    }
 
-        return view('admin.orders.create', compact('warehouses', 'expeditions'));
+    protected function constrainManualOrderWarehouse(Request $request): void
+    {
+    }
+
+    protected function redirectAfterManualStore($order)
+    {
+        return redirect()
+            ->route('admin.orders.show', $order)
+            ->with('success', 'Transaksi '.$order->order_number.' berhasil dibuat.');
     }
 
     public function store(Request $request)
     {
+        $this->constrainManualOrderWarehouse($request);
+
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
             'address_id' => ['required', 'exists:addresses,id'],
@@ -51,6 +81,8 @@ class ManualOrderController extends Controller
             ],
             'preferred_shipping_date' => ['nullable', 'date'],
             'pakai_ppn' => ['required', 'in:0,1'],
+            'purchase_order_number' => ['nullable', 'string', 'max:50'],
+            'purchase_order_document' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity_ordered' => ['required', 'integer', 'min:1'],
@@ -72,6 +104,12 @@ class ManualOrderController extends Controller
         $expedition = Expedition::active()->findOrFail($validated['expedition_id']);
         $normalized = $this->orders->normalizeItems($validated['items']);
 
+        $poNumber = trim((string) ($validated['purchase_order_number'] ?? ''));
+        $poDocumentPath = null;
+        if ($request->hasFile('purchase_order_document')) {
+            $poDocumentPath = $request->file('purchase_order_document')->store('purchase-orders', 'public');
+        }
+
         $order = $this->orders->create($customer, $warehouse, $address, $expedition, $normalized, [
             'expedition_service' => $validated['expedition_service'],
             'shipping_cost' => (float) $validated['shipping_cost'],
@@ -82,11 +120,11 @@ class ManualOrderController extends Controller
             'preferred_shipping_date' => $validated['preferred_shipping_date'] ?? null,
             'admin_name' => $request->user()->name,
             'pakai_ppn' => (bool) (int) $validated['pakai_ppn'],
+            'purchase_order_number' => $poNumber !== '' ? $poNumber : null,
+            'purchase_order_document' => $poDocumentPath,
         ]);
 
-        return redirect()
-            ->route('admin.orders.show', $order)
-            ->with('success', 'Transaksi ' . $order->order_number . ' berhasil dibuat.');
+        return $this->redirectAfterManualStore($order);
     }
 
     public function searchCustomers(Request $request)

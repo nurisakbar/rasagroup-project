@@ -22,5 +22,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
             $view->with('globalCategories', \App\Models\Category::forStorefrontSidebar());
         });
+
+        \App\Jobs\SyncQadInventoryJob::ensureQueued();
     }
 }

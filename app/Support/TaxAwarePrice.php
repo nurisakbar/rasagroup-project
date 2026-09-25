@@ -86,4 +86,21 @@ class TaxAwarePrice
 
         return 'PPN '.$formatted.'%';
     }
+
+    public static function taxPercentDisplay(?float $taxPercent = null): string
+    {
+        $taxPercent ??= Setting::taxPercent();
+
+        return rtrim(rtrim(number_format($taxPercent, 1, ',', '.'), '0'), ',');
+    }
+
+    public static function pakaiPpnYesLabel(?float $taxPercent = null): string
+    {
+        return 'Ya ('.self::taxPercentDisplay($taxPercent).'%)';
+    }
+
+    public static function pakaiPpnNoLabel(): string
+    {
+        return 'Dibebaskan (Batam)';
+    }
 }

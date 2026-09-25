@@ -58,6 +58,21 @@
                             <th width="30%">No. Pesanan</th>
                             <td><strong>{{ $order->order_number }}</strong></td>
                         </tr>
+                        @if($order->purchase_order_number || $order->purchase_order_document)
+                        <tr>
+                            <th>Purchase Order</th>
+                            <td>
+                                @if($order->purchase_order_number)
+                                    <strong>{{ $order->purchase_order_number }}</strong>
+                                @endif
+                                @if($order->purchase_order_document)
+                                    <a href="{{ Storage::url($order->purchase_order_document) }}" target="_blank" class="btn btn-xs btn-default" style="margin-left: 8px;">
+                                        <i class="fa fa-file-pdf-o"></i> Lihat PDF
+                                    </a>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
                         <tr>
                             <th>Pembeli</th>
                             <td>
@@ -869,23 +884,28 @@
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>WMS Sales Order</strong>
                                 </h3>
-                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;" id="wms-so-body">
                                     @if($order->wms_so_status)
-                                        Status WMS: <strong>{{ $order->wms_so_status }}</strong>
-                                        <div style="margin-top: 5px;">
+                                        Status WMS: <strong id="wms-so-status">{{ $order->wms_so_status }}</strong>
+                                    @else
+                                        <span class="text-muted" id="wms-so-empty">Belum dikirim ke WMS</span>
+                                    @endif
+                                    <div style="margin-top: 8px;">
+                                        <button type="button" class="btn btn-xs btn-success" id="btn-send-wms">
+                                            <i class="fa fa-paper-plane"></i> Kirim ke WMS
+                                        </button>
+                                        @if($order->wms_so_status)
                                             <form action="{{ route('admin.orders.check-wms', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Memeriksa...';">
                                                 @csrf
                                                 <button type="submit" class="btn btn-xs btn-primary" title="Cek status terbaru ke WMS"><i class="fa fa-refresh"></i> Cek Status Terkini</button>
                                             </form>
                                             <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#modalCurlWms"><i class="fa fa-code"></i> Lihat cURL</button>
-                                        </div>
-                                        @if($order->wms_so_failure_reason)
-                                            <div style="margin-top: 5px; padding: 5px; background: #fff3f3; border: 1px solid #ffcccc; border-radius: 4px; color: #cc0000; font-size: 12px; word-wrap: break-word;">
-                                                <strong>Error:</strong> {{ $order->wms_so_failure_reason }}
-                                            </div>
                                         @endif
-                                    @else
-                                        <span class="text-muted">Belum dikirim ke WMS</span>
+                                    </div>
+                                    @if($order->wms_so_failure_reason)
+                                        <div id="wms-so-error" style="margin-top: 5px; padding: 5px; background: #fff3f3; border: 1px solid #ffcccc; border-radius: 4px; color: #cc0000; font-size: 12px; word-wrap: break-word;">
+                                            <strong>Error:</strong> {{ $order->wms_so_failure_reason }}
+                                        </div>
                                     @endif
                                 </div>
                             </div>
@@ -1001,11 +1021,46 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
             </div>
         </div>
     </div>
+
+    <div id="wms-send-overlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,.55);">
+        <div style="position:absolute; top:40%; left:0; right:0; text-align:center; color:#fff;">
+            <i class="fa fa-spinner fa-spin" style="font-size:42px;"></i>
+            <p style="margin-top:12px; font-size:16px;">Mengirim sales order ke WMS...</p>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
+    $('#btn-send-wms').on('click', function () {
+        if (!confirm('Kirim sales order ini ke WMS sekarang?')) {
+            return;
+        }
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $('#wms-send-overlay').show();
+        $.ajax({
+            url: @json(route('admin.orders.sync-wms', $order)),
+            type: 'POST',
+            data: { _token: @json(csrf_token()) },
+            timeout: 120000,
+            success: function (res) {
+                alert(res.message || 'Sales order terkirim ke WMS.');
+                window.location.reload();
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Gagal mengirim ke WMS.';
+                alert(msg);
+                window.location.reload();
+            },
+            complete: function () {
+                $('#wms-send-overlay').hide();
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
     // Store original values
     var originalOrderStatus = $('#order_status').val();
     var originalTrackingNumber = $('#tracking_number').val();

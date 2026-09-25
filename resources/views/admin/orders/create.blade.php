@@ -1,11 +1,11 @@
-@extends('layouts.admin')
+@extends($manualLayout)
 
 @section('title', 'Input Transaksi')
 @section('page-title', 'Input Transaksi Manual')
 @section('page-description', 'Buat pesanan seperti checkout pembeli (harga, hub, ekspedisi, sinkronisasi)')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.orders.index') }}">Pesanan</a></li>
+    <li><a href="{{ $manualUrls['index'] }}">Pesanan</a></li>
     <li class="active">Input Transaksi</li>
 @endsection
 
@@ -55,7 +55,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.orders.store') }}" id="manual-order-form">
+    <form method="POST" action="{{ $manualUrls['store'] }}" id="manual-order-form" enctype="multipart/form-data">
         @csrf
         <div class="row">
             <div class="col-md-8">
@@ -64,6 +64,28 @@
                         <h3 class="box-title"><i class="fa fa-user"></i> Pelanggan & Pengiriman</h3>
                     </div>
                     <div class="box-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="purchase_order_number">Nomor Purchase Order</label>
+                                    <input type="text" class="form-control" id="purchase_order_number" name="purchase_order_number" value="{{ old('purchase_order_number') }}" maxlength="50" placeholder="Contoh: PO-2026-001" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Dokumen Purchase Order (PDF)</label>
+                                    <div>
+                                        <a href="#" id="po-document-link"><i class="fa fa-upload"></i> Unggah dokumen PDF</a>
+                                        <span id="po-document-name" class="text-muted" style="margin-left: 8px;"></span>
+                                    </div>
+                                    <input type="file" name="purchase_order_document" id="purchase_order_document" accept="application/pdf,.pdf" style="display: none;">
+                                    <p class="help-block">Maksimal 10 MB, format PDF.</p>
+                                    @error('purchase_order_document')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="form-group">
@@ -85,12 +107,18 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Hub pengirim <span class="text-danger">*</span></label>
-                                    <select id="source_warehouse_id" name="source_warehouse_id" class="form-control" required style="width: 100%;">
-                                        <option value="">-- Pilih Hub --</option>
-                                        @foreach($warehouses as $warehouse)
-                                            <option value="{{ $warehouse->id }}" {{ old('source_warehouse_id') == $warehouse->id ? 'selected' : '' }}>{{ $warehouse->name }}{{ $warehouse->kode_hub ? ' ('.$warehouse->kode_hub.')' : '' }}</option>
-                                        @endforeach
-                                    </select>
+                                    @if($lockWarehouse)
+                                        @php $lockedWarehouse = $warehouses->first(); @endphp
+                                        <input type="hidden" id="source_warehouse_id" name="source_warehouse_id" value="{{ $lockedWarehouse->id }}">
+                                        <input type="text" class="form-control" value="{{ $lockedWarehouse->name }}{{ $lockedWarehouse->kode_hub ? ' ('.$lockedWarehouse->kode_hub.')' : '' }}" readonly>
+                                    @else
+                                        <select id="source_warehouse_id" name="source_warehouse_id" class="form-control" required style="width: 100%;">
+                                            <option value="">-- Pilih Hub --</option>
+                                            @foreach($warehouses as $warehouse)
+                                                <option value="{{ $warehouse->id }}" {{ (string) old('source_warehouse_id', $defaultWarehouseId ?? '') === (string) $warehouse->id ? 'selected' : '' }}>{{ $warehouse->name }}{{ $warehouse->kode_hub ? ' ('.$warehouse->kode_hub.')' : '' }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -151,12 +179,15 @@
                     </div>
                     <div class="box-body">
                         <div class="form-group">
-                            <label>Pakai PPN</label>
+                            @php
+                                $pakaiPpn = (string) old('pakai_ppn', '1');
+                            @endphp
+                            <label for="pakai_ppn">Pakai PPN</label>
                             <select name="pakai_ppn" id="pakai_ppn" class="form-control">
-                                <option value="1" selected>YA</option>
-                                <option value="0">Tidak</option>
+                                <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnYesLabel() }}</option>
+                                <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnNoLabel() }}</option>
                             </select>
-                            <p class="help-block" id="pakai-ppn-hint">Mengikuti data pelanggan. YA memakai pajak di pengaturan ({{ rtrim(rtrim(number_format(\App\Models\Setting::taxPercent(), 1, ',', '.'), '0'), ',') }}%).</p>
+                            <p class="help-block" id="pakai-ppn-hint">Mengikuti data pelanggan. Bisa diubah manual.</p>
                         </div>
                         <div class="form-group">
                             <label>Metode pembayaran <span class="text-danger">*</span></label>
@@ -182,7 +213,7 @@
                         <p class="summary-total">Total: <span class="pull-right" id="sum-total">Rp 0</span></p>
                     </div>
                     <div class="box-footer">
-                        <a href="{{ route('admin.orders.index') }}" class="btn btn-default">Batal</a>
+                        <a href="{{ $manualUrls['index'] }}" class="btn btn-default">Batal</a>
                         <button type="submit" class="btn btn-primary pull-right" id="btn-submit">
                             <i class="fa fa-save"></i> Simpan transaksi
                         </button>
@@ -250,6 +281,17 @@
     var items = [];
     var productInsertBusy = false;
     var money = new Intl.NumberFormat('id-ID');
+    var lockWarehouse = @json((bool) $lockWarehouse);
+    var urls = @json($manualUrls);
+
+    $('#po-document-link').on('click', function (e) {
+        e.preventDefault();
+        $('#purchase_order_document').trigger('click');
+    });
+    $('#purchase_order_document').on('change', function () {
+        var file = this.files && this.files[0];
+        $('#po-document-name').text(file ? file.name : '');
+    });
 
     var defaultTaxPercent = {{ (float) \App\Models\Setting::taxPercent() }};
     var taxPercent = defaultTaxPercent;
@@ -283,17 +325,19 @@
         return html;
     }
 
-    $('#source_warehouse_id').select2({
-        theme: 'bootstrap',
-        width: '100%',
-        placeholder: 'Cari hub pengirim...',
-        allowClear: true
-    }).on('change', function () {
-        items = [];
-        renderItems();
-        refreshPreview();
-        setProductSearchEnabled(canAddProducts());
-    });
+    if (!lockWarehouse) {
+        $('#source_warehouse_id').select2({
+            theme: 'bootstrap',
+            width: '100%',
+            placeholder: 'Cari hub pengirim...',
+            allowClear: true
+        }).on('change', function () {
+            items = [];
+            renderItems();
+            refreshPreview();
+            setProductSearchEnabled(canAddProducts());
+        });
+    }
 
     $('#sales_code').select2({
         theme: 'bootstrap',
@@ -301,7 +345,7 @@
         placeholder: 'Cari kode / nama sales...',
         allowClear: true,
         ajax: {
-            url: @json(route('admin.orders.search-sales')),
+            url: urls.searchSales,
             dataType: 'json',
             delay: 250,
             data: function (params) { return { q: params.term }; },
@@ -314,7 +358,7 @@
         width: '100%',
         placeholder: 'Cari pelanggan...',
         ajax: {
-            url: @json(route('admin.orders.search-customers')),
+            url: urls.searchCustomers,
             dataType: 'json',
             delay: 250,
             data: function (params) { return { q: params.term }; },
@@ -344,7 +388,7 @@
         width: '100%',
         placeholder: 'Cari produk (kode / nama)...',
         ajax: {
-            url: @json(route('admin.orders.search-products')),
+            url: urls.searchProducts,
             dataType: 'json',
             delay: 250,
             data: function (params) {
@@ -481,7 +525,7 @@
     }
 
     function loadAddresses(userId) {
-        var addressTpl = @json(route('admin.orders.customer-addresses', ['user' => '00000000-0000-0000-0000-000000000000']));
+        var addressTpl = urls.customerAddresses;
         $.get(addressTpl.replace('00000000-0000-0000-0000-000000000000', userId), function (res) {
             var $sel = $('#address_id').empty();
             if (!res.addresses.length) {
@@ -599,7 +643,7 @@
             return;
         }
         setProductInsertLoading(true, 'Mengambil batch ' + (p.name || 'produk') + '...');
-        $.get(@json(route('admin.orders.product-batches')), {
+        $.get(urls.productBatches, {
             user_id: $('#user_id').val(),
             warehouse_id: $('#source_warehouse_id').val(),
             product_id: p.id
@@ -706,7 +750,7 @@
             return $.Deferred().resolve().promise();
         }
         return $.ajax({
-            url: @json(route('admin.orders.preview-pricing')),
+            url: urls.previewPricing,
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',

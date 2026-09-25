@@ -38,6 +38,16 @@
                         </form>
                     </div>
                     @endif
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <a href="{{ route('warehouse.orders.invoice', $order) }}" class="btn btn-xs btn-default" title="Download Proforma Invoice">
+                            <i class="fa fa-download"></i> Download Proforma Invoice
+                        </a>
+                    </div>
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <a href="{{ route('warehouse.orders.surat-jalan-pdf', $order) }}" target="_blank" class="btn btn-xs btn-default" title="Cetak Surat Jalan">
+                            <i class="fa fa-print"></i> Cetak Surat Jalan
+                        </a>
+                    </div>
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">

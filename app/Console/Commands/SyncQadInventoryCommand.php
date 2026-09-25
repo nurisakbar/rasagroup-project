@@ -19,16 +19,12 @@ class SyncQadInventoryCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Dispatch job to synchronize inventory data from WMS to local database';
+    protected $description = 'Sinkronisasi stok batch WMS/QAD ke database lokal';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
+        $this->info('Job sinkronisasi stok batch dimasukkan ke queue.');
         SyncQadInventoryJob::dispatch();
-
-        $this->info('WMS inventory sync job dispatched to queue.');
 
         return Command::SUCCESS;
     }

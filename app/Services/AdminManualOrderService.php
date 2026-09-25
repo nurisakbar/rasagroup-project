@@ -161,7 +161,9 @@ class AdminManualOrderService
      *     sales_code?: ?string,
      *     preferred_shipping_date?: ?string,
      *     admin_name?: ?string,
-     *     pakai_ppn?: bool
+     *     pakai_ppn?: bool,
+     *     purchase_order_number?: ?string,
+     *     purchase_order_document?: ?string
      * }  $payload
      */
     public function create(
@@ -277,6 +279,8 @@ class AdminManualOrderService
                 'points_credited' => false,
                 'sales_code' => $payload['sales_code'] ?? null,
                 'preferred_shipping_date' => $payload['preferred_shipping_date'] ?? null,
+                'purchase_order_number' => $payload['purchase_order_number'] ?? null,
+                'purchase_order_document' => $payload['purchase_order_document'] ?? null,
             ]);
 
             foreach ($normalizedItems as $item) {

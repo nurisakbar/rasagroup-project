@@ -135,6 +135,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $itemMasterCache = [];
         $lines = [];
         $invalidPriceItems = [];
+        $invalidUomItems = [];
 
         foreach ($this->order->items as $index => $item) {
             $itemCode = $item->product->code ?? $item->product->name ?? null;
@@ -144,6 +145,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                     $itemRes = $qadService->getItem($itemCode);
                     if (is_array($itemRes) && ! ($itemRes['error']['isError'] ?? false)) {
                         $data = $itemRes['data'] ?? [];
+                        if (isset($data[0]) && is_array($data[0])) {
+                            $data = $data[0];
+                        }
                         $uomRaw = $data['uom'] ?? $data['unitOfMeasure'] ?? $data['stockUom'] ?? null;
                         $uomOk = is_string($uomRaw) ? trim($uomRaw) : '';
                         $itemMasterCache[$itemCode] = [
@@ -177,10 +181,18 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             }
 
             $uom = $qadMaster['uom'] ?? null;
-            if (! $uom && $item->product?->unit) {
-                $uom = trim((string) $item->product->unit);
+            if (! $uom) {
+                $invalidUomItems[] = [
+                    'item_code' => $itemCode,
+                    'local_unit' => $item->product?->unit,
+                ];
+                Log::error('SyncOrderToQad: Missing QAD UOM for SO line', [
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'item_code' => $itemCode,
+                    'local_unit' => $item->product?->unit,
+                ]);
             }
-            $uom = $uom ?: 'PK';
 
             $linePrice = (int) round(max(0.0, (float) $price));
             $lines[] = [
@@ -201,8 +213,12 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             ];
         }
 
-        if (! empty($invalidPriceItems)) {
-            return ['ok' => false, 'invalid_items' => $invalidPriceItems];
+        if (! empty($invalidPriceItems) || ! empty($invalidUomItems)) {
+            return [
+                'ok' => false,
+                'invalid_items' => $invalidPriceItems,
+                'invalid_uom' => $invalidUomItems,
+            ];
         }
 
         return ['ok' => true, 'lines' => $lines];
@@ -302,15 +318,20 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
         $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);
         if (! $linesBuild['ok']) {
-            Log::error('SyncOrderToQad: Abort create SO because one or more item prices are invalid (<= 0). Please fix product/order master pricing first.', [
+            Log::error('SyncOrderToQad: Abort create SO because line price or UOM is invalid.', [
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
-                'invalid_items' => $linesBuild['invalid_items'],
+                'invalid_items' => $linesBuild['invalid_items'] ?? [],
+                'invalid_uom' => $linesBuild['invalid_uom'] ?? [],
             ]);
 
             $this->appendSyncLog(
                 [],
-                ['error' => 'Abort create SO because one or more item prices are invalid (<= 0).', 'invalid_items' => $linesBuild['invalid_items']],
+                [
+                    'error' => 'Abort create SO because line price or UOM is invalid.',
+                    'invalid_items' => $linesBuild['invalid_items'] ?? [],
+                    'invalid_uom' => $linesBuild['invalid_uom'] ?? [],
+                ],
                 1,
                 'failed'
             );
@@ -478,6 +499,16 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
      */
     protected function buildPurchaseOrderNumberForQad(int $attempt): string
     {
+        $custom = trim((string) ($this->order->purchase_order_number ?? ''));
+        if ($custom !== '') {
+            $base = substr($custom, 0, 20);
+            if ($attempt > 1) {
+                return substr($base, 0, 18) . str_pad((string) $attempt, 2, '0', STR_PAD_LEFT);
+            }
+
+            return $base;
+        }
+
         $ymd = $this->order->created_at->format('ymd');
         $n = (abs(crc32((string) $this->order->id)) + $attempt * 9973) % 10000;
 

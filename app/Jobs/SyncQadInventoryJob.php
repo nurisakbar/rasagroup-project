@@ -7,13 +7,13 @@ use App\Models\Warehouse;
 use App\Services\WmsService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
+class SyncQadInventoryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -21,14 +21,65 @@ class SyncQadInventoryJob implements ShouldQueue, ShouldBeUnique
 
     public int $tries = 1;
 
-    public int $uniqueFor = 600;
-
-    public function uniqueId(): string
+    public function handle(WmsService $wms): void
     {
-        return 'wms-sync-inventory';
+        $lock = Cache::lock('wms-sync-inventory-run', 600);
+
+        if (! $lock->get()) {
+            $this->queueNext();
+
+            return;
+        }
+
+        try {
+            $this->syncAllHubs($wms);
+        } finally {
+            optional($lock)->release();
+            $this->queueNext();
+        }
     }
 
-    public function handle(WmsService $wms): void
+    public function failed(?\Throwable $e): void
+    {
+        $this->queueNext();
+    }
+
+    /**
+     * Pastikan rantai job 5 menit sudah ada di queue (tanpa scheduler).
+     */
+    public static function ensureQueued(): void
+    {
+        if (app()->runningUnitTests() || app()->runningInConsole()) {
+            return;
+        }
+
+        if (config('queue.default') === 'sync') {
+            return;
+        }
+
+        if (! Cache::add('wms-inventory-chain', 1, now()->addMinutes(6))) {
+            return;
+        }
+
+        static::dispatch();
+    }
+
+    private function queueNext(): void
+    {
+        if (config('queue.default') === 'sync') {
+            return;
+        }
+
+        Cache::put('wms-inventory-chain', 1, now()->addMinutes(6));
+
+        if (! Cache::add('wms-inventory-next-queued', 1, now()->addMinutes(4))) {
+            return;
+        }
+
+        static::dispatch()->delay(now()->addMinutes(5));
+    }
+
+    private function syncAllHubs(WmsService $wms): void
     {
         Log::info('SyncQadInventoryJob: starting (WMS)');
 

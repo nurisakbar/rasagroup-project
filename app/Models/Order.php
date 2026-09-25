@@ -57,6 +57,8 @@ class Order extends Model
         'received_at',
         'pickup_note',
         'notes',
+        'purchase_order_number',
+        'purchase_order_document',
         'points_earned',
         'points_credited',
         'affiliate_id',
@@ -363,6 +365,34 @@ class Order extends Model
     public function shouldSyncToQad(): bool
     {
         return $this->sourceHubSendsSalesOrdersToQad();
+    }
+
+    /**
+     * SO QAD yang belum terbentuk setelah order dilepas ke hub.
+     */
+    public function scopeNeedingQadSalesOrderRetry($query)
+    {
+        return $query
+            ->where('finance_approved', true)
+            ->where('order_status', '!=', 'cancelled')
+            ->whereNull('qad_so_number')
+            ->whereHas('sourceWarehouse', function ($q) {
+                $q->whereRaw("UPPER(TRIM(COALESCE(qad_location_code, ''))) LIKE 'FG%'");
+            });
+    }
+
+    /**
+     * SO WMS yang gagal atau belum pernah terkirim setelah order dilepas ke hub.
+     */
+    public function scopeNeedingWmsSalesOrderRetry($query)
+    {
+        return $query
+            ->where('finance_approved', true)
+            ->where('order_status', '!=', 'cancelled')
+            ->where(function ($q) {
+                $q->whereNull('wms_so_status')
+                    ->orWhereRaw('UPPER(wms_so_status) = ?', ['FAILED']);
+            });
     }
 
     /**

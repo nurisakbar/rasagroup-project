@@ -928,6 +928,15 @@ class DistributorController extends Controller
         return response()->json(isset($result['data']) ? $result['data'] : []);
     }
 
+    public function searchQadCustomers(Request $request, QidApiService $qid)
+    {
+        $q = trim((string) $request->get('q', ''));
+
+        return response()->json([
+            'results' => QadExistingCustomer::searchOptions($qid, $q),
+        ]);
+    }
+
     /**
      * Internal helper to get villages for initial form load.
      */

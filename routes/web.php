@@ -301,6 +301,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
         Route::post('/orders/{order}/check-qad', [App\Http\Controllers\Admin\OrderController::class, 'checkQadStatus'])->name('orders.check-qad');
         Route::post('/orders/{order}/check-wms', [App\Http\Controllers\Admin\OrderController::class, 'checkWmsStatus'])->name('orders.check-wms');
+        Route::post('/orders/{order}/sync-wms', [App\Http\Controllers\Admin\OrderController::class, 'syncWms'])->name('orders.sync-wms');
 
         // Menus Management
         Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);
@@ -340,6 +341,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/distributors/get-regencies', [App\Http\Controllers\Admin\DistributorController::class, 'getRegencies'])->name('distributors.get-regencies');
         Route::get('/distributors/get-districts', [App\Http\Controllers\Admin\DistributorController::class, 'getDistricts'])->name('distributors.get-districts');
         Route::get('/distributors/get-villages', [App\Http\Controllers\Admin\DistributorController::class, 'getVillages'])->name('distributors.get-villages');
+        Route::get('/distributors/qad-customers', [App\Http\Controllers\Admin\DistributorController::class, 'searchQadCustomers'])->name('distributors.qad-customers');
         Route::get('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'show'])->name('distributors.show');
         Route::get('/distributors/{distributor}/edit', [App\Http\Controllers\Admin\DistributorController::class, 'edit'])->name('distributors.edit');
         Route::put('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'update'])->name('distributors.update');
@@ -381,9 +383,18 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Warehouse\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/create', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/ajax/customers', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'searchCustomers'])->name('orders.search-customers');
+        Route::get('/orders/ajax/sales', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'searchSales'])->name('orders.search-sales');
+        Route::get('/orders/ajax/products', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'searchProducts'])->name('orders.search-products');
+        Route::get('/orders/ajax/product-batches', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'productBatches'])->name('orders.product-batches');
+        Route::get('/orders/ajax/customers/{user}/addresses', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'customerAddresses'])->name('orders.customer-addresses');
+        Route::post('/orders/ajax/preview', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'previewPricing'])->name('orders.preview-pricing');
         Route::get('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'update'])->name('orders.update');
         Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Warehouse\OrderController::class, 'suratJalanPdf'])->name('orders.surat-jalan-pdf');
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Warehouse\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'requestPickup'])->name('orders.request-pickup');

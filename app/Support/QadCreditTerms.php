@@ -13,13 +13,28 @@ final class QadCreditTerms
     }
 
     /**
+     * Jumlah hari TOP yang ditawarkan di form.
+     *
+     * @return list<int>
+     */
+    public static function allowedTopDays(): array
+    {
+        return [7, 14, 30, 40];
+    }
+
+    /**
      * Terms tempo (bukan CASH / CIA / COD), untuk dropdown TOP.
      *
      * @return array<string, array{label: string, days: int}>
      */
     public static function forTop(): array
     {
-        return array_filter(self::all(), fn (array $term) => empty($term['immediate']));
+        $allowed = self::allowedTopDays();
+
+        return array_filter(
+            self::all(),
+            fn (array $term) => empty($term['immediate']) && in_array((int) ($term['days'] ?? 0), $allowed, true)
+        );
     }
 
     /**

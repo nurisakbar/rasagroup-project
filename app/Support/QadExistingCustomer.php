@@ -77,6 +77,58 @@ final class QadExistingCustomer
     }
 
     /**
+     * Opsi Select2: id = customerCode, text = "KODE - Nama".
+     *
+     * @return list<array{id: string, text: string}>
+     */
+    public static function searchOptions(QidApiService $qid, string $q, int $limit = 40): array
+    {
+        $q = trim($q);
+        if ($q === '') {
+            return [];
+        }
+
+        $rows = [];
+        $upper = strtoupper($q);
+        if (preg_match('/^[A-Z]{1,4}\d{3,}$/', $upper)) {
+            $rows = self::parseList($qid->get('/api/master/customer/list', ['customerCode' => $upper]));
+        }
+        if ($rows === [] && strlen($q) >= 2) {
+            $rows = self::parseList($qid->get('/api/master/customer/list', ['addressSearchName' => $q]));
+        }
+
+        $seen = [];
+        $options = [];
+        foreach ($rows as $c) {
+            $code = trim((string) ($c['customerCode'] ?? ''));
+            if ($code === '' || isset($seen[$code])) {
+                continue;
+            }
+            $seen[$code] = true;
+            $options[] = [
+                'id' => $code,
+                'text' => self::optionLabel($c),
+            ];
+            if (count($options) >= $limit) {
+                break;
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param  array<string, mixed>  $customer
+     */
+    public static function optionLabel(array $customer): string
+    {
+        $code = trim((string) ($customer['customerCode'] ?? ''));
+        $name = trim((string) ($customer['businessRelationName'] ?? $customer['addressName'] ?? ''));
+
+        return $name !== '' ? $code.' - '.$name : $code;
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $customers
      * @return array<string, mixed>|null
      */

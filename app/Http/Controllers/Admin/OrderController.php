@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendSalesOrderToWmsJob;
 use App\Models\Order;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
@@ -824,6 +825,41 @@ class OrderController extends Controller
             }
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan saat mengecek status WMS: ' . $e->getMessage());
+        }
+    }
+
+    public function syncWms(Order $order)
+    {
+        if (empty(config('services.wms.api_url')) || empty(config('services.wms.api_key'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'WMS API belum dikonfigurasi.',
+            ], 400);
+        }
+
+        try {
+            SendSalesOrderToWmsJob::dispatchSync($order);
+            $order->refresh();
+
+            $failed = strtoupper((string) $order->wms_so_status) === 'FAILED';
+
+            return response()->json([
+                'success' => ! $failed,
+                'message' => $failed
+                    ? ('Gagal kirim ke WMS: '.($order->wms_so_failure_reason ?: 'lihat log'))
+                    : ('Sales order terkirim ke WMS. Status: '.($order->wms_so_status ?: 'OK')),
+                'status' => $order->wms_so_status,
+                'failure_reason' => $order->wms_so_failure_reason,
+            ], $failed ? 422 : 200);
+        } catch (\Throwable $e) {
+            $order->refresh();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal kirim ke WMS: '.$e->getMessage(),
+                'status' => $order->wms_so_status,
+                'failure_reason' => $order->wms_so_failure_reason,
+            ], 500);
         }
     }
 

@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="{{ asset('adminlte/css/AdminLTE.min.css') }}">
   <!-- AdminLTE Skins -->
   <link rel="stylesheet" href="{{ asset('adminlte/css/skins/skin-green.min.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css">
   
   @stack('styles')
 </head>
@@ -99,12 +101,17 @@
             <i class="fa fa-dashboard"></i> <span>DASHBOARD</span>
           </a>
         </li>
+        <li class="{{ request()->routeIs('warehouse.orders.create') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.orders.create') }}">
+            <i class="fa fa-plus-square"></i> <span>INPUT TRANSAKSI</span>
+          </a>
+        </li>
         <li class="{{ request()->routeIs('warehouse.stock.*') ? 'active' : '' }}">
           <a href="{{ route('warehouse.stock.index') }}">
             <i class="fa fa-cubes"></i> <span>KELOLA STOCK</span>
           </a>
         </li>
-        <li class="{{ request()->routeIs('warehouse.orders.*') ? 'active' : '' }}">
+        <li class="{{ request()->routeIs('warehouse.orders.index') || request()->routeIs('warehouse.orders.show') ? 'active' : '' }}">
           <a href="{{ route('warehouse.orders.index') }}">
             <i class="fa fa-shopping-cart"></i> <span>KELOLA PESANAN</span>
           </a>
@@ -181,6 +188,7 @@
 <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
 <!-- Bootstrap -->
 <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('adminlte/js/adminlte.min.js') }}"></script>
 

@@ -553,5 +553,18 @@ class OrderController extends Controller
 
         return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
     }
+
+    public function downloadInvoice(Order $order)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        $order->load(\App\Support\ProformaInvoice::relations());
+        $invoice = \App\Support\ProformaInvoice::fromOrder($order);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('proforma-invoice-' . $order->order_number . '.pdf');
+    }
 }
 

@@ -170,8 +170,14 @@
 
                         <div class="form-group @error('qad_customer_code') has-error @enderror">
                             <label for="qad_customer_code">Kode Customer QAD</label>
-                            <input type="text" class="form-control" id="qad_customer_code" name="qad_customer_code" value="{{ old('qad_customer_code', $distributor->qad_customer_code) }}" placeholder="Contoh: CS00200" maxlength="50" autocomplete="off">
-                            <p class="help-block">Isi kode customer yang sudah terdaftar di QAD. Kosongkan jika belum ada.</p>
+                            @php $qadCode = old('qad_customer_code', $distributor->qad_customer_code); @endphp
+                            <select id="qad_customer_code" name="qad_customer_code" class="form-control" style="width: 100%;">
+                                <option value="">-- Pilih kode customer QAD --</option>
+                                @if($qadCode)
+                                    <option value="{{ $qadCode }}" selected>{{ $qadCode }}</option>
+                                @endif
+                            </select>
+                            <p class="help-block">Cari dari master customer QAD (kode atau nama). Kosongkan jika belum ada.</p>
                             @error('qad_customer_code')
                                 <span class="help-block text-danger">{{ $message }}</span>
                             @enderror
@@ -226,8 +232,8 @@
                                 <div class="form-group @error('pakai_ppn') has-error @enderror">
                                     <label for="pakai_ppn">Pakai PPN</label>
                                     <select class="form-control" id="pakai_ppn" name="pakai_ppn">
-                                        <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>YA</option>
-                                        <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnYesLabel() }}</option>
+                                        <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnNoLabel() }}</option>
                                     </select>
                                     @error('pakai_ppn')
                                         <span class="help-block text-danger">{{ $message }}</span>
@@ -269,6 +275,24 @@
 $(document).ready(function() {
     // Initialize Select2
     $('.select2').select2();
+
+    $('#qad_customer_code').select2({
+        width: '100%',
+        placeholder: 'Cari kode atau nama customer QAD...',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+            url: @json(route('admin.distributors.qad-customers')),
+            dataType: 'json',
+            delay: 400,
+            data: function (params) {
+                return { q: params.term };
+            },
+            processResults: function (data) {
+                return data;
+            }
+        }
+    });
 
     // Load regencies when province changes
     $('#province_id').change(function() {

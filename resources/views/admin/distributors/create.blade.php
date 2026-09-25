@@ -180,8 +180,8 @@
                                 <div class="form-group @error('pakai_ppn') has-error @enderror">
                                     <label for="pakai_ppn">Pakai PPN</label>
                                     <select class="form-control" id="pakai_ppn" name="pakai_ppn">
-                                        <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>YA</option>
-                                        <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1" {{ $pakaiPpn === '1' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnYesLabel() }}</option>
+                                        <option value="0" {{ $pakaiPpn === '0' ? 'selected' : '' }}>{{ \App\Support\TaxAwarePrice::pakaiPpnNoLabel() }}</option>
                                     </select>
                                     @error('pakai_ppn')
                                         <span class="help-block text-danger">{{ $message }}</span>
