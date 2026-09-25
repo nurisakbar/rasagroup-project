@@ -168,6 +168,15 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('qad_customer_code') has-error @enderror">
+                            <label for="qad_customer_code">Kode Customer QAD</label>
+                            <input type="text" class="form-control" id="qad_customer_code" name="qad_customer_code" value="{{ old('qad_customer_code', $distributor->qad_customer_code) }}" placeholder="Contoh: CS00200" maxlength="50" autocomplete="off">
+                            <p class="help-block">Isi kode customer yang sudah terdaftar di QAD. Kosongkan jika belum ada.</p>
+                            @error('qad_customer_code')
+                                <span class="help-block text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         @include('admin.distributors.partials.payment-terms', [
                             'currentPaymentMethod' => $distributor->payment_method,
                             'currentTermDays' => $distributor->term_of_payment,

@@ -525,36 +525,6 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         return $nextNumber;
     }
 
-    /**
-     * GET /customer/get di QID production sering BadRequest meski customer ada.
-     * Pakai list + exact customerCode sebagai pengecekan eksistensi.
-     */
-    protected function qadCustomerCodeExists(QadService $qadService, string $customerCode): bool
-    {
-        if ($customerCode === '') {
-            return false;
-        }
-
-        $res = $qadService->listCustomer(['customerCode' => $customerCode]);
-        if (! is_array($res) || ($res['error']['isError'] ?? false)) {
-            return false;
-        }
-
-        $data = $res['data'] ?? null;
-        $rows = [];
-        if (is_array($data)) {
-            $rows = array_is_list($data) ? $data : [$data];
-        }
-
-        foreach ($rows as $row) {
-            if (is_array($row) && (string) ($row['customerCode'] ?? '') === $customerCode) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     protected function ensureQadCustomerReady(QadService $qadService, User $user, Address $address): ?User
     {
         $user = $user->fresh();
@@ -562,51 +532,39 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             return null;
         }
 
-        if ($user->qad_customer_code) {
-            $valid = $this->qadCustomerCodeExists($qadService, (string) $user->qad_customer_code);
-
-            if (! $valid) {
-                Log::warning('SyncOrderToQad: Existing qad_customer_code is not valid in QAD, clearing and re-syncing', [
-                    'order_id' => $this->order->id,
-                    'user_id' => $user->id,
-                    'qad_customer_code' => $user->qad_customer_code,
-                ]);
-                $user->update(['qad_customer_code' => null]);
-                $user->refresh();
-            }
+        // Kode customer lokal yang sudah diisi tidak boleh diubah saat kirim sales order.
+        if (trim((string) $user->qad_customer_code) !== '') {
+            return $user;
         }
 
-        if (! $user->qad_customer_code) {
-            $existingCode = QadExistingCustomer::findCode($qadService, $user);
-            if ($existingCode) {
-                $user->update(['qad_customer_code' => $existingCode]);
-                $user->refresh();
-                Log::info('SyncOrderToQad: Existing QAD customer found, using for sales order', [
-                    'order_id' => $this->order->id,
-                    'user_id' => $user->id,
-                    'qad_customer_code' => $existingCode,
-                ]);
-            }
+        $existingCode = QadExistingCustomer::findCode($qadService, $user);
+        if ($existingCode) {
+            $user->update(['qad_customer_code' => $existingCode]);
+            $user->refresh();
+            Log::info('SyncOrderToQad: Existing QAD customer found, using for sales order', [
+                'order_id' => $this->order->id,
+                'user_id' => $user->id,
+                'qad_customer_code' => $existingCode,
+            ]);
+
+            return $user;
         }
 
-        if (! $user->qad_customer_code) {
-            $addressSnapshot = $this->buildOrderAddressSnapshot($address);
-            
-            // Execute the job manually so we can capture the payload and response
-            $customerSyncJob = new \App\Jobs\SyncCustomerToQad($user, $addressSnapshot);
-            $customerSyncJob->handle($qadService);
-            
-            $user = $user->fresh();
-            
-            if (!$user || !$user->qad_customer_code) {
-                // If it still failed, log it to the UI sync history
-                $this->appendSyncLog(
-                    $customerSyncJob->lastPayload ?? [],
-                    $customerSyncJob->lastResponse ?? ['error' => 'Customer validation failed'],
-                    1,
-                    'failed'
-                );
-            }
+        $addressSnapshot = $this->buildOrderAddressSnapshot($address);
+
+        // Execute the job manually so we can capture the payload and response
+        $customerSyncJob = new \App\Jobs\SyncCustomerToQad($user, $addressSnapshot);
+        $customerSyncJob->handle($qadService);
+
+        $user = $user->fresh();
+
+        if (! $user || ! $user->qad_customer_code) {
+            $this->appendSyncLog(
+                $customerSyncJob->lastPayload ?? [],
+                $customerSyncJob->lastResponse ?? ['error' => 'Customer validation failed'],
+                1,
+                'failed'
+            );
         }
 
         return $user;

@@ -807,6 +807,9 @@ class DistributorController extends Controller
             $request->merge(['ar_outstanding' => str_replace('.', '', $request->ar_outstanding)]);
         }
 
+        $qadCustomerCode = strtoupper(trim((string) $request->input('qad_customer_code', '')));
+        $request->merge(['qad_customer_code' => $qadCustomerCode !== '' ? $qadCustomerCode : null]);
+
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
@@ -821,6 +824,12 @@ class DistributorController extends Controller
 
             // User data
             'user_name' => ['required', 'string', 'max:255'],
+            'qad_customer_code' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('users', 'qad_customer_code')->ignore($distributor->id),
+            ],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'credit_terms_code' => [
                 'nullable',
@@ -853,6 +862,7 @@ class DistributorController extends Controller
         // Update user
         $userData = [
             'name' => $validated['user_name'],
+            'qad_customer_code' => $validated['qad_customer_code'] ?? null,
             'phone' => $validated['hub_phone'],
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $this->termOfPaymentFromRequest($validated),
