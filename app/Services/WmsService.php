@@ -258,9 +258,26 @@ class WmsService
      */
     public function batchesForProduct(array $grouped, string $productCode): array
     {
-        return $grouped[$productCode]
-            ?? $grouped[strtoupper(trim($productCode))]
-            ?? [];
+        $want = strtoupper(trim($productCode));
+        if ($want === '') {
+            return [];
+        }
+
+        if (isset($grouped[$productCode]) && is_array($grouped[$productCode])) {
+            return $grouped[$productCode];
+        }
+
+        if (isset($grouped[$want]) && is_array($grouped[$want])) {
+            return $grouped[$want];
+        }
+
+        foreach ($grouped as $code => $rows) {
+            if (strtoupper(trim((string) $code)) === $want && is_array($rows)) {
+                return $rows;
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -270,19 +287,14 @@ class WmsService
      */
     public function localBatchesForItem(string $locationCode, string $productCode, int $minMasaBerlakuBulan = 0): array
     {
-        $codes = array_values(array_unique(array_filter([
-            $productCode,
-            trim($productCode),
-            strtoupper(trim($productCode)),
-        ])));
-
-        if ($codes === []) {
+        $needle = strtoupper(trim($productCode));
+        if ($needle === '') {
             return [];
         }
 
         $rows = QadInventory::query()
             ->where('qad_location_code', $locationCode)
-            ->whereIn('item_code', $codes)
+            ->whereRaw('UPPER(TRIM(item_code)) = ?', [$needle])
             ->where('qty', '>', 0)
             ->get();
 

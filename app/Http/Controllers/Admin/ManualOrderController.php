@@ -255,11 +255,30 @@ class ManualOrderController extends Controller
             ]);
         }
 
-        $batches = $wms->localBatchesForItem(
-            $location,
-            (string) $product->code,
-            $customer->shelfLifeMonths()
-        );
+        $productCode = (string) $product->code;
+        $shelfLife = $customer->shelfLifeMonths();
+        $grouped = $wms->batchesByItemCode($location, $shelfLife) ?? [];
+        $batches = $wms->batchesForProduct($grouped, $productCode);
+
+        // Tab stok gudang tidak memfilter masa berlaku; jika semua batch tersaring, tampilkan seperti di hub.
+        if ($batches === [] && $shelfLife > 0) {
+            $grouped = $wms->batchesByItemCode($location, 0) ?? [];
+            $batches = $wms->batchesForProduct($grouped, $productCode);
+        }
+
+        if ($batches === []) {
+            $locationCandidates = array_values(array_unique(array_filter([
+                $location,
+                $warehouse->qad_location_code,
+                $warehouse->kode_hub,
+            ])));
+            foreach ($locationCandidates as $candidate) {
+                $batches = $wms->localBatchesForItem((string) $candidate, $productCode, 0);
+                if ($batches !== []) {
+                    break;
+                }
+            }
+        }
 
         return response()->json([
             'batches' => array_values($batches),
