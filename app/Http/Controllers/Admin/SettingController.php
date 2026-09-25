@@ -25,11 +25,11 @@ class SettingController extends Controller
 
         \App\Models\Expedition::updateOrCreate(
             ['code' => 'self_pickup'],
-            ['name' => 'Ambil Sendiri']
+            ['name' => 'Pengambilan Ditempat']
         );
         \App\Models\Expedition::updateOrCreate(
             ['code' => 'kurir_toko'],
-            ['name' => 'Kurir Toko']
+            ['name' => 'Diantar Ketempat']
         );
         
         if (isset($courierRes['data']) && is_array($courierRes['data'])) {

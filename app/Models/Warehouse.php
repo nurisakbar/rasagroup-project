@@ -260,9 +260,10 @@ class Warehouse extends Model
         $queryBuilder = function () use ($exclude, $rolesAllowed) {
             return self::where('is_active', true)
                 ->when($exclude, fn ($q) => $q->where('id', '!=', $exclude))
+                ->whereRaw('JSON_VALID(`target_role`)')
                 ->where(function ($q) use ($rolesAllowed) {
                     foreach ($rolesAllowed as $role) {
-                        $q->orWhereJsonContains('target_role', $role);
+                        $q->orWhereRaw('JSON_CONTAINS(`target_role`, ?)', [json_encode($role)]);
                     }
                 });
         };

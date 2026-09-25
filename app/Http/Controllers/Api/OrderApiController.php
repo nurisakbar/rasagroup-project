@@ -234,6 +234,10 @@ class OrderApiController extends Controller
             $discountData = $discountService->calculateCartDiscount($carts, $user);
             $tieredDiscountAmount = $discountData['total_discount_amount'];
             $subtotal = $retailSubtotal - $tieredDiscountAmount;
+            $ppn = \App\Support\TaxAwarePrice::ppnOnDpp(
+                $subtotal,
+                \App\Support\TaxAwarePrice::percentIfEnabled($user->usesPpn())
+            );
 
             $totalWeight = $carts->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -254,7 +258,7 @@ class OrderApiController extends Controller
                 $expedition->base_cost,
                 $serviceMultiplier
             );
-            $total = $subtotal + $shippingCost;
+            $total = $subtotal + $ppn + $shippingCost;
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .

@@ -23,10 +23,7 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $isSelfPickup = $this->order->expedition && (
-            in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']) || 
-            str_contains(strtolower($this->order->expedition->name), 'pickup')
-        );
+        $isSelfPickup = $this->order->expedition && in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']);
 
         $url = url('/orders/' . $this->order->id);
 
@@ -37,7 +34,7 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
             ->line('Total Pesanan: Rp ' . number_format($this->order->total_amount, 0, ',', '.'));
 
         if ($isSelfPickup) {
-            $mail->line('Metode Pengambilan: Ambil Sendiri di Gudang.')
+            $mail->line('Metode: Pengambilan Ditempat di gudang.')
                  ->line('Anda akan menerima notifikasi email berikutnya apabila barang telah selesai disiapkan dan siap untuk Anda ambil di gudang.');
         } else {
             $mail->line('Pesanan Anda akan segera diserahkan kepada pihak kurir/ekspedisi (' . ($this->order->expedition->name ?? 'Reguler') . ').')

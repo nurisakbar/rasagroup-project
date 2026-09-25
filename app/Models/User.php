@@ -403,19 +403,44 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Harga jual untuk user ini. Distributor memakai diskon kategori (DPP dulu, baru %).
+     * Persentase diskon yang dipakai untuk produk: kategori dulu, lalu price level.
      */
-    public function getProductPrice(Product $product): float
+    public function productDiscountPercentageFor(Product $product): float
     {
         $percent = $this->categoryDiscountPercentageFor($product);
         if ($percent > 0) {
-            return \App\Support\TaxAwarePrice::applyDiscount(
-                (float) $product->final_price,
-                $percent
-            );
+            return $percent;
         }
 
-        return (float) $product->final_price;
+        if ($this->isDistributor()) {
+            $this->loadMissing('priceLevel');
+            if ($this->priceLevel) {
+                return max(0.0, (float) $this->priceLevel->discount_percentage);
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Harga jual DPP: pajak katalog dikeluarkan dulu, baru diskon distributor.
+     */
+    public function getProductPrice(Product $product): float
+    {
+        $inclusive = (float) $product->final_price;
+        $categoryPercent = $this->categoryDiscountPercentageFor($product);
+        if ($categoryPercent > 0) {
+            return \App\Support\TaxAwarePrice::applyDiscount($inclusive, $categoryPercent);
+        }
+
+        if ($this->isDistributor()) {
+            $this->loadMissing('priceLevel');
+            if ($this->priceLevel) {
+                return $this->priceLevel->calculatePriceForProduct($product);
+            }
+        }
+
+        return \App\Support\TaxAwarePrice::applyDiscount($inclusive, 0.0);
     }
 
     /**

@@ -139,8 +139,8 @@
                             @endif
 
                             @php
-                                $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
-                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'diantar ketempat');
+                                $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
+                                $isKurirToko = $order->expedition && $order->expedition->code === 'kurir_toko';
                             @endphp
                             @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
@@ -345,8 +345,8 @@
 
                                 <!-- Shipping Status Card -->
                                 @php
-                                    $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
-                                    $isKurirToko = $order->expedition && str_contains(strtolower($order->expedition->name), 'diantar ketempat');
+                                    $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
+                                    $isKurirToko = $order->expedition && $order->expedition->code === 'kurir_toko';
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">

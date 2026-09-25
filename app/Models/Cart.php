@@ -187,16 +187,22 @@ class Cart extends Model
      */
     public function displayUnitPrice(): float
     {
-        $this->loadMissing('product');
+        $this->loadMissing(['product', 'user']);
         $product = $this->product;
         if (! $product) {
             return 0.0;
         }
+
+        $user = $this->user ?? \Illuminate\Support\Facades\Auth::user();
+        $unit = $user
+            ? $user->getProductPrice($product)
+            : \App\Support\TaxAwarePrice::applyDiscount((float) $product->final_price, 0.0);
+
         if ($this->showsLargeUnitInCart()) {
-            return (float) $product->final_price * (float) $product->unitsPerLargeEffective();
+            return $unit * (float) $product->unitsPerLargeEffective();
         }
 
-        return (float) $product->final_price;
+        return $unit;
     }
 
     /**

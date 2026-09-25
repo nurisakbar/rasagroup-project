@@ -80,7 +80,7 @@
                                         <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $cart->product->name }}" onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
                                     </td>
                                     <td class="product-des product-name pl-15 rg-cart-product">
-                                        <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->name }} {{ $cart->product->commercial_name ? ' - ' . $cart->product->commercial_name : '' }}</a></h6>
+                                        <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->display_name }}</a></h6>
                                         @if($cart->product->weight)
                                         <div class="product-meta mt-5">
                                             <small class="rg-cart-weight">

@@ -54,7 +54,7 @@ class DiscountService
         foreach ($carts as $cartItem) {
             $product = $cartItem->product;
             $quantity = $cartItem->quantity;
-            $originalPrice = \App\Support\TaxAwarePrice::excludingTax($user->getProductPrice($product));
+            $originalPrice = $user->getProductPrice($product);
             $subtotal = $originalPrice * $quantity;
 
             $group = $this->getProductCategoryGroup($product);

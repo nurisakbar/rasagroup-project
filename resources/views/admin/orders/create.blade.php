@@ -146,7 +146,7 @@
                                 <div class="form-group">
                                     <label>Ongkir (Rp)</label>
                                     <input type="number" min="0" step="1" class="form-control" name="shipping_cost" id="shipping_cost" value="{{ old('shipping_cost', 0) }}">
-                                    <p class="help-block">Isi 0 untuk ambil sendiri / sudah termasuk.</p>
+                                    <p class="help-block">Isi 0 untuk pengambilan di tempat / sudah termasuk.</p>
                                 </div>
                             </div>
                             <div class="col-md-4">

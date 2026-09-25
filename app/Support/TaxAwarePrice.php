@@ -22,16 +22,26 @@ class TaxAwarePrice
     /**
      * Diskon dihitung dari harga setelah pajak dikeluarkan.
      * Contoh: 111.000, PPN 11% → DPP 100.000, diskon 20% → 80.000.
+     * Diskon 0% tetap mengembalikan DPP (pajak sudah dikeluarkan).
      */
     public static function applyDiscount(float $inclusivePrice, float $discountPercent, ?float $taxPercent = null): float
     {
+        $dpp = self::excludingTax($inclusivePrice, $taxPercent);
         if ($discountPercent <= 0) {
-            return $inclusivePrice;
+            return round($dpp, 2);
         }
 
-        $dpp = self::excludingTax($inclusivePrice, $taxPercent);
-
         return round($dpp * (1 - ($discountPercent / 100)), 2);
+    }
+
+    public static function ppnOnDpp(float $dpp, ?float $taxPercent = null): float
+    {
+        $taxPercent ??= Setting::taxPercent();
+        if ($taxPercent <= 0 || $dpp <= 0) {
+            return 0.0;
+        }
+
+        return round($dpp * ($taxPercent / 100), 2);
     }
 
     /**

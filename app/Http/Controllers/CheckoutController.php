@@ -14,6 +14,7 @@ use App\Jobs\ProcessCheckoutSuccessJob;
 use App\Services\FaspayService;
 use App\Support\QadWsOrderNumberGenerator;
 use App\Support\ShopFulfillment;
+use App\Support\TaxAwarePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -130,6 +131,9 @@ class CheckoutController extends Controller
         $subtotal = $pricing['subtotal_after_distributor'];
         $priceLevelName = $pricing['price_level_name'];
         $showDistributorPricing = $pricing['show_distributor_pricing'];
+        $ppn = $pricing['ppn'];
+        $ppnLabel = $pricing['ppn_label'];
+        $showPpn = $pricing['tax_percent'] > 0;
 
         // Check if default address has district_id
         if ($defaultAddress && !$defaultAddress->district_id) {
@@ -265,7 +269,7 @@ class CheckoutController extends Controller
     $discountAmount = 0;
     $discountPercent = 0;
 
-    $total = $subtotal - $discountAmount + $shippingCost;
+    $total = $subtotal - $discountAmount + $ppn + $shippingCost;
 
     // Track affiliate
     $affiliate = null;
@@ -308,6 +312,9 @@ class CheckoutController extends Controller
         'showTieredDiscount',
         'priceLevelName',
         'showDistributorPricing',
+        'ppn',
+        'ppnLabel',
+        'showPpn',
         'shippingCost', 
         'originalShippingCost',
         'isShippingDiscounted',
@@ -362,6 +369,7 @@ class CheckoutController extends Controller
         $subtotal = $pricing['subtotal_after_distributor'];
         $showDistributorPricing = $pricing['show_distributor_pricing'];
         $priceLevelName = $pricing['price_level_name'];
+        $ppn = $pricing['ppn'];
 
         $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
         $hubChanged = $syncResult['hub_changed'] ?? false;
@@ -447,7 +455,7 @@ class CheckoutController extends Controller
             $discountPercent = $applicableDiscount->discount_percent;
         }
 
-        $total = $subtotal - $discountAmount + $shippingCost;
+        $total = $subtotal - $discountAmount + $ppn + $shippingCost;
 
         $isShippingDiscounted = false;
         $originalShippingCost = $shippingCost;
@@ -480,6 +488,11 @@ class CheckoutController extends Controller
             'is_shipping_discounted' => $isShippingDiscounted,
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            'ppn' => $ppn,
+            'ppn_formatted' => 'Rp ' . number_format($ppn, 0, ',', '.'),
+            'ppn_label' => $pricing['ppn_label'],
+            'tax_percent' => $pricing['tax_percent'],
+            'goods_total' => $subtotal - $discountAmount + $ppn,
             'catalog_subtotal' => $pricing['catalog_subtotal'] ?? $retailSubtotal,
             'catalog_subtotal_formatted' => 'Rp ' . number_format($pricing['catalog_subtotal'] ?? $retailSubtotal, 0, ',', '.'),
             'retail_subtotal' => $retailSubtotal,
@@ -843,6 +856,7 @@ class CheckoutController extends Controller
             $user->loadMissing('priceLevel');
             $pricing = $this->cartPricingBreakdown($user, $carts);
             $subtotal = $pricing['subtotal_after_distributor'];
+            $ppn = $pricing['ppn'];
 
             $totalWeight = $carts->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
@@ -921,7 +935,7 @@ class CheckoutController extends Controller
             $discountAmount = 0;
             $discountPercent = 0;
 
-            $total = $subtotal - $discountAmount + $shippingCost;
+            $total = $subtotal - $discountAmount + $ppn + $shippingCost;
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .
@@ -1354,14 +1368,15 @@ class CheckoutController extends Controller
      */
     private function cartPricingBreakdown(User $user, $carts): array
     {
+        $user->loadMissing(['priceLevel', 'categoryDiscounts']);
+
         $retailSubtotal = (float) $carts->sum(function ($cart) use ($user) {
             return $user->getProductPrice($cart->product) * (int) $cart->quantity;
         });
 
-        $user->loadMissing(['priceLevel', 'categoryDiscounts']);
-
         $catalogSubtotal = (float) $carts->sum(function ($cart) {
-            return (float) $cart->product->price * (int) $cart->quantity;
+            return TaxAwarePrice::excludingTax((float) $cart->product->price)
+                * (int) $cart->quantity;
         });
 
         $subtotalAfterDistributor = $retailSubtotal;
@@ -1375,7 +1390,7 @@ class CheckoutController extends Controller
         if ($user->isDistributor()) {
             $distributorPriceDiscount = max(0.0, $catalogSubtotal - $retailSubtotal);
             $subtotalAfterDistributor = $retailSubtotal;
-            if ($distributorPriceDiscount > 0) {
+            if ($distributorPriceDiscount > 0.5) {
                 $priceLevelName = $user->categoryDiscounts->contains(fn ($d) => (float) $d->discount_percentage > 0)
                     ? 'Diskon Kategori'
                     : ($user->priceLevel->name ?? 'Diskon Distributor');
@@ -1387,6 +1402,9 @@ class CheckoutController extends Controller
             $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
         }
 
+        $taxPercent = TaxAwarePrice::percentIfEnabled($user->usesPpn());
+        $ppn = TaxAwarePrice::ppnOnDpp($subtotalAfterDistributor, $taxPercent);
+
         return [
             'catalog_subtotal' => $catalogSubtotal,
             'retail_subtotal' => $retailSubtotal,
@@ -1396,8 +1414,11 @@ class CheckoutController extends Controller
             'subtotal_after_distributor' => $subtotalAfterDistributor,
             'price_level_name' => $priceLevelName,
             'show_distributor_pricing' => $user->isDistributor()
-                && $distributorPriceDiscount > 0,
+                && $distributorPriceDiscount > 0.5,
             'show_tiered_discount' => $tieredDiscountAmount > 0,
+            'tax_percent' => $taxPercent,
+            'ppn' => $ppn,
+            'ppn_label' => TaxAwarePrice::ppnLabel($taxPercent),
         ];
     }
 

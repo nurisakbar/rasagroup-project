@@ -24,10 +24,7 @@ class OrderShippedNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $isSelfPickup = $this->order->expedition && (
-            in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']) || 
-            str_contains(strtolower($this->order->expedition->name), 'pickup')
-        );
+        $isSelfPickup = $this->order->expedition && in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']);
 
         $isDistributor = $this->order->order_type === Order::TYPE_DISTRIBUTOR;
         $url = $isDistributor 

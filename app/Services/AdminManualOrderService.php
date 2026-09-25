@@ -427,11 +427,6 @@ class AdminManualOrderService
 
     private function unitPrice(User $user, Product $product, float $taxPercent): float
     {
-        $percent = $user->categoryDiscountPercentageFor($product);
-        if ($percent > 0) {
-            return TaxAwarePrice::applyDiscount((float) $product->final_price, $percent, $taxPercent);
-        }
-
-        return (float) $product->final_price;
+        return $user->getProductPrice($product);
     }
 }

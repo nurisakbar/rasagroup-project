@@ -29,6 +29,20 @@ class Expedition extends Model
         'is_active' => 'boolean',
     ];
 
+    public static function publicName(?string $code): ?string
+    {
+        return match ($code) {
+            'self_pickup' => 'Pengambilan Ditempat',
+            'kurir_toko' => 'Diantar Ketempat',
+            default => null,
+        };
+    }
+
+    public function getNameAttribute(?string $value): string
+    {
+        return self::publicName($this->attributes['code'] ?? null) ?? (string) ($value ?? '');
+    }
+
     public function getServicesAttribute(): array
     {
         $services = [

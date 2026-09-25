@@ -443,8 +443,10 @@
                                     @foreach($carts as $cart)
                                         @php
                                             $checkoutUser = Auth::user();
+                                            $taxExtract = \App\Models\Setting::taxPercent();
                                             $baseUnitPrice = $checkoutUser->getProductPrice($cart->product);
-                                            $baseRetailUnit = (float) $cart->product->price;
+                                            $baseRetailUnit = \App\Support\TaxAwarePrice::excludingTax((float) $cart->product->price, $taxExtract);
+                                            $discountPercentage = $checkoutUser->productDiscountPercentageFor($cart->product);
                                             
                                             $multiplier = $cart->showsLargeUnitInCart() ? $cart->product->unitsPerLargeEffective() : 1;
                                             $unitPrice = $baseUnitPrice * $multiplier;
@@ -452,17 +454,16 @@
                                             $displayQty = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity;
                                             $displayUnit = $cart->showsLargeUnitInCart() ? $cart->cartQuantityUnitLabel() : $cart->product->unit;
                                             
-                                            $showRetailStrike = $checkoutUser->isDistributor() && $baseUnitPrice + 0.5 < $baseRetailUnit;
-                                            $discountPercentage = $showRetailStrike ? round((1 - ($baseUnitPrice / $baseRetailUnit)) * 100, 1) : 0;
+                                            $showRetailStrike = $checkoutUser->isDistributor() && $discountPercentage > 0 && $baseUnitPrice + 0.5 < $baseRetailUnit;
                                         @endphp
                                         <tr class="rg-checkout-item">
                                             <td class="image product-thumbnail rg-checkout-item-thumb">
                                                 <img src="{{ $cart->product->image_url ? $cart->product->image_url : asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}" alt="{{ $cart->product->name }}">
                                             </td>
                                             <td class="rg-checkout-item-info">
-                                                <a href="{{ route('products.show', $cart->product) }}" class="rg-checkout-item-name text-heading">{{ $cart->product->name }}</a>
-                                                @if($cart->product->commercial_name)
-                                                    <p class="rg-checkout-item-variant">{{ $cart->product->commercial_name }}</p>
+                                                <a href="{{ route('products.show', $cart->product) }}" class="rg-checkout-item-name text-heading">{{ $cart->product->display_name }}</a>
+                                                @if($cart->product->commercial_name && strcasecmp(trim($cart->product->commercial_name), trim($cart->product->name)) !== 0)
+                                                    <p class="rg-checkout-item-variant">{{ $cart->product->name }}</p>
                                                 @endif
                                                 <div class="rg-checkout-item-meta">
                                                     <span class="rg-checkout-item-qty">
@@ -566,6 +567,14 @@
                                     </tr>
                                     @endforeach
                                 @endif
+                                <tr class="rg-checkout-total-row" id="ppnRow" @if(empty($showPpn) || ($ppn ?? 0) <= 0) style="display: none;" @endif>
+                                    <th class="cart_total_label align-middle pb-3">
+                                        <h6 class="text-muted mb-0" id="ppnLabelDisplay">{{ $ppnLabel ?? 'PPN' }}</h6>
+                                    </th>
+                                    <td class="cart_total_amount text-end align-middle pb-3">
+                                        <h5 class="text-brand mb-0" id="ppnDisplay">Rp {{ number_format($ppn ?? 0, 0, ',', '.') }}</h5>
+                                    </td>
+                                </tr>
                                 <tr class="rg-checkout-total-row rg-checkout-shipping-row">
                                     <th class="cart_total_label align-middle py-3">
                                         <h6 class="text-muted mb-2">Ongkos Kirim</h6>
@@ -1190,7 +1199,7 @@
     });
 
 
-    window.checkoutTotalWithoutShipping = {{ (float) ($subtotal - $discountAmount) }};
+    window.checkoutTotalWithoutShipping = {{ (float) (($subtotal - $discountAmount) + ($ppn ?? 0)) }};
     var paymentFees = @json($paymentFees ?? []);
     var currentBaseTotal = {{ (float) $total }};
     var currentPaymentFee = 0;
@@ -1515,10 +1524,21 @@
                 }
 
                 $('#subtotalDisplay').text(data.subtotal_formatted);
+                if (typeof data.ppn !== 'undefined') {
+                    $('#ppnDisplay').text(data.ppn_formatted);
+                    if (data.ppn_label) {
+                        $('#ppnLabelDisplay').text(data.ppn_label);
+                    }
+                    if (parseFloat(data.ppn) > 0) {
+                        $('#ppnRow').show();
+                    } else {
+                        $('#ppnRow').hide();
+                    }
+                }
                 if (data.total_weight_formatted) {
                     $('#totalWeightDisplay').text('Berat Total: ' + data.total_weight_formatted);
                 }
-                window.checkoutTotalWithoutShipping = parseFloat(data.subtotal) || 0;
+                window.checkoutTotalWithoutShipping = parseFloat(data.goods_total != null ? data.goods_total : data.subtotal) || 0;
 
                 if (data.show_distributor_pricing) {
                     $('#distributorRetailRow').show();

@@ -87,7 +87,7 @@
                             <td>{{ \App\Support\Wib::format($order->created_at) }} WIB</td>
                         </tr>
                         @php
-                            $isSelfPickupTop = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                            $isSelfPickupTop = $order->expedition && $order->expedition->code === 'self_pickup';
                         @endphp
                         @if($order->pickup_ready_at)
                         <tr class="bg-success">
@@ -350,7 +350,7 @@
                                     // EkspedisiKu Pickup API currently only supports Lion Parcel
                                     $supportsPickup = $order->expedition && in_array($order->expedition->code, ['lion_parcel'], true);
                                     $isLalamove = $order->expedition && $order->expedition->code === 'lalamove';
-                                    $isSelfPickup = $order->expedition && ($order->expedition->code === 'self_pickup' || str_contains(strtolower($order->expedition->name), 'pickup'));
+                                    $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
                                 @endphp
 
                                 @if($isSelfPickup)

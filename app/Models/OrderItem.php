@@ -151,7 +151,7 @@ class OrderItem extends Model
             return 0.0;
         }
 
-        return $this->order->user->categoryDiscountPercentageFor($this->product);
+        return $this->order->user->productDiscountPercentageFor($this->product);
     }
 
     /**
@@ -160,6 +160,11 @@ class OrderItem extends Model
      */
     public function soldBaseUnitPrice(): float
     {
+        $this->loadMissing(['order.user', 'product']);
+        if ($this->order?->user && $this->product) {
+            return (float) $this->order->user->getProductPrice($this->product);
+        }
+
         $percent = $this->buyerCategoryDiscountPercent();
         if ($percent > 0) {
             return \App\Support\TaxAwarePrice::applyDiscount(
@@ -173,11 +178,6 @@ class OrderItem extends Model
             return $this->hasUnitDiscount()
                 ? $sold
                 : \App\Support\TaxAwarePrice::excludingTax($sold);
-        }
-
-        $this->loadMissing(['order.user', 'product']);
-        if ($this->order?->user && $this->product) {
-            return (float) $this->order->user->getProductPrice($this->product);
         }
 
         return 0.0;
