@@ -181,7 +181,18 @@
             placeholder: '-- Pilih Nama Sales (Opsional) --',
             allowClear: true,
             width: '100%',
-            dropdownAutoWidth: true
+            dropdownAutoWidth: true,
+            templateSelection: function (data) {
+                if (!data.id) {
+                    return data.text;
+                }
+                var $elem = $('<span>' + data.text + '</span>');
+                $elem.css({
+                    'color': '#ef4444',
+                    'font-weight': 'bold'
+                });
+                return $elem;
+            }
         });
         
         // Force width 100% via inline style and force styles on the container itself
