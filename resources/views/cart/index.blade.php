@@ -307,8 +307,7 @@
             grid-template-columns: 72px 1fr auto;
             grid-template-areas:
                 "thumb product remove"
-                "unit-price unit-price unit-price"
-                "qty qty qty"
+                "unit-price unit-price qty"
                 "subtotal subtotal subtotal";
             gap: 0 12px;
             background: #fff;
@@ -378,29 +377,41 @@
         .rg-cart-page .rg-cart-unit-price,
         .rg-cart-page .rg-cart-qty,
         .rg-cart-page .rg-cart-subtotal {
-            grid-column: 1 / -1;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
             margin-top: 14px;
             padding-top: 14px !important;
+        }
+        
+        .rg-cart-page .rg-cart-unit-price,
+        .rg-cart-page .rg-cart-qty {
             border-top: 1px solid #f1f5f9;
+        }
+
+        .rg-cart-page .rg-cart-subtotal {
+            grid-column: 1 / -1;
         }
 
         .rg-cart-page .rg-cart-unit-price {
             grid-area: unit-price;
+            justify-content: flex-start;
         }
 
         .rg-cart-page .rg-cart-qty {
             grid-area: qty;
-            align-items: flex-start;
+            justify-content: flex-end;
+        }
+        
+        .rg-cart-page .rg-cart-qty::before {
+            display: none !important; /* Hide "Jumlah" text to save space */
         }
 
         .rg-cart-page .rg-cart-subtotal {
             grid-area: subtotal;
             border-top: none;
-            margin-top: 0;
+            margin-top: 12px;
             padding-top: 0 !important;
             background: #f8fafc;
             border-radius: 12px;
@@ -408,7 +419,6 @@
         }
 
         .rg-cart-page .rg-cart-unit-price::before,
-        .rg-cart-page .rg-cart-qty::before,
         .rg-cart-page .rg-cart-subtotal::before {
             content: attr(data-title);
             font-size: 13px;
