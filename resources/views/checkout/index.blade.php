@@ -262,7 +262,7 @@
                                 <div class="payment-option mb-10 payment-method-card" id="card-faspay-va-group">
                                     <div class="custom-radio" onclick="selectPayment('faspay_va_group')" style="cursor: pointer;">
                                         <input class="form-check-input" type="radio" name="payment_group" value="virtual_account" id="payVAGroup">
-                                        <label class="form-check-label" for="payVAGroup" style="cursor: pointer; width: 100%;">
+                                        <label class="form-check-label" for="payVAGroup" style="cursor: pointer;">
                                             <strong class="mr-5">Virtual Account (VA)</strong>
                                         </label>
                                     </div>
