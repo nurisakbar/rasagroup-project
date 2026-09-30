@@ -579,7 +579,12 @@
                                 <tr class="rg-checkout-total-row rg-checkout-shipping-row">
                                     <th class="cart_total_label align-middle py-3">
                                         <h6 class="text-muted mb-2">Ongkos Kirim</h6>
-                                        <small class="text-muted d-block rg-checkout-expedition-info" id="expeditionInfo">{{ $defaultExpedition?->name ?? '-' }} - {{ $defaultService['name'] ?? 'Reguler' }}</small>
+                                        @php
+                                            $expName = $defaultExpedition?->name ?? '-';
+                                            $srvName = $defaultService['name'] ?? 'Reguler';
+                                            $expeditionText = (strpos($srvName, $expName) === 0) ? $srvName : $expName . ' - ' . $srvName;
+                                        @endphp
+                                        <small class="text-muted d-block rg-checkout-expedition-info" id="expeditionInfo">{{ $expeditionText }}</small>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle py-3">
                                         <h5 class="text-brand mb-2" id="shippingCostDisplay">
@@ -1572,8 +1577,10 @@
                 
                 // Update expedition info
                 var expCard = $('.expedition-card.active');
-                var expName = expCard.length ? expCard.find('.fw-bold').text() : '';
-                $('#expeditionInfo').text(expName + ' - ' + data.service_name);
+                var expName = expCard.length ? $.trim(expCard.find('.fw-bold').text()) : '';
+                var srvName = data.service_name || '';
+                var expText = (srvName.indexOf(expName) === 0) ? srvName : (expName + ' - ' + srvName);
+                $('#expeditionInfo').text(expText);
             },
             error: function(xhr) {
                 console.error('Error:', xhr);
