@@ -326,7 +326,8 @@
             display: grid !important;
             grid-template-columns: 80px 1fr auto;
             grid-template-areas:
-                "thumb product unit-price"
+                "thumb title title"
+                "thumb weight unit-price"
                 "remove qty qty"
                 "subtotal subtotal subtotal";
             gap: 8px 12px;
@@ -370,10 +371,21 @@
         }
 
         .rg-cart-page .rg-cart-product {
-            grid-area: product;
+            display: contents;
+        }
+        
+        .rg-cart-page .rg-cart-product > h6 {
+            grid-area: title;
             align-self: start;
-            min-width: 0;
-            text-align: left !important;
+            margin: 0 !important;
+            padding-left: 8px;
+        }
+        
+        .rg-cart-page .rg-cart-product > .product-meta {
+            grid-area: weight;
+            align-self: center;
+            margin: 0 !important;
+            padding-left: 8px;
         }
 
         .rg-cart-page .rg-cart-product .product-name {
@@ -385,7 +397,7 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-align: left !important;
-            margin-bottom: 4px !important;
+            margin-bottom: 0 !important;
             color: #1e293b;
         }
         
