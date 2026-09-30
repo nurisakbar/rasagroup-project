@@ -171,7 +171,7 @@
                                            {{ $isDefaultExpedition ? 'checked' : '' }}>
                                     <div class="card-body text-center p-2">
                                         @if($expedition->logo)
-                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset($expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 30px; object-fit:contain;">
+                                            <img src="{{ str_starts_with($expedition->logo, 'http') ? $expedition->logo : asset($expedition->logo) }}" alt="{{ $expedition->name }}" style="height: 45px; max-width: 100%; object-fit:contain;">
                                         @else
                                             <strong class="text-uppercase">{{ $expedition->code }}</strong>
                                         @endif
@@ -183,7 +183,7 @@
                     </div>
 
                     <!-- Service Options -->
-                    <div class="mt-3">
+                    <div class="mt-3" id="serviceSelectionSection" style="{{ in_array($defaultExpedition?->code, ['self_pickup', 'kurir_toko']) ? 'display: none;' : '' }}">
                         <label class="font-weight-bold mb-10">Layanan Tersedia:</label>
                         <div id="serviceList" class="row">
                             @if(!empty($allShippingServices))
@@ -488,10 +488,11 @@
                                                     $showStockWarning = is_array($warning)
                                                         && isset($warning['available_qty'])
                                                         && $warning['available_qty'] !== ''
-                                                        && $cart->quantity > (int) $warning['available_qty'];
+                                                        && (int) ($warning['requested_qty'] ?? 0) > (int) $warning['available_qty'];
+                                                    $stockUnit = $warning['unit'] ?? '';
                                                 @endphp
                                                 <div class="stock-warning-message text-danger small mt-1 fw-bold align-items-center {{ $showStockWarning ? 'd-flex' : 'd-none' }}" id="stock-warning-{{ $cart->id }}">
-                                                    <span>Stok tidak cukup! (Tersedia: <span class="available-qty">{{ $showStockWarning ? $warning['available_qty'] : '' }}</span>)</span>
+                                                    <span>Stok tidak cukup! (Tersedia: <span class="available-qty">{{ $showStockWarning ? trim($warning['available_qty'].' '.$stockUnit) : '' }}</span>)</span>
                                                     <button type="submit" form="delete-form-{{ $cart->id }}" onclick="return confirm('Hapus item ini dari pesanan?');" class="text-danger border-0 align-baseline ms-2" style="background-color: #fff5f5; color: #c0392b !important; padding: 4px 6px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none; line-height: 1; display: inline-flex; align-items: center; justify-content: center;" title="Hapus Item"><i class="fi-rs-trash"></i></button>
                                                 </div>
                                             </td>
@@ -646,31 +647,9 @@
                     </div>
                     
                     <div class="divider-2 mt-20 mb-20"></div>
+                    <input type="hidden" name="sales_code" value="{{ request('sales_code', Auth::user()?->sales_code) }}">
 
-                    <!-- Sales Code -->
-                    @if(!Auth::check() || !Auth::user()->isDistributor())
-                    <div class="mb-20">
-                        <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Nama Sales</h6>
-                        <div class="form-group mb-0">
-                            <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
-                                @php
-                                    $currentSalesCode = old('sales_code', Auth::user()?->sales_code);
-                                    $salesName = '';
-                                    if ($currentSalesCode) {
-                                        $salesUser = \App\Models\User::where('sales_code', $currentSalesCode)->where('role', 'sales')->first();
-                                        $salesName = $salesUser ? ' - ' . $salesUser->name : '';
-                                    }
-                                @endphp
-                                @if($currentSalesCode)
-                                    <option value="{{ $currentSalesCode }}" selected="selected">{{ $currentSalesCode }}{{ $salesName }}</option>
-                                @endif
-                            </select>
-                            @error('sales_code')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    @endif
+
                     
                     <!-- Notes -->
                     <div class="mb-20">
@@ -1179,23 +1158,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#sales_code').select2({
-            placeholder: 'Masukkan Nama Sales (Opsional)',
-            allowClear: true,
-            width: '100%',
-            ajax: {
-                url: '{{ route('sales.search') }}',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term };
-                },
-                processResults: function (data) {
-                    return { results: data.results };
-                },
-                cache: true
-            }
-        });
+
     });
 
 
@@ -1205,6 +1168,7 @@
     var currentPaymentFee = 0;
     
     var currentAddressId = '{{ $defaultAddress?->id ?? '' }}';
+    var currentSalesCode = new URLSearchParams(window.location.search).get('sales_code');
     var currentExpeditionId = '{{ $defaultExpedition?->id ?? '' }}';
     var currentServiceCode = @json($defaultService['code'] ?? null);
     var servicesLoading = false;
@@ -1311,7 +1275,10 @@
             $.ajax({
                 url: '{{ route("checkout.check-stock") }}',
                 type: 'GET',
-                data: { address_id: currentAddressId },
+                data: { 
+                    address_id: currentAddressId,
+                    sales_code: currentSalesCode
+                },
                 success: function(data) {
                     handleStockWarnings(data.stock_warnings);
                     if (data.hub_changed) {
@@ -1362,6 +1329,7 @@
         
         var expCard = $('.expedition-card[data-expedition-id="'+expeditionId+'"]');
         var expName = expCard.length ? expCard.find('.fw-bold').text() : '';
+        var expCode = expCard.length ? expCard.data('expedition-code') : '';
         $('#expeditionInfo').text(expName + ' - (Pilih Layanan)');
         
         serviceList.html('<div class="col-12"><div class="text-center py-3"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Loading...</span></div> Memuat layanan...</div></div>');
@@ -1371,7 +1339,8 @@
             type: 'GET',
             data: {
                 expedition_id: expeditionId,
-                address_id: currentAddressId
+                address_id: currentAddressId,
+                sales_code: currentSalesCode
             },
             success: function(data) {
                 if (data.warehouse) {
@@ -1402,6 +1371,14 @@
                 
                 handleStockWarnings(data.stock_warnings);
 
+                var isPickupOrDelivery = ['self_pickup', 'kurir_toko'].includes(expCode);
+                
+                if (isPickupOrDelivery) {
+                    $('#serviceSelectionSection').hide();
+                } else {
+                    $('#serviceSelectionSection').show();
+                }
+
                 if (data.services.length === 0) {
                     serviceList.html('<div class="col-12"><div class="alert alert-warning py-2 small"><i class="fi-rs-info"></i> Tidak ada layanan pengiriman tersedia untuk wilayah ini.</div></div>');
                     $('#expeditionInfo').text(expName + ' - (Tidak ada layanan)');
@@ -1409,9 +1386,9 @@
                     setSubmitEnabled(false);
                     return;
                 }
-    
+
                 data.services.forEach(function(service, index) {
-                    var isSelected = false; // User must explicitly select
+                    var isSelected = isPickupOrDelivery && index === 0; // Auto-select for pickup/delivery
                     
                     var serviceHtml = `
                         <div class="col-md-6 mb-10">
@@ -1439,13 +1416,15 @@
                 
                 // Update displays if services found
                 if (data.services.length > 0) {
-                    // Reset shipping displays until user selects a service
-                    $('#shippingCostDisplay').text('-');
-                    $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID'));
-                    $('#estimatedDelivery').text('-');
-                    
-                    // If we previously auto-called updateShipping() here, we remove it
-                    // updateShipping(); 
+                    if (isPickupOrDelivery) {
+                        // Auto-calculate shipping immediately
+                        selectService(data.services[0].code);
+                    } else {
+                        // Reset shipping displays until user selects a service
+                        $('#shippingCostDisplay').text('-');
+                        $('#totalDisplay').text('Rp ' + Number(window.checkoutTotalWithoutShipping || 0).toLocaleString('id-ID'));
+                        $('#estimatedDelivery').text('-');
+                    }
                 } else {
                      // Reset shipping displays if no services
                     $('#shippingCostDisplay').text('-');
@@ -1497,7 +1476,8 @@
             data: {
                 address_id: currentAddressId,
                 expedition_id: currentExpeditionId,
-                service_code: currentServiceCode
+                service_code: currentServiceCode,
+                sales_code: currentSalesCode
             },
             success: function(data) {
         if (data.error) {
@@ -1770,32 +1750,12 @@
                     if (!warningDiv.find('.available-qty').length) {
                         warningDiv.html('<span>Stok tidak cukup! (Tersedia: <span class="available-qty"></span>)</span>');
                     }
-                    warningDiv.find('.available-qty').text(available);
+                    warningDiv.find('.available-qty').text($.trim(available + ' ' + (warning.unit || '')));
                     warningDiv.removeClass('d-none').addClass('d-flex');
                     hasWarning = true;
                 }
-                warningListHtml.push('- ' + warning.product_name + ' (Pesan: ' + warning.requested_qty + ', Tersedia: ' + available + ')');
             });
-
-            if (warningListHtml.length) {
-            const warningHtml = warningListHtml.join('<br>');
-            const removeBtnHtml = `
-                <div class="mt-15">
-                    <form action="{{ route('cart.remove-out-of-stock') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="btn btn-xs btn-outline-danger">Hapus Item Habis Stok</button>
-                    </form>
-                </div>`;
-                
-            const stockAlert = `
-                <div class="alert alert-warning alert-dismissible fade show mb-30" role="alert">
-                    <i class="fi-rs-exclamation mr-10"></i> <strong>Peringatan Stok:</strong><br>${warningHtml}
-                    ${removeBtnHtml}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>`;
-            $('#checkoutAlertContainer').append(stockAlert);
-            }
+            // We no longer show the global alert box since it's already under each product
         }
         
         var anyVisible = $('.stock-warning-message.d-flex').length > 0;

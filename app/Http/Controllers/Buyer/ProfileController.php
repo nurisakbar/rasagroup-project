@@ -17,7 +17,8 @@ class ProfileController extends Controller
 
     public function edit()
     {
-        return view('buyer.profile.edit');
+        $salesList = \App\Models\User::where('role', 'sales')->get();
+        return view('buyer.profile.edit', compact('salesList'));
     }
 
     public function update(Request $request)
@@ -35,6 +36,7 @@ class ProfileController extends Controller
             'phone' => 'nullable|string|max:20',
             'date_of_birth' => 'nullable|date|before_or_equal:today',
             'occupation' => 'nullable|string|max:120',
+            'sales_code' => 'nullable|string|max:255',
         ]);
 
         if (array_key_exists('occupation', $validated) && is_string($validated['occupation'])) {

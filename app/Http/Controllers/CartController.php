@@ -158,8 +158,9 @@ class CartController extends Controller
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
         $totalWeightFormatted = $this->formatTotalWeightGrams($totalWeight);
+        $salesList = \App\Models\User::where('role', 'sales')->get();
 
-        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted'));
+        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted', 'salesList'));
     }
 
     public function update(Request $request, Cart $cart)
@@ -330,6 +331,10 @@ class CartController extends Controller
             return $request->ajax()
                 ? response()->json(['error' => 'Silakan masuk terlebih dahulu untuk belanja.'], 401)
                 : redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk belanja.');
+        }
+
+        if ($denied = \App\Http\Middleware\PreventSuperAdminFromBuyer::deny($request)) {
+            return $denied;
         }
 
         $this->tryApplyShoppingAddressFromUser();

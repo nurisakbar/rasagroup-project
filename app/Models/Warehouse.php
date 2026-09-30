@@ -250,10 +250,17 @@ class Warehouse extends Model
         if ($user) {
             if ($user->isDistributor()) {
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
-            } elseif ($user->isOutlet()) {
-                $rolesAllowed = ['outlet']; // STRICTLY outlet only
-            } elseif ($user->isBuyer()) {
-                $rolesAllowed = ['ecommerce']; // STRICTLY buyer -> ecommerce
+            } elseif ($user->isOutlet() || $user->isBuyer()) {
+                $isValidSalesCode = false;
+                if (request()->filled('sales_code')) {
+                    $isValidSalesCode = \App\Models\User::where('sales_code', request('sales_code'))->where('role', 'sales')->exists();
+                }
+
+                if ($isValidSalesCode) {
+                    $rolesAllowed = ['outlet']; // If valid sales code is used, strictly search outlet warehouses
+                } else {
+                    $rolesAllowed = ['ecommerce']; // If no/invalid sales code, strictly search ecommerce warehouses
+                }
             }
         }
 

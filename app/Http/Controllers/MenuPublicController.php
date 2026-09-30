@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use App\Models\Warehouse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class MenuPublicController extends Controller
 {
@@ -61,8 +61,12 @@ class MenuPublicController extends Controller
     /**
      * Tambahkan semua produk komposisi menu ke keranjang (hub dari sesi), sesuai stok tersedia.
      */
-    public function addCompositionToCart(Request $request, string $slug): RedirectResponse
+    public function addCompositionToCart(Request $request, string $slug): Response
     {
+        if ($denied = \App\Http\Middleware\PreventSuperAdminFromBuyer::deny($request)) {
+            return $denied;
+        }
+
         $menu = Menu::query()
             ->where('slug', $slug)
             ->where('status_aktif', true)

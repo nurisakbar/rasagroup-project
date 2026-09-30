@@ -101,7 +101,7 @@ Route::get('/cart/{product}', function (\App\Models\Product $product) {
     return redirect()->route('products.show', $product);
 })->name('cart.product-redirect');
 
-Route::middleware(['auth', 'wa.verified'])->group(function () {
+Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/bulk-delete', [App\Http\Controllers\CartController::class, 'bulkDelete'])->name('cart.bulk-delete');
     Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
@@ -117,7 +117,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Checkout Routes
-Route::middleware(['auth', 'wa.verified'])->group(function () {
+Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [App\Http\Controllers\CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/calculate-shipping', [App\Http\Controllers\CheckoutController::class, 'calculateShipping'])->name('checkout.calculate-shipping');
@@ -273,6 +273,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Users Management
         Route::resource('users', App\Http\Controllers\Admin\UserController::class);
+
+        // Outlets Management
+        Route::resource('outlets', App\Http\Controllers\Admin\OutletController::class);
 
         // Sales Management
         Route::get('sales/{sale}/orders', [App\Http\Controllers\Admin\SalesController::class, 'orders'])->name('sales.orders');

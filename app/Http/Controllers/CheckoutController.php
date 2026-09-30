@@ -36,6 +36,10 @@ class CheckoutController extends Controller
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
+        if ($denied = \App\Http\Middleware\PreventSuperAdminFromBuyer::deny(request())) {
+            return $denied;
+        }
+
         Auth::user()->loadMissing('priceLevel');
 
         $query = Cart::with(['product', 'warehouse.wilayah'])
@@ -699,6 +703,10 @@ class CheckoutController extends Controller
     {
         if (!Auth::check()) {
             return redirect()->route('login');
+        }
+
+        if ($denied = \App\Http\Middleware\PreventSuperAdminFromBuyer::deny($request)) {
+            return $denied;
         }
 
         Log::info('--- CHECKOUT STORE START ---', [
@@ -1439,19 +1447,19 @@ class CheckoutController extends Controller
 
         if (ShopFulfillment::autoHubByAddress()) {
             $bestHub = ShopFulfillment::resolveNearestHub($address, $excludeOwnHubId, $totalAmount);
+        }
 
-            if ($bestHub && $bestHub->id !== $currentWarehouseId) {
-                $hubChanged = true;
-                Cart::where('user_id', Auth::id())
-                    ->where('cart_type', 'regular')
-                    ->update(['warehouse_id' => $bestHub->id]);
+        if ($bestHub && $bestHub->id !== $currentWarehouseId) {
+            $hubChanged = true;
+            Cart::where('user_id', Auth::id())
+                ->where('cart_type', 'regular')
+                ->update(['warehouse_id' => $bestHub->id]);
 
-                session([
-                    'selected_hub_id' => $bestHub->id,
-                    'selected_hub_name' => $bestHub->name,
-                    'selected_hub_slug' => $bestHub->slug,
-                ]);
-            }
+            session([
+                'selected_hub_id' => $bestHub->id,
+                'selected_hub_name' => $bestHub->name,
+                'selected_hub_slug' => $bestHub->slug,
+            ]);
         }
 
         $currentHub = $bestHub ?: Warehouse::find($currentWarehouseId);
@@ -1485,11 +1493,16 @@ class CheckoutController extends Controller
                 }
                     
                 if ($cart->quantity > $finalStock) {
+                    $usesDistributorUnit = $cart->showsLargeUnitInCart();
+                    $per = $usesDistributorUnit ? $cart->product->unitsPerLargeEffective() : 1;
                     $stockWarnings[] = [
                         'cart_id' => $cart->id,
                         'product_name' => $cart->product->name,
-                        'requested_qty' => $cart->quantity,
-                        'available_qty' => $finalStock
+                        'requested_qty' => $usesDistributorUnit ? $cart->cartQuantityInputValue() : $cart->quantity,
+                        'available_qty' => $per > 1 ? intdiv((int) $finalStock, $per) : (int) $finalStock,
+                        'unit' => $usesDistributorUnit
+                            ? $cart->cartQuantityUnitLabel()
+                            : (string) ($cart->product->unit ?: 'unit'),
                     ];
                 }
             }

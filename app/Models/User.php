@@ -233,6 +233,11 @@ class User extends Authenticatable implements MustVerifyEmail
         ]);
     }
 
+    public function salesPerson(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_code', 'sales_code')->where('role', self::ROLE_SALES);
+    }
+
     public function isAgent(): bool
     {
         return in_array($this->role, [self::ROLE_AGENT, self::ROLE_SUPER_ADMIN]);
@@ -281,6 +286,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isBuyer(): bool
     {
         return $this->role === self::ROLE_BUYER;
+    }
+
+    /**
+     * Nama di header toko hanya untuk peran belanja yang memang dipakai di depan.
+     */
+    public function showsStorefrontIdentity(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_BUYER,
+            self::ROLE_RESELLER,
+            self::ROLE_DISTRIBUTOR,
+            self::ROLE_OUTLET,
+            self::ROLE_DRIIPPRENEUR,
+            self::ROLE_AFFILIATOR,
+        ], true);
     }
 
     public function isOutlet(): bool

@@ -222,6 +222,7 @@ class SyncCustomerToQad implements ShouldQueue
             'addressTypeCode' => 'HEADOFFICE',
             'isBusinessRelationFieldsEnabled' => true,
             'customerCurrencyCode' => 'IDR',
+            'isOverruleAllowedSOCreditLimit' => true,
         ];
     }
 

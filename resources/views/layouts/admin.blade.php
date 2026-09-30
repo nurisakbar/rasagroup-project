@@ -236,6 +236,11 @@
             <i class="fa fa-users"></i> <span>DATA PENGGUNA</span>
           </a>
         </li>
+        <li class="{{ request()->routeIs('admin.outlets.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.outlets.index') }}">
+            <i class="fa fa-building-o"></i> <span>DATA USER OUTLET</span>
+          </a>
+        </li>
         @endif
         
         @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))

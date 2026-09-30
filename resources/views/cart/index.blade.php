@@ -3,6 +3,14 @@
 @section('title', 'Keranjang Belanja')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single { height: 45px; border: 1px solid #ececec; border-radius: 10px; padding: 8px 15px; background-color: #fff; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 43px; right: 10px; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 27px; color: #4F5D77; padding-left: 0; }
+    .select2-container { margin-bottom: 0; width: 100% !important; max-width: none !important; }
+    .select2-selection { box-shadow: none !important; transition: all .3s ease; }
+</style>
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
@@ -58,7 +66,7 @@
                                     <label class="form-check-label" for="select-all-checkbox"></label>
                                 </th>
                                 <th scope="col" colspan="2">Produk</th>
-                                <th scope="col">Harga Satuan</th>
+                                <th scope="col">Harga</th>
                                 <th scope="col">Jumlah</th>
                                 <th scope="col">Subtotal</th>
                                 <th scope="col" class="end">Hapus</th>
@@ -89,7 +97,7 @@
                                         </div>
                                         @endif
                                     </td>
-                                    <td class="price rg-cart-unit-price" data-title="Harga Satuan">
+                                    <td class="price rg-cart-unit-price" data-title="Harga">
                                         <h4 class="text-body js-cart-unit-price mb-0">Rp {{ number_format($cart->displayUnitPrice(), 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="text-center detail-info rg-cart-qty" data-title="Jumlah">
@@ -197,12 +205,28 @@
                             color: #ffffff !important;
                         }
                     </style>
-                    <a href="{{ route('products.index') }}" class="btn w-100 mb-15 btn-lanjut-belanja text-center"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                     @auth
                         <form action="{{ route('checkout.index') }}" method="GET" id="checkout-form">
+                            @if(!Auth::user()->isDistributor())
+                            <div class="mb-20 text-start">
+                                <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Nama Sales (Opsional)</h6>
+                                <div class="form-group mb-0">
+                                    <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
+                                        <option value="">-- Kosongkan Nama Sales --</option>
+                                        @foreach($salesList as $salesUser)
+                                            <option value="{{ $salesUser->sales_code }}" {{ old('sales_code', Auth::user()?->sales_code) == $salesUser->sales_code ? 'selected' : '' }}>
+                                                {{ $salesUser->sales_code }} - {{ $salesUser->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            @endif
+                            <a href="{{ route('products.index') }}" class="btn w-100 mb-15 btn-lanjut-belanja text-center"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                             <button type="submit" class="btn mb-20 w-100 text-center" id="btn-checkout">Lanjut ke Pembayaran<i class="fi-rs-sign-out ml-15"></i></button>
                         </form>
                     @else
+                        <a href="{{ route('products.index') }}" class="btn w-100 mb-15 btn-lanjut-belanja text-center"><i class="fi-rs-arrow-left mr-10"></i>Lanjut Belanja</a>
                         <a href="{{ route('login') }}" class="btn mb-20 w-100 text-center">Login untuk Melanjutkan<i class="fi-rs-sign-in ml-15"></i></a>
                     @endauth
                 </div>
@@ -752,6 +776,27 @@
                 }
             });
         });
+        });
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // Initialize Select2 for Sales Code
+    $(document).ready(function() {
+        if ($('#sales_code').length) {
+            $('#sales_code').select2({
+                placeholder: 'Masukkan Nama/Kode Sales (Opsional)',
+                allowClear: true,
+                width: '100%',
+                dropdownAutoWidth: true
+            });
+            
+            // Enforce max-width none
+            $('.select2-container').css({
+                'width': '100%',
+                'max-width': 'none'
+            });
+        }
     });
 </script>
 @endpush

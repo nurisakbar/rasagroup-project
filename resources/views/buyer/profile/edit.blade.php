@@ -3,6 +3,7 @@
 @section('title', 'Edit Profil')
 
 @section('content')
+
 <div class="page-content pt-50 pb-80 buyer-profile-edit" style="background-color: #F2EAE1;">
     <div class="container">
         <div class="row">
@@ -72,6 +73,19 @@
                                             <input type="text" name="occupation" id="occupation" class="form-control custom-input" value="{{ old('occupation', Auth::user()->occupation) }}" placeholder="Contoh: Karyawan Swasta">
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-20">
+                                            <label class="form-label-custom">Nama Sales</label>
+                                            <select name="sales_code" id="sales_code" class="form-control custom-input select2" style="width: 100%;">
+                                                <option value=""></option>
+                                                @foreach($salesList as $salesUser)
+                                                    <option value="{{ $salesUser->sales_code }}" {{ old('sales_code', Auth::user()?->sales_code) == $salesUser->sales_code ? 'selected' : '' }}>
+                                                        {{ $salesUser->sales_code }} - {{ $salesUser->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -88,7 +102,11 @@
     </div>
 </div>
 
+@endsection
+
+@push('styles')
 <style>
+
     .buyer-profile-edit {
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     }
@@ -101,6 +119,7 @@
         border: 1.5px solid #ECECEC !important;
         border-radius: 12px !important;
         padding: 15px 20px !important;
+        height: 56px !important;
         transition: all 0.3s ease;
     }
     .custom-input:focus {
@@ -118,8 +137,89 @@
         background: #6A1B1B !important;
         color: #fff !important;
     }
+
+    /* Select2 overrides to match custom-input */
+    body .buyer-profile-edit .select2-container {
+        width: 100% !important;
+        max-width: none !important;
+    }
+    body .buyer-profile-edit .select2-container .select2-selection--single {
+        height: 56px !important;
+        border: 1.5px solid #ECECEC !important;
+        border-radius: 12px !important;
+        background-color: #F8F9FA !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0 20px !important;
+        transition: all 0.3s ease;
+    }
+    body .buyer-profile-edit .select2-container--open .select2-selection--single,
+    body .buyer-profile-edit .select2-container .select2-selection--single:focus {
+        border-color: #6A1B1B !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 4px rgba(106, 27, 27, 0.05) !important;
+    }
+    body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__rendered {
+        padding-left: 0 !important;
+        color: #4F5D77 !important;
+        line-height: normal !important;
+        width: 100%;
+    }
+    body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+        right: 15px !important;
+        display: flex !important;
+        align-items: center !important;
+        top: 0 !important;
+    }
 </style>
-@endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        $('#sales_code').select2({
+            placeholder: '-- Pilih Nama Sales (Opsional) --',
+            allowClear: true,
+            width: '100%',
+            dropdownAutoWidth: true
+        });
+        
+        // Force width 100% via inline style and force styles on the container itself
+        $('.select2-container').css({
+            'width': '100%',
+            'max-width': 'none'
+        });
+        
+        // Sometimes CSS doesn't apply, so let's enforce via JS
+        setTimeout(function() {
+            var $selection = $('#sales_code').next('.select2-container').find('.select2-selection--single');
+            $selection.css({
+                'height': '56px',
+                'border': '1.5px solid #ECECEC',
+                'border-radius': '12px',
+                'background-color': '#F8F9FA',
+                'display': 'flex',
+                'align-items': 'center',
+                'padding': '0 20px'
+            });
+            $selection.find('.select2-selection__rendered').css({
+                'padding-left': '0',
+                'color': '#4F5D77',
+                'line-height': 'normal',
+                'width': '100%'
+            });
+            $selection.find('.select2-selection__arrow').css({
+                'height': '100%',
+                'right': '15px',
+                'display': 'flex',
+                'align-items': 'center',
+                'top': '0'
+            });
+        }, 100);
+    });
+</script>
+@endpush
+
 
 
 

@@ -218,9 +218,9 @@
                                                 <a href="#" class="qty-up" onclick="increaseQty(); return false;"><i class="fi-rs-angle-small-up"></i></a>
                                             </div>
                                             <div class="product-extra-link2 product-detail-cta-wrap">
-                                                <button type="submit" class="btn button-add-to-cart product-add-cart-btn" id="add-to-cart-btn" {{ $showHubPicker && !$selectedWarehouseId ? 'disabled' : '' }}>
+                                                <button type="{{ (auth()->check() && auth()->user()->isWarehouse()) ? 'button' : 'submit' }}" class="btn button-add-to-cart product-add-cart-btn" id="add-to-cart-btn" @if(auth()->check() && auth()->user()->isWarehouse()) aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;" @endif {{ (!auth()->check() || !auth()->user()->isWarehouse()) && $showHubPicker && !$selectedWarehouseId ? 'disabled' : '' }}>
                                                     <i class="fi-rs-shopping-cart"></i>
-                                                    @if($showHubPicker && !$selectedWarehouseId)
+                                                    @if($showHubPicker && !$selectedWarehouseId && (!auth()->check() || !auth()->user()->isWarehouse()))
                                                         Pilih Hub Terlebih Dahulu
                                                     @else
                                                         Tambah ke Keranjang
@@ -725,6 +725,10 @@
                 if (xhr.status === 401) {
                     const body = xhr.responseJSON || {};
                     window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
+                    return;
+                }
+                if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.redirect) {
+                    window.location.href = xhr.responseJSON.redirect;
                     return;
                 }
 

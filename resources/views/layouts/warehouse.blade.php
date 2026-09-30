@@ -127,6 +127,19 @@
             <i class="fa fa-clock-o"></i> <span>JADWAL OPERASIONAL</span>
           </a>
         </li>
+        <li class="{{ request()->routeIs('warehouse.profile') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.profile') }}">
+            <i class="fa fa-user"></i> <span>PROFILE</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">
+            <i class="fa fa-sign-out"></i> <span>LOGOUT</span>
+          </a>
+          <form id="sidebar-logout-form" action="{{ route('warehouse.logout') }}" method="POST" style="display: none;">
+            @csrf
+          </form>
+        </li>
       </ul>
     </section>
   </aside>

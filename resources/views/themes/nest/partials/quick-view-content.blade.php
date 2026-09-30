@@ -73,7 +73,7 @@
                         <input type="hidden" name="uom" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}" class="js-cart-uom-field">
                     @endif
                     <div class="product-extra-link2 mt-15">
-                        <button type="submit" class="btn button-add-to-cart">
+                        <button type="{{ (auth()->check() && auth()->user()->isWarehouse()) ? 'button' : 'submit' }}" class="btn button-add-to-cart" @if(auth()->check() && auth()->user()->isWarehouse()) aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;" @endif>
                             <i class="fi-rs-shopping-cart"></i> Tambah ke Keranjang
                         </button>
                     </div>

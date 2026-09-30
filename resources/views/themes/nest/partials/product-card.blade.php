@@ -107,7 +107,7 @@
                         @if($product->hasDualUnitOrdering())
                             <input type="hidden" name="uom" value="{{ (auth()->check() && auth()->user()->isDistributor()) ? 'large' : 'base' }}" class="js-cart-uom-field">
                         @endif
-                        <button type="submit" class="add">
+                        <button type="{{ (auth()->check() && auth()->user()->isWarehouse()) ? 'button' : 'submit' }}" class="add" @if(auth()->check() && auth()->user()->isWarehouse()) aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;" @endif>
                             Beli
                         </button>
                     </form>

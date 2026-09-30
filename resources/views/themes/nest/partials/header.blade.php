@@ -1,3 +1,18 @@
+    @php
+        $showStorefrontIdentity = auth()->check() && auth()->user()->showsStorefrontIdentity();
+        $hubCannotShop = auth()->check() && ! $showStorefrontIdentity;
+        $storeCartUrl = route('cart.index');
+        $storeAccountUrl = auth()->check()
+            ? ($hubCannotShop
+                ? (auth()->user()->isWarehouse() && auth()->user()->warehouse_id
+                    ? route('warehouse.dashboard')
+                    : (auth()->user()->isSuperAdmin() ? route('admin.dashboard') : route('home')))
+                : route('buyer.dashboard'))
+            : route('login');
+        $storefrontAccountLabel = $showStorefrontIdentity
+            ? auth()->user()->name
+            : (auth()->check() && auth()->user()->isWarehouse() ? 'Warehouse' : 'Akun Saya');
+    @endphp
     <header class="header-area header-style-1 header-height-2">
         {{-- <div class="mobile-promotion">
             <span>Pembukaan besar-besaran, diskon hingga <strong>15%</strong> untuk semua item. Tinggal <strong>3 hari</strong> lagi</span>
@@ -40,22 +55,22 @@
                                     </a>
                                     <a href="shop-wishlist.html"><span class="lable">Wishlist</span></a>
                                 </div> --}}
-                                <div class="header-action-icon-2">
+                                <div class="header-action-icon-2 {{ $hubCannotShop ? 'd-none' : '' }}">
                                     @php
                                         $cartCount = \App\Models\Cart::badgeCountForCurrentShopper();
                                     @endphp
-                                    <a class="mini-cart-icon" href="{{ route('cart.index') }}">
+                                    <a class="mini-cart-icon" href="{{ $storeCartUrl }}">
                                         <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                         <span class="pro-count blue">{{ $cartCount }}</span>
                                     </a>
-                                    <a href="{{ route('cart.index') }}"><span class="lable">Keranjang</span></a>
+                                    <a href="{{ $storeCartUrl }}"><span class="lable">Keranjang</span></a>
 
                                 </div>
                                 <div class="header-action-icon-2">
-                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
+                                    <a href="{{ $storeAccountUrl }}">
                                         <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                     </a>
-                                    <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">{{ auth()->check() ? auth()->user()->name : 'Akun Saya' }}</span></a>
+                                    <a href="{{ $storeAccountUrl }}"><span class="lable ml-0">{{ $storefrontAccountLabel }}</span></a>
 
                                 </div>
                             </div>
@@ -134,9 +149,11 @@
                         @php
                             $distributorMainMenuUrl = ! auth()->check()
                                 ? route('login')
-                                : (auth()->user()->isDistributor()
+                                : (auth()->user()->isWarehouse()
+                                    ? route('warehouse.dashboard')
+                                    : (auth()->user()->isDistributor()
                                     ? route('buyer.dashboard')
-                                    : route('buyer.distributor.apply'));
+                                    : route('buyer.distributor.apply')));
                             $distributorMainMenuActive = request()->routeIs('buyer.dashboard') || request()->routeIs('buyer.distributor.apply');
                         @endphp
                         <style>
@@ -198,18 +215,18 @@
                     </div>
                     <div class="header-action-right d-none d-lg-flex sticky-desktop-actions">
                         <div class="header-action-2">
-                            <div class="header-action-icon-2">
-                                <a class="mini-cart-icon" href="{{ route('cart.index') }}">
+                            <div class="header-action-icon-2 {{ $hubCannotShop ? 'd-none' : '' }}">
+                                <a class="mini-cart-icon" href="{{ $storeCartUrl }}">
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                     <span class="pro-count blue">{{ $cartCount }}</span>
                                 </a>
-                                <a href="{{ route('cart.index') }}"><span class="lable">Keranjang</span></a>
+                                <a href="{{ $storeCartUrl }}"><span class="lable">Keranjang</span></a>
                             </div>
                             <div class="header-action-icon-2">
-                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}">
+                                <a href="{{ $storeAccountUrl }}">
                                     <img class="svgInject" alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-user.svg') }}" />
                                 </a>
-                                <a href="{{ auth()->check() ? route('buyer.dashboard') : route('login') }}"><span class="lable ml-0">{{ auth()->check() ? auth()->user()->name : 'Akun Saya' }}</span></a>
+                                <a href="{{ $storeAccountUrl }}"><span class="lable ml-0">{{ $storefrontAccountLabel }}</span></a>
                             </div>
                         </div>
                     </div>
@@ -221,8 +238,8 @@
                                     <span class="pro-count white">4</span>
                                 </a>
                             </div> --}}
-                            <div class="header-action-icon-2">
-                                <a class="mini-cart-icon" href="{{ route('cart.index') }}">
+                            <div class="header-action-icon-2 {{ $hubCannotShop ? 'd-none' : '' }}">
+                                <a class="mini-cart-icon" href="{{ $storeCartUrl }}">
                                     <img alt="Nest" src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-cart.svg') }}" />
                                     <span class="pro-count white">{{ $cartCount }}</span>
                                 </a>

@@ -900,7 +900,7 @@
                                     <form action="{{ route('cart.store', $product) }}" method="POST" class="add-to-cart-form">
                                         @csrf
                                         <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn-add-cart">
+                                        <button type="{{ (auth()->check() && auth()->user()->isWarehouse()) ? 'button' : 'submit' }}" class="btn-add-cart" @if(auth()->check() && auth()->user()->isWarehouse()) aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;" @endif>
                                             Add <i class="bi bi-plus-lg"></i>
                                         </button>
                                     </form>

@@ -110,6 +110,18 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
+        if (Auth::user()->isWarehouse()) {
+            if (Auth::user()->warehouse_id) {
+                return redirect()->route('warehouse.dashboard');
+            }
+
+            Auth::logout();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun hub belum terhubung ke gudang, jadi tidak bisa masuk ke toko depan.',
+            ]);
+        }
+
         $intendedUrl = redirect()->getIntendedUrl();
         if ($intendedUrl && strpos($intendedUrl, '/admin') !== false) {
             return redirect()->route('home');

@@ -1623,6 +1623,10 @@
                             window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
                             return;
                         }
+                        if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.redirect) {
+                            window.location.href = xhr.responseJSON.redirect;
+                            return;
+                        }
                         if (xhr.status === 428) {
                             // Needs shipping address
                             submitBtn.attr('disabled', false).html(originalBtnHtml);
@@ -1731,6 +1735,10 @@
                              window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
                              return;
                          }
+                         if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.redirect) {
+                             window.location.href = xhr.responseJSON.redirect;
+                             return;
+                         }
                          const body = xhr.responseJSON || {};
                          showShopToast(body.message || 'Gagal memperbarui jumlah.', 'error');
                     }
@@ -1776,6 +1784,10 @@
                         if (xhr.status === 401) {
                             const body = xhr.responseJSON || {};
                             window.location.href = body.redirect || '{{ route("login", ["reason" => "add_to_cart"]) }}';
+                            return;
+                        }
+                        if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.redirect) {
+                            window.location.href = xhr.responseJSON.redirect;
                             return;
                         }
                         const body = xhr.responseJSON || {};
@@ -2023,10 +2035,20 @@
         });
     </script>
     @php
+        $showStorefrontIdentity = auth()->check() && auth()->user()->showsStorefrontIdentity();
         $isDistributor = auth()->check() ? auth()->user()->isDistributor() : false;
         $isDistributorPage = request()->is('distributor*') || $isDistributor;
-        $orderRoute = auth()->check() ? ($isDistributorPage ? route('distributor.manage-orders.index') : route('buyer.orders.index')) : route('login');
-        $profileRoute = auth()->check() ? ($isDistributorPage ? route('distributor.profile') : route('buyer.profile')) : route('login');
+        $orderRoute = auth()->check()
+            ? (auth()->user()->isWarehouse()
+                ? route('warehouse.dashboard')
+                : ($isDistributorPage ? route('distributor.manage-orders.index') : route('buyer.orders.index')))
+            : route('login');
+        $profileRoute = auth()->check()
+            ? (auth()->user()->isWarehouse()
+                ? route('warehouse.dashboard')
+                : ($isDistributorPage ? route('distributor.profile') : route('buyer.profile')))
+            : route('login');
+        $cartNavRoute = auth()->check() && auth()->user()->isWarehouse() ? route('warehouse.dashboard') : route('cart.index');
     @endphp
     <div class="mobile-bottom-nav d-flex d-lg-none">
         <div class="nav-item">
@@ -2035,8 +2057,9 @@
                 <span>Beranda</span>
             </a>
         </div>
+        @if($showStorefrontIdentity || !auth()->check())
         <div class="nav-item">
-            <a href="{{ route('cart.index') }}" class="{{ Route::is('cart.index') ? 'active' : '' }}">
+            <a href="{{ $cartNavRoute }}" class="{{ Route::is('cart.index') ? 'active' : '' }}">
                 <i class="fi-rs-shopping-cart"></i>
                 <span>Keranjang</span>
             </a>
@@ -2047,10 +2070,11 @@
                 <span>Pesanan</span>
             </a>
         </div>
+        @endif
         <div class="nav-item">
-            <a href="{{ auth()->check() ? route('buyer.account.menu') : route('login') }}" class="{{ Route::is('buyer.account.menu') ? 'active' : '' }}">
+            <a href="{{ auth()->check() && auth()->user()->isWarehouse() ? route('warehouse.dashboard') : (auth()->check() ? route('buyer.account.menu') : route('login')) }}" class="{{ Route::is('buyer.account.menu') || (auth()->check() && auth()->user()->isWarehouse() && Route::is('warehouse.*')) ? 'active' : '' }}">
                 <i class="fi-rs-user"></i>
-                <span>Akun</span>
+                <span>{{ auth()->check() && auth()->user()->isWarehouse() ? 'Warehouse' : 'Akun' }}</span>
             </a>
         </div>
     </div>
