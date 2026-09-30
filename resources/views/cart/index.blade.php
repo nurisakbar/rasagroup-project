@@ -163,7 +163,7 @@
                             <tbody>
                                 <tr>
                                     <td class="cart_total_label">
-                                        <h6 class="text-muted">Subtotal</h6>
+                                        <h6 class="text-heading">Subtotal</h6>
                                     </td>
                                     <td class="cart_total_amount">
                                         <h4 class="text-brand text-end js-cart-page-total">Rp {{ number_format($total, 0, ',', '.') }}</h4>
@@ -171,7 +171,7 @@
                                 </tr>
                                 <tr>
                                     <td class="cart_total_label">
-                                        <h6 class="text-muted">Total Berat</h6>
+                                        <h6 class="text-heading">Total Berat</h6>
                                     </td>
                                     <td class="cart_total_amount">
                                         <h4 class="text-brand text-end js-cart-page-total-weight">{{ $totalWeightFormatted }}</h4>
@@ -184,7 +184,7 @@
                                 </tr>
                                 <tr>
                                     <td class="cart_total_label">
-                                        <h6 class="text-muted">Total</h6>
+                                        <h6 class="text-heading">Total</h6>
                                     </td>
                                     <td class="cart_total_amount">
                                         <h4 class="text-brand text-end js-cart-page-total">Rp {{ number_format($total, 0, ',', '.') }}</h4>
