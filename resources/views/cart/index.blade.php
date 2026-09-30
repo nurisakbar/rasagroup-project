@@ -324,12 +324,12 @@
 
         .rg-cart-page .rg-cart-item {
             display: grid !important;
-            grid-template-columns: 80px 1fr auto;
+            grid-template-columns: 80px 1fr;
             grid-template-areas:
-                "thumb title title"
-                "thumb weight unit-price"
-                "remove qty qty"
-                "subtotal subtotal subtotal";
+                "thumb product"
+                "thumb unit-price"
+                "remove qty"
+                "subtotal subtotal";
             gap: 8px 12px;
             background: #fff;
             border: 1px solid #edf2f7;
@@ -371,22 +371,10 @@
         }
 
         .rg-cart-page .rg-cart-product {
-            display: contents;
-        }
-        
-        .rg-cart-page td.rg-cart-product > h6 {
-            grid-column: 2 / 4 !important;
-            grid-row: 1 !important;
+            grid-area: product;
             align-self: start;
-            margin: 0 !important;
-            padding-left: 8px;
-        }
-        
-        .rg-cart-page td.rg-cart-product > .product-meta {
-            grid-column: 2 / 3 !important;
-            grid-row: 2 !important;
-            align-self: center;
-            margin: 0 !important;
+            min-width: 0;
+            text-align: left !important;
             padding-left: 8px;
         }
 
@@ -394,27 +382,31 @@
             font-size: 14px !important;
             font-weight: 600;
             line-height: 1.35;
-            display: block;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             text-align: left !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 2px !important;
             color: #1e293b;
         }
         
         .rg-cart-page .rg-cart-weight {
             text-align: left !important;
             display: block;
-            margin-top: 0;
+            margin-top: 2px;
             font-size: 12px;
             color: #64748b;
         }
 
         .rg-cart-page .rg-cart-unit-price {
             grid-area: unit-price;
-            align-self: end;
+            align-self: start;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: flex-start;
             margin-top: 0;
+            padding-left: 8px !important;
         }
         
         .rg-cart-page .rg-cart-unit-price h4 {
