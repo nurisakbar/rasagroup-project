@@ -1382,7 +1382,13 @@ class CheckoutController extends Controller
             return $user->getProductPrice($cart->product) * (int) $cart->quantity;
         });
 
-        $catalogSubtotal = (float) $carts->sum(function ($cart) {
+        // Harga normal (retail) yang sudah TERMASUK PPN
+        $catalogSubtotalWithPpn = (float) $carts->sum(function ($cart) {
+            return (float) $cart->product->price * (int) $cart->quantity;
+        });
+
+        // Harga normal (retail) TANPA PPN (DPP) untuk perhitungan diskon
+        $catalogSubtotalDpp = (float) $carts->sum(function ($cart) {
             return TaxAwarePrice::excludingTax((float) $cart->product->price)
                 * (int) $cart->quantity;
         });
@@ -1396,7 +1402,7 @@ class CheckoutController extends Controller
         $tieredDiscountDetails = [];
 
         if ($user->isDistributor()) {
-            $distributorPriceDiscount = max(0.0, $catalogSubtotal - $retailSubtotal);
+            $distributorPriceDiscount = max(0.0, $catalogSubtotalDpp - $retailSubtotal);
             $subtotalAfterDistributor = $retailSubtotal;
             if ($distributorPriceDiscount > 0.5) {
                 $priceLevelName = $user->categoryDiscounts->contains(fn ($d) => (float) $d->discount_percentage > 0)
@@ -1414,7 +1420,7 @@ class CheckoutController extends Controller
         $ppn = TaxAwarePrice::ppnOnDpp($subtotalAfterDistributor, $taxPercent);
 
         return [
-            'catalog_subtotal' => $catalogSubtotal,
+            'catalog_subtotal' => $catalogSubtotalWithPpn,
             'retail_subtotal' => $retailSubtotal,
             'distributor_price_discount' => $distributorPriceDiscount,
             'tiered_discount_amount' => $tieredDiscountAmount,
