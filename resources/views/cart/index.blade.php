@@ -366,20 +366,29 @@
         .rg-cart-page .rg-cart-product {
             grid-area: product;
             min-width: 0;
+            text-align: left !important;
+            padding-left: 8px !important;
         }
 
         .rg-cart-page .rg-cart-product .product-name {
-            font-size: 15px !important;
+            font-size: 14px !important;
             line-height: 1.35;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            text-align: left !important;
+        }
+        
+        .rg-cart-page .rg-cart-weight {
+            text-align: left !important;
+            display: block;
+            margin-top: 4px;
         }
 
         .rg-cart-page .rg-cart-remove {
             grid-area: remove;
-            align-self: start;
+            align-self: center;
             text-align: right;
         }
 
@@ -392,6 +401,11 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        /* Hide all auto-injected table titles by default */
+        .rg-cart-page .rg-cart-item > td::before {
+            display: none !important;
         }
 
         .rg-cart-page .rg-cart-unit-price,
@@ -412,6 +426,7 @@
 
         .rg-cart-page .rg-cart-subtotal {
             grid-column: 1 / -1;
+            border-top: 1px solid #f1f5f9;
         }
 
         .rg-cart-page .rg-cart-unit-price {
@@ -423,24 +438,16 @@
             grid-area: qty;
             justify-content: flex-end;
         }
-        
-        .rg-cart-page .rg-cart-qty::before {
-            display: none !important; /* Hide "Jumlah" text to save space */
-        }
 
         .rg-cart-page .rg-cart-subtotal {
             grid-area: subtotal;
-            border-top: none;
-            margin-top: 12px;
-            padding-top: 0 !important;
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 12px 14px !important;
         }
 
+        /* Show auto-injected titles only for unit price and subtotal */
         .rg-cart-page .rg-cart-unit-price::before,
         .rg-cart-page .rg-cart-subtotal::before {
             content: attr(data-title);
+            display: block !important;
             font-size: 13px;
             font-weight: 600;
             color: #7E7E7E;
@@ -449,11 +456,14 @@
 
         .rg-cart-page .rg-cart-qty .detail-extralink {
             margin: 0 !important;
-            text-align: right;
-            flex: 1;
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rg-cart-page .rg-cart-unit-label {
+            margin-top: 0 !important;
         }
 
         .rg-cart-page .rg-cart-qty-control {
