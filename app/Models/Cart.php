@@ -194,9 +194,9 @@ class Cart extends Model
         }
 
         $user = $this->user ?? \Illuminate\Support\Facades\Auth::user();
-        $unit = $user
-            ? $user->getProductPrice($product)
-            : \App\Support\TaxAwarePrice::applyDiscount((float) $product->final_price, 0.0);
+        
+        // Menampilkan harga normal (retail) dengan PPN di keranjang
+        $unit = (float) $product->price;
 
         if ($this->showsLargeUnitInCart()) {
             return $unit * (float) $product->unitsPerLargeEffective();

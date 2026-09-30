@@ -444,7 +444,7 @@
                                         @php
                                             $checkoutUser = Auth::user();
                                             $taxExtract = \App\Models\Setting::taxPercent();
-                                            $baseUnitPrice = $checkoutUser->getProductPrice($cart->product);
+                                            $baseUnitPrice = (float) $cart->product->price;
                                             $baseRetailUnit = \App\Support\TaxAwarePrice::excludingTax((float) $cart->product->price, $taxExtract);
                                             $discountPercentage = $checkoutUser->productDiscountPercentageFor($cart->product);
                                             
