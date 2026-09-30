@@ -1418,20 +1418,30 @@ class CheckoutController extends Controller
 
         $taxPercent = TaxAwarePrice::percentIfEnabled($user->usesPpn());
         $ppn = TaxAwarePrice::ppnOnDpp($subtotalAfterDistributor, $taxPercent);
+        
+        $subtotalWithPpn = $subtotalAfterDistributor + $ppn;
+        $distributorDiscountWithPpn = max(0.0, $catalogSubtotalWithPpn - $subtotalWithPpn);
+
+        // Scale tiered discounts to include PPN so the UI math adds up
+        $taxMultiplier = 1 + ($taxPercent / 100);
+        $tieredDiscountAmountWithPpn = $tieredDiscountAmount * $taxMultiplier;
+        foreach ($tieredDiscountDetails as &$detail) {
+            $detail['discount_amount'] = $detail['discount_amount'] * $taxMultiplier;
+        }
 
         return [
             'catalog_subtotal' => $catalogSubtotalWithPpn,
             'retail_subtotal' => $retailSubtotal,
-            'distributor_price_discount' => $distributorPriceDiscount,
-            'tiered_discount_amount' => $tieredDiscountAmount,
+            'distributor_price_discount' => $distributorDiscountWithPpn,
+            'tiered_discount_amount' => $tieredDiscountAmountWithPpn,
             'tiered_discount_details' => $tieredDiscountDetails,
-            'subtotal_after_distributor' => $subtotalAfterDistributor,
+            'subtotal_after_distributor' => $subtotalWithPpn,
             'price_level_name' => $priceLevelName,
             'show_distributor_pricing' => $user->isDistributor()
-                && $distributorPriceDiscount > 0.5,
+                && $distributorDiscountWithPpn > 0.5,
             'show_tiered_discount' => $tieredDiscountAmount > 0,
             'tax_percent' => $taxPercent,
-            'ppn' => $ppn,
+            'ppn' => 0, // Set PPN to 0 because it's already included in subtotal
             'ppn_label' => TaxAwarePrice::ppnLabel($taxPercent),
         ];
     }

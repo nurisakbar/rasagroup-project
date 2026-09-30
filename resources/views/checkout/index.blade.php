@@ -533,7 +533,7 @@
                                 @if(!empty($showDistributorPricing) && ($distributorPriceDiscount ?? 0) > 0)
                                 <tr class="rg-checkout-total-row" id="distributorRetailRow">
                                     <th class="cart_total_label align-middle pb-3">
-                                        <h6 class="text-muted mb-0">Harga normal (Termasuk PPN)</h6>
+                                        <h6 class="text-muted mb-0">Harga normal</h6>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle pb-3">
                                         <h5 class="text-muted mb-0 text-decoration-line-through" id="catalogSubtotalDisplay">Rp {{ number_format($catalogSubtotal ?? $retailSubtotal, 0, ',', '.') }}</h5>
@@ -541,7 +541,7 @@
                                 </tr>
                                 <tr class="rg-checkout-total-row" id="distributorDiscountRow">
                                     <th class="cart_total_label align-middle pb-3">
-                                        <h6 class="text-muted mb-0">Diskon (Dari DPP) <span id="distributorLevelLabel">{{ $priceLevelName ? '(' . $priceLevelName . ')' : '' }}</span></h6>
+                                        <h6 class="text-muted mb-0">Diskon <span id="distributorLevelLabel">{{ $priceLevelName ? '(' . $priceLevelName . ')' : '' }}</span></h6>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle pb-3">
                                         <h5 class="text-danger mb-0" id="distributorDiscountDisplay">-Rp {{ number_format($distributorPriceDiscount, 0, ',', '.') }}</h5>
@@ -550,7 +550,7 @@
                                 @endif
                                 <tr class="rg-checkout-total-row">
                                     <th class="cart_total_label align-middle pb-3">
-                                        <h6 class="text-muted mb-0">Subtotal (DPP)</h6>
+                                        <h6 class="text-muted mb-0">Subtotal</h6>
                                     </th>
                                     <td class="cart_total_amount text-end align-middle pb-3">
                                         <h5 class="text-brand mb-0" id="subtotalDisplay">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
