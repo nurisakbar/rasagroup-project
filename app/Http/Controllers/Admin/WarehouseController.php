@@ -236,9 +236,24 @@ class WarehouseController extends Controller
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($warehouse) {
                     $html = '<strong>' . e($warehouse->name) . '</strong>';
-                    $kodeHub = $warehouse->kode_hub ? e($warehouse->kode_hub) : '-';
-                    $sumber = $warehouse->syncSourceBadgesHtml();
-                    $html .= '<br><small class="text-muted">' . $kodeHub . ' &mdash; ' . $sumber . '</small>';
+                    $roles = $warehouse->target_role;
+                    if (! is_array($roles)) {
+                        $roles = filled($roles) ? [$roles] : [];
+                    }
+                    $roleLabels = [
+                        'umum' => 'Umum',
+                        'ecommerce' => 'eCommerce',
+                        'distributor' => 'Distributor',
+                        'outlet' => 'Outlet',
+                    ];
+                    $gudangOrder = collect($roles)
+                        ->map(fn ($role) => $roleLabels[$role] ?? ucfirst((string) $role))
+                        ->filter()
+                        ->map(fn ($label) => '<span class="label label-warning">'.e($label).'</span>')
+                        ->implode(' ');
+                    if ($gudangOrder !== '') {
+                        $html .= '<br><span style="display:inline-block;margin-top:4px;">'.$gudangOrder.'</span>';
+                    }
                     return $html;
                 })
                 ->addColumn('location_info', function ($warehouse) {

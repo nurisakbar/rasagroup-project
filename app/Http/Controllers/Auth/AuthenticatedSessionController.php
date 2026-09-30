@@ -67,6 +67,39 @@ class AuthenticatedSessionController extends Controller
         return $this->redirectAfterLogin();
     }
 
+    public function createDistributorByEmail(): View
+    {
+        return view('auth.lbe');
+    }
+
+    public function storeDistributorByEmail(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        $user = User::query()->where('email', $validated['email'])->first();
+
+        if (! $user || ! $user->isDistributor()) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun distributor dengan email tersebut tidak ditemukan.',
+            ]);
+        }
+
+        $sessionId = $request->session()->getId();
+
+        Auth::guard('admin')->logout();
+        Auth::guard('web')->logout();
+
+        Auth::login($user);
+
+        $request->session()->regenerate();
+
+        \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
+
+        return redirect()->route('buyer.dashboard');
+    }
+
     private function redirectAfterLogin(): RedirectResponse
     {
         $adminRoles = ['agent', 'super_admin', 'ecommerce', 'brand_marketing', 'sales', 'finance'];
