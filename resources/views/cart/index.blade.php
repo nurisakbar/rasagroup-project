@@ -374,15 +374,17 @@
             display: contents;
         }
         
-        .rg-cart-page .rg-cart-product > h6 {
-            grid-area: title;
+        .rg-cart-page td.rg-cart-product > h6 {
+            grid-column: 2 / 4 !important;
+            grid-row: 1 !important;
             align-self: start;
             margin: 0 !important;
             padding-left: 8px;
         }
         
-        .rg-cart-page .rg-cart-product > .product-meta {
-            grid-area: weight;
+        .rg-cart-page td.rg-cart-product > .product-meta {
+            grid-column: 2 / 3 !important;
+            grid-row: 2 !important;
             align-self: center;
             margin: 0 !important;
             padding-left: 8px;
