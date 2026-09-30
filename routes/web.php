@@ -251,6 +251,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
         Route::get('/warehouses/qad-locations', [App\Http\Controllers\Admin\WarehouseController::class, 'getQadLocations'])->name('warehouses.qad-locations');
         Route::post('/warehouses/sync-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncJubelio'])->name('warehouses.sync-jubelio');
+        Route::get('/warehouses/sync-qad-batches/locations', [App\Http\Controllers\Admin\WarehouseController::class, 'qadBatchLocations'])->name('warehouses.sync-qad-batches.locations');
+        Route::post('/warehouses/sync-qad-batches', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQadBatchLocation'])->name('warehouses.sync-qad-batches');
         Route::post('/warehouses/sync-stock-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockJubelio'])->name('warehouses.sync-stock-jubelio');
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::resource('armadas', App\Http\Controllers\Admin\ArmadaController::class);
@@ -278,6 +280,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/export', [App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
         Route::get('/orders/create', [App\Http\Controllers\Admin\ManualOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [App\Http\Controllers\Admin\ManualOrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/ajax/customers', [App\Http\Controllers\Admin\ManualOrderController::class, 'searchCustomers'])->name('orders.search-customers');

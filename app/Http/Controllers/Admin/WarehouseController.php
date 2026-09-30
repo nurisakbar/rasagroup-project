@@ -35,6 +35,96 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Lokasi QAD yang sudah di-mapping pada hub.
+     */
+    public function qadBatchLocations()
+    {
+        $locations = [];
+        $seen = [];
+
+        $rows = Warehouse::query()
+            ->whereNotNull('qad_location_code')
+            ->orderBy('name')
+            ->get(['name', 'qad_location_code']);
+
+        foreach ($rows as $row) {
+            $code = trim((string) $row->qad_location_code);
+            if ($code === '' || isset($seen[$code])) {
+                continue;
+            }
+            $seen[$code] = true;
+            $locations[] = [
+                'code' => $code,
+                'name' => (string) $row->name,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'locations' => $locations,
+            'total' => count($locations),
+        ]);
+    }
+
+    /**
+     * Tarik stock batch satu lokasi QAD (semua produk) lalu simpan.
+     */
+    public function syncQadBatchLocation(Request $request)
+    {
+        set_time_limit(180);
+
+        $locationCode = trim((string) $request->input('location_code'));
+        $mapped = $locationCode !== '' && Warehouse::query()
+            ->where('qad_location_code', $locationCode)
+            ->exists();
+
+        if (! $mapped) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lokasi tidak termasuk yang sudah di-mapping.',
+            ], 422);
+        }
+
+        $wms = app(WmsService::class);
+        if (! $wms->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API batch belum dikonfigurasi.',
+            ], 422);
+        }
+
+        try {
+            $synced = $wms->syncLocationBatches($locationCode);
+        } catch (\Exception $e) {
+            Log::error('QAD batch sync failed', [
+                'location' => $locationCode,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menarik batch lokasi '.$locationCode.'.',
+            ], 500);
+        }
+
+        $products = QadInventory::query()
+            ->where('qad_location_code', $locationCode)
+            ->where('qty', '>', 0)
+            ->distinct()
+            ->count('item_code');
+
+        return response()->json([
+            'success' => true,
+            'location' => $locationCode,
+            'synced' => $synced,
+            'products' => $products,
+            'message' => $synced > 0
+                ? $synced.' batch dari '.$products.' produk.'
+                : 'Tidak ada batch untuk lokasi ini.',
+        ]);
+    }
+
+    /**
      * Sync with Jubelio API.
      */
     public function syncJubelio()

@@ -82,6 +82,9 @@ input:checked + .slider:before {
                         </div>
                         <div style="display: flex; gap: 5px;">
                             @include('admin.partials.sync-qad-jubelio')
+                            <button type="button" class="btn btn-success btn-sm" id="btn-sync-qad-batches">
+                                <i class="fa fa-refresh"></i> Sinkronisasi Batch QAD
+                            </button>
                             @if(app()->environment('local'))
                                 <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteAllWarehouses()" title="Hanya tersedia di APP_ENV=local">
                                     <i class="fa fa-trash"></i> Hapus Semua
@@ -162,7 +165,28 @@ input:checked + .slider:before {
         </div>
     </div>
 
-    <!-- QAD Locations Modal -->
+    <div class="modal fade" id="qadBatchModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Sinkronisasi Batch QAD</h4>
+                </div>
+                <div class="modal-body">
+                    <p id="qadBatchMessage" class="text-muted">Menyiapkan lokasi yang sudah di-mapping...</p>
+                    <div class="progress" style="height: 22px; margin-bottom: 8px;">
+                        <div id="qadBatchBar" class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" style="width: 0%; min-width: 2em;">
+                            <span id="qadBatchPercent">0%</span>
+                        </div>
+                    </div>
+                    <small id="qadBatchDetail" class="text-muted"></small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" id="qadBatchClose" data-dismiss="modal" style="display: none;">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="qadLocationsModal" tabindex="-1" role="dialog" aria-labelledby="qadLocationsModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -290,6 +314,115 @@ $(function() {
     // Toggle active only
     $('#toggle-active-only').on('change', function() {
         table.draw();
+    });
+
+    var qadBatchRunning = false;
+
+    function setQadBatchProgress(percent, message, detail) {
+        var rounded = Math.max(0, Math.min(100, Math.round(percent)));
+        $('#qadBatchBar').css('width', rounded + '%');
+        $('#qadBatchPercent').text(rounded + '%');
+        if (message) {
+            $('#qadBatchMessage').text(message);
+        }
+        $('#qadBatchDetail').text(detail || '');
+    }
+
+    function finishQadBatch(message, detail, failed) {
+        qadBatchRunning = false;
+        $('#qadBatchBar').removeClass('active progress-bar-striped');
+        if (failed) {
+            $('#qadBatchBar').removeClass('progress-bar-success').addClass('progress-bar-warning');
+        }
+        setQadBatchProgress(100, message, detail);
+        $('#qadBatchClose').show();
+    }
+
+    function syncNextQadBatch(locations, index, totals) {
+        if (index >= locations.length) {
+            var detail = totals.batches + ' batch dari ' + locations.length + ' lokasi.';
+            if (totals.failed > 0) {
+                detail += ' ' + totals.failed + ' lokasi gagal.';
+                finishQadBatch('Sinkronisasi selesai dengan beberapa kegagalan.', detail, true);
+            } else {
+                finishQadBatch('Sinkronisasi batch QAD selesai.', detail, false);
+            }
+            return;
+        }
+
+        var location = locations[index];
+        var current = index + 1;
+        setQadBatchProgress(
+            (index / locations.length) * 100,
+            'Menarik batch ' + location.name + ' (' + current + '/' + locations.length + ')',
+            location.code
+        );
+
+        $.ajax({
+            url: @json(route('admin.warehouses.sync-qad-batches')),
+            method: 'POST',
+            timeout: 180000,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            data: { location_code: location.code },
+            success: function(response) {
+                totals.batches += parseInt(response.synced || 0, 10);
+                totals.products += parseInt(response.products || 0, 10);
+                setQadBatchProgress(
+                    (current / locations.length) * 100,
+                    'Selesai ' + location.name + ' (' + current + '/' + locations.length + ')',
+                    response.message || ''
+                );
+                syncNextQadBatch(locations, current, totals);
+            },
+            error: function(xhr) {
+                totals.failed += 1;
+                var message = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message
+                    : ('Gagal menarik lokasi ' + location.code);
+                setQadBatchProgress(
+                    (current / locations.length) * 100,
+                    message + ' (' + current + '/' + locations.length + ')',
+                    'Lanjut ke lokasi berikutnya.'
+                );
+                syncNextQadBatch(locations, current, totals);
+            }
+        });
+    }
+
+    $('#btn-sync-qad-batches').on('click', function() {
+        if (qadBatchRunning) {
+            return;
+        }
+        qadBatchRunning = true;
+        $('#qadBatchClose').hide();
+        $('#qadBatchBar')
+            .removeClass('progress-bar-warning')
+            .addClass('progress-bar-success progress-bar-striped active')
+            .css('width', '0%');
+        $('#qadBatchPercent').text('0%');
+        $('#qadBatchMessage').text('Menyiapkan lokasi yang sudah di-mapping...');
+        $('#qadBatchDetail').text('');
+        $('#qadBatchModal').modal('show');
+
+        $.ajax({
+            url: @json(route('admin.warehouses.sync-qad-batches.locations')),
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            success: function(response) {
+                var locations = response.locations || [];
+                if (!locations.length) {
+                    finishQadBatch('Tidak ada lokasi yang sudah di-mapping.', '', false);
+                    return;
+                }
+                syncNextQadBatch(locations, 0, { batches: 0, products: 0, failed: 0 });
+            },
+            error: function() {
+                finishQadBatch('Gagal memuat daftar lokasi.', '', true);
+            }
+        });
     });
 
 });

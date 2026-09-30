@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exports\AdminOrdersExport;
 use App\Jobs\SendSalesOrderToWmsJob;
 use App\Models\Order;
 use App\Models\Warehouse;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 use App\Notifications\Orders\OrderProcessingNotification;
 use App\Notifications\Orders\OrderPickupReadyNotification;
@@ -26,69 +29,10 @@ class OrderController extends Controller
     {
         if ($request->ajax()) {
             $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah']);
-
-            // Filter by status
-            if ($request->filled('status') && $request->status != '') {
-                $query->where('order_status', $request->status);
-            }
-
-            // Filter by order type
-            if ($request->filled('order_type') && $request->order_type != '') {
-                $query->where('order_type', $request->order_type);
-            }
-
-            // Filter by sales code
-            if ($request->filled('sales_code') && $request->sales_code != '') {
-                $query->where('sales_code', $request->sales_code);
-            }
-            // Filter by date range
-            if ($request->filled('date_from') && $request->date_from != '') {
-                $query->whereDate('created_at', '>=', $request->date_from);
-            }
-
-            if ($request->filled('date_to') && $request->date_to != '') {
-                $query->whereDate('created_at', '<=', $request->date_to);
-            }
-
-            // Filter by source warehouse (hub)
-            if ($request->filled('source_warehouse_id') && $request->source_warehouse_id != '') {
-                $query->where('source_warehouse_id', $request->source_warehouse_id);
-            }
-
-            // Global search
-            if ($request->filled('search') && $request->search['value'] != '') {
-                $searchValue = $request->search['value'];
-                $query->where(function ($q) use ($searchValue) {
-                    $q->where('order_number', 'like', "%{$searchValue}%")
-                      ->orWhereHas('user', function ($u) use ($searchValue) {
-                          $u->where('name', 'like', "%{$searchValue}%");
-                      });
-                });
-            }
+            $this->applyOrderListFilters($query, $request);
 
             $baseQuery = clone $query;
-
-            if ($request->filled('tab_status') && $request->tab_status != '') {
-                if ($request->tab_status === 'menunggu_pembayaran') {
-                    $query->where('payment_status', 'pending')
-                        ->whereNull('payment_proof')
-                        ->where(function ($q) {
-                            $q->whereNull('payment_method')
-                                ->orWhere('payment_method', '!=', 'term_of_payment');
-                        });
-                } elseif ($request->tab_status === 'menunggu_persetujuan_finance') {
-                    $query->where('payment_method', 'term_of_payment')
-                        ->where('finance_approved', false);
-                } elseif ($request->tab_status === 'menunggu_konfirmasi') {
-                    $query->where('payment_status', 'pending')->whereNotNull('payment_proof');
-                } elseif ($request->tab_status === 'sedang_diproses') {
-                    $query->where('finance_approved', true)->whereIn('order_status', ['pending', 'processing']);
-                } elseif ($request->tab_status === 'dikirim') {
-                    $query->where('order_status', 'shipped');
-                } elseif ($request->tab_status === 'selesai') {
-                    $query->whereIn('order_status', ['delivered', 'completed']);
-                }
-            }
+            $this->applyOrderTabFilter($query, (string) $request->input('tab_status', ''));
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -221,6 +165,88 @@ class OrderController extends Controller
         $countSelesai = Order::whereIn('order_status', ['delivered', 'completed'])->count();
 
         return view('admin.orders.index', compact('warehouses', 'countSemua', 'countMenungguPembayaran', 'countMenungguPersetujuanFinance', 'countMenungguKonfirmasi', 'countSedangDiproses', 'countDikirim', 'countSelesai'));
+    }
+
+    public function export(Request $request)
+    {
+        $query = Order::with(['user', 'expedition', 'sourceWarehouse'])
+            ->orderByDesc('created_at');
+
+        $this->applyOrderListFilters($query, $request);
+        $this->applyOrderTabFilter($query, (string) $request->input('tab_status', ''));
+
+        $filename = 'pesanan-'.now()->timezone('Asia/Jakarta')->format('Ymd-His').'.xlsx';
+
+        return Excel::download(new AdminOrdersExport($query), $filename);
+    }
+
+    private function applyOrderListFilters(Builder $query, Request $request): void
+    {
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('order_status', $request->status);
+        }
+
+        if ($request->filled('order_type') && $request->order_type != '') {
+            $query->where('order_type', $request->order_type);
+        }
+
+        if ($request->filled('sales_code') && $request->sales_code != '') {
+            $query->where('sales_code', $request->sales_code);
+        }
+
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('source_warehouse_id') && $request->source_warehouse_id != '') {
+            $query->where('source_warehouse_id', $request->source_warehouse_id);
+        }
+
+        $searchValue = $request->input('search');
+        if (is_array($searchValue)) {
+            $searchValue = $searchValue['value'] ?? '';
+        }
+        $searchValue = trim((string) $searchValue);
+
+        if ($searchValue !== '') {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('order_number', 'like', "%{$searchValue}%")
+                    ->orWhereHas('user', function ($u) use ($searchValue) {
+                        $u->where('name', 'like', "%{$searchValue}%");
+                    });
+            });
+        }
+    }
+
+    private function applyOrderTabFilter(Builder $query, string $tabStatus): void
+    {
+        if ($tabStatus === '') {
+            return;
+        }
+
+        if ($tabStatus === 'menunggu_pembayaran') {
+            $query->where('payment_status', 'pending')
+                ->whereNull('payment_proof')
+                ->where(function ($q) {
+                    $q->whereNull('payment_method')
+                        ->orWhere('payment_method', '!=', 'term_of_payment');
+                });
+        } elseif ($tabStatus === 'menunggu_persetujuan_finance') {
+            $query->where('payment_method', 'term_of_payment')
+                ->where('finance_approved', false);
+        } elseif ($tabStatus === 'menunggu_konfirmasi') {
+            $query->where('payment_status', 'pending')->whereNotNull('payment_proof');
+        } elseif ($tabStatus === 'sedang_diproses') {
+            $query->where('finance_approved', true)->whereIn('order_status', ['pending', 'processing']);
+        } elseif ($tabStatus === 'dikirim') {
+            $query->where('order_status', 'shipped');
+        } elseif ($tabStatus === 'selesai') {
+            $query->whereIn('order_status', ['delivered', 'completed']);
+        }
     }
 
     public function show(Order $order)

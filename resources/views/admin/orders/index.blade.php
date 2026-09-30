@@ -25,6 +25,7 @@
         <div class="box-header with-border">
             <h3 class="box-title"><i class="fa fa-filter"></i> Filter Pesanan</h3>
             <div class="box-tools pull-right">
+                <a href="#" id="btn-export-excel" class="btn btn-success btn-sm" style="margin-right:8px;"><i class="fa fa-file-excel-o"></i> Export Excel</a>
                 <a href="{{ route('admin.orders.create') }}" class="btn btn-primary btn-sm" style="margin-right:8px;"><i class="fa fa-plus"></i> Input Transaksi</a>
                 <button type="button" class="btn btn-box-tool" data-widget="collapse">
                     <i class="fa fa-minus"></i>
@@ -243,6 +244,20 @@ $(document).ready(function() {
         $('#filter-date-from').datepicker('update', '{{ date('Y-m-d') }}');
         $('#filter-date-to').datepicker('update', '{{ date('Y-m-d') }}');
         table.draw();
+    });
+
+    $('#btn-export-excel').on('click', function(e) {
+        e.preventDefault();
+        var params = $.param({
+            status: $('#filter-status').val(),
+            order_type: $('#filter-order-type').val(),
+            source_warehouse_id: $('#filter-source-warehouse').val() || '',
+            tab_status: window.currentTabStatus || '',
+            date_from: $('#filter-date-from').val(),
+            date_to: $('#filter-date-to').val(),
+            search: table.search()
+        });
+        window.location = "{{ route('admin.orders.export') }}?" + params;
     });
 });
 </script>
