@@ -153,7 +153,7 @@ class CartController extends Controller
         }
 
         $total = $carts->sum(function ($cart) {
-            return $cart->product->final_price * $cart->quantity;
+            return $cart->getSubtotal();
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
@@ -212,13 +212,13 @@ class CartController extends Controller
         $cart->refresh()->load('product');
         $carts = $this->currentRegularCarts();
         $total = $carts->sum(function ($c) {
-            return $c->product->final_price * $c->quantity;
+            return $c->getSubtotal();
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
 
         $product = $cart->product;
-        $lineSubtotal = (float) ($product->final_price * $cart->quantity);
+        $lineSubtotal = (float) $cart->getSubtotal();
         $cartCountSum = Cart::badgeCountFromCarts($carts);
 
         return response()->json([
@@ -251,7 +251,7 @@ class CartController extends Controller
     {
         $carts = $this->currentRegularCarts();
         $total = $carts->sum(function ($c) {
-            return $c->product->final_price * $c->quantity;
+            return $c->getSubtotal();
         });
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);

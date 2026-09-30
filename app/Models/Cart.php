@@ -206,6 +206,14 @@ class Cart extends Model
     }
 
     /**
+     * Hitung subtotal untuk cart line ini.
+     */
+    public function getSubtotal(): float
+    {
+        return $this->displayUnitPrice() * $this->quantity_ordered;
+    }
+
+    /**
      * Get sisa stock produk di hub terkait.
      */
     public function currentStock(): int

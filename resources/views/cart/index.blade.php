@@ -119,7 +119,7 @@
                                         </div>
                                     </td>
                                     <td class="price rg-cart-subtotal" data-title="Subtotal">
-                                        <h4 class="text-brand js-cart-line-subtotal mb-0">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }} </h4>
+                                        <h4 class="text-brand js-cart-line-subtotal mb-0">Rp {{ number_format($cart->getSubtotal(), 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="action text-center rg-cart-remove" data-title="Hapus">
                                         <form action="{{ route('cart.destroy', $cart) }}" method="POST" class="form-delete-item">
