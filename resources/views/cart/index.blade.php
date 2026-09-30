@@ -89,15 +89,20 @@
                                     </td>
                                     <td class="product-des product-name pl-15 rg-cart-product">
                                         <h6 class="mb-5"><a class="product-name mb-10 text-heading" href="{{ route('products.show', $cart->product) }}">{{ $cart->product->display_name }}</a></h6>
-                                        @if($cart->product->weight)
-                                        <div class="product-meta mt-5">
+                                        
+                                        <div class="product-meta mt-5 rg-cart-product-meta-mobile">
+                                            @if($cart->product->weight)
                                             <small class="rg-cart-weight">
                                                 Berat: {{ $itemWeight >= 1000 ? number_format($itemWeight / 1000, 1) . ' kg' : $itemWeight . ' gram' }}
                                             </small>
+                                            @else
+                                            <small class="rg-cart-weight"></small>
+                                            @endif
+                                            
+                                            <h4 class="text-body d-lg-none rg-cart-unit-price-mobile mb-0">Rp {{ number_format($cart->displayUnitPrice(), 0, ',', '.') }}</h4>
                                         </div>
-                                        @endif
                                     </td>
-                                    <td class="price rg-cart-unit-price" data-title="Harga">
+                                    <td class="price rg-cart-unit-price d-none d-lg-table-cell" data-title="Harga">
                                         <h4 class="text-body js-cart-unit-price mb-0">Rp {{ number_format($cart->displayUnitPrice(), 0, ',', '.') }} </h4>
                                     </td>
                                     <td class="text-center detail-info rg-cart-qty" data-title="Jumlah">
@@ -327,10 +332,9 @@
             grid-template-columns: 80px 1fr;
             grid-template-areas:
                 "thumb product"
-                "thumb unit-price"
                 "remove qty"
                 "subtotal subtotal";
-            gap: 8px 12px;
+            gap: 12px;
             background: #fff;
             border: 1px solid #edf2f7;
             border-radius: 12px;
@@ -387,26 +391,33 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-align: left !important;
-            margin-bottom: 2px !important;
+            margin-bottom: 6px !important;
             color: #1e293b;
         }
         
+        .rg-cart-page .rg-cart-product-meta-mobile {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .rg-cart-page .rg-cart-weight {
             text-align: left !important;
             display: block;
-            margin-top: 2px;
+            margin: 0;
             font-size: 12px;
             color: #64748b;
         }
+        
+        .rg-cart-page .rg-cart-unit-price-mobile {
+            font-size: 12px !important;
+            font-weight: normal !important;
+            color: #64748b !important;
+            margin: 0 !important;
+        }
 
         .rg-cart-page .rg-cart-unit-price {
-            grid-area: unit-price;
-            align-self: start;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            margin-top: 0;
-            padding-left: 8px !important;
+            display: none !important;
         }
         
         .rg-cart-page .rg-cart-unit-price h4 {
