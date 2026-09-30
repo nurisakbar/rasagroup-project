@@ -401,7 +401,7 @@
                                 <div class="custom-radio">
                                     <input class="form-check-input" type="radio" name="payment_method" value="term_of_payment" id="payTot">
                                     <label class="form-check-label" for="payTot">
-                                        <strong>TOT (Term of Payment)</strong>
+                                        <strong>TOP (Term of Payment)</strong>
                                     </label>
                                 </div>
                                 <div class="payment-content pl-20 mt-10" style="display: block;">
