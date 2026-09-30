@@ -129,7 +129,7 @@
                     <!-- TAB 2: INFORMASI STOCK -->
                     <div class="tab-pane {{ request('tab') == 'stock' ? 'active' : '' }}" id="tab_stock">
                         <div class="row" style="margin-bottom: 20px;">
-                            <div class="col-md-12">
+                            <div class="col-md-8">
                                 <form method="GET" action="{{ route('admin.warehouses.show', $warehouse) }}" class="form-horizontal">
                                     <input type="hidden" name="tab" value="stock">
                                     <div class="input-group">
@@ -142,6 +142,16 @@
                                         </span>
                                     </div>
                                 </form>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <button type="button" class="btn btn-primary" id="btnSyncWms" @if(empty($wmsLocationCode)) disabled title="Lokasi WMS belum diisi" @endif>
+                                    <i class="fa fa-refresh"></i> Sinkronisasi WMS
+                                </button>
+                                @if(!empty($wmsLastSyncAt))
+                                    <div class="text-muted" style="margin-top: 6px; font-size: 12px;">
+                                        Terakhir ditarik: {{ \Carbon\Carbon::parse($wmsLastSyncAt)->timezone('Asia/Jakarta')->format('d M Y H:i') }} WIB
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -463,6 +473,58 @@
         </div>
     </div>
     @endforeach
+
+    <div class="modal fade" id="wmsSyncModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-sm" role="document" style="margin-top: 18%;">
+            <div class="modal-content text-center">
+                <div class="modal-body" style="padding: 28px 20px;">
+                    <i class="fa fa-refresh fa-spin fa-3x text-primary"></i>
+                    <h4 style="margin-top: 18px; font-weight: 600;">Menarik data dari WMS</h4>
+                    <p class="text-muted" style="margin-bottom: 0;">Proses penarikan stock batch sedang berjalan. Mohon tunggu.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#btnSyncWms').on('click', function() {
+                var $btn = $(this);
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+                $btn.prop('disabled', true);
+                $('#wmsSyncModal').modal('show');
+
+                $.ajax({
+                    url: @json(route('admin.warehouses.sync-stock-wms', $warehouse)),
+                    method: 'POST',
+                    timeout: 180000,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json'
+                    },
+                    success: function() {
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        $('#wmsSyncModal').modal('hide');
+                        $btn.prop('disabled', false);
+                        var message = (xhr.responseJSON && xhr.responseJSON.message)
+                            ? xhr.responseJSON.message
+                            : 'Gagal menarik stock batch dari WMS.';
+                        if (typeof swal === 'function') {
+                            swal('Gagal', message, 'error');
+                        } else {
+                            alert(message);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    @endpush
 
     @push('scripts')
     <script>

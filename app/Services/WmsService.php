@@ -200,6 +200,79 @@ class WmsService
     }
 
     /**
+     * Tarik semua batch satu lokasi dari WMS dan simpan ke qad_inventories.
+     */
+    public function syncLocationBatches(string $locationCode): int
+    {
+        $items = $this->flatBatches($locationCode);
+        if ($items === []) {
+            return 0;
+        }
+
+        $now = Carbon::now();
+        $upsertData = [];
+
+        foreach ($items as $item) {
+            $itemCode = $item['item_code'] ?? null;
+            $lotSerial = $item['lot_serial'] ?? '';
+            if (! $itemCode) {
+                continue;
+            }
+
+            $expiredDate = null;
+            if (! empty($item['expired'])) {
+                try {
+                    $expiredDate = Carbon::parse($item['expired'])->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $expiredDate = null;
+                }
+            }
+
+            $upsertData[] = [
+                'item_code' => $itemCode,
+                'qad_location_code' => $locationCode,
+                'lot_serial' => $lotSerial,
+                'qty' => (float) ($item['qty'] ?? 0),
+                'expired_date' => $expiredDate,
+                'last_sync_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($upsertData === []) {
+            return 0;
+        }
+
+        foreach (array_chunk($upsertData, 500) as $chunk) {
+            QadInventory::upsert(
+                $chunk,
+                ['item_code', 'qad_location_code', 'lot_serial'],
+                ['qty', 'expired_date', 'last_sync_at', 'updated_at']
+            );
+        }
+
+        QadInventory::where('qad_location_code', $locationCode)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('last_sync_at')
+                    ->orWhere('last_sync_at', '<', $now);
+            })
+            ->update(['qty' => 0]);
+
+        return count($upsertData);
+    }
+
+    /**
+     * Batch tersimpan dari sinkronisasi terakhir, tanpa memanggil API.
+     *
+     * @return array<string, list<array{lot_serial: string, qty: int, expired: ?string}>>
+     */
+    public function storedBatchesByItemCode(string $locationCode): array
+    {
+        return $this->batchesFromCache($locationCode, 0) ?? [];
+    }
+
+    /**
      * Qty WMS per item_code. null jika lokasi kosong atau WMS & cache gagal.
      *
      * @return array<string, int>|null

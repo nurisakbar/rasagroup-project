@@ -2,10 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\QadInventory;
 use App\Models\Warehouse;
 use App\Services\WmsService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -101,14 +99,13 @@ class SyncQadInventoryJob implements ShouldQueue
             return;
         }
 
-        $now = Carbon::now();
         $totalSynced = 0;
 
         foreach ($locationCodes as $locationCode) {
             try {
-                $items = $wms->flatBatches($locationCode);
+                $synced = $wms->syncLocationBatches($locationCode);
 
-                if (empty($items)) {
+                if ($synced === 0) {
                     Log::info('SyncQadInventoryJob: no inventory items returned', [
                         'location' => $locationCode,
                     ]);
@@ -116,55 +113,11 @@ class SyncQadInventoryJob implements ShouldQueue
                     continue;
                 }
 
-                $upsertData = [];
-                foreach ($items as $item) {
-                    $itemCode = $item['item_code'] ?? null;
-                    $lotSerial = $item['lot_serial'] ?? '';
-                    if (! $itemCode) {
-                        continue;
-                    }
-
-                    $expiredDate = null;
-                    if (! empty($item['expired'])) {
-                        try {
-                            $expiredDate = Carbon::parse($item['expired'])->format('Y-m-d');
-                        } catch (\Exception $e) {
-                            $expiredDate = null;
-                        }
-                    }
-
-                    $upsertData[] = [
-                        'item_code' => $itemCode,
-                        'qad_location_code' => $locationCode,
-                        'lot_serial' => $lotSerial,
-                        'qty' => (float) ($item['qty'] ?? 0),
-                        'expired_date' => $expiredDate,
-                        'last_sync_at' => $now,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                }
-
-                if (! empty($upsertData)) {
-                    foreach (array_chunk($upsertData, 500) as $chunk) {
-                        QadInventory::upsert(
-                            $chunk,
-                            ['item_code', 'qad_location_code', 'lot_serial'],
-                            ['qty', 'expired_date', 'last_sync_at', 'updated_at']
-                        );
-                    }
-                    $totalSynced += count($upsertData);
-                    QadInventory::where('qad_location_code', $locationCode)
-                        ->where(function ($query) use ($now) {
-                            $query->whereNull('last_sync_at')
-                                ->orWhere('last_sync_at', '<', $now);
-                        })
-                        ->update(['qty' => 0]);
-                    Log::info('SyncQadInventoryJob: synced location from WMS', [
-                        'location' => $locationCode,
-                        'items' => count($upsertData),
-                    ]);
-                }
+                $totalSynced += $synced;
+                Log::info('SyncQadInventoryJob: synced location from WMS', [
+                    'location' => $locationCode,
+                    'items' => $synced,
+                ]);
             } catch (\Exception $e) {
                 Log::error('SyncQadInventoryJob: error syncing location from WMS', [
                     'location' => $locationCode,

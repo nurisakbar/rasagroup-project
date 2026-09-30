@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\WilayahAdministratif;
 use App\Models\Warehouse;
+use App\Models\QadInventory;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseStockHistory;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use App\Services\EkspedisiKuService;
 use App\Services\JubelioStockSyncService;
+use App\Services\WmsService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -402,16 +404,16 @@ class WarehouseController extends Controller
             ->get();
             
         $wmsBatches = [];
-        $wmsLocationCode = $warehouse->qad_location_code ?? $warehouse->kode_hub;
+        $wmsLocationCode = WmsService::locationCode($warehouse);
+        $wmsLastSyncAt = null;
         if ($request->tab == 'stock' && $wmsLocationCode) {
-            try {
-                $wmsBatches = app(\App\Services\WmsService::class)->batchesByItemCode($wmsLocationCode) ?? [];
-            } catch (\Exception $e) {
-                Log::error('Failed to fetch realtime batch from WMS: ' . $e->getMessage());
-            }
+            $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($wmsLocationCode);
+            $wmsLastSyncAt = QadInventory::query()
+                ->where('qad_location_code', $wmsLocationCode)
+                ->max('last_sync_at');
         }
 
-        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches'));
+        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches', 'wmsLocationCode', 'wmsLastSyncAt'));
     }
 
     public function edit(Warehouse $warehouse)
@@ -713,6 +715,58 @@ class WarehouseController extends Controller
         ]);
 
         return back()->with('success', 'User warehouse berhasil ditambahkan.');
+    }
+
+    /**
+     * Tarik stock batch satu hub dari WMS lalu simpan ke qad_inventories.
+     */
+    public function syncStockWms(Warehouse $warehouse)
+    {
+        set_time_limit(180);
+
+        $locationCode = WmsService::locationCode($warehouse);
+        if (! $locationCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lokasi WMS pada hub ini belum diisi.',
+            ], 422);
+        }
+
+        $wms = app(WmsService::class);
+        if (! $wms->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'WMS API belum dikonfigurasi.',
+            ], 422);
+        }
+
+        try {
+            $synced = $wms->syncLocationBatches($locationCode);
+        } catch (\Exception $e) {
+            Log::error('Warehouse WMS stock sync failed', [
+                'warehouse_id' => $warehouse->id,
+                'location' => $locationCode,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menarik stock batch dari WMS.',
+            ], 500);
+        }
+
+        if ($synced === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'WMS tidak mengembalikan stock batch untuk lokasi '.$locationCode.'.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'synced' => $synced,
+            'message' => 'Stock batch WMS berhasil ditarik ('.$synced.' batch).',
+        ]);
     }
 
     /**

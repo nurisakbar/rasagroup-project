@@ -257,6 +257,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
         Route::post('/warehouses/{warehouse}/sync-stock-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockQid'])->name('warehouses.sync-stock-qid');
+        Route::post('/warehouses/{warehouse}/sync-stock-wms', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockWms'])->name('warehouses.sync-stock-wms');
         Route::put('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'updateStock'])->name('warehouses.update-stock');
         Route::delete('/warehouses/{warehouse}/stock/{stock}', [App\Http\Controllers\Admin\WarehouseController::class, 'removeStock'])->name('warehouses.remove-stock');
         Route::post('/warehouses/{warehouse}/users', [App\Http\Controllers\Admin\WarehouseController::class, 'addUser'])->name('warehouses.add-user');
