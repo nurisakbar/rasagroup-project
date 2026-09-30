@@ -159,6 +159,26 @@
                                 .rg-cart-totals .table td, .rg-cart-totals .table th, .rg-cart-totals .table tr {
                                     border: none !important;
                                 }
+                                .rg-cart-totals .table tr:not(.rg-divider-row) {
+                                    display: flex !important;
+                                    justify-content: space-between !important;
+                                    align-items: center !important;
+                                    width: 100% !important;
+                                    padding: 8px 0;
+                                }
+                                .rg-cart-totals .rg-divider-row {
+                                    display: block !important;
+                                    width: 100% !important;
+                                }
+                                .rg-cart-totals .table td {
+                                    padding: 0 !important;
+                                    width: auto !important;
+                                    display: block !important;
+                                    text-align: left !important;
+                                }
+                                .rg-cart-totals .table td.cart_total_amount {
+                                    text-align: right !important;
+                                }
                             </style>
                             <tbody>
                                 <tr>
@@ -177,8 +197,8 @@
                                         <h4 class="text-brand text-end js-cart-page-total-weight">{{ $totalWeightFormatted }}</h4>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td scope="col" colspan="2">
+                                <tr class="rg-divider-row">
+                                    <td scope="col" colspan="2" style="width: 100% !important;">
                                         <div class="divider-2 mt-10 mb-10"></div>
                                     </td>
                                 </tr>
