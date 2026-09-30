@@ -324,12 +324,11 @@
 
         .rg-cart-page .rg-cart-item {
             display: grid !important;
-            grid-template-columns: 80px 1fr;
+            grid-template-columns: 80px 1fr auto;
             grid-template-areas:
-                "thumb product"
-                "thumb unit-price"
-                "remove qty"
-                "subtotal subtotal";
+                "thumb product unit-price"
+                "remove qty qty"
+                "subtotal subtotal subtotal";
             gap: 8px 12px;
             background: #fff;
             border: 1px solid #edf2f7;
@@ -403,7 +402,7 @@
             align-self: end;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: flex-end;
             margin-top: 0;
         }
         
