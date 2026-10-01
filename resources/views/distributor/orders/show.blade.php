@@ -139,7 +139,13 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td>{{ $item->product->display_name ?? 'Produk tidak tersedia' }}</td>
+                                    <td>
+                                        @if($item->product)
+                                            {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                        @else
+                                            Produk tidak tersedia
+                                        @endif
+                                    </td>
                                     <td class="text-center">{{ $item->quantity }}</td>
                                     <td class="text-right">@include('partials.order-item-unit-price', ['item' => $item])</td>
                                     <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>

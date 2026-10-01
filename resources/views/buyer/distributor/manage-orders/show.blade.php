@@ -81,7 +81,11 @@
                                                             @foreach($order->items as $item)
                                                             <tr>
                                                                 <td>
-                                                                    <strong>{{ $item->product->display_name ?? 'Produk dihapus' }}</strong>
+                                                                    @if($item->product)
+                                                                        <strong>{{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}</strong>
+                                                                    @else
+                                                                        <strong>Produk dihapus</strong>
+                                                                    @endif
                                                                 </td>
                                                                 <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                                                                 <td class="text-center">{{ $item->quantity }}</td>

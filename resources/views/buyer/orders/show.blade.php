@@ -480,7 +480,13 @@
                                                                                  onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
                                                                         </div>
                                                                         <div>
-                                                                            <h6 class="font-sm mb-1 text-dark">{{ $item->product->display_name }}</h6>
+                                                                            <h6 class="font-sm mb-1 text-dark">
+                                                                                @if($item->product)
+                                                                                    {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                                                                @else
+                                                                                    Produk dihapus
+                                                                                @endif
+                                                                            </h6>
                                                                             <span class="font-xs text-muted">SKU: {{ $item->sku ?? '-' }}</span>
                                                                         </div>
                                                                     </div>

@@ -548,7 +548,11 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        {{ $item->product->display_name ?? 'Produk tidak tersedia' }}
+                                        @if($item->product)
+                                            {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                        @else
+                                            Produk tidak tersedia
+                                        @endif
                                         @if(count($batches) > 0)
                                             <div style="margin-top: 5px;">
                                                 @foreach($batches as $batch)
