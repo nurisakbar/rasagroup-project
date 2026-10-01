@@ -326,14 +326,14 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <!-- <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bca_va')" id="card-faspay-bca">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_bca_va" id="payBCAVA">
                                                             <label class="form-check-label" for="payBCAVA"><strong>BCA VA Online</strong></label>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div> -->
                                             @else
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata">

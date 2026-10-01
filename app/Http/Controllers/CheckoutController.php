@@ -1571,7 +1571,7 @@ class CheckoutController extends Controller
             return $this->ekspedisiku->calculateCost(
                 $sourceWarehouse->district_id,
                 $address->district_id,
-                max(1, $totalWeightGrams / 1000),
+                max(1, $totalWeightGrams),
                 $expedition->code,
                 [
                     'warehouse' => $sourceWarehouse,
