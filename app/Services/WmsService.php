@@ -155,6 +155,13 @@ class WmsService
             return self::$requestCache[$cacheKey];
         }
 
+        $laravelCacheKey = 'wms_batches_' . $locationCode . '_' . $minMasaBerlakuBulan;
+        $cachedData = \Illuminate\Support\Facades\Cache::get($laravelCacheKey);
+        if ($cachedData !== null) {
+            self::$requestCache[$cacheKey] = $cachedData;
+            return $cachedData;
+        }
+
         $grouped = [];
         $page = 1;
         $lastPage = 1;
@@ -195,6 +202,8 @@ class WmsService
 
         $normalized = $this->normalizeBatches($grouped, $minMasaBerlakuBulan);
         self::$requestCache[$cacheKey] = $normalized;
+        
+        \Illuminate\Support\Facades\Cache::put($laravelCacheKey, $normalized, now()->addMinutes(10));
 
         return $normalized;
     }
