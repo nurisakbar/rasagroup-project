@@ -569,6 +569,11 @@ class EkspedisiKuService
      */
     public function getCouriers()
     {
+        $cached = \Illuminate\Support\Facades\Cache::get('ekspedisiku_couriers');
+        if ($cached) {
+            return $cached;
+        }
+
         try {
             $response = Http::timeout(10)->withToken($this->token)
                 ->get("{$this->baseUrl}/couriers");
@@ -581,7 +586,11 @@ class EkspedisiKuService
                 return null;
             }
 
-            return $response->json();
+            $data = $response->json();
+            if ($data) {
+                \Illuminate\Support\Facades\Cache::put('ekspedisiku_couriers', $data, now()->addMinutes(60));
+            }
+            return $data;
         } catch (\Exception $e) {
             Log::error('EkspedisiKuService: getCouriers error', ['message' => $e->getMessage()]);
             return null;
