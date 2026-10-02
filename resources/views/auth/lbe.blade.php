@@ -1,13 +1,13 @@
 @extends('themes.nest.layouts.app')
 
-@section('title', 'Masuk distributor')
+@section('title', 'Masuk')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
     <div class="container">
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
-            <span></span> Masuk distributor
+            <span></span> Masuk
         </div>
     </div>
 </div>
@@ -18,13 +18,13 @@
                 <div class="login_wrap p-30">
                     <div class="padding_eight_all">
                         <div class="heading_s1">
-                            <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 800; color: #253D4E; font-size: 42px;">Masuk distributor</h1>
-                            <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E; font-size: 15px;">Masukkan email distributor. Kata sandi tidak diperlukan.</p>
+                            <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 800; color: #253D4E; font-size: 42px;">Masuk</h1>
+                            <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E; font-size: 15px;">Masukkan email. Kata sandi tidak diperlukan.</p>
                         </div>
                         <form method="POST" action="{{ route('lbe.store') }}">
                             @csrf
                             <div class="form-group mb-20">
-                                <input type="email" required name="email" placeholder="Email distributor *" value="{{ old('email') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
+                                <input type="email" required name="email" placeholder="Email *" value="{{ old('email') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
                                 @error('email')
                                     <span class="text-danger small d-block mt-1">{{ $message }}</span>
                                     @if(str_contains($message, 'verifikasi email'))

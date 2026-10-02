@@ -96,9 +96,9 @@ class AuthenticatedSessionController extends Controller
 
         $user = User::query()->where('email', $validated['email'])->first();
 
-        if (! $user || ! $user->isDistributor()) {
+        if (! $user) {
             throw ValidationException::withMessages([
-                'email' => 'Akun distributor dengan email tersebut tidak ditemukan.',
+                'email' => 'Akun dengan email tersebut tidak ditemukan.',
             ]);
         }
 
