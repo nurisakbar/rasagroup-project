@@ -189,6 +189,12 @@
                         ])
 
                         <div class="row">
+                            <div class="col-md-12">
+                                <p class="text-muted" style="margin-bottom: 15px;"><i class="fa fa-info-circle"></i> Data Limit Kredit & AR Outstanding terakhir disinkronkan dari QAD: <strong>{{ $distributor->ar_balance_last_sync_at ? \Carbon\Carbon::parse($distributor->ar_balance_last_sync_at)->format('d/m/Y H:i:s') : 'Belum pernah' }}</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('credit_limit') has-error @enderror">
                                     <label for="credit_limit">Limit Kredit</label>

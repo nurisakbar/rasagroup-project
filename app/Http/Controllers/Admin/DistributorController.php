@@ -89,6 +89,12 @@ class DistributorController extends Controller
                 ->addColumn('ar_outstanding_info', function ($dist) {
                     return 'Rp ' . number_format($dist->ar_outstanding ?? 0, 0, ',', '.');
                 })
+                ->addColumn('ar_balance_last_sync_info', function ($dist) {
+                    if ($dist->ar_balance_last_sync_at) {
+                        return \Carbon\Carbon::parse($dist->ar_balance_last_sync_at)->format('d/m/y H:i');
+                    }
+                    return '<span class="text-muted">-</span>';
+                })
                 ->addColumn('action', function ($dist) {
                     $showUrl = route('admin.distributors.show', $dist);
                     $editUrl = route('admin.distributors.edit', $dist);
@@ -109,7 +115,7 @@ class DistributorController extends Controller
                         </form>
                     ';
                 })
-                ->rawColumns(['name_info', 'status_info', 'location_info', 'action'])
+                ->rawColumns(['name_info', 'status_info', 'location_info', 'ar_balance_last_sync_info', 'action'])
                 ->make(true);
         }
 
@@ -802,11 +808,27 @@ class DistributorController extends Controller
                     ]);
                     if ($response->successful() && $response->json('success')) {
                         $data = $response->json('data');
+                        $isUpdated = false;
+                        
                         if (isset($data['outstanding'])) {
                             $distributor->ar_outstanding = $data['outstanding'];
+                            $isUpdated = true;
                         }
                         if (isset($data['credit_limit'])) {
                             $distributor->credit_limit = $data['credit_limit'];
+                            $isUpdated = true;
+                        }
+                        if (isset($data['top'])) {
+                            $distributor->term_of_payment = \App\Support\QadCreditTerms::daysFromCode($data['top']);
+                            $isUpdated = true;
+                        } elseif (isset($data['term_of_payment'])) {
+                            $distributor->term_of_payment = \App\Support\QadCreditTerms::daysFromCode($data['term_of_payment']);
+                            $isUpdated = true;
+                        }
+                        
+                        if ($isUpdated) {
+                            $distributor->ar_balance_last_sync_at = now();
+                            $distributor->save();
                         }
                     }
                 } catch (\Exception $e) {

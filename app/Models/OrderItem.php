@@ -121,6 +121,23 @@ class OrderItem extends Model
         return $this->price;
     }
 
+    public function orderedPriceWithTax(): float
+    {
+        $price = $this->orderedPrice();
+        if ($this->order && $this->order->user && $this->order->user->usesPpn()) {
+            return \App\Support\TaxAwarePrice::includingTax($price);
+        }
+        return $price;
+    }
+
+    public function subtotalWithTax(): float
+    {
+        if ($this->order && $this->order->user && $this->order->user->usesPpn()) {
+            return \App\Support\TaxAwarePrice::includingTax((float)$this->subtotal);
+        }
+        return (float)$this->subtotal;
+    }
+
     public function catalogUnitPrice(): float
     {
         $this->loadMissing('product');
@@ -162,6 +179,9 @@ class OrderItem extends Model
     {
         $this->loadMissing(['order.user', 'product']);
         if ($this->order?->user && $this->product) {
+            if ($this->exists && $this->price > 0) {
+                return (float) $this->price;
+            }
             return (float) $this->order->user->getProductPrice($this->product);
         }
 
@@ -203,10 +223,7 @@ class OrderItem extends Model
 
     public function unitDiscountPercent(): float
     {
-        $categoryPercent = $this->buyerCategoryDiscountPercent();
-        if ($categoryPercent > 0) {
-            return round($categoryPercent, 1);
-        }
+
 
         $before = $this->unitPriceBeforeDiscount();
         if ($before <= 0) {

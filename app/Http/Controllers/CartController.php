@@ -61,8 +61,13 @@ class CartController extends Controller
             return;
         }
 
+        $excludedHub = Auth::user()?->distributorShoppingExcludedWarehouseId();
         if (session()->has('selected_shipping_address_id') && session()->has('selected_hub_id')) {
-            return;
+            if ($excludedHub && session('selected_hub_id') === $excludedHub) {
+                // Invalid hub in session, force recalculate
+            } else {
+                return;
+            }
         }
 
         $address = null;
@@ -88,8 +93,14 @@ class CartController extends Controller
      */
     protected function ensureShoppingHubInSession(?string $warehouseIdFromRequest = null): void
     {
+        $excludedHub = Auth::check() ? Auth::user()->distributorShoppingExcludedWarehouseId() : null;
         if (session()->has('selected_hub_id')) {
-            return;
+            if ($excludedHub && session('selected_hub_id') === $excludedHub) {
+                // Invalid hub, clear session and recalculate
+                session()->forget(['selected_hub_id', 'selected_hub_name', 'selected_hub_slug']);
+            } else {
+                return;
+            }
         }
 
         if ($warehouseIdFromRequest) {
@@ -387,6 +398,19 @@ class CartController extends Controller
             return $request->ajax()
                 ? response()->json(['error' => 'Jumlah tidak valid.'], 422)
                 : back()->with('error', 'Jumlah tidak valid.');
+        }
+
+        // Force user to set address first if they don't have any
+        if (Auth::check()) {
+            $hasAddress = \App\Models\Address::where('user_id', Auth::id())->exists();
+            if (!$hasAddress) {
+                $msg = 'Silakan isi alamat pengiriman Anda terlebih dahulu.';
+                $redirectUrl = route('addresses.create');
+                
+                return $request->ajax()
+                    ? response()->json(['error' => $msg, 'redirect' => $redirectUrl], 403)
+                    : redirect($redirectUrl)->with('error', $msg);
+            }
         }
 
         $sessionWarehouseId = session('selected_hub_id');

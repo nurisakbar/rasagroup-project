@@ -36,6 +36,10 @@ class SyncQadCustomersJob implements ShouldQueue
             Log::info('SyncQadCustomersJob: Memulai sinkronisasi QAD...');
             app(DistributorController::class)->processQadSync($qid);
             Log::info('SyncQadCustomersJob: Selesai mengeksekusi sinkronisasi QAD.');
+            
+            // Trigger sinkronisasi AR Balance setelah QAD selesai ditarik
+            Log::info('SyncQadCustomersJob: Memicu antrean SyncDistributorArBalanceJob...');
+            \App\Jobs\SyncDistributorArBalanceJob::dispatch();
         } catch (\Exception $e) {
             Log::error('SyncQadCustomersJob Error: ' . $e->getMessage());
         }

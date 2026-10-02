@@ -44,8 +44,14 @@ class SyncDistributorArBalanceJob implements ShouldQueue
                     if (isset($data['credit_limit'])) {
                         $updateData['credit_limit'] = $data['credit_limit'];
                     }
+                    if (isset($data['top'])) {
+                        $updateData['term_of_payment'] = \App\Support\QadCreditTerms::daysFromCode($data['top']);
+                    } elseif (isset($data['term_of_payment'])) {
+                        $updateData['term_of_payment'] = \App\Support\QadCreditTerms::daysFromCode($data['term_of_payment']);
+                    }
 
                     if (!empty($updateData)) {
+                        $updateData['ar_balance_last_sync_at'] = now();
                         $distributor->update($updateData);
                     }
                 } else {

@@ -132,6 +132,12 @@
             <td width="50%" valign="top">
                 <div class="invoice-no">Invoice no: {{ $invoice['invoice_no'] }}</div>
                 <div class="order-date">Order date: {{ $invoice['order_date'] }}</div>
+                @if($order->sales)
+                    <div class="order-date" style="margin-top: 12px; text-align: right;">
+                        <strong>Sales:</strong> {{ $order->sales->name }}<br>
+                        <strong>No. HP:</strong> {{ $order->sales->phone ?? '-' }}
+                    </div>
+                @endif
             </td>
         </tr>
     </table>

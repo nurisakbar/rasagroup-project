@@ -86,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'qad_customer_code',
         'sales_code',
         'is_potential_distributor',
+        'ar_balance_last_sync_at',
     ];
 
     protected static function boot()
@@ -319,7 +320,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return \App\Services\FaspayConfig::COMPANY_MCR;
         }
 
-        return \App\Services\FaspayConfig::COMPANY_RDI;
+        return \App\Services\FaspayConfig::getDefaultCompany();
     }
 
     /**

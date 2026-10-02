@@ -280,7 +280,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'purchaseOrderNumber' => $purchaseOrderNumber,
             'taxClass' => 'PPN',
             'isTaxable' => $this->isTaxableForQad(),
-            'isSelfBillingEnabled' => true,
+            'isSelfBillingEnabled' => false,
             'salesOrderLines' => $lines,
         ];
 

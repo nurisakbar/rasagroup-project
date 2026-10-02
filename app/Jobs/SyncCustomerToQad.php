@@ -173,9 +173,9 @@ class SyncCustomerToQad implements ShouldQueue
         $street1 = $this->sanitizeStreet((string) ($this->addressSnapshot['street1'] ?? ''), '-');
         $street2 = $this->sanitizeStreet((string) ($this->addressSnapshot['street2'] ?? ''), '');
 
-        // QAD address name ~28, street ~36 (lihat customer MCR existing + contoh GET QMI).
-        $nameShort = substr($name, 0, 28);
-        $cityShort = substr($city, 0, 28);
+        // QAD address name ~20, street ~36 (lihat customer MCR existing + contoh GET QMI).
+        $nameShort = substr($name, 0, 20);
+        $cityShort = substr($city, 0, 20);
         $street1Short = substr($street1, 0, 36);
         $street2Short = substr($street2, 0, 36);
 
@@ -236,12 +236,12 @@ class SyncCustomerToQad implements ShouldQueue
         $city = $this->normalizeCityForQad((string) ($this->addressSnapshot['city'] ?? ''));
         $payload = [
             'businessRelationCode' => $code,
-            'businessRelationName1' => (string) ($user->name ?? 'Customer'),
+            'businessRelationName1' => substr((string) ($user->name ?? 'Customer'), 0, 20),
             'businessRelationName2' => '',
             'businessRelationName3' => '',
             'businessRelationSearchName' => substr((string) ($user->name ?? 'Customer'), 0, 20),
-            'corporateGroupCode' => '',
-            'headOfficeAddressName' => (string) ($user->name ?? 'Customer'),
+            'corporateGroupCode' => 'Customer',
+            'headOfficeAddressName' => substr((string) ($user->name ?? 'Customer'), 0, 20),
             'headOfficeAddressSearchName' => substr((string) ($user->name ?? 'Customer'), 0, 20),
             'headOfficeAddressTypeCode' => 'HEADOFFICE',
             'headOfficeBusinessRelationCode' => $code,

@@ -65,6 +65,7 @@
                                 <th width="25%">Lokasi</th>
                                 <th>Credit Limit</th>
                                 <th>AR Outstanding</th>
+                                <th>Update Terakhir</th>
                                 <th>Kode QAD</th>
                                 <th width="100">Action</th>
                             </tr>
@@ -117,6 +118,7 @@ $(function() {
             { data: 'location_info', name: 'location', orderable: false, searchable: false },
             { data: 'credit_limit_info', name: 'credit_limit' },
             { data: 'ar_outstanding_info', name: 'ar_outstanding' },
+            { data: 'ar_balance_last_sync_info', name: 'ar_balance_last_sync_at', orderable: true, searchable: false },
             { data: 'status_info', name: 'status_info', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],

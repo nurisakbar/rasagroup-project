@@ -7,6 +7,19 @@ use App\Models\Setting;
 class TaxAwarePrice
 {
     /**
+     * Harga setelah PPN.
+     */
+    public static function includingTax(float $exclusivePrice, ?float $taxPercent = null): float
+    {
+        $taxPercent ??= Setting::taxPercent();
+        if ($taxPercent <= 0 || $exclusivePrice <= 0) {
+            return $exclusivePrice;
+        }
+
+        return $exclusivePrice * (1 + ($taxPercent / 100));
+    }
+
+    /**
      * Harga sebelum PPN (DPP). Harga katalog dianggap sudah termasuk pajak.
      */
     public static function excludingTax(float $inclusivePrice, ?float $taxPercent = null): float
