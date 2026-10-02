@@ -342,6 +342,7 @@ class CheckoutController extends Controller
 
     public function calculateShipping(Request $request)
     {
+        $startTime = microtime(true);
         $address = Address::with(['wilayah'])->find($request->address_id);
         
         if (!$address || $address->user_id !== Auth::id()) {
@@ -530,11 +531,21 @@ class CheckoutController extends Controller
                 'name' => $sourceWarehouse->name,
                 'location' => $sourceWarehouse->full_location,
             ] : null,
+        ];
+
+        $endTime = microtime(true);
+        Log::info('[checkout.calculate-shipping] PERFORMANCE_METRICS', [
+            'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
+            'expedition_code' => $expedition->code ?? null,
+            'service_code' => $serviceName ?? null,
         ]);
+
+        return response()->json($responsePayload);
     }
 
     public function getExpeditionServices(Request $request)
     {
+        $startTime = microtime(true);
         Log::debug('[checkout.expedition-services] request', [
             'user_id' => Auth::id(),
             'expedition_id' => $request->expedition_id,
@@ -612,12 +623,14 @@ class CheckoutController extends Controller
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
+        $costStart = microtime(true);
         $costResult = $this->resolveShippingCost(
             $expedition,
             $sourceWarehouse,
             $address,
             $totalWeight
         );
+        $costEnd = microtime(true);
 
         $services = [];
         if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
@@ -679,6 +692,14 @@ class CheckoutController extends Controller
         ]);
 
         // Removed dummy services fallback to ensure API data is the only source
+
+        $endTime = microtime(true);
+        Log::info('[checkout.expedition-services] PERFORMANCE_METRICS', [
+            'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
+            'resolve_cost_time_ms' => isset($costStart) && isset($costEnd) ? round(($costEnd - $costStart) * 1000, 2) : 0,
+            'expedition_code' => $expedition->code ?? null,
+            'services_count' => count($services),
+        ]);
 
         return response()->json($responsePayload);
     }
