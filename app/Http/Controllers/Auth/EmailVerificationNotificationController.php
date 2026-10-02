@@ -75,4 +75,36 @@ class EmailVerificationNotificationController extends Controller
             return back()->with('error', 'Gagal mengirim email verifikasi.')->with('debug_id', $debugId);
         }
     }
+
+    /**
+     * Display the resend verification email form.
+     */
+    public function showResendForm(Request $request): \Illuminate\View\View
+    {
+        return view('auth.resend-verification', ['email' => $request->query('email')]);
+    }
+
+    /**
+     * Resend verification email for public access (guest).
+     */
+    public function storePublic(Request $request): RedirectResponse
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = \App\Models\User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return back()->withErrors(['email' => 'Akun dengan email tersebut tidak ditemukan.']);
+        }
+        
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('login')->with('status', 'Email sudah diverifikasi. Silakan login.');
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+            return back()->with('status', 'Tautan verifikasi telah dikirim ulang. Silakan cek kotak masuk atau folder spam Anda.');
+        } catch (Throwable $e) {
+            return back()->withErrors(['email' => 'Gagal mengirim email verifikasi. Silakan coba lagi nanti.']);
+        }
+    }
 }

@@ -43,6 +43,7 @@ class Product extends Model
         'discount_end_date',
         'sync_sources',
         'created_by',
+        'alternate_codes',
     ];
 
     protected $casts = [
@@ -54,6 +55,7 @@ class Product extends Model
         'is_discount' => 'boolean',
         'discount_start_date' => 'date',
         'discount_end_date' => 'date',
+        'alternate_codes' => 'array',
     ];
 
     /**
@@ -63,6 +65,7 @@ class Product extends Model
     {
         parent::boot();
         // static::addGlobalScope(new SyncedInJubelioAndQadScope()); // Moved to frontend controllers only
+
 
         static::creating(function ($product) {
             if (!$product->slug) {
@@ -123,6 +126,20 @@ class Product extends Model
                 'was_recently_created' => $product->wasRecentlyCreated,
             ]);
         });
+    }
+    
+    public function getAllCodes(): array
+    {
+        $codes = [];
+        if (filled($this->code)) {
+            $codes[] = $this->code;
+        }
+        
+        if (is_array($this->alternate_codes)) {
+            $codes = array_merge($codes, $this->alternate_codes);
+        }
+        
+        return array_values(array_unique(array_filter($codes)));
     }
 
     public function creator(): BelongsTo

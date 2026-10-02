@@ -512,6 +512,16 @@ class WarehouseController extends Controller
         $wmsLocationCode = WmsService::locationCode($warehouse);
         $wmsLastSyncAt = null;
         if ($request->tab == 'stock' && $wmsLocationCode) {
+            try {
+                // Sync data dari WMS secara realtime sebelum menampilkan data
+                app(WmsService::class)->syncLocationBatches($wmsLocationCode);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Realtime WMS sync failed on show warehouse page', [
+                    'location' => $wmsLocationCode,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($wmsLocationCode);
             $wmsLastSyncAt = QadInventory::query()
                 ->where('qad_location_code', $wmsLocationCode)

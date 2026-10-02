@@ -144,6 +144,12 @@
                                 </form>
                             </div>
                             <div class="col-md-4 text-right">
+                                <form action="{{ route('admin.warehouses.sync-products', $warehouse) }}" method="POST" style="display: inline-block; margin-right: 5px;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success" onclick="return confirm('Tambahkan semua produk aktif (yang belum ada) ke hub ini dengan stok 0?')">
+                                        <i class="fa fa-plus-circle"></i> Sinkron Produk
+                                    </button>
+                                </form>
                                 <button type="button" class="btn btn-primary" id="btnSyncWms" @if(empty($wmsLocationCode)) disabled title="Lokasi WMS belum diisi" @endif>
                                     <i class="fa fa-refresh"></i> Sinkronisasi WMS
                                 </button>
@@ -188,10 +194,30 @@
                                                     <span class="label label-warning">Nonaktif</span>
                                                 @endif
                                                 
-                                                @if(isset($wmsBatches[$stock->product->code]) && count($wmsBatches[$stock->product->code]) > 0)
+                                                @php
+                                                    $productBatches = [];
+                                                    foreach($stock->product->getAllCodes() as $code) {
+                                                        if(isset($wmsBatches[$code])) {
+                                                            foreach($wmsBatches[$code] as $b) {
+                                                                $b['_item_code'] = $code;
+                                                                $productBatches[] = $b;
+                                                            }
+                                                        } else {
+                                                            $ucCode = strtoupper(trim((string) $code));
+                                                            if (isset($wmsBatches[$ucCode])) {
+                                                                foreach($wmsBatches[$ucCode] as $b) {
+                                                                    $b['_item_code'] = $ucCode;
+                                                                    $productBatches[] = $b;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if(count($productBatches) > 0)
                                                     <div style="margin-top: 5px;">
-                                                        @foreach($wmsBatches[$stock->product->code] as $batch)
+                                                        @foreach($productBatches as $batch)
                                                             <div>
+                                                                <small class="text-muted">[{{ $batch['_item_code'] ?? '-' }}]</small> 
                                                                 <em>Batch : {{ $batch['lot_serial'] }} 
                                                                 @if(!empty($batch['expired']))
                                                                     - Expired : {{ $batch['expired'] }}
@@ -203,7 +229,15 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td><code>{{ $stock->product->code }}</code></td>
+                                            <td>
+                                                <code>{{ $stock->product->code }}</code>
+                                                @if(!empty($stock->product->alternate_codes) && is_array($stock->product->alternate_codes))
+                                                    <br>
+                                                    @foreach($stock->product->alternate_codes as $altCode)
+                                                        <code style="background: #f4f4f4; border: 1px solid #ddd; margin-top:2px; display:inline-block; color: #666;">{{ $altCode }}</code>
+                                                    @endforeach
+                                                @endif
+                                            </td>
                                             <td>Rp {{ number_format($stock->product->price, 0, ',', '.') }}</td>
                                             <td class="text-center">
                                                 @if($stock->stock <= 10)
@@ -217,10 +251,8 @@
                                             <td class="text-center">
                                                 @php
                                                     $wmsTotal = 0;
-                                                    if(isset($wmsBatches[$stock->product->code])) {
-                                                        foreach($wmsBatches[$stock->product->code] as $b) {
-                                                            $wmsTotal += $b['qty'];
-                                                        }
+                                                    foreach($productBatches as $b) {
+                                                        $wmsTotal += $b['qty'];
                                                     }
                                                 @endphp
                                                 @if($wmsTotal > 0)

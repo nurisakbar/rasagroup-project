@@ -30,6 +30,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->authenticate();
 
+        if (! Auth::user()->hasVerifiedEmail()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'Anda harus melakukan verifikasi email terlebih dahulu. Silakan cek kotak masuk atau folder spam Anda.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         \App\Models\Cart::mergeSessionCartToUser(Auth::id(), $sessionId);
@@ -58,6 +68,12 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if (! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => 'Anda harus melakukan verifikasi email terlebih dahulu. Silakan cek kotak masuk atau folder spam Anda.',
+            ]);
+        }
+
         Auth::login($user);
 
         $request->session()->regenerate();
@@ -83,6 +99,12 @@ class AuthenticatedSessionController extends Controller
         if (! $user || ! $user->isDistributor()) {
             throw ValidationException::withMessages([
                 'email' => 'Akun distributor dengan email tersebut tidak ditemukan.',
+            ]);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => 'Anda harus melakukan verifikasi email terlebih dahulu. Silakan cek kotak masuk atau folder spam Anda.',
             ]);
         }
 

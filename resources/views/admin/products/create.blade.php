@@ -97,6 +97,19 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group @error('alternate_codes') has-error @enderror">
+                                    <label for="alternate_codes"><i class="fa fa-tags"></i> Kode Alternatif / SKU Lain (Opsional)</label>
+                                    <input type="text" class="form-control" id="alternate_codes" name="alternate_codes" value="{{ old('alternate_codes') }}" placeholder="Ketik kode lalu pisahkan dengan koma. Contoh: SKU-01, SKU-02">
+                                    <p class="help-block text-muted small mb-0">Digunakan untuk multiple mapping SKU dari sistem WMS.</p>
+                                    @error('alternate_codes')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <hr>
                         <!-- Group 2: Measurement & Pricing -->
                         <div class="row">

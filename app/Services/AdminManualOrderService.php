@@ -400,7 +400,7 @@ class AdminManualOrderService
             if (! isset($pools[$productId])) {
                 $pools[$productId] = $wms->batchesForWarehouseItem(
                     $warehouse,
-                    (string) $product->code,
+                    $product->getAllCodes(),
                     $customer->shelfLifeMonths()
                 );
             }

@@ -51,6 +51,18 @@
                             <i class="fa fa-print"></i> Cetak Surat Jalan
                         </a>
                     </div>
+                    @if(!in_array($order->order_status, ['cancelled', 'completed', 'delivered']))
+                    <div class="pull-right" style="margin-right: 10px;">
+                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?');">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="order_status" value="cancelled">
+                            <button type="submit" class="btn btn-xs btn-danger" title="Batalkan Pesanan">
+                                <i class="fa fa-times"></i> Batalkan Pesanan
+                            </button>
+                        </form>
+                    </div>
+                    @endif
                 </div>
                 <div class="box-body">
                     <table class="table table-bordered">

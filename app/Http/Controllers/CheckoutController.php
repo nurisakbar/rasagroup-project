@@ -822,24 +822,41 @@ class CheckoutController extends Controller
                 $dbStock = $stock ? $stock->stock : 0;
 
                 if ($usesJubelio && $jubelioItems !== null) {
-                    $needle = strtoupper(trim((string) $productCode));
-                    $jItem = $jubelioItems->first(function ($item) use ($needle) {
-                        return strtoupper(trim((string) ($item['item_code'] ?? ''))) === $needle;
-                    });
+                    $productCodes = $cart->product->getAllCodes();
+                    $availableStock = 0;
+                    $checkedKeys = [];
+                    foreach ($productCodes as $code) {
+                        $needle = strtoupper(trim((string) $code));
+                        if (isset($checkedKeys[$needle])) continue;
+                        $checkedKeys[$needle] = true;
+                        
+                        $jItem = $jubelioItems->first(function ($item) use ($needle) {
+                            return strtoupper(trim((string) ($item['item_code'] ?? ''))) === $needle;
+                        });
+                        if ($jItem) {
+                            $availableStock += (int) ($jItem['available_qty'] ?? 0);
+                        }
+                    }
 
-                    if (!$jItem) {
+                    if ($availableStock === 0 && empty($checkedKeys)) {
                         $stockErrors[] = "{$productName}: Produk tidak tersedia/belum di-assign di gudang Jubelio.";
                         continue;
                     }
-
-                    $availableStock = (int) ($jItem['available_qty'] ?? 0);
                     if ($qty > $availableStock) {
                         $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (Jubelio).";
                     }
                 } else if ($wmsLocationCode && $wmsStock !== null) {
-                    $actualWmsStock = $wmsStock[$productCode]
-                        ?? $wmsStock[strtoupper(trim((string) $productCode))]
-                        ?? 0;
+                    $productCodes = $cart->product->getAllCodes();
+                    $actualWmsStock = 0;
+                    $checkedKeys = [];
+                    foreach ($productCodes as $code) {
+                        $key = strtoupper(trim((string) $code));
+                        if (!isset($checkedKeys[$key])) {
+                            $actualWmsStock += $wmsStock[$key] ?? 0;
+                            $checkedKeys[$key] = true;
+                        }
+                    }
+                    
                     $availableStock = $isDistributor || $actualWmsStock > 0
                         ? $actualWmsStock
                         : $dbStock;
@@ -1056,28 +1073,47 @@ class CheckoutController extends Controller
                 $lineUnit = $user->getProductPrice($cart->product);
 
                 $allocatedBatches = [];
-                $productCode = $cart->product->code;
+                $productCodes = $cart->product->getAllCodes();
                 $qtyNeeded = $cart->quantity;
                 
-                $batchKey = array_key_exists($productCode, $wmsBatches)
-                    ? $productCode
-                    : strtoupper(trim((string) $productCode));
-                if (isset($wmsBatches[$batchKey])) {
-                    foreach ($wmsBatches[$batchKey] as &$batch) {
-                        if ($qtyNeeded <= 0) break;
-                        
-                        if ($batch['qty'] > 0) {
-                            $take = min($qtyNeeded, $batch['qty']);
-                            $allocatedBatches[] = [
-                                'lot_serial' => $batch['lot_serial'],
-                                'qty' => $take,
-                                'expired' => $batch['expired']
-                            ];
-                            $batch['qty'] -= $take;
-                            $qtyNeeded -= $take;
+                // Find all matching batches across all valid codes for this product
+                $availableProductBatches = [];
+                foreach ($productCodes as $code) {
+                    $key1 = $code;
+                    $key2 = strtoupper(trim((string) $code));
+                    
+                    if (isset($wmsBatches[$key1]) && is_array($wmsBatches[$key1])) {
+                        foreach ($wmsBatches[$key1] as &$batchRef) {
+                            $batchRef['_item_code'] = $key1;
+                            $availableProductBatches[] = &$batchRef;
+                        }
+                    } elseif (isset($wmsBatches[$key2]) && is_array($wmsBatches[$key2])) {
+                        foreach ($wmsBatches[$key2] as &$batchRef) {
+                            $batchRef['_item_code'] = $key2;
+                            $availableProductBatches[] = &$batchRef;
                         }
                     }
-                    unset($batch);
+                }
+                
+                // FEFO sort the aggregated batches
+                usort($availableProductBatches, function ($a, $b) {
+                    return strtotime($a['expired'] ?? '2099-12-31') <=> strtotime($b['expired'] ?? '2099-12-31');
+                });
+                
+                foreach ($availableProductBatches as &$batch) {
+                    if ($qtyNeeded <= 0) break;
+                    
+                    if ($batch['qty'] > 0) {
+                        $take = min($qtyNeeded, $batch['qty']);
+                        $allocatedBatches[] = [
+                            'lot_serial' => $batch['lot_serial'],
+                            'qty' => $take,
+                            'expired' => $batch['expired'],
+                            'item_code' => $batch['_item_code'] ?? null
+                        ];
+                        $batch['qty'] -= $take;
+                        $qtyNeeded -= $take;
+                    }
                 }
 
                 $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;
@@ -1490,18 +1526,56 @@ class CheckoutController extends Controller
                 $user?->shelfLifeMonths() ?? 0
             );
 
+            $isDistributor = $user?->isDistributor() ?? false;
+            $usesJubelio = !$isDistributor && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
+            $jubelioItems = null;
+
+            if ($usesJubelio && $currentHub->kode_hub) {
+                try {
+                    $jubelio = app(\App\Services\JubelioService::class);
+                    $token = $jubelio->token();
+                    $locationId = $jubelio->findLocationIdByCode($token, $currentHub->kode_hub);
+                    if ($locationId) {
+                        $jubelioItems = collect($jubelio->fetchItemsToSell($token, $locationId));
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('syncWarehouseByAddress fallback to local', ['error' => $e->getMessage()]);
+                }
+            }
+
             foreach ($carts as $cart) {
                 $dbStock = \App\Models\WarehouseStock::where('warehouse_id', $currentHub->id)
                     ->where('product_id', $cart->product_id)
                     ->sum('stock');
 
-                $productCode = $cart->product->code;
-
-                if ($wmsLocationCode && $wmsStock !== null) {
-                    $actualWmsStock = $wmsStock[$productCode]
-                        ?? $wmsStock[strtoupper(trim((string) $productCode))]
-                        ?? 0;
-                    $isDistributor = $user?->isDistributor() ?? false;
+                if ($usesJubelio && $jubelioItems !== null) {
+                    $productCodes = $cart->product->getAllCodes();
+                    $availableStock = 0;
+                    $checkedKeys = [];
+                    foreach ($productCodes as $code) {
+                        $needle = strtoupper(trim((string) $code));
+                        if (isset($checkedKeys[$needle])) continue;
+                        $checkedKeys[$needle] = true;
+                        
+                        $jItem = $jubelioItems->first(function ($item) use ($needle) {
+                            return strtoupper(trim((string) ($item['item_code'] ?? ''))) === $needle;
+                        });
+                        if ($jItem) {
+                            $availableStock += (int) ($jItem['available_qty'] ?? 0);
+                        }
+                    }
+                    $finalStock = $availableStock;
+                } else if ($wmsLocationCode && $wmsStock !== null) {
+                    $productCodes = $cart->product->getAllCodes();
+                    $actualWmsStock = 0;
+                    $checkedKeys = [];
+                    foreach ($productCodes as $code) {
+                        $key = strtoupper(trim((string) $code));
+                        if (!isset($checkedKeys[$key])) {
+                            $actualWmsStock += $wmsStock[$key] ?? 0;
+                            $checkedKeys[$key] = true;
+                        }
+                    }
                     $finalStock = $isDistributor || $actualWmsStock > 0
                         ? $actualWmsStock
                         : $dbStock;

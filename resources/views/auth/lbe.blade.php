@@ -26,7 +26,12 @@
                             <div class="form-group mb-20">
                                 <input type="email" required name="email" placeholder="Email distributor *" value="{{ old('email') }}" autofocus style="background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); width: 100%;" />
                                 @error('email')
-                                    <span class="text-danger small">{{ $message }}</span>
+                                    <span class="text-danger small d-block mt-1">{{ $message }}</span>
+                                    @if(str_contains($message, 'verifikasi email'))
+                                        <a href="{{ route('verification.resend_form') }}?email={{ urlencode(old('email')) }}" class="small" style="color: #6A1B1B; font-weight: 600; display: inline-block; margin-top: 5px;">
+                                            Belum menerima email? Kirim ulang verifikasi.
+                                        </a>
+                                    @endif
                                 @enderror
                             </div>
                             <div class="form-group">

@@ -9,7 +9,9 @@ Artisan::command('inspire', function () {
 
 use App\Jobs\RetryFailedQadSalesOrdersJob;
 use App\Jobs\RetryFailedWmsSalesOrdersJob;
+use App\Jobs\SyncDistributorArBalanceJob;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::job(new RetryFailedQadSalesOrdersJob)->everyFiveMinutes()->withoutOverlapping();
 Schedule::job(new RetryFailedWmsSalesOrdersJob)->everyFiveMinutes()->withoutOverlapping();
+Schedule::job(new SyncDistributorArBalanceJob)->everyMinute()->withoutOverlapping();

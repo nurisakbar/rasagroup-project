@@ -187,7 +187,7 @@ class CartController extends Controller
         $availableStock = PHP_INT_MAX;
         $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
         if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
-            $availableStock = $warehouse->getAvailableStock($product->code, $product->id);
+            $availableStock = $warehouse->getAvailableStock($product);
         }
 
         if ($newBaseQty > $availableStock) {
@@ -496,7 +496,7 @@ class CartController extends Controller
         
         $availableStock = PHP_INT_MAX;
         if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
-            $availableStock = $warehouse->getAvailableStock($product->code, $product->id);
+            $availableStock = $warehouse->getAvailableStock($product);
         }
         
         if ($existingQty + $requestedBaseQty > $availableStock) {
@@ -790,7 +790,7 @@ class CartController extends Controller
 
         if (! ShopFulfillment::assumeStockReady()) {
             $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
-            $availableStock = $warehouse ? $warehouse->getAvailableStock($product->code, $product->id) : 0;
+            $availableStock = $warehouse ? $warehouse->getAvailableStock($product) : 0;
 
             if ($baseNeeded > $availableStock) {
                 return response()->json(['success' => false, 'message' => "Stok tidak mencukupi. Tersedia {$availableStock} di gudang pengiriman Anda."], 422);

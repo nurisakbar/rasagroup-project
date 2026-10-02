@@ -299,7 +299,7 @@ class ManualOrderController extends Controller
 
         $batches = $wms->batchesForWarehouseItem(
             $warehouse,
-            (string) $product->code,
+            $product->getAllCodes(),
             $customer->shelfLifeMonths()
         );
 

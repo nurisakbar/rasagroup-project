@@ -62,11 +62,10 @@
                             <tr>
                                 <th width="5%">No</th>
                                 <th>Nama Distributor</th>
-                                <th>Email</th>
-                                <th>No. HP</th>
-                                <th>Lokasi</th>
-                                <th>Terdaftar</th>
-                                <th>Status Aktif</th>
+                                <th width="25%">Lokasi</th>
+                                <th>Credit Limit</th>
+                                <th>AR Outstanding</th>
+                                <th>Kode QAD</th>
                                 <th width="100">Action</th>
                             </tr>
                         </thead>
@@ -115,10 +114,9 @@ $(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'name_info', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'phone_display', name: 'phone', orderable: false },
             { data: 'location_info', name: 'location', orderable: false, searchable: false },
-            { data: 'created_date', name: 'created_at' },
+            { data: 'credit_limit_info', name: 'credit_limit' },
+            { data: 'ar_outstanding_info', name: 'ar_outstanding' },
             { data: 'status_info', name: 'status_info', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],

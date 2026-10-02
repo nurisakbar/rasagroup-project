@@ -327,47 +327,68 @@ class WmsService
 
     /**
      * @param  array<string, list<array{lot_serial: string, qty: int, expired: ?string}>>  $grouped
-     * @return list<array{lot_serial: string, qty: int, expired: ?string}>
+     * @return list<array{lot_serial: string, qty: int, expired: ?string, item_code?: string}>
      */
-    public function batchesForProduct(array $grouped, string $productCode): array
+    public function batchesForProduct(array $grouped, array $productCodes): array
     {
-        $want = strtoupper(trim($productCode));
-        if ($want === '') {
-            return [];
-        }
+        $allBatches = [];
+        
+        foreach ($productCodes as $code) {
+            $want = strtoupper(trim($code));
+            if ($want === '') {
+                continue;
+            }
 
-        if (isset($grouped[$productCode]) && is_array($grouped[$productCode])) {
-            return $grouped[$productCode];
-        }
+            if (isset($grouped[$code]) && is_array($grouped[$code])) {
+                foreach ($grouped[$code] as $b) {
+                    $b['item_code'] = $code;
+                    $allBatches[] = $b;
+                }
+                continue;
+            }
 
-        if (isset($grouped[$want]) && is_array($grouped[$want])) {
-            return $grouped[$want];
-        }
+            if (isset($grouped[$want]) && is_array($grouped[$want])) {
+                foreach ($grouped[$want] as $b) {
+                    $b['item_code'] = $want;
+                    $allBatches[] = $b;
+                }
+                continue;
+            }
 
-        foreach ($grouped as $code => $rows) {
-            if (strtoupper(trim((string) $code)) === $want && is_array($rows)) {
-                return $rows;
+            foreach ($grouped as $k => $rows) {
+                if (strtoupper(trim((string) $k)) === $want && is_array($rows)) {
+                    foreach ($rows as $b) {
+                        $b['item_code'] = $k;
+                        $allBatches[] = $b;
+                    }
+                    break;
+                }
             }
         }
+        
+        // Sort FEFO again just in case there are batches from multiple item codes
+        usort($allBatches, function ($a, $b) {
+            return strtotime($a['expired'] ?? '2099-12-31') <=> strtotime($b['expired'] ?? '2099-12-31');
+        });
 
-        return [];
+        return $allBatches;
     }
 
     /**
      * Batch satu item dari cache lokal (qad_inventories), tanpa tarik semua halaman WMS.
      *
-     * @return list<array{lot_serial: string, qty: int, expired: ?string}>
+     * @return list<array{lot_serial: string, qty: int, expired: ?string, item_code?: string}>
      */
-    public function localBatchesForItem(string $locationCode, string $productCode, int $minMasaBerlakuBulan = 0): array
+    public function localBatchesForItem(string $locationCode, array $productCodes, int $minMasaBerlakuBulan = 0): array
     {
-        $needle = strtoupper(trim($productCode));
-        if ($needle === '') {
+        $needles = array_filter(array_map('strtoupper', array_map('trim', $productCodes)));
+        if (empty($needles)) {
             return [];
         }
 
         $rows = QadInventory::query()
             ->where('qad_location_code', $locationCode)
-            ->whereRaw('UPPER(TRIM(item_code)) = ?', [$needle])
+            ->whereIn(QadInventory::raw('UPPER(TRIM(item_code))'), $needles)
             ->where('qty', '>', 0)
             ->get();
 
@@ -392,7 +413,7 @@ class WmsService
 
         $normalized = $this->normalizeBatches($grouped, $minMasaBerlakuBulan);
 
-        return $this->batchesForProduct($normalized, $productCode);
+        return $this->batchesForProduct($normalized, $productCodes);
     }
 
     /**
@@ -465,9 +486,9 @@ class WmsService
     }
 
     /**
-     * @return list<array{lot_serial: string, qty: int, expired: ?string}>
+     * @return list<array{lot_serial: string, qty: int, expired: ?string, item_code?: string}>
      */
-    public function batchesForWarehouseItem(Warehouse $warehouse, string $productCode, int $minMasaBerlakuBulan = 0): array
+    public function batchesForWarehouseItem(Warehouse $warehouse, array $productCodes, int $minMasaBerlakuBulan = 0): array
     {
         $location = self::locationCode($warehouse);
         if (! $location) {
@@ -475,11 +496,11 @@ class WmsService
         }
 
         $grouped = $this->batchesByItemCode($location, $minMasaBerlakuBulan) ?? [];
-        $batches = $this->batchesForProduct($grouped, $productCode);
+        $batches = $this->batchesForProduct($grouped, $productCodes);
 
         if ($batches === [] && $minMasaBerlakuBulan > 0) {
             $grouped = $this->batchesByItemCode($location, 0) ?? [];
-            $batches = $this->batchesForProduct($grouped, $productCode);
+            $batches = $this->batchesForProduct($grouped, $productCodes);
         }
 
         if ($batches === []) {
@@ -489,7 +510,7 @@ class WmsService
                 $warehouse->kode_hub,
             ])));
             foreach ($locationCandidates as $candidate) {
-                $batches = $this->localBatchesForItem((string) $candidate, $productCode, 0);
+                $batches = $this->localBatchesForItem((string) $candidate, $productCodes, 0);
                 if ($batches !== []) {
                     break;
                 }
@@ -523,6 +544,7 @@ class WmsService
                 'lot_serial' => (string) ($batch['lot_serial'] ?? ''),
                 'qty' => $take,
                 'expired' => $batch['expired'] ?? null,
+                'item_code' => $batch['item_code'] ?? null,
             ];
             $batch['qty'] = $available - $take;
             $need -= $take;

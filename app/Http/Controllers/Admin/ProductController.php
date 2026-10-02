@@ -99,7 +99,16 @@ class ProductController extends Controller
                     ';
                 })
                 ->addColumn('code_display', function ($product) {
-                    return $product->code ?? '<span class="text-muted">-</span>';
+                    $html = '';
+                    if ($product->code) {
+                        $html .= '<div style="margin-bottom: 2px;"><code>' . $product->code . '</code></div>';
+                    }
+                    if (is_array($product->alternate_codes) && count($product->alternate_codes) > 0) {
+                        foreach ($product->alternate_codes as $altCode) {
+                            $html .= '<div style="margin-bottom: 2px;"><span class="label label-default"><i class="fa fa-tag"></i> ' . $altCode . '</span></div>';
+                        }
+                    }
+                    return $html ?: '<span class="text-muted">-</span>';
                 })
                 ->addColumn('name_info', function ($product) {
                     // Use display_name (which uses commercial_name as primary)
@@ -326,6 +335,7 @@ class ProductController extends Controller
             'discount_price' => 'nullable|numeric|min:0',
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
+            'alternate_codes' => 'nullable|string',
         ]);
 
         $validated['is_discount'] = $request->has('is_discount') ? (bool) $request->is_discount : false;
@@ -344,6 +354,12 @@ class ProductController extends Controller
 
         if (empty($validated['large_unit'])) {
             $validated['units_per_large'] = null;
+        }
+        
+        if (!empty($validated['alternate_codes'])) {
+            $validated['alternate_codes'] = array_values(array_filter(array_map('trim', explode(',', $validated['alternate_codes']))));
+        } else {
+            $validated['alternate_codes'] = null;
         }
 
         $validated['name'] = $validated['commercial_name'];
@@ -401,6 +417,7 @@ class ProductController extends Controller
             'discount_price' => 'nullable|numeric|min:0',
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
+            'alternate_codes' => 'nullable|string',
         ]);
 
         $validated['is_discount'] = $request->has('is_discount') ? (bool) $request->is_discount : false;
@@ -424,6 +441,12 @@ class ProductController extends Controller
 
         if (empty($validated['large_unit'])) {
             $validated['units_per_large'] = null;
+        }
+
+        if (!empty($validated['alternate_codes'])) {
+            $validated['alternate_codes'] = array_values(array_filter(array_map('trim', explode(',', $validated['alternate_codes']))));
+        } else {
+            $validated['alternate_codes'] = null;
         }
 
         $validated['name'] = $validated['commercial_name'];

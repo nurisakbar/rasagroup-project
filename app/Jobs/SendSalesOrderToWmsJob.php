@@ -63,34 +63,43 @@ class SendSalesOrderToWmsJob implements ShouldQueue
         $itemsPayload = [];
 
         foreach ($order->items as $item) {
-            $batchesPayload = [];
-            $totalBatchQty = 0;
+            $productCodes = $item->product ? $item->product->getAllCodes() : [];
+            $defaultCode = $item->product ? $item->product->code : '';
+
+            $batchesByCode = [];
 
             if (! empty($item->allocated_batches) && is_array($item->allocated_batches)) {
                 foreach ($item->allocated_batches as $batch) {
-                    $batchesPayload[] = [
+                    $code = $batch['item_code'] ?? $defaultCode;
+                    if (!isset($batchesByCode[$code])) {
+                        $batchesByCode[$code] = [];
+                    }
+                    $batchesByCode[$code][] = [
                         'batch_number' => $batch['lot_serial'] ?? '',
                         'location_code' => $order->source_qad_location_code ?? '',
                         'quantity' => (float) ($batch['qty'] ?? 0),
                     ];
-                    $totalBatchQty += (float) ($batch['qty'] ?? 0);
                 }
             }
 
-            if ($totalBatchQty != $item->quantity) {
-                Log::warning('WMS Sync: Item quantity does not match allocated batches.', [
-                    'order_number' => $order->order_number,
-                    'item_code' => $item->product->code,
-                    'item_quantity' => $item->quantity,
-                    'allocated_total' => $totalBatchQty,
-                ]);
-            }
+            foreach ($batchesByCode as $code => $batchesPayload) {
+                $totalBatchQty = array_sum(array_column($batchesPayload, 'quantity'));
 
-            $itemsPayload[] = [
-                'item_code' => $item->product->code,
-                'quantity' => (float) $item->quantity,
-                'batches' => $batchesPayload,
-            ];
+                $itemsPayload[] = [
+                    'item_code' => $code,
+                    'quantity' => (float) $totalBatchQty,
+                    'batches' => $batchesPayload,
+                ];
+            }
+            
+            // Check if there are no allocated batches (fallback)
+            if (empty($batchesByCode)) {
+                $itemsPayload[] = [
+                    'item_code' => $defaultCode,
+                    'quantity' => (float) $item->quantity,
+                    'batches' => [],
+                ];
+            }
         }
 
         $payload = [
@@ -175,12 +184,13 @@ class SendSalesOrderToWmsJob implements ShouldQueue
             throw new WmsBatchValidationException('Hub belum punya kode lokasi WMS/QAD.');
         }
 
-        $itemCodes = $order->items
-            ->map(fn ($item) => $item->product?->code)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        $itemCodes = [];
+        foreach ($order->items as $item) {
+            if ($item->product) {
+                $itemCodes = array_merge($itemCodes, $item->product->getAllCodes());
+            }
+        }
+        $itemCodes = array_values(array_unique(array_filter($itemCodes)));
 
         $grouped = $wms->batchesForItemCodes(
             $location,
@@ -189,15 +199,15 @@ class SendSalesOrderToWmsJob implements ShouldQueue
         );
 
         foreach ($order->items as $item) {
-            $productCode = (string) ($item->product?->code ?? '');
-            $productName = $item->product?->name ?: $productCode;
+            $productName = $item->product?->name ?: ($item->product?->code ?? '');
             $allocated = is_array($item->allocated_batches) ? $item->allocated_batches : [];
 
             if ($allocated === []) {
                 throw new WmsBatchValidationException("Batch belum dipilih untuk {$productName}.");
             }
 
-            $available = $wms->batchesForProduct($grouped, $productCode);
+            $productCodes = $item->product ? $item->product->getAllCodes() : [];
+            $available = $wms->batchesForProduct($grouped, $productCodes);
             $used = [];
 
             foreach ($allocated as $batch) {

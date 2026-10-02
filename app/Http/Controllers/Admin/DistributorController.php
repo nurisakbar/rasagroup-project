@@ -57,13 +57,17 @@ class DistributorController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('name_info', function ($dist) {
-                    return '<strong>' . $dist->name . '</strong>';
+                    $html = '<strong>' . e($dist->name) . '</strong>';
+                    $html .= '<br><small>Email : ' . e($dist->email ?? '-') . '</small>';
+                    $html .= '<br><small>Nomor HP : ' . e($dist->phone ?? '-') . '</small>';
+                    return $html;
                 })
                 ->addColumn('status_info', function ($dist) {
+                    $qadCode = $dist->qad_customer_code ? '<strong>' . e($dist->qad_customer_code) . '</strong><br>' : '<span class="text-muted">-</span><br>';
                     if ($dist->warehouse && $dist->warehouse->is_active) {
-                        return '<span class="label label-success">Aktif</span>';
+                        return $qadCode . '<span class="label label-success">Aktif</span>';
                     }
-                    return '<span class="label label-danger">Non Aktif</span>';
+                    return $qadCode . '<span class="label label-danger">Non Aktif</span>';
                 })
                 ->addColumn('location_info', function ($dist) {
                     if ($dist->warehouse) {
@@ -78,11 +82,12 @@ class DistributorController extends Controller
                     }
                     return '<span class="text-muted">-</span>';
                 })
-                ->addColumn('phone_display', function ($dist) {
-                    return $dist->phone ?? '-';
+
+                ->addColumn('credit_limit_info', function ($dist) {
+                    return 'Rp ' . number_format($dist->credit_limit ?? 0, 0, ',', '.');
                 })
-                ->addColumn('created_date', function ($dist) {
-                    return $dist->created_at->format('d M Y');
+                ->addColumn('ar_outstanding_info', function ($dist) {
+                    return 'Rp ' . number_format($dist->ar_outstanding ?? 0, 0, ',', '.');
                 })
                 ->addColumn('action', function ($dist) {
                     $showUrl = route('admin.distributors.show', $dist);
@@ -787,6 +792,32 @@ class DistributorController extends Controller
             $villages = $this->getVillagesInternal($distributor->warehouse->district_id);
         }
 
+        // Ambil data AR Outstanding dan Credit Limit dari n8n webhook jika qad_customer_code (debtorcode) tersedia
+        if ($distributor->qad_customer_code) {
+            $webhookUrl = env('N8N_CIS_AR_BALANCE_URL');
+            if ($webhookUrl) {
+                try {
+                    $response = Http::timeout(5)->get($webhookUrl, [
+                        'debtorcode' => $distributor->qad_customer_code
+                    ]);
+                    if ($response->successful() && $response->json('success')) {
+                        $data = $response->json('data');
+                        if (isset($data['outstanding'])) {
+                            $distributor->ar_outstanding = $data['outstanding'];
+                        }
+                        if (isset($data['credit_limit'])) {
+                            $distributor->credit_limit = $data['credit_limit'];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to fetch AR balance from webhook', [
+                        'debtorcode' => $distributor->qad_customer_code,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
         return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages'));
     }
 
@@ -1073,16 +1104,24 @@ class DistributorController extends Controller
     /**
      * Sync QAD Customers as Distributors.
      */
-    public function syncQadCustomers(Request $request, QidApiService $qid)
+    public function syncQadCustomers(Request $request)
+    {
+        \App\Jobs\SyncQadCustomersJob::dispatch();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proses sinkronisasi data dari QAD telah dijalankan di background (antrean).'
+        ]);
+    }
+
+    public function processQadSync(QidApiService $qid)
     {
         try {
             $result = $qid->get('/api/master/customer/list');
 
             if (! is_array($result)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal mengambil data dari QAD API.',
-                ], 400);
+                Log::error('QAD Sync Error: Gagal mengambil data dari QAD API.');
+                return;
             }
 
             $data = $result['data'] ?? [];
@@ -1091,10 +1130,8 @@ class DistributorController extends Controller
             $customers = QadExistingCustomer::parseList($result);
             
             if (empty($customers)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data customer dari QAD API kosong.'
-                ], 400);
+                Log::warning('QAD Sync Warning: Data customer dari QAD API kosong.');
+                return;
             }
 
             $added = 0;
@@ -1181,16 +1218,9 @@ class DistributorController extends Controller
 
             $linked += $this->linkUnlinkedDistributorsFromQad($qid);
 
-            return response()->json([
-                'success' => true,
-                'message' => "Sinkronisasi QAD selesai! Ditambahkan: {$added}, diperbarui: {$updated}, kode customer diisi: {$linked}."
-            ]);
+            Log::info("Sinkronisasi QAD selesai! Ditambahkan: {$added}, diperbarui: {$updated}, kode customer diisi: {$linked}.");
         } catch (\Exception $e) {
             Log::error('QAD Sync Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem saat sinkronisasi QAD: ' . $e->getMessage()
-            ], 500);
         }
     }
 

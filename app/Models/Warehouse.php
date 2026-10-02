@@ -328,10 +328,10 @@ class Warehouse extends Model
             ->first();
     }
 
-    public function getAvailableStock(string $productCode, string $productId): int
+    public function getAvailableStock(\App\Models\Product $product): int
     {
         $dbStock = \App\Models\WarehouseStock::where('warehouse_id', $this->id)
-            ->where('product_id', $productId)
+            ->where('product_id', $product->id)
             ->value('stock') ?? 0;
 
         $user = \Illuminate\Support\Facades\Auth::user();
@@ -343,9 +343,16 @@ class Warehouse extends Model
         );
 
         if ($wmsStockMap !== null) {
-            $wmsStock = (int) ($wmsStockMap[$productCode]
-                ?? $wmsStockMap[strtoupper(trim($productCode))]
-                ?? 0);
+            $productCodes = $product->getAllCodes();
+            $wmsStock = 0;
+            $checkedKeys = [];
+            foreach ($productCodes as $code) {
+                $key = strtoupper(trim((string) $code));
+                if (!isset($checkedKeys[$key])) {
+                    $wmsStock += (int) ($wmsStockMap[$key] ?? 0);
+                    $checkedKeys[$key] = true;
+                }
+            }
 
             if ($isDistributor) {
                 return $wmsStock;

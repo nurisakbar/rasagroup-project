@@ -210,7 +210,12 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'salesCC' => '',
                 'discountAcct' => '41101',
                 'discountCC' => '',
+                'siteCode' => 'MCR',
             ];
+            
+            if (!empty($this->order->sourceWarehouse->qad_location_code)) {
+                $lines[count($lines) - 1]['locationCode'] = $this->order->sourceWarehouse->qad_location_code;
+            }
         }
 
         if (! empty($invalidPriceItems) || ! empty($invalidUomItems)) {
@@ -258,6 +263,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     {
         $payload = [
             'domainCode' => 'MCR',
+            'siteCode' => 'MCR',
             'salesOrderNumber' => $qidSalesOrderNumber,
             'billToCustomerCode' => $user->qad_customer_code,
             'soldToCustomerCode' => $user->qad_customer_code,

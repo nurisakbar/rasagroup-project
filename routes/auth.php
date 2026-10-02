@@ -47,6 +47,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+        
+    Route::get('resend-verification', [EmailVerificationNotificationController::class, 'showResendForm'])
+        ->name('verification.resend_form');
+
+    Route::post('resend-verification', [EmailVerificationNotificationController::class, 'storePublic'])
+        ->middleware('throttle:6,1')
+        ->name('verification.resend_public');
 });
 
 Route::get('lbe', [AuthenticatedSessionController::class, 'createDistributorByEmail'])

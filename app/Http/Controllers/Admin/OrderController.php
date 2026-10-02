@@ -124,10 +124,22 @@ class OrderController extends Controller
                             <i class="fa fa-check"></i> Approve
                         </a>';
                     } elseif ($order->payment_status === 'pending' && $order->payment_proof) {
-                        $btn .= '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-warning btn-xs" title="Verifikasi Bukti Bayar" style="background-color: #ff851b; border-color: #ff851b;">
+                        $btn .= '<a href="' . route('admin.orders.show', $order) . '" class="btn btn-warning btn-xs" title="Verifikasi Bukti Bayar" style="background-color: #ff851b; border-color: #ff851b; margin-right: 3px;">
                             <i class="fa fa-check-square-o"></i> Verifikasi
                         </a>';
                     }
+                    
+                    if (!in_array($order->order_status, ['cancelled', 'completed', 'delivered'])) {
+                        $btn .= '<form action="' . route('admin.orders.update-status', $order) . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Apakah Anda yakin ingin membatalkan pesanan ini?\');">
+                            ' . csrf_field() . '
+                            ' . method_field('PUT') . '
+                            <input type="hidden" name="order_status" value="cancelled">
+                            <button type="submit" class="btn btn-danger btn-xs" title="Batalkan Pesanan">
+                                <i class="fa fa-times"></i> Batal
+                            </button>
+                        </form>';
+                    }
+
                     return $btn;
                 })
                 ->rawColumns(['order_info', 'buyer_info', 'expedition_info', 'hub_info', 'total_formatted', 'status_badge', 'payment_badge', 'action'])
