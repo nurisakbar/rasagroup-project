@@ -1695,6 +1695,10 @@ class CheckoutController extends Controller
             $activeCodes = array_diff($activeCodes, ['self_pickup']);
         }
 
+        if (empty(request('sales_code'))) {
+            $activeCodes = array_diff($activeCodes, ['self_pickup']);
+        }
+
         return array_values($activeCodes);
     }
 
