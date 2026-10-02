@@ -9,7 +9,7 @@ final class ShopFulfillment
 {
     public static function assumeStockReady(): bool
     {
-        return (bool) config('shop.assume_stock_ready', true);
+        return false;
     }
 
     public static function autoHubByAddress(): bool
