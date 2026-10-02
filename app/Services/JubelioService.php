@@ -38,28 +38,30 @@ class JubelioService
 
     public function login(): string
     {
-        $email = config('jubelio.email') ?: env('JUBELIO_EMAIL');
-        $password = config('jubelio.password') ?: env('JUBELIO_PASSWORD');
+        return \Illuminate\Support\Facades\Cache::remember('jubelio_token', now()->addHours(1), function () {
+            $email = config('jubelio.email') ?: env('JUBELIO_EMAIL');
+            $password = config('jubelio.password') ?: env('JUBELIO_PASSWORD');
 
-        if (!$email || !$password) {
-            throw new RuntimeException('Kredensial Jubelio tidak ditemukan di file .env');
-        }
+            if (!$email || !$password) {
+                throw new RuntimeException('Kredensial Jubelio tidak ditemukan di file .env');
+            }
 
-        $response = $this->http()->post($this->baseUrl() . '/login', [
-            'email' => $email,
-            'password' => $password,
-        ]);
+            $response = $this->http()->post($this->baseUrl() . '/login', [
+                'email' => $email,
+                'password' => $password,
+            ]);
 
-        if (!$response->successful()) {
-            throw new RuntimeException('Gagal login ke Jubelio. Periksa kembali email dan password di .env');
-        }
+            if (!$response->successful()) {
+                throw new RuntimeException('Gagal login ke Jubelio. Periksa kembali email dan password di .env');
+            }
 
-        $token = $response->json('token');
-        if (!$token) {
-            throw new RuntimeException('Token Jubelio tidak ditemukan dalam response.');
-        }
+            $token = $response->json('token');
+            if (!$token) {
+                throw new RuntimeException('Token Jubelio tidak ditemukan dalam response.');
+            }
 
-        return $token;
+            return $token;
+        });
     }
 
     /**
@@ -67,27 +69,29 @@ class JubelioService
      */
     public function fetchAllLocations(string $token): array
     {
-        $locations = [];
-        $page = 1;
+        return \Illuminate\Support\Facades\Cache::remember('jubelio_all_locations', now()->addHours(1), function () use ($token) {
+            $locations = [];
+            $page = 1;
 
-        do {
-            $response = $this->http($token)->get($this->baseUrl() . '/locations/', [
-                'page' => $page,
-                'pageSize' => 200,
-            ]);
+            do {
+                $response = $this->http($token)->get($this->baseUrl() . '/locations/', [
+                    'page' => $page,
+                    'pageSize' => 200,
+                ]);
 
-            if (!$response->successful()) {
-                throw new RuntimeException('Gagal mengambil lokasi Jubelio: HTTP ' . $response->status());
-            }
+                if (!$response->successful()) {
+                    throw new RuntimeException('Gagal mengambil lokasi Jubelio: HTTP ' . $response->status());
+                }
 
-            $data = $response->json();
-            $batch = $data['data'] ?? [];
-            $locations = array_merge($locations, $batch);
-            $totalCount = (int) ($data['totalCount'] ?? count($locations));
-            $page++;
-        } while (count($locations) < $totalCount && count($batch) > 0);
+                $data = $response->json();
+                $batch = $data['data'] ?? [];
+                $locations = array_merge($locations, $batch);
+                $totalCount = (int) ($data['totalCount'] ?? count($locations));
+                $page++;
+            } while (count($locations) < $totalCount && count($batch) > 0);
 
-        return $locations;
+            return $locations;
+        });
     }
 
     /**
@@ -209,22 +213,25 @@ class JubelioService
      */
     public function fetchItemsToSell(string $token, int $locationId): array
     {
-        $response = $this->http($token)->get($this->baseUrl() . "/inventory/items/to-sell/{$locationId}");
+        $cacheKey = 'jubelio_items_to_sell_' . $locationId;
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($token, $locationId) {
+            $response = $this->http($token)->get($this->baseUrl() . "/inventory/items/to-sell/{$locationId}");
 
-        if (!$response->successful()) {
-            throw new RuntimeException('Gagal mengambil item to-sell Jubelio: HTTP ' . $response->status());
-        }
+            if (!$response->successful()) {
+                throw new RuntimeException('Gagal mengambil item to-sell Jubelio: HTTP ' . $response->status());
+            }
 
-        $body = $response->json();
-        if (! is_array($body)) {
-            return [];
-        }
+            $body = $response->json();
+            if (! is_array($body)) {
+                return [];
+            }
 
-        if (isset($body['data']) && is_array($body['data'])) {
-            return $body['data'];
-        }
+            if (isset($body['data']) && is_array($body['data'])) {
+                return $body['data'];
+            }
 
-        return array_is_list($body) ? $body : [];
+            return array_is_list($body) ? $body : [];
+        });
     }
 
     /**
