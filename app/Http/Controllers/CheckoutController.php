@@ -344,6 +344,7 @@ class CheckoutController extends Controller
     {
         $startTime = microtime(true);
         $address = Address::with(['wilayah'])->find($request->address_id);
+        $t1 = microtime(true);
         
         if (!$address || $address->user_id !== Auth::id()) {
             return response()->json(['error' => 'Alamat tidak valid'], 400);
@@ -353,9 +354,12 @@ class CheckoutController extends Controller
             ->where('user_id', Auth::id())
             ->where('cart_type', 'regular')
             ->get();
+        $t2 = microtime(true);
 
         // Re-detect best Hub based on selected address
         $syncResult = $this->syncWarehouseByAddress($address) ?? [];
+        $t3 = microtime(true);
+
         if (!empty($syncResult['hub_changed'])) {
             $carts = Cart::with(['product', 'warehouse.wilayah'])
                 ->where('user_id', Auth::id())
@@ -369,6 +373,7 @@ class CheckoutController extends Controller
 
         Auth::user()->loadMissing('priceLevel');
         $pricing = $this->cartPricingBreakdown(Auth::user(), $carts);
+        $t4 = microtime(true);
         $retailSubtotal = $pricing['retail_subtotal'];
         $distributorPriceDiscount = $pricing['distributor_price_discount'];
         $subtotal = $pricing['subtotal_after_distributor'];
@@ -385,6 +390,8 @@ class CheckoutController extends Controller
         }
 
         $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse);
+        $t5 = microtime(true);
+
         if (!$expedition) {
             return response()->json(['error' => 'Ekspedisi tidak ditemukan atau tidak tersedia'], 400);
         }
@@ -395,6 +402,7 @@ class CheckoutController extends Controller
             $address,
             $totalWeight
         );
+        $t6 = microtime(true);
 
         $shippingCost = 0;
         $serviceName = $request->service_code;
@@ -483,6 +491,27 @@ class CheckoutController extends Controller
             'faspay_qris' => (float) \App\Models\Setting::get('fee_faspay_qris', 0),
         ];
 
+        $endTime = microtime(true);
+        Log::info('[checkout.calculate-shipping] PERFORMANCE_METRICS', [
+            'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
+            'expedition_code' => $expedition->code ?? null,
+            'service_code' => $serviceName ?? null,
+        ]);
+
+        $endTime = microtime(true);
+        Log::info('[checkout.calculate-shipping] PERFORMANCE_METRICS', [
+            'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
+            't1_address' => round(($t1 - $startTime) * 1000, 2),
+            't2_carts' => round(($t2 - $t1) * 1000, 2),
+            't3_syncHub' => round(($t3 - $t2) * 1000, 2),
+            't4_pricing' => round(($t4 - $t3) * 1000, 2),
+            't5_expedition' => round(($t5 - $t4) * 1000, 2),
+            't6_resolveCost' => round(($t6 - $t5) * 1000, 2),
+            't7_remaining' => round(($endTime - $t6) * 1000, 2),
+            'expedition_code' => $expedition->code ?? null,
+            'service_code' => $serviceName ?? null,
+        ]);
+
         return response()->json([
             'payment_fees' => $paymentFees,
             'total_weight' => $totalWeight,
@@ -531,16 +560,7 @@ class CheckoutController extends Controller
                 'name' => $sourceWarehouse->name,
                 'location' => $sourceWarehouse->full_location,
             ] : null,
-        ];
-
-        $endTime = microtime(true);
-        Log::info('[checkout.calculate-shipping] PERFORMANCE_METRICS', [
-            'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
-            'expedition_code' => $expedition->code ?? null,
-            'service_code' => $serviceName ?? null,
         ]);
-
-        return response()->json($responsePayload);
     }
 
     public function getExpeditionServices(Request $request)
@@ -1541,14 +1561,21 @@ class CheckoutController extends Controller
         $stockWarnings = [];
         if ($currentHub) {
             $user = \Illuminate\Support\Facades\Auth::user();
-            $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
-            $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
-                $currentHub,
-                $user?->shelfLifeMonths() ?? 0
-            );
-
             $isDistributor = $user?->isDistributor() ?? false;
-            $usesJubelio = !$isDistributor && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
+            $salesCode = request('sales_code') ?: session('sales_code');
+            $usesWms = $isDistributor || !empty($salesCode);
+            
+            $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
+            $wmsStock = null;
+            
+            if ($usesWms && $wmsLocationCode) {
+                $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
+                    $currentHub,
+                    $user?->shelfLifeMonths() ?? 0
+                );
+            }
+
+            $usesJubelio = !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
             $jubelioItems = null;
 
             if ($usesJubelio && $currentHub->kode_hub) {
