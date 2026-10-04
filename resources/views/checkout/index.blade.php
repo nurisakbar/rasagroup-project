@@ -282,11 +282,12 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_sinarmas_va')" id="card-faspay-sinarmas">
+                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_sinarmas_va')" id="card-faspay-sinarmas" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_sinarmas_va" id="paySinarmasVA">
                                                             <label class="form-check-label" for="paySinarmasVA"><strong>Sinarmas VA</strong></label>
                                                         </div>
+                                                        <img src="{{ asset('images/banks/sinarmas.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Sinarmas">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -307,19 +308,21 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_danamon_va')" id="card-faspay-danamon">
+                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_danamon_va')" id="card-faspay-danamon" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_danamon_va" id="payDanamonVA">
                                                             <label class="form-check-label" for="payDanamonVA"><strong>Danamon VA</strong></label>
                                                         </div>
+                                                        <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Danamon">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bsi_va')" id="card-faspay-bsi">
+                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bsi_va')" id="card-faspay-bsi" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_bsi_va" id="payBsiVA">
                                                             <label class="form-check-label" for="payBsiVA"><strong>BSI VA</strong></label>
                                                         </div>
+                                                        <img src="{{ asset('images/banks/bsi.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BSI">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -331,17 +334,7 @@
                                                         <img src="{{ asset('images/banks/cimb.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="CIMB">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bri_va')" id="card-faspay-bri" style="position: relative;">
-                                                        <div class="custom-radio">
-                                                            <input class="form-check-input" type="radio" name="payment_method" value="faspay_bri_va" id="payBRIVA">
-                                                            <label class="form-check-label" for="payBRIVA">
-                                                                <strong>BRI VA</strong>
-                                                            </label>
-                                                        </div>
-                                                        <img src="{{ asset('images/banks/bri.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BRI">
-                                                    </div>
-                                                </div>
+
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni" style="position: relative;">
                                                         <div class="custom-radio">
@@ -385,17 +378,7 @@
                                                         <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Mandiri">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bri_va')" id="card-faspay-bri" style="position: relative;">
-                                                        <div class="custom-radio">
-                                                            <input class="form-check-input" type="radio" name="payment_method" value="faspay_bri_va" id="payBRIVA">
-                                                            <label class="form-check-label" for="payBRIVA">
-                                                                <strong>BRI VA</strong>
-                                                            </label>
-                                                        </div>
-                                                        <img src="{{ asset('images/banks/bri.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BRI">
-                                                    </div>
-                                                </div>
+
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb" style="position: relative;">
                                                         <div class="custom-radio">

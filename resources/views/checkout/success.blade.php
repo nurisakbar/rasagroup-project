@@ -628,10 +628,24 @@
                     </label>
                 </div>
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bri" value="faspay_bri_va" {{ $order->payment_method === 'faspay_bri_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bri" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> BRI Virtual Account</span>
-                        <img src="{{ asset('images/banks/bri.png') }}" style="height: 18px;" alt="BRI">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bsi" value="faspay_bsi_va" {{ $order->payment_method === 'faspay_bsi_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bsi" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> BSI Virtual Account</span>
+                        <img src="{{ asset('images/banks/bsi.png') }}" style="height: 18px;" alt="BSI">
+                    </label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_danamon" value="faspay_danamon_va" {{ $order->payment_method === 'faspay_danamon_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_danamon" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> Danamon Virtual Account</span>
+                        <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 18px;" alt="Danamon">
+                    </label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_sinarmas" value="faspay_sinarmas_va" {{ $order->payment_method === 'faspay_sinarmas_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_sinarmas" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> Sinarmas Virtual Account</span>
+                        <img src="{{ asset('images/banks/sinarmas.png') }}" style="height: 18px;" alt="Sinarmas">
                     </label>
                 </div>
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
