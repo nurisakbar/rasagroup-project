@@ -255,7 +255,7 @@
                                             <div class="info-list">
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Tanggal Transaksi</span>
-                                                    <span class="fw-bold font-sm text-dark">{{ $order->created_at->format('d M Y, H:i') }}</span>
+                                                    <span class="fw-bold font-sm text-dark">{{ $order->created_at->format('d-m-Y') }}</span>
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Metode Pembayaran</span>
