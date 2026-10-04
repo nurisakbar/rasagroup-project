@@ -83,7 +83,7 @@ class CheckoutController extends Controller
         // Only show expeditions that are active in DB AND active in EkspedisiKu API
         $apiCourierCodes = $this->activeApiCourierCodes($sourceWarehouse);
 
-        if (request()->has('sales_code') && Auth::check() && Auth::user()->role === 'outlet') {
+        if (request()->filled('sales_code') && Auth::check() && in_array(Auth::user()->role, ['outlet', 'buyer'])) {
             $apiCourierCodes = array_filter($apiCourierCodes, function($code) {
                 return $code !== 'self_pickup';
             });
