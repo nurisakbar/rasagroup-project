@@ -613,6 +613,13 @@
                     </label>
                 </div>
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_maybank" value="faspay_maybank_va" {{ $order->payment_method === 'faspay_maybank_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_maybank" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> Maybank Virtual Account</span>
+                        <img src="{{ asset('images/banks/maybank.png') }}" style="height: 18px;" alt="Maybank">
+                    </label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
                     <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
                     <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bni" style="cursor: pointer; flex: 1;">
                         <span><i class="fi-rs-bank mr-5"></i> BNI Virtual Account</span>

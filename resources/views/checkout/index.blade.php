@@ -300,11 +300,12 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_maybank_va')" id="card-faspay-maybank">
+                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_maybank_va')" id="card-faspay-maybank" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_maybank_va" id="payMaybankVA">
                                                             <label class="form-check-label" for="payMaybankVA"><strong>Maybank VA</strong></label>
                                                         </div>
+                                                        <img src="{{ asset('images/banks/maybank.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Maybank">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
