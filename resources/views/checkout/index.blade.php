@@ -1258,7 +1258,8 @@
         var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
         var isDistributor = {{ Auth::user()->isDistributor() ? 'true' : 'false' }};
         var isOutlet = {{ Auth::user()->role === 'outlet' ? 'true' : 'false' }};
-        var hasSalesCode = new URLSearchParams(window.location.search).has('sales_code');
+        var salesCode = new URLSearchParams(window.location.search).get('sales_code');
+        var hasSalesCode = salesCode !== null && salesCode.trim() !== '';
         
         var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
         if (kurirTokoCard.length) {
