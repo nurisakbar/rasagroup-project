@@ -230,6 +230,7 @@ class QidStressTest extends Command
                     'addressTypeCode' => 'HEADOFFICE',
                     'isBusinessRelationFieldsEnabled' => true,
                     'customerCurrencyCode' => 'IDR',
+                    'corporateGroupCode' => 'Customer',
                     'isOverruleAllowedSOCreditLimit' => true,
                 ];
 

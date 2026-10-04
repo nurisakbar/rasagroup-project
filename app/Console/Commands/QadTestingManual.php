@@ -56,7 +56,9 @@ class QadTestingManual extends Command
             "vatPercentageLevel" => "NONE",
             "addressTypeCode" => "HEADOFFICE",
             "isBusinessRelationFieldsEnabled" => true,
-            "customerCurrencyCode" => "IDR"
+            "customerCurrencyCode" => "IDR",
+            "corporateGroupCode" => "Customer",
+            "isOverruleAllowedSOCreditLimit" => true
         ];
 
         $customerResult = $qadService->createCustomer($customerPayload);
