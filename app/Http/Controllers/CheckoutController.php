@@ -836,7 +836,9 @@ class CheckoutController extends Controller
             $stockErrors = [];
             
             $isDistributor = $user && $user->isDistributor();
-            $usesJubelio = !$isDistributor && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
+            $salesCode = request('sales_code') ?: session('sales_code');
+            $usesWms = $isDistributor || !empty($salesCode);
+            $usesJubelio = !$usesWms && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
             $jubelioItems = null;
 
             if ($usesJubelio && $sourceWarehouse->kode_hub) {
@@ -853,10 +855,13 @@ class CheckoutController extends Controller
             }
             
             $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse);
-            $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
-                $sourceWarehouse,
-                $user->shelfLifeMonths()
-            );
+            $wmsStock = null;
+            if ($usesWms && $wmsLocationCode) {
+                $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
+                    $sourceWarehouse,
+                    $user->shelfLifeMonths()
+                );
+            }
 
             foreach ($carts as $cart) {
                 $productName = $cart->product->display_name;
