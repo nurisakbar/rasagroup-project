@@ -31,7 +31,7 @@
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
                                     <div class="d-flex align-items-center gap-2">
-                                        <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-sm btn-brand rounded font-sm px-3 py-2" style="white-space: nowrap; min-width: max-content;">
+                                        <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-brand rounded font-sm px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">
                                             <i class="fi-rs-download mr-5"></i> Download Invoice
                                         </a>
                                         <div class="badge-group">
@@ -53,7 +53,7 @@
                                                     default => ucfirst($order->order_status),
                                                 };
                                             @endphp
-                                            <span class="badge rounded-pill {{ $statusClass }} px-3 py-2 text-white font-sm" style="white-space: nowrap;">{{ $statusLabel }}</span>
+                                            <span class="rounded {{ $statusClass }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $statusLabel }}</span>
                                         </div>
                                     </div>
                                 </div>

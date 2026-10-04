@@ -135,7 +135,7 @@
                 @if($order->sales)
                     <div class="order-date" style="margin-top: 12px; text-align: right;">
                         <strong>Sales:</strong> {{ $order->sales->name }}<br>
-                        <strong>No. HP:</strong> {{ $order->sales->phone ?? '-' }}
+                        <strong>Email:</strong> {{ $order->sales->email ?? '-' }}
                     </div>
                 @endif
             </td>
