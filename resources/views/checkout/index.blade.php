@@ -1257,10 +1257,12 @@
         var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
         var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
         var isDistributor = {{ Auth::user()->isDistributor() ? 'true' : 'false' }};
+        var isOutlet = {{ Auth::user()->role === 'outlet' ? 'true' : 'false' }};
+        var hasSalesCode = new URLSearchParams(window.location.search).has('sales_code');
         
         var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
         if (kurirTokoCard.length) {
-            if (isJabodetabek && isDistributor) {
+            if (isJabodetabek && (isDistributor || (isOutlet && hasSalesCode))) {
                 kurirTokoCard.parent().show();
             } else {
                 kurirTokoCard.parent().hide();

@@ -1765,7 +1765,7 @@ class CheckoutController extends Controller
             $activeCodes = array_diff($activeCodes, ['self_pickup']);
         }
 
-        if (empty(request('sales_code'))) {
+        if (empty(request('sales_code')) && (!\Auth::check() || \Auth::user()->role !== 'distributor')) {
             $activeCodes = array_diff($activeCodes, ['self_pickup']);
         }
 
