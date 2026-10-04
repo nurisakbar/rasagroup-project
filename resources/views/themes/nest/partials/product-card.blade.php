@@ -34,9 +34,7 @@
                         {{ $product->brand->name ?? 'Tanpa Brand' }}
                     @endif
                 </span>
-                @if(\App\Support\ShopFulfillment::showStockOnStorefront() && session('selected_hub_id'))
-                    <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
-                @endif
+                <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
             </div>
             @if(!empty($showPromoPeriod) && $product->relationLoaded('promos') && $product->promos->isNotEmpty())
                 @php

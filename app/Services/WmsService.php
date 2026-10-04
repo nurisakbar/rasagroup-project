@@ -148,18 +148,18 @@ class WmsService
      *
      * @return array<string, list<array{lot_serial: string, qty: int, expired: ?string}>>|null
      */
-    public function batchesByItemCode(string $locationCode, int $minMasaBerlakuBulan = 0): ?array
+    public function batchesByItemCode(string $locationCode, int $minMasaBerlakuBulan = 0, bool $forceWms = false): ?array
     {
-        $cacheKey = $locationCode . '|' . $minMasaBerlakuBulan;
+        $cacheKey = $locationCode . '|' . $minMasaBerlakuBulan . '|' . ($forceWms ? '1' : '0');
         if (array_key_exists($cacheKey, self::$requestCache)) {
             return self::$requestCache[$cacheKey];
         }
 
-        $laravelCacheKey = 'wms_batches_' . $locationCode . '_' . $minMasaBerlakuBulan;
-        $cachedData = \Illuminate\Support\Facades\Cache::get($laravelCacheKey);
-        if ($cachedData !== null) {
-            self::$requestCache[$cacheKey] = $cachedData;
-            return $cachedData;
+        // Default behavior: immediately return from local database cache
+        if (! $forceWms) {
+            $fromCache = $this->batchesFromCache($locationCode, $minMasaBerlakuBulan);
+            self::$requestCache[$cacheKey] = $fromCache;
+            return $fromCache;
         }
 
         $grouped = [];
@@ -196,15 +196,12 @@ class WmsService
         if (! $fetched) {
             $fromCache = $this->batchesFromCache($locationCode, $minMasaBerlakuBulan);
             self::$requestCache[$cacheKey] = $fromCache;
-
             return $fromCache;
         }
 
         $normalized = $this->normalizeBatches($grouped, $minMasaBerlakuBulan);
         self::$requestCache[$cacheKey] = $normalized;
         
-        \Illuminate\Support\Facades\Cache::put($laravelCacheKey, $normalized, now()->addMinutes(10));
-
         return $normalized;
     }
 
@@ -213,7 +210,7 @@ class WmsService
      */
     public function syncLocationBatches(string $locationCode): int
     {
-        $items = $this->flatBatches($locationCode);
+        $items = $this->flatBatches($locationCode, true);
         if ($items === []) {
             return 0;
         }
@@ -315,9 +312,9 @@ class WmsService
     /**
      * @return list<array{item_code: string, lot_serial: string, qty: int, expired: ?string}>
      */
-    public function flatBatches(string $locationCode): array
+    public function flatBatches(string $locationCode, bool $forceWms = false): array
     {
-        $grouped = $this->batchesByItemCode($locationCode) ?? [];
+        $grouped = $this->batchesByItemCode($locationCode, 0, $forceWms) ?? [];
         $flat = [];
 
         foreach ($grouped as $itemCode => $rows) {

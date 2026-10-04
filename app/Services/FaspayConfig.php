@@ -24,7 +24,7 @@ class FaspayConfig
      */
     public static function getDefaultCompany(): string
     {
-        return config('services.faspay.default', self::COMPANY_RDI);
+        return config('services.faspay.default', self::COMPANY_MCR);
     }
 
     /**

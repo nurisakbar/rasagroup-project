@@ -750,6 +750,22 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="modal fade" id="changePaymentModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="border-radius: 20px;">
+      <style>
+        #changePaymentModal .form-check-input:checked {
+            background-color: #3BB77E !important;
+            border-color: #3BB77E !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+            background-size: 70%;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+        }
+        #changePaymentModal .form-check-input {
+            width: 1.4em;
+            height: 1.4em;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+      </style>
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title">Ganti Metode Pembayaran</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -762,50 +778,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             @if($activeGateway === 'faspay')
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_qris" style="cursor: pointer;">
-                        <i class="fi-rs-smartphone mr-5"></i> QRIS (Faspay)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_qris" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-smartphone mr-5"></i> QRIS</span>
+                        <img src="{{ asset('images/banks/qris.png') }}" style="height: 18px;" alt="QRIS">
                     </label>
                 </div>
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bca" style="cursor: pointer;">
-                        <i class="fi-rs-bank mr-5"></i> BCA Virtual Account (Faspay)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bca" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> BCA Virtual Account</span>
+                        <img src="{{ asset('images/banks/bca.png') }}" style="height: 18px;" alt="BCA">
                     </label>
                 </div>
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_mandiri" style="cursor: pointer;">
-                        <i class="fi-rs-bank mr-5"></i> Mandiri Virtual Account (Faspay)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_mandiri" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> Mandiri Virtual Account</span>
+                        <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 18px;" alt="Mandiri">
                     </label>
                 </div>
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bri" value="faspay_bri_va" {{ $order->payment_method === 'faspay_bri_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bri" style="cursor: pointer;">
-                        <i class="fi-rs-bank mr-5"></i> BRI Virtual Account (Faspay)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bri" value="faspay_bri_va" {{ $order->payment_method === 'faspay_bri_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bri" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> BRI Virtual Account</span>
+                        <img src="{{ asset('images/banks/bri.png') }}" style="height: 18px;" alt="BRI">
                     </label>
                 </div>
-                <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                    <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold w-100 ms-2" for="pay_faspay_bni" style="cursor: pointer;">
-                        <i class="fi-rs-bank mr-5"></i> BNI Virtual Account (Faspay)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bni" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> BNI Virtual Account</span>
+                        <img src="{{ asset('images/banks/bni.png') }}" style="height: 18px;" alt="BNI">
+                    </label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_permata" value="faspay_permata_va" {{ $order->payment_method === 'faspay_permata_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_permata" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> Permata Virtual Account</span>
+                        <img src="{{ asset('images/banks/permata.png') }}" style="height: 18px;" alt="Permata">
+                    </label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_cimb" value="faspay_cimb_va" {{ $order->payment_method === 'faspay_cimb_va' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_cimb" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-bank mr-5"></i> CIMB Niaga Virtual Account</span>
+                        <img src="{{ asset('images/banks/cimb.png') }}" style="height: 18px;" alt="CIMB Niaga">
                     </label>
                 </div>
             @endif
 
-            <div class="form-check mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important;">
-                <input class="form-check-input ms-1" type="radio" name="payment_method" id="pay_manual" value="manual_transfer" {{ in_array($order->payment_method, ['manual_transfer', 'transfer']) ? 'checked' : '' }} required>
-                <label class="form-check-label fw-bold w-100 ms-2" for="pay_manual" style="cursor: pointer;">
-                    <i class="fi-rs-document-text mr-5"></i> Transfer Bank Manual (Upload Bukti)
-                </label>
-            </div>
+            @if(Auth::check() && Auth::user()->isDistributor() && (int) (Auth::user()->term_of_payment ?? 0) > 0)
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_top" value="term_of_payment" {{ $order->payment_method === 'term_of_payment' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_top" style="cursor: pointer; flex: 1;">
+                        <span><i class="fi-rs-document-text mr-5"></i> TOP (Term of Payment)</span>
+                        <span class="badge bg-success" style="font-size: 13px; padding: 6px 12px; border-radius: 6px;">Tempo {{ (int) Auth::user()->term_of_payment }} Hari</span>
+                    </label>
+                </div>
+            @endif
+
             
             <p class="text-danger font-sm mt-3 mb-0"><i class="fi-rs-info mr-5"></i><strong>Perhatian:</strong> Mengganti metode pembayaran akan membatalkan kode bayar yang lama dan membuat instruksi bayar baru.</p>
         </div>
-        <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
-            <button type="submit" class="btn btn-brand rounded-pill">Simpan Perubahan</button>
+        <div class="modal-footer border-0 pt-0 d-flex gap-2 w-100">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="flex: 1; border-radius: 10px !important; padding: 12px;">Batal</button>
+            <button type="submit" class="btn btn-brand" style="flex: 1; border-radius: 10px !important; padding: 12px;">Simpan Perubahan</button>
         </div>
       </form>
     </div>

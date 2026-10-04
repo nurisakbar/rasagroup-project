@@ -24,9 +24,7 @@
             @if($unitLabel)
                 <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
             @endif
-            @if(\App\Support\ShopFulfillment::showStockOnStorefront() && session('selected_hub_id'))
-                <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
-            @endif
+            <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
             <br>
             @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
                 <span class="old-price">{{ number_format($product->price * $multiplier, 0, ',', '.') }}</span>

@@ -42,7 +42,7 @@ return [
     ],
 
     'faspay' => [
-        'default' => env('FASPAY_DEFAULT_COMPANY', 'rdi'),
+        'default' => env('FASPAY_DEFAULT_COMPANY', 'mcr'),
 
         // Backward-compatibility keys (points to default / RDI)
         'merchant_id' => env('FASPAY_RDI_MERCHANT_ID', env('FASPAY_MERCHANT_ID', '37020')),

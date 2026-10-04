@@ -1367,7 +1367,7 @@
     <style>
         .whatsapp-float {
             position: fixed;
-            bottom: 30px;
+            bottom: 80px; /* Dinaikkan agar tidak menutupi tombol sosial media di footer */
             right: 30px;
             z-index: 9999;
         }

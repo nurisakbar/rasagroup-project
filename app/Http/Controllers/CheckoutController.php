@@ -53,7 +53,7 @@ class CheckoutController extends Controller
         $carts = $query->get();
 
         if ($carts->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang kosong.');
+            return redirect()->route('cart.index');
         }
 
         // Get the source warehouse from cart (all items should be from same warehouse)
@@ -801,7 +801,7 @@ class CheckoutController extends Controller
         $carts = $query->get();
 
         if ($carts->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang kosong.');
+            return redirect()->route('cart.index');
         }
 
         // Get source warehouse from cart
@@ -1066,6 +1066,20 @@ class CheckoutController extends Controller
                 }
             }
 
+            $isFinanceApproved = false;
+            $financeApprovedAt = null;
+
+            if ($request->payment_method === 'term_of_payment') {
+                $arOutstanding = (float) ($user->ar_outstanding ?? 0);
+                $creditLimit = (float) ($user->credit_limit ?? 0);
+                
+                // Jika total pesanan + AR Outstanding <= Limit Credit, maka otomatis approve
+                if (($arOutstanding + $total) <= $creditLimit) {
+                    $isFinanceApproved = true;
+                    $financeApprovedAt = now();
+                }
+            }
+
             $order = Order::create([
                 'order_type' => $orderType, // Determine by role
                 'order_number' => $orderNumber,
@@ -1094,6 +1108,8 @@ class CheckoutController extends Controller
                 'affiliate_id' => $affiliateId,
                 'affiliate_points' => $affiliatePoints,
                 'sales_code' => $request->sales_code,
+                'finance_approved' => $isFinanceApproved,
+                'finance_approved_at' => $financeApprovedAt,
             ]);
             
             Log::info('--- CHECKOUT DEBUG: ORDER CREATED ---', [
@@ -1372,7 +1388,7 @@ class CheckoutController extends Controller
             }
 
             Log::info('Checkout Debug: No gateway URL found. Redirecting to success page.');
-            return redirect()->route('checkout.success', $order)->with('success', 'Pesanan berhasil dibuat.');
+            return redirect()->route('checkout.success', $order);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('--- CHECKOUT STORE ERROR ---', [

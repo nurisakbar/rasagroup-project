@@ -102,7 +102,6 @@
                                         </div>
                                     </div>
 
-                                    @if($showHubPicker && $selectedWarehouseId)
                                         <div class="product-detail-stock-below-price mb-3">
                                             <span class="product-detail-stock-below-label">Stok</span>
                                             <span class="product-detail-stock-below-value text-brand">{{ $product->current_stock }}</span>
@@ -110,7 +109,6 @@
                                                 <span class="product-detail-stock-below-unit text-muted" id="stock-unit-label">{{ $product->unit }}</span>
                                             @endif
                                         </div>
-                                    @endif
 
                                     <div class="product-detail-brand-category mb-30">
                                         <div class="product-detail-meta-card">

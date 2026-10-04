@@ -251,15 +251,17 @@ class Warehouse extends Model
             if ($user->isDistributor()) {
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
             } elseif ($user->isOutlet() || $user->isBuyer()) {
-                $isValidSalesCode = false;
-                if (request()->filled('sales_code')) {
-                    $isValidSalesCode = \App\Models\User::where('sales_code', request('sales_code'))->where('role', 'sales')->exists();
+                $hasSalesCode = !empty($user->sales_code);
+                
+                // Jika request ada sales_code (misal saat checkout pertama kali), tetap pertimbangkan
+                if (!$hasSalesCode && request()->filled('sales_code')) {
+                    $hasSalesCode = \App\Models\User::where('sales_code', request('sales_code'))->where('role', 'sales')->exists();
                 }
 
-                if ($isValidSalesCode) {
-                    $rolesAllowed = ['outlet']; // If valid sales code is used, strictly search outlet warehouses
+                if ($hasSalesCode) {
+                    $rolesAllowed = ['outlet']; // Jika punya kode sales, dikirim dari gudang outlet
                 } else {
-                    $rolesAllowed = ['ecommerce']; // If no/invalid sales code, strictly search ecommerce warehouses
+                    $rolesAllowed = ['ecommerce']; // Jika belum punya kode sales, dikirim dari gudang ecommerce
                 }
             }
         }
@@ -335,32 +337,32 @@ class Warehouse extends Model
             ->value('stock') ?? 0;
 
         $user = \Illuminate\Support\Facades\Auth::user();
-        $isDistributor = $user && $user->isDistributor();
+        $hasSalesCode = $user && (!empty($user->sales_code) || request()->filled('sales_code'));
+        $shouldUseWms = $user && ($user->isDistributor() || ($user->isOutlet() && $hasSalesCode));
 
-        $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(
-            $this,
-            $user?->shelfLifeMonths() ?? 0
-        );
+        if ($shouldUseWms) {
+            $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(
+                $this,
+                $user?->shelfLifeMonths() ?? 0
+            );
 
-        if ($wmsStockMap !== null) {
-            $productCodes = $product->getAllCodes();
-            $wmsStock = 0;
-            $checkedKeys = [];
-            foreach ($productCodes as $code) {
-                $key = strtoupper(trim((string) $code));
-                if (!isset($checkedKeys[$key])) {
-                    $wmsStock += (int) ($wmsStockMap[$key] ?? 0);
-                    $checkedKeys[$key] = true;
+            if ($wmsStockMap !== null) {
+                $productCodes = $product->getAllCodes();
+                $wmsStock = 0;
+                $checkedKeys = [];
+                foreach ($productCodes as $code) {
+                    $key = strtoupper(trim((string) $code));
+                    if (!isset($checkedKeys[$key])) {
+                        $wmsStock += (int) ($wmsStockMap[$key] ?? 0);
+                        $checkedKeys[$key] = true;
+                    }
                 }
-            }
-
-            if ($isDistributor) {
                 return $wmsStock;
             }
-
-            return $wmsStock > 0 ? $wmsStock : (int) $dbStock;
+            return 0;
         }
 
+        // Jika bukan Distributor/Outlet dengan sales code, langsung gunakan stok dari Jubelio (database lokal)
         return (int) $dbStock;
     }
 }

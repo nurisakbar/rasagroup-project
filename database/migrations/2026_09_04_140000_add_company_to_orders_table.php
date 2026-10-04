@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'company')) {
-                $table->string('company', 20)->nullable()->default('rdi')->after('payment_method');
+                $table->string('company', 20)->nullable()->default('mcr')->after('payment_method');
             }
         });
     }

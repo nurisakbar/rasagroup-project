@@ -404,12 +404,15 @@ class CartController extends Controller
         if (Auth::check()) {
             $hasAddress = \App\Models\Address::where('user_id', Auth::id())->exists();
             if (!$hasAddress) {
-                $msg = 'Silakan isi alamat pengiriman Anda terlebih dahulu.';
-                $redirectUrl = route('addresses.create');
+                $msg = 'Silahkan menambahkan alamat pengiriman terlebih dahulu.';
+                $redirectUrl = route('buyer.addresses.create');
                 
-                return $request->ajax()
-                    ? response()->json(['error' => $msg, 'redirect' => $redirectUrl], 403)
-                    : redirect($redirectUrl)->with('error', $msg);
+                if ($request->ajax()) {
+                    session()->flash('warning', $msg);
+                    return response()->json(['error' => $msg, 'redirect' => $redirectUrl], 403);
+                }
+                
+                return redirect($redirectUrl)->with('warning', $msg);
             }
         }
 

@@ -322,6 +322,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb" style="position: relative;">
                                                         <div class="custom-radio">

@@ -365,15 +365,55 @@ class Product extends Model
      */
     public function getCurrentStockAttribute(): int
     {
-        $selectedHubId = session('selected_hub_id');
-        
-        if ($selectedHubId) {
-            $stock = $this->warehouseStocks->where('warehouse_id', $selectedHubId)->first();
-            return $stock ? $stock->stock : 0;
+        if (auth()->check()) {
+            $user = auth()->user();
+            $selectedHubId = session('selected_hub_id');
+            
+            // Jika belum ada hub terpilih di session, coba cari otomatis berdasarkan alamat utama
+            if (!$selectedHubId) {
+                $address = $user->addresses()->where('is_default', true)->first() ?? $user->addresses()->first();
+                if ($address) {
+                    $hub = \App\Models\Warehouse::findBestHubForAddress($address);
+                    if ($hub) {
+                        $selectedHubId = $hub->id;
+                        session([
+                            'selected_hub_id' => $hub->id,
+                            'selected_hub_name' => $hub->name,
+                            'selected_hub_slug' => $hub->slug
+                        ]);
+                    }
+                }
+            }
+
+            if ($selectedHubId) {
+                $warehouse = \App\Models\Warehouse::find($selectedHubId);
+                
+                $hasSalesCode = !empty($user->sales_code) || request()->filled('sales_code');
+                $shouldUseWms = $user->isDistributor() || ($user->isOutlet() && $hasSalesCode);
+
+                // Ambil dari WMS jika Distributor atau Outlet ber-kode sales
+                if ($shouldUseWms && $warehouse) {
+                    $wms = app(\App\Services\WmsService::class);
+                    $wmsStockMap = $wms->qtyByItemCode($warehouse, $user->shelfLifeMonths());
+                    if ($wmsStockMap !== null) {
+                        $totalStock = 0;
+                        $codes = $this->getAllCodes();
+                        foreach ($codes as $code) {
+                            $totalStock += ($wmsStockMap[strtoupper(trim((string)$code))] ?? 0);
+                        }
+                        return $totalStock;
+                    }
+                    return 0; // WMS gagal / tidak ada
+                }
+
+                // Selain itu (Buyer biasa, atau Outlet tanpa kode sales) ambil dari lokal
+                $stock = $this->warehouseStocks->where('warehouse_id', $selectedHubId)->first();
+                return $stock ? $stock->stock : 0;
+            }
         }
 
-        // If no hub selected, sum all stocks (or handle as needed)
-        return $this->warehouseStocks->sum('stock');
+        // Jika belum login (Guest) atau user tidak punya alamat, tampilkan stok statis 10
+        return 10;
     }
 
     /**
