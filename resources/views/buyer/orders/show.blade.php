@@ -30,31 +30,29 @@
                                 </a>
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
                                         <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-brand rounded font-sm px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">
                                             <i class="fi-rs-download mr-5"></i> Download Invoice
                                         </a>
-                                        <div class="badge-group">
-                                            @php
-                                                $statusClass = match($order->order_status) {
-                                                    'pending' => 'bg-warning',
-                                                    'processing' => 'bg-info',
-                                                    'shipped' => 'bg-primary',
-                                                    'delivered' => 'bg-success',
-                                                    'cancelled' => 'bg-danger',
-                                                    default => 'bg-secondary',
-                                                };
-                                                $statusLabel = match($order->order_status) {
-                                                    'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
-                                                    'processing' => 'Sedang Diproses',
-                                                    'shipped' => 'Dalam Pengiriman',
-                                                    'delivered' => 'Selesai',
-                                                    'cancelled' => 'Dibatalkan',
-                                                    default => ucfirst($order->order_status),
-                                                };
-                                            @endphp
-                                            <span class="rounded {{ $statusClass }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $statusLabel }}</span>
-                                        </div>
+                                        @php
+                                            $statusClass = match($order->order_status) {
+                                                'pending' => 'bg-warning',
+                                                'processing' => 'bg-info',
+                                                'shipped' => 'bg-primary',
+                                                'delivered' => 'bg-success',
+                                                'cancelled' => 'bg-danger',
+                                                default => 'bg-secondary',
+                                            };
+                                            $statusLabel = match($order->order_status) {
+                                                'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
+                                                'processing' => 'Sedang Diproses',
+                                                'shipped' => 'Dalam Pengiriman',
+                                                'delivered' => 'Selesai',
+                                                'cancelled' => 'Dibatalkan',
+                                                default => ucfirst($order->order_status),
+                                            };
+                                        @endphp
+                                        <span class="rounded {{ $statusClass }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $statusLabel }}</span>
                                     </div>
                                 </div>
                             </div>
