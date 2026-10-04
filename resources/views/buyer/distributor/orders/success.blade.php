@@ -570,77 +570,163 @@
 
 
             @if($activeGateway === 'faspay')
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_qris" style="cursor: pointer; flex: 1;">
+                <!-- QRIS -->
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded payment-main-option" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0; cursor: pointer;" onclick="document.getElementById('pay_faspay_qris').click()">
+                    <input class="form-check-input m-0 main-payment-radio" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_qris" style="cursor: pointer; flex: 1; pointer-events: none;">
                         <span><i class="fi-rs-smartphone mr-5"></i> QRIS</span>
                         <img src="{{ asset('images/banks/qris.png') }}" style="height: 18px;" alt="QRIS">
                     </label>
                 </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bca" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> BCA Virtual Account</span>
-                        <img src="{{ asset('images/banks/bca.png') }}" style="height: 18px;" alt="BCA">
+
+                <!-- Direct Debit -->
+                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded payment-main-option" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0; cursor: pointer;" onclick="document.getElementById('pay_faspay_direct_debit').click()">
+                    <input class="form-check-input m-0 main-payment-radio" type="radio" name="payment_method" id="pay_faspay_direct_debit" value="faspay_direct_debit" {{ $order->payment_method === 'faspay_direct_debit' ? 'checked' : '' }} required>
+                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_direct_debit" style="cursor: pointer; flex: 1; pointer-events: none;">
+                        <span><i class="fi-rs-credit-card mr-5"></i> Direct Debit</span>
                     </label>
                 </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_mandiri" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> Mandiri Virtual Account</span>
-                        <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 18px;" alt="Mandiri">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bsi" value="faspay_bsi_va" {{ $order->payment_method === 'faspay_bsi_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bsi" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> BSI Virtual Account</span>
-                        <img src="{{ asset('images/banks/bsi.png') }}" style="height: 18px;" alt="BSI">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_danamon" value="faspay_danamon_va" {{ $order->payment_method === 'faspay_danamon_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_danamon" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> Danamon Virtual Account</span>
-                        <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 18px;" alt="Danamon">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_sinarmas" value="faspay_sinarmas_va" {{ $order->payment_method === 'faspay_sinarmas_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_sinarmas" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> Sinarmas Virtual Account</span>
-                        <img src="{{ asset('images/banks/sinarmas.png') }}" style="height: 18px;" alt="Sinarmas">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_maybank" value="faspay_maybank_va" {{ $order->payment_method === 'faspay_maybank_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_maybank" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> Maybank Virtual Account</span>
-                        <img src="{{ asset('images/banks/maybank.png') }}" style="height: 18px;" alt="Maybank">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bni" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> BNI Virtual Account</span>
-                        <img src="{{ asset('images/banks/bni.png') }}" style="height: 18px;" alt="BNI">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_permata" value="faspay_permata_va" {{ $order->payment_method === 'faspay_permata_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_permata" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> Permata Virtual Account</span>
-                        <img src="{{ asset('images/banks/permata.png') }}" style="height: 18px;" alt="Permata">
-                    </label>
-                </div>
-                <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
-                    <input class="form-check-input m-0" type="radio" name="payment_method" id="pay_faspay_cimb" value="faspay_cimb_va" {{ $order->payment_method === 'faspay_cimb_va' ? 'checked' : '' }} required>
-                    <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_cimb" style="cursor: pointer; flex: 1;">
-                        <span><i class="fi-rs-bank mr-5"></i> CIMB Niaga Virtual Account</span>
-                        <img src="{{ asset('images/banks/cimb.png') }}" style="height: 18px;" alt="CIMB Niaga">
-                    </label>
+
+                <!-- Virtual Account Group -->
+                @php
+                    $isVaSelected = str_ends_with($order->payment_method, '_va');
+                @endphp
+                <div class="form-check d-flex flex-column mb-3 p-3 border rounded payment-main-option" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
+                    <div class="d-flex align-items-center w-100" onclick="document.getElementById('pay_va_group').click()" style="cursor: pointer;">
+                        <input class="form-check-input m-0" type="radio" name="payment_group_dummy" id="pay_va_group" {{ $isVaSelected ? 'checked' : '' }}>
+                        <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_va_group" style="cursor: pointer; flex: 1; pointer-events: none;">
+                            <span><i class="fi-rs-bank mr-5"></i> Virtual Account</span>
+                            <i class="fi-rs-angle-down"></i>
+                        </label>
+                    </div>
+                    
+                    <div id="va-options-container" class="mt-3 pt-3 border-top" style="display: {{ $isVaSelected ? 'block' : 'none' }};">
+                        
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bca').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bca" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>BCA Virtual Account</span>
+                                <img src="{{ asset('images/banks/bca.png') }}" style="height: 18px;" alt="BCA">
+                            </label>
+                        </div>
+                        
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_mandiri').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_mandiri" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>Mandiri Virtual Account</span>
+                                <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 18px;" alt="Mandiri">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bsi').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bsi" value="faspay_bsi_va" {{ $order->payment_method === 'faspay_bsi_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bsi" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>BSI Virtual Account</span>
+                                <img src="{{ asset('images/banks/bsi.png') }}" style="height: 18px;" alt="BSI">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_danamon').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_danamon" value="faspay_danamon_va" {{ $order->payment_method === 'faspay_danamon_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_danamon" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>Danamon Virtual Account</span>
+                                <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 18px;" alt="Danamon">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_sinarmas').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_sinarmas" value="faspay_sinarmas_va" {{ $order->payment_method === 'faspay_sinarmas_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_sinarmas" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>Sinarmas Virtual Account</span>
+                                <img src="{{ asset('images/banks/sinarmas.png') }}" style="height: 18px;" alt="Sinarmas">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_maybank').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_maybank" value="faspay_maybank_va" {{ $order->payment_method === 'faspay_maybank_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_maybank" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>Maybank Virtual Account</span>
+                                <img src="{{ asset('images/banks/maybank.png') }}" style="height: 18px;" alt="Maybank">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bni').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bni" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>BNI Virtual Account</span>
+                                <img src="{{ asset('images/banks/bni.png') }}" style="height: 18px;" alt="BNI">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_permata').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_permata" value="faspay_permata_va" {{ $order->payment_method === 'faspay_permata_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_permata" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>Permata Virtual Account</span>
+                                <img src="{{ asset('images/banks/permata.png') }}" style="height: 18px;" alt="Permata">
+                            </label>
+                        </div>
+
+                        <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_cimb').click()" style="cursor: pointer;">
+                            <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_cimb" value="faspay_cimb_va" {{ $order->payment_method === 'faspay_cimb_va' ? 'checked' : '' }} required>
+                            <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_cimb" style="cursor: pointer; flex: 1; pointer-events: none;">
+                                <span>CIMB Niaga Virtual Account</span>
+                                <img src="{{ asset('images/banks/cimb.png') }}" style="height: 18px;" alt="CIMB Niaga">
+                            </label>
+                        </div>
+                    </div>
                 </div>
             @endif
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const mainRadios = document.querySelectorAll('.main-payment-radio');
+                    const vaGroupRadio = document.getElementById('pay_va_group');
+                    const vaContainer = document.getElementById('va-options-container');
+                    const vaSubRadios = document.querySelectorAll('.va-sub-radio');
+                    const topRadio = document.getElementById('pay_top');
+
+                    function hideVa() {
+                        if(vaContainer) vaContainer.style.display = 'none';
+                        if(vaGroupRadio) vaGroupRadio.checked = false;
+                    }
+
+                    if(mainRadios) {
+                        mainRadios.forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                if (this.checked) hideVa();
+                            });
+                        });
+                    }
+
+                    if(topRadio) {
+                        topRadio.addEventListener('change', function() {
+                            if (this.checked) hideVa();
+                        });
+                    }
+
+                    if(vaGroupRadio) {
+                        vaGroupRadio.addEventListener('change', function() {
+                            if (this.checked) {
+                                vaContainer.style.display = 'block';
+                                let anyChecked = Array.from(vaSubRadios).some(r => r.checked);
+                                if (!anyChecked && vaSubRadios.length > 0) {
+                                    vaSubRadios[0].checked = true;
+                                }
+                            }
+                        });
+                    }
+
+                    if(vaSubRadios) {
+                        vaSubRadios.forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                if (this.checked && vaGroupRadio) {
+                                    vaGroupRadio.checked = true;
+                                }
+                            });
+                        });
+                    }
+                });
+            </script>
 
             @if(Auth::check() && Auth::user()->isDistributor() && (int) (Auth::user()->term_of_payment ?? 0) > 0)
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0;">
