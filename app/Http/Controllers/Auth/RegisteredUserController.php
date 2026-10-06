@@ -85,17 +85,14 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
-
         if (env('BYPASS_WA_VERIFICATION', true)) {
             $user->wa_verified_at = now();
             $user->save();
-            return redirect(route('dashboard', absolute: false));
+        } else {
+            // Dispatch WhatsApp Verification Job to queue
+            \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $waCode);
         }
 
-        // Dispatch WhatsApp Verification Job to queue
-        \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $waCode);
-
-        return redirect(route('wa.verify', absolute: false));
+        return redirect()->route('login')->with('status', 'Pendaftaran berhasil. Silakan cek email Anda untuk melakukan verifikasi akun sebelum login.');
     }
 }
