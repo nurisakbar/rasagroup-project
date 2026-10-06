@@ -381,7 +381,7 @@
                         <tr>
                             <td colspan="2" style="padding: 15px;">
                                 <div class="well well-sm" style="background-color: #f9fafc; border-left: 3px solid #00c0ef; margin-bottom: 0;">
-                                    <h4 style="margin-top:0; margin-bottom: 15px; font-size: 16px;"><i class="fa fa-paper-plane-o"></i> Proses Pengiriman (EkspedisiKu)</h4>
+                                    <h4 style="margin-top:0; margin-bottom: 15px; font-size: 16px;"><i class="fa fa-paper-plane-o"></i> Proses Pengiriman</h4>
                                     <div class="row">
                                         <!-- Step 1: Booking -->
                                         <div class="col-md-4">
@@ -403,7 +403,7 @@
                                                     @else
                                                         <form action="{{ route('admin.orders.ekspedisiku-booking', $order) }}" method="POST">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking di EkspedisiKu?')">
+                                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Buat booking pengiriman?')">
                                                                 <i class="fa fa-plus"></i> Buat Booking
                                                             </button>
                                                         </form>
