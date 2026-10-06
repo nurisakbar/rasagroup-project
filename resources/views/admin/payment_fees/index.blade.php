@@ -39,11 +39,14 @@
                         ] as $key => $label)
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="fee_faspay_{{ $key }}">{{ $label }}</label>
+                                <label for="fee_faspay_{{ $key }}">
+                                    <input type="checkbox" name="active_faspay_{{ $key }}" value="1" {{ ($faspayActive['active_faspay_'.$key] ?? 1) ? 'checked' : '' }}> 
+                                    {{ $label }}
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-addon">Rp</span>
                                     <input type="number" class="form-control" id="fee_faspay_{{ $key }}" name="fee_faspay_{{ $key }}" 
-                                        value="{{ old('fee_faspay_'.$key, $faspayFees['fee_faspay_'.$key] ?? 0) }}" min="0">
+                                        value="{{ old('fee_faspay_'.$key, $faspayFees['fee_faspay_'.$key] ?? 0) }}" min="0" placeholder="Biaya layanan (0 jika gratis)">
                                 </div>
                             </div>
                         </div>

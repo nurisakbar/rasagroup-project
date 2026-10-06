@@ -115,6 +115,10 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Hanya pesanan pending yang bisa diganti metode pembayarannya.');
         }
 
+        if ($order->isPaymentExpired()) {
+            return redirect()->back()->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit). Anda tidak dapat lagi mengubah metode pembayaran atau melakukan pembayaran.');
+        }
+
         $request->validate([
             'payment_method' => 'required|string'
         ]);
@@ -198,6 +202,10 @@ class OrderController extends Controller
             return redirect()->route('buyer.orders.show', $order)->with('info', 'Pesanan ini sudah dibayar.');
         }
 
+        if ($order->isPaymentExpired()) {
+            return redirect()->route('buyer.orders.show', $order)->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit).');
+        }
+
         return view('buyer.orders.confirm-payment', compact('order'));
     }
 
@@ -205,6 +213,10 @@ class OrderController extends Controller
     {
         if ($order->user_id !== Auth::id()) {
             abort(403);
+        }
+
+        if ($order->isPaymentExpired()) {
+            return redirect()->route('buyer.orders.show', $order)->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit).');
         }
 
         $request->validate([

@@ -210,12 +210,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'salesCC' => '',
                 'discountAcct' => '41101',
                 'discountCC' => '',
-                'siteCode' => 'MCR',
             ];
-            
-            if (!empty($this->order->sourceWarehouse->qad_location_code)) {
-                $lines[count($lines) - 1]['locationCode'] = $this->order->sourceWarehouse->qad_location_code;
-            }
         }
 
         if (! empty($invalidPriceItems) || ! empty($invalidUomItems)) {
@@ -263,7 +258,6 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     {
         $payload = [
             'domainCode' => 'MCR',
-            'siteCode' => 'MCR',
             'salesOrderNumber' => $qidSalesOrderNumber,
             'billToCustomerCode' => $user->qad_customer_code,
             'soldToCustomerCode' => $user->qad_customer_code,
@@ -571,6 +565,17 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
         // Kode customer lokal yang sudah diisi tidak boleh diubah saat kirim sales order.
         if (trim((string) $user->qad_customer_code) !== '') {
+            return $user;
+        }
+
+        $warehouse = $this->order->sourceWarehouse;
+        if ($warehouse && (stripos($warehouse->name, 'bekasi') !== false || $warehouse->qad_location_code === 'FG008')) {
+            $user->update(['qad_customer_code' => 'HUB00002']);
+            $user->refresh();
+            Log::info('SyncOrderToQad: Using generic HUB00002 customer code for Hub Bekasi', [
+                'order_id' => $this->order->id,
+                'user_id' => $user->id,
+            ]);
             return $user;
         }
 

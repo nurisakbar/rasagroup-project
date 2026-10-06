@@ -74,7 +74,7 @@
                                 <p class="font-lg text-heading">Produsen sirup premium berkualitas tinggi<br>untuk kebutuhan industri dan rumah tangga.</p>
                             </div>
                             <ul class="contact-infor">
-                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>MM 2100 Industrial Town, Jl. Serui Blok AE1-3, Bekasi 17846 - Indonesia</span></li>
+                                <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-location.svg') }}" alt="" /><strong>Alamat: </strong> <span>SOHO Marina Bay, Rukan Manhattan PIK2, Jl. Jend. Sudirman No.10 SPPM Blok B/09, Muara, Kec. Teluknaga, Kabupaten Tangerang, Banten 15510, Indonesia</span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-contact.svg') }}" alt="" /><strong>Telepon: </strong> <span><a href="tel:02131176969" class="text-decoration-none text-heading">(021) 31176969</a></span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-email-2.svg') }}" alt="" /><strong>Email: </strong> <span>info@rasagroup.co.id</span></li>
                                 <li><img src="{{ asset('themes/nest-frontend/assets/imgs/theme/icons/icon-clock.svg') }}" alt="" /><strong>Jam Kerja: </strong> <span>08:00 - 17:00, Senin - Sabtu</span></li>

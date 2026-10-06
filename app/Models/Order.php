@@ -208,6 +208,18 @@ class Order extends Model
     }
 
     /**
+     * Check if the order payment time has expired (30 minutes).
+     */
+    public function isPaymentExpired(): bool
+    {
+        if ($this->payment_method === 'term_of_payment') {
+            return false;
+        }
+
+        return $this->payment_status === 'pending' && $this->created_at->addMinutes(30)->isPast();
+    }
+
+    /**
      * TOP order menunggu persetujuan finance (finance_approved = 0).
      */
     public function isAwaitingFinanceApproval(): bool

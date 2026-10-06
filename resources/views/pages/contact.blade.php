@@ -230,9 +230,9 @@
                             <i class="bi bi-geo-alt"></i>
                         </div>
                         <h4>Alamat</h4>
-                        <p><strong>Rasa Group Headquarters</strong></p>
-                        <p>Cikarang–Cibitung, Kabupaten Bekasi, Jawa Barat</p>
-                        <p class="mb-0"><a href="https://www.google.com/maps/place/Rasa+Group+Headquarters/@-6.3163819,107.1104067,17z/data=!3m1!4b1!4m6!3m5!1s0x2e699bde0142aab3:0x3b89b0730a884347!8m2!3d-6.3163819!4d107.1104067!16s%2Fg%2F11vb0rtyjl?entry=ttu" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></p>
+                        <p><strong>RASA HEADQUARTERS</strong></p>
+                        <p>SOHO Marina Bay, Rukan Manhattan PIK2, Jl. Jend. Sudirman No.10 SPPM Blok B/09, Muara, Kec. Teluknaga, Kabupaten Tangerang, Banten 15510, Indonesia</p>
+                        <p class="mb-0"><a href="https://www.google.com/maps/search/?api=1&query=SOHO+Marina+Bay+Rukan+Manhattan+PIK2+Tangerang" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -355,8 +355,8 @@
     <section class="map-section">
         <div class="map-container">
             <iframe
-                title="Peta Rasa Group Headquarters"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.598327932857!2d107.10783177538464!3d-6.316376561811204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e699bde0142aab3%3A0x3b89b0730a884347!2sRasa%20Group%20Headquarters!5e0!3m2!1sid!2sid!4v1777757273799!5m2!1sid!2sid"
+                title="Peta RASA HEADQUARTERS"
+                src="https://maps.google.com/maps?q=SOHO+Marina+Bay,+Rukan+Manhattan+PIK2&t=&z=13&ie=UTF8&iwloc=&output=embed"
                 allowfullscreen=""
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"></iframe>

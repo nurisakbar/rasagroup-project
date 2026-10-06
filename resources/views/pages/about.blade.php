@@ -16,22 +16,22 @@
             <div class="container">
                 <div class="row">
                     <div class="col-xl-10 col-lg-12 m-auto">
-                        <section class="row align-items-center mb-50">
+                        <section class="row align-items-stretch mb-50">
                             <div class="col-lg-6">
-                                <img src="{{ asset('themes/nest-frontend/assets/imgs/page/about-1.png') }}" alt="Tentang Rasa Group" class="border-radius-15 mb-md-3 mb-lg-0 mb-sm-4 shadow-sm" />
+                                <img src="{{ asset('themes/nest-frontend/assets/imgs/page/about10.jpg') }}" alt="Tentang Rasa Group" class="border-radius-15 mb-md-3 mb-lg-0 mb-sm-4 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;" />
                             </div>
                             <div class="col-lg-6">
                                 <div class="pl-25">
                                     <h2 class="mb-30">Selamat Datang di Rasa Group</h2>
-                                    <p class="mb-25">Rasa Group didirikan pada tahun 2010 dengan visi menjadi produsen sirup berkualitas tinggi yang mampu menjangkau seluruh pelosok Indonesia. Berawal dari sebuah usaha kecil di Jakarta, kami terus berkembang hingga kini memiliki fasilitas produksi modern dengan standar kualitas internasional.</p>
-                                    <p class="mb-50">Selama lebih dari 14 tahun perjalanan, kami telah melayani ribuan pelanggan dari berbagai kalangan, mulai dari pengusaha minuman, hotel, restoran, hingga konsumen rumah tangga. Kepercayaan pelanggan adalah motivasi kami untuk terus berinovasi dan meningkatkan kualitas produk.</p>
+                                    <p class="mb-25" style="text-align: justify;">RASA Group adalah perusahaan beverage yang berkomitmen menghadirkan produk dan solusi berkualitas bagi industri F&B Indonesia. Melalui inovasi, kualitas, dan pemahaman terhadap tren pasar, kami membantu bisnis menghadirkan pengalaman minuman yang relevan, konsisten, dan berdaya saing.</p>
+                                    <p class="mb-50" style="text-align: justify;">Dengan pengalaman lebih dari satu dekade, kami telah menjadi mitra terpercaya bagi coffee shop, cafe, restoran, hotel, dan berbagai pelaku usaha F&B dalam mengembangkan menu minuman yang bernilai tinggi serta mendukung pertumbuhan bisnis yang berkelanjutan.</p>
                                     <div class="carausel-3-columns-cover position-relative">
                                         <div id="carausel-3-columns-arrows"></div>
                                         <div class="carausel-3-columns" id="carausel-3-columns">
-                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about-2.png') }}" alt="Galeri 1" /></div>
-                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about-3.png') }}" alt="Galeri 2" /></div>
-                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about-4.png') }}" alt="Galeri 3" /></div>
-                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about-2.png') }}" alt="Galeri 4" /></div>
+                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about4.jpg') }}" alt="Galeri 1" /></div>
+                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about2.jpg') }}" alt="Galeri 2" /></div>
+                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about3.jpg') }}" alt="Galeri 3" /></div>
+                                            <div class="px-2"><img class="border-radius-15" src="{{ asset('themes/nest-frontend/assets/imgs/page/about3.jpg') }}" alt="Galeri 3" /></div>
                                         </div>
                                     </div>
                                 </div>
@@ -97,23 +97,23 @@
                                 </div>
                                 <div class="col-lg-5">
                                     <h4 class="mb-20 text-muted">Performa Kami</h4>
-                                    <h1 class="heading-1 mb-40">Partner Solusi Sirup Berkualitas Anda</h1>
-                                    <p class="mb-30">Kami berkomitmen untuk selalu menghadirkan produk dengan cita rasa terbaik yang dibuat dari bahan-bahan pilihan berkualitas tinggi.</p>
-                                    <p>Kepercayaan pelanggan adalah motivasi kami untuk terus berinovasi dan meningkatkan kualitas produk di setiap tetesnya.</p>
+                                    <h1 class="heading-1 mb-40">Solusi Minuman untuk Bisnis F&B Anda</h1>
+                                    <p class="mb-30" style="text-align: justify;">Kami menghadirkan rangkaian produk dan solusi minuman yang dirancang untuk membantu bisnis F&B menciptakan menu yang inovatif, konsisten, dan memiliki daya saing tinggi. Dari kreasi premium hingga kebutuhan operasional harian, kami mendukung setiap langkah pertumbuhan bisnis pelanggan.</p>
+                                    <p style="text-align: justify;">Dengan komitmen terhadap kualitas dan inovasi, kami terus mengembangkan produk yang mampu menjawab tren pasar sekaligus menghadirkan pengalaman rasa terbaik dalam setiap sajian.</p>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-lg-4 pr-30 mb-md-5 mb-lg-0 mb-sm-5">
                                     <h3 class="mb-30">Siapa Kami</h3>
-                                    <p>Rasa Group adalah produsen sirup terkemuka yang berfokus pada kualitas dan inovasi rasa untuk memenuhi kebutuhan industri kuliner dan rumah tangga.</p>
+                                    <p style="text-align: justify;">RASA Group adalah perusahaan beverage yang berfokus pada pengembangan produk dan solusi minuman untuk industri F&B Indonesia. Dengan mengedepankan inovasi, kualitas, dan pemahaman terhadap tren pasar, kami membantu pelanggan menghadirkan pengalaman minuman yang relevan dan bernilai.</p>
                                 </div>
                                 <div class="col-lg-4 pr-30 mb-md-5 mb-lg-0 mb-sm-5">
                                     <h3 class="mb-30">Sejarah Kami</h3>
-                                    <p>Dimulai dari usaha kecil di tahun 2010, kini kami melayani ribuan pelanggan di seluruh Indonesia dengan berbagai varian rasa premium.</p>
+                                    <p style="text-align: justify;">Sejak didirikan pada tahun 2010, RASA Group terus berkembang bersama industri F&B Indonesia. Berawal dari visi untuk menghadirkan produk minuman berkualitas, kami kini dipercaya oleh ribuan pelanggan dari berbagai segmen, termasuk coffee shop, cafe, restoran, hotel, dan pelaku usaha minuman di seluruh Indonesia.</p>
                                 </div>
                                 <div class="col-lg-4">
                                     <h3 class="mb-30">Misi Kami</h3>
-                                    <p>Menghasilkan produk sirup berkualitas tinggi dengan standar keamanan pangan yang ketat dan memberikan pelayanan terbaik bagi pelanggan.</p>
+                                    <p style="text-align: justify;">Menjadi mitra terpercaya bagi pertumbuhan bisnis F&B melalui produk berkualitas, inovasi berkelanjutan, dan pelayanan yang unggul. Kami berkomitmen menciptakan solusi beverage yang mampu memberikan nilai tambah bagi pelanggan dan konsumen akhir.</p>
                                 </div>
                             </div>
                         </section>
@@ -144,56 +144,7 @@
                     </div>
                 </div>
             </section>
-            <div class="container">
-                <div class="row">
-                    <div class="col-xl-10 col-lg-12 m-auto">
-                        <section class="mb-50">
-                            <h2 class="title style-3 mb-40 text-center">Tim Kami</h2>
-                            <div class="row">
-                                <div class="col-lg-4 mb-lg-0 mb-md-5 mb-sm-5">
-                                    <h6 class="mb-5 text-brand">Tim Kami</h6>
-                                    <h1 class="mb-30">Kenali Tim Ahli Kami</h1>
-                                    <p class="mb-30">Orang-orang hebat di balik kesuksesan Rasa Group yang berdedikasi tinggi untuk memberikan yang terbaik bagi Anda.</p>
-                                    <p class="mb-30">Tim kami terdiri dari para ahli di bidang produksi, pengembangan rasa, dan pemasaran yang telah berpengalaman bertahun-tahun.</p>
-                                    <a href="#" class="btn btn-brand">Lihat Semua Anggota</a>
-                                </div>
-                                <div class="col-lg-8">
-                                    <div class="row">
-                                        <div class="col-lg-6 col-md-6">
-                                            <div class="team-card shadow-sm">
-                                                <img src="{{ asset('themes/nest-frontend/assets/imgs/page/about-6.png') }}" alt="Ahmad Susanto" />
-                                                <div class="content text-center">
-                                                    <h4 class="mb-5">Ahmad Susanto</h4>
-                                                    <span>CEO & Founder</span>
-                                                    <div class="social-network mt-20">
-                                                        <a href="#"><i class="bi bi-facebook"></i></a>
-                                                        <a href="#"><i class="bi bi-twitter-x"></i></a>
-                                                        <a href="#"><i class="bi bi-instagram"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <div class="team-card shadow-sm">
-                                                <img src="{{ asset('themes/nest-frontend/assets/imgs/page/about-8.png') }}" alt="Siti Rahayu" />
-                                                <div class="content text-center">
-                                                    <h4 class="mb-5">Siti Rahayu</h4>
-                                                    <span>Chief Operating Officer</span>
-                                                    <div class="social-network mt-20">
-                                                        <a href="#"><i class="bi bi-facebook"></i></a>
-                                                        <a href="#"><i class="bi bi-twitter-x"></i></a>
-                                                        <a href="#"><i class="bi bi-instagram"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </main>
 @endsection

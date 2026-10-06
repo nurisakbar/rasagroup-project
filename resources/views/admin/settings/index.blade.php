@@ -97,6 +97,19 @@
             </div>
         </div>
 
+        <!-- Payment Fee Setting -->
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title"><i class="fa fa-credit-card"></i> Pengaturan Metode Pembayaran</h3>
+            </div>
+            <div class="box-body">
+                <p>Kelola daftar channel pembayaran Faspay (Virtual Account & QRIS), biaya penanganan (fee), dan atur channel mana yang aktif atau disembunyikan.</p>
+                <a href="{{ route('admin.payment-fees.index') }}" class="btn btn-success">
+                    <i class="fa fa-arrow-right"></i> Ke Halaman Pengaturan Pembayaran
+                </a>
+            </div>
+        </div>
+
     </div>
 </div>
 

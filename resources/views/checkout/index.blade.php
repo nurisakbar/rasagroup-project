@@ -236,6 +236,7 @@
                         <div class="payment_accordion">
                             <!-- Online Payment -->
                             @if(config('services.active_payment_gateway') === 'faspay')
+                                @if($faspayActive['faspay_qris'] ?? true)
                                 <div class="payment-option mb-10 payment-method-card active" onclick="selectPayment('faspay_qris')" id="card-faspay-qris" style="position: relative;">
                                     <div class="custom-radio">
                                         <input class="form-check-input" type="radio" name="payment_method" value="faspay_qris" id="payQRIS" checked>
@@ -248,6 +249,7 @@
                                         <p class="font-sm text-muted">Bayar menggunakan e-Wallet (OVO, Dana, ShopeePay, LinkAja) atau m-Banking yang mendukung QRIS.</p>
                                     </div>
                                 </div>
+                                @endif
                                 <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_direct_debit')" id="card-faspay-direct-debit">
                                     <div class="custom-radio">
                                         <input class="form-check-input" type="radio" name="payment_method" value="faspay_direct_debit" id="payDirectDebit">
@@ -270,7 +272,8 @@
                                         <p class="font-sm text-muted mb-10">Pilih bank untuk transfer Virtual Account:</p>
                                         <div class="row">
                                             @if(config('services.faspay.env') === 'production' || env('FASPAY_ENV') === 'production')
-                                                <div class="col-md-6">
+                                                @if($faspayActive['faspay_mandiri_va'] ?? true)
+<div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_mandiri_va')" id="card-faspay-mandiri" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_mandiri_va" id="payMandiriVA">
@@ -281,6 +284,8 @@
                                                         <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Mandiri">
                                                     </div>
                                                 </div>
+@endif
+                                                @if($faspayActive['faspay_sinarmas_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_sinarmas_va')" id="card-faspay-sinarmas" style="position: relative;">
                                                         <div class="custom-radio">
@@ -290,7 +295,9 @@
                                                         <img src="{{ asset('images/banks/sinarmas.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Sinarmas">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+@endif
+                                                @if($faspayActive['faspay_permata_va'] ?? true)
+<div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_permata_va" id="payPermataVA">
@@ -299,6 +306,8 @@
                                                         <img src="{{ asset('images/banks/permata.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Permata">
                                                     </div>
                                                 </div>
+@endif
+                                                @if($faspayActive['faspay_maybank_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_maybank_va')" id="card-faspay-maybank" style="position: relative;">
                                                         <div class="custom-radio">
@@ -308,6 +317,8 @@
                                                         <img src="{{ asset('images/banks/maybank.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Maybank">
                                                     </div>
                                                 </div>
+@endif
+                                                @if($faspayActive['faspay_danamon_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_danamon_va')" id="card-faspay-danamon" style="position: relative;">
                                                         <div class="custom-radio">
@@ -317,6 +328,8 @@
                                                         <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Danamon">
                                                     </div>
                                                 </div>
+@endif
+                                                @if($faspayActive['faspay_bsi_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bsi_va')" id="card-faspay-bsi" style="position: relative;">
                                                         <div class="custom-radio">
@@ -326,7 +339,9 @@
                                                         <img src="{{ asset('images/banks/bsi.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BSI">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+@endif
+                                                @if($faspayActive['faspay_cimb_va'] ?? true)
+<div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_cimb_va" id="payCIMBVA">
@@ -335,8 +350,10 @@
                                                         <img src="{{ asset('images/banks/cimb.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="CIMB">
                                                     </div>
                                                 </div>
+@endif
 
-                                                <div class="col-md-6">
+                                                @if($faspayActive['faspay_bni_va'] ?? true)
+<div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_bni_va" id="payBNIVA">
@@ -347,7 +364,9 @@
                                                         <img src="{{ asset('images/banks/bni.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BNI">
                                                     </div>
                                                 </div>
-                                                <!-- <div class="col-md-6">
+@endif
+                                                <!-- @if($faspayActive['faspay_bca_va'] ?? true)
+                                                <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bca_va')" id="card-faspay-bca" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_bca_va" id="payBCAVA">
@@ -357,8 +376,10 @@
                                                         </div>
                                                         <img src="{{ asset('images/banks/bca.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BCA">
                                                     </div>
-                                                </div> -->
+                                                </div>
+@endif -->
                                             @else
+                                                @if($faspayActive['faspay_permata_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_permata_va')" id="card-faspay-permata" style="position: relative;">
                                                         <div class="custom-radio">
@@ -368,6 +389,8 @@
                                                         <img src="{{ asset('images/banks/permata.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Permata">
                                                     </div>
                                                 </div>
+                                                @endif
+                                                @if($faspayActive['faspay_mandiri_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_mandiri_va')" id="card-faspay-mandiri" style="position: relative;">
                                                         <div class="custom-radio">
@@ -379,7 +402,9 @@
                                                         <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="Mandiri">
                                                     </div>
                                                 </div>
+                                                @endif
 
+                                                @if($faspayActive['faspay_cimb_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_cimb_va')" id="card-faspay-cimb" style="position: relative;">
                                                         <div class="custom-radio">
@@ -389,6 +414,8 @@
                                                         <img src="{{ asset('images/banks/cimb.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="CIMB">
                                                     </div>
                                                 </div>
+                                                @endif
+                                                @if($faspayActive['faspay_bni_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bni_va')" id="card-faspay-bni" style="position: relative;">
                                                         <div class="custom-radio">
@@ -400,6 +427,7 @@
                                                         <img src="{{ asset('images/banks/bni.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BNI">
                                                     </div>
                                                 </div>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>

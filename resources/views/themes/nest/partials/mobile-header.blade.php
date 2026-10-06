@@ -27,8 +27,8 @@
                         <ul class="mobile-menu font-heading">
                             <li><a href="{{ route('home') }}">HALAMAN UTAMA</a></li>
 
-                            <li><a href="{{ route('products.index', ['brand' => 'dripp']) }}">DRIPP</a></li>
-                            <li><a href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a></li>
+                            <li><a href="{{ route('products.index', ['brand' => 'dripp']) }}">DRiPP</a></li>
+                            <li><a href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTiBEV</a></li>
                             <li><a href="{{ route('promo.index') }}">PROMO</a></li>
                             <li><a href="{{ route('menus.index') }}">MENU PAKET</a></li>
                             <li><a href="{{ route('contact') }}">HUBUNGI KAMI</a></li>

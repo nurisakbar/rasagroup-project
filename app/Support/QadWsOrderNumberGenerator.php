@@ -53,12 +53,12 @@ final class QadWsOrderNumberGenerator
         $pattern = '^' . $prefix . $datePrefix . '[0-9]{3,}$';
         $prefixLength = strlen($prefix . $datePrefix) + 1;
 
-        $fromOrder = (int) (Order::query()
+        $fromOrder = (int) (Order::query()->withTrashed()
             ->whereRaw('order_number REGEXP ?', [$pattern])
             ->selectRaw('COALESCE(MAX(CAST(SUBSTRING(order_number, ?) AS UNSIGNED)), 0) AS m', [$prefixLength])
             ->value('m'));
 
-        $fromQid = (int) (Order::query()
+        $fromQid = (int) (Order::query()->withTrashed()
             ->whereRaw('qid_sales_order_number REGEXP ?', [$pattern])
             ->selectRaw('COALESCE(MAX(CAST(SUBSTRING(qid_sales_order_number, ?) AS UNSIGNED)), 0) AS m', [$prefixLength])
             ->value('m'));
@@ -71,7 +71,7 @@ final class QadWsOrderNumberGenerator
         $prefix = self::getPrefix();
         $datePrefix = date('ym');
         $max = 0;
-        Order::query()
+        Order::query()->withTrashed()
             ->where(function ($q) use ($prefix, $datePrefix) {
                 $q->where('order_number', 'like', $prefix . $datePrefix . '%')
                     ->orWhere('qid_sales_order_number', 'like', $prefix . $datePrefix . '%');

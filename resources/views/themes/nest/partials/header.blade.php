@@ -174,10 +174,10 @@
                                     </li>
 
                                     <li>
-                                        <a class="{{ request('brand') == 'dripp' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'dripp']) }}">DRIPP</a>
+                                        <a class="{{ request('brand') == 'dripp' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'dripp']) }}">DRiPP</a>
                                     </li>
                                     <li>
-                                        <a class="{{ request('brand') == 'multibev' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTIBEV</a>
+                                        <a class="{{ request('brand') == 'multibev' ? 'active' : '' }}" href="{{ route('products.index', ['brand' => 'multibev']) }}">MULTiBEV</a>
                                     </li>
                                     <li>
                                         <a class="{{ request()->routeIs('promo.index') ? 'active' : '' }}" href="{{ route('promo.index') }}">PROMO</a>

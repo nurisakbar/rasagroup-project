@@ -291,29 +291,35 @@
 
                                             @if($order->payment_status === 'pending')
                                                 <div class="mt-4 pt-3 border-top text-center">
-                                                    @if(in_array($order->payment_method, ['manual_transfer', 'transfer']))
-                                                        @if($order->payment_proof)
-                                                            <div class="alert alert-info font-sm mb-0 rounded-pill">
-                                                                <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
-                                                            </div>
-                                                        @else
-                                                            <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100 mb-2">
-                                                                <i class="fi-rs-upload mr-5"></i> Konfirmasi Pembayaran Manual
-                                                            </a>
-                                                        @endif
+                                                    @if($order->isPaymentExpired())
+                                                        <div class="alert alert-danger font-sm mb-0 rounded-pill">
+                                                            <i class="fi-rs-info mr-5"></i> Waktu pembayaran telah habis
+                                                        </div>
                                                     @else
-                                                        @php $paymentUrl = $order->faspay_redirect_url; @endphp
-                                                        @if($paymentUrl)
-                                                        <a href="{{ $paymentUrl }}" target="_blank" class="btn btn-brand rounded-pill w-100 mb-2">
-                                                            <i class="fi-rs-money mr-5"></i> Lanjutkan Pembayaran
-                                                        </a>
+                                                        @if(in_array($order->payment_method, ['manual_transfer', 'transfer']))
+                                                            @if($order->payment_proof)
+                                                                <div class="alert alert-info font-sm mb-0 rounded-pill">
+                                                                    <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
+                                                                </div>
+                                                            @else
+                                                                <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100 mb-2">
+                                                                    <i class="fi-rs-upload mr-5"></i> Konfirmasi Pembayaran Manual
+                                                                </a>
+                                                            @endif
+                                                        @else
+                                                            @php $paymentUrl = $order->faspay_redirect_url; @endphp
+                                                            @if($paymentUrl)
+                                                            <a href="{{ $paymentUrl }}" target="_blank" class="btn btn-brand rounded-pill w-100 mb-2">
+                                                                <i class="fi-rs-money mr-5"></i> Lanjutkan Pembayaran
+                                                            </a>
+                                                            @endif
                                                         @endif
-                                                    @endif
-                                                    
-                                                    @if(!$order->payment_proof)
-                                                    <button type="button" class="btn btn-outline-brand rounded-pill w-100 mt-2" data-bs-toggle="modal" data-bs-target="#changePaymentModal">
-                                                        <i class="fi-rs-refresh mr-5"></i> Ganti Metode Pembayaran
-                                                    </button>
+                                                        
+                                                        @if(!$order->payment_proof)
+                                                        <button type="button" class="btn btn-outline-brand rounded-pill w-100 mt-2" data-bs-toggle="modal" data-bs-target="#changePaymentModal">
+                                                            <i class="fi-rs-refresh mr-5"></i> Ganti Metode Pembayaran
+                                                        </button>
+                                                        @endif
                                                     @endif
                                                 </div>
                                             @endif

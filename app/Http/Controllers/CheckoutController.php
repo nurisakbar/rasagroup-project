@@ -311,6 +311,20 @@ class CheckoutController extends Controller
         'faspay_qris' => (float) \App\Models\Setting::get('fee_faspay_qris', 0),
     ];
 
+    $faspayActive = [
+        'faspay_bca_va' => (bool) \App\Models\Setting::get('active_faspay_bca_va', 1),
+        'faspay_mandiri_va' => (bool) \App\Models\Setting::get('active_faspay_mandiri_va', 1),
+        'faspay_bri_va' => (bool) \App\Models\Setting::get('active_faspay_bri_va', 1),
+        'faspay_bni_va' => (bool) \App\Models\Setting::get('active_faspay_bni_va', 1),
+        'faspay_cimb_va' => (bool) \App\Models\Setting::get('active_faspay_cimb_va', 1),
+        'faspay_permata_va' => (bool) \App\Models\Setting::get('active_faspay_permata_va', 1),
+        'faspay_sinarmas_va' => (bool) \App\Models\Setting::get('active_faspay_sinarmas_va', 1),
+        'faspay_maybank_va' => (bool) \App\Models\Setting::get('active_faspay_maybank_va', 1),
+        'faspay_danamon_va' => (bool) \App\Models\Setting::get('active_faspay_danamon_va', 1),
+        'faspay_bsi_va' => (bool) \App\Models\Setting::get('active_faspay_bsi_va', 1),
+        'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
+    ];
+
     return view('checkout.index', compact(
         'carts', 
         'subtotal', 
@@ -342,6 +356,7 @@ class CheckoutController extends Controller
         'affiliate',
         'cart_ids',
         'paymentFees',
+        'faspayActive',
         'stockWarnings'
     ));
 }
@@ -497,6 +512,20 @@ class CheckoutController extends Controller
             'faspay_qris' => (float) \App\Models\Setting::get('fee_faspay_qris', 0),
         ];
 
+        $faspayActive = [
+            'faspay_bca_va' => (bool) \App\Models\Setting::get('active_faspay_bca_va', 1),
+            'faspay_mandiri_va' => (bool) \App\Models\Setting::get('active_faspay_mandiri_va', 1),
+            'faspay_bri_va' => (bool) \App\Models\Setting::get('active_faspay_bri_va', 1),
+            'faspay_bni_va' => (bool) \App\Models\Setting::get('active_faspay_bni_va', 1),
+            'faspay_cimb_va' => (bool) \App\Models\Setting::get('active_faspay_cimb_va', 1),
+            'faspay_permata_va' => (bool) \App\Models\Setting::get('active_faspay_permata_va', 1),
+            'faspay_sinarmas_va' => (bool) \App\Models\Setting::get('active_faspay_sinarmas_va', 1),
+            'faspay_maybank_va' => (bool) \App\Models\Setting::get('active_faspay_maybank_va', 1),
+            'faspay_danamon_va' => (bool) \App\Models\Setting::get('active_faspay_danamon_va', 1),
+            'faspay_bsi_va' => (bool) \App\Models\Setting::get('active_faspay_bsi_va', 1),
+            'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
+        ];
+
         $endTime = microtime(true);
         Log::info('[checkout.calculate-shipping] PERFORMANCE_METRICS', [
             'total_time_ms' => round(($endTime - $startTime) * 1000, 2),
@@ -520,6 +549,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'payment_fees' => $paymentFees,
+            'faspay_active' => $faspayActive,
             'total_weight' => $totalWeight,
             'shipping_cost' => $shippingCost,
             'original_shipping_cost' => $originalShippingCost,
