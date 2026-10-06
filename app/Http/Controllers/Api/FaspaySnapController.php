@@ -355,6 +355,10 @@ class FaspaySnapController extends Controller
             }
 
             Log::info('Faspay SNAP Webhook: Order marked as paid', ['order_id' => $order->id]);
+            
+            if ($order->user) {
+                $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+            }
         }
 
         if (isset($isLegacy) && $isLegacy) {
@@ -523,6 +527,10 @@ class FaspaySnapController extends Controller
             }
 
             Log::info('Faspay SNAP QR Webhook: Order marked as paid', ['order_id' => $order->id]);
+            
+            if ($order->user) {
+                $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+            }
         }
 
         $responsePayload = [
@@ -633,6 +641,10 @@ class FaspaySnapController extends Controller
                             }
 
                             Log::info('Faspay SNAP Direct Debit Webhook: Order marked as paid', ['order_id' => $order->id]);
+                            
+                            if ($order->user) {
+                                $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+                            }
                         }
 
                         $responsePayload = [
