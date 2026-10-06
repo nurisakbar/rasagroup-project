@@ -15,3 +15,4 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::job(new RetryFailedQadSalesOrdersJob)->everyFiveMinutes()->withoutOverlapping();
 Schedule::job(new RetryFailedWmsSalesOrdersJob)->everyFiveMinutes()->withoutOverlapping();
 Schedule::job(new SyncDistributorArBalanceJob)->dailyAt('05:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+Schedule::command('orders:cancel-unpaid')->everyFiveMinutes()->withoutOverlapping();

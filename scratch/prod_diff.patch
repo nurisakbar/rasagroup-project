@@ -1,0 +1,177 @@
+diff --git a/app/Http/Controllers/CheckoutController.php b/app/Http/Controllers/CheckoutController.php
+index 10137c5..5f612a1 100644
+--- a/app/Http/Controllers/CheckoutController.php
++++ b/app/Http/Controllers/CheckoutController.php
+@@ -836,7 +836,9 @@ public function store(Request $request)
+             $stockErrors = [];
+             
+             $isDistributor = $user && $user->isDistributor();
+-            $usesJubelio = !$isDistributor && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
++            $salesCode = request('sales_code') ?: session('sales_code');
++            $usesWms = $isDistributor || !empty($salesCode);
++            $usesJubelio = !$usesWms && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
+             $jubelioItems = null;
+ 
+             if ($usesJubelio && $sourceWarehouse->kode_hub) {
+@@ -853,10 +855,13 @@ public function store(Request $request)
+             }
+             
+             $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse);
+-            $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
+-                $sourceWarehouse,
+-                $user->shelfLifeMonths()
+-            );
++            $wmsStock = null;
++            if ($usesWms && $wmsLocationCode) {
++                $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
++                    $sourceWarehouse,
++                    $user->shelfLifeMonths()
++                );
++            }
+ 
+             foreach ($carts as $cart) {
+                 $productName = $cart->product->display_name;
+diff --git a/app/Jobs/SyncCustomerToQad.php b/app/Jobs/SyncCustomerToQad.php
+index 5e025a2..6e9637e 100644
+--- a/app/Jobs/SyncCustomerToQad.php
++++ b/app/Jobs/SyncCustomerToQad.php
+@@ -222,6 +222,7 @@ private function buildCustomerPayload(User $user, string $customerCode, array $o
+             'addressTypeCode' => 'HEADOFFICE',
+             'isBusinessRelationFieldsEnabled' => true,
+             'customerCurrencyCode' => 'IDR',
++            'corporateGroupCode' => 'Customer',
+             'isOverruleAllowedSOCreditLimit' => true,
+         ];
+     }
+diff --git a/app/Jobs/SyncOrderToQad.php b/app/Jobs/SyncOrderToQad.php
+index 834953e..56ac1a7 100644
+--- a/app/Jobs/SyncOrderToQad.php
++++ b/app/Jobs/SyncOrderToQad.php
+@@ -210,12 +210,7 @@ protected function buildSalesOrderLinesForPayload(QadService $qadService, string
+                 'salesCC' => '',
+                 'discountAcct' => '41101',
+                 'discountCC' => '',
+-                'siteCode' => 'MCR',
+             ];
+-            
+-            if (!empty($this->order->sourceWarehouse->qad_location_code)) {
+-                $lines[count($lines) - 1]['locationCode'] = $this->order->sourceWarehouse->qad_location_code;
+-            }
+         }
+ 
+         if (! empty($invalidPriceItems) || ! empty($invalidUomItems)) {
+@@ -263,7 +258,6 @@ protected function buildSalesOrderCreatePayload(User $user, string $qidSalesOrde
+     {
+         $payload = [
+             'domainCode' => 'MCR',
+-            'siteCode' => 'MCR',
+             'salesOrderNumber' => $qidSalesOrderNumber,
+             'billToCustomerCode' => $user->qad_customer_code,
+             'soldToCustomerCode' => $user->qad_customer_code,
+diff --git a/app/Support/QadWsOrderNumberGenerator.php b/app/Support/QadWsOrderNumberGenerator.php
+index 1393cd2..c810355 100644
+--- a/app/Support/QadWsOrderNumberGenerator.php
++++ b/app/Support/QadWsOrderNumberGenerator.php
+@@ -53,12 +53,12 @@ private static function maxSequenceMysqlForThisMonth(): int
+         $pattern = '^' . $prefix . $datePrefix . '[0-9]{3,}$';
+         $prefixLength = strlen($prefix . $datePrefix) + 1;
+ 
+-        $fromOrder = (int) (Order::query()
++        $fromOrder = (int) (Order::query()->withTrashed()
+             ->whereRaw('order_number REGEXP ?', [$pattern])
+             ->selectRaw('COALESCE(MAX(CAST(SUBSTRING(order_number, ?) AS UNSIGNED)), 0) AS m', [$prefixLength])
+             ->value('m'));
+ 
+-        $fromQid = (int) (Order::query()
++        $fromQid = (int) (Order::query()->withTrashed()
+             ->whereRaw('qid_sales_order_number REGEXP ?', [$pattern])
+             ->selectRaw('COALESCE(MAX(CAST(SUBSTRING(qid_sales_order_number, ?) AS UNSIGNED)), 0) AS m', [$prefixLength])
+             ->value('m'));
+@@ -71,7 +71,7 @@ private static function maxSequencePortableForThisMonth(): int
+         $prefix = self::getPrefix();
+         $datePrefix = date('ym');
+         $max = 0;
+-        Order::query()
++        Order::query()->withTrashed()
+             ->where(function ($q) use ($prefix, $datePrefix) {
+                 $q->where('order_number', 'like', $prefix . $datePrefix . '%')
+                     ->orWhere('qid_sales_order_number', 'like', $prefix . $datePrefix . '%');
+diff --git a/resources/views/buyer/orders/invoice.blade.php b/resources/views/buyer/orders/invoice.blade.php
+index 76d2034..f1f7fa6 100644
+--- a/resources/views/buyer/orders/invoice.blade.php
++++ b/resources/views/buyer/orders/invoice.blade.php
+@@ -135,7 +135,7 @@
+                 @if($order->sales)
+                     <div class="order-date" style="margin-top: 12px; text-align: right;">
+                         <strong>Sales:</strong> {{ $order->sales->name }}<br>
+-                        <strong>No. HP:</strong> {{ $order->sales->phone ?? '-' }}
++                        <strong>Email:</strong> {{ $order->sales->email ?? '-' }}
+                     </div>
+                 @endif
+             </td>
+diff --git a/resources/views/buyer/orders/show.blade.php b/resources/views/buyer/orders/show.blade.php
+index 91872a4..57b834b 100644
+--- a/resources/views/buyer/orders/show.blade.php
++++ b/resources/views/buyer/orders/show.blade.php
+@@ -30,31 +30,29 @@
+                                 </a>
+                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
+-                                    <div class="d-flex align-items-center gap-2">
+-                                        <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-sm btn-brand rounded font-sm px-3 py-2" style="white-space: nowrap; min-width: max-content;">
++                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
++                                        <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-brand rounded font-sm px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">
+                                             <i class="fi-rs-download mr-5"></i> Download Invoice
+                                         </a>
+-                                        <div class="badge-group">
+-                                            @php
+-                                                $statusClass = match($order->order_status) {
+-                                                    'pending' => 'bg-warning',
+-                                                    'processing' => 'bg-info',
+-                                                    'shipped' => 'bg-primary',
+-                                                    'delivered' => 'bg-success',
+-                                                    'cancelled' => 'bg-danger',
+-                                                    default => 'bg-secondary',
+-                                                };
+-                                                $statusLabel = match($order->order_status) {
+-                                                    'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
+-                                                    'processing' => 'Sedang Diproses',
+-                                                    'shipped' => 'Dalam Pengiriman',
+-                                                    'delivered' => 'Selesai',
+-                                                    'cancelled' => 'Dibatalkan',
+-                                                    default => ucfirst($order->order_status),
+-                                                };
+-                                            @endphp
+-                                            <span class="badge rounded-pill {{ $statusClass }} px-3 py-2 text-white font-sm" style="white-space: nowrap;">{{ $statusLabel }}</span>
+-                                        </div>
++                                        @php
++                                            $statusClass = match($order->order_status) {
++                                                'pending' => 'bg-warning',
++                                                'processing' => 'bg-info',
++                                                'shipped' => 'bg-primary',
++                                                'delivered' => 'bg-success',
++                                                'cancelled' => 'bg-danger',
++                                                default => 'bg-secondary',
++                                            };
++                                            $statusLabel = match($order->order_status) {
++                                                'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
++                                                'processing' => 'Sedang Diproses',
++                                                'shipped' => 'Dalam Pengiriman',
++                                                'delivered' => 'Selesai',
++                                                'cancelled' => 'Dibatalkan',
++                                                default => ucfirst($order->order_status),
++                                            };
++                                        @endphp
++                                        <span class="rounded {{ $statusClass }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $statusLabel }}</span>
+                                     </div>
+                                 </div>
+                             </div>
+@@ -257,7 +255,7 @@
+                                             <div class="info-list">
+                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                                     <span class="text-dark font-sm">Tanggal Transaksi</span>
+-                                                    <span class="fw-bold font-sm text-dark">{{ $order->created_at->format('d M Y, H:i') }}</span>
++                                                    <span class="fw-bold font-sm text-dark">{{ $order->created_at->format('d-m-Y') }}</span>
+                                                 </div>
+                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                                     <span class="text-dark font-sm">Metode Pembayaran</span>
