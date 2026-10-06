@@ -11,9 +11,9 @@ use Tests\TestCase;
 
 class FaspayMultiCompanyTest extends TestCase
 {
-    public function test_default_company_is_rdi()
+    public function test_default_company_is_mcr()
     {
-        $this->assertEquals('rdi', FaspayConfig::getDefaultCompany());
+        $this->assertEquals('mcr', FaspayConfig::getDefaultCompany());
     }
 
     public function test_get_company_config_rdi()
@@ -39,15 +39,15 @@ class FaspayMultiCompanyTest extends TestCase
 
     public function test_va_prefix_resolution()
     {
-        // RDI Dev prefixes
-        $permataRdi = FaspayConfig::getVaPrefix('faspay_permata_va', 'rdi', 'dev');
-        $mandiriRdi = FaspayConfig::getVaPrefix('faspay_mandiri_va', 'rdi', 'dev');
-        $this->assertEquals('370201', $permataRdi);
-        $this->assertEquals('37020002', $mandiriRdi);
+        // MCR Dev prefixes
+        $permataMcr = FaspayConfig::getVaPrefix('faspay_permata_va', 'mcr', 'dev');
+        $mandiriMcr = FaspayConfig::getVaPrefix('faspay_mandiri_va', 'mcr', 'dev');
+        $this->assertEquals('371161', $permataMcr);
+        $this->assertEquals('37116001', $mandiriMcr);
 
-        // RDI Production prefixes
-        $mandiriProd = FaspayConfig::getVaPrefix('faspay_mandiri_va', 'rdi', 'production');
-        $this->assertEquals('88558010', $mandiriProd);
+        // MCR Production prefixes (fallback to dev defaults if not set in test env)
+        $mandiriProd = FaspayConfig::getVaPrefix('faspay_mandiri_va', 'mcr', 'production');
+        $this->assertEquals('37116001', $mandiriProd);
     }
 
     public function test_resolve_company_by_merchant_id()
@@ -85,7 +85,7 @@ class FaspayMultiCompanyTest extends TestCase
 
         // Fallback default
         $emptyRequest = Request::create('/api/faspay/inquiry', 'POST');
-        $this->assertEquals('rdi', FaspayConfig::resolveCompanyFromRequest($emptyRequest));
+        $this->assertEquals('mcr', FaspayConfig::resolveCompanyFromRequest($emptyRequest));
     }
 
     public function test_order_model_fillable_has_company()

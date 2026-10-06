@@ -107,6 +107,10 @@ class FaspayWebhookController extends Controller
                             $order->update(['order_status' => 'processing']);
                         }
 
+                        if ($order->user) {
+                            $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+                        }
+
                         $order->creditPoints();
 
                         Log::info('Faspay payment successful', [
@@ -208,6 +212,11 @@ class FaspayWebhookController extends Controller
                     $order->paid_at = now();
                     $order->order_status = 'processing';
                     $order->save();
+                    
+                    if ($order->user) {
+                        $order->user->notify(new \App\Notifications\Orders\OrderProcessingNotification($order));
+                    }
+                    
                     Log::info('Order updated to paid via Faspay Return URL', ['order_id' => $order->id]);
                     
                     if ($order->payment_method !== 'term_of_payment') {

@@ -606,6 +606,7 @@
         <div class="modal-body p-4">
             
             @if(true)
+                @if($faspayActive['faspay_qris'] ?? true)
                 <!-- QRIS -->
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded payment-main-option" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0; cursor: pointer;" onclick="document.getElementById('pay_faspay_qris').click()">
                     <input class="form-check-input m-0 main-payment-radio" type="radio" name="payment_method" id="pay_faspay_qris" value="faspay_qris" {{ $order->payment_method === 'faspay_qris' ? 'checked' : '' }} required>
@@ -614,6 +615,7 @@
                         <img src="{{ asset('images/banks/qris.png') }}" style="height: 18px;" alt="QRIS">
                     </label>
                 </div>
+                @endif
 
                 <!-- Direct Debit -->
                 <div class="form-check d-flex align-items-center mb-3 p-3 border rounded payment-main-option" style="border-color: #ECECEC !important; border-radius: 15px !important; margin-left: 0; cursor: pointer;" onclick="document.getElementById('pay_faspay_direct_debit').click()">
@@ -638,6 +640,8 @@
                     
                     <div id="va-options-container" class="mt-3 pt-3 border-top" style="display: {{ $isVaSelected ? 'block' : 'none' }};">
                         
+                        @if($faspayActive['faspay_bca_va'] ?? true)
+                        
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bca').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bca" value="faspay_bca_va" {{ $order->payment_method === 'faspay_bca_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_bca" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -646,6 +650,10 @@
                             </label>
                         </div>
                         
+                        @endif
+                        
+                        @if($faspayActive['faspay_mandiri_va'] ?? true)
+                        
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_mandiri').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_mandiri" value="faspay_mandiri_va" {{ $order->payment_method === 'faspay_mandiri_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_mandiri" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -653,6 +661,10 @@
                                 <img src="{{ asset('images/banks/mandiri.png') }}" style="height: 18px;" alt="Mandiri">
                             </label>
                         </div>
+                        
+                        @endif
+
+                        @if($faspayActive['faspay_bsi_va'] ?? true)
 
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bsi').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bsi" value="faspay_bsi_va" {{ $order->payment_method === 'faspay_bsi_va' ? 'checked' : '' }} required>
@@ -662,6 +674,10 @@
                             </label>
                         </div>
 
+                        @endif
+
+                        @if($faspayActive['faspay_danamon_va'] ?? true)
+
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_danamon').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_danamon" value="faspay_danamon_va" {{ $order->payment_method === 'faspay_danamon_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_danamon" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -669,6 +685,10 @@
                                 <img src="{{ asset('images/banks/danamon.svg') }}" style="height: 18px;" alt="Danamon">
                             </label>
                         </div>
+
+                        @endif
+
+                        @if($faspayActive['faspay_sinarmas_va'] ?? true)
 
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_sinarmas').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_sinarmas" value="faspay_sinarmas_va" {{ $order->payment_method === 'faspay_sinarmas_va' ? 'checked' : '' }} required>
@@ -678,6 +698,10 @@
                             </label>
                         </div>
 
+                        @endif
+
+                        @if($faspayActive['faspay_maybank_va'] ?? true)
+
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_maybank').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_maybank" value="faspay_maybank_va" {{ $order->payment_method === 'faspay_maybank_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_maybank" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -685,6 +709,10 @@
                                 <img src="{{ asset('images/banks/maybank.png') }}" style="height: 18px;" alt="Maybank">
                             </label>
                         </div>
+
+                        @endif
+
+                        @if($faspayActive['faspay_bni_va'] ?? true)
 
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_bni').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_bni" value="faspay_bni_va" {{ $order->payment_method === 'faspay_bni_va' ? 'checked' : '' }} required>
@@ -694,6 +722,10 @@
                             </label>
                         </div>
 
+                        @endif
+
+                        @if($faspayActive['faspay_permata_va'] ?? true)
+
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_permata').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_permata" value="faspay_permata_va" {{ $order->payment_method === 'faspay_permata_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_permata" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -702,6 +734,10 @@
                             </label>
                         </div>
 
+                        @endif
+
+                        @if($faspayActive['faspay_cimb_va'] ?? true)
+
                         <div class="form-check d-flex align-items-center mb-2 p-2 rounded" onclick="document.getElementById('pay_faspay_cimb').click()" style="cursor: pointer;">
                             <input class="form-check-input m-0 va-sub-radio" type="radio" name="payment_method" id="pay_faspay_cimb" value="faspay_cimb_va" {{ $order->payment_method === 'faspay_cimb_va' ? 'checked' : '' }} required>
                             <label class="form-check-label fw-bold ms-2 d-flex align-items-center justify-content-between w-100" for="pay_faspay_cimb" style="cursor: pointer; flex: 1; pointer-events: none;">
@@ -709,6 +745,8 @@
                                 <img src="{{ asset('images/banks/cimb.png') }}" style="height: 18px;" alt="CIMB Niaga">
                             </label>
                         </div>
+
+                        @endif
                     </div>
                 </div>
             @endif

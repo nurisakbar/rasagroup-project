@@ -1474,7 +1474,21 @@ class CheckoutController extends Controller
         // Verifikasi Xendit, sync customer/QAD SO, dan WA thank-you setelah response terkirim (tidak menahan loading halaman).
         ProcessCheckoutSuccessJob::dispatch((string) $order->id)->afterResponse();
 
-        return view('checkout.success', compact('order'));
+        $faspayActive = [
+            'faspay_bca_va' => (bool) \App\Models\Setting::get('active_faspay_bca_va', 1),
+            'faspay_mandiri_va' => (bool) \App\Models\Setting::get('active_faspay_mandiri_va', 1),
+            'faspay_bri_va' => (bool) \App\Models\Setting::get('active_faspay_bri_va', 1),
+            'faspay_bni_va' => (bool) \App\Models\Setting::get('active_faspay_bni_va', 1),
+            'faspay_cimb_va' => (bool) \App\Models\Setting::get('active_faspay_cimb_va', 1),
+            'faspay_permata_va' => (bool) \App\Models\Setting::get('active_faspay_permata_va', 1),
+            'faspay_sinarmas_va' => (bool) \App\Models\Setting::get('active_faspay_sinarmas_va', 1),
+            'faspay_maybank_va' => (bool) \App\Models\Setting::get('active_faspay_maybank_va', 1),
+            'faspay_danamon_va' => (bool) \App\Models\Setting::get('active_faspay_danamon_va', 1),
+            'faspay_bsi_va' => (bool) \App\Models\Setting::get('active_faspay_bsi_va', 1),
+            'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
+        ];
+
+        return view('checkout.success', compact('order', 'faspayActive'));
     }
 
     /**

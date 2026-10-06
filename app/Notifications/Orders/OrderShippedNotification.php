@@ -49,10 +49,9 @@ class OrderShippedNotification extends Notification implements ShouldQueue
             $expName = $this->order->expedition->name ?? 'Kurir';
             $resi = $this->order->tracking_number ? 'Nomor Resi: ' . $this->order->tracking_number : 'Kurir Sedang Mengirimkan Paket';
 
-            $mail->subject('Pesanan Dikirim / Diserahkan (Handover) - Order #' . $this->order->order_number . ' | Rasaconnect')
-                 ->line('Pesanan Anda #' . $this->order->order_number . ' telah diserahkan / dikirimkan menggunakan layanan ekspedisi ' . $expName . '.')
-                 ->line($resi)
-                 ->line('Waktu Penyerahan / Pengiriman: ' . $timeStr);
+            $mail->subject('Pesanan Dikirim - Order #' . $this->order->order_number . ' | Rasaconnect')
+                 ->line('Pesanan Anda #' . $this->order->order_number . ' telah dikirim menggunakan layanan ekspedisi ' . $expName . '.')
+                 ->line($resi);
 
             if ($isDistributor) {
                 $mail->line('Jika paket sudah tiba dan Anda terima dengan baik, silakan login dan klik tombol "Masukkan ke Stock" pada halaman pesanan Anda untuk memasukkan item ke dalam stok gudang.');

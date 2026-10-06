@@ -208,7 +208,15 @@ class ManageOrderController extends Controller
         }
 
         if (!empty($updateData)) {
+            $oldStatus = $order->order_status;
             $order->update($updateData);
+
+            if (isset($updateData['order_status']) && $updateData['order_status'] === 'shipped' && $oldStatus !== 'shipped') {
+                if ($order->user) {
+                    $order->user->notify(new \App\Notifications\Orders\OrderShippedNotification($order));
+                }
+            }
+
             $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
             return back()->with('success', $message);
         }
