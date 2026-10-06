@@ -152,7 +152,7 @@ class CreateShipmentBooking implements ShouldQueue
         // Prepare location names
         $originDistrict = $this->order->sourceWarehouse->district;
         $originCity = $originDistrict ? $originDistrict->city : null;
-        $originDistrictName = $resolveDistrictNameFromEkspedisiKu($originDistrict?->id, $originCity?->id) ?? ($originDistrict->name ?? null);
+        $originDistrictName = $resolveDistrictNameFromEkspedisiKu($originDistrict?->getKey(), $originCity?->getKey()) ?? ($originDistrict->name ?? null);
         $originCityLabel = $normalizeCityLabel($originCity?->name);
         $originName = $originDistrictName && $originCity
             ? strtoupper($originDistrictName . ', ' . $originCityLabel)
@@ -160,7 +160,7 @@ class CreateShipmentBooking implements ShouldQueue
 
         $destDistrict = $this->order->address->district;
         $destCity = $destDistrict ? $destDistrict->city : null;
-        $destDistrictName = $resolveDistrictNameFromEkspedisiKu($destDistrict?->id, $destCity?->id) ?? ($destDistrict->name ?? null);
+        $destDistrictName = $resolveDistrictNameFromEkspedisiKu($destDistrict?->getKey(), $destCity?->getKey()) ?? ($destDistrict->name ?? null);
         $destCityLabel = $normalizeCityLabel($destCity?->name);
         $destName = $destDistrictName && $destCity
             ? strtoupper($destDistrictName . ', ' . $destCityLabel)
@@ -192,8 +192,8 @@ class CreateShipmentBooking implements ShouldQueue
         // Validate service_code against /api/ongkir (when we have city IDs).
         // This prevents sending invalid service_code like JAGOPACK for Lion Parcel.
         $serviceCode = $this->order->expedition_service ?? 'REGPACK';
-        $originCityId = $originCity?->id;
-        $destCityId = $destCity?->id;
+        $originCityId = $originCity?->getKey();
+        $destCityId = $destCity?->getKey();
         $weightKg = (int) ceil(max(1, (float) ($totalWeight / 1000)));
         if ($originCityId && $destCityId) {
             $rateOptions = $carrier === 'lalamove'
@@ -259,8 +259,8 @@ class CreateShipmentBooking implements ShouldQueue
         $payload = [
             'carrier' => $carrier,
             'shipment' => [
-                'origin' => (string) ($originDistrict?->id ?? $originName),
-                'destination' => (string) ($destDistrict?->id ?? $destName),
+                'origin' => (string) ($originDistrict?->getKey() ?? $originName),
+                'destination' => (string) ($destDistrict?->getKey() ?? $destName),
                 'reference' => $bookingReference,
                 'sender' => [
                     'name' => $this->order->sourceWarehouse->name,
