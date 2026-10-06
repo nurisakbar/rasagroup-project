@@ -1475,17 +1475,17 @@ class CheckoutController extends Controller
         ProcessCheckoutSuccessJob::dispatch((string) $order->id)->afterResponse();
 
         $faspayActive = [
-            'faspay_bca_va' => (bool) \App\Models\Setting::get('active_faspay_bca_va', 1),
-            'faspay_mandiri_va' => (bool) \App\Models\Setting::get('active_faspay_mandiri_va', 1),
-            'faspay_bri_va' => (bool) \App\Models\Setting::get('active_faspay_bri_va', 1),
-            'faspay_bni_va' => (bool) \App\Models\Setting::get('active_faspay_bni_va', 1),
-            'faspay_cimb_va' => (bool) \App\Models\Setting::get('active_faspay_cimb_va', 1),
-            'faspay_permata_va' => (bool) \App\Models\Setting::get('active_faspay_permata_va', 1),
-            'faspay_sinarmas_va' => (bool) \App\Models\Setting::get('active_faspay_sinarmas_va', 1),
-            'faspay_maybank_va' => (bool) \App\Models\Setting::get('active_faspay_maybank_va', 1),
-            'faspay_danamon_va' => (bool) \App\Models\Setting::get('active_faspay_danamon_va', 1),
-            'faspay_bsi_va' => (bool) \App\Models\Setting::get('active_faspay_bsi_va', 1),
-            'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
+            'faspay_bca_va' => filter_var(\App\Models\Setting::get('active_faspay_bca_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_mandiri_va' => filter_var(\App\Models\Setting::get('active_faspay_mandiri_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_bri_va' => filter_var(\App\Models\Setting::get('active_faspay_bri_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_bni_va' => filter_var(\App\Models\Setting::get('active_faspay_bni_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_cimb_va' => filter_var(\App\Models\Setting::get('active_faspay_cimb_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_permata_va' => filter_var(\App\Models\Setting::get('active_faspay_permata_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_sinarmas_va' => filter_var(\App\Models\Setting::get('active_faspay_sinarmas_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_maybank_va' => filter_var(\App\Models\Setting::get('active_faspay_maybank_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_danamon_va' => filter_var(\App\Models\Setting::get('active_faspay_danamon_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_bsi_va' => filter_var(\App\Models\Setting::get('active_faspay_bsi_va', 1), FILTER_VALIDATE_BOOLEAN),
+            'faspay_qris' => filter_var(\App\Models\Setting::get('active_faspay_qris', 1), FILTER_VALIDATE_BOOLEAN),
         ];
 
         return view('checkout.success', compact('order', 'faspayActive'));
