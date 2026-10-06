@@ -243,6 +243,35 @@ class Order extends Model
         return $this->finance_approved ? '1' : '0';
     }
 
+    public function getFormattedPaymentMethodAttribute()
+    {
+        if (empty($this->payment_method)) return '-';
+        
+        if (str_starts_with($this->payment_method, 'faspay_')) {
+            $method = str_replace('faspay_', '', $this->payment_method);
+            if (str_ends_with($method, '_va')) {
+                $bank = strtoupper(str_replace('_va', '', $method));
+                if (in_array($bank, ['MANDIRI', 'DANAMON', 'SINARMAS', 'MAYBANK', 'PERMATA'])) {
+                    $bank = ucfirst(strtolower($bank));
+                }
+                if ($bank == 'CIMB') {
+                    $bank = 'CIMB Niaga';
+                }
+                return $bank . ' Virtual Account';
+            } elseif ($method === 'qris') {
+                return 'QRIS';
+            } elseif ($method === 'direct_debit') {
+                return 'Direct Debit';
+            }
+        }
+        
+        if ($this->payment_method === 'term_of_payment') {
+            return 'Term Of Payment (TOP)';
+        }
+        
+        return ucwords(str_replace('_', ' ', $this->payment_method));
+    }
+
     /**
      * Approve finance (set finance_approved = 1) and release order to hub.
      *

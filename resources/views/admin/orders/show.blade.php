@@ -139,7 +139,7 @@
                         </tr>
                         <tr>
                             <th>Metode Pembayaran</th>
-                            <td>{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</td>
+                            <td>{{ $order->formatted_payment_method }}</td>
                         </tr>
                         <tr>
                             <th>Status Pembayaran</th>

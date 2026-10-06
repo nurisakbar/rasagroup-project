@@ -57,7 +57,7 @@
                         </tr>
                         <tr>
                             <th>Metode Pembayaran</th>
-                            <td>{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</td>
+                            <td>{{ $order->formatted_payment_method }}</td>
                         </tr>
                         <tr>
                             <th>Status Pembayaran</th>
@@ -284,7 +284,7 @@
                                     @elseif($order->payment_method === 'cod')
                                         COD (Bayar di Tempat)
                                     @else
-                                        {{ $order->payment_method == 'transfer' ? 'Transfer Bank' : ucfirst(str_replace('_', ' ', $order->payment_method)) }}
+                                        {{ $order->formatted_payment_method }}
                                     @endif
                                 </p>
                             </div>
