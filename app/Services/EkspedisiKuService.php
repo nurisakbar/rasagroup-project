@@ -176,56 +176,53 @@ class EkspedisiKuService
         }
 
         try {
-            $payload = [
-                'pickup' => $pickup,
-                'dropoff' => $dropoff,
-                'weight' => max(1, (float) $weight),
-                'service_type' => (string) config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE'),
-            ];
-
-            $response = Http::timeout(10)->withToken($this->token)
-                ->acceptJson()
-                ->post("{$this->baseUrl}/rates", $payload);
-
-            if ($response->failed()) {
-                Log::warning('EkspedisiKuService: lalamove rates failed', [
-                    'status' => $response->status(),
-                    'response' => $response->json(),
+            $types = ['MOTORCYCLE', 'MPV'];
+            $responses = \Illuminate\Support\Facades\Http::pool(fn (\Illuminate\Http\Client\Pool $pool) => collect($types)->map(fn ($type) => 
+                $pool->as($type)->timeout(10)->withToken($this->token)->acceptJson()->post("{$this->baseUrl}/rates", [
                     'pickup' => $pickup,
                     'dropoff' => $dropoff,
-                ]);
-
-                return null;
-            }
-
-            $result = $response->json();
-            $carrier = collect($result['carriers'] ?? [])->firstWhere('id', 'lalamove');
-
-            if (! is_array($carrier) || (int) ($carrier['status'] ?? 0) !== 200) {
-                Log::warning('EkspedisiKuService: lalamove unavailable', [
-                    'status' => $carrier['status'] ?? null,
-                    'message' => $carrier['message'] ?? null,
-                    'lalamove' => $carrier['lalamove'] ?? null,
-                ]);
-
-                return ['data' => []];
-            }
+                    'weight' => max(1, (float) $weight),
+                    'service_type' => $type
+                ])
+            ));
 
             $normalizedData = [];
-            foreach ($carrier['services'] ?? [] as $service) {
-                if (! is_array($service)) {
+            
+            foreach ($responses as $type => $response) {
+                if ($response instanceof \Exception || $response->failed()) {
+                    Log::warning("EkspedisiKuService: lalamove rates failed for {$type}");
+                    continue;
+                }
+                
+                $result = $response->json();
+                $carrier = collect($result['carriers'] ?? [])->firstWhere('id', 'lalamove');
+
+                if (! is_array($carrier) || (int) ($carrier['status'] ?? 0) !== 200) {
                     continue;
                 }
 
-                $normalizedData[] = [
-                    'code' => 'lalamove',
-                    'name' => (string) ($carrier['label'] ?? 'Lalamove'),
-                    'service' => (string) ($service['code'] ?? config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE')),
-                    'description' => (string) ($service['name'] ?? 'Lalamove'),
-                    'cost' => $service['price'] ?? 0,
-                    'etd' => $service['etd'] ?? null,
-                    'quotation_id' => $service['quotation_id'] ?? null,
-                ];
+                foreach ($carrier['services'] ?? [] as $service) {
+                    if (! is_array($service)) {
+                        continue;
+                    }
+
+                    $normalizedData[] = [
+                        'code' => 'lalamove',
+                        'name' => (string) ($carrier['label'] ?? 'Lalamove'),
+                        'service' => (string) ($service['code'] ?? $type),
+                        'description' => (string) ($service['name'] ?? $type),
+                        'cost' => $service['price'] ?? 0,
+                        'etd' => $service['etd'] ?? null,
+                        'quotation_id' => $service['quotation_id'] ?? null,
+                    ];
+                }
+            }
+
+            if (empty($normalizedData)) {
+                Log::warning('EkspedisiKuService: lalamove totally unavailable for all types', [
+                    'pickup' => $pickup,
+                    'dropoff' => $dropoff,
+                ]);
             }
 
             return ['data' => $normalizedData];

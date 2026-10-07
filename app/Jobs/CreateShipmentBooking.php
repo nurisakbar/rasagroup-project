@@ -498,7 +498,7 @@ class CreateShipmentBooking implements ShouldQueue
         $bookingReference = $this->order->order_number.'-B'.str_pad((string) $nextAttempt, 2, '0', STR_PAD_LEFT);
         $configuredType = (string) config('services.ekspedisiku.lalamove_service_type', 'MOTORCYCLE');
         $requestedType = strtoupper(trim((string) ($this->order->expedition_service ?: '')));
-        $lalamoveTypes = ['MOTORCYCLE', 'CAR', 'SEDAN', 'VAN', 'TRUCK', 'WALKER'];
+        $lalamoveTypes = ['MOTORCYCLE', 'CAR', 'SEDAN', 'VAN', 'TRUCK', 'WALKER', 'MPV'];
         $serviceType = in_array($requestedType, $lalamoveTypes, true)
             ? $requestedType
             : $configuredType;
