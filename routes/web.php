@@ -250,6 +250,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');
         Route::post('/warehouses/sync-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQid'])->name('warehouses.sync-qid');
         Route::get('/warehouses/qad-locations', [App\Http\Controllers\Admin\WarehouseController::class, 'getQadLocations'])->name('warehouses.qad-locations');
+        Route::get('/warehouses/jubelio-locations', [App\Http\Controllers\Admin\WarehouseController::class, 'getJubelioLocations'])->name('warehouses.jubelio-locations');
         Route::post('/warehouses/sync-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncJubelio'])->name('warehouses.sync-jubelio');
         Route::get('/warehouses/sync-qad-batches/locations', [App\Http\Controllers\Admin\WarehouseController::class, 'qadBatchLocations'])->name('warehouses.sync-qad-batches.locations');
         Route::post('/warehouses/sync-qad-batches', [App\Http\Controllers\Admin\WarehouseController::class, 'syncQadBatchLocation'])->name('warehouses.sync-qad-batches');

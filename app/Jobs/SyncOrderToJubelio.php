@@ -467,7 +467,6 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'store_id' => null,
             'service_fee' => 0,
             'payment_method' => $this->mapPaymentMethod(),
-            'courier_id' => $this->mapCourierId(),
             'items' => $items,
         ];
     }

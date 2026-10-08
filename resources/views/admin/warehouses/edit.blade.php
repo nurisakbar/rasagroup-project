@@ -32,7 +32,7 @@
                         </div>
 
                         <div class="form-group @error('qad_location_code') has-error @enderror">
-                            <label for="qad_location_code">Kode Lokasi QAD</label>
+                            <label for="qad_location_code" id="label_location_code">Kode Lokasi QAD / Jubelio</label>
                             <select class="form-control select2" id="qad_location_code" name="qad_location_code" style="width: 100%;">
                                 <option value="">-- Pilih Lokasi QAD (Kosongkan jika tidak terhubung) --</option>
                                 @foreach($qadLocations as $loc)
@@ -245,6 +245,48 @@
 $(document).ready(function() {
     // Initialize Select2
     $('.select2').select2();
+
+    var initialLocation = "{{ old('qad_location_code', $warehouse->qad_location_code ?? '') }}";
+    
+    function loadLocations(isEcommerce) {
+        var url = isEcommerce ? '{{ route("admin.warehouses.jubelio-locations") }}' : '{{ route("admin.warehouses.qad-locations") }}';
+        var labelText = isEcommerce ? 'Kode Lokasi Jubelio' : 'Kode Lokasi QAD';
+        $('#label_location_code').text(labelText);
+        
+        var select = $('#qad_location_code');
+        var prevVal = select.val() || initialLocation;
+        select.html('<option value="">Loading...</option>').trigger('change');
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(res) {
+                select.html('<option value="">-- Pilih Lokasi (Kosongkan jika tidak terhubung) --</option>');
+                if (res.success && res.data) {
+                    $.each(res.data, function(index, loc) {
+                        var opt = new Option(loc.location + ' - ' + loc.description, loc.location, false, false);
+                        select.append(opt);
+                    });
+                    
+                    if (prevVal) {
+                        select.val(prevVal).trigger('change');
+                    }
+                }
+            },
+            error: function() {
+                select.html('<option value="">Error loading data</option>').trigger('change');
+            }
+        });
+    }
+
+    $('#target_role').on('change', function() {
+        var roles = $(this).val() || [];
+        var isEcommerce = roles.includes('ecommerce');
+        loadLocations(isEcommerce);
+    });
+    
+    // Trigger on load
+    $('#target_role').trigger('change');
 
     // Load regencies when province changes
     $('#province_id').change(function() {

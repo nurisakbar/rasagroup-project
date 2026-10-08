@@ -246,6 +246,35 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Get Jubelio Locations.
+     */
+    public function getJubelioLocations()
+    {
+        try {
+            $jubelio = app(\App\Services\JubelioService::class);
+            $token = $jubelio->token();
+            $locations = $jubelio->fetchAllLocations($token);
+            
+            $formatted = array_map(function($loc) {
+                return [
+                    'location' => $loc['location_code'] ?? $loc['location_id'] ?? '',
+                    'description' => $loc['location_name'] ?? ''
+                ];
+            }, $locations);
+            
+            // Filter out empty location codes
+            $formatted = array_filter($formatted, function($loc) {
+                return !empty($loc['location']);
+            });
+
+            return response()->json(['success' => true, 'data' => array_values($formatted)]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Jubelio Locations Fetch Exception', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Sync warehouse stocks from Jubelio all-stocks API.
      */
     public function syncStockJubelio(JubelioStockSyncService $stockSync)
