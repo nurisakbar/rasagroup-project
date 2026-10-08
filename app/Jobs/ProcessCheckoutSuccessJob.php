@@ -61,6 +61,17 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
             ]);
         }
 
+        try {
+            if ($order->user && $order->user->email) {
+                \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderCreatedMail($order));
+            }
+        } catch (\Throwable $e) {
+            Log::error('ProcessCheckoutSuccessJob: failed to send OrderCreatedMail', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // Payment polling is handled entirely by Webhooks for Faspay
 
         $order->refresh();

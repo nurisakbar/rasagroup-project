@@ -65,6 +65,15 @@ class CancelUnpaidOrders extends Command
                 DB::commit();
                 $count++;
                 
+                try {
+                    $order->loadMissing('user');
+                    if ($order->user && $order->user->email) {
+                        \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderCancelledMail($order));
+                    }
+                } catch (\Exception $mailEx) {
+                    Log::error("Failed to send cancellation email for {$order->order_number}: " . $mailEx->getMessage());
+                }
+
                 Log::info("Cancelled unpaid order {$order->order_number} automatically after 30 minutes.");
             } catch (\Exception $e) {
                 DB::rollBack();
