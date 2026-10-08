@@ -41,6 +41,13 @@ return [
         ],
     ],
 
+    'zoho' => [
+        'client_id' => env('ZOHO_CLIENT_ID'),
+        'client_secret' => env('ZOHO_CLIENT_SECRET'),
+        'refresh_token' => env('ZOHO_REFRESH_TOKEN'),
+        'org_id' => env('ZOHO_ORG_ID'),
+    ],
+
     'faspay' => [
         'default' => env('FASPAY_DEFAULT_COMPANY', 'mcr'),
 
