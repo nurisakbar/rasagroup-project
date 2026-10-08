@@ -1793,15 +1793,15 @@ class CheckoutController extends Controller
             ->all();
 
         if (request()->filled('sales_code')) {
-            $allowed = [];
+            $allowed = ['lion_parcel'];
             if ($address) {
                 if ($address->isJabodetabek()) {
-                    $allowed = ['kurir_toko', 'self_pickup'];
+                    $allowed = array_merge($allowed, ['kurir_toko', 'self_pickup']);
                 } else {
-                    $allowed = ['self_pickup'];
+                    $allowed = array_merge($allowed, ['self_pickup']);
                 }
             } else {
-                $allowed = ['kurir_toko', 'self_pickup'];
+                $allowed = array_merge($allowed, ['kurir_toko', 'self_pickup']);
             }
             return array_values(array_intersect($dbCodes, $allowed));
         }

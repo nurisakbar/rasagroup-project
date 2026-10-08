@@ -419,6 +419,12 @@ class Order extends Model
             ->whereNull('qad_so_number')
             ->whereHas('sourceWarehouse', function ($q) {
                 $q->whereRaw("UPPER(TRIM(COALESCE(qad_location_code, ''))) LIKE 'FG%'");
+            })
+            ->where(function ($q) {
+                $q->whereNull('qad_sync_history')
+                  // Satu kali job jalan bisa mencatat 1-2 log failed.
+                  // Batas < 6 artinya maksimal sekitar 3 kali job retry.
+                  ->orWhereRaw("JSON_LENGTH(qad_sync_history) < 6");
             });
     }
 

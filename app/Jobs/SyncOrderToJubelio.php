@@ -467,8 +467,29 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'store_id' => null,
             'service_fee' => 0,
             'payment_method' => $this->mapPaymentMethod(),
+            'courier_id' => $this->mapCourierId(),
             'items' => $items,
         ];
+    }
+
+    private function mapCourierId(): ?int
+    {
+        $code = strtolower(trim((string) $this->order->expedition?->code));
+        return match ($code) {
+            'jne' => 1,
+            'jnt' => 2,
+            'grab' => 3,
+            'sicepat' => 4,
+            'gosend' => 5,
+            'pos' => 7,
+            'tiki' => 9,
+            'self_pickup' => 36, // Ambil Sendiri
+            'kurir_toko' => 17, // Kirim Sendiri
+            'anteraja' => 100,
+            'lion_parcel' => 113,
+            'lalamove' => 17, // Lalamove tidak ada di Jubelio, fallback ke Kirim Sendiri
+            default => null, // Biarkan kosong/null jika tidak terdaftar
+        };
     }
 
     private function mapPaymentMethod(): ?string
