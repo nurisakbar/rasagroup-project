@@ -72,6 +72,7 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/meta', [\App\Http\Controllers\Api\MetaWebhookController::class, 'handle'])->name('api.webhooks.meta.handle');
     Route::get('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'verify'])->name('api.webhooks.lalamove.verify');
     Route::post('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'handle'])->name('api.webhooks.lalamove.handle');
+    Route::post('/lion-parcel', [\App\Http\Controllers\Api\LionParcelWebhookController::class, 'handle'])->name('api.webhooks.lion-parcel.handle');
 });
 
 // Faspay SNAP VA & Payment Notification routes
