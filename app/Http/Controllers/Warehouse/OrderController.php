@@ -447,7 +447,7 @@ class OrderController extends Controller
     {
         $this->authorizeWarehouseOrder($order);
 
-        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove'], true)) {
+        if (! $order->expedition || ! in_array($order->expedition->code, ['lion_parcel', 'lalamove', 'sicepat'], true)) {
             return back()->with('error', 'Ekspedisi tidak didukung untuk reset booking EkspedisiKu.');
         }
 
