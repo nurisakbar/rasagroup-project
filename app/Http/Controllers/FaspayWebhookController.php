@@ -122,6 +122,7 @@ class FaspayWebhookController extends Controller
                         \App\Jobs\SendWhatsAppNotification::dispatch($order, 'thank_you');
                         \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_notification');
                         \App\Support\SalesOrderSyncDispatcher::dispatch($order);
+                        \App\Jobs\SyncOrderToZohoJob::dispatch($order->id);
                     }
                 } elseif (in_array($paymentStatusCode, ['3', '4', '5', '7', '8'])) { // Various failure/cancellation codes
                     if ($order->payment_status !== 'failed') {

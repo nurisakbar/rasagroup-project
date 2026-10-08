@@ -84,6 +84,7 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
 
         if ($order->payment_status === 'paid') {
             SendWhatsAppNotification::dispatch($order, 'thank_you');
+            \App\Jobs\SyncOrderToZohoJob::dispatch($order->id);
         }
     }
 }
