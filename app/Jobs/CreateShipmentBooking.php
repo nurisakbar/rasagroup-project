@@ -278,7 +278,7 @@ class CreateShipmentBooking implements ShouldQueue
                 ],
                 'package' => [
                     'service_code' => $serviceCode,
-                    'commodity_code' => 'ABR036', // Default commodity code for Multibev
+                    'commodity_code' => $carrier === 'lion_parcel' ? 'THT015' : 'ABR036', 
                     'insurance_type' => 'free',
                     'goods_value' => $goodsValue,
                     'is_cod' => false,
@@ -286,9 +286,9 @@ class CreateShipmentBooking implements ShouldQueue
                     'is_woodpacking' => false,
                     'pieces' => [
                         [
-                            'length' => 10,
-                            'width' => 10,
-                            'height' => 10,
+                            'length' => $carrier === 'lion_parcel' ? 100 : 10,
+                            'width' => $carrier === 'lion_parcel' ? 71 : 10,
+                            'height' => $carrier === 'lion_parcel' ? 60 : 10,
                             'weight' => max(1, (float) ($totalWeight / 1000)), // convert gram to kg, min 1kg
                         ]
                     ]
@@ -296,7 +296,7 @@ class CreateShipmentBooking implements ShouldQueue
                 'documents' => [
                     'cipls' => [
                         [
-                            'commodity_name' => 'ABR036',
+                            'commodity_name' => $carrier === 'lion_parcel' ? 'THT015' : 'ABR036',
                             'item_detail' => 'Food & Beverages',
                             'quantity' => array_sum(array_column($items, 'qty')),
                             'item_price' => $goodsValue
