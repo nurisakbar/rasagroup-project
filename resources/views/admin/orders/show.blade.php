@@ -549,7 +549,7 @@
                             @foreach($order->items as $item)
                                 @php
                                     $priceBefore = $item->catalogUnitPrice() * $item->displayPriceMultiplier();
-                                    $priceAfter = $item->discountedUnitPrice() * $item->displayPriceMultiplier();
+                                    $priceAfter = $item->orderedPriceWithTax() * $item->displayPriceMultiplier();
                                     $qtyDisplay = max(1, $item->displayQuantity());
                                     $lineBefore = $priceBefore * $qtyDisplay;
                                     $lineAfter = $priceAfter * $qtyDisplay;
@@ -623,10 +623,6 @@
                             <tr>
                                 <th colspan="5" class="text-right">Diskon:</th>
                                 <td class="text-right">-Rp {{ number_format($discountTotal, 0, ',', '.') }}</td>
-                            </tr>
-                            <tr>
-                                <th colspan="5" class="text-right">Pajak ({{ $ppnLabel }}):</th>
-                                <td class="text-right">Rp {{ number_format($ppnAmount, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
                                 <th colspan="5" class="text-right">Ongkos Kirim:</th>

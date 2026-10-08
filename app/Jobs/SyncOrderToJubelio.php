@@ -345,7 +345,16 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
      */
     private function buildSalesOrderItems(JubelioService $jubelio, string $token, int $locationId): array
     {
-        $shipper = $this->order->expedition?->name ?? 'Internal';
+        $shipperMap = [
+            'Sicepat Ekspres'      => 'SiCepat',
+            'J&T Express'          => 'J&T',
+            'POS Indonesia'        => 'Pos Indonesia',
+            'AnterAja'             => 'Anteraja',
+            'Diantar Ketempat'     => 'Kirim Sendiri',
+            'Pengambilan Ditempat' => 'Ambil Sendiri',
+        ];
+        $rawShipper = $this->order->expedition?->name ?? 'Internal';
+        $shipper = $shipperMap[$rawShipper] ?? $rawShipper;
         $items = [];
         $issues = [];
         $subTotal = 0.0;
@@ -364,7 +373,7 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 continue;
             }
 
-            $price = (float) ($item->price ?? 0);
+            $price = (float) $item->orderedPriceWithTax();
             if ($price <= 0) {
                 $price = (float) ($jubelioItem['sell_price'] ?? $item->product?->price ?? 0);
             }
