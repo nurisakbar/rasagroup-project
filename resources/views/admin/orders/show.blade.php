@@ -535,6 +535,7 @@
                             <tr>
                                 <th>Produk</th>
                                 <th class="text-right">Harga katalog</th>
+                                <th class="text-right">Diskon</th>
                                 <th class="text-right">Harga jual</th>
                                 <th class="text-center">Jumlah</th>
                                 <th class="text-right">Subtotal</th>
@@ -547,15 +548,15 @@
                             @endphp
                             @foreach($order->items as $item)
                                 @php
-                                    $priceBefore = $item->unitPriceBeforeDiscount();
-                                    $priceAfter = $item->unitPriceAfterDiscount();
+                                    $priceBefore = $item->catalogUnitPrice() * $item->displayPriceMultiplier();
+                                    $priceAfter = $item->discountedUnitPrice() * $item->displayPriceMultiplier();
                                     $qtyDisplay = max(1, $item->displayQuantity());
                                     $lineBefore = $priceBefore * $qtyDisplay;
                                     $lineAfter = $priceAfter * $qtyDisplay;
                                     $dppBeforeTotal += $lineBefore;
                                     $dppAfterTotal += $lineAfter;
                                     $lineDiscount = max(0, $priceBefore - $priceAfter);
-                                    $lineDiscountPercent = $item->unitDiscountPercent();
+                                    $lineDiscountPercent = $priceBefore > 0 ? ($lineDiscount / $priceBefore) * 100 : 0;
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
                                 @endphp
                                 <tr>
@@ -584,12 +585,17 @@
                                         Rp {{ number_format($priceBefore, 0, ',', '.') }}
                                     </td>
                                     <td class="text-right">
-                                        <strong>Rp {{ number_format($priceAfter, 0, ',', '.') }}</strong>
-                                        @if($lineDiscount > 0.5)
-                                            <div>
-                                                <small class="text-success">Diskon kategori {{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%</small>
-                                            </div>
+                                        @if($lineDiscount > 0)
+                                            <span class="text-danger">Rp {{ number_format($lineDiscount, 0, ',', '.') }}</span>
+                                            @if($lineDiscountPercent > 0)
+                                                <br><small class="text-muted">({{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%)</small>
+                                            @endif
+                                        @else
+                                            -
                                         @endif
+                                    </td>
+                                    <td class="text-right">
+                                        <strong>Rp {{ number_format($priceAfter, 0, ',', '.') }}</strong>
                                     </td>
                                     <td class="text-center">
                                         {{ $item->orderedQuantityDescription() }}
@@ -611,28 +617,28 @@
                                 $ppnAmount = $taxPercent > 0 ? round($dppAfterTotal * ($taxPercent / 100), 2) : 0;
                             @endphp
                             <tr>
-                                <th colspan="4" class="text-right">Subtotal:</th>
+                                <th colspan="5" class="text-right">Subtotal:</th>
                                 <td class="text-right">Rp {{ number_format($dppBeforeTotal, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
-                                <th colspan="4" class="text-right">Diskon:</th>
+                                <th colspan="5" class="text-right">Diskon:</th>
                                 <td class="text-right">-Rp {{ number_format($discountTotal, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
-                                <th colspan="4" class="text-right">Pajak ({{ $ppnLabel }}):</th>
+                                <th colspan="5" class="text-right">Pajak ({{ $ppnLabel }}):</th>
                                 <td class="text-right">Rp {{ number_format($ppnAmount, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
-                                <th colspan="4" class="text-right">Ongkos Kirim:</th>
+                                <th colspan="5" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
                             <tr style="font-size: 16px;">
-                                <th colspan="4" class="text-right">Total:</th>
+                                <th colspan="5" class="text-right">Total:</th>
                                 <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
                             @if($order->order_type === 'distributor')
                             <tr class="bg-yellow">
-                                <th colspan="4" class="text-right"><i class="fa fa-star"></i> Poin Didapat:</th>
+                                <th colspan="5" class="text-right"><i class="fa fa-star"></i> Poin Didapat:</th>
                                 <td class="text-right">
                                     <strong>+{{ number_format($order->points_earned, 0, ',', '.') }}</strong>
                                     @if($order->points_credited)
