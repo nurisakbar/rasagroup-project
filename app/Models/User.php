@@ -59,6 +59,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'aturan_minimal_masa_berlaku',
         'pakai_ppn',
         'driippreneur_status',
+        'is_eligible',
         'driippreneur_province_id',
         'driippreneur_regency_id',
         'driippreneur_address',

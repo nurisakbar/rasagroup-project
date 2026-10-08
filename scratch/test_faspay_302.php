@@ -1,0 +1,21 @@
+<?php
+require __DIR__ . '/../vendor/autoload.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
+$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+
+$service = new \App\Services\FaspaySnapService('mcr');
+
+// Force base url to production just in case
+$reflection = new ReflectionClass($service);
+$property = $reflection->getProperty('baseUrl');
+$property->setAccessible(true);
+$property->setValue($service, 'https://debit.faspay.co.id/v1.0');
+
+$order = new \stdClass();
+$order->order_number = 'W' . date('ymdHis');
+$order->company = 'mcr';
+$order->user = new \stdClass();
+$order->user->phone = '081234567890';
+
+$response = $service->generateQris($order, 106000.00);
+echo json_encode($response, JSON_PRETTY_PRINT);

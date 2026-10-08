@@ -152,5 +152,21 @@ class DriippreneurController extends Controller
 
         return back()->with('success', 'Aplikasi DRiiPPreneur ditolak.');
     }
+
+    /**
+     * Update DRiiPPreneur eligibility status.
+     */
+    public function updateEligibility(Request $request, User $driippreneur)
+    {
+        $request->validate([
+            'is_eligible' => 'nullable|boolean',
+        ]);
+
+        $driippreneur->update([
+            'is_eligible' => $request->input('is_eligible'),
+        ]);
+
+        return back()->with('success', 'Status Memenuhi Syarat berhasil diperbarui.');
+    }
 }
 

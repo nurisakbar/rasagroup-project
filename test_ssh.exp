@@ -1,0 +1,8 @@
+#!/usr/bin/expect
+spawn ssh -p 2122 debian@116.206.199.251
+expect "password:"
+send "STTIndo26\r"
+expect "$ "
+send "ls -la\r"
+expect "$ "
+send "exit\r"

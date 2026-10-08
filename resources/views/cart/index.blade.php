@@ -875,7 +875,6 @@
                 placeholder: 'Masukkan Nama/Kode Sales (Opsional)',
                 allowClear: true,
                 width: '100%',
-                dropdownAutoWidth: true,
                 templateSelection: function (data) {
                     if (!data.id) {
                         return data.text;
@@ -887,12 +886,6 @@
                     });
                     return $elem;
                 }
-            });
-            
-            // Enforce max-width none
-            $('.select2-container').css({
-                'width': '100%',
-                'max-width': 'none'
             });
         }
     });

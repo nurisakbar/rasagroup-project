@@ -328,6 +328,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/driippreneurs/{driippreneur}', [App\Http\Controllers\Admin\DriippreneurController::class, 'show'])->name('driippreneurs.show');
         Route::put('/driippreneurs/{driippreneur}/approve', [App\Http\Controllers\Admin\DriippreneurController::class, 'approve'])->name('driippreneurs.approve');
         Route::put('/driippreneurs/{driippreneur}/reject', [App\Http\Controllers\Admin\DriippreneurController::class, 'reject'])->name('driippreneurs.reject');
+        Route::put('/driippreneurs/{driippreneur}/eligibility', [App\Http\Controllers\Admin\DriippreneurController::class, 'updateEligibility'])->name('driippreneurs.update-eligibility');
 
         // Point Withdrawals Management
         Route::get('/point-withdrawals', [App\Http\Controllers\Admin\PointWithdrawalController::class, 'index'])->name('point-withdrawals.index');

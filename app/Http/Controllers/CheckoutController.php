@@ -80,20 +80,6 @@ class CheckoutController extends Controller
                 ->with('error', 'Data lokasi hub pengirim belum lengkap. Silakan hubungi administrator untuk melengkapi data lokasi hub (Provinsi, Kota, dan Kecamatan).');
         }
 
-        // Only show expeditions that are active in DB AND active in EkspedisiKu API
-        $apiCourierCodes = $this->activeApiCourierCodes($sourceWarehouse);
-
-        if (request()->filled('sales_code') && Auth::check() && in_array(Auth::user()->role, ['outlet', 'buyer'])) {
-            $apiCourierCodes = array_filter($apiCourierCodes, function($code) {
-                return $code !== 'self_pickup';
-            });
-        }
-
-        $expeditions = Expedition::where('is_active', true)
-            ->whereIn('code', $apiCourierCodes)
-            ->get();
-        $defaultExpedition = $expeditions->firstWhere('code', 'lion_parcel') ?? $expeditions->first();
-
         $addresses = Auth::user()->addresses()
             ->with(['wilayah'])
             ->orderByDesc('is_default')
@@ -109,6 +95,14 @@ class CheckoutController extends Controller
         $defaultAddress = $addresses->where('id', request('address_id'))->first()
             ?? $addresses->firstWhere('is_default', true) 
             ?? $addresses->first();
+
+        // Only show expeditions that are active in DB AND active in EkspedisiKu API
+        $apiCourierCodes = $this->activeApiCourierCodes($sourceWarehouse);
+
+        $expeditions = Expedition::where('is_active', true)
+            ->whereIn('code', $apiCourierCodes)
+            ->get();
+        $defaultExpedition = $expeditions->firstWhere('code', 'lion_parcel') ?? $expeditions->first();
 
         $stockWarnings = [];
         // Re-detect best Hub based on default address
@@ -410,7 +404,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
 
-        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse);
+        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse, $address);
         $t5 = microtime(true);
 
         if (!$expedition) {
@@ -632,7 +626,7 @@ class CheckoutController extends Controller
         // We update $sourceWarehouse to the newly synced one
         $sourceWarehouse = $syncResult['warehouse'] ?? $carts->first()?->warehouse;
         
-        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse);
+        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse, $address);
 
         if (!$expedition) {
             Log::debug('[checkout.expedition-services] expedition not found', [
@@ -1761,10 +1755,12 @@ class CheckoutController extends Controller
         );
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($expedition, $sourceWarehouse, $address, $totalWeightGrams) {
+            $weightKg = max(1, (float) ($totalWeightGrams / 1000));
+            
             return $this->ekspedisiku->calculateCost(
                 $sourceWarehouse->district_id,
                 $address->district_id,
-                max(1, $totalWeightGrams),
+                $weightKg,
                 $expedition->code,
                 [
                     'warehouse' => $sourceWarehouse,
@@ -1788,13 +1784,27 @@ class CheckoutController extends Controller
      *
      * @return array<int, string>
      */
-    private function activeApiCourierCodes(?Warehouse $sourceWarehouse = null): array
+    private function activeApiCourierCodes(?Warehouse $sourceWarehouse = null, ?Address $address = null): array
     {
         $dbCodes = Expedition::where('is_active', true)
             ->pluck('code')
             ->filter()
             ->values()
             ->all();
+
+        if (request()->filled('sales_code')) {
+            $allowed = [];
+            if ($address) {
+                if ($address->isJabodetabek()) {
+                    $allowed = ['kurir_toko', 'self_pickup'];
+                } else {
+                    $allowed = ['self_pickup'];
+                }
+            } else {
+                $allowed = ['kurir_toko', 'self_pickup'];
+            }
+            return array_values(array_intersect($dbCodes, $allowed));
+        }
 
         $courierRes = $this->ekspedisiku->getCouriers();
         if (! isset($courierRes['data']) || ! is_array($courierRes['data'])) {
@@ -1814,20 +1824,24 @@ class CheckoutController extends Controller
             $activeCodes = array_diff($activeCodes, ['self_pickup']);
         }
 
-        if (empty(request('sales_code')) && (!\Auth::check() || \Auth::user()->role !== 'distributor')) {
+        if (!\Auth::check() || \Auth::user()->role !== 'distributor') {
             $activeCodes = array_diff($activeCodes, ['self_pickup']);
+        }
+
+        if (\Auth::check() && \Auth::user()->role === 'distributor') {
+            $activeCodes = array_intersect($activeCodes, ['kurir_toko', 'self_pickup']);
         }
 
         return array_values($activeCodes);
     }
 
-    private function findAvailableExpedition(?string $expeditionId, ?Warehouse $sourceWarehouse = null): ?Expedition
+    private function findAvailableExpedition(?string $expeditionId, ?Warehouse $sourceWarehouse = null, ?Address $address = null): ?Expedition
     {
         if (! $expeditionId) {
             return null;
         }
 
-        return Expedition::whereIn('code', $this->activeApiCourierCodes($sourceWarehouse))->find($expeditionId);
+        return Expedition::whereIn('code', $this->activeApiCourierCodes($sourceWarehouse, $address))->find($expeditionId);
     }
 
     private function usesEkspedisiKuRates(string $code): bool

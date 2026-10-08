@@ -1280,7 +1280,7 @@
         setSubmitEnabled(true);
     });
     
-    function checkKurirTokoVisibility() {
+    function checkExpeditionVisibility() {
         if (!currentAddressId) return;
         var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
         var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
@@ -1290,6 +1290,33 @@
         var hasSalesCode = salesCode !== null && salesCode.trim() !== '';
         
         var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
+        var selfPickupCard = $('.expedition-card[data-expedition-code="self_pickup"]');
+        
+        if (hasSalesCode) {
+            if (isJabodetabek) {
+                if (kurirTokoCard.length) kurirTokoCard.parent().show();
+                if (selfPickupCard.length) selfPickupCard.parent().show();
+            } else {
+                if (kurirTokoCard.length) kurirTokoCard.parent().hide();
+                if (selfPickupCard.length) selfPickupCard.parent().show();
+            }
+            
+            var activeCard = $('.expedition-card.active');
+            if (activeCard.length && !activeCard.parent().is(':visible')) {
+                var firstAvailable = $('.expedition-card:visible').first();
+                if (firstAvailable.length) {
+                    var newExpId = firstAvailable.data('expedition-id');
+                    $('.expedition-card').removeClass('active');
+                    firstAvailable.addClass('active');
+                    $('#exp' + newExpId).prop('checked', true);
+                    currentExpeditionId = newExpId;
+                } else {
+                    currentExpeditionId = null;
+                }
+            }
+            return;
+        }
+
         if (kurirTokoCard.length) {
             if (isJabodetabek && (isDistributor || (isOutletOrBuyer && hasSalesCode))) {
                 kurirTokoCard.parent().show();
@@ -1334,7 +1361,7 @@
             $('#shippingAddress').text(fullAddress);
         }
         
-        checkKurirTokoVisibility();
+        checkExpeditionVisibility();
         
         // Reload services or just check stock
         if (currentExpeditionId) {
@@ -1776,7 +1803,7 @@
         var checkedExpedition = $('input[name="expedition_id"]:checked').val();
         var serverExpedition = @json($defaultExpedition?->id ?? null);
         
-        checkKurirTokoVisibility();
+        checkExpeditionVisibility();
         
         if (checkedExpedition && checkedExpedition !== serverExpedition) {
             currentExpeditionId = ''; // Reset so selectExpedition fetches correct services

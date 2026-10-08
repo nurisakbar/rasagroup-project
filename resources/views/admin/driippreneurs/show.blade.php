@@ -51,6 +51,19 @@
                             </td>
                         </tr>
                         <tr>
+                            <th>Memenuhi Syarat</th>
+                            <td>
+                                <form action="{{ route('admin.driippreneurs.update-eligibility', $driippreneur) }}" method="POST" style="display:inline-flex; align-items:center;">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="is_eligible" class="form-control input-sm" onchange="this.form.submit()" style="width: auto;">
+                                        <option value="0" {{ $driippreneur->is_eligible == 0 ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1" {{ $driippreneur->is_eligible == 1 ? 'selected' : '' }}>Ya</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
                             <th>Tanggal Pengajuan</th>
                             <td>{{ $driippreneur->driippreneur_applied_at ? $driippreneur->driippreneur_applied_at->format('d M Y H:i') : '-' }}</td>
                         </tr>

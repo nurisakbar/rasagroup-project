@@ -297,7 +297,7 @@ class OrderController extends Controller
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
 
-        $expeditions = Expedition::active()->get();
+        $expeditions = Expedition::active()->whereIn('code', ['kurir_toko', 'self_pickup'])->get();
         $defaultExpedition = $expeditions->first();
         $defaultService = $defaultExpedition ? $defaultExpedition->services[0] : null;
 
@@ -555,8 +555,8 @@ class OrderController extends Controller
         }
 
         $expedition = Expedition::find($request->expedition_id);
-        if (!$expedition) {
-            return back()->with('error', 'Ekspedisi tidak valid.');
+        if (!$expedition || !in_array($expedition->code, ['kurir_toko', 'self_pickup'])) {
+            return back()->with('error', 'Ekspedisi tidak valid atau tidak tersedia untuk akun Anda.');
         }
 
         $carts = Cart::with('product')
