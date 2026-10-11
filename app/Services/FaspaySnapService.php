@@ -193,6 +193,147 @@ class FaspaySnapService
     }
 
     /**
+     * Generate Standalone QRIS (Decoupled from local Order model, suitable for external apps)
+     *
+     * @param string $referenceNo Unique reference number from external app
+     * @param float|int|string $amount Total transaction amount
+     * @param array $options ['customer_name', 'customer_phone', 'description', 'channel_code', 'validity_minutes']
+     * @return array|null
+     */
+    public function generateStandaloneQris(string $referenceNo, $amount, array $options = []): ?array
+    {
+        $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+        $endpoint = '/v1.0/qr/qr-mpm-generate';
+        $url = rtrim($this->baseUrl, '/') . '/qr/qr-mpm-generate';
+        $partnerId = $this->partnerId;
+        $privateKey = $this->getPrivateKey();
+        $channelCode = (string) ($options['channel_code'] ?? '715');
+        $validityMinutes = (int) ($options['validity_minutes'] ?? 60);
+
+        $payload = [
+            'partnerReferenceNo' => (string) $referenceNo,
+            'amount' => [
+                'value' => number_format((float) $amount, 2, '.', ''),
+                'currency' => 'IDR'
+            ],
+            'merchantId' => $partnerId,
+            'validityPeriod' => now()->addMinutes($validityMinutes)->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+            'additionalInfo' => [
+                'billDate' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+                'billDescription' => substr($options['description'] ?? ('Payment #' . $referenceNo), 0, 50),
+                'channelCode' => $channelCode,
+                'phoneNo' => $options['customer_phone'] ?? '081234567890'
+            ]
+        ];
+
+        $requestBody = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $requestBody, $timestamp, $privateKey);
+
+        $headers = [
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'X-PARTNER-ID' => $partnerId,
+            'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
+            'CHANNEL-ID' => '77001',
+            'Content-Type' => 'application/json'
+        ];
+
+        Log::info('Faspay Standalone QRIS Request', [
+            'company' => $this->company,
+            'reference_no' => $referenceNo,
+            'amount' => $amount,
+            'channel_code' => $channelCode,
+            'url' => $url
+        ]);
+
+        $response = Http::withoutVerifying()
+            ->withHeaders($headers)
+            ->withBody($requestBody, 'application/json')
+            ->post($url);
+
+        Log::info('Faspay Standalone QRIS Response', [
+            'company' => $this->company,
+            'reference_no' => $referenceNo,
+            'status' => $response->status(),
+            'body' => $response->json() ?? $response->body()
+        ]);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error('Faspay Standalone QRIS Error', [
+            'company' => $this->company,
+            'reference_no' => $referenceNo,
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Query QRIS Payment Status via Faspay SNAP API
+     *
+     * @param string $originalPartnerReferenceNo
+     * @param string|null $originalReferenceNo
+     * @param string $channelCode
+     * @return array|null
+     */
+    public function queryQris(string $originalPartnerReferenceNo, ?string $originalReferenceNo = null, string $channelCode = '715'): ?array
+    {
+        $timestamp = now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+        $endpoint = '/v1.0/qr/qr-mpm-query';
+        $url = rtrim($this->baseUrl, '/') . '/qr/qr-mpm-query';
+        $partnerId = $this->partnerId;
+        $privateKey = $this->getPrivateKey();
+
+        $payload = [
+            'originalPartnerReferenceNo' => (string) $originalPartnerReferenceNo,
+            'merchantId' => $partnerId,
+            'serviceCode' => '47',
+            'additionalInfo' => [
+                'channelCode' => (string) $channelCode,
+                'billDescription' => 'Inquiry Payment QRIS'
+            ]
+        ];
+
+        if (!empty($originalReferenceNo)) {
+            $payload['originalReferenceNo'] = (string) $originalReferenceNo;
+        }
+
+        $requestBody = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $signature = $this->generateTransactionAsymmetricSignature('POST', $endpoint, $requestBody, $timestamp, $privateKey);
+
+        $headers = [
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'X-PARTNER-ID' => $partnerId,
+            'X-EXTERNAL-ID' => date('YmdHis') . rand(1000, 9999),
+            'CHANNEL-ID' => '77001',
+            'Content-Type' => 'application/json'
+        ];
+
+        $response = Http::withoutVerifying()
+            ->withHeaders($headers)
+            ->withBody($requestBody, 'application/json')
+            ->post($url);
+
+        Log::info('Faspay QRIS Query Response', [
+            'company' => $this->company,
+            'partner_reference_no' => $originalPartnerReferenceNo,
+            'status' => $response->status(),
+            'body' => $response->json() ?? $response->body()
+        ]);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        return null;
+    }
+
+    /**
      * Direct Debit Payment (Host-to-Host)
      */
     public function directDebitPayment($order, $amount, $paymentChannelUid = '812')

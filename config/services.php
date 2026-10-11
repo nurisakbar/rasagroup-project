@@ -156,4 +156,14 @@ return [
         'x_token' => env('FINANCE_APPROVAL_X_TOKEN'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | External QRIS Integration
+    |--------------------------------------------------------------------------
+    | API Key proteksi untuk endpoint generate & query QRIS yang diakses aplikasi lain.
+    */
+    'external_qris' => [
+        'api_key' => env('EXTERNAL_QRIS_API_KEY', 'rasa-qris-secret-key-2026'),
+    ],
+
 ];

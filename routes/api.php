@@ -103,3 +103,9 @@ Route::prefix('v1.0/debit')->group(function () {
     Route::post('/notify', [\App\Http\Controllers\Api\FaspaySnapController::class, 'debitNotify'])->name('api.v1.debit.notify');
 });
 
+// External Application API - QRIS Service (Protected by X-API-KEY)
+Route::prefix('v1/external/qris')->middleware('external.api.key')->group(function () {
+    Route::post('/generate', [\App\Http\Controllers\Api\ExternalQrisController::class, 'generate'])->name('api.external.qris.generate');
+    Route::get('/status/{referenceNo}', [\App\Http\Controllers\Api\ExternalQrisController::class, 'status'])->name('api.external.qris.status');
+});
+
