@@ -14,6 +14,15 @@ use Symfony\Component\HttpFoundation\Response;
 class ExternalQrisController extends Controller
 {
     /**
+     * Dedicated endpoint to generate QRIS for PT Rasa Distribusi Indonesia (RDI).
+     */
+    public function generateRdi(GenerateExternalQrisRequest $request): Response
+    {
+        $request->merge(['company' => 'rdi']);
+        return $this->generate($request);
+    }
+
+    /**
      * Generate QRIS Image / Data for external applications.
      */
     public function generate(GenerateExternalQrisRequest $request): Response

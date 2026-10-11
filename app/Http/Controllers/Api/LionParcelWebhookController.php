@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Notifications\Orders\OrderShippedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LionParcelWebhookController extends Controller
@@ -16,6 +17,29 @@ class LionParcelWebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
+        $payload = $request->all();
+
+        $sttNo = $request->input('stt_no') 
+                 ?? $request->input('data.stt_no') 
+                 ?? $request->input('stt_number');
+                 
+        $statusCode = $request->input('status_code') 
+                      ?? $request->input('data.status_code');
+                 
+        $status = $request->input('status') 
+                  ?? $request->input('data.status')
+                  ?? $request->input('status_name');
+
+        // Log to database
+        DB::table('webhook_logs')->insert([
+            'provider' => 'lion_parcel',
+            'reference_number' => $sttNo,
+            'payload' => json_encode($payload),
+            'status_parsed' => $status ?: $statusCode ?: 'unknown',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $expectedSecret = env('LION_PARCEL_WEBHOOK_SECRET');
         $providedSecret = $request->header('x-token') 
                           ?? $request->bearerToken() 
@@ -29,22 +53,9 @@ class LionParcelWebhookController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $payload = $request->all();
-
         Log::info('Lion Parcel webhook received', [
             'payload' => $payload,
         ]);
-
-        $sttNo = $request->input('stt_no') 
-                 ?? $request->input('data.stt_no') 
-                 ?? $request->input('stt_number');
-                 
-        $statusCode = $request->input('status_code') 
-                      ?? $request->input('data.status_code');
-                 
-        $status = $request->input('status') 
-                  ?? $request->input('data.status')
-                  ?? $request->input('status_name');
 
         if (! is_string($sttNo) || $sttNo === '') {
             Log::warning('Lion Parcel webhook missing STT number', ['payload' => $payload]);
