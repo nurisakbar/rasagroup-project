@@ -108,5 +108,6 @@ Route::prefix('v1/external/qris')->middleware('external.api.key')->group(functio
     Route::post('/rdi/generate', [\App\Http\Controllers\Api\ExternalQrisController::class, 'generateRdi'])->name('api.external.qris.rdi.generate');
     Route::post('/generate', [\App\Http\Controllers\Api\ExternalQrisController::class, 'generate'])->name('api.external.qris.generate');
     Route::get('/status/{referenceNo}', [\App\Http\Controllers\Api\ExternalQrisController::class, 'status'])->name('api.external.qris.status');
+    Route::post('/resend-webhook/{referenceNo}', [\App\Http\Controllers\Api\ExternalQrisController::class, 'resendWebhook'])->name('api.external.qris.resend-webhook');
 });
 

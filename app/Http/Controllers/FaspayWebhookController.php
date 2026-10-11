@@ -83,6 +83,29 @@ class FaspayWebhookController extends Controller
                 ->first();
 
             if (!$order) {
+                // Check if this notification belongs to an External QRIS transaction
+                $extTx = \App\Models\ExternalQrisTransaction::where('reference_no', $billNo)
+                    ->orWhere('faspay_reference_no', $billNo)
+                    ->first();
+
+                if ($extTx) {
+                    Log::info('Faspay Legacy Webhook: Matched External QRIS Transaction', [
+                        'reference_no' => $extTx->reference_no,
+                        'status_code' => $paymentStatusCode,
+                    ]);
+
+                    if ($paymentStatusCode == '2') {
+                        $extTx->markAsPaid($data);
+                        try {
+                            app(\App\Services\ExternalQrisWebhookDispatcher::class)->dispatch($extTx, $data);
+                        } catch (\Throwable $e) {
+                            Log::error('Faspay Legacy Webhook: Failed to dispatch 3rd party webhook', ['error' => $e->getMessage()]);
+                        }
+                    }
+
+                    return $this->jsonResponse($trxId, $merchantId, $billNo, '00', 'Success');
+                }
+
                 Log::warning('Faspay webhook: Order not found', [
                     'bill_no' => $billNo,
                 ]);

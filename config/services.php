@@ -164,6 +164,7 @@ return [
     */
     'external_qris' => [
         'api_key' => env('EXTERNAL_QRIS_API_KEY', 'rasa-qris-secret-key-2026'),
+        'default_callback_url' => env('EXTERNAL_QRIS_DEFAULT_CALLBACK_URL'),
     ],
 
 ];

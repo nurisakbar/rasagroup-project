@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ExternalQrisTransaction;
 use App\Models\Order;
+use App\Services\ExternalQrisWebhookDispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -285,6 +287,14 @@ class FaspaySnapController extends Controller
             ->first();
 
         if (!$order) {
+            $extTx = ExternalQrisTransaction::where('reference_no', $orderNumber)
+                ->orWhere('faspay_reference_no', $orderNumber)
+                ->first();
+
+            if ($extTx) {
+                return $this->handleExternalQrisPaymentNotification($extTx, $request, (string)$orderNumber, $status, $isLegacy);
+            }
+
             Log::error('Faspay SNAP Webhook: Order not found', ['identifier' => $orderNumber, 'customerNo' => $customerNo]);
             return response()->json([
                 'responseCode' => '4042512',
@@ -474,6 +484,14 @@ class FaspaySnapController extends Controller
             ->first();
 
         if (!$order) {
+            $extTx = ExternalQrisTransaction::where('reference_no', $orderNumber)
+                ->orWhere('faspay_reference_no', $orderNumber)
+                ->first();
+
+            if ($extTx) {
+                return $this->handleExternalQrisQrNotify($extTx, $request, (string)$orderNumber, $status);
+            }
+
             Log::error('Faspay SNAP QR Webhook: Order not found', ['identifier' => $orderNumber]);
             return response()->json([
                 'responseCode' => '4044712',
@@ -896,5 +914,156 @@ class FaspaySnapController extends Controller
         }
 
         return null; // Valid
+    }
+
+    /**
+     * Handle Faspay SNAP QR MPM notification for 3rd party external QRIS transaction.
+     */
+    protected function handleExternalQrisQrNotify(ExternalQrisTransaction $extTx, Request $request, string $orderNumber, $status)
+    {
+        Log::info('Faspay SNAP QR Webhook: Matched External QRIS Transaction', [
+            'reference_no' => $extTx->reference_no,
+            'faspay_reference_no' => $extTx->faspay_reference_no,
+            'amount' => $extTx->amount,
+            'status' => $status,
+        ]);
+
+        $paidAmount = $request->input('paidAmount.value') ?? $request->input('txnAmount.value');
+        if ($paidAmount && (float)$paidAmount !== (float)$extTx->amount) {
+            Log::warning('Faspay SNAP QR Webhook: External amount mismatch', [
+                'paid' => $paidAmount,
+                'expected' => $extTx->amount
+            ]);
+        }
+
+        $isPaid = false;
+        if ($status === '00' || strtoupper((string)$status) === 'S') {
+            $isPaid = true;
+        } else if ($paidAmount && ($request->has('paidAmount.value') || $request->has('txnAmount.value'))) {
+            $isPaid = true;
+        }
+
+        if ($isPaid) {
+            $extTx->markAsPaid($request->all());
+
+            // Relay notification to 3rd party webhook
+            try {
+                $dispatcher = app(ExternalQrisWebhookDispatcher::class);
+                $dispatcher->dispatch($extTx, $request->all());
+            } catch (\Throwable $e) {
+                Log::error('Faspay SNAP QR Webhook: Failed to dispatch 3rd party webhook', [
+                    'reference_no' => $extTx->reference_no,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        $responsePayload = [
+            'responseCode' => '2004700',
+            'responseMessage' => 'Success',
+            'originalReferenceNo' => $request->input('originalReferenceNo', $extTx->faspay_reference_no ?: 'QR' . time()),
+            'originalPartnerReferenceNo' => $extTx->reference_no,
+            'approvalCode' => '123456'
+        ];
+
+        Log::info('Faspay SNAP QR MPM Notification Response (External)', $responsePayload);
+
+        return response()->json($responsePayload);
+    }
+
+    /**
+     * Handle Faspay SNAP VA/Payment notification for 3rd party external QRIS transaction.
+     */
+    protected function handleExternalQrisPaymentNotification(ExternalQrisTransaction $extTx, Request $request, string $orderNumber, $status, bool $isLegacy = false)
+    {
+        Log::info('Faspay SNAP Payment Notification: Matched External QRIS Transaction', [
+            'reference_no' => $extTx->reference_no,
+            'faspay_reference_no' => $extTx->faspay_reference_no,
+            'amount' => $extTx->amount,
+            'status' => $status,
+        ]);
+
+        $paidAmount = $request->input('paidAmount.value') ?? $request->input('payment_total');
+        $isPaid = false;
+        if ($status == '2' || $status === '00' || strtoupper((string)$status) === 'S' || strtolower((string)$request->input('type')) === 'payment') {
+            $isPaid = true;
+        } else if (!$isLegacy && $paidAmount && $request->has('paidAmount.value')) {
+            $isPaid = true;
+        }
+
+        if ($isPaid) {
+            $extTx->markAsPaid($request->all());
+
+            // Relay notification to 3rd party webhook
+            try {
+                $dispatcher = app(ExternalQrisWebhookDispatcher::class);
+                $dispatcher->dispatch($extTx, $request->all());
+            } catch (\Throwable $e) {
+                Log::error('Faspay SNAP Webhook: Failed to dispatch 3rd party webhook', [
+                    'reference_no' => $extTx->reference_no,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        if ($isLegacy) {
+            $trx_id = $request->input('trx_id', 'WS' . time());
+            $merchant_id = $request->input('merchant_id', '37020');
+            $merchant = $request->input('merchant', 'PT Rasa Distribusi Indonesia');
+            $bill_no = $extTx->reference_no;
+
+            $isJsonRequest = $request->isJson() || str_contains($request->header('Content-Type', ''), 'json');
+            if ($isJsonRequest) {
+                return response()->json([
+                    "response" => "Payment Notification",
+                    "trx_id" => $trx_id,
+                    "merchant_id" => $merchant_id,
+                    "merchant" => $merchant,
+                    "bill_no" => $bill_no,
+                    "response_code" => "00",
+                    "response_desc" => "Sukses",
+                    "response_error" => ""
+                ]);
+            }
+
+            $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$trx_id}</trx_id><merchant_id>{$merchant_id}</merchant_id><bill_no>{$bill_no}</bill_no><response_code>00</response_code><response_desc>Sukses</response_desc><response_error></response_error></faspay>";
+            return response($xmlResponse, 200)->header('Content-Type', 'text/xml');
+        }
+
+        $responsePayload = [
+            'responseCode' => '2002500',
+            'responseMessage' => 'Success',
+            'virtualAccountData' => [
+                'paymentFlagReason' => [
+                    'english' => 'Success',
+                    'indonesia' => 'Sukses'
+                ],
+                'partnerServiceId' => $request->input('partnerServiceId', '370201'),
+                'customerNo' => $request->input('customerNo', $extTx->reference_no),
+                'virtualAccountNo' => (string) $orderNumber,
+                'virtualAccountName' => $extTx->customer_name ?: 'Customer Rasa Group',
+                'virtualAccountEmail' => 'customer@rasagroup.co.id',
+                'virtualAccountPhone' => $extTx->customer_phone ?: '6281234567890',
+                'trxId' => $request->input('trx_id', 'WS' . time()),
+                'paymentRequestId' => $request->input('paymentRequestId', ''),
+                'paidAmount' => [
+                    'value' => number_format($paidAmount ?? $extTx->amount, 2, '.', ''),
+                    'currency' => 'IDR'
+                ],
+                'paidBills' => '1',
+                'totalAmount' => [
+                    'value' => number_format($extTx->amount, 2, '.', ''),
+                    'currency' => 'IDR'
+                ],
+                'trxDateTime' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),
+                'referenceNo' => $extTx->reference_no,
+                'journalNum' => '',
+                'paymentType' => '1',
+                'flagAdvise' => 'Y',
+                'paymentFlagStatus' => '00'
+            ]
+        ];
+
+        return response()->json($responsePayload);
     }
 }

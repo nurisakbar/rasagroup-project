@@ -34,6 +34,8 @@ class GenerateExternalQrisRequest extends FormRequest
             'channel_code' => 'nullable|string|in:711,715,836',
             'validity_minutes' => 'nullable|integer|min:5|max:1440',
             'format' => 'nullable|string|in:json,image,redirect',
+            'callback_url' => 'nullable|url|max:500',
+            'callback_token' => 'nullable|string|max:255',
         ];
     }
 
