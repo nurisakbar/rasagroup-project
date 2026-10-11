@@ -716,9 +716,9 @@ class FaspaySnapController extends Controller
     {
                 // Pengecekan Channel ID
         $channelId = $request->header('CHANNEL-ID', '');
-        $allowedChannels = ['77001', '802', '818', '402', '408', '708', '723', '825', '702'];
+        $allowedChannels = ['77001', '802', '818', '402', '408', '708', '723', '825', '702', '836', '715', '711', '9522', '95', '37020', '37116'];
         
-        if (!in_array($channelId, $allowedChannels)) {
+        if (!empty($channelId) && !in_array($channelId, $allowedChannels)) {
             return response()->json([
                 'responseCode' => '401' . $serviceCode . '00',
                 'responseMessage' => 'Unauthorized. Invalid Channel ID'
