@@ -32,7 +32,7 @@ class ExternalQrisController extends Controller
         $referenceNo = $validated['reference_no'];
         $amount = (float) $validated['amount'];
         $company = strtolower($validated['company'] ?? 'rdi');
-        $channelCode = (string) ($validated['channel_code'] ?? '715'); // 715 = Nobu QRIS, 836 = Paydia QRIS
+        $channelCode = (string) ($validated['channel_code'] ?? '836'); // 836 = Paydia QRIS (direct PNG), 715 = Nobu QRIS
         $validityMinutes = (int) ($validated['validity_minutes'] ?? 60);
         $format = strtolower($validated['format'] ?? 'json');
 
@@ -64,8 +64,8 @@ class ExternalQrisController extends Controller
                 ], Response::HTTP_BAD_GATEWAY);
             }
 
-            // Extract image URL from response
-            $qrImageUrl = $result['additionalInfo']['qrImageUrl'] ?? ($result['qrUrl'] ?? null);
+            // Extract image URL: prioritize direct PNG qrUrl, then qrImageUrl
+            $qrImageUrl = $result['qrUrl'] ?? ($result['additionalInfo']['qrImageUrl'] ?? null);
             $faspayRefNo = $result['referenceNo'] ?? null;
             $partnerRefNo = $result['partnerReferenceNo'] ?? $referenceNo;
             $expiresAt = now()->addMinutes($validityMinutes)->timezone('Asia/Jakarta')->toIso8601String();
