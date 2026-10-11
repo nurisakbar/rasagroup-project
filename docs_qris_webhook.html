@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Integrasi API Faspay QRIS & Webhook Relay - PT Rasa Distribusi Indonesia</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 15mm 15mm;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            line-height: 1.55;
+            font-size: 13px;
+        }
+        .header {
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+        .brand-subtitle {
+            font-size: 13px;
+            color: #0284c7;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .doc-meta {
+            text-align: right;
+            font-size: 11px;
+            color: #64748b;
+        }
+        .badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 22px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        h2 .num {
+            background: #0284c7;
+            color: #fff;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        h3 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 14px;
+            margin-bottom: 6px;
+        }
+        p {
+            margin-bottom: 10px;
+            color: #334155;
+        }
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+        li {
+            margin-bottom: 4px;
+        }
+        /* Flow Diagram Container */
+        .flow-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 14px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        .flow-step-num {
+            background: #0284c7;
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .flow-step-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .flow-step-sub {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: normal;
+        }
+        .flow-arrow {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1;
+            margin: -4px 0;
+        }
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 14px 0;
+            font-size: 11.5px;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            text-align: left;
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        /* Code blocks */
+        pre {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 10.5px;
+            line-height: 1.45;
+            overflow-x: auto;
+            margin: 8px 0 14px 0;
+            border: 1px solid #1e293b;
+        }
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 11px;
+            background: #f1f5f9;
+            color: #0369a1;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        .code-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .alert {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 9px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 11.5px;
+            color: #166534;
+            margin: 10px 0;
+        }
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .footer {
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+            font-size: 10.5px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <div class="header">
+        <div>
+            <div class="brand-title">PANDUAN INTEGRASI API QRIS & WEBHOOK RELAY</div>
+            <div class="brand-subtitle">PT Rasa Distribusi Indonesia (Rasa Group) &bull; Faspay SNAP BI Integration</div>
+        </div>
+        <div class="doc-meta">
+            <div><span class="badge">Production Ready</span></div>
+            <div style="margin-top: 4px;">Versi Dokumen: <strong>1.0.0</strong></div>
+            <div>Base URL: <strong>https://rasaconnect.com</strong></div>
+        </div>
+    </div>
+
+    <!-- Section 1: Overview -->
+    <h2><span class="num">1</span> Ringkasan & Arsitektur Alur Transaksi</h2>
+    <p>Layanan API ini memungkinkan aplikasi pihak ketiga (3rd Party Application) untuk membuat <strong>QRIS Dinamis (Paydia QRIS)</strong> menggunakan kredensial produksi Faspay atas nama entitas <strong>PT Rasa Distribusi Indonesia (RDI)</strong>. Layanan ini dilengkapi dengan <strong>Webhook Relay System</strong> yang secara otomatis meneruskan konfirmasi pembayaran sukses ke endpoint pihak ketiga secara instan.</p>
+
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div>
+                <div class="flow-step-text">Aplikasi Pihak Ketiga &rarr; Rasa Connect: Request Generate QRIS</div>
+                <div class="flow-step-sub">Kirim `reference_no`, `amount`, `callback_url`, dan `callback_token` via endpoint `POST /api/v1/external/qris/rdi/generate`</div>
+            </div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <div>
+                <div class="flow-step-text">Rasa Connect &rarr; Faspay SNAP BI: Standalone QRIS RDI</div>
+                <div class="flow-step-sub">Sistem membuat QRIS dinamis via Faspay SNAP RDI (Merchant ID 37020) dan memperoleh direct image URL PNG.</div>
+            </div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-step">
+            <div class="flow-step-num">3</div>
+            <div>
+                <div class="flow-step-text">Customer Melakukan Pembayaran</div>
+                <div class="flow-step-sub">Customer memindai QR code dari aplikasi pihak ketiga menggunakan BCA, Mandiri, GoPay, OVO, Dana, dll.</div>
+            </div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-step">
+            <div class="flow-step-num">4</div>
+            <div>
+                <div class="flow-step-text">Faspay Payment Gateway &rarr; Rasa Connect Webhook (Status 00 Verified)</div>
+                <div class="flow-step-sub">Faspay mengirimkan notifikasi verifikasi pembayaran lunas ke webhook endpoint Rasa Connect.</div>
+            </div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-step">
+            <div class="flow-step-num">5</div>
+            <div>
+                <div class="flow-step-text">Rasa Connect &rarr; Aplikasi Pihak Ketiga: Webhook Relay Real-Time</div>
+                <div class="flow-step-sub">Sistem Rasa Connect meneruskan data pembayaran sukses ke `callback_url` pihak ketiga dan membalas status 200 ke Faspay.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Autentikasi -->
+    <h2><span class="num">2</span> Autentikasi API</h2>
+    <p>Setiap panggilan API dari pihak ketiga wajib menyertakan header keamanan berikut:</p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Header Name</th>
+                <th style="width: 40%;">Nilai (Value)</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>X-API-KEY</code></td>
+                <td><code>rasa_qris_rdi_sec_2026!</code></td>
+                <td>Kunci otentikasi rahasia sistem eksternal</td>
+            </tr>
+            <tr>
+                <td><code>Content-Type</code></td>
+                <td><code>application/json</code></td>
+                <td>Format request body (JSON)</td>
+            </tr>
+            <tr>
+                <td><code>Accept</code></td>
+                <td><code>application/json</code></td>
+                <td>Format respon yang diharapkan</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- Section 3: Endpoint Generate -->
+    <h2><span class="num">3</span> Spesifikasi API Endpoint</h2>
+
+    <h3>3.1. Generate QRIS Dinamis (Dedicated RDI)</h3>
+    <p>Endpoint ini digunakan untuk men-generate gambar QRIS untuk nominal tertentu dan mendaftarkan URL webhook pihak ketiga.</p>
+    <ul>
+        <li><strong>Method:</strong> <code>POST</code></li>
+        <li><strong>URL:</strong> <code>https://rasaconnect.com/api/v1/external/qris/rdi/generate</code></li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 22%;">Parameter</th>
+                <th style="width: 14%;">Tipe</th>
+                <th style="width: 12%;">Wajib?</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>reference_no</code></td>
+                <td>String</td>
+                <td><strong>Wajib</strong></td>
+                <td>ID referensi / nomor invoice unik dari sistem Anda (maks. 64 karakter).</td>
+            </tr>
+            <tr>
+                <td><code>amount</code></td>
+                <td>Numeric</td>
+                <td><strong>Wajib</strong></td>
+                <td>Nominal transaksi dalam Rupiah (min. 1000). Contoh: <code>50000</code>.</td>
+            </tr>
+            <tr>
+                <td><code>callback_url</code></td>
+                <td>String (URL)</td>
+                <td>Opsional</td>
+                <td>URL webhook pihak ketiga yang akan di-hit otomatis saat pembayaran sukses diverifikasi.</td>
+            </tr>
+            <tr>
+                <td><code>callback_token</code></td>
+                <td>String</td>
+                <td>Opsional</td>
+                <td>Token / kunci rahasia pihak ketiga yang akan dikirim kembali via header <code>X-Callback-Token</code>.</td>
+            </tr>
+            <tr>
+                <td><code>customer_name</code></td>
+                <td>String</td>
+                <td>Opsional</td>
+                <td>Nama pelanggan (default: <code>"Customer"</code>).</td>
+            </tr>
+            <tr>
+                <td><code>customer_phone</code></td>
+                <td>String</td>
+                <td>Opsional</td>
+                <td>Nomor telepon pelanggan.</td>
+            </tr>
+            <tr>
+                <td><code>description</code></td>
+                <td>String</td>
+                <td>Opsional</td>
+                <td>Catatan transaksi (default: <code>"Payment #{reference_no}"</code>).</td>
+            </tr>
+            <tr>
+                <td><code>validity_minutes</code></td>
+                <td>Integer</td>
+                <td>Opsional</td>
+                <td>Masa berlaku QR code dalam menit (default: <code>60</code> menit).</td>
+            </tr>
+            <tr>
+                <td><code>format</code></td>
+                <td>String</td>
+                <td>Opsional</td>
+                <td>Pilihan respon: <code>"json"</code> (default), <code>"image"</code> (stream binary PNG), atau <code>"redirect"</code>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="code-title">Contoh Request cURL:</div>
+<pre>curl -X POST https://rasaconnect.com/api/v1/external/qris/rdi/generate \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: rasa_qris_rdi_sec_2026!" \
+  -d '{
+    "reference_no": "INV-APP3-00123",
+    "amount": 50000,
+    "customer_name": "Ahmad Fauzi",
+    "customer_phone": "081234567890",
+    "description": "Pembayaran Invoice INV-APP3-00123",
+    "callback_url": "https://api.pihakketiga.com/webhook/payment",
+    "callback_token": "token_auth_pihak_ketiga_xyz"
+  }'</pre>
+
+    <div class="code-title">Contoh Respon JSON (HTTP 200 OK):</div>
+<pre>{
+  "status": "success",
+  "responseCode": "2004700",
+  "responseMessage": "QRIS generated successfully",
+  "data": {
+    "id": 1,
+    "partner_reference_no": "INV-APP3-00123",
+    "reference_no": "3702083645902822",
+    "amount": "50000.00",
+    "currency": "IDR",
+    "qr_image_url": "https://web.faspay.co.id/__assets/qr/paydia/37020-3702083645902822.png",
+    "channel_code": "836",
+    "company": "rdi",
+    "expires_at": "2026-10-11T16:50:00+07:00",
+    "callback_url": "https://api.pihakketiga.com/webhook/payment",
+    "callback_status": "pending"
+  }
+}</pre>
+
+    <div class="alert">
+        <strong>PENTING:</strong> Nilai <code>data.qr_image_url</code> adalah URL file gambar PNG langsung. Anda dapat langsung menggunakannya pada tag HTML <code>&lt;img src="..." /&gt;</code> di website atau Image View di aplikasi kasir/mobile Anda.
+    </div>
+
+    <!-- Section 3.2: Status & Resend -->
+    <h3>3.2. Cek Status Transaksi (Inquiry Status)</h3>
+    <p>Mengecek status terkini transaksi (apakah sudah dibayar dan apakah webhook sudah terkirim):</p>
+    <ul>
+        <li><strong>Method:</strong> <code>GET</code></li>
+        <li><strong>URL:</strong> <code>https://rasaconnect.com/api/v1/external/qris/status/{referenceNo}</code></li>
+    </ul>
+
+<pre>curl -X GET "https://rasaconnect.com/api/v1/external/qris/status/INV-APP3-00123" \
+  -H "X-API-KEY: rasa_qris_rdi_sec_2026!"</pre>
+
+    <div class="code-title">Contoh Respon (Transaksi Lunas & Webhook Terkirim):</div>
+<pre>{
+  "status": "success",
+  "responseCode": "2005100",
+  "responseMessage": "Payment has been completed",
+  "data": {
+    "reference_no": "INV-APP3-00123",
+    "faspay_reference_no": "3702083645902822",
+    "amount": 50000,
+    "status": "paid",
+    "paid_at": "2026-10-11T15:48:32+07:00",
+    "callback_url": "https://api.pihakketiga.com/webhook/payment",
+    "callback_status": "delivered",
+    "callback_sent_at": "2026-10-11T15:48:33+07:00"
+  }
+}</pre>
+
+    <div class="page-break"></div>
+
+    <!-- Section 4: Webhook Receiver Specification -->
+    <h2><span class="num">4</span> Spesifikasi Webhook Pihak Ketiga (Receiver)</h2>
+    <p>Ketika pembayaran customer telah berhasil diverifikasi oleh Faspay, server Rasa Connect akan otomatis mengirimkan request HTTP POST ke <code>callback_url</code> milik Anda.</p>
+
+    <h3>4.1. Header Request Webhook yang Dikirimkan:</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 28%;">Header Name</th>
+                <th style="width: 32%;">Contoh Nilai</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Content-Type</code></td>
+                <td><code>application/json</code></td>
+                <td>Format data JSON</td>
+            </tr>
+            <tr>
+                <td><code>User-Agent</code></td>
+                <td><code>RasaGroup-Webhook-Relay/1.0</code></td>
+                <td>Identitas pengirim webhook</td>
+            </tr>
+            <tr>
+                <td><code>X-Event</code></td>
+                <td><code>payment.verified</code></td>
+                <td>Event pembayaran terverifikasi lunas</td>
+            </tr>
+            <tr>
+                <td><code>X-Timestamp</code></td>
+                <td><code>1791708522</code></td>
+                <td>UNIX timestamp waktu dispatch</td>
+            </tr>
+            <tr>
+                <td><code>X-Callback-Token</code></td>
+                <td><code>token_auth_pihak_ketiga_xyz</code></td>
+                <td>Nilai <code>callback_token</code> yang Anda daftarkan</td>
+            </tr>
+            <tr>
+                <td><code>X-Signature</code></td>
+                <td><code>77b6758b1e13f0505...</code></td>
+                <td>HMAC-SHA256 signature untuk validasi keaslian payload</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.2. Rumus Validasi Signature:</h3>
+    <p>Untuk memvalidasi keaslian data pada server Anda (opsional tapi disarankan):</p>
+    <pre>expected_signature = hash_hmac('sha256', header['X-Timestamp'] + '.' + raw_json_body, callback_token)</pre>
+
+    <h3>4.3. Body Payload Webhook (JSON):</h3>
+<pre>{
+  "event": "payment.verified",
+  "status": "paid",
+  "reference_no": "INV-APP3-00123",
+  "faspay_reference_no": "3702083645902822",
+  "company": "rdi",
+  "channel_code": "836",
+  "amount": 50000,
+  "currency": "IDR",
+  "customer_name": "Ahmad Fauzi",
+  "customer_phone": "081234567890",
+  "description": "Pembayaran Invoice INV-APP3-00123",
+  "paid_at": "2026-10-11T15:48:32+07:00",
+  "created_at": "2026-10-11T15:47:39+07:00",
+  "raw_notification": {
+    "originalReferenceNo": "3702083645902822",
+    "originalPartnerReferenceNo": "INV-APP3-00123",
+    "latestTransactionStatus": "00",
+    "paidAmount": {
+      "value": "50000.00",
+      "currency": "IDR"
+    }
+  }
+}</pre>
+
+    <div class="alert alert-info">
+        <strong>Ketentuan Respon Webhook:</strong> Server webhook pihak ketiga <strong>wajib</strong> membalas request ini dengan HTTP Status Code <code>200 OK</code> dengan body respon JSON sederhana seperti <code>{"status": "success"}</code>.
+    </div>
+
+    <!-- Section 5: Implementation Examples -->
+    <h2><span class="num">5</span> Contoh Kode Webhook Receiver (Pihak Ketiga)</h2>
+
+    <h3>Contoh Node.js (Express.js):</h3>
+<pre>const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/webhook/payment', (req, res) => {
+    const token = req.headers['x-callback-token'];
+    
+    // 1. Verifikasi callback token
+    if (token !== 'token_auth_pihak_ketiga_xyz') {
+        return res.status(401).json({ error: 'Unauthorized token' });
+    }
+
+    const payload = req.body;
+    if (payload.event === 'payment.verified' && payload.status === 'paid') {
+        const referenceNo = payload.reference_no;
+        const amount = payload.amount;
+
+        // 2. Tandai invoice di database internal pihak ketiga menjadi LUNAS (PAID)
+        console.log(`[SUKSES] Invoice ${referenceNo} sebesar Rp ${amount} telah LUNAS.`);
+    }
+
+    // 3. Wajib balas HTTP 200 OK
+    return res.status(200).json({ status: 'success' });
+});
+
+app.listen(3000, () => console.log('Webhook server running on port 3000'));</pre>
+
+    <h3>Contoh PHP Native:</h3>
+<pre>&lt;?php
+$payload = json_decode(file_get_contents('php://input'), true);
+$token = $_SERVER['HTTP_X_CALLBACK_TOKEN'] ?? '';
+
+if ($token !== 'token_auth_pihak_ketiga_xyz') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
+if (($payload['event'] ?? '') === 'payment.verified' && ($payload['status'] ?? '') === 'paid') {
+    $refNo = $payload['reference_no'];
+    $amount = $payload['amount'];
+    // TODO: Update status pembayaran invoice $refNo menjadi LUNAS di database Anda
+}
+
+http_response_code(200);
+echo json_encode(['status' => 'success']);</pre>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div>&copy; 2026 PT Rasa Distribusi Indonesia &bull; Rasa Group Tech & Engineering</div>
+        <div>Dokumen Rahasia &bull; Khusus Rekanan Terintegrasi</div>
+    </div>
+
+</body>
+</html>
