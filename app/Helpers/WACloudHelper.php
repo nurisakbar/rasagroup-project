@@ -240,12 +240,22 @@ class WACloudHelper
     }
 
     /**
-     * Check if WACloud is configured
+     * Check if WhatsApp service is configured
      * 
      * @return bool
      */
     public static function isConfigured(): bool
     {
+        $metaService = app(\App\Services\MetaWhatsAppService::class);
+        if ($metaService->isConfigured()) {
+            return true;
+        }
+
+        $provider = env('WHATSAPP_PROVIDER', 'meta');
+        if ($provider === 'wacloud') {
+            return (new \App\Services\WACloudService())->isConfigured();
+        }
+
         return app(\App\Services\QidApiService::class)->isConfigured();
     }
 
@@ -569,7 +579,7 @@ class WACloudHelper
     public static function notifyWarehouseOwnersAboutPayment(\App\Models\Order $order): void
     {
         if (!self::isConfigured()) {
-            Log::warning('WACloud not configured. Cannot notify warehouse owners.');
+            Log::warning('WhatsApp service not configured. Cannot notify warehouse owners.');
             return;
         }
 
@@ -608,7 +618,7 @@ class WACloudHelper
     public static function notifyWarehouseOwnersAboutNewOrder(\App\Models\Order $order): void
     {
         if (! self::isConfigured()) {
-            Log::warning('WACloud not configured. Cannot notify warehouse owners (new order).');
+            Log::warning('WhatsApp service not configured. Cannot notify warehouse owners (new order).');
 
             return;
         }
@@ -663,6 +673,14 @@ class WACloudHelper
             })
             ->get();
 
+        $warehouse = $order->sourceWarehouse ?? \App\Models\Warehouse::find($order->source_warehouse_id);
+        $warehouseName = $warehouse ? $warehouse->name : 'Hub';
+
+        $templateName = env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
+        $languageCode = env('META_WA_TEMPLATE_LANG', 'id');
+        $metaService = app(\App\Services\MetaWhatsAppService::class);
+        $useMetaTemplate = $metaService->isConfigured();
+
         $sentTo = [];
 
         foreach ($warehouseOwners as $owner) {
@@ -673,14 +691,50 @@ class WACloudHelper
             if ($key === '' || isset($sentTo[$key])) {
                 continue;
             }
+
+            // Sesuaikan link order berdasarkan peran (distributor vs warehouse)
+            try {
+                $orderUrl = ($owner->role === 'distributor')
+                    ? route('distributor.manage-orders.show', $order)
+                    : route('warehouse.orders.show', $order);
+            } catch (\Throwable $e) {
+                $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+                $orderUrl = ($owner->role === 'distributor')
+                    ? "{$baseUrl}/distributor/manage-orders/{$order->id}"
+                    : "{$baseUrl}/warehouse/orders/{$order->id}";
+            }
+
             Log::info('Sending WhatsApp to warehouse staff', [
                 'context' => $context,
                 'order_id' => $order->id,
                 'owner_id' => $owner->id,
                 'phone' => $owner->phone,
+                'order_url' => $orderUrl,
+                'use_template' => $useMetaTemplate,
             ]);
-            $personalizedMessage = str_replace('[NAMA_USER]', $owner->name, $message);
-            self::sendText($owner->phone, $personalizedMessage);
+
+            $sent = false;
+            if ($useMetaTemplate) {
+                $components = [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $warehouseName],
+                            ['type' => 'text', 'text' => (string) $order->order_number],
+                            ['type' => 'text', 'text' => $orderUrl],
+                        ],
+                    ],
+                ];
+                $templateResult = self::sendTemplate($owner->phone, $templateName, $languageCode, $components);
+                $sent = !empty($templateResult);
+            }
+
+            // Fallback ke pesan teks jika template gagal atau Meta belum terkonfigurasi
+            if (!$sent) {
+                $personalizedMessage = str_replace('[NAMA_USER]', $owner->name, $message);
+                self::sendText($owner->phone, $personalizedMessage);
+            }
+
             $sentTo[$key] = true;
         }
 
@@ -688,14 +742,43 @@ class WACloudHelper
         if ($warehouse && $warehouse->phone) {
             $key = preg_replace('/\D+/', '', (string) $warehouse->phone);
             if ($key !== '' && ! isset($sentTo[$key])) {
+                try {
+                    $orderUrl = route('warehouse.orders.show', $order);
+                } catch (\Throwable $e) {
+                    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+                    $orderUrl = "{$baseUrl}/warehouse/orders/{$order->id}";
+                }
+
                 Log::info('Sending WhatsApp to hub contact number', [
                     'context' => $context,
                     'order_id' => $order->id,
                     'warehouse_id' => $warehouse->id,
                     'phone' => $warehouse->phone,
+                    'order_url' => $orderUrl,
+                    'use_template' => $useMetaTemplate,
                 ]);
-                $personalizedMessage = str_replace('[NAMA_USER]', 'Admin Hub', $message);
-                self::sendText($warehouse->phone, $personalizedMessage);
+
+                $sent = false;
+                if ($useMetaTemplate) {
+                    $components = [
+                        [
+                            'type' => 'body',
+                            'parameters' => [
+                                ['type' => 'text', 'text' => $warehouseName],
+                                ['type' => 'text', 'text' => (string) $order->order_number],
+                                ['type' => 'text', 'text' => $orderUrl],
+                            ],
+                        ],
+                    ];
+                    $templateResult = self::sendTemplate($warehouse->phone, $templateName, $languageCode, $components);
+                    $sent = !empty($templateResult);
+                }
+
+                if (!$sent) {
+                    $personalizedMessage = str_replace('[NAMA_USER]', 'Admin Hub', $message);
+                    self::sendText($warehouse->phone, $personalizedMessage);
+                }
+
                 $sentTo[$key] = true;
             }
         }
