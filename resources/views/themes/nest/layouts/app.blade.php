@@ -1591,7 +1591,7 @@
             }
 
             function isGridProductInCart(slug) {
-                return $('#add-form-' + slug).hasClass('d-none');
+                return !$('#qty-selector-' + slug).hasClass('d-none');
             }
 
             function syncGridQtyToAddForm(slug) {
@@ -1602,18 +1602,23 @@
             }
 
             function applyGridCartQtyResponse(slug, response) {
-                if (response.line.quantity_input <= 0) {
+                if (!response || !response.line || response.line.quantity_input <= 0) {
+                    $('#qty-selector-' + slug).addClass('d-none');
                     $('#add-form-' + slug).removeClass('d-none');
                     $('#qty-val-' + slug).val(1);
                     $('#add-form-' + slug).find('.js-qty-input').val(1);
                 } else {
+                    $('#qty-selector-' + slug).removeClass('d-none');
                     $('#add-form-' + slug).addClass('d-none');
                     $('#qty-val-' + slug).val(response.line.quantity_input);
                 }
 
-                $('.pro-count.blue').text(response.cart_count);
-                $('.pro-count.white').text(response.cart_count);
-                if (response.mini_cart_html) {
+                if (response && response.cart_count !== undefined) {
+                    $('.pro-count.blue').text(response.cart_count);
+                    $('.pro-count.white').text(response.cart_count);
+                    $('.pro-count').text(response.cart_count);
+                }
+                if (response && response.mini_cart_html) {
                     $('.cart-dropdown-wrap').html(response.mini_cart_html);
                 }
             }
@@ -1772,6 +1777,9 @@
                         buttons.removeClass('disabled').css('opacity', '1');
                         if (response.success) {
                             applyGridCartQtyResponse(slug, response);
+                            if (response.message) {
+                                showShopToast(response.message, response.line && response.line.quantity_input <= 0 ? 'info' : 'success');
+                            }
                         } else {
                             qtyValEl.val(oldVal);
                             showShopToast(response.message || 'Gagal memperbarui jumlah.', 'error');
@@ -1811,7 +1819,8 @@
                     return;
                 }
 
-                const qty = parseGridQty(qtyValEl.val());
+                const rawVal = parseInt(String(qtyValEl.val()).replace(/\D/g, ''), 10);
+                const qty = isNaN(rawVal) ? 0 : rawVal;
                 qtyValEl.val(qty);
 
                 $.ajax({
@@ -1824,6 +1833,9 @@
                     success: function(response) {
                         if (response.success) {
                             applyGridCartQtyResponse(slug, response);
+                            if (response.message) {
+                                showShopToast(response.message, response.line && response.line.quantity_input <= 0 ? 'info' : 'success');
+                            }
                         } else {
                             qtyValEl.val(oldVal);
                             showShopToast(response.message || 'Gagal memperbarui jumlah.', 'error');

@@ -68,11 +68,12 @@
                 </div>
                 <div class="add-cart rg-add-cart-row">
                     @php
-                        $inCartQty = isset($cartItemMap) ? ($cartItemMap[$product->id] ?? 0) : 0;
+                        $cartMap = isset($cartItemMap) ? $cartItemMap : \App\Models\Cart::itemQuantityMapForCurrentShopper();
+                        $inCartQty = $cartMap[$product->id] ?? 0;
                         $displayQty = $inCartQty > 0 ? $inCartQty : 1;
                     @endphp
 
-                    <div class="product-qty-selector d-none" id="qty-selector-{{ $product->slug }}">
+                    <div class="product-qty-selector {{ $inCartQty > 0 ? '' : 'd-none' }}" id="qty-selector-{{ $product->slug }}">
                         <div class="d-flex align-items-center justify-content-between rg-grid-qty-wrap">
                             <a href="javascript:void(0)" class="qty-down-grid" data-slug="{{ $product->slug }}">
                                 <i class="fi-rs-minus" style="font-size: 14px; color: #253D4E; border: 1px solid #253D4E; border-radius: 50%; padding: 4px;"></i>
@@ -92,7 +93,7 @@
                         </div>
                     </div>
 
-                    <form class="add-to-cart-form" id="add-form-{{ $product->slug }}" action="{{ route('cart.store', $product->slug) }}" method="POST"
+                    <form class="add-to-cart-form {{ $inCartQty > 0 ? 'd-none' : '' }}" id="add-form-{{ $product->slug }}" action="{{ route('cart.store', $product->slug) }}" method="POST"
                         @if($product->hasDualUnitOrdering())
                             data-dual-uom="1"
                             data-product-name="{{ $product->display_name }}"

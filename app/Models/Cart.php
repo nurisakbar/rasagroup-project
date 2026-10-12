@@ -156,6 +156,30 @@ class Cart extends Model
         return self::badgeCountFromCarts($query->get());
     }
 
+    public static function itemQuantityMapForCurrentShopper(): array
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $query = static::query()->where('cart_type', 'regular')->with('product');
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $query->where('user_id', \Illuminate\Support\Facades\Auth::id());
+        } elseif (session()->getId()) {
+            $query->where('session_id', session()->getId());
+        } else {
+            return $cached = [];
+        }
+
+        $map = [];
+        foreach ($query->get() as $item) {
+            $map[$item->product_id] = $item->cartQuantityInputValue();
+        }
+
+        return $cached = $map;
+    }
+
     /** Nilai untuk input jumlah di halaman keranjang */
     public function cartQuantityInputValue(): int
     {
