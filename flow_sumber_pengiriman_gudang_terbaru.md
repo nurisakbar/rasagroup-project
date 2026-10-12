@@ -33,7 +33,7 @@ Dokumen standar operasional ini disusun sebagai acuan resmi bagi manajemen, divi
 | :--- | :--- |
 | **BAGIAN I: Alur Sumber Pengiriman Gudang & Layanan Ekspedisi** | • Aturan Khusus Transaksi ($\ge$ Rp 25 Juta)<br/>• Aturan Pemilihan Gudang per Role (Distributor, Outlet, eCommerce)<br/>• Prioritas Pencarian Gudang Terdekat (Hierarki Geografis Wilayah) |
 | **BAGIAN II: Skema Perhitungan Diskon Ketika Pembelian** | • Diskon Level Produk & Promo Katalog<br/>• Diskon Berjenjang Kategori Produk (Syrup/Sauce & Powder/Pulp)<br/>• Diskon Khusus Role Distributor (B2B Price Level ERP QAD)<br/>• Diskon Ongkos Kirim Ekspedisi JNE 20%<br/>• Urutan Perhitungan Total Pembayaran Saat Checkout |
-| **BAGIAN III: Diagram Arsitektur & Distribusi Data Sistem** | • Diagram Alur Batching & Integrasi Sales Order (Gambar Resmi)<br/>• Diagram Flowchart Penentuan Sumber Gudang Pengiriman (Gambar Resmi)<br/>• Matriks Komparasi Integrasi Sistem Berdasarkan Role<br/>• Penjelasan Rinci Alur Distribusi Data per Saluran |
+| **BAGIAN III: Diagram Arsitektur & Distribusi Data Sistem** | • Diagram Alur Batching & Integrasi Sales Order (Gambar Resmi)<br/>• Diagram Flowchart Penentuan Sumber Gudang Pengiriman (Gambar Resmi)<br/>• Penjelasan Rinci Alur Distribusi Data per Saluran |
 
 <div style="page-break-after: always;"></div>
 
@@ -188,23 +188,7 @@ Berikut adalah diagram alur logika penentuan gudang pengiriman berdasarkan nilai
 
 <div style="page-break-after: always;"></div>
 
-### 3. Matriks Komparasi Integrasi Sistem Berdasarkan Role
-
-Tabel berikut merangkum ke mana saja data dialirkan untuk masing-masing tipe pesanan:
-
-| Sistem Terintegrasi | Order Distributor (B2B) | Order Outlet (Mitra Sales) | Order eCommerce & Retail Umum |
-| :--- | :--- | :--- | :--- |
-| **QAD ERP** | **Ya** (Menerima Sales Order B2B & pembaruan batas piutang) | **Tidak** | **Tidak** |
-| **Jubelio Omnichannel** | **Tidak** | **Ya** (Menerima Sales Order & alokasi stok Hub) | **Ya** (Menerima Sales Order & alokasi stok Hub) |
-| **Zoho Books** | **Ya** (Pencatatan Sales Order & Faktur Penjualan B2B) | **Ya** (Pencatatan Faktur Penjualan & Pembayaran) | **Ya** (Pencatatan Faktur Penjualan & Pembayaran) |
-| **Faspay Gateway** | Opsional (Jika pembayaran tunai digital) | **Ya** (Virtual Account BCA/Mandiri/BRI & QRIS) | **Ya** (Virtual Account BCA/Mandiri/BRI & QRIS) |
-| **Gudang Pemenuhan** | DC MM2100, DC Surabaya, DC Medan (Gudang Kode FG) | Hub Bekasi, Hub Surabaya Tidar, Hub Maggiore | Hub Tomang, Hub Surabaya Tidar |
-| **Pilihan Ekspedisi** | Diantar Ketempat & Pengambilan Ditempat | Lion Parcel, Diantar Ketempat (Jabodetabek), Pengambilan Ditempat | JNE Express (Diskon 20%), Lalamove Instant, Diantar Ketempat |
-| **Notifikasi Pelanggan** | WhatsApp Gateway & Email Konfirmasi Order | WhatsApp Gateway & Email Notifikasi | WhatsApp Gateway & Email Notifikasi |
-
----
-
-### 4. Penjelasan Rinci Alur Distribusi Data
+### 3. Penjelasan Rinci Alur Distribusi Data
 
 #### A. Alur Order Distributor (B2B)
 1. **Penerimaan Pesanan:** Pesanan diproses melalui portal B2B dengan harga net distributor yang telah disinkronkan dari penetapan harga khusus di ERP QAD.
