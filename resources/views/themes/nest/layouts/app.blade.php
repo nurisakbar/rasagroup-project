@@ -1389,20 +1389,19 @@
             background: linear-gradient(135deg, #7d2424 0%, #5c1818 100%);
         }
 
-        /* ScrollUp Floating Button */
+        /* ScrollUp Floating Button - Hide when at bottom so it does not cover social media icons */
         #scrollUp {
             z-index: 9998 !important;
-            transition: bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease !important;
+            transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.2s ease !important;
         }
         #scrollUp.at-bottom {
-            bottom: 150px !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
         @media (max-width: 991.98px) {
             #scrollUp {
                 bottom: 80px;
-            }
-            #scrollUp.at-bottom {
-                bottom: 150px !important;
             }
         }
 
@@ -1472,7 +1471,7 @@
 
     <script>
         $(document).ready(function() {
-            // ScrollUp auto-adjust position so it does not overlap footer social icons
+            // ScrollUp auto-hide so it does not overlap footer social icons when at bottom
             function updateScrollUpPosition() {
                 var $scrollUp = $('#scrollUp');
                 if (!$scrollUp.length) return;
@@ -1483,14 +1482,14 @@
 
                 if ($social.length) {
                     var rect = $social[0].getBoundingClientRect();
-                    // Ketika elemen sosial media mendekati atau masuk viewport
-                    if (rect.top <= winHeight + 30) {
+                    // Ketika elemen sosial media mendekati atau masuk viewport bawah
+                    if (rect.top <= winHeight + 10) {
                         isAtBottom = true;
                     }
                 } else {
                     var docHeight = $(document).height();
                     var scrollTop = $(window).scrollTop();
-                    if (docHeight - winHeight - scrollTop < 120) {
+                    if (docHeight - winHeight - scrollTop < 100) {
                         isAtBottom = true;
                     }
                 }
