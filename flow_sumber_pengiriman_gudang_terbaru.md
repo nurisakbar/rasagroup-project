@@ -7,7 +7,7 @@ Dokumen ini menjelaskan alur penentuan lokasi asal pengiriman barang (Gudang/Hub
 ## BAGIAN I: ALUR SUMBER PENGIRIMAN GUDANG & EKSPEDISI
 
 ### 1. Aturan Khusus (Prioritas Utama)
-Sistem memiliki satu aturan *override* mutlak yang mengabaikan semua aturan tipe pengguna:
+Sistem memiliki satu aturan mutlak yang mengabaikan semua aturan tipe pengguna:
 - **Kondisi:** Jika **Total Belanja (Subtotal) ≥ Rp 25.000.000**.
 - **Sumber Pengiriman:** Otomatis dikirim dari Gudang Utama Pusat, yaitu **DC MM2100**.
 
@@ -67,32 +67,32 @@ Setelah sistem mengelompokkan gudang sesuai tipe pengguna di atas, penentuan 1 g
 
 ## BAGIAN II: PERHITUNGAN DISKON KETIKA PEMBELIAN
 
-Sistem e-commerce menerapkan skema diskon transparan bertingkat yang dihitung secara otomatis saat checkout berdasarkan kategori produk, volume pembelian, dan role pengguna.
+Sistem e-commerce menerapkan skema diskon bertingkat yang dihitung secara otomatis saat checkout berdasarkan kategori produk, volume pembelian, dan role pengguna.
 
 ### 1. Diskon Level Produk (Promo Katalog)
-- **Mekanisme:** Jika produk memiliki potongan harga promo langsung (`discount_price < price` atau `compare_price > price`), harga satuan dasar yang masuk ke keranjang belanja adalah `final_price`.
-- Tampilan pada katalog: Menampilkan harga coret (`old-price`) dan harga jual promo aktif.
+- Jika produk memiliki potongan promo langsung dari harga aslinya, harga satuan yang masuk ke keranjang belanja otomatis menggunakan harga promo aktif (`final_price`).
+- Pada tampilan katalog, sistem memperlihatkan harga coret dan harga promo.
 
 ---
 
 ### 2. Diskon Berjenjang Kategori Produk (Tiered Category Discount)
-Skema ini berlaku bagi pembeli bertipe **Outlet** dan **Subdist / Reseller** (Non-Distributor), dihitung oleh `App\Services\DiscountService`.
+Skema diskon ini berlaku bagi pembeli bertipe **Outlet** dan **Subdist / Reseller** (Non-Distributor).
 
 #### A. Pembagian Grup Kategori Produk
-Seluruh produk dalam keranjang belanja dikelompokkan ke dalam 2 grup kategori utama:
+Produk dikelompokkan ke dalam 2 grup kategori:
 1. **Grup 1: Syrup & Sauce**
-   - Kategori yang termasuk: `Syrup`, `SAUCE`.
+   - Kategori: `Syrup` dan `SAUCE`.
 2. **Grup 2: Powder, Pulp & Lainnya**
-   - Kategori yang termasuk: `PULP`, `POWDER`, `COCOA`, `PUREE`, `TEA`, `TOPPING`, `JELLY`, `RAMOE`.
+   - Kategori: `PULP`, `POWDER`, `COCOA`, `PUREE`, `TEA`, `TOPPING`, `JELLY`, `RAMOE`.
 
-#### B. Rumus Konversi Volume ke Karton
-Perhitungan jenjang diskon didasarkan pada akumulasi total botol/pack per grup kategori yang dikonversikan ke satuan karton:
-$$\text{Total Karton per Grup} = \left\lfloor \frac{\sum \text{Quantity Item pada Grup}}{6} \right\rfloor$$
-*(Catatan: 1 karton setara dengan 6 pcs produk standar).*
+#### B. Konversi Volume ke Satuan Karton
+Akumulasi kuantitas produk dalam satu grup dikonversikan ke satuan karton (1 karton = 6 pcs):
+- **Jumlah Karton** = Total botol/pack per grup dibagi 6, lalu dibulatkan ke bawah.
+- Contoh: Membeli 8 botol Syrup dihitung sebagai **1 karton** (sisa 2 botol di bawah 1 karton tidak masuk perhitungan tier karton berikutnya).
 
 #### C. Tabel Persentase Diskon Berjenjang
 
-| Role Pembeli | Akumulasi Pembelian per Grup | Persentase Diskon: Syrup & Sauce | Persentase Diskon: Powder, Pulp & Lainnya |
+| Role Pembeli | Akumulasi Pembelian per Grup | Diskon Syrup & Sauce | Diskon Powder, Pulp & Lainnya |
 | :--- | :--- | :---: | :---: |
 | **Outlet** *(Default)* | **1 – 2 Karton** (6 – 17 pcs) | **2.5%** | **2.0%** |
 | **Outlet** *(Default)* | **3 – 8 Karton** (18 – 53 pcs) | **5.0%** | **4.0%** |
@@ -100,38 +100,33 @@ $$\text{Total Karton per Grup} = \left\lfloor \frac{\sum \text{Quantity Item pad
 | **Outlet** *(Default)* | **≥ 19 Karton** (≥ 114 pcs) | **10.0%** | **6.0%** |
 | **Subdist / Reseller** | **> 50 Karton** (> 300 pcs) | **15.0%** | **8.0%** |
 
-#### D. Rumus Perhitungan Diskon Kategori
-$$\text{Diskon Grup} = \frac{\text{Subtotal Grup} \times \text{Persentase Diskon}}{100}$$
-$$\text{Total Diskon Berjenjang} = \text{Diskon Grup 1 (Syrup \& Sauce)} + \text{Diskon Grup 2 (Powder, Pulp \& Lainnya)}$$
+#### D. Perhitungan Nilai Potongan Diskon
+- **Diskon per Grup** = Subtotal belanja pada grup tersebut dikalikan persentase diskon grup yang tercapai.
+- **Total Diskon Berjenjang** = Diskon Grup 1 (Syrup & Sauce) + Diskon Grup 2 (Powder, Pulp & Lainnya).
 
 ---
 
 ### 3. Diskon Khusus Role Distributor
-Akun bertipe **Distributor** memiliki skema harga B2B khusus yang terintegrasi dengan ERP QAD:
-- **Tidak Menggunakan Diskon Berjenjang Retail:** Distributor tidak memakai skema berjenjang di atas, melainkan menggunakan struktur harga net grosir.
-- **Price Level & Category Discounts:**
-  - Setiap distributor memiliki penetapan `PriceLevel` dan diskon per kategori (`user->categoryDiscounts`).
-  - **Potongan Distributor:** Selisih antara harga katalog dasar (DPP) dengan harga net distributor:
-    $$\text{Potongan Distributor} = \text{Catalog Subtotal DPP} - \text{Retail Subtotal Distributor}$$
-  - Pada rincian checkout, potongan ini dicantumkan sebagai **Diskon Distributor** atau **Diskon Kategori**.
+Akun bertipe **Distributor** menggunakan struktur harga net B2B khusus yang terhubung dengan ERP QAD:
+- Distributor tidak menggunakan skema diskon berjenjang retail di atas.
+- Harga produk mengacu pada master **Price Level** dan/atau **Diskon Kategori Distributor** yang ditetapkan untuk akun distributor tersebut.
+- Selisih antara harga katalog sebelum PPN dengan harga net distributor ditampilkan sebagai **Diskon Distributor** pada rincian ringkasan belanja.
 
 ---
 
 ### 4. Diskon Ongkos Kirim (Shipping Discount)
-- **Ekspedisi JNE:**
-  - Pesanan yang menggunakan layanan **JNE** otomatis mendapatkan **Diskon Ongkir 20%**:
-    $$\text{Ongkos Kirim Akhir} = \text{Tarif Asli JNE} \times 0.80$$
+- **Ekspedisi JNE:** Pesanan yang memilih pengiriman JNE otomatis memperoleh potongan ongkir sebesar **20%** dari tarif normal ekspedisi.
 
 ---
 
-### 5. Simulasi Perhitungan Total Pembayaran (Summary Formula)
+### 5. Urutan Perhitungan Total Pembayaran Saat Checkout
 
-Secara menyeluruh, perhitungan akhir nilai pesanan saat checkout adalah sebagai berikut:
+Alur perhitungan nilai akhir pesanan dari awal hingga pembayaran adalah:
 
-$$\text{Subtotal Produk} = \sum (\text{Harga Satuan} \times \text{Qty})$$
-
-$$\text{DPP (Dasar Pengenaan Pajak)} = \text{Subtotal Produk} - \text{Total Diskon Berjenjang}$$
-
-$$\text{PPN} = \begin{cases} \text{DPP} \times \text{Tarif PPN}, & \text{jika akun kena pajak} \\ 0, & \text{jika non-PPN} \end{cases}$$
-
-$$\text{Total Pembayaran} = \text{DPP} + \text{PPN} + \text{Ongkos Kirim (setelah diskon ongkir)} + \text{Biaya Pembayaran (Payment Fee)}$$
+1. **Subtotal Produk:** Total harga satuan produk dikalikan kuantitas masing-masing item.
+2. **Potongan Diskon:** Total diskon berjenjang (atau diskon distributor) dikurangkan dari subtotal produk.
+3. **DPP (Dasar Pengenaan Pajak):** Nilai subtotal bersih setelah dikurangi potongan diskon.
+4. **PPN:** Dihitung dari nilai DPP (jika profil akun atau perusahaan diatur kena PPN). Jika akun non-PPN, nilai PPN adalah Rp 0.
+5. **Ongkos Kirim:** Biaya pengiriman sesuai ekspedisi yang dipilih (sudah termasuk potongan diskon 20% jika memakai JNE).
+6. **Biaya Pembayaran (Payment Fee):** Biaya admin gateway pembayaran (misal Virtual Account atau QRIS, jika ada).
+7. **Total Pembayaran:** **DPP + PPN + Ongkos Kirim + Biaya Pembayaran**.
