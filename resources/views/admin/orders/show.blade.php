@@ -615,21 +615,18 @@
                         </tbody>
                         <tfoot>
                             @php
-                                $itemDiscountSaved = max(0, $dppBeforeTotal - $dppAfterTotal);
                                 $couponDiscount = (float) ($order->discount_amount ?? 0);
-                                $discountTotal = $itemDiscountSaved + $couponDiscount;
-                                $ppnLabel = \App\Support\TaxAwarePrice::ppnLabel();
-                                $taxPercent = \App\Models\Setting::taxPercent();
-                                $ppnAmount = $taxPercent > 0 ? round($dppAfterTotal * ($taxPercent / 100), 2) : 0;
                             @endphp
                             <tr>
                                 <th colspan="5" class="text-right">Subtotal:</th>
-                                <td class="text-right">Rp {{ number_format($dppBeforeTotal, 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format($dppAfterTotal, 0, ',', '.') }}</td>
                             </tr>
+                            @if($couponDiscount > 0)
                             <tr>
                                 <th colspan="5" class="text-right">Diskon:</th>
-                                <td class="text-right">-Rp {{ number_format($discountTotal, 0, ',', '.') }}</td>
+                                <td class="text-right">-Rp {{ number_format($couponDiscount, 0, ',', '.') }}</td>
                             </tr>
+                            @endif
                             <tr>
                                 <th colspan="5" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
