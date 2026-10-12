@@ -1,43 +1,147 @@
-# LAPORAN STANDAR OPERASIONAL & ARSITEKTUR SISTEM
+# LAPORAN BLUEPRINT DAN ARSITEKTUR PLATFORM RASACONNECT
 
 **PT MULTI CITRA RASA (RASA GROUP)**  
 *Platform E-Commerce & Marketplace Terintegrasi — RasaConnect*
 
 ---
 
-## PANDUAN ALUR SUMBER PENGIRIMAN GUDANG, SKEMA PERHITUNGAN DISKON, DAN DISTRIBUSI DATA PEMESANAN
+## PANDUAN ARSITEKTUR SISTEM, ALUR PENGIRIMAN GUDANG, SKEMA DISKON, DAN DISTRIBUSI DATA
 
 | Informasi Dokumen | Keterangan |
 | :--- | :--- |
-| **Nomor Dokumen** | SOP-RC-LOG-2026-001 |
-| **Judul Dokumen** | Alur Sumber Pengiriman Gudang, Perhitungan Diskon, dan Distribusi Data Sistem |
+| **Nomor Dokumen** | BP-RC-ARCH-2026-001 |
+| **Judul Dokumen** | Laporan Blueprint dan Arsitektur Platform RasaConnect |
 | **Versi / Edisi** | Versi 2.0 (Resmi) |
 | **Tanggal Efektif** | Oktober 2026 |
 | **Status Dokumen** | Berlaku / Disetujui |
-| **Divisi Penyusun** | Departemen Supply Chain, Logistik & Teknologi Informasi |
+| **Tujuan Dokumen** | Memberikan gambaran komprehensif cara kerja platform RasaConnect |
+| **Divisi Penyusun** | Departemen Teknologi Informasi & Rekayasa Sistem (Supply Chain) |
 | **Klasifikasi** | Dokumen Internal Resmi (Confidential) |
 
 <div style="page-break-after: always;"></div>
 
-## RINGKASAN EKSEKUTIF
+## RINGKASAN & TUJUAN DOKUMEN
 
-Dokumen standar operasional ini disusun sebagai acuan resmi bagi manajemen, divisi penjualan (*sales*), operasional pergudangan, rantai pasok (*supply chain*), dan keuangan dalam memahami tata kelola pemrosesan pesanan di platform **RasaConnect**. Dokumen ini mencakup 3 (tiga) pilar utama sistem:
+Dokumen ini disusun sebagai **Blueprint Arsitektur Resmi** yang bertujuan murni untuk memberikan gambaran komprehensif dan mendalam tentang **bagaimana platform RasaConnect bekerja** secara menyeluruh dari hulu ke hilir. Dokumen ini menjabarkan mekanisme internal sistem dalam mengelola transaksi, integrasi antar-sistem, penentuan logistik pergudangan, serta kalkulasi finansial belanja:
 
-1. **Alur Sumber Pengiriman Gudang:** Mekanisme penentuan lokasi asal pengiriman barang (Distribution Center atau Hub Regional) serta pilihan layanan ekspedisi berdasarkan total nilai transaksi dan peran akun (*Distributor*, *Outlet*, atau *eCommerce/Retail*).
-2. **Skema Perhitungan Diskon Pembelian:** Tata cara kalkulasi potongan harga bertingkat, mulai dari diskon level produk, diskon berjenjang kategori produk (Syrup/Sauce dan Powder/Pulp), diskon khusus distributor B2B berbasis ERP QAD, diskon ongkos kirim ekspedisi JNE sebesar 20%, hingga urutan penentuan total pembayaran akhir (termasuk DPP, PPN, dan biaya pembayaran).
-3. **Arsitektur Sistem & Distribusi Data:** Pemetaan integrasi aliran data secara otomatis antara platform RasaConnect dengan sistem pendukung utama, yaitu ERP QAD, Jubelio Omnichannel, Zoho Books, Faspay Payment Gateway, Manajemen Pergudangan (WMS), serta gateway notifikasi WhatsApp dan Email.
-
-## DAFTAR ISI
-
-| Bagian Dokumen | Topik & Pokok Bahasan |
-| :--- | :--- |
-| **BAGIAN I: Alur Sumber Pengiriman Gudang & Layanan Ekspedisi** | • Aturan Khusus Transaksi ($\ge$ Rp 25 Juta)<br/>• Aturan Pemilihan Gudang per Role (Distributor, Outlet, eCommerce)<br/>• Prioritas Pencarian Gudang Terdekat (Hierarki Geografis Wilayah) |
-| **BAGIAN II: Skema Perhitungan Diskon Ketika Pembelian** | • Diskon Level Produk & Promo Katalog<br/>• Diskon Berjenjang Kategori Produk (Syrup/Sauce & Powder/Pulp)<br/>• Diskon Khusus Role Distributor (B2B Price Level ERP QAD)<br/>• Diskon Ongkos Kirim Ekspedisi JNE 20%<br/>• Urutan Perhitungan Total Pembayaran Saat Checkout |
-| **BAGIAN III: Diagram Arsitektur & Distribusi Data Sistem** | • Diagram Alur Batching & Integrasi Sales Order (Gambar Resmi)<br/>• Diagram Flowchart Penentuan Sumber Gudang Pengiriman (Gambar Resmi)<br/>• Penjelasan Rinci Alur Distribusi Data per Saluran |
+1. **Mekanisme Penentuan Lokasi Gudang & Ekspedisi:** Logika cerdas sistem dalam menentukan titik asal pengiriman pesanan (Distribution Center atau Hub Regional) serta pilihan metode pengiriman (**Diantar Ketempat** dan **Pengambilan Ditempat**) berdasarkan skala nominal belanja dan klasifikasi peran akun pengguna.
+2. **Kalkulasi & Skema Finansial Diskon Pembelian:** Logika bisnis perhitungan harga bertingkat, mencakup harga promo katalog, diskon berjenjang volume karton per grup kategori (Syrup/Sauce dan Powder/Pulp), diskon harga net khusus Distributor B2B yang tersinkronisasi dari master Price Level ERP QAD, diskon ongkos kirim ekspedisi JNE 20%, hingga hierarki kalkulasi DPP, PPN, biaya pembayaran, dan total tagihan akhir saat checkout.
+3. **Arsitektur Aliran Data & Integrasi Eksternal:** Alur distribusi data otomatis yang menghubungkan RasaConnect dengan ekosistem enterprise: ERP QAD, Jubelio Omnichannel, Zoho Books, Faspay Payment Gateway, sistem WMS pergudangan, serta gateway notifikasi WhatsApp dan Email.
 
 <div style="page-break-after: always;"></div>
 
-## BAGIAN I: ALUR SUMBER PENGIRIMAN GUDANG & LAYANAN EKSPEDISI
+## DAFTAR ISI
+
+<table style="width: 100%; border: none; margin: 15px 0; font-size: 9.5pt;">
+  <tr style="border-bottom: 1.5px solid #6A1B1B;">
+    <th style="border: none; padding: 6px 0; text-align: left; background: none; color: #6A1B1B; font-size: 10pt;">Pokok Pembahasan & Struktur Dokumen</th>
+    <th style="border: none; padding: 6px 0; text-align: right; background: none; color: #6A1B1B; font-size: 10pt; width: 80px;">Halaman</th>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 5px 0;"><b>RINGKASAN & TUJUAN DOKUMEN</b> ..........................................................................................</td>
+    <td style="border: none; padding: 5px 0; text-align: right; font-weight: bold; color: #6A1B1B;">Hal. 2</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 5px 0;"><b>BAB I: ALUR SUMBER PENGIRIMAN GUDANG & LAYANAN EKSPEDISI</b> .........................</td>
+    <td style="border: none; padding: 5px 0; text-align: right; font-weight: bold; color: #6A1B1B;">Hal. 4</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">1.1 Aturan Khusus Nilai Transaksi (Prioritas Utama: Subtotal &ge; Rp 25.000.000) .......................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 4</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">1.2 Aturan Sumber Gudang & Ekspedisi Berdasarkan Peran Pengguna (Role) ........................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 4</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• A. Akun Distributor (Diantar Ketempat & Pengambilan Ditempat) ................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 4</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• B. Akun Outlet dengan Kode Sales .................................................................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 4</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• C. Akun Outlet / Pembeli Umum Tanpa Kode Sales (eCommerce) .................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 5</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">1.3 Prioritas Pencarian Gudang Terdekat (Hierarki Geografis Wilayah) .................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 5</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 5px 0;"><b>BAB II: SKEMA PERHITUNGAN DISKON KETIKA PEMBELIAN</b> .......................................</td>
+    <td style="border: none; padding: 5px 0; text-align: right; font-weight: bold; color: #6A1B1B;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">2.1 Diskon Level Produk (Promo Katalog) ............................................................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">2.2 Diskon Berjenjang Kategori Produk (Tiered Category Discount) ......................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• A. Pembagian Grup Kategori (Syrup/Sauce & Powder/Pulp) .........................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• B. Konversi Volume ke Satuan Karton (1 Karton = 6 Pcs) .............................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• C. Tabel Persentase Diskon Berjenjang ..........................................................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• D. Perhitungan Nilai Potongan Diskon per Grup .............................................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 6</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">2.3 Diskon Khusus Role Distributor (B2B Price Level ERP QAD) ...........................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 7</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">2.4 Diskon Ongkos Kirim (Ekspedisi JNE 20%) .....................................................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 7</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">2.5 Urutan Perhitungan Total Pembayaran Saat Checkout ...................................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 7</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 5px 0;"><b>BAB III: DIAGRAM ARSITEKTUR & DISTRIBUSI DATA SISTEM</b> .......................................</td>
+    <td style="border: none; padding: 5px 0; text-align: right; font-weight: bold; color: #6A1B1B;">Hal. 8</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">3.1 Diagram Alur Batching & Integrasi Sales Order (Gambar Resmi) .....................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 8</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">3.2 Diagram Flowchart Penentuan Sumber Gudang Pengiriman (Gambar Resmi) ....................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 9</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 3px 0 3px 15px; color: #444;">3.3 Penjelasan Rinci Alur Distribusi Data Pesanan ................................................................</td>
+    <td style="border: none; padding: 3px 0; text-align: right; color: #555;">Hal. 10</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• A. Alur Order Distributor B2B (QAD, WMS, Zoho Books) ...............................................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 10</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• B. Alur Order Outlet dengan Kode Sales (Jubelio, Hub Regional, Zoho) ........................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 10</td>
+  </tr>
+  <tr>
+    <td style="border: none; padding: 2px 0 2px 25px; color: #666;">• C. Alur Order eCommerce & Retail Umum (Jubelio, Ekspedisi API, Zoho) ......................</td>
+    <td style="border: none; padding: 2px 0; text-align: right; color: #666;">Hal. 11</td>
+  </tr>
+</table>
+
+<div style="page-break-after: always;"></div>
+
+## BAB I: ALUR SUMBER PENGIRIMAN GUDANG & LAYANAN EKSPEDISI
 
 ### 1. Aturan Khusus Nilai Transaksi (Prioritas Utama)
 Sistem menerapkan satu aturan mutlak berprioritas tertinggi yang mengabaikan tipe pengguna apa pun:
@@ -96,9 +200,9 @@ Setelah sistem mengelompokkan kandidat gudang sesuai peran akun pemesan, pemilih
 4. **Provinsi (Province):** Apabila belum ditemukan, mencari gudang yang berada di Provinsi yang sama.
 5. **Fallback (Pilihan Cadangan):** Jika tidak ada gudang yang satu provinsi, sistem menunjuk gudang aktif sesuai perannya dengan prioritas default ke **DC MM2100**.
 
----
+<div style="page-break-after: always;"></div>
 
-## BAGIAN II: SKEMA PERHITUNGAN DISKON KETIKA PEMBELIAN
+## BAB II: SKEMA PERHITUNGAN DISKON KETIKA PEMBELIAN
 
 Sistem e-commerce menerapkan skema diskon bertingkat yang dihitung secara otomatis saat proses checkout berdasarkan kategori produk, volume pembelian, dan profil pengguna.
 
@@ -162,9 +266,9 @@ Alur perhitungan nilai akhir pesanan dari awal hingga pembayaran adalah:
 6. **Biaya Pembayaran (Payment Fee):** Biaya administrasi gateway pembayaran (misal Virtual Account atau QRIS, jika ada).
 7. **Total Pembayaran:** **DPP + PPN + Ongkos Kirim + Biaya Pembayaran**.
 
----
+<div style="page-break-after: always;"></div>
 
-## BAGIAN III: DIAGRAM ARSITEKTUR & DISTRIBUSI DATA SISTEM
+## BAB III: DIAGRAM ARSITEKTUR & DISTRIBUSI DATA SISTEM
 
 Bagian ini memetakan bagaimana data pesanan dari platform **RasaConnect** didistribusikan ke berbagai sistem terintegrasi (ERP, Omnichannel, Pembayaran, Logistik, dan Notifikasi) berdasarkan tipe pesanan dan peran pengguna (*role*).
 
