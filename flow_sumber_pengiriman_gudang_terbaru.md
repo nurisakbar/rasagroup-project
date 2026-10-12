@@ -137,24 +137,27 @@ Alur perhitungan nilai akhir pesanan dari awal hingga pembayaran adalah:
 
 Bagian ini memetakan bagaimana data pesanan dari platform **RasaConnect** didistribusikan ke berbagai sistem terintegrasi (ERP, Omnichannel, Pembayaran, Logistik, dan Notifikasi) berdasarkan tipe pesanan dan peran pengguna (role).
 
-### 1. Diagram Alur Pemrosesan Pesanan (End-to-End Flow)
+### 1. Diagram Alur Batching & Sales Order
 
-Berikut adalah diagram visual alur pemrosesan pesanan dari saat transaksi dibuat hingga pengiriman:
+Berikut adalah diagram alur resmi integrasi pemesanan (*Flow Batching & Sales Order*) pada platform RasaConnect:
 
-| Tahap Pemrosesan | Alur Order Distributor (B2B) | Alur Order Outlet (Mitra Sales) | Alur Order eCommerce & Retail Umum |
-| :--- | :--- | :--- | :--- |
-| **1. Kanal Pemesanan** | Portal Khusus Distributor B2B | Katalog Web (Memasukkan Kode Sales) | Katalog Web (Pembelian Langsung / Reseller) |
-| **2. Alokasi Gudang** | Distribution Center Pusat/Cabang<br/>*(DC MM2100, DC Surabaya, DC Medan)* | Hub Regional Terdekat<br/>*(Hub Bekasi, Surabaya Tidar, Maggiore)* | Hub eCommerce Terdekat<br/>*(Hub Tomang, Hub Surabaya Tidar)* |
-| **3. Mekanisme Pembayaran** | Pembayaran Tempo (*Term of Payment*) atau Transfer Bank | Pembayaran Online Faspay<br/>*(Virtual Account Bank / QRIS)* | Pembayaran Online Faspay<br/>*(Virtual Account Bank / QRIS)* |
-| **4. Integrasi Sistem ERP / Order** | **QAD ERP Enterprise**<br/>*(Mencatat Sales Order B2B & Update Limit Kredit Piutang)* | **Jubelio Omnichannel**<br/>*(Mencatat Sales Order Retail & Potong Stok Hub)* | **Jubelio Omnichannel**<br/>*(Mencatat Sales Order Retail & Potong Stok Hub)* |
-| **5. Operasional Gudang (WMS)** | WMS DC Pusat/Cabang<br/>*(Pengecekan masa simpan/shelf-life batch minimal 9 bulan)* | WMS Hub Regional<br/>*(Penyiapan dan pengemasan pesanan)* | WMS Hub Regional<br/>*(Pengemasan paket & penerbitan label resi)* |
-| **6. Pencatatan Akuntansi** | **Zoho Books**<br/>*(Penerbitan faktur penjualan resmi B2B)* | **Zoho Books**<br/>*(Penerbitan faktur penjualan lunas)* | **Zoho Books**<br/>*(Penerbitan faktur penjualan lunas)* |
-| **7. Layanan Pengiriman** | Armada Truk DC / Pengambilan Mandiri di Gudang (*Self Pickup*) | Lion Parcel, Kurir Toko Jabodetabek, atau Pengambilan Mandiri | Ekspedisi Terintegrasi: JNE Express (Diskon 20%) & Lalamove Instant |
-| **8. Notifikasi Pelanggan** | Konfirmasi pesanan & invoice tagihan via WhatsApp & Email | Konfirmasi pesanan & bukti pembayaran via WhatsApp & Email | Konfirmasi lunas & resi pelacakan via WhatsApp & Email |
+![Diagram Alur Batching & Sales Order](./untitled%20folder/WhatsApp%20Image%202026-10-07%20at%2007.41.09.jpeg)
+
+*Diagram 1: Alur Pemesanan dan Integrasi Sistem (Jalur Distributor & Outlet melalui MWS/QAD vs Jalur E-commerce melalui Jubelio).*
 
 ---
 
-### 2. Matriks Komparasi Integrasi Sistem Berdasarkan Role
+### 2. Diagram Flowchart Penentuan Sumber Gudang Pengiriman
+
+Berikut adalah diagram alur logika penentuan gudang pengiriman berdasarkan nilai belanja, peran akun, dan kedekatan wilayah:
+
+![Diagram Alur Penentuan Gudang Pengiriman](./untitled%20folder/WhatsApp%20Image%202026-10-09%20at%2008.58.37.jpeg)
+
+*Diagram 2: Flowchart Logika Penentuan 1 Gudang Pengiriman.*
+
+---
+
+### 3. Matriks Komparasi Integrasi Sistem Berdasarkan Role
 
 Tabel berikut merangkum ke mana saja data dialirkan untuk masing-masing tipe pesanan:
 
@@ -170,7 +173,7 @@ Tabel berikut merangkum ke mana saja data dialirkan untuk masing-masing tipe pes
 
 ---
 
-### 3. Penjelasan Rinci Alur Distribusi Data
+### 4. Penjelasan Rinci Alur Distribusi Data
 
 #### A. Alur Order Distributor (B2B)
 1. **Penerimaan Pesanan:** Pesanan diproses melalui portal B2B dengan harga net distributor yang telah disinkronkan dari penetapan harga khusus di ERP QAD.
