@@ -44,6 +44,7 @@ class Product extends Model
         'sync_sources',
         'created_by',
         'alternate_codes',
+        'zoho_item_id',
     ];
 
     protected $casts = [

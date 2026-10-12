@@ -146,6 +146,86 @@ class ZohoService
     }
 
     /**
+     * Mark a draft invoice as sent in Zoho Books
+     * Endpoint: POST /books/v3/invoices/{invoice_id}/status/sent
+     * Documentation: https://www.zoho.com/books/api/v3/invoices/#mark-an-invoice-as-sent
+     */
+    public function markInvoiceAsSent(string $invoiceId): bool
+    {
+        $response = $this->client()->post("{$this->apiDomain}/books/v3/invoices/{$invoiceId}/status/sent");
+
+        if (!$response->successful() || $response->json('code') !== 0) {
+            $msg = $response->json('message') ?? $response->body();
+            // Idempotent: If invoice is already marked as sent or paid, treat as success
+            if (str_contains(strtolower($msg), 'already') || str_contains(strtolower($msg), 'sent') || str_contains(strtolower($msg), 'paid')) {
+                Log::info("Zoho: Invoice {$invoiceId} is already marked as sent/processed.");
+                return true;
+            }
+
+            Log::error("Zoho: Failed to mark invoice {$invoiceId} as sent", [
+                'status' => $response->status(),
+                'response' => $response->json() ?? $response->body()
+            ]);
+
+            throw new \Exception("Failed to mark Invoice {$invoiceId} as sent in Zoho: {$msg}");
+        }
+
+        Log::info("Zoho: Successfully marked invoice {$invoiceId} as sent.");
+        return true;
+    }
+
+    /**
+     * Open a draft Sales Order in Zoho Books
+     * Endpoint: POST /books/v3/salesorders/{salesorder_id}/status/open
+     */
+    public function openSalesOrder(string $salesorderId): bool
+    {
+        $response = $this->client()->post("{$this->apiDomain}/books/v3/salesorders/{$salesorderId}/status/open");
+
+        if (!$response->successful() || $response->json('code') !== 0) {
+            $msg = $response->json('message') ?? $response->body();
+            if (str_contains(strtolower($msg), 'already') || str_contains(strtolower($msg), 'open')) {
+                Log::info("Zoho: Sales Order {$salesorderId} is already open.");
+                return true;
+            }
+
+            Log::error("Zoho: Failed to open Sales Order {$salesorderId}", [
+                'status' => $response->status(),
+                'response' => $response->json() ?? $response->body()
+            ]);
+
+            throw new \Exception("Failed to open Sales Order {$salesorderId} in Zoho: {$msg}");
+        }
+
+        Log::info("Zoho: Successfully opened Sales Order {$salesorderId}.");
+        return true;
+    }
+
+    /**
+     * Get Invoice details from Zoho Books
+     */
+    public function getInvoice(string $invoiceId): ?array
+    {
+        $response = $this->client()->get("{$this->apiDomain}/books/v3/invoices/{$invoiceId}");
+        if ($response->successful()) {
+            return $response->json('invoice');
+        }
+        return null;
+    }
+
+    /**
+     * Get Sales Order details from Zoho Books
+     */
+    public function getSalesOrder(string $salesorderId): ?array
+    {
+        $response = $this->client()->get("{$this->apiDomain}/books/v3/salesorders/{$salesorderId}");
+        if ($response->successful()) {
+            return $response->json('salesorder');
+        }
+        return null;
+    }
+
+    /**
      * Create Order -> Invoice -> Payment flow
      */
     public function createOrderToPaymentFlow(Order $order)
@@ -155,71 +235,94 @@ class ZohoService
             
             $customerId = $this->resolveCustomer($order->user);
             
-            // 1. Create Sales Order
-            $lineItems = [];
-            foreach ($order->items as $item) {
-                $itemId = $this->resolveItem($item->product);
-                $lineItems[] = [
-                    'item_id' => $itemId,
-                    'quantity' => $item->quantity,
-                    'rate' => $item->price,
-                ];
+            // 1. Resolve or Create Sales Order
+            $salesorderId = $order->zoho_salesorder_id;
+            $zohoLineItems = [];
+
+            if (!$salesorderId) {
+                $lineItems = [];
+                foreach ($order->items as $item) {
+                    $itemId = $this->resolveItem($item->product);
+                    $lineItems[] = [
+                        'item_id' => $itemId,
+                        'quantity' => $item->quantity,
+                        'rate' => $item->price,
+                    ];
+                }
+
+                $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", [
+                    'customer_id' => $customerId,
+                    'reference_number' => $order->order_number,
+                    'date' => $order->created_at->format('Y-m-d'),
+                    'line_items' => $lineItems,
+                    'custom_fields' => [
+                        ['api_name' => 'cf_source', 'value' => 'rasaconnect']
+                    ],
+                    'shipping_charge' => $order->shipping_cost ?? 0,
+                ]);
+
+                if (!$soResponse->successful()) {
+                    throw new \Exception('Failed to create Sales Order: ' . $soResponse->body());
+                }
+
+                $salesorderId = $soResponse->json('salesorder.salesorder_id');
+                $zohoLineItems = $soResponse->json('salesorder.line_items');
+                $order->update(['zoho_salesorder_id' => $salesorderId]);
+
+                // Open SO
+                $this->openSalesOrder($salesorderId);
+            } else {
+                // If invoice is not created yet, retrieve SO line items
+                if (!$order->zoho_invoice_id) {
+                    $soData = $this->getSalesOrder($salesorderId);
+                    $zohoLineItems = $soData['line_items'] ?? [];
+                }
             }
 
-            // Create SO
-            $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", [
-                'customer_id' => $customerId,
-                'reference_number' => $order->order_number,
-                'date' => $order->created_at->format('Y-m-d'),
-                'line_items' => $lineItems,
-                'custom_fields' => [
-                    ['api_name' => 'cf_source', 'value' => 'Website/App']
-                ],
-                'shipping_charge' => $order->shipping_cost ?? 0,
-            ]);
+            // 2. Resolve or Create Invoice
+            $invoiceId = $order->zoho_invoice_id;
+            $invoiceBalance = 0.0;
 
-            if (!$soResponse->successful()) {
-                throw new \Exception('Failed to create Sales Order: ' . $soResponse->body());
+            if (!$invoiceId) {
+                $invoiceLineItems = [];
+                foreach ($zohoLineItems as $zItem) {
+                    $invoiceLineItems[] = [
+                        'item_id' => $zItem['item_id'],
+                        'salesorder_item_id' => $zItem['line_item_id'] ?? null,
+                        'quantity' => $zItem['quantity'],
+                        'rate' => $zItem['rate'],
+                    ];
+                }
+
+                $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", [
+                    'customer_id' => $customerId,
+                    'reference_number' => $order->order_number,
+                    'line_items' => $invoiceLineItems,
+                    'shipping_charge' => $order->shipping_cost ?? 0,
+                ]);
+
+                if (!$invResponse->successful()) {
+                    throw new \Exception('Failed to create Invoice: ' . $invResponse->body());
+                }
+
+                $invoiceId = $invResponse->json('invoice.invoice_id');
+                $invoiceBalance = (float) $invResponse->json('invoice.balance');
+                $order->update(['zoho_invoice_id' => $invoiceId]);
+
+                // Mark Invoice as Sent
+                $this->markInvoiceAsSent($invoiceId);
+            } else {
+                $invData = $this->getInvoice($invoiceId);
+                $invoiceBalance = (float) ($invData['balance'] ?? $order->total_amount);
+
+                // Ensure invoice is marked as sent if it is still in draft
+                if (($invData['status'] ?? '') === 'draft') {
+                    $this->markInvoiceAsSent($invoiceId);
+                }
             }
-
-            $salesorderId = $soResponse->json('salesorder.salesorder_id');
-            $zohoLineItems = $soResponse->json('salesorder.line_items');
-            $order->update(['zoho_salesorder_id' => $salesorderId]);
-
-            // Open SO
-            $this->client()->post("{$this->apiDomain}/books/v3/salesorders/{$salesorderId}/status/open");
-
-            // 2. Create Invoice
-            $invoiceLineItems = [];
-            foreach ($zohoLineItems as $zItem) {
-                $invoiceLineItems[] = [
-                    'item_id' => $zItem['item_id'],
-                    'salesorder_item_id' => $zItem['line_item_id'],
-                    'quantity' => $zItem['quantity'],
-                    'rate' => $zItem['rate'],
-                ];
-            }
-
-            $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", [
-                'customer_id' => $customerId,
-                'reference_number' => $order->order_number,
-                'line_items' => $invoiceLineItems,
-                'shipping_charge' => $order->shipping_cost ?? 0,
-            ]);
-
-            if (!$invResponse->successful()) {
-                throw new \Exception('Failed to create Invoice: ' . $invResponse->body());
-            }
-
-            $invoiceId = $invResponse->json('invoice.invoice_id');
-            $invoiceBalance = $invResponse->json('invoice.balance');
-            $order->update(['zoho_invoice_id' => $invoiceId]);
-
-            // Sent Invoice
-            $this->client()->post("{$this->apiDomain}/books/v3/invoices/{$invoiceId}/status/sent");
 
             // 3. Create Payment
-            if ($order->total_amount > 0) {
+            if (!$order->zoho_payment_id && $order->total_amount > 0) {
                 // If payment method exists, maybe map to Zoho payment_mode, fallback to banktransfer
                 $mode = str_contains(strtolower($order->payment_method), 'va') ? 'banktransfer' : 'cash';
                 if ($order->payment_method === 'faspay_qris') $mode = 'others';
@@ -232,7 +335,7 @@ class ZohoService
                     'invoices' => [
                         [
                             'invoice_id' => $invoiceId,
-                            'amount_applied' => min($invoiceBalance, $order->total_amount)
+                            'amount_applied' => min($invoiceBalance, (float) $order->total_amount)
                         ]
                     ],
                     'reference_number' => $order->order_number

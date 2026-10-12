@@ -88,6 +88,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'sales_code',
         'is_potential_distributor',
         'ar_balance_last_sync_at',
+        'zoho_customer_id',
     ];
 
     protected static function boot()

@@ -81,6 +81,9 @@ class Order extends Model
         'wms_so_status',
         'wms_so_synced_at',
         'wms_so_failure_reason',
+        'zoho_salesorder_id',
+        'zoho_invoice_id',
+        'zoho_payment_id',
     ];
 
     protected $casts = [
@@ -118,16 +121,21 @@ class Order extends Model
 
         static::creating(function (Order $order) {
             // Auto approve TOP jika AR Outstanding + TOP existing + order baru masih di bawah limit kredit
-            if ($order->payment_method === 'term_of_payment' && !$order->finance_approved) {
-                $user = $order->user ?? \App\Models\User::find($order->user_id);
-                if ($user && $user->credit_limit !== null) {
-                    $accumulatedDebt = $user->getAccumulatedTopDebt();
-                    if (($accumulatedDebt + (float)$order->total_amount) <= (float)$user->credit_limit) {
-                        $order->finance_approved = true;
-                        $order->finance_approved_at = now();
-                        $order->finance_approved_by = null;
-                        $order->payment_status = 'term_of_payment';
-                        $order->auto_approved_at_creation = true; // Flag for after-creation notification
+            if ($order->payment_method === 'term_of_payment') {
+                if ($order->finance_approved) {
+                    $order->payment_status = 'term_of_payment';
+                    $order->auto_approved_at_creation = true;
+                } else {
+                    $user = $order->user ?? \App\Models\User::find($order->user_id);
+                    if ($user && $user->credit_limit !== null) {
+                        $accumulatedDebt = $user->getAccumulatedTopDebt();
+                        if (($accumulatedDebt + (float)$order->total_amount) <= (float)$user->credit_limit) {
+                            $order->finance_approved = true;
+                            $order->finance_approved_at = now();
+                            $order->finance_approved_by = null;
+                            $order->payment_status = 'term_of_payment';
+                            $order->auto_approved_at_creation = true; // Flag for after-creation notification
+                        }
                     }
                 }
             }
