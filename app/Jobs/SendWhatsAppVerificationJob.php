@@ -33,7 +33,7 @@ class SendWhatsAppVerificationJob implements ShouldQueue
     {
         try {
             $templateName = env('META_WA_OTP_TEMPLATE', 'otp_register');
-            $languageCode = env('META_WA_TEMPLATE_LANG', 'en');
+            $languageCode = env('META_WA_TEMPLATE_LANG', 'id');
             
             $components = [
                 [
