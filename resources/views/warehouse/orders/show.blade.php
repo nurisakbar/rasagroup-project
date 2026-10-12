@@ -152,8 +152,14 @@
                         <tr>
                             <th width="30%">QAD Customer Code</th>
                             <td>
-                                @if($order->user->qad_customer_code)
-                                    <span class="label label-default" style="font-size: 14px;">{{ $order->user->qad_customer_code }}</span>
+                                @php
+                                    $qadCustCode = $order->resolveQadCustomerCode();
+                                @endphp
+                                @if($qadCustCode)
+                                    <span class="label label-default" style="font-size: 14px;">{{ $qadCustCode }}</span>
+                                    @if($qadCustCode === 'HUB00002')
+                                        <small class="text-muted">(Hub Bekasi)</small>
+                                    @endif
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif

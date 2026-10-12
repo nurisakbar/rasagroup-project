@@ -649,23 +649,26 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         $user = $this->ensureQadCustomerReady($qadService, $user, $address);
-        if (! $user || ! $user->qad_customer_code) {
+        $customerCode = $this->resolveSalesOrderCustomerCode($user);
+        if (! $user || $customerCode === '') {
             return ['ok' => false, 'error' => 'Customer QAD tidak siap (kode pelanggan kosong setelah sync).'];
         }
 
         $user->refresh();
 
         $orderAddress = $this->order->address;
-        if ($orderAddress) {
+        if ($orderAddress && $customerCode !== 'HUB00002') {
             QadBusinessRelationHeadOffice::patch(
                 $qadService,
                 $user,
-                $user->qad_customer_code,
+                $customerCode,
                 $this->buildOrderAddressSnapshot($orderAddress)
             );
         }
 
-        $createCustomerDataResponse = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
+        $createCustomerDataResponse = $customerCode !== 'HUB00002'
+            ? $qadService->createCustomerData(['customerCode' => $customerCode])
+            : ['message' => 'Generic HUB00002 customer used for Hub Bekasi, createCustomerData skipped.'];
 
         $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
         $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);
@@ -701,7 +704,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $base = [
             'ok' => true,
             'qid_sales_order_number' => $qidSalesOrderNumber,
-            'customer_code' => $user->qad_customer_code,
+            'customer_code' => $customerCode,
             'create_customer_data_response' => $createCustomerDataResponse,
             'endpoint' => $endpoint,
             'method' => 'POST',
