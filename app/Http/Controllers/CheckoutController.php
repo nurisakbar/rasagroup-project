@@ -1135,7 +1135,7 @@ class CheckoutController extends Controller
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,
                 'company' => $user->getFaspayCompany(),
-                'payment_status' => 'pending',
+                'payment_status' => ($request->payment_method === 'term_of_payment' && $isFinanceApproved) ? 'term_of_payment' : 'pending',
                 'order_status' => 'pending',
                 'notes' => $orderNotes,
                 'points_earned' => $pointsEarned,
@@ -1255,7 +1255,7 @@ class CheckoutController extends Controller
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
                 Log::info('Checkout Debug: TOP selected, skipping gateway.');
                 
-                if (!empty($order->auto_approved_at_creation)) {
+                if (!empty($order->auto_approved_at_creation) || $isFinanceApproved) {
                     Log::info('Checkout Debug: TOP order auto approved, triggering hub notification and sync jobs.', ['order_id' => $order->id]);
                     $order->notifyHubAfterFinanceApproval();
                 }

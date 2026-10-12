@@ -549,7 +549,7 @@
                             @foreach($order->items as $item)
                                 @php
                                     $priceBefore = $item->catalogUnitPrice() * $item->displayPriceMultiplier();
-                                    $priceAfter = $item->orderedPriceWithTax() * $item->displayPriceMultiplier();
+                                    $priceAfter = $item->orderedPriceWithTax();
                                     $qtyDisplay = max(1, $item->displayQuantity());
                                     $lineBefore = $priceBefore * $qtyDisplay;
                                     $lineAfter = $priceAfter * $qtyDisplay;

@@ -33,10 +33,14 @@ class CancelUnpaidOrders extends Command
     {
         $timeLimit = Carbon::now()->subMinutes(30);
 
-        // Find orders created before $timeLimit and still pending payment
+        // Find orders created before $timeLimit and still pending payment (exclude Term of Payment / TOP)
         $orders = Order::where('payment_status', 'pending')
                        ->where('order_status', 'pending')
                        ->where('created_at', '<', $timeLimit)
+                       ->where(function ($query) {
+                           $query->whereNull('payment_method')
+                                 ->orWhere('payment_method', '!=', 'term_of_payment');
+                       })
                        ->get();
 
         $count = 0;
@@ -47,11 +51,14 @@ class CancelUnpaidOrders extends Command
                 if (! ShopFulfillment::assumeStockReady()) {
                     // Return stock to warehouse
                     foreach ($order->items as $item) {
-                        $stock = WarehouseStock::where('warehouse_id', $order->warehouse_id)
-                            ->where('product_id', $item->product_id)
-                            ->first();
-                        if ($stock) {
-                            $stock->increment('stock', $item->quantity);
+                        $warehouseId = $order->source_warehouse_id ?? $order->warehouse_id;
+                        if ($warehouseId) {
+                            $stock = WarehouseStock::where('warehouse_id', $warehouseId)
+                                ->where('product_id', $item->product_id)
+                                ->first();
+                            if ($stock) {
+                                $stock->increment('stock', $item->quantity);
+                            }
                         }
                     }
                 }
