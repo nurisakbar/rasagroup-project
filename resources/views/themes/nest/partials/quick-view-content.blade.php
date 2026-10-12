@@ -84,7 +84,9 @@
                     <li class="mb-5">Brand: <span class="text-brand">{{ $product->brand->name ?? '-' }}</span></li>
                     <li class="mb-5">Kategori: <span class="text-brand">{{ $product->category->name ?? '-' }}</span></li>
                     <li class="mb-5">Berat: <span class="text-brand">{{ $product->formatted_weight }}</span></li>
-                    <li class="mb-5">Stok: <span class="text-brand">{{ $product->current_stock }}</span></li>
+                    @auth
+                        <li class="mb-5">Stok: <span class="text-brand">{{ $product->current_stock }}</span></li>
+                    @endauth
                 </ul>
             </div>
         </div>

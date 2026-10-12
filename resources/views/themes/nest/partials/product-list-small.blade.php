@@ -24,7 +24,9 @@
             @if($unitLabel)
                 <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
             @endif
-            <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
+            @auth
+                <span class="font-small ml-10 text-success" style="font-size: 11px;">Stok: {{ $product->current_stock }}</span>
+            @endauth
             <br>
             @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
                 <span class="old-price">{{ number_format($product->price * $multiplier, 0, ',', '.') }}</span>

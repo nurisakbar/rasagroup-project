@@ -50,18 +50,22 @@
 
                 <div class="border-top pt-25 mb-25">
                     <h5 class="mb-15">Komposisi</h5>
-                    @if($selectedHub)
-                        <p class="font-sm text-muted mb-15 mb-0">Stok tersedia di hub: <strong class="text-body">{{ $selectedHub->name }}</strong></p>
-                    @else
-                        <p class="font-sm text-muted mb-15 mb-0">Pilih hub pengirim di situs untuk menampilkan stok per produk di hub tersebut.</p>
-                    @endif
+                    @auth
+                        @if($selectedHub)
+                            <p class="font-sm text-muted mb-15 mb-0">Stok tersedia di hub: <strong class="text-body">{{ $selectedHub->name }}</strong></p>
+                        @else
+                            <p class="font-sm text-muted mb-15 mb-0">Pilih hub pengirim di situs untuk menampilkan stok per produk di hub tersebut.</p>
+                        @endif
+                    @endauth
                     <div class="table-responsive border-radius-10 border mt-15">
                         <table class="table table-striped mb-0 font-sm">
                             <thead>
                                 <tr>
                                     <th class="ps-4">Produk</th>
                                     <th width="88" class="text-center">Qty</th>
-                                    <th width="110" class="text-center">Stok</th>
+                                    @auth
+                                        <th width="110" class="text-center">Stok</th>
+                                    @endauth
                                     <th width="128" class="text-end pe-4">Subtotal</th>
                                 </tr>
                             </thead>
@@ -83,6 +87,7 @@
                                             @endif
                                         </td>
                                         <td class="text-center">{{ number_format($detail->jumlah) }}</td>
+                                        @auth
                                         <td class="text-center">
                                             @if($p && $selectedHub)
                                                 @if($stockAvail >= $needQty)
@@ -101,13 +106,14 @@
                                                 <span class="text-muted">—</span>
                                             @endif
                                         </td>
+                                        @endauth
                                         <td class="text-end pe-4">Rp {{ number_format($sub, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             <tfoot>
                                 <tr class="fw-bold bg-light">
-                                    <td colspan="3" class="ps-4 text-end">Estimasi total paket</td>
+                                    <td colspan="{{ auth()->check() ? 3 : 2 }}" class="ps-4 text-end">Estimasi total paket</td>
                                     <td class="text-end pe-4 text-brand">Rp {{ number_format($menu->bundledPrice(), 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>

@@ -34,7 +34,9 @@
                         {{ $product->brand->name ?? 'Tanpa Brand' }}
                     @endif
                 </span>
-                <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
+                @auth
+                    <span class="font-small ml-10 text-success">Stok: {{ $product->current_stock }}</span>
+                @endauth
             </div>
             @if(!empty($showPromoPeriod) && $product->relationLoaded('promos') && $product->promos->isNotEmpty())
                 @php
