@@ -704,8 +704,7 @@
                         </div>
                     </div>
                     
-                    <div class="divider-2 mt-20 mb-20"></div>
-                    <input type="hidden" name="sales_code" value="{{ request('sales_code', Auth::user()?->sales_code) }}">
+                    <input type="hidden" name="sales_code" value="{{ request('sales_code') }}">
 
 
                     

@@ -75,15 +75,29 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group mb-20">
-                                            <label class="form-label-custom">Nama Sales</label>
-                                            <select name="sales_code" id="sales_code" class="form-control custom-input select2" style="width: 100%;">
-                                                <option value=""></option>
-                                                @foreach($salesList as $salesUser)
-                                                    <option value="{{ $salesUser->sales_code }}" {{ old('sales_code', Auth::user()?->sales_code) == $salesUser->sales_code ? 'selected' : '' }}>
-                                                        {{ $salesUser->sales_code }} - {{ $salesUser->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label class="form-label-custom mb-0">Nama Sales</label>
+                                                <button type="button" 
+                                                        id="btn-clear-sales" 
+                                                        class="btn btn-sm py-0 px-2 rounded-pill font-xs text-danger" 
+                                                        style="border: 1px solid #fecaca; background-color: #fff1f1; display: none; align-items: center; gap: 4px; font-weight: 600; cursor: pointer;"
+                                                        title="Kosongkan nama sales">
+                                                    <i class="fi-rs-cross-small"></i> Hapus Sales
+                                                </button>
+                                            </div>
+                                            <div class="position-relative">
+                                                <select name="sales_code" id="sales_code" class="form-control custom-input select2" style="width: 100%;">
+                                                    <option value="" {{ empty(old('sales_code', Auth::user()?->sales_code)) ? 'selected' : '' }}>-- Tanpa Sales (Kosongkan) --</option>
+                                                    @foreach($salesList as $salesUser)
+                                                        <option value="{{ $salesUser->sales_code }}" {{ old('sales_code', Auth::user()?->sales_code) == $salesUser->sales_code ? 'selected' : '' }}>
+                                                            {{ $salesUser->sales_code }} - {{ $salesUser->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <small class="form-text text-muted font-xs mt-1 d-block">
+                                                Pilih <em>-- Tanpa Sales (Kosongkan) --</em> atau klik tombol <strong>✕</strong> / <strong>Hapus Sales</strong> jika tidak ingin menggunakan sales.
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -150,7 +164,8 @@
         background-color: #F8F9FA !important;
         display: flex !important;
         align-items: center !important;
-        padding: 0 20px !important;
+        padding: 0 45px 0 20px !important;
+        position: relative !important;
         transition: all 0.3s ease;
     }
     body .buyer-profile-edit .select2-container--open .select2-selection--single,
@@ -161,9 +176,13 @@
     }
     body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__rendered {
         padding-left: 0 !important;
+        padding-right: 25px !important;
         color: #4F5D77 !important;
         line-height: normal !important;
         width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__arrow {
         height: 100% !important;
@@ -171,30 +190,107 @@
         display: flex !important;
         align-items: center !important;
         top: 0 !important;
+        position: absolute !important;
+    }
+    /* Select2 Clear Button Styling */
+    body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__clear {
+        position: absolute !important;
+        right: 38px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 22px !important;
+        height: 22px !important;
+        border-radius: 50% !important;
+        background-color: #fee2e2 !important;
+        color: #ef4444 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 15px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 5 !important;
+        line-height: 1 !important;
+        transition: all 0.2s ease !important;
+    }
+    body .buyer-profile-edit .select2-container .select2-selection--single .select2-selection__clear:hover {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+        transform: translateY(-50%) scale(1.1) !important;
     }
 </style>
 
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('#sales_code').select2({
-            placeholder: '-- Pilih Nama Sales (Opsional) --',
+        var $sales = $('#sales_code');
+        var $clearBtn = $('#btn-clear-sales');
+
+        function updateClearBtnVisibility() {
+            var val = $sales.val();
+            if (val && val !== '' && val !== '__none__') {
+                $clearBtn.css('display', 'inline-flex');
+            } else {
+                $clearBtn.hide();
+            }
+        }
+
+        $sales.select2({
+            placeholder: {
+                id: '__none__',
+                text: '-- Tanpa Sales (Kosongkan) --'
+            },
             allowClear: true,
             width: '100%',
             dropdownAutoWidth: true,
             templateSelection: function (data) {
-                if (!data.id) {
-                    return data.text;
+                if (!data.id || data.id === '' || data.id === '__none__') {
+                    return $('<span>-- Tanpa Sales (Kosongkan) --</span>').css({
+                        'color': '#6c757d',
+                        'font-style': 'italic'
+                    });
                 }
-                var $elem = $('<span>' + data.text + '</span>');
-                $elem.css({
+                return $('<span>' + data.text + '</span>').css({
                     'color': '#ef4444',
                     'font-weight': 'bold'
                 });
-                return $elem;
+            },
+            templateResult: function (data) {
+                if (!data.id || data.id === '' || data.id === '__none__') {
+                    return $('<span><i class="fi-rs-cross-circle mr-5 text-muted"></i><em>-- Tanpa Sales (Kosongkan) --</em></span>');
+                }
+                return $('<span>' + data.text + '</span>');
             }
         });
-        
+
+        // Set initial visibility
+        updateClearBtnVisibility();
+
+        // Update clear button when selection changes
+        $sales.on('change', function() {
+            updateClearBtnVisibility();
+        });
+
+        // Handle Select2 clear event
+        $sales.on('select2:clear', function(e) {
+            $sales.val('').trigger('change');
+        });
+
+        // Dedicated "Hapus Sales" button above input
+        $clearBtn.on('click', function(e) {
+            e.preventDefault();
+            $sales.val('').trigger('change');
+            $sales.select2('close');
+        });
+
+        // Intercept Select2 (x) button to smoothly clear without reopening dropdown
+        $(document).on('mousedown touchstart', '.buyer-profile-edit .select2-selection__clear', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $sales.val('').trigger('change');
+            $sales.select2('close');
+        });
+
         // Force width 100% via inline style and force styles on the container itself
         $('.select2-container').css({
             'width': '100%',
@@ -203,7 +299,7 @@
         
         // Sometimes CSS doesn't apply, so let's enforce via JS
         setTimeout(function() {
-            var $selection = $('#sales_code').next('.select2-container').find('.select2-selection--single');
+            var $selection = $sales.next('.select2-container').find('.select2-selection--single');
             $selection.css({
                 'height': '56px',
                 'border': '1.5px solid #ECECEC',
@@ -211,10 +307,12 @@
                 'background-color': '#F8F9FA',
                 'display': 'flex',
                 'align-items': 'center',
-                'padding': '0 20px'
+                'padding': '0 45px 0 20px',
+                'position': 'relative'
             });
             $selection.find('.select2-selection__rendered').css({
                 'padding-left': '0',
+                'padding-right': '25px',
                 'color': '#4F5D77',
                 'line-height': 'normal',
                 'width': '100%'
@@ -224,7 +322,8 @@
                 'right': '15px',
                 'display': 'flex',
                 'align-items': 'center',
-                'top': '0'
+                'top': '0',
+                'position': 'absolute'
             });
         }, 100);
     });

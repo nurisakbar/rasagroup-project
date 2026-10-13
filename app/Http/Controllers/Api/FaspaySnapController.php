@@ -61,12 +61,7 @@ class FaspaySnapController extends Controller
         $customerNo = $request->input('customerNo');
         $partnerServiceId = $request->input('partnerServiceId');
         
-        $knownPrefixes = [
-            '37116001', '37116002', '37116003', // 8 digits MCR
-            '9881236387', // BNI MCR
-            '371161', '371162', '371164', '371165', // 6 digits MCR
-            '370201', '370202', '370203', '370204', '370205', '370206', '370207', '370208', '370209', // Rasa
-        ];
+        $knownPrefixes = \App\Services\FaspayConfig::getAllVaPrefixes();
         
         if (!$customerNo || !$partnerServiceId) {
             $extractedCustomerNo = $vaNumber;
@@ -257,12 +252,7 @@ class FaspaySnapController extends Controller
         $customerNo = $request->input('customerNo');
         $partnerServiceId = $request->input('partnerServiceId');
         
-        $knownPrefixes = [
-            '37116001', '37116002', '37116003', // 8 digits MCR
-            '9881236387', // BNI MCR
-            '371161', '371162', '371164', '371165', // 6 digits MCR
-            '370201', '370202', '370203', '370204', '370205', '370206', '370207', '370208', '370209', // Rasa
-        ];
+        $knownPrefixes = \App\Services\FaspayConfig::getAllVaPrefixes();
         
         if (!$customerNo || !$partnerServiceId) {
             $extractedCustomerNo = $orderNumber;
@@ -716,7 +706,7 @@ class FaspaySnapController extends Controller
     {
                 // Pengecekan Channel ID
         $channelId = $request->header('CHANNEL-ID', '');
-        $allowedChannels = ['77001', '802', '818', '402', '408', '708', '723', '825', '702', '836', '715', '711', '9522', '95', '37020', '37116'];
+        $allowedChannels = ['77001', '801', '802', '818', '402', '408', '708', '723', '825', '702', '836', '715', '711', '9522', '95', '37020', '37116'];
         
         if (!empty($channelId) && !in_array($channelId, $allowedChannels)) {
             return response()->json([

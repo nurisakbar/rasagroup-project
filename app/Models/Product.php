@@ -389,7 +389,7 @@ class Product extends Model
             if ($selectedHubId) {
                 $warehouse = \App\Models\Warehouse::find($selectedHubId);
                 
-                $hasSalesCode = !empty($user->sales_code) || request()->filled('sales_code');
+                $hasSalesCode = request()->filled('sales_code');
                 $shouldUseWms = $user->isDistributor() || ($user->isOutlet() && $hasSalesCode);
 
                 // Ambil dari WMS jika Distributor atau Outlet ber-kode sales

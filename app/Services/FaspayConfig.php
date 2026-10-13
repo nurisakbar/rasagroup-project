@@ -89,6 +89,55 @@ class FaspayConfig
     }
 
     /**
+     * Get all known VA prefixes across production and dev, sorted by length descending.
+     */
+    public static function getAllVaPrefixes(): array
+    {
+        $prefixes = [
+            // Production MCR
+            '9881236387', // BNI MCR (10 digits)
+            '12601038',   // BSI MCR (8 digits)
+            '78218638',   // Maybank MCR (8 digits)
+            '88558038',   // Mandiri MCR (8 digits)
+            '735136',     // Permata MCR (6 digits)
+            '222555',     // CIMB MCR (6 digits)
+            '797055',     // Danamon MCR (6 digits)
+            '885655',     // Sinarmas MCR (6 digits)
+
+            // Production RDI
+            '12601021',   // BSI RDI (8 digits)
+            '78218052',   // Maybank RDI (8 digits)
+            '88558010',   // Mandiri RDI (8 digits)
+            '735161',     // Permata RDI (6 digits)
+            '222550',     // CIMB RDI (6 digits)
+            '797039',     // Danamon RDI (6 digits)
+            '885648',     // Sinarmas RDI (6 digits)
+
+            // Dev / Sandbox & UAT
+            '37116001', '37116002', '37116003',
+            '371161', '371162', '371164', '371165',
+            '37020002',
+            '370201', '370202', '370203', '370204', '370205', '370206', '370207', '370208', '370209',
+        ];
+
+        $companies = config('services.faspay.companies', []);
+        foreach ($companies as $comp) {
+            if (!empty($comp['va_prefixes']) && is_array($comp['va_prefixes'])) {
+                foreach ($comp['va_prefixes'] as $p) {
+                    if (!empty($p) && is_string($p)) {
+                        $prefixes[] = trim($p);
+                    }
+                }
+            }
+        }
+
+        $prefixes = array_values(array_unique(array_filter($prefixes)));
+        usort($prefixes, fn($a, $b) => strlen($b) <=> strlen($a));
+
+        return $prefixes;
+    }
+
+    /**
      * Resolve company by merchant ID or client ID.
      */
     public static function resolveCompanyByMerchantId(?string $id): ?string

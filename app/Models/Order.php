@@ -401,10 +401,21 @@ class Order extends Model
     }
 
     /**
-     * Hub selain FG (Jubelio) → sales order ke Jubelio.
+     * Hub selain FG (Jubelio) atau hub yang tersinkron Jubelio → sales order ke Jubelio.
      */
     public function shouldSyncToJubelio(): bool
     {
+        $this->loadMissing('sourceWarehouse');
+        $warehouse = $this->sourceWarehouse;
+
+        if ($warehouse && in_array('jubelio', is_array($warehouse->sync_sources) ? $warehouse->sync_sources : [], true)) {
+            return true;
+        }
+
+        if ($warehouse && ! empty($warehouse->kode_hub) && $this->order_type === self::TYPE_REGULAR) {
+            return true;
+        }
+
         return ! $this->sourceHubSendsSalesOrdersToQad();
     }
 

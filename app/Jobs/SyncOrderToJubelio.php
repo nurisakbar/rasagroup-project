@@ -42,9 +42,14 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
 
     public function handle(JubelioService $jubelio): void
     {
-        $this->order->refresh();
+        $this->order->loadMissing('sourceWarehouse');
+        $warehouse = $this->order->sourceWarehouse;
+        $hasJubelioHub = $warehouse && (
+            ! empty($warehouse->kode_hub) ||
+            in_array('jubelio', is_array($warehouse->sync_sources) ? $warehouse->sync_sources : [], true)
+        );
 
-        if (! $this->order->shouldSyncToJubelio()) {
+        if (! $this->order->shouldSyncToJubelio() && ! $hasJubelioHub) {
             Log::info('SyncOrderToJubelio: skipped (bukan order hub/online)', [
                 'order_id' => $this->order->id,
                 'order_type' => $this->order->order_type,
@@ -201,13 +206,16 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             ];
         }
 
+        $salesman = $this->resolveSalesman($jubelio, $token);
         $payload = $this->buildSalesOrderPayload(
             $contact,
             $locationId,
             $address,
             $linesBuild['items'],
             $linesBuild['sub_total'],
-            $linesBuild['total_tax']
+            $linesBuild['total_tax'],
+            $linesBuild['total_discount'] ?? 0.0,
+            $salesman
         );
 
         return [
@@ -326,22 +334,17 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 }
             }
         }
-
-        $allCustomers = $jubelio->fetchCustomers($token);
-        if (! empty($allCustomers)) {
-            $first = $allCustomers[0];
-
-            return [
-                'contact_id' => (int) $first['contact_id'],
-                'customer_name' => (string) ($first['contact_name'] ?? $user->name),
-            ];
-        }
-
-        return null;
+        return [
+            'contact_id' => (int) (config('jubelio.sales_order.default_contact_id') ?: -1),
+            'customer_name' => (string) ($user->name ?: 'Pelanggan Umum'),
+        ];
     }
 
     /**
      * @return array{ok: bool, items?: array<int, array<string, mixed>>, sub_total?: float, total_tax?: float, issues?: array<int, string>}
+     */
+    /**
+     * @return array{ok: bool, items?: array<int, array<string, mixed>>, sub_total?: float, total_tax?: float, total_discount?: float, issues?: array<int, string>}
      */
     private function buildSalesOrderItems(JubelioService $jubelio, string $token, int $locationId): array
     {
@@ -359,6 +362,10 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
         $issues = [];
         $subTotal = 0.0;
         $totalTax = 0.0;
+
+        // 1. Kumpulkan baris item dan hitung subtotal katalog bruto
+        $itemRows = [];
+        $grossSubtotal = 0.0;
 
         foreach ($this->order->items as $item) {
             $itemCode = trim((string) ($item->product?->code ?? ''));
@@ -383,10 +390,59 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             }
 
             $qty = (int) $item->quantity;
+            $lineGross = round($price * $qty, 2);
+            $grossSubtotal += $lineGross;
+
+            $itemRows[] = [
+                'item' => $item,
+                'jubelio_item' => $jubelioItem,
+                'item_code' => $itemCode,
+                'price' => $price,
+                'qty' => $qty,
+                'line_gross' => $lineGross,
+            ];
+        }
+
+        if ($issues !== [] || $itemRows === []) {
+            return ['ok' => false, 'issues' => $issues];
+        }
+
+        // 2. Tentukan total diskon (baik diskon eksplisit maupun diskon tiering keranjang)
+        $orderSubtotal = (float) ($this->order->subtotal ?? 0);
+        $explicitDiscount = (float) ($this->order->discount_amount ?? 0);
+        $tierDiscount = ($orderSubtotal > 0 && $grossSubtotal > $orderSubtotal)
+            ? ($grossSubtotal - $orderSubtotal)
+            : 0.0;
+        $totalDiscount = max($explicitDiscount, $tierDiscount);
+        $totalDiscount = round($totalDiscount, 2);
+
+        // 3. Alokasikan diskon ke masing-masing item
+        $allocatedDiscountTotal = 0.0;
+        $count = count($itemRows);
+
+        foreach ($itemRows as $idx => $row) {
+            $item = $row['item'];
+            $jubelioItem = $row['jubelio_item'];
+            $itemCode = $row['item_code'];
+            $price = $row['price'];
+            $qty = $row['qty'];
+            $lineGross = $row['line_gross'];
+
+            $lineDisc = 0.0;
+            if ($totalDiscount > 0.5 && $grossSubtotal > 0) {
+                if ($idx === $count - 1) {
+                    $lineDisc = max(0.0, round($totalDiscount - $allocatedDiscountTotal, 2));
+                } else {
+                    $lineDisc = round(($lineGross / $grossSubtotal) * $totalDiscount, 2);
+                    $allocatedDiscountTotal += $lineDisc;
+                }
+            }
+
             $rate = (float) ($jubelioItem['rate'] ?? 0);
-            $amount = round($price * $qty, 2);
+            $amount = max(0.0, round($lineGross - $lineDisc, 2));
             $taxAmount = $rate > 0 ? round($amount * $rate / 100, 2) : 0.0;
             $description = (string) ($jubelioItem['item_short_name'] ?? $jubelioItem['item_name'] ?? $item->product?->display_name ?? $itemCode);
+            $discPercent = $lineGross > 0 ? round(($lineDisc / $lineGross) * 100, 2) : 0;
 
             $items[] = [
                 'salesorder_detail_id' => 0,
@@ -397,8 +453,8 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 'price' => (int) round($price),
                 'unit' => (string) ($jubelioItem['sell_unit'] ?? $item->product?->unit ?? 'Buah'),
                 'qty_in_base' => $qty,
-                'disc' => 0,
-                'disc_amount' => 0,
+                'disc' => $discPercent,
+                'disc_amount' => (int) round($lineDisc),
                 'tax_amount' => (int) round($taxAmount),
                 'amount' => (int) round($amount),
                 'location_id' => $locationId,
@@ -406,12 +462,8 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 'channel_order_detail_id' => null,
             ];
 
-            $subTotal += $amount;
+            $subTotal += $lineGross;
             $totalTax += $taxAmount;
-        }
-
-        if ($issues !== [] || $items === []) {
-            return ['ok' => false, 'issues' => $issues];
         }
 
         return [
@@ -419,6 +471,7 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'items' => $items,
             'sub_total' => $subTotal,
             'total_tax' => $totalTax,
+            'total_discount' => $totalDiscount,
         ];
     }
 
@@ -432,13 +485,22 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
         Address $address,
         array $items,
         float $subTotal,
-        float $totalTax
+        float $totalTax,
+        float $totalDiscount = 0.0,
+        ?array $salesman = null
     ): array {
         $shippingCost = (float) ($this->order->shipping_cost ?? 0);
-        $discount = (float) ($this->order->discount_amount ?? 0);
-        $grandTotal = round($subTotal + $totalTax + $shippingCost - $discount, 2);
+        $grandTotal = round($subTotal + $totalTax + $shippingCost - $totalDiscount, 2);
         $isPaid = $this->order->payment_status === 'paid';
         $transactionDate = $this->order->created_at->copy()->utc()->format('Y-m-d\TH:i:s.000\Z');
+
+        $baseNote = trim((string) ($this->order->notes ?: $this->order->order_number));
+        if ($salesman && !empty($salesman['sales_code'])) {
+            $salesTag = '[Sales: ' . $salesman['sales_code'] . (!empty($salesman['sales_name']) ? ' - ' . $salesman['sales_name'] : '') . ']';
+            if (!str_contains($baseNote, $salesTag)) {
+                $baseNote = trim($baseNote . ' ' . $salesTag);
+            }
+        }
 
         return [
             'salesorder_id' => 0,
@@ -447,9 +509,9 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'customer_name' => $contact['customer_name'],
             'transaction_date' => $transactionDate,
             'is_tax_included' => false,
-            'note' => trim((string) ($this->order->notes ?: $this->order->order_number)),
+            'note' => $baseNote,
             'sub_total' => (int) round($subTotal),
-            'total_disc' => (int) round($discount),
+            'total_disc' => (int) round($totalDiscount),
             'total_tax' => (int) round($totalTax),
             'grand_total' => (int) round($grandTotal),
             'ref_no' => $this->order->order_number,
@@ -472,12 +534,49 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'shipping_country' => 'Indonesia',
             'add_disc' => 0,
             'add_fee' => 0,
-            'salesmen_id' => null,
+            'salesmen_id' => $salesman['salesmen_id'] ?? null,
             'store_id' => null,
             'service_fee' => 0,
             'payment_method' => $this->mapPaymentMethod(),
             'items' => $items,
         ];
+    }
+
+    private function resolveSalesman(JubelioService $jubelio, string $token): ?array
+    {
+        $salesCode = trim((string) ($this->order->sales_code ?? ''));
+        if ($salesCode === '') {
+            return null;
+        }
+
+        $salesUser = User::where('sales_code', $salesCode)->first();
+        $salesName = $salesUser?->name;
+        $salesEmail = $salesUser?->email;
+
+        $cacheKey = 'jubelio_salesmen_list';
+        $salesmen = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(1), function () use ($jubelio, $token) {
+            $res = \Illuminate\Support\Facades\Http::withToken($token)
+                ->get(rtrim((string) config('jubelio.base_url'), '/') . '/contacts/salesman/', [
+                    'page' => 1,
+                    'pageSize' => 100,
+                ]);
+            return $res->json('data') ?? [];
+        });
+
+        foreach ($salesmen as $s) {
+            $cId = (int) ($s['contact_id'] ?? $s['salesmen_id'] ?? 0);
+            $sEmail = strtolower(trim((string) ($s['email'] ?? '')));
+            $sName = strtolower(trim((string) ($s['contact_name'] ?? '')));
+
+            if ($salesEmail && $sEmail !== '' && $sEmail === strtolower(trim($salesEmail))) {
+                return ['salesmen_id' => $cId, 'sales_name' => (string) $s['contact_name'], 'sales_code' => $salesCode];
+            }
+            if ($salesName && $sName !== '' && (stripos($sName, strtolower(trim($salesName))) !== false || stripos(strtolower(trim($salesName)), $sName) !== false)) {
+                return ['salesmen_id' => $cId, 'sales_name' => (string) $s['contact_name'], 'sales_code' => $salesCode];
+            }
+        }
+
+        return $salesName ? ['salesmen_id' => null, 'sales_name' => $salesName, 'sales_code' => $salesCode] : ['salesmen_id' => null, 'sales_name' => null, 'sales_code' => $salesCode];
     }
 
     private function mapCourierId(): ?int

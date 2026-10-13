@@ -251,17 +251,15 @@ class Warehouse extends Model
             if ($user->isDistributor()) {
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
             } elseif ($user->isOutlet() || $user->isBuyer()) {
-                $hasSalesCode = !empty($user->sales_code);
-                
-                // Jika request ada sales_code (misal saat checkout pertama kali), tetap pertimbangkan
-                if (!$hasSalesCode && request()->filled('sales_code')) {
+                $hasSalesCode = false;
+                if (request()->filled('sales_code')) {
                     $hasSalesCode = \App\Models\User::where('sales_code', request('sales_code'))->where('role', 'sales')->exists();
                 }
 
                 if ($hasSalesCode) {
-                    $rolesAllowed = ['outlet']; // Jika punya kode sales, dikirim dari gudang outlet
+                    $rolesAllowed = ['outlet']; // Jika punya kode sales di URL, dikirim dari gudang outlet
                 } else {
-                    $rolesAllowed = ['ecommerce']; // Jika belum punya kode sales, dikirim dari gudang ecommerce
+                    $rolesAllowed = ['ecommerce']; // Jika tanpa kode sales di URL, dikirim dari gudang ecommerce
                 }
             }
         }
@@ -337,7 +335,7 @@ class Warehouse extends Model
             ->value('stock') ?? 0;
 
         $user = \Illuminate\Support\Facades\Auth::user();
-        $hasSalesCode = $user && (!empty($user->sales_code) || request()->filled('sales_code'));
+        $hasSalesCode = request()->filled('sales_code');
         $shouldUseWms = $user && ($user->isDistributor() || ($user->isOutlet() && $hasSalesCode));
 
         if ($shouldUseWms) {
