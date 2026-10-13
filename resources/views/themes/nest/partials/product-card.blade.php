@@ -55,11 +55,12 @@
             @endphp
             <div class="product-card-bottom rg-product-footer">
                 <div class="product-price">
-                    <span>{{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
-                    @if($unitLabel)
-                        <span class="text-muted" style="font-size: 0.8em; margin-left: 2px;">/ {{ $unitLabel }}</span>
-                    @endif
-                    <br>
+                    <div class="rg-price-unit-wrap">
+                        <span class="rg-price-current">{{ number_format($product->final_price * $multiplier, 0, ',', '.') }}</span>
+                        @if($unitLabel)
+                            <span class="rg-unit-label">/ {{ $unitLabel }}</span>
+                        @endif
+                    </div>
                     @if($product->hasActiveDiscount() && $product->discount_price < $product->price)
                         <span class="old-price">{{ number_format($product->price * $multiplier, 0, ',', '.') }}</span>
                     @elseif(isset($product->compare_price) && $product->compare_price > $product->price)
