@@ -36,16 +36,18 @@ class StockController extends Controller
         $this->autoSyncRealtimeData($warehouse, $qadLocationCode);
 
         $query = WarehouseStock::with(['product.images'])
-            ->whereHas('product')
-            ->where('warehouse_id', $warehouse->id);
+            ->whereHas('product', function ($q) use ($request) {
+                $q->where('status', 'active');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('product', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->where('warehouse_id', $warehouse->id);
 
         if ($request->filled('filter') && $request->filter === 'low') {
             $query->where('stock', '<=', 10);
@@ -213,16 +215,18 @@ class StockController extends Controller
         }
 
         $query = WarehouseStock::with(['product'])
-            ->whereHas('product')
-            ->where('warehouse_id', $warehouse->id);
+            ->whereHas('product', function ($q) use ($request) {
+                $q->where('status', 'active');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('product', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->where('warehouse_id', $warehouse->id);
 
         if ($request->filled('filter') && $request->filter === 'low') {
             $query->where('stock', '<=', 10);
@@ -430,6 +434,7 @@ class StockController extends Controller
 
         $items = $jubelio->fetchItemsToSell($token, $locationId);
         $productsByCode = Product::query()
+            ->where('status', 'active')
             ->whereNotNull('code')
             ->where('code', '!=', '')
             ->pluck('id', 'code');

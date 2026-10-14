@@ -120,9 +120,6 @@
                                     </td>
                                     <td>
                                         <strong>{{ $stock->product->display_name }}</strong>
-                                        @if($stock->product->status !== 'active')
-                                            <br><span class="label label-warning">Produk Nonaktif</span>
-                                        @endif
                                         @if($usesQadStock && count($qadBatches) > 0)
                                             <div style="margin-top: 6px;">
                                                 @foreach($qadBatches as $batch)

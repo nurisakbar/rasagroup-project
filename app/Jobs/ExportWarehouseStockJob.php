@@ -57,6 +57,7 @@ class ExportWarehouseStockJob implements ShouldQueue
                     if ($locationId) {
                         $items = $jubelio->fetchItemsToSell($token, $locationId);
                         $productsByCode = Product::query()
+                            ->where('status', 'active')
                             ->whereNotNull('code')
                             ->where('code', '!=', '')
                             ->pluck('id', 'code');
@@ -117,16 +118,18 @@ class ExportWarehouseStockJob implements ShouldQueue
             // 3. Ambil data stok yang sudah ter-update (70% - 80%)
             $progress->update(75, 'Menyiapkan data produk dan batch...');
             $query = WarehouseStock::with(['product'])
-                ->whereHas('product')
-                ->where('warehouse_id', $warehouse->id);
+                ->whereHas('product', function ($q) {
+                    $q->where('status', 'active');
 
-            if (!empty($this->filters['search'])) {
-                $search = $this->filters['search'];
-                $query->whereHas('product', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%");
-                });
-            }
+                    if (!empty($this->filters['search'])) {
+                        $search = $this->filters['search'];
+                        $q->where(function ($sq) use ($search) {
+                            $sq->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        });
+                    }
+                })
+                ->where('warehouse_id', $warehouse->id);
 
             if (!empty($this->filters['filter']) && $this->filters['filter'] === 'low') {
                 $query->where('stock', '<=', 10);
