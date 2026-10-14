@@ -1482,8 +1482,21 @@
                     return;
                 }
 
+                var isLalamove = (expCode === 'lalamove');
+
                 data.services.forEach(function(service, index) {
                     var isSelected = isPickupOrDelivery && index === 0; // Auto-select for pickup/delivery
+                    
+                    var costHtml = '';
+                    if (!isLalamove && service.cost_formatted && service.cost !== null && service.cost !== 0) {
+                        costHtml = `
+                            <div class="fw-bold text-brand">
+                                ${service.is_discounted ? `<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.85em;">${service.original_cost_formatted}</span>` : ''}
+                                ${service.cost_formatted}
+                            </div>`;
+                    } else if (!isLalamove && service.cost === 0 && (service.code === 'self_pickup' || service.code === 'kurir_toko')) {
+                        costHtml = `<div class="fw-bold text-success">Gratis</div>`;
+                    }
                     
                     var serviceHtml = `
                         <div class="col-md-6 mb-10">
@@ -1498,10 +1511,7 @@
                                         <h6 class="mb-0 text-dark">${service.name}</h6>
                                         <small class="text-muted">${service.estimated_days}</small>
                                     </div>
-                                    <div class="fw-bold text-brand">
-                                        ${service.is_discounted ? `<span class="text-muted text-decoration-line-through me-1" style="font-size: 0.85em;">${service.original_cost_formatted}</span>` : ''}
-                                        ${service.cost_formatted}
-                                    </div>
+                                    ${costHtml}
                                 </div>
                             </div>
                         </div>`;

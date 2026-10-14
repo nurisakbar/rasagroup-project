@@ -176,7 +176,7 @@ class EkspedisiKuService
         }
 
         try {
-            $types = ['MOTORCYCLE', 'MPV'];
+            $types = !empty($options['service_type']) ? [(string) $options['service_type']] : ['MOTORCYCLE', 'MPV'];
             $responses = \Illuminate\Support\Facades\Http::pool(fn (\Illuminate\Http\Client\Pool $pool) => collect($types)->map(fn ($type) => 
                 $pool->as($type)->timeout(10)->withToken($this->token)->acceptJson()->post("{$this->baseUrl}/rates", [
                     'pickup' => $pickup,

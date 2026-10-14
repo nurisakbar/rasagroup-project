@@ -43,10 +43,13 @@ class SettingController extends Controller
                 }
                 $expedition->save();
             }
-        }
 
-        // Only show expeditions that are in the API response
-        $expeditions = Expedition::whereIn('code', $apiCourierCodes)->get();
+            // Only show expeditions that are in the API response
+            $expeditions = Expedition::whereIn('code', $apiCourierCodes)->get();
+        } else {
+            // Fallback: Tampilkan semua ekspedisi yang ada di database jika API EkspedisiKu tidak dapat dihubungi
+            $expeditions = Expedition::all();
+        }
         
         $hubs = Warehouse::where('is_active', true)->get();
         $payment_confirmation_email = Setting::get('payment_confirmation_email');

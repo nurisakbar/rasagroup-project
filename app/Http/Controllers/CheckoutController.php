@@ -415,7 +415,8 @@ class CheckoutController extends Controller
             $expedition,
             $sourceWarehouse,
             $address,
-            $totalWeight
+            $totalWeight,
+            $request->service_code
         );
         $t6 = microtime(true);
 
@@ -467,6 +468,12 @@ class CheckoutController extends Controller
                     break;
                 }
             }
+        }
+
+        if ($expedition->code === 'lalamove' && $shippingCost <= 0) {
+            return response()->json([
+                'error' => 'Gagal mendapatkan ongkir Lalamove untuk layanan ' . ($request->service_code ?? '') . '. Pastikan alamat penjemputan dan tujuan terjangkau oleh armada Lalamove.'
+            ], 400);
         }
 
         // No fallback for shipping cost anymore, we want real API data
@@ -673,47 +680,73 @@ class CheckoutController extends Controller
              return response()->json(['error' => 'Data hub pengirim tidak lengkap'], 400);
         }
         
-        $costStart = microtime(true);
-        $costResult = $this->resolveShippingCost(
-            $expedition,
-            $sourceWarehouse,
-            $address,
-            $totalWeight
-        );
-        $costEnd = microtime(true);
-
         $services = [];
-        if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
-            // RajaOngkir returns flat array, filter by expedition code
-            foreach ($costResult['data'] as $service) {
-                Log::debug('[checkout.expedition-services] checking service row', [
-                    'service_code' => $service['code'] ?? null,
-                    'service' => $service['service'] ?? null,
-                    'description' => $service['description'] ?? null,
-                    'cost' => $service['cost'] ?? null,
-                    'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
-                ]);
+        if ($expedition->code === 'lalamove') {
+            // Khusus Lalamove: Jangan hit API ongkir di muka, tampilkan opsi layanan tanpa nominal ongkir
+            $services = [
+                [
+                    'code' => 'MOTORCYCLE',
+                    'name' => 'Sepeda Motor (Motorcycle)',
+                    'cost' => null,
+                    'original_cost' => null,
+                    'is_discounted' => false,
+                    'cost_formatted' => '',
+                    'original_cost_formatted' => '',
+                    'estimated_days' => 'Hari yang sama',
+                ],
+                [
+                    'code' => 'MPV',
+                    'name' => 'Mobil MPV',
+                    'cost' => null,
+                    'original_cost' => null,
+                    'is_discounted' => false,
+                    'cost_formatted' => '',
+                    'original_cost_formatted' => '',
+                    'estimated_days' => 'Hari yang sama',
+                ],
+            ];
+        } else {
+            $costStart = microtime(true);
+            $costResult = $this->resolveShippingCost(
+                $expedition,
+                $sourceWarehouse,
+                $address,
+                $totalWeight
+            );
+            $costEnd = microtime(true);
 
-                if (($service['code'] ?? '') === $expedition->code) {
-                    $originalCost = $service['cost'];
-                    $cost = $originalCost;
-                    $isDiscounted = false;
+            if ($costResult && isset($costResult['data']) && !empty($costResult['data'])) {
+                // RajaOngkir returns flat array, filter by expedition code
+                foreach ($costResult['data'] as $service) {
+                    Log::debug('[checkout.expedition-services] checking service row', [
+                        'service_code' => $service['code'] ?? null,
+                        'service' => $service['service'] ?? null,
+                        'description' => $service['description'] ?? null,
+                        'cost' => $service['cost'] ?? null,
+                        'matches_expedition' => ($service['code'] ?? '') === $expedition->code,
+                    ]);
 
-                    if ($expedition->code === 'jne') {
-                        $isDiscounted = true;
-                        $cost = $originalCost * 0.8;
+                    if (($service['code'] ?? '') === $expedition->code) {
+                        $originalCost = $service['cost'];
+                        $cost = $originalCost;
+                        $isDiscounted = false;
+
+                        if ($expedition->code === 'jne') {
+                            $isDiscounted = true;
+                            $cost = $originalCost * 0.8;
+                        }
+
+                        $services[] = [
+                            'code' => $service['service'],
+                            'name' => $service['description'],
+                            'cost' => $cost,
+                            'original_cost' => $originalCost,
+                            'is_discounted' => $isDiscounted,
+                            'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
+                            'original_cost_formatted' => 'Rp ' . number_format($originalCost, 0, ',', '.'),
+                            'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code),
+                        ];
                     }
-
-                    $services[] = [
-                        'code' => $service['service'],
-                        'name' => $service['description'],
-                        'cost' => $cost,
-                        'original_cost' => $originalCost,
-                        'is_discounted' => $isDiscounted,
-                        'cost_formatted' => 'Rp ' . number_format($cost, 0, ',', '.'),
-                        'original_cost_formatted' => 'Rp ' . number_format($originalCost, 0, ',', '.'),
-                        'estimated_days' => $this->formatEstimatedDelivery($service['etd'] ?? null, $expedition->code),
-                    ];
                 }
             }
         }
@@ -976,7 +1009,8 @@ class CheckoutController extends Controller
                 $expedition,
                 $sourceWarehouse,
                 $address,
-                $totalWeight
+                $totalWeight,
+                $request->expedition_service
             );
 
             $shippingCost = -1;
@@ -1726,7 +1760,8 @@ class CheckoutController extends Controller
         Expedition $expedition,
         Warehouse $sourceWarehouse,
         Address $address,
-        float $totalWeightGrams
+        float $totalWeightGrams,
+        ?string $serviceCode = null
     ): ?array {
         if (in_array($expedition->code, ['self_pickup', 'kurir_toko'])) {
             $isKurirToko = $expedition->code === 'kurir_toko';
@@ -1747,27 +1782,41 @@ class CheckoutController extends Controller
         }
 
         $cacheKey = sprintf(
-            'shipping_cost_%s_%s_%s_%s',
+            'shipping_cost_%s_%s_%s_%s_%s',
             $expedition->code,
             $sourceWarehouse->id,
             $address->id,
-            $totalWeightGrams
+            $totalWeightGrams,
+            $serviceCode ?? 'all'
         );
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($expedition, $sourceWarehouse, $address, $totalWeightGrams) {
-            $weightKg = max(1, (float) ($totalWeightGrams / 1000));
-            
-            return $this->ekspedisiku->calculateCost(
-                $sourceWarehouse->district_id,
-                $address->district_id,
-                $weightKg,
-                $expedition->code,
-                [
-                    'warehouse' => $sourceWarehouse,
-                    'address' => $address,
-                ]
-            );
-        });
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return \Illuminate\Support\Facades\Cache::get($cacheKey);
+        }
+
+        $weightKg = max(1, (float) ($totalWeightGrams / 1000));
+        
+        $options = [
+            'warehouse' => $sourceWarehouse,
+            'address' => $address,
+        ];
+        if (!empty($serviceCode)) {
+            $options['service_type'] = $serviceCode;
+        }
+
+        $result = $this->ekspedisiku->calculateCost(
+            $sourceWarehouse->district_id,
+            $address->district_id,
+            $weightKg,
+            $expedition->code,
+            $options
+        );
+
+        if ($result && !empty($result['data'])) {
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $result, now()->addMinutes(10));
+        }
+
+        return $result;
     }
 
     private function formatEstimatedDelivery(?string $etd, string $expeditionCode): string
