@@ -235,6 +235,7 @@ class OrderController extends Controller
                 'orders.jubelio_salesorder_id',
                 'orders.order_type',
                 'orders.user_id',
+                'orders.address_id',
                 'orders.expedition_id',
                 'orders.tracking_number',
                 'orders.source_warehouse_id',
@@ -244,7 +245,7 @@ class OrderController extends Controller
                 'orders.payment_status',
                 'orders.created_at',
             ])
-            ->with(['user', 'expedition', 'sourceWarehouse'])
+            ->with(['user', 'address', 'expedition', 'sourceWarehouse'])
             ->where('orders.source_warehouse_id', $warehouse->id)
             ->where('orders.finance_approved', true)
             ->orderByDesc('created_at');

@@ -32,6 +32,7 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'Tanggal',
             'Tipe Order',
             'Pembeli',
+            'Nama Toko / Rumah',
             'Email',
             'Ekspedisi',
             'No. Resi',
@@ -61,6 +62,19 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
         $jubelioSo = $order->jubelio_salesorder_no ?: ($order->jubelio_salesorder_id ? 'ID '.$order->jubelio_salesorder_id : '-');
         $qadSo = $order->qad_so_number ?: ($order->qid_sales_order_number ?: '-');
 
+        $storeName = trim((string) ($order->address?->store_name ?? ''));
+        $label = trim((string) ($order->address?->label ?? ''));
+
+        if ($storeName !== '' && $label !== '') {
+            $storeInfo = $storeName . ' (' . $label . ')';
+        } elseif ($storeName !== '') {
+            $storeInfo = $storeName;
+        } elseif ($label !== '') {
+            $storeInfo = $label;
+        } else {
+            $storeInfo = '-';
+        }
+
         return [
             $order->order_number,
             $jubelioSo,
@@ -68,6 +82,7 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
             Wib::format($order->created_at, 'd/m/Y H:i'),
             $type,
             $order->user->name ?? '-',
+            $storeInfo,
             $order->user->email ?? '-',
             $order->expedition->name ?? '-',
             $order->tracking_number ?: '-',
@@ -88,14 +103,15 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'D' => 20,
             'E' => 20,
             'F' => 28,
-            'G' => 32,
-            'H' => 22,
+            'G' => 30,
+            'H' => 32,
             'I' => 22,
-            'J' => 28,
-            'K' => 16,
-            'L' => 18,
-            'M' => 22,
+            'J' => 22,
+            'K' => 28,
+            'L' => 16,
+            'M' => 18,
             'N' => 22,
+            'O' => 22,
         ];
     }
 
