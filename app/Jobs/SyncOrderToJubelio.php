@@ -357,7 +357,31 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'Pengambilan Ditempat' => 'Ambil Sendiri',
         ];
         $rawShipper = $this->order->expedition?->name ?? 'Internal';
-        $shipper = $shipperMap[$rawShipper] ?? $rawShipper;
+        $courierName = $shipperMap[$rawShipper] ?? $rawShipper;
+        $service = trim((string) ($this->order->expedition_service ?? ''));
+
+        if ($courierName === 'JNE') {
+            $upperService = strtoupper($service);
+            if (str_starts_with($upperService, 'REG') || str_starts_with($upperService, 'CTC')) {
+                $shipper = 'JNE REG';
+            } elseif (str_starts_with($upperService, 'JTR')) {
+                $shipper = 'JNE JTR';
+            } elseif (str_starts_with($upperService, 'YES')) {
+                $shipper = 'JNE YES';
+            } elseif (str_starts_with($upperService, 'OKE')) {
+                $shipper = 'JNE OKE';
+            } elseif ($service !== '') {
+                $shipper = 'JNE ' . $service;
+            } else {
+                $shipper = 'JNE REG';
+            }
+        } elseif ($courierName === 'SiCepat' && $service !== '') {
+            $shipper = 'SiCepat ' . $service;
+        } elseif ($courierName === 'J&T' && $service !== '') {
+            $shipper = 'J&T ' . $service;
+        } else {
+            $shipper = $courierName;
+        }
         $items = [];
         $issues = [];
         $subTotal = 0.0;

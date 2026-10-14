@@ -377,4 +377,29 @@ class JubelioService
 
         return is_array($body) ? $body : null;
     }
+
+    /**
+     * Update Sales Order Airwaybill and Shipper.
+     *
+     * @return array<string, mixed>
+     */
+    public function saveAirwayBill(string $token, int $salesOrderId, string $trackingNo, string $shipper): array
+    {
+        $payload = [
+            'salesorder_id' => $salesOrderId,
+            'tracking_no' => $trackingNo,
+            'shipper' => $shipper,
+        ];
+
+        $response = $this->http($token)->post($this->baseUrl() . '/sales/orders/save-airwaybill/', $payload);
+
+        if (!$response->successful()) {
+            throw new RuntimeException(
+                'Gagal memperbarui Airway Bill Jubelio: HTTP ' . $response->status() . ' — ' . substr($response->body(), 0, 500)
+            );
+        }
+
+        return $response->json() ?? [];
+    }
 }
+

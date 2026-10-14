@@ -193,7 +193,9 @@
             <i class="fa fa-motorcycle"></i> <span>ARMADA PENGIRIMAN</span>
           </a>
         </li>
+        @endif
         
+        @if(in_array($adminRole, ['super_admin', 'inventory_manager', 'finance']))
         <li class="{{ request()->routeIs('admin.distributors.*') ? 'active' : '' }}">
           <a href="{{ route('admin.distributors.index') }}">
             <i class="fa fa-truck"></i> <span>DISTRIBUTOR</span>
