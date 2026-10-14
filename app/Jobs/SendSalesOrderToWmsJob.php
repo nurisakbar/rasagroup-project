@@ -107,6 +107,10 @@ class SendSalesOrderToWmsJob implements ShouldQueue
             'items' => $itemsPayload,
         ];
 
+        if ($order->wms_so_status !== null) {
+            $payload['is_update'] = true;
+        }
+
         try {
             $response = Http::withHeaders([
                 'x-api-key' => $apiKey,
