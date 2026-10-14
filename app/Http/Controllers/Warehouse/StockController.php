@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Warehouse;
 
 use App\Exports\WarehouseStockExport;
 use App\Http\Controllers\Controller;
+use App\Jobs\ExportWarehouseStockJob;
 use App\Models\Product;
 use App\Models\QadInventory;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Services\JubelioService;
 use App\Services\WmsService;
+use App\Support\WarehouseStockExportProgress;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -27,6 +30,9 @@ class StockController extends Controller
         $warehouse = $user->warehouse;
         $qadLocationCode = WmsService::locationCode($warehouse);
         $usesQadStock = filled($qadLocationCode);
+
+        // Tarik data realtime dari Jubelio dan QAD saat halaman diakses (dengan cooldown 60 detik)
+        $this->autoSyncRealtimeData($warehouse, $qadLocationCode);
 
         $query = WarehouseStock::with(['product.images'])
             ->whereHas('product')
@@ -284,41 +290,8 @@ class StockController extends Controller
         }
 
         try {
-            $token = $jubelio->login();
-            $locationId = $jubelio->findLocationIdByCode($token, $warehouse->kode_hub);
-            if (! $locationId) {
-                return back()->with('error', "Lokasi Jubelio dengan kode {$warehouse->kode_hub} tidak ditemukan.");
-            }
-
-            $items = $jubelio->fetchItemsToSell($token, $locationId);
-            $productsByCode = Product::query()
-                ->whereNotNull('code')
-                ->where('code', '!=', '')
-                ->pluck('id', 'code');
-
-            $updatedCount = 0;
-            DB::transaction(function () use ($items, $productsByCode, $warehouse, &$updatedCount) {
-                foreach ($items as $item) {
-                    $itemCode = $item['item_code'] ?? null;
-                    if (! $itemCode || ! isset($productsByCode[$itemCode])) {
-                        continue;
-                    }
-
-                    $productId = $productsByCode[$itemCode];
-                    $availableQty = max(0, (int) ($item['available_qty'] ?? 0));
-
-                    WarehouseStock::updateOrCreate(
-                        [
-                            'warehouse_id' => $warehouse->id,
-                            'product_id' => $productId,
-                        ],
-                        [
-                            'stock' => $availableQty,
-                        ]
-                    );
-                    $updatedCount++;
-                }
-            });
+            $updatedCount = $this->performJubelioSync($warehouse);
+            Cache::put('warehouse_realtime_jubelio_' . $warehouse->id, true, 60);
 
             return back()->with('success', "Berhasil mensinkronisasi {$updatedCount} stok produk dari Jubelio.");
         } catch (\Throwable $e) {
@@ -330,6 +303,149 @@ class StockController extends Controller
 
             return back()->with('error', 'Gagal melakukan sinkronisasi dengan Jubelio: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Dispatch background job for exporting stock with realtime sync & progress tracking.
+     */
+    public function dispatchExportJob(Request $request)
+    {
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+        if (! $warehouse) {
+            return response()->json(['message' => 'Hub/Warehouse tidak ditemukan.'], 403);
+        }
+
+        $filters = $request->only(['search', 'filter']);
+        $progress = WarehouseStockExportProgress::create($warehouse->id, (string) $user->id, $filters);
+
+        ExportWarehouseStockJob::dispatch($progress->id(), $warehouse->id, $filters);
+
+        return response()->json([
+            'progress_id' => $progress->id(),
+        ]);
+    }
+
+    /**
+     * Check progress of warehouse stock export job.
+     */
+    public function exportProgress(string $progressId)
+    {
+        $progress = WarehouseStockExportProgress::find($progressId);
+        if (! $progress) {
+            return response()->json(['message' => 'Status export tidak ditemukan.'], 404);
+        }
+
+        return response()->json($progress->toArray());
+    }
+
+    /**
+     * Download completed exported Excel file.
+     */
+    public function downloadExport(Request $request)
+    {
+        $filename = basename((string) $request->query('filename'));
+        if (! Str::startsWith($filename, 'stok-hub-') || ! Str::endsWith($filename, '.xlsx')) {
+            abort(400, 'Nama file export tidak valid.');
+        }
+
+        $path = storage_path('app/exports/' . $filename);
+        if (! file_exists($path)) {
+            abort(404, 'File export tidak ditemukan atau telah kedaluwarsa.');
+        }
+
+        return response()->download($path, $filename);
+    }
+
+    /**
+     * Automatically sync realtime stock data when viewing the stock list.
+     */
+    protected function autoSyncRealtimeData($warehouse, $qadLocationCode): void
+    {
+        if (! $warehouse) {
+            return;
+        }
+
+        // Realtime Jubelio sync with 60s cooldown per warehouse
+        if (! empty($warehouse->kode_hub)) {
+            $cacheKeyJubelio = 'warehouse_realtime_jubelio_' . $warehouse->id;
+            if (! Cache::has($cacheKeyJubelio)) {
+                try {
+                    $this->performJubelioSync($warehouse);
+                    Cache::put($cacheKeyJubelio, true, 60);
+                } catch (\Throwable $e) {
+                    Log::warning('StockController: autoSyncRealtimeData Jubelio warning', [
+                        'warehouse_id' => $warehouse->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        // Realtime QAD sync with 60s cooldown per warehouse
+        if (! empty($qadLocationCode)) {
+            $cacheKeyQad = 'warehouse_realtime_qad_' . $warehouse->id;
+            if (! Cache::has($cacheKeyQad)) {
+                try {
+                    app(WmsService::class)->syncLocationBatches($qadLocationCode);
+                    Cache::put($cacheKeyQad, true, 60);
+                } catch (\Throwable $e) {
+                    Log::warning('StockController: autoSyncRealtimeData QAD warning', [
+                        'location' => $qadLocationCode,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper to perform Jubelio stock sync for a warehouse.
+     */
+    protected function performJubelioSync(Warehouse $warehouse): int
+    {
+        if (empty($warehouse->kode_hub)) {
+            return 0;
+        }
+
+        $jubelio = app(JubelioService::class);
+        $token = $jubelio->login();
+        $locationId = $jubelio->findLocationIdByCode($token, $warehouse->kode_hub);
+        if (! $locationId) {
+            return 0;
+        }
+
+        $items = $jubelio->fetchItemsToSell($token, $locationId);
+        $productsByCode = Product::query()
+            ->whereNotNull('code')
+            ->where('code', '!=', '')
+            ->pluck('id', 'code');
+
+        $updatedCount = 0;
+        DB::transaction(function () use ($items, $productsByCode, $warehouse, &$updatedCount) {
+            foreach ($items as $item) {
+                $itemCode = $item['item_code'] ?? null;
+                if (! $itemCode || ! isset($productsByCode[$itemCode])) {
+                    continue;
+                }
+
+                $productId = $productsByCode[$itemCode];
+                $availableQty = max(0, (int) ($item['available_qty'] ?? 0));
+
+                WarehouseStock::updateOrCreate(
+                    [
+                        'warehouse_id' => $warehouse->id,
+                        'product_id' => $productId,
+                    ],
+                    [
+                        'stock' => $availableQty,
+                    ]
+                );
+                $updatedCount++;
+            }
+        });
+
+        return $updatedCount;
     }
 }
 

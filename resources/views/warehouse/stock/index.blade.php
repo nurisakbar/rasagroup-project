@@ -20,9 +20,9 @@
                                 <i class="fa fa-database"></i> QAD {{ $qadLocationCode }}
                             </span>
                         @endif
-                        <a href="{{ route('warehouse.stock.export', request()->only(['search', 'filter'])) }}" class="btn btn-success btn-sm" style="margin-right: 5px;" title="Download Stock dan Batch ke Excel">
+                        <button type="button" id="btnExportStock" class="btn btn-success btn-sm" style="margin-right: 5px;" title="Download Stock dan Batch ke Excel (Realtime Jubelio & QAD)">
                             <i class="fa fa-file-excel-o"></i> Download Excel
-                        </a>
+                        </button>
                         @if($usesQadStock)
                         <form action="{{ route('warehouse.stock.sync-qad') }}" method="POST" style="display: inline-block; margin-right: 5px;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menyinkronkan...';">
                             @csrf
@@ -254,4 +254,137 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Progress Export Excel -->
+    <div class="modal fade" id="exportProgressModal" tabindex="-1" role="dialog" aria-labelledby="exportProgressModalLabel" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-sm" role="document" style="top: 20%; width: 420px; max-width: 90%;">
+            <div class="modal-content text-center" style="border-radius: 8px; padding: 25px 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3);">
+                <div class="modal-body" style="padding: 0;">
+                    <div style="margin-bottom: 15px;">
+                        <i class="fa fa-refresh fa-spin fa-3x text-info" id="exportProgressIcon"></i>
+                    </div>
+                    <h4 style="font-weight: 600; margin-bottom: 8px;" id="exportProgressTitle">Menyiapkan Data Stok...</h4>
+                    <p class="text-muted" id="exportProgressMessage" style="font-size: 13px; min-height: 40px; margin-bottom: 15px;">
+                        Harap tunggu, sistem sedang memproses sinkronisasi realtime Jubelio & QAD di background...
+                    </p>
+                    <div class="progress" style="height: 22px; border-radius: 4px; margin-bottom: 10px; background-color: #e9ecef;">
+                        <div id="exportProgressBar" class="progress-bar progress-bar-striped active progress-bar-info" role="progressbar" style="width: 5%; min-width: 2em; line-height: 22px; font-weight: bold; font-size: 12px;">
+                            <span id="exportProgressPercent">5%</span>
+                        </div>
+                    </div>
+                    <div id="exportProgressActions" style="display: none; margin-top: 15px;">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    var exportPollTimer = null;
+
+    $('#btnExportStock').click(function(e) {
+        e.preventDefault();
+        startStockExport();
+    });
+
+    function startStockExport() {
+        $('#exportProgressIcon').removeClass('fa-check text-success fa-times text-danger').addClass('fa-refresh fa-spin text-info');
+        $('#exportProgressTitle').text('Memulai Export Stok...');
+        $('#exportProgressMessage').text('Menghubungkan ke antrian server...');
+        $('#exportProgressBar').removeClass('progress-bar-success progress-bar-danger').addClass('progress-bar-info progress-bar-striped active').css('width', '5%');
+        $('#exportProgressPercent').text('5%');
+        $('#exportProgressActions').hide();
+        $('#exportProgressModal').modal('show');
+
+        if (exportPollTimer) {
+            clearInterval(exportPollTimer);
+            exportPollTimer = null;
+        }
+
+        var exportParams = {
+            _token: '{{ csrf_token() }}',
+            search: '{{ request("search") }}',
+            filter: '{{ request("filter") }}'
+        };
+
+        $.ajax({
+            url: '{{ route("warehouse.stock.export-job") }}',
+            type: 'POST',
+            data: exportParams,
+            success: function(res) {
+                if (res && res.progress_id) {
+                    pollExportProgress(res.progress_id);
+                } else {
+                    handleExportError('Gagal mendapatkan ID proses export.');
+                }
+            },
+            error: function(xhr) {
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Gagal menghubungi server.';
+                handleExportError(errMsg);
+            }
+        });
+    }
+
+    function pollExportProgress(progressId) {
+        var progressUrl = '{{ url("/warehouse/stock/export-progress") }}/' + progressId;
+
+        exportPollTimer = setInterval(function() {
+            $.ajax({
+                url: progressUrl,
+                type: 'GET',
+                cache: false,
+                success: function(data) {
+                    if (!data) return;
+
+                    var pct = Math.round(data.progress || 0);
+                    $('#exportProgressBar').css('width', pct + '%');
+                    $('#exportProgressPercent').text(pct + '%');
+
+                    if (data.message) {
+                        $('#exportProgressMessage').text(data.message);
+                    }
+
+                    if (data.status === 'completed') {
+                        clearInterval(exportPollTimer);
+                        exportPollTimer = null;
+
+                        $('#exportProgressBar').removeClass('progress-bar-info progress-bar-striped active').addClass('progress-bar-success').css('width', '100%');
+                        $('#exportProgressPercent').text('100%');
+                        $('#exportProgressIcon').removeClass('fa-refresh fa-spin text-info').addClass('fa-check text-success');
+                        $('#exportProgressTitle').text('Download Selesai!');
+                        $('#exportProgressMessage').text('Mengunduh file Excel...');
+
+                        if (data.file_url) {
+                            window.location.href = data.file_url;
+                        }
+
+                        setTimeout(function() {
+                            $('#exportProgressModal').modal('hide');
+                        }, 1800);
+                    } else if (data.status === 'failed') {
+                        clearInterval(exportPollTimer);
+                        exportPollTimer = null;
+                        handleExportError(data.error || 'Terjadi kesalahan saat memproses data.');
+                    }
+                },
+                error: function() {
+                    // Terus polling jika terjadi transient network delay
+                }
+            });
+        }, 1000);
+    }
+
+    function handleExportError(msg) {
+        $('#exportProgressBar').removeClass('progress-bar-info progress-bar-striped active').addClass('progress-bar-danger');
+        $('#exportProgressIcon').removeClass('fa-refresh fa-spin text-info').addClass('fa-times text-danger');
+        $('#exportProgressTitle').text('Export Gagal');
+        $('#exportProgressMessage').text(msg);
+        $('#exportProgressActions').show();
+    }
+});
+</script>
+@endpush

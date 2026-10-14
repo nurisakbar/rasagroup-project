@@ -389,6 +389,9 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         // Stock Management
         Route::get('/stock', [App\Http\Controllers\Warehouse\StockController::class, 'index'])->name('stock.index');
         Route::get('/stock/export', [App\Http\Controllers\Warehouse\StockController::class, 'export'])->name('stock.export');
+        Route::post('/stock/export-job', [App\Http\Controllers\Warehouse\StockController::class, 'dispatchExportJob'])->name('stock.export-job');
+        Route::get('/stock/export-progress/{progressId}', [App\Http\Controllers\Warehouse\StockController::class, 'exportProgress'])->name('stock.export-progress');
+        Route::get('/stock/export-download', [App\Http\Controllers\Warehouse\StockController::class, 'downloadExport'])->name('stock.export-download');
         Route::post('/stock/sync-qad', [App\Http\Controllers\Warehouse\StockController::class, 'syncQad'])->name('stock.sync-qad');
         Route::post('/stock/sync-jubelio', [App\Http\Controllers\Warehouse\StockController::class, 'syncJubelio'])->name('stock.sync-jubelio');
         Route::put('/stock/{stock}', [App\Http\Controllers\Warehouse\StockController::class, 'update'])->name('stock.update');
