@@ -129,7 +129,7 @@
                     <!-- TAB 2: INFORMASI STOCK -->
                     <div class="tab-pane {{ request('tab') == 'stock' ? 'active' : '' }}" id="tab_stock">
                         <div class="row" style="margin-bottom: 20px;">
-                            <div class="col-md-8">
+                            <div class="col-md-5">
                                 <form method="GET" action="{{ route('admin.warehouses.show', $warehouse) }}" class="form-horizontal">
                                     <input type="hidden" name="tab" value="stock">
                                     <div class="input-group">
@@ -143,10 +143,13 @@
                                     </div>
                                 </form>
                             </div>
-                            <div class="col-md-4 text-right">
+                            <div class="col-md-7 text-right">
+                                <a href="{{ route('admin.warehouses.export-stock', array_merge(['warehouse' => $warehouse], request()->only('search'))) }}" class="btn btn-success" style="margin-right: 5px;" title="Download Data Stok dan Batch ke Excel">
+                                    <i class="fa fa-file-excel-o"></i> Download Stock & Batch
+                                </a>
                                 <form action="{{ route('admin.warehouses.sync-products', $warehouse) }}" method="POST" style="display: inline-block; margin-right: 5px;">
                                     @csrf
-                                    <button type="submit" class="btn btn-success" onclick="return confirm('Tambahkan semua produk aktif (yang belum ada) ke hub ini dengan stok 0?')">
+                                    <button type="submit" class="btn btn-info" onclick="return confirm('Tambahkan semua produk aktif (yang belum ada) ke hub ini dengan stok 0?')">
                                         <i class="fa fa-plus-circle"></i> Sinkron Produk
                                     </button>
                                 </form>

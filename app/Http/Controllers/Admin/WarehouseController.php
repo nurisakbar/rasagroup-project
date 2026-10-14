@@ -21,6 +21,8 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Services\EkspedisiKuService;
 use App\Services\JubelioStockSyncService;
 use App\Services\WmsService;
+use App\Exports\WarehouseStockExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -558,6 +560,53 @@ class WarehouseController extends Controller
         }
 
         return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches', 'wmsLocationCode', 'wmsLastSyncAt'));
+    }
+
+    /**
+     * Export stock and batches of warehouse to Excel.
+     */
+    public function exportStock(Request $request, Warehouse $warehouse)
+    {
+        $warehouse->load(['wilayah', 'regency']);
+
+        $wmsLocationCode = WmsService::locationCode($warehouse);
+        if ($wmsLocationCode) {
+            try {
+                // Sync data dari WMS secara realtime sebelum export jika memungkinkan
+                app(WmsService::class)->syncLocationBatches($wmsLocationCode);
+            } catch (\Exception $e) {
+                Log::warning('Realtime WMS sync failed during stock export', [
+                    'location' => $wmsLocationCode,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        $query = WarehouseStock::with('product')
+            ->whereHas('product', function($q) {
+                $q->where('status', 'active');
+            })
+            ->where('warehouse_id', $warehouse->id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('product', function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('code', 'like', '%' . $search . '%');
+            });
+        }
+
+        $stocks = $query->orderBy('updated_at', 'desc')->get();
+
+        $wmsBatches = [];
+        if ($wmsLocationCode) {
+            $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($wmsLocationCode);
+        }
+
+        $hubIdentifier = $warehouse->kode_hub ?: Str::slug($warehouse->name);
+        $filename = 'stok-batch-' . $hubIdentifier . '-' . now()->timezone('Asia/Jakarta')->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new WarehouseStockExport($warehouse, $stocks, $wmsBatches), $filename);
     }
 
     public function edit(Warehouse $warehouse)

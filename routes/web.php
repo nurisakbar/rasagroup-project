@@ -257,6 +257,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/warehouses/sync-stock-jubelio', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockJubelio'])->name('warehouses.sync-stock-jubelio');
         Route::resource('warehouses', App\Http\Controllers\Admin\WarehouseController::class);
         Route::resource('armadas', App\Http\Controllers\Admin\ArmadaController::class);
+        Route::get('/warehouses/{warehouse}/export-stock', [App\Http\Controllers\Admin\WarehouseController::class, 'exportStock'])->name('warehouses.export-stock');
         Route::post('/warehouses/{warehouse}/stock', [App\Http\Controllers\Admin\WarehouseController::class, 'addStock'])->name('warehouses.add-stock');
         Route::post('/warehouses/{warehouse}/sync-products', [App\Http\Controllers\Admin\WarehouseController::class, 'syncProducts'])->name('warehouses.sync-products');
         Route::post('/warehouses/{warehouse}/sync-stock-qid', [App\Http\Controllers\Admin\WarehouseController::class, 'syncStockQid'])->name('warehouses.sync-stock-qid');
