@@ -36,6 +36,7 @@ class OrderController extends Controller
                     'orders.order_number',
                     'orders.order_type',
                     'orders.user_id',
+                    'orders.address_id',
                     'orders.expedition_id',
                     'orders.tracking_number',
                     'orders.source_warehouse_id',
@@ -50,7 +51,7 @@ class OrderController extends Controller
                     'orders.created_at',
                     'orders.updated_at',
                 ])
-                ->with(['user', 'expedition', 'sourceWarehouse.wilayah']);
+                ->with(['user', 'address', 'expedition', 'sourceWarehouse.wilayah']);
             $this->applyOrderListFilters($query, $request);
 
             $baseQuery = clone $query;
@@ -67,13 +68,28 @@ class OrderController extends Controller
                     } else {
                         $html .= '<br><span class="label label-primary" style="font-size: 10px;"><i class="fa fa-globe"></i> ONLINE</span>';
                     }
-                    $html .= '<br><small class="text-muted">' . \App\Support\Wib::format($order->created_at) . ' WIB</small>';
+                    $html .= '<br><small class="text-muted">' . \App\Support\Wib::format($order->created_at, 'd/m/Y H:i') . '</small>';
                     return $html;
                 })
                 ->addColumn('buyer_info', function ($order) {
-                    $html = $order->user->name . '<br><small class="text-muted">' . $order->user->email . '</small>';
-                    $arOutstanding = $order->user->ar_outstanding ?? 0;
-                    $html .= '<br><small class="text-muted">AR Outstanding: <strong>Rp ' . number_format($arOutstanding, 0, ',', '.') . '</strong></small>';
+                    $recipientName = trim((string) ($order->address?->recipient_name ?: ($order->user?->name ?? '-')));
+                    $html = '<strong>' . e($recipientName) . '</strong>';
+
+                    $storeName = trim((string) ($order->address?->store_name ?? ''));
+                    $label = trim((string) ($order->address?->label ?? ''));
+
+                    if ($storeName !== '' && $label !== '') {
+                        if (strcasecmp($storeName, $label) === 0) {
+                            $html .= '<br>' . e($storeName);
+                        } else {
+                            $html .= '<br>' . e($storeName) . ' (' . e($label) . ')';
+                        }
+                    } elseif ($storeName !== '') {
+                        $html .= '<br>' . e($storeName);
+                    } elseif ($label !== '') {
+                        $html .= '<br>' . e($label);
+                    }
+
                     return $html;
                 })
                 ->addColumn('expedition_info', function ($order) {
@@ -289,8 +305,14 @@ class OrderController extends Controller
         if ($searchValue !== '') {
             $query->where(function ($q) use ($searchValue) {
                 $q->where('order_number', 'like', "%{$searchValue}%")
+                    ->orWhere('tracking_number', 'like', "%{$searchValue}%")
                     ->orWhereHas('user', function ($u) use ($searchValue) {
                         $u->where('name', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('address', function ($a) use ($searchValue) {
+                        $a->where('recipient_name', 'like', "%{$searchValue}%")
+                          ->orWhere('store_name', 'like', "%{$searchValue}%")
+                          ->orWhere('label', 'like', "%{$searchValue}%");
                     });
             });
         }
@@ -298,7 +320,7 @@ class OrderController extends Controller
 
     private function applyOrderTabFilter(Builder $query, string $tabStatus): void
     {
-        if ($tabStatus === '') {
+        if ($tabStatus === '' || $tabStatus === 'semua') {
             return;
         }
 

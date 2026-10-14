@@ -12,8 +12,7 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 <style>
-    /* .dataTables_filter { display: none; } */
-    .filter-box { margin-bottom: 0; }
+    .filter-box { margin-bottom: 15px; }
     #orders-table_length { margin-bottom: 15px; }
     .datepicker-dropdown { z-index: 2000 !important; }
 </style>
@@ -34,29 +33,21 @@
         </div>
         <div class="box-body">
             <div class="row">
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="form-group">
-                        <label>Dari Tanggal</label>
-                        <div class="input-group date">
-                            <div class="input-group-addon">
-                                <i class="fa fa-calendar"></i>
-                            </div>
-                            <input type="text" id="filter-date-from" class="form-control datepicker" value="{{ date('Y-m-d') }}">
-                        </div>
+                        <label>Tahapan Pesanan</label>
+                        <select id="filter-tab-status" class="form-control">
+                            <option value="">-- Semua Tahapan ({{ number_format($countSemua) }}) --</option>
+                            <option value="menunggu_pembayaran" {{ request('tab') == 'menunggu_pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran ({{ number_format($countMenungguPembayaran) }})</option>
+                            <option value="menunggu_persetujuan_finance" {{ request('tab') == 'menunggu_persetujuan_finance' ? 'selected' : '' }}>Menunggu Approval Finance ({{ number_format($countMenungguPersetujuanFinance) }})</option>
+                            <option value="menunggu_konfirmasi" {{ request('tab') == 'menunggu_konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi Pembayaran ({{ number_format($countMenungguKonfirmasi) }})</option>
+                            <option value="sedang_diproses" {{ request('tab') == 'sedang_diproses' ? 'selected' : '' }}>Sedang Diproses ({{ number_format($countSedangDiproses) }})</option>
+                            <option value="dikirim" {{ request('tab') == 'dikirim' ? 'selected' : '' }}>Dikirim ({{ number_format($countDikirim) }})</option>
+                            <option value="selesai" {{ request('tab') == 'selesai' ? 'selected' : '' }}>Selesai ({{ number_format($countSelesai ?? 0) }})</option>
+                        </select>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Sampai Tanggal</label>
-                        <div class="input-group date">
-                            <div class="input-group-addon">
-                                <i class="fa fa-calendar"></i>
-                            </div>
-                            <input type="text" id="filter-date-to" class="form-control datepicker" value="{{ date('Y-m-d') }}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>Status Pesanan</label>
                         <select id="filter-status" class="form-control">
@@ -70,8 +61,7 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>Tipe Order</label>
                         <select id="filter-order-type" class="form-control">
@@ -82,7 +72,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>Sumber Pengiriman</label>
                         <select id="filter-source-warehouse" class="form-control select2" style="width: 100%;">
@@ -94,9 +84,31 @@
                     </div>
                 </div>
             </div>
-            <div class="row" style="margin-top: 10px;">
-                <div class="col-md-2 pull-right">
-                    <button type="button" id="btn-reset" class="btn btn-danger btn-block">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Dari Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-date-from" class="form-control datepicker" value="{{ date('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Sampai Tanggal</label>
+                        <div class="input-group date">
+                            <div class="input-group-addon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <input type="text" id="filter-date-to" class="form-control datepicker" value="{{ date('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-md-offset-3" style="padding-top: 24px;">
+                    <button type="button" id="btn-reset" class="btn btn-default btn-block">
                         <i class="fa fa-refresh"></i> Reset Filter
                     </button>
                 </div>
@@ -104,36 +116,30 @@
         </div>
     </div>
 
+    <!-- Orders Table Box -->
     <div class="row">
         <div class="col-xs-12">
-            <div class="nav-tabs-custom">
-                <ul class="nav nav-tabs">
-                    <li class="active"><a href="#tab_menunggu_pembayaran" data-toggle="tab" class="order-tab" data-tab="menunggu_pembayaran"><i class="fa fa-hourglass-start"></i> MENUNGGU PEMBAYARAN <span class="label label-warning" id="count-menunggu-pembayaran">{{ number_format($countMenungguPembayaran) }}</span></a></li>
-                    <li><a href="#tab_menunggu_persetujuan_finance" data-toggle="tab" class="order-tab" data-tab="menunggu_persetujuan_finance"><i class="fa fa-lock"></i> MENUNGGU APPROVAL FINANCE <span class="label label-warning" id="count-menunggu-persetujuan-finance" style="background-color: #f39c12;">{{ number_format($countMenungguPersetujuanFinance) }}</span></a></li>
-                    <li><a href="#tab_menunggu_konfirmasi" data-toggle="tab" class="order-tab" data-tab="menunggu_konfirmasi"><i class="fa fa-check-square-o"></i> MENUNGGU KONFIRMASI PEMBAYARAN <span class="label label-info" id="count-menunggu-konfirmasi">{{ number_format($countMenungguKonfirmasi) }}</span></a></li>
-                    <li><a href="#tab_sedang_diproses" data-toggle="tab" class="order-tab" data-tab="sedang_diproses"><i class="fa fa-cogs"></i> SEDANG DIPROSES <span class="label label-primary" id="count-sedang-diproses">{{ number_format($countSedangDiproses) }}</span></a></li>
-                    <li><a href="#tab_dikirim" data-toggle="tab" class="order-tab" data-tab="dikirim"><i class="fa fa-truck"></i> DIKIRIM <span class="label bg-purple" id="count-dikirim">{{ number_format($countDikirim) }}</span></a></li>
-                    <li><a href="#tab_selesai" data-toggle="tab" class="order-tab" data-tab="selesai"><i class="fa fa-check-circle"></i> SELESAI <span class="label label-success" id="count-selesai">{{ number_format($countSelesai ?? 0) }}</span></a></li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane active" id="tab_menunggu_pembayaran">
-                        <table id="orders-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>No. Pesanan</th>
-                                    <th>Pembeli</th>
-                                    <th>Ekspedisi</th>
-                                    <th>Sumber Pengiriman</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Pembayaran</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Daftar Pesanan</h3>
+                </div>
+                <div class="box-body table-responsive">
+                    <table id="orders-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>No. Pesanan</th>
+                                <th>Pembeli</th>
+                                <th>Ekspedisi</th>
+                                <th>Sumber Pengiriman</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Pembayaran</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -231,7 +237,7 @@ $(document).ready(function() {
                 d.status = $('#filter-status').val();
                 d.order_type = $('#filter-order-type').val();
                 d.source_warehouse_id = $('#filter-source-warehouse').val();
-                d.tab_status = window.currentTabStatus || '';
+                d.tab_status = $('#filter-tab-status').val() || '';
                 d.date_from = $('#filter-date-from').val();
                 d.date_to = $('#filter-date-to').val();
             }
@@ -249,13 +255,13 @@ $(document).ready(function() {
         drawCallback: function(settings) {
             var json = table.ajax.json();
             if (json && json.counts) {
-                $('#count-semua').text(json.counts.semua.toLocaleString('id-ID'));
-                $('#count-menunggu-pembayaran').text(json.counts.menunggu_pembayaran.toLocaleString('id-ID'));
-                $('#count-menunggu-persetujuan-finance').text((json.counts.menunggu_persetujuan_finance || 0).toLocaleString('id-ID'));
-                $('#count-menunggu-konfirmasi').text(json.counts.menunggu_konfirmasi.toLocaleString('id-ID'));
-                $('#count-sedang-diproses').text(json.counts.sedang_diproses.toLocaleString('id-ID'));
-                $('#count-dikirim').text(json.counts.dikirim.toLocaleString('id-ID'));
-                $('#count-selesai').text(json.counts.selesai.toLocaleString('id-ID'));
+                $('#filter-tab-status option[value=""]').text('-- Semua Tahapan (' + (json.counts.semua || 0).toLocaleString('id-ID') + ') --');
+                $('#filter-tab-status option[value="menunggu_pembayaran"]').text('Menunggu Pembayaran (' + (json.counts.menunggu_pembayaran || 0).toLocaleString('id-ID') + ')');
+                $('#filter-tab-status option[value="menunggu_persetujuan_finance"]').text('Menunggu Approval Finance (' + (json.counts.menunggu_persetujuan_finance || 0).toLocaleString('id-ID') + ')');
+                $('#filter-tab-status option[value="menunggu_konfirmasi"]').text('Menunggu Konfirmasi Pembayaran (' + (json.counts.menunggu_konfirmasi || 0).toLocaleString('id-ID') + ')');
+                $('#filter-tab-status option[value="sedang_diproses"]').text('Sedang Diproses (' + (json.counts.sedang_diproses || 0).toLocaleString('id-ID') + ')');
+                $('#filter-tab-status option[value="dikirim"]').text('Dikirim (' + (json.counts.dikirim || 0).toLocaleString('id-ID') + ')');
+                $('#filter-tab-status option[value="selesai"]').text('Selesai (' + (json.counts.selesai || 0).toLocaleString('id-ID') + ')');
             }
         },
         order: [[0, 'desc']],
@@ -263,7 +269,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 15, 25, 50, 100], [10, 15, 25, 50, 100]],
         language: {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
-            search: "Cari (No. Pesanan / Nama):",
+            search: "Cari (No. Pesanan / Pembeli / Resi):",
             lengthMenu: "Tampilkan _MENU_ data",
             info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
             infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
@@ -306,16 +312,8 @@ $(document).ready(function() {
         allowClear: true
     });
 
-    window.currentTabStatus = 'menunggu_pembayaran';
-
-    // Tab handlers
-    $('.order-tab').on('shown.bs.tab', function (e) {
-        window.currentTabStatus = $(e.target).data('tab');
-        table.draw();
-    });
-
     // Filter handlers
-    $('#filter-status, #filter-order-type, #filter-source-warehouse').change(function() {
+    $('#filter-tab-status, #filter-status, #filter-order-type, #filter-source-warehouse').change(function() {
         table.draw();
     });
 
@@ -325,6 +323,7 @@ $(document).ready(function() {
 
     // Reset button
     $('#btn-reset').click(function() {
+        $('#filter-tab-status').val('');
         $('#filter-status').val('');
         $('#filter-order-type').val('');
         $('#filter-source-warehouse').val(null).trigger('change');
