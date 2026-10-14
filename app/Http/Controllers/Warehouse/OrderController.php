@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Warehouse;
 
+use App\Exports\AdminOrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
@@ -61,6 +64,22 @@ class OrderController extends Controller
             }
 
             return DataTables::of($query)
+                ->filter(function ($q) use ($request) {
+                    if ($request->has('search') && $keyword = trim((string) $request->input('search.value'))) {
+                        $q->where(function ($sub) use ($keyword) {
+                            $sub->where('orders.order_number', 'like', "%{$keyword}%")
+                                ->orWhere('orders.tracking_number', 'like', "%{$keyword}%")
+                                ->orWhereHas('user', function ($uq) use ($keyword) {
+                                    $uq->where('name', 'like', "%{$keyword}%")
+                                       ->orWhere('email', 'like', "%{$keyword}%")
+                                       ->orWhere('phone', 'like', "%{$keyword}%");
+                                })
+                                ->orWhereHas('expedition', function ($eq) use ($keyword) {
+                                    $eq->where('name', 'like', "%{$keyword}%");
+                                });
+                        });
+                    }
+                })
                 ->addIndexColumn()
                 ->addColumn('order_number_display', function ($order) {
                     $html = '<strong>' . $order->order_number . '</strong>';
@@ -176,6 +195,66 @@ class OrderController extends Controller
             'processingOrders',
             'totalRevenue'
         ));
+    }
+
+    /**
+     * Export warehouse orders to Excel with date and status filters.
+     */
+    public function export(Request $request)
+    {
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+        if (! $warehouse) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $query = Order::query()
+            ->select([
+                'orders.id',
+                'orders.order_number',
+                'orders.order_type',
+                'orders.user_id',
+                'orders.expedition_id',
+                'orders.tracking_number',
+                'orders.source_warehouse_id',
+                'orders.total_amount',
+                'orders.order_status',
+                'orders.payment_method',
+                'orders.payment_status',
+                'orders.created_at',
+            ])
+            ->with(['user', 'expedition', 'sourceWarehouse'])
+            ->where('orders.source_warehouse_id', $warehouse->id)
+            ->where('orders.finance_approved', true)
+            ->orderByDesc('created_at');
+
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $query->whereDate('orders.created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $query->whereDate('orders.created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('orders.order_status', $request->status);
+        }
+
+        $hubIdentifier = $warehouse->kode_hub ?: Str::slug($warehouse->name);
+        $filenameParts = ['laporan-pesanan-hub', $hubIdentifier];
+        if ($request->filled('status') && $request->status != '') {
+            $filenameParts[] = $request->status;
+        }
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $filenameParts[] = 'dari-' . $request->date_from;
+        }
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $filenameParts[] = 'sd-' . $request->date_to;
+        }
+        $filenameParts[] = now()->timezone('Asia/Jakarta')->format('Ymd-His');
+        $filename = implode('-', $filenameParts) . '.xlsx';
+
+        return Excel::download(new AdminOrdersExport($query), $filename);
     }
 
     /**

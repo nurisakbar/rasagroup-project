@@ -395,6 +395,7 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         
         // Orders Management
         Route::get('/orders', [App\Http\Controllers\Warehouse\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/export', [App\Http\Controllers\Warehouse\OrderController::class, 'export'])->name('orders.export');
         Route::get('/orders/create', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/ajax/customers', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'searchCustomers'])->name('orders.search-customers');
