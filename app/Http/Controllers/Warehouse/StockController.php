@@ -349,12 +349,24 @@ class StockController extends Controller
             abort(400, 'Nama file export tidak valid.');
         }
 
-        $path = storage_path('app/exports/' . $filename);
-        if (! file_exists($path)) {
-            abort(404, 'File export tidak ditemukan atau telah kedaluwarsa.');
+        $disk = Storage::disk('local');
+        $relativePath = 'exports/' . $filename;
+
+        if ($disk->exists($relativePath)) {
+            return $disk->download($relativePath, $filename);
         }
 
-        return response()->download($path, $filename);
+        $fallbackPath = storage_path('app/exports/' . $filename);
+        if (file_exists($fallbackPath)) {
+            return response()->download($fallbackPath, $filename);
+        }
+
+        $privatePath = storage_path('app/private/exports/' . $filename);
+        if (file_exists($privatePath)) {
+            return response()->download($privatePath, $filename);
+        }
+
+        abort(404, 'File export tidak ditemukan atau telah kedaluwarsa.');
     }
 
     /**
