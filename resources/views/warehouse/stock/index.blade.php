@@ -31,6 +31,14 @@
                             </button>
                         </form>
                         @endif
+                        @if(!empty($warehouse->kode_hub))
+                        <form action="{{ route('warehouse.stock.sync-jubelio') }}" method="POST" style="display: inline-block; margin-right: 5px;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menyinkronkan...';">
+                            @csrf
+                            <button type="submit" class="btn btn-info btn-sm" title="Tarik data stok terkini dari Jubelio">
+                                <i class="fa fa-refresh"></i> Sinkron Jubelio
+                            </button>
+                        </form>
+                        @endif
                         <form action="{{ route('warehouse.stock.sync') }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Sync semua produk dengan stock 0?');">
                             @csrf
                             <button type="submit" class="btn btn-warning btn-sm" title="Tambahkan produk aktif baru ke hub dengan stok 0">
@@ -85,10 +93,10 @@
                                 <th>Kode</th>
                                 <th>Harga</th>
                                 @if($usesQadStock)
-                                    <th width="120">Stok lokal</th>
+                                    <th width="120">Stok Jubelio</th>
                                     <th width="140">Stok QAD</th>
                                 @else
-                                    <th width="120">Stock</th>
+                                    <th width="120">Stok Jubelio</th>
                                 @endif
                                 <th>Terakhir Update</th>
                                 @if(! $usesQadStock)
@@ -135,11 +143,11 @@
                                     @if($usesQadStock)
                                         <td>
                                             @if($stock->stock <= 10)
-                                                <span class="badge bg-red" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
+                                                <span class="badge bg-red" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
                                             @elseif($stock->stock <= 50)
-                                                <span class="badge bg-yellow" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
+                                                <span class="badge bg-yellow" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
                                             @else
-                                                <span class="badge bg-green" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
+                                                <span class="badge bg-green" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
                                             @endif
                                         </td>
                                         <td>

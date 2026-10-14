@@ -8,8 +8,10 @@ use App\Models\Product;
 use App\Models\QadInventory;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Services\JubelioService;
 use App\Services\WmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
@@ -265,6 +267,68 @@ class StockController extends Controller
             ]);
 
             return back()->with('error', 'Gagal melakukan sinkronisasi dengan QAD: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Manually sync product stocks from Jubelio API for current hub.
+     */
+    public function syncJubelio(JubelioService $jubelio)
+    {
+        set_time_limit(180);
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+
+        if (! $warehouse || empty($warehouse->kode_hub)) {
+            return back()->with('error', 'Kode Hub belum dikonfigurasi pada hub Anda.');
+        }
+
+        try {
+            $token = $jubelio->login();
+            $locationId = $jubelio->findLocationIdByCode($token, $warehouse->kode_hub);
+            if (! $locationId) {
+                return back()->with('error', "Lokasi Jubelio dengan kode {$warehouse->kode_hub} tidak ditemukan.");
+            }
+
+            $items = $jubelio->fetchItemsToSell($token, $locationId);
+            $productsByCode = Product::query()
+                ->whereNotNull('code')
+                ->where('code', '!=', '')
+                ->pluck('id', 'code');
+
+            $updatedCount = 0;
+            DB::transaction(function () use ($items, $productsByCode, $warehouse, &$updatedCount) {
+                foreach ($items as $item) {
+                    $itemCode = $item['item_code'] ?? null;
+                    if (! $itemCode || ! isset($productsByCode[$itemCode])) {
+                        continue;
+                    }
+
+                    $productId = $productsByCode[$itemCode];
+                    $availableQty = max(0, (int) ($item['available_qty'] ?? 0));
+
+                    WarehouseStock::updateOrCreate(
+                        [
+                            'warehouse_id' => $warehouse->id,
+                            'product_id' => $productId,
+                        ],
+                        [
+                            'stock' => $availableQty,
+                        ]
+                    );
+                    $updatedCount++;
+                }
+            });
+
+            return back()->with('success', "Berhasil mensinkronisasi {$updatedCount} stok produk dari Jubelio.");
+        } catch (\Throwable $e) {
+            Log::error('Warehouse stock: gagal sync Jubelio', [
+                'warehouse_id' => $warehouse->id,
+                'kode_hub' => $warehouse->kode_hub,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal melakukan sinkronisasi dengan Jubelio: ' . $e->getMessage());
         }
     }
 }
