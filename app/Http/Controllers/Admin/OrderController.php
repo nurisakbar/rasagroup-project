@@ -9,6 +9,8 @@ use App\Models\Order;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 use App\Notifications\Orders\OrderProcessingNotification;
@@ -319,6 +321,41 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['user.categoryDiscounts', 'items.product', 'expedition', 'address', 'sourceWarehouse', 'financeApprover']);
+
+        // Refresh AR balance and credit limit if distributor order
+        if ($order->order_type === 'distributor' && $order->user && $order->user->qad_customer_code) {
+            $webhookUrl = config('services.n8n.cis_ar_balance_url') ?: env('N8N_CIS_AR_BALANCE_URL');
+            if ($webhookUrl) {
+                try {
+                    $response = Http::timeout(3)->get($webhookUrl, [
+                        'debtorcode' => $order->user->qad_customer_code,
+                    ]);
+                    if ($response->successful() && $response->json('success')) {
+                        $data = $response->json('data');
+                        $isUpdated = false;
+                        if (isset($data['outstanding'])) {
+                            $order->user->ar_outstanding = $data['outstanding'];
+                            $isUpdated = true;
+                        }
+                        if (isset($data['credit_limit'])) {
+                            $order->user->credit_limit = $data['credit_limit'];
+                            $isUpdated = true;
+                        }
+                        if ($isUpdated) {
+                            $order->user->ar_balance_last_sync_at = now();
+                            $order->user->save();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed fetching AR balance on admin order show', [
+                        'order_id' => $order->id,
+                        'debtorcode' => $order->user->qad_customer_code,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         $expeditions = \App\Models\Expedition::where('is_active', true)->get();
         return view('admin.orders.show', compact('order', 'expeditions'));
     }

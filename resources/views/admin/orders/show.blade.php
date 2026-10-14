@@ -94,6 +94,32 @@
                                 @endif
                             </td>
                         </tr>
+                        @if($order->order_type === 'distributor' && $order->user)
+                        <tr style="background-color: #fafbfc;">
+                            <th><i class="fa fa-credit-card text-muted"></i> Credit Limit</th>
+                            <td>
+                                <strong class="text-primary" style="font-size: 14px;">
+                                    Rp {{ number_format($order->user->credit_limit ?? 0, 0, ',', '.') }}
+                                </strong>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #fafbfc;">
+                            <th><i class="fa fa-money text-muted"></i> AR Outstanding</th>
+                            <td>
+                                <strong class="{{ ($order->user->ar_outstanding ?? 0) > 0 ? 'text-danger' : 'text-success' }}" style="font-size: 14px;">
+                                    Rp {{ number_format($order->user->ar_outstanding ?? 0, 0, ',', '.') }}
+                                </strong>
+                                @php
+                                    $creditLimit = (float) ($order->user->credit_limit ?? 0);
+                                    $arOutstanding = (float) ($order->user->ar_outstanding ?? 0);
+                                    $sisaLimit = $creditLimit - $arOutstanding;
+                                @endphp
+                                <span style="margin-left: 8px;" class="text-muted">
+                                    (Sisa Limit: <strong class="{{ $sisaLimit >= 0 ? 'text-success' : 'text-danger' }}">Rp {{ number_format($sisaLimit, 0, ',', '.') }}</strong>@if($sisaLimit < 0) <span class="label label-danger" style="margin-left: 3px;">Over Limit</span>@endif)
+                                </span>
+                            </td>
+                        </tr>
+                        @endif
                         <tr>
                             <th>Tanggal Pesanan</th>
                             <td>{{ \App\Support\Wib::format($order->created_at) }} WIB</td>
@@ -183,6 +209,78 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Informasi Finansial Distributor -->
+            @if($order->order_type === 'distributor' && $order->user)
+            <div class="box box-warning">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-id-card-o text-yellow"></i> Informasi Finansial Distributor</h3>
+                    @if(Route::has('admin.distributors.edit'))
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('admin.distributors.edit', $order->user) }}" target="_blank" class="btn btn-xs btn-default">
+                            <i class="fa fa-external-link"></i> Profil Distributor
+                        </a>
+                    </div>
+                    @endif
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="info-box bg-aqua" style="margin-bottom: 0;">
+                                <span class="info-box-icon"><i class="fa fa-credit-card"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Credit Limit</span>
+                                    <span class="info-box-number" style="font-size: 15px;">
+                                        Rp {{ number_format($order->user->credit_limit ?? 0, 0, ',', '.') }}
+                                    </span>
+                                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
+                                    <span class="progress-description" style="font-size: 11px;">
+                                        Limit kredit terdaftar
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            @php
+                                $arOutstanding = (float) ($order->user->ar_outstanding ?? 0);
+                            @endphp
+                            <div class="info-box {{ $arOutstanding > 0 ? 'bg-red' : 'bg-green' }}" style="margin-bottom: 0;">
+                                <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">AR Outstanding</span>
+                                    <span class="info-box-number" style="font-size: 15px;">
+                                        Rp {{ number_format($arOutstanding, 0, ',', '.') }}
+                                    </span>
+                                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
+                                    <span class="progress-description" style="font-size: 11px;">
+                                        Total tagihan berjalan
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            @php
+                                $creditLimit = (float) ($order->user->credit_limit ?? 0);
+                                $sisaLimit = $creditLimit - $arOutstanding;
+                            @endphp
+                            <div class="info-box {{ $sisaLimit >= 0 ? 'bg-green' : 'bg-yellow' }}" style="margin-bottom: 0;">
+                                <span class="info-box-icon"><i class="fa {{ $sisaLimit >= 0 ? 'fa-check' : 'fa-exclamation-triangle' }}"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Sisa Limit Kredit</span>
+                                    <span class="info-box-number" style="font-size: 15px;">
+                                        Rp {{ number_format($sisaLimit, 0, ',', '.') }}
+                                    </span>
+                                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
+                                    <span class="progress-description" style="font-size: 11px;">
+                                        {{ $sisaLimit >= 0 ? 'Limit masih mencukupi' : 'Melebihi Credit Limit' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- ERP: Jubelio (order hub/online) -->
             @if($order->shouldSyncToJubelio() || $order->jubelio_salesorder_id)
@@ -711,6 +809,31 @@
                                 <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded (Dikembalikan)</option>
                                 <option value="term_of_payment" {{ $order->payment_status === 'term_of_payment' ? 'selected' : '' }}>Term Of Payment (Approved)</option>
                             </select>
+                            @if($order->order_type === 'distributor' && $order->user)
+                                <div class="well well-sm" style="margin-top: 10px; margin-bottom: 0; background: #fff; border-left: 3px solid #f39c12;">
+                                    <small class="text-muted text-uppercase" style="font-weight: 600;">Status Kredit Distributor</small>
+                                    <div style="margin-top: 4px; display: flex; justify-content: space-between;">
+                                        <span>Credit Limit:</span>
+                                        <strong>Rp {{ number_format($order->user->credit_limit ?? 0, 0, ',', '.') }}</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>AR Outstanding:</span>
+                                        <strong class="{{ ($order->user->ar_outstanding ?? 0) > 0 ? 'text-danger' : 'text-success' }}">Rp {{ number_format($order->user->ar_outstanding ?? 0, 0, ',', '.') }}</strong>
+                                    </div>
+                                    @php
+                                        $sisaLimit = (float)($order->user->credit_limit ?? 0) - (float)($order->user->ar_outstanding ?? 0);
+                                    @endphp
+                                    <div style="display: flex; justify-content: space-between; border-top: 1px dashed #ddd; padding-top: 3px; margin-top: 3px;">
+                                        <span>Sisa Limit:</span>
+                                        <strong class="{{ $sisaLimit >= 0 ? 'text-success' : 'text-danger' }}">
+                                            Rp {{ number_format($sisaLimit, 0, ',', '.') }}
+                                            @if($sisaLimit < 0)
+                                                <span class="label label-danger" style="font-size: 9px; padding: 1px 3px;">Over</span>
+                                            @endif
+                                        </strong>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <hr>
