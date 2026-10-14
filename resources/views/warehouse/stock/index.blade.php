@@ -8,6 +8,23 @@
     <li class="active">Kelola Stock</li>
 @endsection
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
+<style>
+    .filter-stock-box {
+        background: #fdfdfd;
+        border-bottom: 1px solid #f4f4f4;
+        padding: 12px 15px;
+    }
+    #stock-table_length { margin-top: 5px; margin-bottom: 12px; }
+    .dataTables_filter { float: right; margin-top: 5px; margin-bottom: 12px; }
+    .dataTables_filter input { width: 250px !important; display: inline-block; margin-left: 6px; }
+    #stock-table th { background: #fafafa; vertical-align: middle !important; }
+    #stock-table td { vertical-align: middle !important; }
+    .table-responsive { border: none; }
+</style>
+@endpush
+
 @section('content')
     <div class="row">
         <div class="col-xs-12">
@@ -39,7 +56,7 @@
                             </button>
                         </form>
                         @endif
-                        <form action="{{ route('warehouse.stock.sync') }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Sync semua produk dengan stock 0?');">
+                        <form action="{{ route('warehouse.stock.sync') }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Sync semua produk aktif dengan stock 0?');">
                             @csrf
                             <button type="submit" class="btn btn-warning btn-sm" title="Tambahkan produk aktif baru ke hub dengan stok 0">
                                 <i class="fa fa-plus-circle"></i> Sync Produk
@@ -47,28 +64,27 @@
                         </form>
                     </div>
                 </div>
-                <!-- Filter -->
-                <div class="box-body" style="border-bottom: 1px solid #f4f4f4;">
-                    <form action="{{ route('warehouse.stock.index') }}" method="GET" class="form-inline">
-                        <div class="form-group">
-                            <input type="text" name="search" class="form-control" placeholder="Cari produk atau kode..." value="{{ request('search') }}">
-                        </div>
-                        <div class="form-group">
-                            <select name="filter" class="form-control">
-                                <option value="">Semua Stock</option>
-                                <option value="low" {{ request('filter') == 'low' ? 'selected' : '' }}>Stock Rendah (≤10)</option>
+
+                <!-- Filter Bar -->
+                <div class="box-body filter-stock-box">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6">
+                            <label style="font-size: 12px; margin-bottom: 4px; color: #555;">Filter Stok Produk:</label>
+                            <select id="filter-stock-status" class="form-control input-sm">
+                                <option value="">Semua Stok</option>
+                                <option value="low" {{ request('filter') == 'low' ? 'selected' : '' }}>Stok Rendah (≤10)</option>
+                                <option value="available">Stok Tersedia (>0)</option>
+                                <option value="empty">Stok Habis (0)</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-default">
-                            <i class="fa fa-search"></i> Filter
-                        </button>
-                        @if(request('search') || request('filter'))
-                            <a href="{{ route('warehouse.stock.index') }}" class="btn btn-default">
-                                <i class="fa fa-times"></i> Reset
-                            </a>
-                        @endif
-                    </form>
+                        <div class="col-md-3 col-sm-6" style="padding-top: 22px;">
+                            <button type="button" id="btn-reset-filter" class="btn btn-default btn-sm">
+                                <i class="fa fa-refresh"></i> Reset Filter
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 @if($usesQadStock)
                     <div class="box-body" style="padding-bottom: 0;">
                         <div class="callout callout-info" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -84,28 +100,30 @@
                         </div>
                     </div>
                 @endif
-                <div class="box-body table-responsive no-padding">
-                    <table class="table table-hover">
+
+                <div class="box-body table-responsive" style="padding: 15px;">
+                    <table id="stock-table" class="table table-bordered table-striped table-hover" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th width="60">Gambar</th>
+                                <th width="45" class="text-center">No</th>
+                                <th width="65" class="text-center">Gambar</th>
                                 <th>Nama Produk</th>
-                                <th>Kode</th>
-                                <th>Harga</th>
+                                <th width="120">Kode (SKU)</th>
+                                <th width="120">Harga</th>
                                 @if($usesQadStock)
-                                    <th width="120">Stok Jubelio</th>
-                                    <th width="140">Stok QAD</th>
+                                    <th width="110" class="text-center">Stok Jubelio</th>
+                                    <th width="130" class="text-center">Stok QAD</th>
                                 @else
-                                    <th width="120">Stok Jubelio</th>
+                                    <th width="110" class="text-center">Stok Jubelio</th>
                                 @endif
-                                <th>Terakhir Update</th>
+                                <th width="130" class="text-center">Terakhir Update</th>
                                 @if(! $usesQadStock)
-                                    <th width="150">Action</th>
+                                    <th width="120" class="text-center">Action</th>
                                 @endif
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($stocks as $stock)
+                            @foreach($stocks as $stock)
                                 @php
                                     $qadQty = (int) ($stock->qad_qty ?? 0);
                                     $qadBatches = $stock->qad_batches ?? [];
@@ -114,143 +132,120 @@
                                         ? $stock->product->image_url
                                         : ($stock->product->images->first()?->image_url ?: $stock->product->image_url);
                                 @endphp
-                                <tr class="{{ $displayQty <= 10 ? 'danger' : '' }}">
-                                    <td>
-                                        <img src="{{ $productImageUrl }}" alt="{{ $stock->product->display_name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';">
+                                <tr class="{{ $displayQty <= 10 ? 'danger' : '' }}" data-qty="{{ $displayQty }}">
+                                    <td class="text-center"></td>
+                                    <td class="text-center">
+                                        <img src="{{ $productImageUrl }}" alt="{{ $stock->product->display_name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px;" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';">
                                     </td>
                                     <td>
                                         <strong>{{ $stock->product->display_name }}</strong>
                                         @if($usesQadStock && count($qadBatches) > 0)
-                                            <div style="margin-top: 6px;">
+                                            <div style="margin-top: 6px; font-size: 11px; color: #555;">
                                                 @foreach($qadBatches as $batch)
                                                     <div>
-                                                        <em>Batch : {{ $batch['lot_serial'] }}
+                                                        <em>Batch: {{ $batch['lot_serial'] }}
                                                         @if(!empty($batch['expired']))
-                                                            - Expired : {{ $batch['expired'] }}
+                                                            - Exp: {{ $batch['expired'] }}
                                                         @endif
                                                         </em>
-                                                        - Jumlah : {{ number_format($batch['qty']) }}
+                                                        - Jml: {{ number_format($batch['qty']) }}
                                                     </div>
                                                 @endforeach
                                             </div>
                                         @endif
                                     </td>
                                     <td><code>{{ $stock->product->code ?: '-' }}</code></td>
-                                    <td>Rp {{ number_format($stock->product->price, 0, ',', '.') }}</td>
-                                    @if($usesQadStock)
-                                        <td>
-                                            @if($stock->stock <= 10)
-                                                <span class="badge bg-red" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
-                                            @elseif($stock->stock <= 50)
-                                                <span class="badge bg-yellow" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
-                                            @else
-                                                <span class="badge bg-green" style="font-size: 14px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
+                                    <td data-order="{{ (float) $stock->product->price }}">Rp {{ number_format($stock->product->price, 0, ',', '.') }}</td>
+                                    <td class="text-center" data-order="{{ (int) $stock->stock }}">
+                                        @if($stock->stock <= 10)
+                                            <span class="badge bg-red" style="font-size: 13px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
+                                            @if(! $usesQadStock)
+                                                <br><small class="text-red" style="font-size: 10px;"><i class="fa fa-warning"></i> Rendah</small>
                                             @endif
-                                        </td>
-                                        <td>
+                                        @elseif($stock->stock <= 50)
+                                            <span class="badge bg-yellow" style="font-size: 13px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
+                                        @else
+                                            <span class="badge bg-green" style="font-size: 13px;" title="Stok Jubelio">{{ number_format($stock->stock) }}</span>
+                                        @endif
+                                    </td>
+                                    @if($usesQadStock)
+                                        <td class="text-center" data-order="{{ (int) $qadQty }}">
                                             @if($qadQty > 0)
-                                                <span class="badge bg-purple" style="font-size: 14px;">{{ number_format($qadQty) }}</span>
+                                                <span class="badge bg-purple" style="font-size: 13px;">{{ number_format($qadQty) }}</span>
                                                 @if((int) $stock->stock !== $qadQty)
-                                                    <br><small class="text-danger"><i class="fa fa-warning"></i> Selisih</small>
+                                                    <br><small class="text-danger" style="font-size: 10px;"><i class="fa fa-warning"></i> Selisih</small>
                                                 @endif
                                             @else
                                                 <span class="text-muted">0</span>
                                             @endif
                                         </td>
-                                    @else
-                                        <td>
-                                            @if($stock->stock <= 10)
-                                                <span class="badge bg-red" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
-                                                <br><small class="text-red"><i class="fa fa-warning"></i> Stock rendah!</small>
-                                            @elseif($stock->stock <= 50)
-                                                <span class="badge bg-yellow" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
-                                            @else
-                                                <span class="badge bg-green" style="font-size: 14px;">{{ number_format($stock->stock) }}</span>
-                                            @endif
-                                        </td>
                                     @endif
-                                    <td>{{ $stock->updated_at->format('d M Y, H:i') }}</td>
+                                    <td class="text-center" data-order="{{ $stock->updated_at ? $stock->updated_at->timestamp : 0 }}">
+                                        {{ $stock->updated_at ? $stock->updated_at->format('d/m/Y H:i') : '-' }}
+                                    </td>
                                     @if(! $usesQadStock)
-                                    <td>
-                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#updateStockModal{{ $stock->id }}">
-                                            <i class="fa fa-edit"></i> Update Stock
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#updateStockModal{{ $stock->id }}">
+                                            <i class="fa fa-edit"></i> Update
                                         </button>
                                     </td>
                                     @endif
                                 </tr>
-
-                                @if(! $usesQadStock)
-
-                                <!-- Update Stock Modal -->
-                                <div class="modal fade" id="updateStockModal{{ $stock->id }}" tabindex="-1" role="dialog">
-                                    <div class="modal-dialog" role="document">
-                                        <div class="modal-content">
-                                            <form action="{{ route('warehouse.stock.update', $stock) }}" method="POST">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                    <h4 class="modal-title">Update Stock - {{ $stock->product->display_name }}</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <img src="{{ $productImageUrl }}" alt="{{ $stock->product->display_name }}" class="img-responsive" style="border-radius: 5px;" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';">
-                                                        </div>
-                                                        <div class="col-md-8">
-                                                            <p><strong>{{ $stock->product->display_name }}</strong></p>
-                                                            <p class="text-muted">Harga: Rp {{ number_format($stock->product->price, 0, ',', '.') }}</p>
-                                                            <hr>
-                                                            <div class="form-group">
-                                                                <label for="stock{{ $stock->id }}">Jumlah Stock Baru</label>
-                                                                <input type="number" class="form-control input-lg" id="stock{{ $stock->id }}" name="stock" value="{{ $stock->stock }}" min="0" required autofocus>
-                                                                <p class="help-block">Stock saat ini: <strong>{{ number_format($stock->stock) }}</strong> unit</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fa fa-save"></i> Simpan
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endif
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">
-                                        <p class="text-muted" style="padding: 40px 0;">
-                                            <i class="fa fa-inbox fa-3x"></i><br><br>
-                                            @if(request('search') || request('filter'))
-                                                Tidak ada produk yang sesuai dengan filter.
-                                            @else
-                                                Belum ada produk di hub ini.<br>
-                                                Klik tombol "Sync Produk" untuk menambahkan semua produk.
-                                            @endif
-                                        </p>
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-                @if($stocks->hasPages())
-                <div class="box-footer clearfix">
-                    <div class="pull-left">
-                        <p class="text-muted">Menampilkan {{ $stocks->firstItem() }} - {{ $stocks->lastItem() }} dari {{ $stocks->total() }} produk</p>
-                    </div>
-                    <div class="pull-right">
-                        {{ $stocks->appends(request()->query())->links('pagination::simple-bootstrap-3') }}
-                    </div>
-                </div>
-                @endif
             </div>
         </div>
     </div>
+
+    @if(! $usesQadStock)
+        @foreach($stocks as $stock)
+            @php
+                $productImageUrl = $stock->product->image
+                    ? $stock->product->image_url
+                    : ($stock->product->images->first()?->image_url ?: $stock->product->image_url);
+            @endphp
+            <!-- Update Stock Modal -->
+            <div class="modal fade" id="updateStockModal{{ $stock->id }}" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <form action="{{ route('warehouse.stock.update', $stock) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Update Stock - {{ $stock->product->display_name }}</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <img src="{{ $productImageUrl }}" alt="{{ $stock->product->display_name }}" class="img-responsive" style="border-radius: 5px;" onerror="this.onerror=null;this.src='{{ asset('logo/Rasa Connect - Logo 2_Maroon 1.png') }}';">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <p><strong>{{ $stock->product->display_name }}</strong></p>
+                                        <p class="text-muted">Harga: Rp {{ number_format($stock->product->price, 0, ',', '.') }}</p>
+                                        <hr>
+                                        <div class="form-group">
+                                            <label for="stock{{ $stock->id }}">Jumlah Stock Baru</label>
+                                            <input type="number" class="form-control input-lg" id="stock{{ $stock->id }}" name="stock" value="{{ $stock->stock }}" min="0" required autofocus>
+                                            <p class="help-block">Stock saat ini: <strong>{{ number_format($stock->stock) }}</strong> unit</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-save"></i> Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
 
     <!-- Modal Progress Export Excel -->
     <div class="modal fade" id="exportProgressModal" tabindex="-1" role="dialog" aria-labelledby="exportProgressModalLabel" data-backdrop="static" data-keyboard="false">
@@ -279,8 +274,83 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Custom filter stock status
+    $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex) {
+            if (settings.nTable.id !== 'stock-table') {
+                return true;
+            }
+            var filterVal = $('#filter-stock-status').val();
+            if (!filterVal) return true;
+
+            var rowNode = table.row(dataIndex).node();
+            var qty = parseInt($(rowNode).attr('data-qty'), 10) || 0;
+
+            if (filterVal === 'low') {
+                return qty <= 10;
+            } else if (filterVal === 'available') {
+                return qty > 0;
+            } else if (filterVal === 'empty') {
+                return qty === 0;
+            }
+            return true;
+        }
+    );
+
+    var table = $('#stock-table').DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+        columnDefs: [
+            { orderable: false, targets: [0, 1{{ !$usesQadStock ? ', 8' : '' }}] },
+            { searchable: false, targets: [0, 1{{ !$usesQadStock ? ', 8' : '' }}] }
+        ],
+        order: [[2, 'asc']],
+        language: {
+            processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>',
+            search: "Cari Produk / Kode / Batch:",
+            searchPlaceholder: "Ketik untuk mencari...",
+            lengthMenu: "Tampilkan _MENU_ produk",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ produk",
+            infoEmpty: "Menampilkan 0 sampai 0 dari 0 produk",
+            infoFiltered: "(difilter dari _MAX_ total produk)",
+            zeroRecords: "Tidak ada produk yang cocok",
+            emptyTable: "Tidak ada data produk tersedia",
+            paginate: {
+                first: "Pertama",
+                previous: "Sebelumnya",
+                next: "Selanjutnya",
+                last: "Terakhir"
+            }
+        }
+    });
+
+    // Auto-numbering column 0
+    table.on('order.dt search.dt', function () {
+        let i = 1;
+        table.cells(null, 0, { search: 'applied', order: 'applied' }).every(function (cell) {
+            this.data(i++);
+        });
+    }).draw();
+
+    // Trigger initial filter if requested in query string
+    @if(request('filter'))
+        table.draw();
+    @endif
+
+    $('#filter-stock-status').on('change', function() {
+        table.draw();
+    });
+
+    $('#btn-reset-filter').on('click', function() {
+        $('#filter-stock-status').val('');
+        table.search('').draw();
+    });
+
+    // Export progress handling
     var exportPollTimer = null;
 
     $('#btnExportStock').click(function(e) {
@@ -304,8 +374,8 @@ $(document).ready(function() {
 
         var exportParams = {
             _token: '{{ csrf_token() }}',
-            search: '{{ request("search") }}',
-            filter: '{{ request("filter") }}'
+            search: table.search() || '',
+            filter: $('#filter-stock-status').val() || ''
         };
 
         $.ajax({
@@ -369,7 +439,7 @@ $(document).ready(function() {
                     }
                 },
                 error: function() {
-                    // Terus polling jika terjadi transient network delay
+                    // Continue polling on transient error
                 }
             });
         }, 1000);

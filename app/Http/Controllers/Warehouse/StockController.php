@@ -36,29 +36,17 @@ class StockController extends Controller
         $this->autoSyncRealtimeData($warehouse, $qadLocationCode);
 
         $query = WarehouseStock::with(['product.images'])
-            ->whereHas('product', function ($q) use ($request) {
+            ->whereHas('product', function ($q) {
                 $q->where('status', 'active');
-
-                if ($request->filled('search')) {
-                    $search = $request->search;
-                    $q->where(function ($sq) use ($search) {
-                        $sq->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    });
-                }
             })
             ->where('warehouse_id', $warehouse->id);
 
-        if ($request->filled('filter') && $request->filter === 'low') {
-            $query->where('stock', '<=', 10);
-        }
-
-        $stocks = $query->orderBy('updated_at', 'desc')->paginate(15);
+        $stocks = $query->orderBy('updated_at', 'desc')->get();
         $qadBatches = $usesQadStock
             ? $this->qadBatchesIndexed($warehouse, (string) $qadLocationCode)
             : [];
 
-        $stocks->getCollection()->transform(function (WarehouseStock $stock) use ($qadBatches) {
+        $stocks->transform(function (WarehouseStock $stock) use ($qadBatches) {
             $code = trim((string) ($stock->product?->code ?? ''));
             $batches = $qadBatches[$code]
                 ?? $qadBatches[strtoupper($code)]
