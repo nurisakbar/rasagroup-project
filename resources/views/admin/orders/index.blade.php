@@ -248,16 +248,7 @@ $(document).ready(function() {
 
     $('#btn-export-excel').on('click', function(e) {
         e.preventDefault();
-        var params = $.param({
-            status: $('#filter-status').val(),
-            order_type: $('#filter-order-type').val(),
-            source_warehouse_id: $('#filter-source-warehouse').val() || '',
-            tab_status: window.currentTabStatus || '',
-            date_from: $('#filter-date-from').val(),
-            date_to: $('#filter-date-to').val(),
-            search: table.search()
-        });
-        window.location = "{{ route('admin.orders.export') }}?" + params;
+        window.location = "{{ route('admin.orders.export') }}";
     });
 });
 </script>

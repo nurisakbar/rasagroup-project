@@ -219,10 +219,7 @@ class OrderController extends Controller
             ->with(['user', 'expedition', 'sourceWarehouse'])
             ->orderByDesc('created_at');
 
-        $this->applyOrderListFilters($query, $request);
-        $this->applyOrderTabFilter($query, (string) $request->input('tab_status', ''));
-
-        $filename = 'pesanan-'.now()->timezone('Asia/Jakarta')->format('Ymd-His').'.xlsx';
+        $filename = 'pesanan-semua-'.now()->timezone('Asia/Jakarta')->format('Ymd-His').'.xlsx';
 
         return Excel::download(new AdminOrdersExport($query), $filename);
     }
