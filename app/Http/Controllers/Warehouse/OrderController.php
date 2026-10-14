@@ -45,7 +45,7 @@ class OrderController extends Controller
         $warehouse = $user->warehouse;
 
         if ($request->ajax()) {
-            $query = Order::with(['user', 'expedition', 'items.product'])
+            $query = Order::with(['user', 'address', 'expedition', 'items.product'])
                 ->where('source_warehouse_id', $warehouse->id)
                 ->where('finance_approved', true);
 
@@ -74,6 +74,11 @@ class OrderController extends Controller
                                        ->orWhere('email', 'like', "%{$keyword}%")
                                        ->orWhere('phone', 'like', "%{$keyword}%");
                                 })
+                                ->orWhereHas('address', function ($aq) use ($keyword) {
+                                    $aq->where('store_name', 'like', "%{$keyword}%")
+                                       ->orWhere('recipient_name', 'like', "%{$keyword}%")
+                                       ->orWhere('label', 'like', "%{$keyword}%");
+                                })
                                 ->orWhereHas('expedition', function ($eq) use ($keyword) {
                                     $eq->where('name', 'like', "%{$keyword}%");
                                 });
@@ -93,6 +98,24 @@ class OrderController extends Controller
                 })
                 ->addColumn('customer_info', function ($order) {
                     $html = '<strong>' . $order->user->name . '</strong>';
+
+                    $storeName = $order->address?->store_name;
+                    $label = $order->address?->label;
+
+                    if ($storeName) {
+                        $html .= '<br><span style="color: #0073b7; font-weight: 600;"><i class="fa fa-shopping-bag"></i> ' . e($storeName) . '</span>';
+                    }
+
+                    if ($label) {
+                        $labelColor = match(strtolower($label)) {
+                            'toko' => 'success',
+                            'kantor' => 'warning',
+                            'rumah' => 'info',
+                            default => 'default',
+                        };
+                        $html .= ' <span class="label label-' . $labelColor . '" style="font-size: 10px; margin-left: 3px;">' . strtoupper(e($label)) . '</span>';
+                    }
+
                     $html .= '<br><small class="text-muted">' . $order->user->email . '</small>';
                     if ($order->user->phone) {
                         $html .= '<br><small class="text-muted"><i class="fa fa-phone"></i> ' . $order->user->phone . '</small>';
