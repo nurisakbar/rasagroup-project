@@ -219,7 +219,30 @@ class OrderController extends Controller
             ->with(['user', 'expedition', 'sourceWarehouse'])
             ->orderByDesc('created_at');
 
-        $filename = 'pesanan-semua-'.now()->timezone('Asia/Jakarta')->format('Ymd-His').'.xlsx';
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $query->whereDate('orders.created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $query->whereDate('orders.created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('orders.order_status', $request->status);
+        }
+
+        $filenameParts = ['laporan-pesanan'];
+        if ($request->filled('status') && $request->status != '') {
+            $filenameParts[] = $request->status;
+        }
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $filenameParts[] = 'dari-'.$request->date_from;
+        }
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $filenameParts[] = 'sd-'.$request->date_to;
+        }
+        $filenameParts[] = now()->timezone('Asia/Jakarta')->format('Ymd-His');
+        $filename = implode('-', $filenameParts).'.xlsx';
 
         return Excel::download(new AdminOrdersExport($query), $filename);
     }

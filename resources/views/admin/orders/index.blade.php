@@ -138,6 +138,66 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Export Excel -->
+    <div class="modal fade" id="modalExportExcel" tabindex="-1" role="dialog" aria-labelledby="modalExportExcelLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="form-export-excel" method="GET" action="{{ route('admin.orders.export') }}">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="modalExportExcelLabel"><i class="fa fa-file-excel-o text-success"></i> Export Data Pesanan ke Excel</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="export-date-from">Dari Tanggal</label>
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </div>
+                                        <input type="text" name="date_from" id="export-date-from" class="form-control datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
+                                    </div>
+                                    <p class="help-block text-muted" style="font-size: 11px;">Kosongkan jika dari awal transaksi.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="export-date-to">Sampai Tanggal</label>
+                                    <div class="input-group date">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </div>
+                                        <input type="text" name="date_to" id="export-date-to" class="form-control datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
+                                    </div>
+                                    <p class="help-block text-muted" style="font-size: 11px;">Kosongkan jika hingga transaksi terbaru.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="export-status">Status Pesanan</label>
+                            <select name="status" id="export-status" class="form-control">
+                                <option value="">-- Semua Status --</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Batal</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-download"></i> Download Excel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -248,7 +308,16 @@ $(document).ready(function() {
 
     $('#btn-export-excel').on('click', function(e) {
         e.preventDefault();
-        window.location = "{{ route('admin.orders.export') }}";
+        $('#export-date-from').datepicker('update', $('#filter-date-from').val() || '');
+        $('#export-date-to').datepicker('update', $('#filter-date-to').val() || '');
+        $('#export-status').val($('#filter-status').val() || '');
+        $('#modalExportExcel').modal('show');
+    });
+
+    $('#form-export-excel').on('submit', function() {
+        setTimeout(function() {
+            $('#modalExportExcel').modal('hide');
+        }, 500);
     });
 });
 </script>
