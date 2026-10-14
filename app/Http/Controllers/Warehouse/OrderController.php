@@ -97,28 +97,22 @@ class OrderController extends Controller
                     return $order->created_at->format('d M Y H:i');
                 })
                 ->addColumn('customer_info', function ($order) {
-                    $html = '<strong>' . $order->user->name . '</strong>';
+                    $html = '<strong>' . e($order->user->name) . '</strong>';
 
-                    $storeName = $order->address?->store_name;
-                    $label = $order->address?->label;
+                    $storeName = trim((string) ($order->address?->store_name ?? ''));
+                    $label = trim((string) ($order->address?->label ?? ''));
 
-                    if ($storeName) {
-                        $html .= '<br><span style="color: #0073b7; font-weight: 600;"><i class="fa fa-shopping-bag"></i> ' . e($storeName) . '</span>';
+                    if ($storeName !== '' && $label !== '') {
+                        $html .= '<br>' . e($storeName) . ' (' . e($label) . ')';
+                    } elseif ($storeName !== '') {
+                        $html .= '<br>' . e($storeName);
+                    } elseif ($label !== '') {
+                        $html .= '<br>(' . e($label) . ')';
                     }
 
-                    if ($label) {
-                        $labelColor = match(strtolower($label)) {
-                            'toko' => 'success',
-                            'kantor' => 'warning',
-                            'rumah' => 'info',
-                            default => 'default',
-                        };
-                        $html .= ' <span class="label label-' . $labelColor . '" style="font-size: 10px; margin-left: 3px;">' . strtoupper(e($label)) . '</span>';
-                    }
-
-                    $html .= '<br><small class="text-muted">' . $order->user->email . '</small>';
+                    $html .= '<br><small class="text-muted">' . e($order->user->email) . '</small>';
                     if ($order->user->phone) {
-                        $html .= '<br><small class="text-muted"><i class="fa fa-phone"></i> ' . $order->user->phone . '</small>';
+                        $html .= '<br><small class="text-muted">' . e($order->user->phone) . '</small>';
                     }
                     return $html;
                 })
