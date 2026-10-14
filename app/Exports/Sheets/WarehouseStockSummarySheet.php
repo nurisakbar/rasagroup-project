@@ -26,7 +26,9 @@ class WarehouseStockSummarySheet implements FromCollection, WithHeadings, WithMa
 
     public function collection()
     {
-        return $this->stocks;
+        return $this->stocks->filter(function ($stock) {
+            return $stock->product && $stock->product->status === 'active';
+        });
     }
 
     public function title(): string
@@ -40,18 +42,16 @@ class WarehouseStockSummarySheet implements FromCollection, WithHeadings, WithMa
             'No',
             'Produk',
             'Kode Produk',
-            'Kode Alternatif',
             'Harga (Rp)',
             'Stok (Jubelio)',
             'Fisik (WMS)',
-            'Selisih (WMS - Jubelio)',
             'Detail Batch WMS',
         ];
     }
 
     public function map($stock): array
     {
-        if (!$stock->product) {
+        if (!$stock->product || $stock->product->status !== 'active') {
             return [];
         }
 
@@ -86,21 +86,13 @@ class WarehouseStockSummarySheet implements FromCollection, WithHeadings, WithMa
             $batchLines[] = $line;
         }
 
-        $altCodes = !empty($stock->product->alternate_codes) && is_array($stock->product->alternate_codes)
-            ? implode(', ', $stock->product->alternate_codes)
-            : '-';
-
-        $selisih = $wmsTotal - (int) $stock->stock;
-
         return [
             $this->rowNumber++,
             $stock->product->name,
             $stock->product->code,
-            $altCodes,
             (float) $stock->product->price,
             (int) $stock->stock,
             $wmsTotal,
-            $selisih,
             count($batchLines) > 0 ? implode("\n", $batchLines) : '-',
         ];
     }
@@ -111,24 +103,22 @@ class WarehouseStockSummarySheet implements FromCollection, WithHeadings, WithMa
             'A' => 6,
             'B' => 38,
             'C' => 18,
-            'D' => 22,
+            'D' => 16,
             'E' => 16,
             'F' => 16,
-            'G' => 16,
-            'H' => 24,
-            'I' => 50,
+            'G' => 50,
         ];
     }
 
     public function styles(Worksheet $sheet): array
     {
-        $sheet->getStyle('A:I')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-        $sheet->getStyle('I')->getAlignment()->setWrapText(true);
+        $sheet->getStyle('A:G')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('G')->getAlignment()->setWrapText(true);
         $sheet->getStyle('A')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('C:D')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('F:H')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('E')->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle('F:H')->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('C')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('E:F')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D')->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('E:F')->getNumberFormat()->setFormatCode('#,##0');
 
         return [
             1 => [

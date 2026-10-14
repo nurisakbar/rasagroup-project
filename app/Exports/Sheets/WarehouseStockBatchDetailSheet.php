@@ -29,7 +29,7 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
         $rows = collect();
 
         foreach ($this->stocks as $stock) {
-            if (!$stock->product) {
+            if (!$stock->product || $stock->product->status !== 'active') {
                 continue;
             }
 
@@ -56,16 +56,11 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
                 $wmsTotal += (int) ($b['qty'] ?? 0);
             }
 
-            $altCodes = !empty($stock->product->alternate_codes) && is_array($stock->product->alternate_codes)
-                ? implode(', ', $stock->product->alternate_codes)
-                : '-';
-
             if (count($productBatches) > 0) {
                 foreach ($productBatches as $batch) {
                     $rows->push([
                         'product_name' => $stock->product->name,
                         'product_code' => $stock->product->code,
-                        'alt_codes' => $altCodes,
                         'price' => (float) $stock->product->price,
                         'stock_jubelio' => (int) $stock->stock,
                         'wms_total' => $wmsTotal,
@@ -79,7 +74,6 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
                 $rows->push([
                     'product_name' => $stock->product->name,
                     'product_code' => $stock->product->code,
-                    'alt_codes' => $altCodes,
                     'price' => (float) $stock->product->price,
                     'stock_jubelio' => (int) $stock->stock,
                     'wms_total' => 0,
@@ -104,7 +98,6 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
         return [
             'No',
             'Kode Produk (SKU)',
-            'Kode Alternatif',
             'Nama Produk',
             'Kode Item WMS',
             'Nomor Batch / Lot',
@@ -121,7 +114,6 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
         return [
             $this->rowNumber++,
             $row['product_code'],
-            $row['alt_codes'],
             $row['product_name'],
             $row['wms_item_code'],
             $row['lot_serial'],
@@ -138,27 +130,26 @@ class WarehouseStockBatchDetailSheet implements FromCollection, WithHeadings, Wi
         return [
             'A' => 6,
             'B' => 18,
-            'C' => 18,
-            'D' => 38,
-            'E' => 18,
-            'F' => 20,
-            'G' => 18,
-            'H' => 16,
+            'C' => 38,
+            'D' => 18,
+            'E' => 20,
+            'F' => 18,
+            'G' => 16,
+            'H' => 18,
             'I' => 18,
-            'J' => 18,
-            'K' => 16,
+            'J' => 16,
         ];
     }
 
     public function styles(Worksheet $sheet): array
     {
-        $sheet->getStyle('A:K')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A:J')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getStyle('A')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('B:C')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('E:G')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('H:J')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('H:J')->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle('K')->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('B')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D:F')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('G:I')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('G:I')->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('J')->getNumberFormat()->setFormatCode('#,##0');
 
         return [
             1 => [
