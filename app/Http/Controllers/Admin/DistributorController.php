@@ -800,7 +800,7 @@ class DistributorController extends Controller
 
         // Ambil data AR Outstanding dan Credit Limit dari n8n webhook jika qad_customer_code (debtorcode) tersedia
         if ($distributor->qad_customer_code) {
-            $webhookUrl = env('N8N_CIS_AR_BALANCE_URL');
+            $webhookUrl = config('services.n8n.cis_ar_balance_url') ?: env('N8N_CIS_AR_BALANCE_URL');
             if ($webhookUrl) {
                 try {
                     $response = Http::timeout(5)->get($webhookUrl, [

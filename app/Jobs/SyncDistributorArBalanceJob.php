@@ -17,7 +17,7 @@ class SyncDistributorArBalanceJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $webhookUrl = env('N8N_CIS_AR_BALANCE_URL');
+        $webhookUrl = config('services.n8n.cis_ar_balance_url') ?: env('N8N_CIS_AR_BALANCE_URL');
         if (!$webhookUrl) {
             Log::warning('SyncDistributorArBalanceJob: N8N_CIS_AR_BALANCE_URL is not set.');
             return;

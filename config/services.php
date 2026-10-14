@@ -23,6 +23,10 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'n8n' => [
+        'cis_ar_balance_url' => env('N8N_CIS_AR_BALANCE_URL', 'https://n8n.locton.id/webhook/cis-ar-balance-test'),
+    ],
+
     'wms' => [
         'api_url' => env('WMS_EXTERNAL_API_URL', 'https://wmsrcapi-dev.rasagroupoffice.com/api/v1/external'),
         'api_key' => env('WMS_EXTERNAL_API_KEY', ''),
