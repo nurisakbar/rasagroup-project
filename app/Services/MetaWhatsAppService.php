@@ -13,9 +13,9 @@ class MetaWhatsAppService
 
     public function __construct()
     {
-        $this->token = env('META_WA_TOKEN');
-        $this->phoneNumberId = env('META_WA_PHONE_NUMBER_ID');
-        $this->apiVersion = env('META_WA_API_VERSION', 'v25.0');
+        $this->token = config('services.meta_wa.token') ?: env('META_WA_TOKEN');
+        $this->phoneNumberId = config('services.meta_wa.phone_number_id') ?: env('META_WA_PHONE_NUMBER_ID');
+        $this->apiVersion = config('services.meta_wa.api_version') ?: env('META_WA_API_VERSION', 'v25.0');
     }
 
     public function isConfigured(): bool

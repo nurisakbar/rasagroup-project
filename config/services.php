@@ -171,4 +171,20 @@ return [
         'default_callback_url' => env('EXTERNAL_QRIS_DEFAULT_CALLBACK_URL'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Meta WhatsApp Cloud API Configuration
+    |--------------------------------------------------------------------------
+    */
+    'meta_wa' => [
+        'token' => env('META_WA_TOKEN'),
+        'phone_number_id' => env('META_WA_PHONE_NUMBER_ID'),
+        'api_version' => env('META_WA_API_VERSION', 'v25.0'),
+        'otp_template' => env('META_WA_OTP_TEMPLATE', 'otp_register'),
+        'order_notification_template' => env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru'),
+        'template_lang' => env('META_WA_TEMPLATE_LANG', 'id'),
+        'provider' => env('WHATSAPP_PROVIDER', 'meta'),
+    ],
+
 ];
+

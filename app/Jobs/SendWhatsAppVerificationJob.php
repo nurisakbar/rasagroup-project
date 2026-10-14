@@ -32,8 +32,8 @@ class SendWhatsAppVerificationJob implements ShouldQueue
     public function handle(\App\Services\MetaWhatsAppService $metaService): void
     {
         try {
-            $templateName = env('META_WA_OTP_TEMPLATE', 'otp_register');
-            $languageCode = env('META_WA_TEMPLATE_LANG', 'id');
+            $templateName = config('services.meta_wa.otp_template') ?: env('META_WA_OTP_TEMPLATE', 'otp_register');
+            $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
             
             $components = [
                 [

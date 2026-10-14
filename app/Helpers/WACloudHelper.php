@@ -18,7 +18,7 @@ class WACloudHelper
     public static function sendText(string $phone, string $message): ?array
     {
         try {
-            $provider = env('WHATSAPP_PROVIDER', 'meta');
+            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
             
             if ($provider === 'wacloud') {
                 $wacloud = new WACloudService();
@@ -251,7 +251,7 @@ class WACloudHelper
             return true;
         }
 
-        $provider = env('WHATSAPP_PROVIDER', 'meta');
+        $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
         if ($provider === 'wacloud') {
             return (new \App\Services\WACloudService())->isConfigured();
         }
@@ -676,8 +676,8 @@ class WACloudHelper
         $warehouse = $order->sourceWarehouse ?? \App\Models\Warehouse::find($order->source_warehouse_id);
         $warehouseName = $warehouse ? $warehouse->name : 'Hub';
 
-        $templateName = env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
-        $languageCode = env('META_WA_TEMPLATE_LANG', 'id');
+        $templateName = config('services.meta_wa.order_notification_template') ?: env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
+        $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
         $metaService = app(\App\Services\MetaWhatsAppService::class);
         $useMetaTemplate = $metaService->isConfigured();
 
