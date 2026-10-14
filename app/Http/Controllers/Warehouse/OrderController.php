@@ -229,6 +229,10 @@ class OrderController extends Controller
             ->select([
                 'orders.id',
                 'orders.order_number',
+                'orders.qad_so_number',
+                'orders.qid_sales_order_number',
+                'orders.jubelio_salesorder_no',
+                'orders.jubelio_salesorder_id',
                 'orders.order_type',
                 'orders.user_id',
                 'orders.expedition_id',

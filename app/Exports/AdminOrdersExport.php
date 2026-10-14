@@ -27,6 +27,8 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
     {
         return [
             'No. Pesanan',
+            'No. SO Jubelio',
+            'No. SO QAD',
             'Tanggal',
             'Tipe Order',
             'Pembeli',
@@ -56,8 +58,13 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
             ? 'Term Of Payment'
             : ucwords(str_replace('_', ' ', (string) $order->payment_status));
 
+        $jubelioSo = $order->jubelio_salesorder_no ?: ($order->jubelio_salesorder_id ? 'ID '.$order->jubelio_salesorder_id : '-');
+        $qadSo = $order->qad_so_number ?: ($order->qid_sales_order_number ?: '-');
+
         return [
             $order->order_number,
+            $jubelioSo,
+            $qadSo,
             Wib::format($order->created_at),
             $type,
             $order->user->name ?? '-',
@@ -76,17 +83,19 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
     {
         return [
             'A' => 22,
-            'B' => 20,
-            'C' => 20,
-            'D' => 28,
-            'E' => 32,
-            'F' => 22,
-            'G' => 22,
-            'H' => 28,
-            'I' => 16,
-            'J' => 18,
-            'K' => 22,
-            'L' => 22,
+            'B' => 22,
+            'C' => 22,
+            'D' => 20,
+            'E' => 20,
+            'F' => 28,
+            'G' => 32,
+            'H' => 22,
+            'I' => 22,
+            'J' => 28,
+            'K' => 16,
+            'L' => 18,
+            'M' => 22,
+            'N' => 22,
         ];
     }
 
