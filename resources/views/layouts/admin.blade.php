@@ -102,7 +102,7 @@
               <li class="user-header">
                 <img src="{{ asset('adminlte/img/user2-160x160.jpg') }}" class="img-circle" alt="User Image">
                 <p>
-                  {{ Auth::user()->name ?? 'Administrator' }}
+                  {{ Auth::user()->name ?? 'Administrator' }} - {{ Auth::user()->role_label }}
                   <small>Member since {{ Auth::user()->created_at->format('M Y') ?? 'Jan 2025' }}</small>
                 </p>
               </li>
@@ -151,7 +151,7 @@
         </div>
         <div class="pull-left info">
           <p>{{ Auth::user()->name ?? 'Admin' }}</p>
-          <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+          <a href="#"><i class="fa fa-circle text-success"></i> {{ Auth::user()->role_label }}</a>
         </div>
       </div>
 

@@ -304,8 +304,8 @@
                     <h3 class="box-title">Selamat Datang, {{ Auth::user()->name }}!</h3>
                 </div>
                 <div class="box-body">
-                    <p>Anda berhasil login sebagai <strong>Admin/Agen</strong>.</p>
-                    <p>Gunakan menu di sidebar untuk mengelola produk dan pesanan.</p>
+                    <p>Anda berhasil login sebagai <strong>{{ Auth::user()->role_label }}</strong>.</p>
+                    <p>Gunakan menu di sidebar untuk mengelola sistem sesuai hak akses Anda.</p>
                 </div>
             </div>
         </div>

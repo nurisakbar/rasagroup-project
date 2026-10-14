@@ -515,4 +515,30 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->getArOutstandingAmount() + $this->getExistingTopTransactionTotal($excludeOrderId);
     }
+
+    /**
+     * Nama label role pengguna yang ramah dibaca.
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        $labels = [
+            self::ROLE_SUPER_ADMIN => 'Super Admin',
+            self::ROLE_ECOMMERCE => 'eCommerce',
+            self::ROLE_BRAND_MARKETING => 'Brand Marketing',
+            self::ROLE_FINANCE => 'Finance',
+            'sales_admin' => 'Sales Admin',
+            self::ROLE_SALES => 'Sales',
+            self::ROLE_CUSTOMER_SERVICE => 'Customer Service',
+            self::ROLE_IT_APPLICATION => 'IT Application',
+            self::ROLE_INVENTORY_MANAGER => 'Inventory Manager',
+            self::ROLE_DISTRIBUTOR => 'Distributor',
+            self::ROLE_OUTLET => 'Outlet',
+            self::ROLE_DRIIPPRENEUR => 'Driippreneur',
+            self::ROLE_AFFILIATOR => 'Affiliator',
+            'agent' => 'Agen',
+            'buyer' => 'Buyer',
+        ];
+
+        return $labels[$this->role] ?? ucwords(str_replace('_', ' ', (string) ($this->role ?? 'Admin')));
+    }
 }
