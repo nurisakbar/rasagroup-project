@@ -505,6 +505,10 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'response' => $response,
         ];
 
+        if (count($history) > 10) {
+            $history = array_slice($history, -10);
+        }
+
         $this->order->update(['qad_sync_history' => $history]);
     }
 

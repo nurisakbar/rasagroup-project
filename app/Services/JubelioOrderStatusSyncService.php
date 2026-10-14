@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Notifications\Orders\OrderCompletedNotification;
+use App\Notifications\Orders\OrderShippedNotification;
 use App\Support\JubelioOrderStatusMapper;
 use Illuminate\Support\Facades\Log;
 
@@ -154,8 +156,17 @@ class JubelioOrderStatusSyncService
         $order->update($updates);
         $order->refresh();
 
+        if ($previousStatus !== 'shipped' && $order->order_status === 'shipped') {
+            if ($order->user) {
+                $order->user->notify(new OrderShippedNotification($order));
+            }
+        }
+
         if (($updates['order_status'] ?? null) === 'completed') {
             $order->creditPoints();
+            if ($previousStatus !== 'completed' && $order->user) {
+                $order->user->notify(new OrderCompletedNotification($order));
+            }
         }
 
         Log::channel('jubelio_sales_order')->info('JubelioOrderStatusSync: updated', [

@@ -28,7 +28,27 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah']);
+            $query = Order::query()
+                ->select([
+                    'orders.id',
+                    'orders.order_number',
+                    'orders.order_type',
+                    'orders.user_id',
+                    'orders.expedition_id',
+                    'orders.tracking_number',
+                    'orders.source_warehouse_id',
+                    'orders.total_amount',
+                    'orders.order_status',
+                    'orders.payment_method',
+                    'orders.payment_status',
+                    'orders.payment_proof',
+                    'orders.finance_approved',
+                    'orders.finance_approved_by',
+                    'orders.finance_approved_at',
+                    'orders.created_at',
+                    'orders.updated_at',
+                ])
+                ->with(['user', 'expedition', 'sourceWarehouse.wilayah']);
             $this->applyOrderListFilters($query, $request);
 
             $baseQuery = clone $query;
@@ -181,7 +201,22 @@ class OrderController extends Controller
 
     public function export(Request $request)
     {
-        $query = Order::with(['user', 'expedition', 'sourceWarehouse'])
+        $query = Order::query()
+            ->select([
+                'orders.id',
+                'orders.order_number',
+                'orders.order_type',
+                'orders.user_id',
+                'orders.expedition_id',
+                'orders.tracking_number',
+                'orders.source_warehouse_id',
+                'orders.total_amount',
+                'orders.order_status',
+                'orders.payment_method',
+                'orders.payment_status',
+                'orders.created_at',
+            ])
+            ->with(['user', 'expedition', 'sourceWarehouse'])
             ->orderByDesc('created_at');
 
         $this->applyOrderListFilters($query, $request);
@@ -815,6 +850,9 @@ class OrderController extends Controller
                 'status' => $status,
                 'response' => $isFound ? ['message' => 'Sales Order found in QAD', 'data' => $response['data']] : $response,
             ];
+            if (count($history) > 10) {
+                $history = array_slice($history, -10);
+            }
 
             $order->qad_sync_history = $history;
             

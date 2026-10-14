@@ -86,6 +86,10 @@ class Order extends Model
         'zoho_payment_id',
     ];
 
+    protected $hidden = [
+        'qad_sync_history',
+    ];
+
     protected $casts = [
         'subtotal' => 'decimal:2',
         'discount_percent' => 'decimal:2',
