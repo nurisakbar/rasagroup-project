@@ -15,7 +15,7 @@
     /* .dataTables_filter { display: none; } */
     .filter-box { margin-bottom: 0; }
     #orders-table_length { margin-bottom: 15px; }
-    .datepicker { z-index: 1151 !important; }
+    .datepicker-dropdown { z-index: 2000 !important; }
 </style>
 @endpush
 
@@ -142,15 +142,21 @@
     <!-- Modal Export Excel -->
     <div class="modal fade" id="modalExportExcel" tabindex="-1" role="dialog" aria-labelledby="modalExportExcelLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
+            <div class="modal-content" style="border-radius: 6px; overflow: hidden;">
                 <form id="form-export-excel" method="GET" action="{{ route('admin.orders.export') }}">
-                    <div class="modal-header">
+                    <div class="modal-header" style="background: #fcfcfc; border-bottom: 1px solid #eee; padding: 15px 20px;">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 class="modal-title" id="modalExportExcelLabel"><i class="fa fa-file-excel-o text-success"></i> Export Data Pesanan ke Excel</h4>
+                        <h4 class="modal-title" id="modalExportExcelLabel" style="font-weight: 600;">
+                            <i class="fa fa-file-excel-o text-success"></i> Export Data Pesanan ke Excel
+                        </h4>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="padding: 20px;">
+                        <div class="alert alert-info" style="font-size: 12px; margin-bottom: 18px; padding: 10px 12px;">
+                            <i class="fa fa-info-circle"></i> Kosongkan pilihan tanggal jika ingin mengunduh <strong>seluruh data transaksi</strong>.
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -159,9 +165,9 @@
                                         <div class="input-group-addon">
                                             <i class="fa fa-calendar"></i>
                                         </div>
-                                        <input type="text" name="date_from" id="export-date-from" class="form-control datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
+                                        <input type="text" name="date_from" id="export-date-from" class="form-control export-datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
                                     </div>
-                                    <p class="help-block text-muted" style="font-size: 11px;">Kosongkan jika dari awal transaksi.</p>
+                                    <p class="help-block text-muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 0;">Kosongkan jika dari awal transaksi.</p>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -171,13 +177,23 @@
                                         <div class="input-group-addon">
                                             <i class="fa fa-calendar"></i>
                                         </div>
-                                        <input type="text" name="date_to" id="export-date-to" class="form-control datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
+                                        <input type="text" name="date_to" id="export-date-to" class="form-control export-datepicker" placeholder="YYYY-MM-DD" autocomplete="off">
                                     </div>
-                                    <p class="help-block text-muted" style="font-size: 11px;">Kosongkan jika hingga transaksi terbaru.</p>
+                                    <p class="help-block text-muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 0;">Kosongkan jika hingga transaksi terbaru.</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
+
+                        <div style="margin-bottom: 15px;">
+                            <button type="button" class="btn btn-xs btn-default" id="btn-export-today-dates">
+                                <i class="fa fa-calendar-check-o text-primary"></i> Pasang Tanggal Hari Ini
+                            </button>
+                            <button type="button" class="btn btn-xs btn-default" id="btn-export-clear-dates" style="margin-left: 5px;">
+                                <i class="fa fa-eraser text-danger"></i> Kosongkan Tanggal (Semua)
+                            </button>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 5px;">
                             <label for="export-status">Status Pesanan</label>
                             <select name="status" id="export-status" class="form-control">
                                 <option value="">-- Semua Status --</option>
@@ -190,7 +206,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="background: #fcfcfc; border-top: 1px solid #eee; padding: 12px 20px;">
                         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Batal</button>
                         <button type="submit" class="btn btn-success"><i class="fa fa-download"></i> Download Excel</button>
                     </div>
@@ -273,6 +289,17 @@ $(document).ready(function() {
         clearBtn: true
     });
 
+    // Initialize Datepicker specifically for Export Modal with container attached to modal
+    $('.export-datepicker').datepicker({
+        autoclose: true,
+        format: 'yyyy-mm-dd',
+        todayHighlight: true,
+        orientation: "bottom auto",
+        todayBtn: "linked",
+        clearBtn: true,
+        container: '#modalExportExcel'
+    });
+
     // Initialize Select2 for source warehouse filter
     $('#filter-source-warehouse').select2({
         placeholder: '-- Semua Hub --',
@@ -308,10 +335,21 @@ $(document).ready(function() {
 
     $('#btn-export-excel').on('click', function(e) {
         e.preventDefault();
-        $('#export-date-from').datepicker('update', $('#filter-date-from').val() || '');
-        $('#export-date-to').datepicker('update', $('#filter-date-to').val() || '');
+        $('#export-date-from').datepicker('clearDates');
+        $('#export-date-to').datepicker('clearDates');
         $('#export-status').val($('#filter-status').val() || '');
         $('#modalExportExcel').modal('show');
+    });
+
+    $('#btn-export-today-dates').on('click', function() {
+        var today = '{{ date('Y-m-d') }}';
+        $('#export-date-from').datepicker('update', today);
+        $('#export-date-to').datepicker('update', today);
+    });
+
+    $('#btn-export-clear-dates').on('click', function() {
+        $('#export-date-from').datepicker('clearDates');
+        $('#export-date-to').datepicker('clearDates');
     });
 
     $('#form-export-excel').on('submit', function() {
