@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Warehouse;
 
+use App\Exports\WarehouseStockExport;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\QadInventory;
@@ -10,6 +11,8 @@ use App\Models\WarehouseStock;
 use App\Services\WmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockController extends Controller
 {
@@ -58,11 +61,16 @@ class StockController extends Controller
             return $stock;
         });
 
+        $lastSyncAt = $usesQadStock
+            ? QadInventory::query()->where('qad_location_code', $qadLocationCode)->max('last_sync_at')
+            : null;
+
         return view('warehouse.stock.index', compact(
             'warehouse',
             'stocks',
             'usesQadStock',
-            'qadLocationCode'
+            'qadLocationCode',
+            'lastSyncAt'
         ));
     }
 
@@ -173,6 +181,91 @@ class StockController extends Controller
         }
         
         return back()->with('info', 'Semua produk sudah tersinkron.');
+    }
+
+    /**
+     * Download / Export stock and batch info to Excel.
+     */
+    public function export(Request $request)
+    {
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+
+        $qadLocationCode = WmsService::locationCode($warehouse);
+        if ($qadLocationCode) {
+            try {
+                app(WmsService::class)->syncLocationBatches($qadLocationCode);
+            } catch (\Throwable $e) {
+                Log::warning('Warehouse stock export: failed realtime sync', [
+                    'location' => $qadLocationCode,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $query = WarehouseStock::with(['product'])
+            ->whereHas('product')
+            ->where('warehouse_id', $warehouse->id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('product', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('filter') && $request->filter === 'low') {
+            $query->where('stock', '<=', 10);
+        }
+
+        $stocks = $query->orderBy('updated_at', 'desc')->get();
+
+        $wmsBatches = [];
+        if ($qadLocationCode) {
+            $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($qadLocationCode);
+        }
+
+        $hubIdentifier = $warehouse->kode_hub ?: Str::slug($warehouse->name);
+        $filename = 'stok-hub-' . $hubIdentifier . '-' . now()->timezone('Asia/Jakarta')->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new WarehouseStockExport($warehouse, $stocks, $wmsBatches),
+            $filename
+        );
+    }
+
+    /**
+     * Manually sync stock and batches from QAD/WMS.
+     */
+    public function syncQad()
+    {
+        set_time_limit(180);
+        $user = auth()->user();
+        $warehouse = $user->warehouse;
+
+        $locationCode = WmsService::locationCode($warehouse);
+        if (! $locationCode) {
+            return back()->with('error', 'Lokasi QAD/WMS pada hub Anda belum dikonfigurasi.');
+        }
+
+        $wms = app(WmsService::class);
+        if (! $wms->isConfigured()) {
+            return back()->with('error', 'API QAD/WMS belum dikonfigurasi.');
+        }
+
+        try {
+            $synced = $wms->syncLocationBatches($locationCode);
+            return back()->with('success', "Berhasil mensinkronisasi {$synced} batch stok dari QAD.");
+        } catch (\Throwable $e) {
+            Log::error('Warehouse stock: gagal sync QAD/WMS', [
+                'warehouse_id' => $warehouse->id,
+                'location' => $locationCode,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal melakukan sinkronisasi dengan QAD: ' . $e->getMessage());
+        }
     }
 }
 

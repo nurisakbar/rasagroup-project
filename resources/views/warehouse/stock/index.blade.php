@@ -20,10 +20,21 @@
                                 <i class="fa fa-database"></i> QAD {{ $qadLocationCode }}
                             </span>
                         @endif
+                        <a href="{{ route('warehouse.stock.export', request()->only(['search', 'filter'])) }}" class="btn btn-success btn-sm" style="margin-right: 5px;" title="Download Stock dan Batch ke Excel">
+                            <i class="fa fa-file-excel-o"></i> Download Excel
+                        </a>
+                        @if($usesQadStock)
+                        <form action="{{ route('warehouse.stock.sync-qad') }}" method="POST" style="display: inline-block; margin-right: 5px;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Menyinkronkan...';">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-sm" title="Tarik data stok & batch terkini dari QAD/WMS">
+                                <i class="fa fa-refresh"></i> Sinkron QAD
+                            </button>
+                        </form>
+                        @endif
                         <form action="{{ route('warehouse.stock.sync') }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Sync semua produk dengan stock 0?');">
                             @csrf
-                            <button type="submit" class="btn btn-warning btn-sm">
-                                <i class="fa fa-refresh"></i> Sync Produk
+                            <button type="submit" class="btn btn-warning btn-sm" title="Tambahkan produk aktif baru ke hub dengan stok 0">
+                                <i class="fa fa-plus-circle"></i> Sync Produk
                             </button>
                         </form>
                     </div>
@@ -52,11 +63,16 @@
                 </div>
                 @if($usesQadStock)
                     <div class="box-body" style="padding-bottom: 0;">
-                        <div class="callout callout-info" style="margin-bottom: 10px;">
+                        <div class="callout callout-info" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <p style="margin: 0;">
                                 Hub terhubung ke kode lokasi QAD <strong>{{ $qadLocationCode }}</strong>.
                                 Kolom stok fisik menampilkan qty batch dari QAD/WMS.
                             </p>
+                            @if(!empty($lastSyncAt))
+                                <span class="text-muted" style="font-size: 12px; background: rgba(255,255,255,0.7); padding: 3px 8px; border-radius: 4px; color: #31708f;">
+                                    <i class="fa fa-clock-o"></i> Terakhir sinkron QAD: <strong>{{ \Carbon\Carbon::parse($lastSyncAt)->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB</strong>
+                                </span>
+                            @endif
                         </div>
                     </div>
                 @endif
