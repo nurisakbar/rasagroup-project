@@ -65,7 +65,7 @@ class AdminOrdersExport implements FromQuery, WithHeadings, WithMapping, WithCol
             $order->order_number,
             $jubelioSo,
             $qadSo,
-            Wib::format($order->created_at),
+            Wib::format($order->created_at, 'd/m/Y H:i'),
             $type,
             $order->user->name ?? '-',
             $order->user->email ?? '-',

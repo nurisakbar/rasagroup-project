@@ -94,7 +94,7 @@ class OrderController extends Controller
                     return $html;
                 })
                 ->addColumn('order_date', function ($order) {
-                    return $order->created_at->format('d M Y H:i');
+                    return \App\Support\Wib::format($order->created_at, 'd/m/Y H:i');
                 })
                 ->addColumn('customer_info', function ($order) {
                     $html = '<strong>' . e($order->user->name) . '</strong>';

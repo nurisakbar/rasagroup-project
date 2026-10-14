@@ -127,12 +127,10 @@
                                 <th>No. Pesanan</th>
                                 <th>Tanggal</th>
                                 <th>Customer</th>
-                                <th>Tipe</th>
-                                <th>Items</th>
-                                <th>Total</th>
                                 <th>Status Pesanan</th>
                                 <th>Status Pembayaran</th>
                                 <th>Ekspedisi</th>
+                                <th>Total</th>
                                 <th width="80px">Action</th>
                             </tr>
                         </thead>
@@ -242,12 +240,10 @@ $(document).ready(function() {
             { data: 'order_number_display', name: 'order_number' },
             { data: 'order_date', name: 'created_at' },
             { data: 'customer_info', name: 'user.name', orderable: false },
-            { data: 'order_type_badge', name: 'order_type', orderable: false, searchable: false },
-            { data: 'items_info', name: 'items', orderable: false, searchable: false },
-            { data: 'total_amount_formatted', name: 'total_amount' },
             { data: 'order_status_badge', name: 'order_status', orderable: false, searchable: false },
             { data: 'payment_status_badge', name: 'payment_status', orderable: false, searchable: false },
             { data: 'expedition_info', name: 'expedition.name', orderable: false },
+            { data: 'total_amount_formatted', name: 'total_amount' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[1, 'desc']],
