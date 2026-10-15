@@ -365,19 +365,19 @@
                                                     </div>
                                                 </div>
 @endif
-                                                <!-- @if($faspayActive['faspay_bca_va'] ?? true)
+                                                @if($faspayActive['faspay_bca_va'] ?? true)
                                                 <div class="col-md-6">
                                                     <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bca_va')" id="card-faspay-bca" style="position: relative;">
                                                         <div class="custom-radio">
                                                             <input class="form-check-input" type="radio" name="payment_method" value="faspay_bca_va" id="payBCAVA">
                                                             <label class="form-check-label" for="payBCAVA">
-                                                                <strong>BCA VA Online</strong>
+                                                                <strong>BCA VA</strong>
                                                             </label>
                                                         </div>
                                                         <img src="{{ asset('images/banks/bca.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BCA">
                                                     </div>
                                                 </div>
-@endif -->
+                                                @endif
                                             @else
                                                 @if($faspayActive['faspay_permata_va'] ?? true)
                                                 <div class="col-md-6">
@@ -425,6 +425,19 @@
                                                             </label>
                                                         </div>
                                                         <img src="{{ asset('images/banks/bni.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BNI">
+                                                    </div>
+                                                </div>
+                                                @endif
+                                                @if($faspayActive['faspay_bca_va'] ?? true)
+                                                <div class="col-md-6">
+                                                    <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('faspay_bca_va')" id="card-faspay-bca" style="position: relative;">
+                                                        <div class="custom-radio">
+                                                            <input class="form-check-input" type="radio" name="payment_method" value="faspay_bca_va" id="payBCAVA">
+                                                            <label class="form-check-label" for="payBCAVA">
+                                                                <strong>BCA VA</strong>
+                                                            </label>
+                                                        </div>
+                                                        <img src="{{ asset('images/banks/bca.png') }}" style="height: 15px; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;" alt="BCA">
                                                     </div>
                                                 </div>
                                                 @endif
@@ -1721,7 +1734,7 @@
                      $('#totalDisplay').text('Rp ' + newTotal.toLocaleString('id-ID').replace(/,/g, '.'));
                  }
              } else {
-                 $('#' + currentVAMethod.replace('faspay_', 'card-faspay-')).addClass('active');
+                 $('#' + currentVAMethod.replace('faspay_', 'card-faspay-').replace('_va', '')).addClass('active');
              }
              return;
         }
