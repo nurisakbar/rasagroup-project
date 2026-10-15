@@ -177,7 +177,13 @@ class FaspaySnapService
         ]);
 
         if ($response->successful()) {
-            return $response->json();
+            $data = $response->json();
+            $referenceNo = $data['referenceNo'] ?? null;
+            $merchantId = $data['additionalInfo']['merchantId'] ?? $partnerId;
+            if ($referenceNo && $merchantId) {
+                $data['qrDirectImageUrl'] = "https://web.faspay.co.id/__assets/qr/linkaja/{$merchantId}-{$referenceNo}.png";
+            }
+            return $data;
         }
 
         Log::error('Faspay SNAP QRIS Error', [

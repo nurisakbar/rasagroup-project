@@ -734,8 +734,21 @@ class OrderController extends Controller
                 if ($request->payment_method === 'faspay_qris') {
                     $snapService = new \App\Services\FaspaySnapService($orderCompany);
                     $qrisData = $snapService->generateQris($order, $total);
-                    if ($qrisData && (isset($qrisData['qrUrl']) || isset($qrisData['additionalInfo']['qrImageUrl']))) {
-                        $order->virtual_account_no = $qrisData['qrUrl'] ?? $qrisData['additionalInfo']['qrImageUrl'];
+                    if ($qrisData && (isset($qrisData['qrUrl']) || isset($qrisData['additionalInfo']['qrImageUrl']) || isset($qrisData['qrDirectImageUrl']))) {
+                        $rawUrl = $qrisData['qrUrl'] ?? $qrisData['additionalInfo']['qrImageUrl'] ?? null;
+                        $directImg = $qrisData['qrDirectImageUrl'] ?? null;
+                        if (!$directImg && $rawUrl) {
+                            $parts = parse_url($rawUrl);
+                            if (!empty($parts['query'])) {
+                                parse_str($parts['query'], $query);
+                                if (!empty($query['merchant_id']) && !empty($query['trx_id'])) {
+                                    $directImg = "https://web.faspay.co.id/__assets/qr/linkaja/{$query['merchant_id']}-{$query['trx_id']}.png";
+                                }
+                            }
+                        }
+                        $order->virtual_account_no = $directImg ?: $rawUrl;
+                        $order->faspay_redirect_url = $rawUrl;
+                        $order->faspay_trx_id = $qrisData['referenceNo'] ?? null;
                         $order->payment_method = 'faspay_qris';
                     } else {
                         throw new \Exception('Failed to generate Faspay QRIS');

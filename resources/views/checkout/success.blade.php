@@ -297,9 +297,27 @@
                                     <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">
                                         @if($order->payment_method === 'faspay_qris')
                                             <div class="text-center mb-20">
-                                                <h5 class="mb-15" style="color: #253D4E;">Scan QRIS untuk Membayar</h5>
-                                                @if($order->virtual_account_no)
-                                                    <img src="{{ $order->virtual_account_no }}" alt="QRIS Barcode" style="max-width: 250px; border: 2px solid #ECECEC; padding: 10px; border-radius: 10px;">
+                                                <h5 class="mb-15" style="color: #253D4E; font-weight: 700;">Scan QRIS untuk Membayar</h5>
+                                                @php
+                                                    $qrisImage = $order->qris_image_url ?: $order->virtual_account_no;
+                                                    $faspayPageUrl = $order->faspay_redirect_url ?: ($order->virtual_account_no !== $qrisImage ? $order->virtual_account_no : null);
+                                                @endphp
+                                                @if($qrisImage)
+                                                    <div class="d-flex justify-content-center mb-20">
+                                                        <div class="p-3 border rounded-3 bg-white shadow-sm" style="display: inline-block; border: 2px solid #ECECEC !important;">
+                                                            <img src="{{ $qrisImage }}" alt="QRIS Barcode" style="max-width: 260px; width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px;">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-center gap-2 mt-15 flex-wrap">
+                                                        <a href="{{ $qrisImage }}" download="QRIS-{{ $order->order_number }}.png" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">
+                                                            <i class="fi-rs-download mr-5"></i> Unduh Gambar QRIS
+                                                        </a>
+                                                        @if($faspayPageUrl)
+                                                            <a href="{{ $faspayPageUrl }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener" style="border-radius: 8px;">
+                                                                <i class="fi-rs-external-link mr-5"></i> Buka Halaman Faspay
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 @else
                                                     <p class="text-danger">Gagal memuat QRIS. Silakan hubungi admin.</p>
                                                 @endif
@@ -373,7 +391,28 @@
                                         </div>
                                     </div>
 
-                                    @if($order->payment_method !== 'faspay_qris')
+                                    @if($order->payment_method === 'faspay_qris')
+                                    <div class="accordion mt-30" id="accordionQRISPayment">
+                                        <div class="accordion-item" style="border: 1px solid #ECECEC; border-radius: 12px; margin-bottom: 10px; overflow: hidden;">
+                                            <h2 class="accordion-header" id="headingQRISOne">
+                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseQRISOne" aria-expanded="true" aria-controls="collapseQRISOne" style="background: white; color: #253D4E; font-weight: 600;">
+                                                    <i class="fi-rs-smartphone mr-10" style="color: #6A1B1B;"></i> Panduan Pembayaran via QRIS
+                                                </button>
+                                            </h2>
+                                            <div id="collapseQRISOne" class="accordion-collapse collapse show" aria-labelledby="headingQRISOne" data-bs-parent="#accordionQRISPayment">
+                                                <div class="accordion-body" style="background: #FAFAFA; font-size: 14px; line-height: 1.8;">
+                                                    <ol class="mb-0" style="list-style-type: decimal; padding-left: 1.5rem;">
+                                                        <li>Buka aplikasi Mobile Banking (BCA mobile, Livin' Mandiri, BRImo, BNI Mobile, dll.) atau E-Wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).</li>
+                                                        <li>Pilih menu <strong>Bayar</strong> atau <strong>Scan QR</strong>.</li>
+                                                        <li>Arahkan kamera smartphone ke kode QR di atas, atau unggah dari galeri foto Anda.</li>
+                                                        <li>Pastikan nama merchant tertera <strong>Rasa Group - MCR</strong> dan nominal pembayaran <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong>.</li>
+                                                        <li>Konfirmasi dan masukkan PIN Anda. Sistem akan memverifikasi status pembayaran secara otomatis.</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @else
                                     <div class="accordion mt-30" id="accordionVAPayment">
                                         <div class="accordion-item" style="border: 1px solid #ECECEC; border-radius: 12px; margin-bottom: 10px; overflow: hidden;">
                                             <h2 class="accordion-header" id="headingVAOne">

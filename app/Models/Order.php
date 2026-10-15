@@ -285,6 +285,52 @@ class Order extends Model
     }
 
     /**
+     * Resolve the direct image URL for QRIS payment (e.g. from Faspay).
+     */
+    public function getQrisImageUrlAttribute(): ?string
+    {
+        if ($this->payment_method !== 'faspay_qris') {
+            return null;
+        }
+
+        $url = $this->virtual_account_no;
+        if (empty($url)) {
+            return null;
+        }
+
+        // Already a direct image PNG/JPG URL
+        if (str_contains($url, '__assets/qr/') || preg_match('/\.(png|jpg|jpeg|svg|webp)(\?.*)?$/i', $url)) {
+            return $url;
+        }
+
+        $parts = parse_url($url);
+
+        // 1. Check query parameters: ?trx_id=...&merchant_id=...
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+            $merchantId = $query['merchant_id'] ?? null;
+            $trxId = $query['trx_id'] ?? null;
+            if ($merchantId && $trxId) {
+                return "https://web.faspay.co.id/__assets/qr/linkaja/{$merchantId}-{$trxId}.png";
+            }
+        }
+
+        // 2. Check base64 encoded JSON in the path (e.g. /eyJ0cnhfaWQi...)
+        if (!empty($parts['path'])) {
+            $segments = explode('/', trim($parts['path'], '/'));
+            $lastSegment = end($segments);
+            if ($lastSegment) {
+                $decoded = json_decode(@base64_decode($lastSegment), true);
+                if (is_array($decoded) && !empty($decoded['merchant_id']) && !empty($decoded['trx_id'])) {
+                    return "https://web.faspay.co.id/__assets/qr/linkaja/{$decoded['merchant_id']}-{$decoded['trx_id']}.png";
+                }
+            }
+        }
+
+        return $url;
+    }
+
+    /**
      * Approve finance (set finance_approved = 1) and release order to hub.
      *
      * @return array{success: bool, message: string}
