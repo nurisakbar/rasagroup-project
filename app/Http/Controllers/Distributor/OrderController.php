@@ -748,7 +748,6 @@ class OrderController extends Controller
                         }
                         $order->virtual_account_no = $directImg ?: $rawUrl;
                         $order->faspay_redirect_url = $rawUrl;
-                        $order->faspay_trx_id = $qrisData['referenceNo'] ?? null;
                         $order->payment_method = 'faspay_qris';
                     } else {
                         throw new \Exception('Failed to generate Faspay QRIS');

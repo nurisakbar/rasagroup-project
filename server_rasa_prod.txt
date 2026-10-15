@@ -1,0 +1,11 @@
+SSH Acess ops rasa prod
+IP: 116.206.199.219
+Port: 2122
+Username: debian
+Password: Solusindo26
+
+
+
+
+token github : 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
+token whatsapp meta permanen : EAAZAcFxftUEIBSvVVu1mBufnzyxl08pBgZA2cZAZBbKcLs20p1OGvCmT8vZBCX6IwgLLT00gsaSL4cn2PqMxNDBmrOucSKeKPk52l0vV1ZAQ0luVbp9lLZB56AjQQdfSaXUhvP6H6xZBj56Nyt42ZCDuEuQIvfZAa15fcZC2zPTYiCbqAKH8xZCxZCyUG1X8pPiUW3ogb1gZDZD

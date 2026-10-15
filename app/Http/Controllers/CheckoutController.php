@@ -1323,7 +1323,6 @@ class CheckoutController extends Controller
                             }
                             $order->virtual_account_no = $directImg ?: $rawUrl;
                             $order->faspay_redirect_url = $rawUrl;
-                            $order->faspay_trx_id = $qrisData['referenceNo'] ?? null;
                             $order->payment_method = 'faspay_qris';
                             $order->save();
                             Log::info('Faspay QRIS generated successfully', ['order_id' => $order->id, 'company' => $orderCompany]);

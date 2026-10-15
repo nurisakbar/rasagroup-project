@@ -1,0 +1,3 @@
+SERVER STT RASA
+ssh debian@116.206.199.251 -p 2122
+Solusindo26
