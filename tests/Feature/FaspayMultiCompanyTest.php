@@ -39,7 +39,7 @@ class FaspayMultiCompanyTest extends TestCase
 
     public function test_va_prefix_resolution()
     {
-        // 8 Faspay Virtual Account Channels
+        // 9 Faspay Virtual Account Channels (including BCA VA)
         $expectedChannels = [
             'faspay_permata_va'  => '735136',     // 402 - Permata
             'faspay_bsi_va'      => '12601038',   // 723 - BSI Virtual Account
@@ -49,13 +49,14 @@ class FaspayMultiCompanyTest extends TestCase
             'faspay_mandiri_va'  => '88558038',   // 802 - Mandiri Virtual Account
             'faspay_sinarmas_va' => '885655',     // 818 - Sinarmas Virtual Account
             'faspay_bni_va'      => '9881236387', // 801 - BNI Virtual Account
+            'faspay_bca_va'      => '19005022',   // 702 - BCA Virtual Account
         ];
 
         foreach ($expectedChannels as $method => $prefix) {
             $this->assertEquals($prefix, FaspayConfig::getVaPrefix($method, 'mcr'));
         }
 
-        // Test getAllVaPrefixes contains all 8 prefixes
+        // Test getAllVaPrefixes contains all prefixes
         $allPrefixes = FaspayConfig::getAllVaPrefixes();
         foreach ($expectedChannels as $prefix) {
             $this->assertContains($prefix, $allPrefixes);

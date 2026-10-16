@@ -96,6 +96,7 @@ class FaspayConfig
         $prefixes = [
             // Production MCR
             '9881236387', // BNI MCR (10 digits)
+            '19005022',   // BCA MCR (8 digits)
             '12601038',   // BSI MCR (8 digits)
             '78218638',   // Maybank MCR (8 digits)
             '88558038',   // Mandiri MCR (8 digits)

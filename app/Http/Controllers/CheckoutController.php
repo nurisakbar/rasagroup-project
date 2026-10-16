@@ -1341,27 +1341,8 @@ class CheckoutController extends Controller
                         } else {
                             Log::error('Failed to generate Faspay Direct Debit', ['order_id' => $order->id, 'company' => $orderCompany]);
                         }
-                    } elseif ($request->payment_method === 'faspay_bca_va') {
-                        // BCA VA uses Legacy API
-                        $faspayService = new \App\Services\FaspayService($orderCompany);
-                        $invoice = $faspayService->createBill($order, $user, '702');
-                        if ($invoice && isset($invoice['bill_no'])) {
-                            $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
-                            $order->faspay_redirect_url = $invoice['redirect_url'];
-                            $order->payment_method = 'faspay_bca_va';
-                            if (empty($order->virtual_account_no)) {
-                                // Generate a mock VA number for BCA so it displays on the frontend
-                                $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
-                            }
-                            $order->save();
-                            $faspayInvoiceUrl = $order->faspay_redirect_url;
-                            
-                            Log::info('Faspay BCA VA Invoice created', ['order_id' => $order->id, 'bill_no' => $order->faspay_bill_no, 'company' => $orderCompany]);
-                        } else {
-                            Log::error('Failed to generate Faspay BCA VA', ['order_id' => $order->id, 'company' => $orderCompany]);
-                        }
                     } else {
-                        // VA Static Flow using FaspayConfig
+                        // VA Static Flow using FaspayConfig (BCA, Mandiri, BRI, BNI, Permata, CIMB, Sinarmas, Maybank, Danamon, BSI)
                         $prefix = \App\Services\FaspayConfig::getVaPrefix($request->payment_method, $orderCompany);
                         $targetLength = 16;
                         $prefixLength = strlen($prefix);

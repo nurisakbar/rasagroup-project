@@ -195,24 +195,56 @@ class FaspaySnapController extends Controller
             // Note: During UAT, some simulators might not send the correct signature, 
             // but we will enforce it for security as requested.
             if ($expectedSignature !== $providedSignature && $providedSignature !== 'BYPASS_UAT_TESTING_2026') {
-                Log::error('Faspay Legacy Webhook Signature mismatch', [
-                    'expected' => $expectedSignature,
-                    'provided' => $providedSignature,
-                    'bill_no' => $billNo,
-                    'status_code' => $paymentStatusCode
-                ]);
-                
-                // Usually legacy faspay returns an XML for error, but JSON is fine for debug if it's JSON request
-                $isJsonRequest = $request->isJson() || str_contains($request->header('Content-Type', ''), 'json');
-                if ($isJsonRequest) {
-                    return response()->json([
-                        'response_error' => '1',
-                        'response_desc' => 'Invalid Signature',
-                    ], 401);
+                $isVerified = false;
+
+                // 1. Cek jika order sudah lunas di DB, kita tidak perlu menolak webhook notifikasi redundan ini
+                if (!empty($billNo)) {
+                    $existingOrder = Order::where('order_number', $billNo)->orWhere('virtual_account_no', $billNo)->first();
+                    if ($existingOrder && $existingOrder->payment_status === 'paid') {
+                        $isVerified = true;
+                    }
                 }
-                
-                $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$request->input('trx_id')}</trx_id><merchant_id>{$request->input('merchant_id')}</merchant_id><bill_no>{$billNo}</bill_no><response_code>01</response_code><response_desc>Invalid Signature</response_desc><response_error>1</response_error></faspay>";
-                return response($xmlResponse, 401)->header('Content-Type', 'text/xml');
+
+                // 2. Active Verification Fallback: jika signature mismatch (misal perbedaan password legacy di production),
+                // lakukan verifikasi aktif langsung ke Faspay SNAP Query API menggunakan Private Key RSA resmi.
+                if (!$isVerified && !empty($billNo) && $paymentStatusCode == '2') {
+                    $trxId = $request->input('trx_id');
+                    try {
+                        $snapService = new \App\Services\FaspaySnapService($company);
+                        $queryRes = $snapService->queryQris($billNo, $trxId);
+                        if ($queryRes && ($queryRes['latestTransactionStatus'] ?? null) === '00') {
+                            Log::info('Faspay Legacy Webhook: Verified successfully via active Faspay queryQris API fallback', [
+                                'bill_no' => $billNo,
+                                'trx_id' => $trxId,
+                                'latestTransactionStatus' => $queryRes['latestTransactionStatus']
+                            ]);
+                            $isVerified = true;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning('Faspay Legacy Webhook: queryQris fallback check error', ['error' => $e->getMessage()]);
+                    }
+                }
+
+                if (!$isVerified) {
+                    Log::error('Faspay Legacy Webhook Signature mismatch', [
+                        'expected' => $expectedSignature,
+                        'provided' => $providedSignature,
+                        'bill_no' => $billNo,
+                        'status_code' => $paymentStatusCode
+                    ]);
+                    
+                    // Usually legacy faspay returns an XML for error, but JSON is fine for debug if it's JSON request
+                    $isJsonRequest = $request->isJson() || str_contains($request->header('Content-Type', ''), 'json');
+                    if ($isJsonRequest) {
+                        return response()->json([
+                            'response_error' => '1',
+                            'response_desc' => 'Invalid Signature',
+                        ], 401);
+                    }
+                    
+                    $xmlResponse = "<?xml version=\"1.0\"?><faspay><response>Payment Notification</response><trx_id>{$request->input('trx_id')}</trx_id><merchant_id>{$request->input('merchant_id')}</merchant_id><bill_no>{$billNo}</bill_no><response_code>01</response_code><response_desc>Invalid Signature</response_desc><response_error>1</response_error></faspay>";
+                    return response($xmlResponse, 401)->header('Content-Type', 'text/xml');
+                }
             }
         }
 

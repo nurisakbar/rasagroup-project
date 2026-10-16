@@ -24,7 +24,7 @@ return [
     ],
 
     'n8n' => [
-        'cis_ar_balance_url' => env('N8N_CIS_AR_BALANCE_URL', 'https://n8n.locton.id/webhook/cis-ar-balance-test'),
+        'cis_ar_balance_url' => env('N8N_CIS_AR_BALANCE_URL', 'https://n8n.locton.id/webhook/cis-ar-balance'),
     ],
 
     'wms' => [
@@ -92,6 +92,7 @@ return [
                     'faspay_maybank_va'  => env('FASPAY_RDI_VA_MAYBANK', '78218052'),
                     'faspay_danamon_va'  => env('FASPAY_RDI_VA_DANAMON', '797039'),
                     'faspay_bsi_va'      => env('FASPAY_RDI_VA_BSI', '12601021'),
+                    'faspay_bca_va'      => env('FASPAY_RDI_VA_BCA', ''),
                 ],
             ],
 
@@ -118,6 +119,7 @@ return [
                     'faspay_maybank_va'  => env('FASPAY_MCR_VA_MAYBANK', '37116002'),
                     'faspay_danamon_va'  => env('FASPAY_MCR_VA_DANAMON', '371165'),
                     'faspay_bsi_va'      => env('FASPAY_MCR_VA_BSI', '37116003'),
+                    'faspay_bca_va'      => env('FASPAY_MCR_VA_BCA', '19005022'),
                 ],
             ],
         ],

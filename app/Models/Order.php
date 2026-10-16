@@ -255,6 +255,74 @@ class Order extends Model
         return $this->finance_approved ? '1' : '0';
     }
 
+    /**
+     * Cek apakah ekspedisi pesanan adalah Ambil di Tempat (Self Pickup)
+     */
+    public function isSelfPickup(): bool
+    {
+        $code = strtolower($this->expedition?->code ?? '');
+        $name = strtolower($this->expedition?->name ?? '');
+        $service = strtolower($this->expedition_service ?? '');
+
+        return in_array($code, ['self_pickup', 'pickup'], true)
+            || str_contains($name, 'ambil')
+            || str_contains($service, 'ambil')
+            || str_contains($name, 'pickup')
+            || str_contains($service, 'pickup');
+    }
+
+    /**
+     * Cek apakah ekspedisi pesanan adalah Antar di Tempat (Kurir Toko)
+     */
+    public function isKurirToko(): bool
+    {
+        $code = strtolower($this->expedition?->code ?? '');
+        $name = strtolower($this->expedition?->name ?? '');
+        $service = strtolower($this->expedition_service ?? '');
+
+        return in_array($code, ['kurir_toko', 'antar_tempat', 'internal'], true)
+            || str_contains($name, 'antar')
+            || str_contains($service, 'antar');
+    }
+
+    /**
+     * Cek apakah status pembayaran sudah lunas atau TOP sudah diterima / disetujui finance
+     */
+    public function isPaidOrTopApproved(): bool
+    {
+        if ($this->payment_status === 'paid') {
+            return true;
+        }
+
+        if ($this->payment_method === 'term_of_payment' && (bool) $this->finance_approved) {
+            return true;
+        }
+
+        if ($this->payment_status === 'term_of_payment') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Cek apakah pembeli dapat melakukan konfirmasi barang diterima
+     */
+    public function canConfirmReceipt(): bool
+    {
+        if (in_array($this->order_status, ['completed', 'cancelled'], true)) {
+            return false;
+        }
+
+        // Jika expedisi ambil di tempat atau antar di tempat, dan pembayaran sudah bayar atau TOP sudah diterima
+        if (($this->isSelfPickup() || $this->isKurirToko()) && $this->isPaidOrTopApproved()) {
+            return true;
+        }
+
+        // Default: untuk kurir umum jika sudah dikirim atau status shipped / delivered
+        return !empty($this->shipped_at) || in_array($this->order_status, ['shipped', 'delivered'], true);
+    }
+
     public function getFormattedPaymentMethodAttribute()
     {
         if (empty($this->payment_method)) return '-';

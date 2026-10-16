@@ -264,11 +264,11 @@
             <!-- Actions -->
             <div class="box">
                 <div class="box-body">
-                    @if(!in_array($order->order_status, ['completed']) && (!empty($order->shipped_at) || in_array($order->order_status, ['shipped', 'delivered'])))
-                        <form action="{{ route('distributor.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan ini sudah diterima?');" style="margin-bottom: 10px;">
+                    @if($order->canConfirmReceipt())
+                        <form action="{{ route('distributor.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan ini sudah diterima dengan baik?');" style="margin-bottom: 10px;">
                             @csrf
                             <button type="submit" class="btn btn-success btn-block">
-                                <i class="fa fa-check-circle"></i> Konfirmasi Pesanan Diterima
+                                <i class="fa fa-check-circle"></i> Konfirmasi Barang Diterima
                             </button>
                         </form>
                     @endif

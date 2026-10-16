@@ -34,6 +34,14 @@
                                         <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-brand rounded font-sm px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">
                                             <i class="fi-rs-download mr-5"></i> Download Invoice
                                         </a>
+                                        @if($order->canConfirmReceipt())
+                                        <form action="{{ route('buyer.orders.confirm-receipt', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin barang/paket pesanan ini sudah diterima dengan baik?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success rounded font-sm px-4 text-white" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap; background-color: #3bb77e; border-color: #3bb77e;">
+                                                <i class="fi-rs-check mr-5"></i> Konfirmasi Barang Diterima
+                                            </button>
+                                        </form>
+                                        @endif
                                         @php
                                             $statusClass = match($order->order_status) {
                                                 'pending' => 'bg-warning',
@@ -123,10 +131,10 @@
                             @endif
 
                             @php
-                                $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
-                                $isKurirToko = $order->expedition && $order->expedition->code === 'kurir_toko';
+                                $isSelfPickup = $order->isSelfPickup();
+                                $isKurirToko = $order->isKurirToko();
                             @endphp
-                            @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->payment_status === 'paid')
+                            @if($isSelfPickup && !in_array($order->order_status, ['cancelled', 'delivered', 'completed']) && $order->isPaidOrTopApproved())
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
                                 <div class="card-body p-4" style="background-color: #f0faf5; border: 1px solid #cceadd; border-radius: 15px;">
                                     <h6 class="mb-3 font-sm text-brand text-uppercase fw-bold"><i class="fi-rs-shopping-bag mr-5"></i>Tahapan Pengambilan Pesanan</h6>
@@ -216,7 +224,7 @@
                             </div>
                             @endif
 
-                            @if(($order->shipped_at || in_array($order->order_status, ['shipped', 'delivered'])) && !in_array($order->order_status, ['completed', 'cancelled']))
+                            @if($order->canConfirmReceipt())
                             <div class="card border-0 shadow-sm border-radius-15 overflow-hidden mb-4">
                                 <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center" style="background-color: #e8f8f0; border: 2px solid #3bb77e; border-radius: 15px;">
                                     <div class="d-flex align-items-center mb-3 mb-md-0 me-md-3">
@@ -224,12 +232,22 @@
                                             <i class="fi-rs-box-check font-lg"></i>
                                         </div>
                                         <div>
-                                            <h6 class="mb-1 text-dark fw-bold font-md">Konfirmasi Pesanan Diterima</h6>
+                                            <h6 class="mb-1 text-dark fw-bold font-md">Konfirmasi Barang Diterima</h6>
                                             <span class="text-muted font-sm">
                                                 @if($isSelfPickup)
-                                                    Barang telah diserahkan/diambil pada <strong>{{ $order->shipped_at ? $order->shipped_at->format('d M Y, H:i') : '-' }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di bawah ini.
+                                                    @if($order->shipped_at)
+                                                        Barang telah diserahkan/diambil pada <strong>{{ $order->shipped_at->format('d M Y, H:i') }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di samping.
+                                                    @else
+                                                        Pesanan pengambilan di tempat telah dibayar / disetujui. Jika Anda sudah mengambil dan menerima barang dengan baik di gudang, silakan klik tombol konfirmasi di samping.
+                                                    @endif
+                                                @elseif($isKurirToko)
+                                                    @if($order->shipped_at)
+                                                        Pesanan sedang/telah diantar oleh kurir pada <strong>{{ $order->shipped_at->format('d M Y, H:i') }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di samping.
+                                                    @else
+                                                        Pesanan diantar ke tempat telah dibayar / disetujui. Jika barang sudah tiba dan Anda terima dengan baik di lokasi tujuan, silakan klik tombol konfirmasi di samping.
+                                                    @endif
                                                 @else
-                                                    Paket pesanan sedang/telah dikirim. Jika paket sudah tiba dan Anda terima dengan baik, silakan klik tombol konfirmasi di bawah ini.
+                                                    Paket pesanan sedang/telah dikirim. Jika paket sudah tiba dan Anda terima dengan baik, silakan klik tombol konfirmasi di samping.
                                                 @endif
                                             </span>
                                         </div>
@@ -237,7 +255,7 @@
                                     <form action="{{ route('buyer.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang/paket pesanan ini sudah diterima dengan baik?');">
                                         @csrf
                                         <button type="submit" class="btn btn-success fw-bold px-4 py-3 shadow-sm text-white" style="border-radius: 10px; background-color: #3bb77e; border-color: #3bb77e; white-space: nowrap;">
-                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Sudah Diterima
+                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Barang Diterima
                                         </button>
                                     </form>
                                 </div>
@@ -329,8 +347,8 @@
 
                                 <!-- Shipping Status Card -->
                                 @php
-                                    $isSelfPickup = $order->expedition && $order->expedition->code === 'self_pickup';
-                                    $isKurirToko = $order->expedition && $order->expedition->code === 'kurir_toko';
+                                    $isSelfPickup = $order->isSelfPickup();
+                                    $isKurirToko = $order->isKurirToko();
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="card h-100 border-0 shadow-sm border-radius-15 overflow-hidden">
@@ -390,12 +408,12 @@
                                                 </div>
                                                 @endif
                                                 
-                                                @if(isset($isKurirToko) && $isKurirToko && in_array($order->order_status, ['shipped', 'delivered']) && $order->order_status !== 'completed')
+                                                @if($order->canConfirmReceipt() && ($isKurirToko || $isSelfPickup))
                                                 <div class="mt-4 pt-3 border-top">
-                                                    <form action="{{ route('orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin pesanan sudah diterima dengan baik dan selesai?');">
+                                                    <form action="{{ route('buyer.orders.confirm-receipt', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin barang/paket pesanan ini sudah diterima dengan baik dan selesai?');">
                                                         @csrf
                                                         <button type="submit" class="btn w-100 shadow-sm" style="background-color: #3bb77e; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600;">
-                                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Pesanan Diterima
+                                                            <i class="fi-rs-check mr-5"></i> Konfirmasi Barang Diterima
                                                         </button>
                                                     </form>
                                                 </div>

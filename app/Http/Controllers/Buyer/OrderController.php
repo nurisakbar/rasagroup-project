@@ -159,20 +159,6 @@ class OrderController extends Controller
                     } else {
                         throw new \Exception('Failed to generate Faspay QRIS');
                     }
-                } elseif ($request->payment_method === 'faspay_bca_va') {
-                    $faspayService = new \App\Services\FaspayService($orderCompany);
-                    $invoice = $faspayService->createBill($order, $user, '702');
-                    if ($invoice && isset($invoice['bill_no'])) {
-                        $order->faspay_bill_no = $invoice['bill_no'] ?? $order->order_number;
-                        $order->faspay_redirect_url = $invoice['redirect_url'];
-                        $order->payment_method = 'faspay_bca_va';
-                        if (empty($order->virtual_account_no)) {
-                            // Generate a mock VA number for BCA so it displays on the frontend
-                            $order->virtual_account_no = '0712' . substr(preg_replace('/[^0-9]/', '', $order->order_number), -11);
-                        }
-                    } else {
-                        throw new \Exception('Failed to generate Faspay BCA VA');
-                    }
                 } else {
                     $prefix = \App\Services\FaspayConfig::getVaPrefix($request->payment_method, $orderCompany);
                     $targetLength = 16;
@@ -267,14 +253,19 @@ class OrderController extends Controller
             abort(403);
         }
 
-        if (!in_array($order->order_status, ['shipped', 'delivered']) && empty($order->shipped_at)) {
-            return redirect()->route('buyer.orders.show', $order)->with('error', 'Pesanan belum dapat dikonfirmasi karena belum dikirim/diserahkan.');
+        if (!$order->canConfirmReceipt()) {
+            return redirect()->route('buyer.orders.show', $order)->with('error', 'Pesanan belum dapat dikonfirmasi karena belum dikirim/diserahkan atau pembayaran belum diverifikasi.');
         }
 
-        $order->update([
+        $updateData = [
             'order_status' => 'completed',
             'received_at' => now(),
-        ]);
+        ];
+        if (empty($order->shipped_at)) {
+            $updateData['shipped_at'] = now();
+        }
+
+        $order->update($updateData);
         $order->creditPoints();
 
         if ($order->user) {
