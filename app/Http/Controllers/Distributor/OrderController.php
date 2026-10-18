@@ -609,9 +609,9 @@ class OrderController extends Controller
             $total = $totalAfterDiscount + $shippingCost;
 
             $shippingAddressText = $address->recipient_name . "\n" .
+                ($address->store_name ? $address->store_name . "\n" : '') .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
-                ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->district ? 'Kec. ' . $address->district->name . ', ' : '') .
                 ($address->regency ? $address->regency->name . ', ' : '') .
                 ($address->province ? $address->province->name : '') .

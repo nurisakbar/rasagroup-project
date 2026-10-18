@@ -105,18 +105,33 @@ class ProfileController extends Controller
 
         $request->validate([
             'hours' => 'required|array|size:7',
-            'hours.*.is_open' => 'required|boolean',
-            'hours.*.open_time' => 'required|date_format:H:i',
-            'hours.*.close_time' => 'required|date_format:H:i|after:hours.*.open_time',
+            'hours.*.is_open' => 'required|in:0,1',
+            'hours.*.open_time' => 'nullable|date_format:H:i',
+            'hours.*.close_time' => 'nullable|date_format:H:i',
         ]);
 
         foreach ($request->hours as $day => $data) {
+            $isOpen = (bool) $data['is_open'];
+
+            if ($isOpen) {
+                if (empty($data['open_time']) || empty($data['close_time'])) {
+                    return back()->withInput()->with('error', 'Jam buka dan tutup wajib diisi untuk hari yang berstatus Buka.');
+                }
+                if ($data['open_time'] >= $data['close_time']) {
+                    return back()->withInput()->with('error', 'Jam tutup harus lebih besar dari jam buka untuk hari yang berstatus Buka.');
+                }
+            }
+
+            $existing = $user->operationalHours()->where('day', $day)->first();
+            $openTime = !empty($data['open_time']) ? $data['open_time'] : ($existing?->open_time?->format('H:i') ?? '08:00');
+            $closeTime = !empty($data['close_time']) ? $data['close_time'] : ($existing?->close_time?->format('H:i') ?? '20:00');
+
             $user->operationalHours()->updateOrCreate(
                 ['day' => $day],
                 [
-                    'is_open' => $data['is_open'],
-                    'open_time' => $data['open_time'],
-                    'close_time' => $data['close_time'],
+                    'is_open' => $isOpen,
+                    'open_time' => $openTime,
+                    'close_time' => $closeTime,
                 ]
             );
         }

@@ -14,7 +14,7 @@ class SalesController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $sales = User::where('role', User::ROLE_SALES)->select('id', 'sales_code', 'name', 'email', 'monthly_target', 'is_active', 'created_at');
+            $sales = User::where('role', User::ROLE_SALES)->select('id', 'sales_code', 'name', 'email', 'phone', 'monthly_target', 'is_active', 'created_at');
 
             return DataTables::of($sales)
                 ->addIndexColumn()
@@ -39,6 +39,9 @@ class SalesController extends Controller
                     return $sale->is_active 
                         ? '<span class="label label-success">Aktif</span>' 
                         : '<span class="label label-danger">Tidak Aktif</span>';
+                })
+                ->editColumn('phone', function ($sale) {
+                    return $sale->phone ?: '-';
                 })
                 ->editColumn('monthly_target', function ($sale) {
                     return $sale->monthly_target ? 'Rp ' . number_format($sale->monthly_target, 0, ',', '.') : '-';
@@ -70,6 +73,7 @@ class SalesController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'nullable|string|max:20',
             'sales_code' => 'nullable|string|max:255',
             'monthly_target' => 'nullable|numeric',
             'password' => 'required|string|min:8|confirmed',
@@ -79,6 +83,7 @@ class SalesController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'sales_code' => $request->sales_code,
             'monthly_target' => $request->monthly_target,
             'password' => Hash::make($request->password),
@@ -120,6 +125,7 @@ class SalesController extends Controller
                 'max:255',
                 Rule::unique('users')->ignore($sale->id),
             ],
+            'phone' => 'nullable|string|max:20',
             'sales_code' => 'nullable|string|max:255',
             'monthly_target' => 'nullable|numeric',
             'password' => 'nullable|string|min:8|confirmed',
@@ -129,6 +135,7 @@ class SalesController extends Controller
         $data = [
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'sales_code' => $request->sales_code,
             'monthly_target' => $request->monthly_target,
             'is_active' => $request->has('is_active') ? 1 : 0,

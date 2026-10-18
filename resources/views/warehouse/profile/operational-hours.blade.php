@@ -47,15 +47,15 @@
                                         </td>
                                         <td>
                                             <input type="time" name="hours[{{ $hour->day }}][open_time]" 
-                                                   value="{{ old("hours.{$hour->day}.open_time", $hour->open_time->format('H:i')) }}" 
+                                                   value="{{ old("hours.{$hour->day}.open_time", $hour->open_time ? $hour->open_time->format('H:i') : '08:00') }}" 
                                                    class="form-control input-sm time-input" 
-                                                   {{ !$hour->is_open ? 'disabled' : '' }} required>
+                                                   {{ !$hour->is_open ? 'disabled' : '' }}>
                                         </td>
                                         <td>
                                             <input type="time" name="hours[{{ $hour->day }}][close_time]" 
-                                                   value="{{ old("hours.{$hour->day}.close_time", $hour->close_time->format('H:i')) }}" 
+                                                   value="{{ old("hours.{$hour->day}.close_time", $hour->close_time ? $hour->close_time->format('H:i') : '20:00') }}" 
                                                    class="form-control input-sm time-input" 
-                                                   {{ !$hour->is_open ? 'disabled' : '' }} required>
+                                                   {{ !$hour->is_open ? 'disabled' : '' }}>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -78,15 +78,29 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('.status-select').change(function() {
-            var row = $(this).closest('tr');
+        function updateRowState(selectElem) {
+            var row = $(selectElem).closest('tr');
             var timeInputs = row.find('.time-input');
             
-            if ($(this).val() == '0') {
-                timeInputs.prop('disabled', true).prop('required', false);
+            if ($(selectElem).val() == '0') {
+                timeInputs.prop('disabled', true).prop('required', false).css('opacity', '0.5');
             } else {
-                timeInputs.prop('disabled', false).prop('required', true);
+                timeInputs.prop('disabled', false).prop('required', true).css('opacity', '1');
             }
+        }
+
+        $('.status-select').change(function() {
+            updateRowState(this);
+        });
+
+        // Initialize state on page load
+        $('.status-select').each(function() {
+            updateRowState(this);
+        });
+
+        // Re-enable inputs before form submit so values are included in POST
+        $('form').on('submit', function() {
+            $('.time-input').prop('disabled', false);
         });
     });
 </script>

@@ -33,7 +33,8 @@ class FaspaySnapController extends Controller
         }
 
         // Identifikasi nomor VA dari request
-        $vaNumber = $request->input('virtualAccountNo') ?? $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
+        $rawVa = $request->input('virtualAccountNo') ?? $request->input('customerNo') ?? $request->input('virtual_account') ?? $request->input('bill_no') ?? $request->input('VA');
+        $vaNumber = trim((string) $rawVa);
         
         // 11.3 Missing Mandatory Field UAT Simulation
         if (!$request->has('virtualAccountNo') && $request->has('partnerServiceId')) {
@@ -58,8 +59,8 @@ class FaspaySnapController extends Controller
             ], 400);
         }
 
-        $customerNo = $request->input('customerNo');
-        $partnerServiceId = $request->input('partnerServiceId');
+        $customerNo = trim((string) $request->input('customerNo'));
+        $partnerServiceId = trim((string) $request->input('partnerServiceId'));
         
         $knownPrefixes = \App\Services\FaspayConfig::getAllVaPrefixes();
         
@@ -76,12 +77,18 @@ class FaspaySnapController extends Controller
             $customerNo = $customerNo ?: $extractedCustomerNo;
             $partnerServiceId = $partnerServiceId ?: $extractedPartnerServiceId;
         }
+
+        $constructedVa = ($partnerServiceId && $customerNo) ? ($partnerServiceId . $customerNo) : null;
+        $orderWithPrefix = 'W' . ltrim($customerNo ?: $vaNumber, 'Ww');
+
         // Query order from database
         $order = Order::with('user')
-            ->where('order_number', $vaNumber)
-            ->orWhere('virtual_account_no', $vaNumber)
-            ->orWhere('id', $vaNumber)
+            ->where('virtual_account_no', $vaNumber)
+            ->when($constructedVa, fn($q) => $q->orWhere('virtual_account_no', $constructedVa))
+            ->orWhere('order_number', $vaNumber)
+            ->orWhere('order_number', $orderWithPrefix)
             ->orWhere('order_number', $customerNo)
+            ->orWhere('id', $vaNumber)
             ->first();
 
         // 11.8 Expired VA UAT Simulation
@@ -300,12 +307,17 @@ class FaspaySnapController extends Controller
             $partnerServiceId = $partnerServiceId ?: $extractedPartnerServiceId;
         }
 
+        $constructedVa = ($partnerServiceId && $customerNo) ? ($partnerServiceId . $customerNo) : null;
+        $orderWithPrefix = 'W' . ltrim($customerNo ?: $orderNumber, 'Ww');
+
         // Query order from database
         $order = Order::with('user')
-            ->where('order_number', $orderNumber)
-            ->orWhere('virtual_account_no', $orderNumber)
-            ->orWhere('id', $orderNumber)
+            ->where('virtual_account_no', $orderNumber)
+            ->when($constructedVa, fn($q) => $q->orWhere('virtual_account_no', $constructedVa))
+            ->orWhere('order_number', $orderNumber)
+            ->orWhere('order_number', $orderWithPrefix)
             ->orWhere('order_number', $customerNo)
+            ->orWhere('id', $orderNumber)
             ->first();
 
         if (!$order) {

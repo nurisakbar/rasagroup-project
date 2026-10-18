@@ -1075,6 +1075,7 @@ class CheckoutController extends Controller
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .
+                ($address->store_name ? $address->store_name . "\n" : '') .
                 $address->phone . "\n" .
                 $address->address_detail . "\n" .
                 ($address->district_name ? 'Kec. ' . $address->district_name . ', ' : '') .

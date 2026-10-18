@@ -249,6 +249,15 @@
         type: "error"
       });
     @endif
+
+    // Validation error notification
+    @if($errors->any())
+      swal({
+        title: "Validasi Gagal!",
+        text: "{{ $errors->first() }}",
+        type: "error"
+      });
+    @endif
   });
 </script>
 

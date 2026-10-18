@@ -71,17 +71,17 @@
                                                 </td>
                                                 <td class="py-4">
                                                     <input type="time" name="hours[{{ $hour->day }}][open_time]" 
-                                                           value="{{ old("hours.{$hour->day}.open_time", $hour->open_time->format('H:i')) }}" 
+                                                           value="{{ old("hours.{$hour->day}.open_time", $hour->open_time ? $hour->open_time->format('H:i') : '08:00') }}" 
                                                            class="form-control border-radius-10 time-input" 
                                                            style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;"
-                                                           {{ !$hour->is_open ? 'disabled' : '' }} required>
+                                                           {{ !$hour->is_open ? 'disabled' : '' }}>
                                                 </td>
                                                 <td class="py-4">
                                                     <input type="time" name="hours[{{ $hour->day }}][close_time]" 
-                                                           value="{{ old("hours.{$hour->day}.close_time", $hour->close_time->format('H:i')) }}" 
+                                                           value="{{ old("hours.{$hour->day}.close_time", $hour->close_time ? $hour->close_time->format('H:i') : '20:00') }}" 
                                                            class="form-control border-radius-10 time-input" 
                                                            style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;"
-                                                           {{ !$hour->is_open ? 'disabled' : '' }} required>
+                                                           {{ !$hour->is_open ? 'disabled' : '' }}>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -105,24 +105,29 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('.status-select').change(function() {
-            var row = $(this).closest('tr');
+        function updateRowState(selectElem) {
+            var row = $(selectElem).closest('tr');
             var timeInputs = row.find('.time-input');
             
-            if ($(this).val() == '0') {
-                timeInputs.prop('disabled', true).prop('required', false);
-                timeInputs.css('opacity', '0.5');
+            if ($(selectElem).val() == '0') {
+                timeInputs.prop('disabled', true).prop('required', false).css('opacity', '0.5');
             } else {
-                timeInputs.prop('disabled', false).prop('required', true);
-                timeInputs.css('opacity', '1');
+                timeInputs.prop('disabled', false).prop('required', true).css('opacity', '1');
             }
+        }
+
+        $('.status-select').change(function() {
+            updateRowState(this);
         });
         
         // Initial state
         $('.status-select').each(function() {
-            if ($(this).val() == '0') {
-                $(this).closest('tr').find('.time-input').css('opacity', '0.5');
-            }
+            updateRowState(this);
+        });
+
+        // Re-enable before submit so browser sends values
+        $('form').on('submit', function() {
+            $('.time-input').prop('disabled', false);
         });
     });
 </script>

@@ -44,6 +44,14 @@
                                 <span class="help-block">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        <div class="form-group @error('phone') has-error @enderror">
+                            <label for="phone">Nomor Telepon / WhatsApp</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Contoh: 081234567890">
+                            @error('phone')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
                         
                         <div class="form-group @error('password') has-error @enderror">
                             <label for="password">Password <span class="text-danger">*</span></label>

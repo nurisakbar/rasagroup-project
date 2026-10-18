@@ -88,7 +88,10 @@
                         <tr>
                             <th>Pembeli</th>
                             <td>
-                                {{ $order->user->name }} ({{ $order->user->email }})
+                                <strong>{{ $order->user->name }}</strong> ({{ $order->user->email }})
+                                @if($order->address && $order->address->store_name)
+                                    <br><span class="text-primary" style="font-weight: 600;"><i class="fa fa-shopping-bag"></i> {{ $order->address->store_name }}</span>
+                                @endif
                                 @if($order->user->phone)
                                     <br><small class="text-muted"><i class="fa fa-phone"></i> {{ $order->user->phone }}</small>
                                 @endif
@@ -442,7 +445,44 @@
                     <table class="table table-bordered">
                         <tr>
                             <th width="30%">Alamat Pengiriman</th>
-                            <td>{!! nl2br(e($order->shipping_address)) !!}</td>
+                            <td>
+                                @php
+                                    $storeName = $order->address?->store_name;
+                                    $rawShipping = trim((string)$order->shipping_address);
+                                    if ($rawShipping !== '') {
+                                        $shippingLines = explode("\n", str_replace("\r\n", "\n", $rawShipping));
+                                        $recipientLine = array_shift($shippingLines);
+                                        if ($storeName) {
+                                            $filteredLines = [];
+                                            $foundStore = false;
+                                            foreach ($shippingLines as $line) {
+                                                if (!$foundStore && trim($line) === trim($storeName)) {
+                                                    $foundStore = true;
+                                                    continue;
+                                                }
+                                                $filteredLines[] = $line;
+                                            }
+                                            $shippingLines = $filteredLines;
+                                        }
+                                        $remainingAddress = implode("\n", $shippingLines);
+                                    } elseif ($order->address) {
+                                        $recipientLine = $order->address->recipient_name;
+                                        $remainingAddress = trim($order->address->phone . "\n" . $order->address->address_detail . "\n" . ($order->address->district_name ? 'Kec. ' . $order->address->district_name . ', ' : '') . ($order->address->regency_name ? $order->address->regency_name . ', ' : '') . ($order->address->province_name ?? '') . ($order->address->postal_code ? ' ' . $order->address->postal_code : ''));
+                                    } else {
+                                        $recipientLine = '-';
+                                        $remainingAddress = '';
+                                    }
+                                @endphp
+                                @if($recipientLine)
+                                    <strong>{{ $recipientLine }}</strong>
+                                @endif
+                                @if($storeName)
+                                    <br><span class="text-primary" style="font-weight: 600;"><i class="fa fa-shopping-bag"></i> {{ $storeName }}</span>
+                                @endif
+                                @if($remainingAddress !== '')
+                                    <br>{!! nl2br(e($remainingAddress)) !!}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th>Ekspedisi</th>
