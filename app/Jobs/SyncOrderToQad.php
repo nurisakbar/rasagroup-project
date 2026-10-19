@@ -7,9 +7,11 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\QadService;
 use App\Support\QadBusinessRelationHeadOffice;
+use App\Support\QadCreditTerms;
 use App\Support\QadExistingCustomer;
 use App\Support\QadIntegration;
 use App\Support\QadWsOrderNumberGenerator;
+use App\Support\TaxAwarePrice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -195,16 +197,25 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 ]);
             }
 
-            $linePrice = (int) round(max(0.0, (float) $price));
+            $soldPrice = (int) round(max(0.0, (float) $price));
+            $catalogPrice = (int) round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()));
+            $discountPercent = (float) $item->unitDiscountPercent();
+            if ($discountPercent <= 0 && $catalogPrice > $soldPrice && $catalogPrice > 0) {
+                $discountPercent = round((($catalogPrice - $soldPrice) / $catalogPrice) * 100, 2);
+            }
+
+            $listPrice = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $catalogPrice : $soldPrice;
+            $discPercent = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $discountPercent : 0;
+
             $lines[] = [
                 'salesOrderNumber' => $qidSalesOrderNumber,
                 'salesOrderLine' => $index + 1,
                 'itemCode' => $itemCode,
                 'quantityOrdered' => (int) $item->quantity,
                 'unitOfMeasure' => $uom,
-                'listPrice' => $linePrice,
-                'discountPercent' => 0,
-                'netPrice' => $linePrice,
+                'listPrice' => $listPrice,
+                'discountPercent' => $discPercent,
+                'netPrice' => $soldPrice,
                 'dueDate' => $lineDueDate,
                 'isTaxable' => $this->isTaxableForQad(),
                 'salesAcct' => '41101',
@@ -261,6 +272,24 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         return (string) ($user?->qad_customer_code ?? '');
     }
 
+    protected function resolveCreditTermsCode(User $user): string
+    {
+        if ($this->order->payment_method === 'term_of_payment') {
+            $days = (int) ($user->term_of_payment ?? 0);
+            if ($days <= 0 && ! empty($this->order->notes)) {
+                if (preg_match('/tempo\s*(\d+)/i', (string) $this->order->notes, $matches)) {
+                    $days = (int) $matches[1];
+                }
+            }
+
+            if ($days > 0) {
+                return QadCreditTerms::codeFromDays($days) ?? ($days . 'D');
+            }
+        }
+
+        return 'CIA';
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $lines
      * @return array<string, mixed>
@@ -280,7 +309,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'requiredDate' => $headerDateIso,
             'shipDate' => $headerDateIso,
             'promiseDate' => $headerDateIso,
-            'creditTermsCode' => 'CIA',
+            'creditTermsCode' => $this->resolveCreditTermsCode($user),
             'remarks' => substr(($this->order->notes !== null && trim((string) $this->order->notes) !== '')
                 ? (string) $this->order->notes
                 : (string) $this->order->order_number, 0, 24),
