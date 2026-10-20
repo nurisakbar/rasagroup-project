@@ -31,7 +31,7 @@ return [
         'api_url' => env('WMS_EXTERNAL_API_URL', 'https://wmsrcapi-dev.rasagroupoffice.com/api/v1/external'),
         'api_key' => env('WMS_EXTERNAL_API_KEY', ''),
         // Key yang dipakai WMS saat memanggil webhook RasaConnect (header x-api-key).
-        'webhook_key' => env('WMS_WEBHOOK_KEY', ''),
+        'webhook_key' => env('WMS_WEBHOOK_KEY') ?: env('WMS_EXTERNAL_API_KEY', ''),
     ],
 
     'ses' => [
