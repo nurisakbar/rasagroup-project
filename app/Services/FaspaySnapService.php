@@ -133,7 +133,7 @@ class FaspaySnapService
         $payload = [
             'partnerReferenceNo' => (string) $order->order_number,
             'amount' => [
-                'value' => number_format($amount, 2, '.', ''),
+                'value' => number_format(round((float) $amount), 2, '.', ''),
                 'currency' => 'IDR'
             ],
             'merchantId' => $partnerId,
@@ -219,7 +219,7 @@ class FaspaySnapService
         $payload = [
             'partnerReferenceNo' => (string) $referenceNo,
             'amount' => [
-                'value' => number_format((float) $amount, 2, '.', ''),
+                'value' => number_format(round((float) $amount), 2, '.', ''),
                 'currency' => 'IDR'
             ],
             'merchantId' => $partnerId,
@@ -355,8 +355,8 @@ class FaspaySnapService
         $partnerId = $this->partnerId;
         $privateKey = $this->getPrivateKey();
         
-        // Ensure amount is string with 2 decimal places
-        $amountStr = number_format($amount, 2, '.', '');
+        // Ensure amount is string with 2 decimal places (whole Rupiah in IDR)
+        $amountStr = number_format(round((float) $amount), 2, '.', '');
         
         $payload = [
             'partnerReferenceNo' => (string) $order->order_number,

@@ -123,19 +123,27 @@ class FaspaySnapController extends Controller
 
         $inquiryRequestId = $request->input('inquiryRequestId', '');
 
+        $rawPhone = optional($order->address)->phone ?? optional($order->user)->phone ?? '6281234567890';
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string)$rawPhone);
+        if (str_starts_with($cleanPhone, '0')) {
+            $cleanPhone = '62' . substr($cleanPhone, 1);
+        } elseif (!empty($cleanPhone) && !str_starts_with($cleanPhone, '62')) {
+            $cleanPhone = '62' . $cleanPhone;
+        }
+
         $responsePayload = [
             'responseCode' => '2002400',
-            'responseMessage' => 'success',
+            'responseMessage' => 'Success',
             'virtualAccountData' => [
                 'partnerServiceId' => $partnerServiceId,
                 'customerNo' => $customerNo,
                 'virtualAccountNo' => $vaNumber,
                 'virtualAccountName' => optional($order->user)->name ?? 'Customer Rasa Group',
                 'virtualAccountEmail' => optional($order->user)->email ?? 'customer@rasagroup.co.id',
-                'virtualAccountPhone' => optional($order->user)->phone ?? '6281234567890',
+                'virtualAccountPhone' => $cleanPhone ?: '6281234567890',
                 'inquiryRequestId' => $inquiryRequestId,
                 'totalAmount' => [
-                    'value' => number_format($order->total_amount, 2, '.', ''),
+                    'value' => number_format(round((float)$order->total_amount), 2, '.', ''),
                     'currency' => 'IDR'
                 ]
             ]
@@ -345,7 +353,7 @@ class FaspaySnapController extends Controller
         if ($paidAmount && ((float)$paidAmount === 150000.0 || (float)$paidAmount === 2291541.0)) {
             // Bypass amount mismatch for this specific UAT scenario
             Log::debug('Faspay SNAP Webhook: Bypassing amount mismatch for open amount UAT scenario');
-        } else if ($paidAmount && (float)$paidAmount !== (float)$order->total_amount) {
+        } else if ($paidAmount && abs((float)$paidAmount - round((float)$order->total_amount)) > 1.0 && abs((float)$paidAmount - (float)$order->total_amount) > 1.0) {
             Log::error('Faspay SNAP Webhook: Amount mismatch', ['paid' => $paidAmount, 'expected' => $order->total_amount]);
             return response()->json([
                 'responseCode' => '4042513',
@@ -434,6 +442,14 @@ class FaspaySnapController extends Controller
             return response($xmlResponse, 200)->header('Content-Type', 'text/xml');
         }
 
+        $rawPhone = optional($order->address)->phone ?? optional($order->user)->phone ?? '6281234567890';
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string)$rawPhone);
+        if (str_starts_with($cleanPhone, '0')) {
+            $cleanPhone = '62' . substr($cleanPhone, 1);
+        } elseif (!empty($cleanPhone) && !str_starts_with($cleanPhone, '62')) {
+            $cleanPhone = '62' . $cleanPhone;
+        }
+
         $responsePayload = [
             'responseCode' => '2002500',
             'responseMessage' => 'Success',
@@ -447,16 +463,16 @@ class FaspaySnapController extends Controller
                 'virtualAccountNo' => (string) $orderNumber,
                 'virtualAccountName' => optional($order->user)->name ?? 'Customer Rasa Group',
                 'virtualAccountEmail' => optional($order->user)->email ?? 'customer@rasagroup.co.id',
-                'virtualAccountPhone' => optional($order->user)->phone ?? '6281234567890',
+                'virtualAccountPhone' => $cleanPhone ?: '6281234567890',
                 'trxId' => $request->input('trx_id', 'WS' . time()),
                 'paymentRequestId' => $request->input('paymentRequestId', ''),
                 'paidAmount' => [
-                    'value' => number_format($paidAmount ?? $order->total_amount, 2, '.', ''),
+                    'value' => number_format(round((float)($paidAmount ?? $order->total_amount)), 2, '.', ''),
                     'currency' => 'IDR'
                 ],
                 'paidBills' => '1',
                 'totalAmount' => [
-                    'value' => number_format($order->total_amount ?? $paidAmount, 2, '.', ''),
+                    'value' => number_format(round((float)($order->total_amount ?? $paidAmount)), 2, '.', ''),
                     'currency' => 'IDR'
                 ],
                 'trxDateTime' => now()->timezone('Asia/Jakarta')->format('Y-m-d\TH:i:sP'),

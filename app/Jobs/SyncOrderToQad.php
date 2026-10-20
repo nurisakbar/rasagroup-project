@@ -207,6 +207,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             $listPrice = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $catalogPrice : $soldPrice;
             $discPercent = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $discountPercent : 0;
 
+            // netPrice = listPrice x (1 - discount%), boleh desimal (mis. 58559 x 80% = 46847.2) agar konsisten dengan hitungan QAD.
+            $netPrice = $discPercent > 0
+                ? round($listPrice * (1 - ($discPercent / 100)), 2)
+                : (float) $listPrice;
+
             $lines[] = [
                 'salesOrderNumber' => $qidSalesOrderNumber,
                 'salesOrderLine' => $index + 1,
@@ -215,7 +220,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'unitOfMeasure' => $uom,
                 'listPrice' => $listPrice,
                 'discountPercent' => $discPercent,
-                'netPrice' => $soldPrice,
+                'netPrice' => $netPrice,
+                'isFixedPrice' => true,
+                'isReprice' => false,
                 'dueDate' => $lineDueDate,
                 'isTaxable' => $this->isTaxableForQad(),
                 'salesAcct' => '41101',
@@ -316,14 +323,14 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'purchaseOrderNumber' => $purchaseOrderNumber,
             'taxClass' => 'PPN',
             'isTaxable' => $this->isTaxableForQad(),
+            'salespersonCode_01' => $this->salespersonCodeForQad() ?? '',
+            'isLinePricing' => true,
+            'isReprice' => false,
             'isSelfBillingEnabled' => false,
+            'isSelfBillingOrder' => false,
+            'isSBAccountsEnabled' => false,
             'salesOrderLines' => $lines,
         ];
-
-        $salespersonCode = $this->salespersonCodeForQad();
-        if ($salespersonCode !== null) {
-            $payload['salespersonCode_01'] = $salespersonCode;
-        }
 
         return $payload;
     }

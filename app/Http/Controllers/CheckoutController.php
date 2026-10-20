@@ -1071,7 +1071,7 @@ class CheckoutController extends Controller
             $discountAmount = 0;
             $discountPercent = 0;
 
-            $total = $subtotal - $discountAmount + $ppn + $shippingCost;
+            $total = round((float) ($subtotal - $discountAmount + $ppn + $shippingCost));
 
             // Build full shipping address string for record
             $shippingAddressText = $address->recipient_name . "\n" .
