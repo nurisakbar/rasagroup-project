@@ -73,6 +73,8 @@ Route::prefix('webhooks')->group(function () {
     Route::get('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'verify'])->name('api.webhooks.lalamove.verify');
     Route::post('/lalamove', [\App\Http\Controllers\Api\LalamoveWebhookController::class, 'handle'])->name('api.webhooks.lalamove.handle');
     Route::post('/lion-parcel', [\App\Http\Controllers\Api\LionParcelWebhookController::class, 'handle'])->name('api.webhooks.lion-parcel.handle');
+    // WMS: batch sales order berubah (mis. diubah manual di QAD) → update allocated_batches
+    Route::post('/wms/sales-orders/batches', [\App\Http\Controllers\Api\WmsBatchUpdateController::class, 'update'])->name('api.webhooks.wms.batches');
 });
 
 // Faspay SNAP VA & Payment Notification routes
