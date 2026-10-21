@@ -716,6 +716,9 @@
                                                     <div>
                                                         <em>
                                                             Batch : {{ $batch['lot_serial'] ?? '-' }}
+                                                            @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
+                                                                <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
+                                                            @endif
                                                             @if(!empty($batch['expired']))
                                                                 - Expired : {{ $batch['expired'] }}
                                                             @endif
@@ -1118,26 +1121,48 @@
         // Build WMS Payload representation based on current items
         $wmsItems = [];
         foreach ($order->items as $item) {
-            $batchesPayload = [];
+            $defaultCode = $item->product ? $item->product->code : '';
+            $batchesByCode = [];
+
             if (!empty($item->allocated_batches) && is_array($item->allocated_batches)) {
                 foreach ($item->allocated_batches as $batch) {
-                    $batchesPayload[] = [
+                    $code = $batch['item_code'] ?? $defaultCode;
+                    if (!isset($batchesByCode[$code])) {
+                        $batchesByCode[$code] = [];
+                    }
+                    $batchesByCode[$code][] = [
                         'batch_number' => $batch['lot_serial'] ?? '',
                         'location_code' => $order->source_qad_location_code ?? '',
                         'quantity' => (float) ($batch['qty'] ?? 0),
                     ];
                 }
             }
-            $wmsItems[] = [
-                'item_code' => $item->product->code ?? '',
-                'quantity' => (float) $item->quantity,
-                'batches' => $batchesPayload,
-            ];
+
+            foreach ($batchesByCode as $code => $batchesPayload) {
+                $totalBatchQty = array_sum(array_column($batchesPayload, 'quantity'));
+
+                $wmsItems[] = [
+                    'item_code' => $code,
+                    'quantity' => (float) $totalBatchQty,
+                    'batches' => $batchesPayload,
+                ];
+            }
+
+            if (empty($batchesByCode)) {
+                $wmsItems[] = [
+                    'item_code' => $defaultCode,
+                    'quantity' => (float) $item->quantity,
+                    'batches' => [],
+                ];
+            }
         }
         $wmsPayload = [
             'so_number' => $order->order_number,
             'items' => $wmsItems,
         ];
+        if ($order->wms_so_status !== null) {
+            $wmsPayload['is_update'] = true;
+        }
     @endphp
 
     <!-- Modal cURL QAD -->
