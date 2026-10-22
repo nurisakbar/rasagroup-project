@@ -1127,12 +1127,34 @@ class CheckoutController extends Controller
 
             if ($wmsLocationCode) {
                 try {
+                    $cartItemCodes = [];
+                    foreach ($carts as $cart) {
+                        if ($cart->product) {
+                            $cartItemCodes = array_merge($cartItemCodes, $cart->product->getAllCodes());
+                        }
+                    }
+                    $cartItemCodes = array_values(array_unique(array_filter($cartItemCodes)));
+
+                    if (! empty($cartItemCodes) && $wms->isConfigured()) {
+                        $wmsBatches = $wms->batchesForItemCodes(
+                            $wmsLocationCode,
+                            $cartItemCodes,
+                            $user->shelfLifeMonths()
+                        ) ?? [];
+                    }
+
+                    if (empty($wmsBatches)) {
+                        $wmsBatches = $wms->batchesByItemCode(
+                            $wmsLocationCode,
+                            $user->shelfLifeMonths()
+                        ) ?? [];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('WMS batch fetch failed at checkout: ' . $e->getMessage());
                     $wmsBatches = $wms->batchesByItemCode(
                         $wmsLocationCode,
                         $user->shelfLifeMonths()
                     ) ?? [];
-                } catch (\Exception $e) {
-                    Log::error('WMS batch fetch failed at checkout: ' . $e->getMessage());
                 }
             }
 

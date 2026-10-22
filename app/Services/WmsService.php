@@ -140,7 +140,82 @@ class WmsService
             } while ($page <= $lastPage && $page <= $maxPages);
         }
 
+        // Sinkronkan hasil realtime dari WMS ke qad_inventories agar cache lokal selalu update
+        try {
+            $this->syncItemBatchesToCache($locationCode, $grouped, array_values($codes), Carbon::now());
+        } catch (\Throwable $e) {
+            Log::warning('WmsService: syncItemBatchesToCache failed: ' . $e->getMessage());
+        }
+
         return $this->normalizeBatches($grouped, $minMasaBerlakuBulan);
+    }
+
+    /**
+     * Update hasil fetch batch realtime dari WMS ke cache lokal qad_inventories.
+     *
+     * @param  array<string, list<array{lot_serial: string, qty: int, expired: ?string}>>  $grouped
+     * @param  list<string>  $itemCodes
+     */
+    public function syncItemBatchesToCache(string $locationCode, array $grouped, array $itemCodes, Carbon $syncTime): void
+    {
+        $upsertData = [];
+        $normalizedCodes = [];
+
+        foreach ($itemCodes as $code) {
+            $norm = strtoupper(trim((string) $code));
+            if ($norm !== '') {
+                $normalizedCodes[] = $norm;
+            }
+        }
+
+        foreach ($grouped as $itemCode => $batches) {
+            foreach ($batches as $batch) {
+                $lotSerial = trim((string) ($batch['lot_serial'] ?? ''));
+                if ($lotSerial === '' || str_contains($lotSerial, '-')) {
+                    continue;
+                }
+
+                $expiredDate = null;
+                if (! empty($batch['expired'])) {
+                    try {
+                        $expiredDate = Carbon::parse($batch['expired'])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        $expiredDate = null;
+                    }
+                }
+
+                $upsertData[] = [
+                    'item_code' => $itemCode,
+                    'qad_location_code' => $locationCode,
+                    'lot_serial' => $lotSerial,
+                    'qty' => (float) ($batch['qty'] ?? 0),
+                    'expired_date' => $expiredDate,
+                    'last_sync_at' => $syncTime,
+                    'created_at' => $syncTime,
+                    'updated_at' => $syncTime,
+                ];
+            }
+        }
+
+        if (! empty($upsertData)) {
+            foreach (array_chunk($upsertData, 500) as $chunk) {
+                QadInventory::upsert(
+                    $chunk,
+                    ['item_code', 'qad_location_code', 'lot_serial'],
+                    ['qty', 'expired_date', 'last_sync_at', 'updated_at']
+                );
+            }
+        }
+
+        if (! empty($normalizedCodes)) {
+            QadInventory::where('qad_location_code', $locationCode)
+                ->whereIn(QadInventory::raw('UPPER(TRIM(item_code))'), $normalizedCodes)
+                ->where(function ($query) use ($syncTime) {
+                    $query->whereNull('last_sync_at')
+                        ->orWhere('last_sync_at', '<', $syncTime);
+                })
+                ->update(['qty' => 0]);
+        }
     }
 
     /**
@@ -501,11 +576,38 @@ class WmsService
             return [];
         }
 
-        $grouped = $this->batchesByItemCode($location, $minMasaBerlakuBulan) ?? [];
+        $cleanCodes = array_values(array_unique(array_filter($productCodes)));
+        $grouped = [];
+
+        if (! empty($cleanCodes) && $this->isConfigured()) {
+            try {
+                $grouped = $this->batchesForItemCodes($location, $cleanCodes, $minMasaBerlakuBulan) ?? [];
+            } catch (\Throwable $e) {
+                Log::warning('WmsService: batchesForWarehouseItem live fetch failed, fallback to cache', [
+                    'location' => $location,
+                    'codes' => $cleanCodes,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if (empty($grouped)) {
+            $grouped = $this->batchesByItemCode($location, $minMasaBerlakuBulan) ?? [];
+        }
+
         $batches = $this->batchesForProduct($grouped, $productCodes);
 
         if ($batches === [] && $minMasaBerlakuBulan > 0) {
-            $grouped = $this->batchesByItemCode($location, 0) ?? [];
+            if (! empty($cleanCodes) && $this->isConfigured()) {
+                try {
+                    $grouped = $this->batchesForItemCodes($location, $cleanCodes, 0) ?? [];
+                } catch (\Throwable $e) {
+                    $grouped = [];
+                }
+            }
+            if (empty($grouped)) {
+                $grouped = $this->batchesByItemCode($location, 0) ?? [];
+            }
             $batches = $this->batchesForProduct($grouped, $productCodes);
         }
 
