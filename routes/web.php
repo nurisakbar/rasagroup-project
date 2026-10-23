@@ -311,6 +311,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/orders/{order}/check-qad', [App\Http\Controllers\Admin\OrderController::class, 'checkQadStatus'])->name('orders.check-qad');
         Route::post('/orders/{order}/check-wms', [App\Http\Controllers\Admin\OrderController::class, 'checkWmsStatus'])->name('orders.check-wms');
         Route::post('/orders/{order}/sync-wms', [App\Http\Controllers\Admin\OrderController::class, 'syncWms'])->name('orders.sync-wms');
+        Route::get('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Admin\OrderController::class, 'getItemBatches'])->name('orders.items.batches');
+        Route::put('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Admin\OrderController::class, 'updateItemBatches'])->name('orders.items.update-batches');
 
         // Menus Management
         Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Exports\AdminOrdersExport;
 use App\Jobs\SendSalesOrderToWmsJob;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Warehouse;
+use App\Services\WmsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -1021,6 +1023,141 @@ class OrderController extends Controller
                 'failure_reason' => $order->wms_so_failure_reason,
             ], 500);
         }
+    }
+
+    public function getItemBatches(Order $order, OrderItem $item, WmsService $wms)
+    {
+        if ($item->order_id !== $order->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item tidak sesuai dengan pesanan.',
+            ], 400);
+        }
+
+        $order->loadMissing(['sourceWarehouse', 'user']);
+        $item->loadMissing('product');
+
+        $warehouse = $order->sourceWarehouse ?? ($order->source_qad_location_code ? Warehouse::where('qad_location_code', $order->source_qad_location_code)->first() : null);
+
+        if (! $warehouse) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gudang asal (source warehouse) tidak ditemukan pada pesanan ini.',
+            ], 422);
+        }
+
+        $product = $item->product;
+        if (! $product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak ditemukan pada item pesanan ini.',
+            ], 422);
+        }
+
+        $productCodes = $product->getAllCodes();
+        $availableBatches = $wms->batchesForWarehouseItem($warehouse, $productCodes, 0);
+
+        return response()->json([
+            'success' => true,
+            'warehouse' => [
+                'id' => $warehouse->id,
+                'name' => $warehouse->name,
+                'location_code' => $warehouse->qad_location_code ?: $order->source_qad_location_code,
+            ],
+            'product' => [
+                'id' => $product->id,
+                'code' => $product->code,
+                'name' => $product->display_name ?? $product->name,
+                'unit' => $product->unit ?: 'PCS',
+            ],
+            'item_id' => $item->id,
+            'required_qty' => (int) $item->quantity,
+            'current_batches' => is_array($item->allocated_batches) ? array_values($item->allocated_batches) : [],
+            'available_batches' => array_values($availableBatches),
+        ]);
+    }
+
+    public function updateItemBatches(Request $request, Order $order, OrderItem $item)
+    {
+        if ($item->order_id !== $order->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item tidak sesuai dengan pesanan.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'batches' => ['present', 'array'],
+            'batches.*.lot_serial' => ['required', 'string', 'max:100'],
+            'batches.*.qty' => ['required', 'numeric', 'min:0.0001'],
+            'batches.*.expired' => ['nullable', 'string', 'max:50'],
+            'batches.*.item_code' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $item->loadMissing('product');
+        $requiredQty = (float) $item->quantity;
+        $defaultCode = $item->product?->code ?? '';
+        $incomingBatches = [];
+        $totalQty = 0;
+
+        foreach ($validated['batches'] as $b) {
+            $qty = (float) ($b['qty'] ?? 0);
+            if ($qty <= 0) {
+                continue;
+            }
+
+            $totalQty += $qty;
+            $incomingBatches[] = [
+                'lot_serial' => trim((string) $b['lot_serial']),
+                'qty' => $qty,
+                'expired' => !empty($b['expired']) ? trim((string) $b['expired']) : null,
+                'item_code' => !empty($b['item_code']) ? trim((string) $b['item_code']) : $defaultCode,
+            ];
+        }
+
+        // Merge duplicate lots for same item_code
+        $merged = [];
+        foreach ($incomingBatches as $b) {
+            $key = ($b['item_code'] ?? '') . '|' . $b['lot_serial'];
+            if (isset($merged[$key])) {
+                $merged[$key]['qty'] += $b['qty'];
+                if (empty($merged[$key]['expired']) && !empty($b['expired'])) {
+                    $merged[$key]['expired'] = $b['expired'];
+                }
+            } else {
+                $merged[$key] = $b;
+            }
+        }
+        $finalBatches = array_values($merged);
+
+        // Validasi kesesuaian total qty dengan quantity yang dipesan
+        if (abs($totalQty - $requiredQty) > 0.001) {
+            return response()->json([
+                'success' => false,
+                'message' => "Total alokasi batch ({$totalQty}) harus sama persis dengan Qty order ({$requiredQty}).",
+            ], 422);
+        }
+
+        $oldBatches = $item->allocated_batches;
+        $item->allocated_batches = $finalBatches;
+        $item->save();
+
+        Log::info('Admin updated order item batch manually', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'item_id' => $item->id,
+            'product_code' => $defaultCode,
+            'old_batches' => $oldBatches,
+            'new_batches' => $finalBatches,
+            'admin_id' => auth('admin')->id(),
+            'admin_name' => auth('admin')->user()?->name,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alokasi batch berhasil diperbarui.',
+            'allocated_batches' => $finalBatches,
+        ]);
     }
 
     protected function sendOrderTransitionNotifications(Order $order, $oldStatus, $oldPickupReady, $oldShippedAt = null)
