@@ -99,7 +99,7 @@ class StockController extends Controller
             foreach ($rows as $row) {
                 $itemCode = trim((string) $row->item_code);
                 $lot = trim((string) ($row->lot_serial ?? ''));
-                if ($itemCode === '' || $lot === '' || str_contains($lot, '-')) {
+                if ($itemCode === '' || $lot === '' || $lot === '-') {
                     continue;
                 }
 

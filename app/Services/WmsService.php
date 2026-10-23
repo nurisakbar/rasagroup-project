@@ -78,7 +78,7 @@ class WmsService
 
             foreach ($batches as $batch) {
                 $lotSerial = trim((string) ($batch['code'] ?? $batch['batch_number'] ?? ''));
-                if ($lotSerial === '' || str_contains($lotSerial, '-')) {
+                if ($lotSerial === '' || $lotSerial === '-') {
                     continue;
                 }
 
@@ -171,7 +171,7 @@ class WmsService
         foreach ($grouped as $itemCode => $batches) {
             foreach ($batches as $batch) {
                 $lotSerial = trim((string) ($batch['lot_serial'] ?? ''));
-                if ($lotSerial === '' || str_contains($lotSerial, '-')) {
+                if ($lotSerial === '' || $lotSerial === '-') {
                     continue;
                 }
 
@@ -481,7 +481,7 @@ class WmsService
         foreach ($rows as $row) {
             $itemCode = trim((string) $row->item_code);
             $lotSerial = trim((string) ($row->lot_serial ?? ''));
-            if ($itemCode === '' || $lotSerial === '' || str_contains($lotSerial, '-')) {
+            if ($itemCode === '' || $lotSerial === '' || $lotSerial === '-') {
                 continue;
             }
 
@@ -511,7 +511,7 @@ class WmsService
         foreach ($rows as $row) {
             $itemCode = trim((string) $row->item_code);
             $lotSerial = trim((string) ($row->lot_serial ?? ''));
-            if ($itemCode === '' || $lotSerial === '' || str_contains($lotSerial, '-')) {
+            if ($itemCode === '' || $lotSerial === '' || $lotSerial === '-') {
                 continue;
             }
 
