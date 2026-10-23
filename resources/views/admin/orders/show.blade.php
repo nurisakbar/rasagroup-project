@@ -712,7 +712,7 @@
                                         @endif
                                         @if(count($batches) > 0)
                                             <div style="margin-top: 5px;">
-                                                @foreach($batches as $batch)
+                                                @foreach($batches as $batchIndex => $batch)
                                                     <div>
                                                         <em>
                                                             Batch : {{ $batch['lot_serial'] ?? '-' }}
@@ -722,17 +722,21 @@
                                                             @if(!empty($batch['expired']))
                                                                 - Expired : {{ $batch['expired'] }}
                                                             @endif
+                                                            @if(count($batches) > 1 && !empty($batch['qty']))
+                                                                ({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})
+                                                            @endif
                                                         </em>
-                                                        @if($loop->first)
-                                                            <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
-                                                               data-item-id="{{ $item->id }}"
-                                                               data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
-                                                               data-item-qty="{{ (int) $item->quantity }}"
-                                                               data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
-                                                               title="Edit Batch">
-                                                                <i class="fa fa-pencil"></i>
-                                                            </a>
-                                                        @endif
+                                                        <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
+                                                           data-item-id="{{ $item->id }}"
+                                                           data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                           data-item-qty="{{ (int) $item->quantity }}"
+                                                           data-batch-index="{{ $batchIndex }}"
+                                                           data-batch-lot="{{ $batch['lot_serial'] ?? '' }}"
+                                                           data-batch-qty="{{ $batch['qty'] ?? (int)$item->quantity }}"
+                                                           data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                           title="Edit Batch">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </a>
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -743,6 +747,9 @@
                                                    data-item-id="{{ $item->id }}"
                                                    data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
                                                    data-item-qty="{{ (int) $item->quantity }}"
+                                                   data-batch-index="0"
+                                                   data-batch-lot=""
+                                                   data-batch-qty="{{ (int) $item->quantity }}"
                                                    data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
                                                    title="Pilih Batch">
                                                     <i class="fa fa-pencil"></i>
@@ -1285,6 +1292,9 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
                             <div style="margin-top: 4px; font-size: 13px; color: #666;">
                                 Gudang: <strong id="batchModalWarehouse">-</strong> | 
                                 Dipesan: <strong class="text-primary" id="batchModalRequiredQty">0</strong> <span id="batchModalUnit">PCS</span>
+                                <span id="batchModalRowInfo" style="display: none; margin-left: 8px;">
+                                    | Baris yang diedit: <strong class="text-warning" id="batchModalRowLot">-</strong> (<span id="batchModalRowQty">0</span> <span id="batchModalRowUnit">PCS</span>)
+                                </span>
                             </div>
                         </div>
 
@@ -1295,9 +1305,9 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
                                     <tr>
                                         <th style="width: 35px;" class="text-center">#</th>
                                         <th>Nomor Batch</th>
-                                        <th style="width: 120px;" class="text-center">Expired</th>
-                                        <th style="width: 90px;" class="text-right">Stok</th>
-                                        <th style="width: 110px;" class="text-center">Aksi</th>
+                                        <th style="width: 110px;" class="text-center">Expired</th>
+                                        <th style="width: 80px;" class="text-right">Stok</th>
+                                        <th style="width: 150px;" class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1408,19 +1418,28 @@ $(document).ready(function() {
         var itemId = $btn.data('item-id');
         var itemName = $btn.data('item-name');
         var itemQty = parseFloat($btn.data('item-qty')) || 0;
+        var batchIndex = parseInt($btn.data('batch-index'), 10);
+        if (isNaN(batchIndex)) batchIndex = 0;
+        var batchLot = ($btn.data('batch-lot') || '').toString().trim();
+        var batchQty = parseFloat($btn.data('batch-qty')) || itemQty;
         var itemUnit = $btn.data('item-unit') || 'PCS';
 
         currentItem = {
             id: itemId,
             name: itemName,
-            qty: itemQty,
-            unit: itemUnit
+            totalQty: itemQty,
+            batchIndex: batchIndex,
+            batchLot: batchLot,
+            batchQty: batchQty,
+            unit: itemUnit,
+            currentBatches: []
         };
 
         // Reset state modal
         $('#batchModalLoading').show();
         $('#batchModalError').hide().text('');
         $('#batchModalContent').hide();
+        $('#batchModalRowInfo').hide();
 
         $('#modalEditBatch').modal('show');
 
@@ -1446,10 +1465,20 @@ $(document).ready(function() {
                 $('#batchModalRequiredQty').text(res.required_qty);
                 $('#batchModalUnit').text(res.product.unit || 'PCS');
 
-                currentItem.qty = parseFloat(res.required_qty);
+                currentItem.totalQty = parseFloat(res.required_qty);
                 currentItem.unit = res.product.unit || 'PCS';
+                currentItem.currentBatches = Array.isArray(res.current_batches) ? res.current_batches : [];
 
-                renderBatchTable(res.available_batches || [], res.current_batches || []);
+                if (currentItem.currentBatches.length > 1 && currentItem.batchLot) {
+                    $('#batchModalRowLot').text(currentItem.batchLot);
+                    $('#batchModalRowQty').text(currentItem.batchQty);
+                    $('#batchModalRowUnit').text(currentItem.unit);
+                    $('#batchModalRowInfo').show();
+                } else {
+                    $('#batchModalRowInfo').hide();
+                }
+
+                renderBatchTable(res.available_batches || [], currentItem.currentBatches);
             },
             error: function(xhr) {
                 $('#batchModalLoading').hide();
@@ -1466,51 +1495,65 @@ $(document).ready(function() {
         var $tbody = $('#batchListTable tbody');
         $tbody.empty();
 
-        // Cari lot yang sedang terpilih
-        var currentLots = [];
-        if (Array.isArray(currentAllocated)) {
-            currentLots = currentAllocated.map(function(b) {
-                return (b.lot_serial || '').trim();
-            }).filter(Boolean);
-        }
-
         if (!available || available.length === 0) {
             $tbody.append('<tr><td colspan="5" class="text-center text-muted" style="padding: 20px;">Tidak ada batch yang tersedia di gudang untuk SKU ini.</td></tr>');
             return;
         }
+
+        var isMultiBatch = Array.isArray(currentAllocated) && currentAllocated.length > 1;
 
         available.forEach(function(b, idx) {
             var stock = parseFloat(b.qty) || 0;
             var lot = (b.lot_serial || '-').trim();
             var exp = b.expired || '-';
             var code = b.item_code || defaultProductCode;
-            var isSufficient = stock >= currentItem.qty;
-            var isCurrent = currentLots.length === 1 && currentLots.includes(lot);
+            
+            var isCurrentRow = Boolean(currentItem.batchLot && lot === currentItem.batchLot);
 
             var codeLabel = '';
             if (code && code !== defaultProductCode) {
                 codeLabel = ' <span class="text-primary font-weight-bold">[' + code + ']</span>';
             }
 
-            var stockBadge = isSufficient 
+            var actionHtml = '';
+
+            if (isCurrentRow) {
+                actionHtml = '<span class="label label-success" style="font-size: 11px; padding: 4px 8px;"><i class="fa fa-check"></i> Terpilih</span>';
+            } else if (!isMultiBatch) {
+                // Item hanya memiliki 1 batch
+                var isSufficient = stock >= currentItem.totalQty;
+                if (isSufficient) {
+                    actionHtml = '<button type="button" class="btn btn-xs btn-primary btn-select-batch" data-apply="all" data-lot="' + lot + '" data-exp="' + (b.expired || '') + '" data-code="' + code + '" data-stock="' + stock + '" data-qty="' + currentItem.totalQty + '"><i class="fa fa-check"></i> Pilih</button>';
+                } else {
+                    actionHtml = '<button type="button" class="btn btn-xs btn-default disabled" disabled style="opacity: 0.6; cursor: not-allowed;" title="Stok (' + stock + ') tidak mencukupi untuk ' + currentItem.totalQty + ' ' + currentItem.unit + '">Stok Kurang</button>';
+                }
+            } else {
+                // Item memiliki multiple batch row
+                var canFulfillRow = stock >= currentItem.batchQty;
+                var canFulfillAll = stock >= currentItem.totalQty;
+
+                if (canFulfillRow) {
+                    actionHtml = '<button type="button" class="btn btn-xs btn-primary btn-select-batch" data-apply="row" data-lot="' + lot + '" data-exp="' + (b.expired || '') + '" data-code="' + code + '" data-stock="' + stock + '" data-qty="' + currentItem.batchQty + '" title="Ganti baris ini (' + currentItem.batchQty + ' ' + currentItem.unit + ')"><i class="fa fa-check"></i> Pilih (' + currentItem.batchQty + ')</button>';
+                    
+                    if (canFulfillAll) {
+                        actionHtml += ' <button type="button" class="btn btn-xs btn-info btn-select-batch" data-apply="all" data-lot="' + lot + '" data-exp="' + (b.expired || '') + '" data-code="' + code + '" data-stock="' + stock + '" data-qty="' + currentItem.totalQty + '" title="Gunakan batch ini untuk seluruh item (' + currentItem.totalQty + ' ' + currentItem.unit + ')">Semua (' + currentItem.totalQty + ')</button>';
+                    }
+                } else {
+                    actionHtml = '<button type="button" class="btn btn-xs btn-default disabled" disabled style="opacity: 0.6; cursor: not-allowed;" title="Stok (' + stock + ') tidak mencukupi untuk baris ini (' + currentItem.batchQty + ' ' + currentItem.unit + ')">Stok Kurang</button>';
+                }
+            }
+
+            var isStockSufficientForHighlight = isMultiBatch ? (stock >= currentItem.batchQty) : (stock >= currentItem.totalQty);
+            var stockBadge = isStockSufficientForHighlight 
                 ? '<strong class="text-success" style="font-size: 13px;">' + stock + '</strong>' 
                 : '<span class="text-danger" style="font-size: 13px;">' + stock + '</span>';
-
-            var actionHtml = '';
-            if (isCurrent) {
-                actionHtml = '<span class="label label-success" style="font-size: 11px; padding: 4px 8px;"><i class="fa fa-check"></i> Terpilih</span>';
-            } else if (isSufficient) {
-                actionHtml = '<button type="button" class="btn btn-xs btn-primary btn-select-batch" data-lot="' + lot + '" data-exp="' + (b.expired || '') + '" data-code="' + code + '" data-stock="' + stock + '"><i class="fa fa-check"></i> Pilih</button>';
-            } else {
-                actionHtml = '<button type="button" class="btn btn-xs btn-default disabled" disabled style="opacity: 0.6; cursor: not-allowed;" title="Stok (' + stock + ') tidak mencukupi untuk memenuhi ' + currentItem.qty + ' ' + currentItem.unit + '">Stok Kurang</button>';
-            }
 
             var tr = '<tr>'
                 + '<td class="text-center text-muted" style="vertical-align: middle;">' + (idx + 1) + '</td>'
                 + '<td style="vertical-align: middle;"><strong class="text-primary">' + lot + '</strong>' + codeLabel + '</td>'
                 + '<td class="text-center" style="vertical-align: middle;">' + exp + '</td>'
                 + '<td class="text-right" style="vertical-align: middle;">' + stockBadge + '</td>'
-                + '<td class="text-center" style="vertical-align: middle;">' + actionHtml + '</td>'
+                + '<td class="text-center" style="vertical-align: middle; white-space: nowrap;">' + actionHtml + '</td>'
                 + '</tr>';
 
             $tbody.append(tr);
@@ -1526,12 +1569,42 @@ $(document).ready(function() {
         var exp = $btn.data('exp') || null;
         var code = $btn.data('code') || defaultProductCode;
         var stock = $btn.data('stock');
+        var applyMode = $btn.data('apply') || 'all';
+        var targetQty = parseFloat($btn.data('qty')) || currentItem.totalQty;
 
-        if (!confirm('Gunakan batch "' + lot + '" (Stok: ' + stock + ') untuk pesanan ini sebanyak ' + currentItem.qty + ' ' + currentItem.unit + '?')) {
+        var confirmMsg = '';
+        if (applyMode === 'row') {
+            confirmMsg = 'Ganti baris batch ini dengan "' + lot + '" (Stok: ' + stock + ') sebanyak ' + targetQty + ' ' + currentItem.unit + '?';
+        } else {
+            confirmMsg = 'Gunakan batch "' + lot + '" (Stok: ' + stock + ') untuk pesanan ini sebanyak ' + targetQty + ' ' + currentItem.unit + '?';
+        }
+
+        if (!confirm(confirmMsg)) {
             return;
         }
 
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+
+        var batchesToSave = [];
+
+        if (applyMode === 'row' && Array.isArray(currentItem.currentBatches) && currentItem.currentBatches.length > 0 && currentItem.batchIndex >= 0 && currentItem.batchIndex < currentItem.currentBatches.length) {
+            batchesToSave = JSON.parse(JSON.stringify(currentItem.currentBatches));
+            batchesToSave[currentItem.batchIndex] = {
+                lot_serial: lot,
+                qty: targetQty,
+                expired: exp,
+                item_code: code
+            };
+        } else {
+            batchesToSave = [
+                {
+                    lot_serial: lot,
+                    qty: targetQty,
+                    expired: exp,
+                    item_code: code
+                }
+            ];
+        }
 
         var updateUrl = "{{ route('admin.orders.items.update-batches', ['order' => $order->id, 'item' => '__ITEM_ID__']) }}".replace('__ITEM_ID__', currentItem.id);
 
@@ -1541,23 +1614,16 @@ $(document).ready(function() {
             data: {
                 _token: "{{ csrf_token() }}",
                 _method: 'PUT',
-                batches: [
-                    {
-                        lot_serial: lot,
-                        qty: currentItem.qty,
-                        expired: exp,
-                        item_code: code
-                    }
-                ]
+                batches: batchesToSave
             },
             dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#modalEditBatch').modal('hide');
-                    alert(res.message || 'Batch berhasil dipilih.');
+                    alert(res.message || 'Batch berhasil disimpan.');
                     window.location.reload();
                 } else {
-                    alert(res.message || 'Gagal memilih batch.');
+                    alert(res.message || 'Gagal menyimpan batch.');
                     $btn.prop('disabled', false).html('<i class="fa fa-check"></i> Pilih');
                 }
             },
