@@ -1126,6 +1126,80 @@
                                 </div>
                             </div>
                         </li>
+
+                        <!-- Jubelio Sync Log -->
+                        @if($order->shouldSyncToJubelio() || $order->jubelio_salesorder_id || $order->jubelio_salesorder_no)
+                        <li>
+                            @php
+                                $isJubelioSynced = !empty($order->jubelio_salesorder_id) || !empty($order->jubelio_salesorder_no);
+                            @endphp
+                            <i class="fa {{ $isJubelioSynced ? 'fa-check bg-green' : 'fa-clock-o bg-yellow' }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa {{ $isJubelioSynced ? 'fa-check-circle text-success' : 'fa-clock-o text-yellow' }}"></i> {{ $isJubelioSynced ? 'Terkirim' : 'Belum Terkirim' }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>Jubelio Sales Order</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($isJubelioSynced)
+                                        <span class="label label-success"><i class="fa fa-check"></i> Berhasil Terkirim ke Jubelio</span>
+                                        <div style="margin-top: 6px;">
+                                            @if($order->jubelio_salesorder_no)
+                                                No. SO: <strong>{{ $order->jubelio_salesorder_no }}</strong>
+                                            @endif
+                                            @if($order->jubelio_salesorder_id)
+                                                <small class="text-muted">(ID: {{ $order->jubelio_salesorder_id }})</small>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="label label-warning"><i class="fa fa-clock-o"></i> Belum Terkirim ke Jubelio</span>
+                                        <div style="margin-top: 8px;">
+                                            <form action="{{ route('admin.orders.sync-jubelio', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Mengirim...';">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-success" title="Kirim sales order ke Jubelio sekarang">
+                                                    <i class="fa fa-paper-plane"></i> Kirim ke Jubelio
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </li>
+                        @endif
+
+                        <!-- QAD Sync Log (untuk pesanan QAD/Distributor) -->
+                        @if(($order->shouldSyncToQad() || $order->qad_so_number) && \App\Support\QadIntegration::isConfigured())
+                        <li>
+                            @php
+                                $isQadSynced = !empty($order->qad_so_number);
+                            @endphp
+                            <i class="fa {{ $isQadSynced ? 'fa-check bg-green' : 'fa-clock-o bg-yellow' }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa {{ $isQadSynced ? 'fa-check-circle text-success' : 'fa-clock-o text-yellow' }}"></i> {{ $isQadSynced ? 'Tersinkron' : 'Belum Terkirim' }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>QAD Sales Order</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($isQadSynced)
+                                        <span class="label label-success"><i class="fa fa-check"></i> Berhasil Terkirim ke QAD</span>
+                                        <div style="margin-top: 6px;">
+                                            No. SO: <strong>{{ $order->qad_so_number }}</strong>
+                                        </div>
+                                    @else
+                                        <span class="label label-warning"><i class="fa fa-clock-o"></i> Belum Terkirim ke QAD</span>
+                                        <div style="margin-top: 8px;">
+                                            <form action="{{ route('admin.orders.sync-qad', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Mengirim...';">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-success" title="Kirim sales order ke QAD sekarang">
+                                                    <i class="fa fa-paper-plane"></i> Kirim ke QAD
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </li>
+                        @endif
+
                         <li>
                             <i class="fa fa-clock-o bg-gray"></i>
                         </li>

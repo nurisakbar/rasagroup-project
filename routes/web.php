@@ -309,6 +309,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Admin\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Admin\OrderController::class, 'syncQad'])->name('orders.sync-qad');
         Route::post('/orders/{order}/check-qad', [App\Http\Controllers\Admin\OrderController::class, 'checkQadStatus'])->name('orders.check-qad');
+        Route::post('/orders/{order}/sync-jubelio', [App\Http\Controllers\Admin\OrderController::class, 'syncJubelio'])->name('orders.sync-jubelio');
         Route::post('/orders/{order}/check-wms', [App\Http\Controllers\Admin\OrderController::class, 'checkWmsStatus'])->name('orders.check-wms');
         Route::post('/orders/{order}/sync-wms', [App\Http\Controllers\Admin\OrderController::class, 'syncWms'])->name('orders.sync-wms');
         Route::get('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Admin\OrderController::class, 'getItemBatches'])->name('orders.items.batches');

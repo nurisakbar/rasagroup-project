@@ -990,6 +990,27 @@ class OrderController extends Controller
         }
     }
 
+    public function syncJubelio(Order $order)
+    {
+        try {
+            \App\Jobs\SyncOrderToJubelio::dispatchSync($order->fresh());
+            $order->refresh();
+
+            if ($order->jubelio_salesorder_id) {
+                return back()->with('success', 'Sales order berhasil dikirim ke Jubelio (No. SO: ' . ($order->jubelio_salesorder_no ?: ('ID ' . $order->jubelio_salesorder_id)) . ').');
+            }
+
+            return back()->with('error', 'Sinkronisasi Jubelio selesai tetapi belum menghasilkan ID/No. SO. Silakan cek log Jubelio.');
+        } catch (\Throwable $e) {
+            \Log::error('Admin OrderController: Sync Jubelio error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan saat sinkronisasi Jubelio: ' . $e->getMessage());
+        }
+    }
+
     public function syncWms(Order $order)
     {
         if (empty(config('services.wms.api_url')) || empty(config('services.wms.api_key'))) {
