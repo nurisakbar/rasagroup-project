@@ -43,7 +43,7 @@ class SyncQadInventoryJob implements ShouldQueue
     }
 
     /**
-     * Pastikan rantai job 5 menit sudah ada di queue (tanpa scheduler).
+     * Pastikan rantai job 1 jam sudah ada di queue (tanpa scheduler).
      */
     public static function ensureQueued(): void
     {
@@ -55,7 +55,7 @@ class SyncQadInventoryJob implements ShouldQueue
             return;
         }
 
-        if (! Cache::add('wms-inventory-chain', 1, now()->addMinutes(6))) {
+        if (! Cache::add('wms-inventory-chain', 1, now()->addMinutes(70))) {
             return;
         }
 
@@ -68,13 +68,13 @@ class SyncQadInventoryJob implements ShouldQueue
             return;
         }
 
-        Cache::put('wms-inventory-chain', 1, now()->addMinutes(6));
+        Cache::put('wms-inventory-chain', 1, now()->addMinutes(70));
 
-        if (! Cache::add('wms-inventory-next-queued', 1, now()->addMinutes(4))) {
+        if (! Cache::add('wms-inventory-next-queued', 1, now()->addMinutes(50))) {
             return;
         }
 
-        static::dispatch()->delay(now()->addMinutes(5));
+        static::dispatch()->delay(now()->addHour());
     }
 
     private function syncAllHubs(WmsService $wms): void
