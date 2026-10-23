@@ -705,53 +705,50 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <div style="font-weight: 600;">
-                                            @if($item->product)
-                                                {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
-                                            @else
-                                                Produk tidak tersedia
-                                            @endif
-                                        </div>
-
-                                        <div class="item-batch-wrapper" style="margin-top: 6px; padding: 4px 8px; background: #fdfdfd; border: 1px dashed #d2d6de; border-radius: 4px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                            <div class="item-batch-list" style="flex-grow: 1;">
-                                                @if(count($batches) > 0)
-                                                    @foreach($batches as $batch)
-                                                        <div style="font-size: 12px; line-height: 1.4; margin-bottom: 2px;">
-                                                            <em>
-                                                                <i class="fa fa-cubes text-muted"></i>
-                                                                Batch: <strong class="text-primary">{{ $batch['lot_serial'] ?? '-' }}</strong>
-                                                                @if(isset($batch['qty']))
-                                                                    <span class="label label-default" style="font-size: 10px; font-weight: normal; padding: 1px 5px;">Qty: {{ $batch['qty'] }}</span>
-                                                                @endif
-                                                                @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
-                                                                    <span class="text-info font-weight-bold">[{{ $batch['item_code'] }}]</span>
-                                                                @endif
-                                                                @if(!empty($batch['expired']))
-                                                                    <span class="text-muted" style="font-size: 11px;">(Exp: {{ $batch['expired'] }})</span>
-                                                                @endif
-                                                            </em>
-                                                        </div>
-                                                    @endforeach
-                                                @else
-                                                    <div style="font-size: 12px; color: #999; font-style: italic;">
-                                                        <i class="fa fa-exclamation-circle text-warning"></i> Belum ada batch dialokasikan
+                                        @if($item->product)
+                                            {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                        @else
+                                            Produk tidak tersedia
+                                        @endif
+                                        @if(count($batches) > 0)
+                                            <div style="margin-top: 5px;">
+                                                @foreach($batches as $batch)
+                                                    <div>
+                                                        <em>
+                                                            Batch : {{ $batch['lot_serial'] ?? '-' }}
+                                                            @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
+                                                                <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
+                                                            @endif
+                                                            @if(!empty($batch['expired']))
+                                                                - Expired : {{ $batch['expired'] }}
+                                                            @endif
+                                                        </em>
+                                                        @if($loop->first)
+                                                            <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
+                                                               data-item-id="{{ $item->id }}"
+                                                               data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                               data-item-qty="{{ (int) $item->quantity }}"
+                                                               data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                               title="Edit Batch">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                        @endif
                                                     </div>
-                                                @endif
+                                                @endforeach
                                             </div>
-                                            <div style="flex-shrink: 0;">
-                                                <button type="button" 
-                                                        class="btn btn-default btn-xs text-primary btn-edit-batch" 
-                                                        title="Edit Alokasi Batch"
-                                                        data-item-id="{{ $item->id }}"
-                                                        data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
-                                                        data-item-qty="{{ (int) $item->quantity }}"
-                                                        data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
-                                                        style="border-color: #3c8dbc; padding: 2px 7px; border-radius: 3px;">
+                                        @else
+                                            <div style="margin-top: 5px;">
+                                                <em>Batch : -</em>
+                                                <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
+                                                   data-item-id="{{ $item->id }}"
+                                                   data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                   data-item-qty="{{ (int) $item->quantity }}"
+                                                   data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                   title="Pilih Batch">
                                                     <i class="fa fa-pencil"></i>
-                                                </button>
+                                                </a>
                                             </div>
-                                        </div>
+                                        @endif
                                     </td>
                                     <td class="text-right">
                                         Rp {{ number_format($priceBefore, 0, ',', '.') }}
@@ -1264,22 +1261,18 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
     </div>
 
     <!-- Modal Edit Batch -->
-    <div class="modal fade" id="modalEditBatch" tabindex="-1" role="dialog" aria-labelledby="modalEditBatchLabel" data-backdrop="static">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade" id="modalEditBatch" tabindex="-1" role="dialog" aria-labelledby="modalEditBatchLabel">
+        <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-primary" style="color: #fff; border-top-left-radius: 4px; border-top-right-radius: 4px;">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.85;">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <h4 class="modal-title" id="modalEditBatchLabel">
-                        <i class="fa fa-cubes"></i> Edit Alokasi Batch SKU
-                    </h4>
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalEditBatchLabel"><i class="fa fa-pencil"></i> Pilih Batch Produk</h4>
                 </div>
-                <div class="modal-body" style="padding: 20px;">
+                <div class="modal-body">
                     <!-- Loading Spinner -->
-                    <div id="batchModalLoading" class="text-center" style="padding: 40px 0;">
-                        <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
-                        <p class="text-muted" style="margin-top: 12px; font-size: 14px;">Memuat data batch dari gudang...</p>
+                    <div id="batchModalLoading" class="text-center" style="padding: 30px 0;">
+                        <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
+                        <p class="text-muted" style="margin-top: 10px; font-size: 13px;">Memuat data batch dari gudang...</p>
                     </div>
 
                     <!-- Error Alert -->
@@ -1287,60 +1280,24 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
 
                     <!-- Modal Main Content -->
                     <div id="batchModalContent" style="display: none;">
-                        <!-- Detail Info Box -->
-                        <div class="row" style="margin-bottom: 15px;">
-                            <div class="col-md-6">
-                                <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 14px;">
-                                    <div class="text-muted small" style="text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Produk / SKU</div>
-                                    <div style="font-size: 15px; font-weight: 700; color: #333;" id="batchModalProdName">-</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 14px;">
-                                    <div class="text-muted small" style="text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Gudang Asal</div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #3c8dbc;" id="batchModalWarehouse">-</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div style="background: #e8f4f8; border: 1px solid #bce8f1; border-radius: 4px; padding: 10px 14px;">
-                                    <div class="text-muted small" style="text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #31708f;">Dibutuhkan (Order)</div>
-                                    <div style="font-size: 16px; font-weight: 700; color: #31708f;">
-                                        <span id="batchModalRequiredQty">0</span> <span id="batchModalUnit">PCS</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Toolbar -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <span class="text-muted small">Pilih batch dan sesuaikan <strong>Qty Dipakai</strong> di bawah:</span>
-                            </div>
-                            <div style="display: flex; gap: 6px;">
-                                <button type="button" class="btn btn-xs btn-info" id="btnAutoAllocateFefo" title="Alokasi otomatis dari batch expired paling awal">
-                                    <i class="fa fa-magic"></i> Auto FEFO
-                                </button>
-                                <button type="button" class="btn btn-xs btn-default" id="btnClearAllocation" title="Kosongkan semua qty alokasi">
-                                    <i class="fa fa-eraser"></i> Kosongkan
-                                </button>
-                                <button type="button" class="btn btn-xs btn-success" id="btnAddCustomBatch" title="Tambah batch jika tidak ada di list">
-                                    <i class="fa fa-plus"></i> Tambah Batch Manual
-                                </button>
+                        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                            <div style="font-size: 15px; font-weight: 600; color: #333;" id="batchModalProdName">-</div>
+                            <div style="margin-top: 4px; font-size: 13px; color: #666;">
+                                Gudang: <strong id="batchModalWarehouse">-</strong> | 
+                                Dipesan: <strong class="text-primary" id="batchModalRequiredQty">0</strong> <span id="batchModalUnit">PCS</span>
                             </div>
                         </div>
 
                         <!-- Table -->
-                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                        <div class="table-responsive">
                             <table class="table table-bordered table-striped table-hover" id="batchListTable" style="margin-bottom: 0;">
-                                <thead style="background: #f4f5f7; position: sticky; top: 0; z-index: 5;">
+                                <thead style="background: #f9f9f9;">
                                     <tr>
                                         <th style="width: 35px;" class="text-center">#</th>
-                                        <th style="width: 140px;">Item Code</th>
-                                        <th>Nomor Batch (Lot/Serial)</th>
-                                        <th style="width: 120px;" class="text-center">Expired Date</th>
-                                        <th style="width: 110px;" class="text-right">Stok Gudang</th>
-                                        <th style="width: 140px;" class="text-center">Qty Dipakai</th>
-                                        <th style="width: 40px;" class="text-center">Aksi</th>
+                                        <th>Nomor Batch</th>
+                                        <th style="width: 120px;" class="text-center">Expired</th>
+                                        <th style="width: 90px;" class="text-right">Stok</th>
+                                        <th style="width: 110px;" class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1348,28 +1305,10 @@ Failure Reason: {{ $order->wms_so_failure_reason ?? '-' }}</pre>
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Allocation Status Summary Callout -->
-                        <div id="batchSummaryBox" class="alert alert-info" style="margin-top: 15px; margin-bottom: 0; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <i class="fa fa-calculator"></i>
-                                <strong>Total Dialokasikan:</strong>
-                                <span id="batchTotalAllocated" style="font-size: 16px; font-weight: bold; margin-left: 5px;">0</span>
-                                / <span id="batchTargetQty" style="font-weight: bold;">0</span> <span id="batchUnitLabel">PCS</span>
-                            </div>
-                            <div id="batchStatusBadge">
-                                <span class="label label-warning" style="font-size: 12px; padding: 4px 8px;">
-                                    <i class="fa fa-exclamation-triangle"></i> Belum sesuai
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="background-color: #f9fafb;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSubmitBatchAllocation" disabled>
-                        <i class="fa fa-save"></i> Simpan Alokasi Batch
-                    </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
@@ -1458,10 +1397,9 @@ $(document).ready(function() {
     });
 
     // ==========================================
-    // Fitur Edit Batch Order Item
+    // Fitur Edit / Pilih Batch Order Item
     // ==========================================
     var currentItem = null;
-    var availableBatchesList = [];
     var defaultProductCode = '';
 
     // Klik icon pensil edit batch
@@ -1483,7 +1421,6 @@ $(document).ready(function() {
         $('#batchModalLoading').show();
         $('#batchModalError').hide().text('');
         $('#batchModalContent').hide();
-        $('#btnSubmitBatchAllocation').prop('disabled', true).html('<i class="fa fa-save"></i> Simpan Alokasi Batch');
 
         $('#modalEditBatch').modal('show');
 
@@ -1508,13 +1445,11 @@ $(document).ready(function() {
                 $('#batchModalWarehouse').text(res.warehouse.name + (res.warehouse.location_code ? ' (' + res.warehouse.location_code + ')' : ''));
                 $('#batchModalRequiredQty').text(res.required_qty);
                 $('#batchModalUnit').text(res.product.unit || 'PCS');
-                $('#batchTargetQty').text(res.required_qty);
-                $('#batchUnitLabel').text(res.product.unit || 'PCS');
 
                 currentItem.qty = parseFloat(res.required_qty);
                 currentItem.unit = res.product.unit || 'PCS';
 
-                renderBatchRows(res.available_batches || [], res.current_batches || []);
+                renderBatchTable(res.available_batches || [], res.current_batches || []);
             },
             error: function(xhr) {
                 $('#batchModalLoading').hide();
@@ -1527,243 +1462,75 @@ $(document).ready(function() {
         });
     });
 
-    function renderBatchRows(available, currentAllocated) {
-        availableBatchesList = available.slice();
+    function renderBatchTable(available, currentAllocated) {
         var $tbody = $('#batchListTable tbody');
         $tbody.empty();
 
-        var currentMap = {};
+        // Cari lot yang sedang terpilih
+        var currentLots = [];
         if (Array.isArray(currentAllocated)) {
-            currentAllocated.forEach(function(b) {
-                var key = (b.item_code || defaultProductCode) + '|' + (b.lot_serial || '');
-                currentMap[key] = {
-                    qty: parseFloat(b.qty) || 0,
-                    expired: b.expired || '',
-                    item_code: b.item_code || defaultProductCode,
-                    lot_serial: b.lot_serial || ''
-                };
-            });
+            currentLots = currentAllocated.map(function(b) {
+                return (b.lot_serial || '').trim();
+            }).filter(Boolean);
         }
 
-        var combined = [];
-        var seenKeys = {};
+        if (!available || available.length === 0) {
+            $tbody.append('<tr><td colspan="5" class="text-center text-muted" style="padding: 20px;">Tidak ada batch yang tersedia di gudang untuk SKU ini.</td></tr>');
+            return;
+        }
 
-        available.forEach(function(b) {
-            var key = (b.item_code || defaultProductCode) + '|' + (b.lot_serial || '');
-            seenKeys[key] = true;
-            var allocatedQty = currentMap[key] ? currentMap[key].qty : 0;
-            combined.push({
-                item_code: b.item_code || defaultProductCode,
-                lot_serial: b.lot_serial || '',
-                expired: b.expired || '',
-                stock_qty: b.qty !== undefined ? b.qty : '-',
-                allocated_qty: allocatedQty,
-                is_custom: false
-            });
-        });
+        available.forEach(function(b, idx) {
+            var stock = parseFloat(b.qty) || 0;
+            var lot = (b.lot_serial || '-').trim();
+            var exp = b.expired || '-';
+            var code = b.item_code || defaultProductCode;
+            var isSufficient = stock >= currentItem.qty;
+            var isCurrent = currentLots.length === 1 && currentLots.includes(lot);
 
-        // Tambahkan batch saat ini jika belum ada di list gudang
-        Object.keys(currentMap).forEach(function(key) {
-            if (!seenKeys[key]) {
-                var c = currentMap[key];
-                combined.push({
-                    item_code: c.item_code,
-                    lot_serial: c.lot_serial,
-                    expired: c.expired,
-                    stock_qty: 'Alokasi Saat Ini',
-                    allocated_qty: c.qty,
-                    is_custom: false
-                });
+            var codeLabel = '';
+            if (code && code !== defaultProductCode) {
+                codeLabel = ' <span class="text-primary font-weight-bold">[' + code + ']</span>';
             }
+
+            var stockBadge = isSufficient 
+                ? '<strong class="text-success" style="font-size: 13px;">' + stock + '</strong>' 
+                : '<span class="text-danger" style="font-size: 13px;">' + stock + '</span>';
+
+            var actionHtml = '';
+            if (isCurrent) {
+                actionHtml = '<span class="label label-success" style="font-size: 11px; padding: 4px 8px;"><i class="fa fa-check"></i> Terpilih</span>';
+            } else if (isSufficient) {
+                actionHtml = '<button type="button" class="btn btn-xs btn-primary btn-select-batch" data-lot="' + lot + '" data-exp="' + (b.expired || '') + '" data-code="' + code + '" data-stock="' + stock + '"><i class="fa fa-check"></i> Pilih</button>';
+            } else {
+                actionHtml = '<button type="button" class="btn btn-xs btn-default disabled" disabled style="opacity: 0.6; cursor: not-allowed;" title="Stok (' + stock + ') tidak mencukupi untuk memenuhi ' + currentItem.qty + ' ' + currentItem.unit + '">Stok Kurang</button>';
+            }
+
+            var tr = '<tr>'
+                + '<td class="text-center text-muted" style="vertical-align: middle;">' + (idx + 1) + '</td>'
+                + '<td style="vertical-align: middle;"><strong class="text-primary">' + lot + '</strong>' + codeLabel + '</td>'
+                + '<td class="text-center" style="vertical-align: middle;">' + exp + '</td>'
+                + '<td class="text-right" style="vertical-align: middle;">' + stockBadge + '</td>'
+                + '<td class="text-center" style="vertical-align: middle;">' + actionHtml + '</td>'
+                + '</tr>';
+
+            $tbody.append(tr);
         });
-
-        if (combined.length === 0) {
-            $tbody.append('<tr id="noBatchRow"><td colspan="7" class="text-center text-muted" style="padding: 20px;">Tidak ada stok batch terdaftar di gudang untuk SKU ini.<br>Anda dapat menambahkan batch secara manual menggunakan tombol <strong>+ Tambah Batch Manual</strong> di atas.</td></tr>');
-        } else {
-            combined.forEach(function(b, idx) {
-                appendBatchRow(b, idx + 1);
-            });
-        }
-
-        recalculateTotal();
     }
 
-    function appendBatchRow(b, rowNum) {
-        $('#noBatchRow').remove();
-        var $tbody = $('#batchListTable tbody');
-        var isCustom = !!b.is_custom;
-
-        var rowHtml = '<tr class="batch-row' + (isCustom ? ' custom-batch-row' : '') + '">'
-            + '<td class="text-center text-muted" style="vertical-align: middle;">' + rowNum + '</td>'
-            + '<td style="vertical-align: middle;">'
-            + (isCustom 
-                ? '<input type="text" class="form-control input-sm input-item-code" value="' + (b.item_code || defaultProductCode) + '" placeholder="Item Code">'
-                : '<span class="font-weight-bold">' + (b.item_code || defaultProductCode) + '</span><input type="hidden" class="input-item-code" value="' + (b.item_code || defaultProductCode) + '">')
-            + '</td>'
-            + '<td style="vertical-align: middle;">'
-            + (isCustom
-                ? '<input type="text" class="form-control input-sm input-lot-serial" value="' + (b.lot_serial || '') + '" placeholder="Nomor Lot/Serial">'
-                : '<span class="text-primary font-weight-bold">' + (b.lot_serial || '-') + '</span><input type="hidden" class="input-lot-serial" value="' + (b.lot_serial || '') + '">')
-            + '</td>'
-            + '<td class="text-center" style="vertical-align: middle;">'
-            + (isCustom
-                ? '<input type="date" class="form-control input-sm input-expired" value="' + (b.expired || '') + '">'
-                : (b.expired ? b.expired : '<span class="text-muted">-</span>') + '<input type="hidden" class="input-expired" value="' + (b.expired || '') + '">')
-            + '</td>'
-            + '<td class="text-right" style="vertical-align: middle;">'
-            + (typeof b.stock_qty === 'number' 
-                ? '<span class="badge bg-green">' + b.stock_qty + '</span>' 
-                : '<span class="badge bg-gray">' + b.stock_qty + '</span>')
-            + '</td>'
-            + '<td class="text-center" style="vertical-align: middle;">'
-            + '<input type="number" min="0" step="any" class="form-control input-sm text-center input-batch-qty" value="' + (b.allocated_qty || 0) + '" style="font-weight: 600;">'
-            + '</td>'
-            + '<td class="text-center" style="vertical-align: middle;">'
-            + (isCustom 
-                ? '<button type="button" class="btn btn-xs btn-danger btn-remove-row" title="Hapus"><i class="fa fa-trash"></i></button>' 
-                : '<button type="button" class="btn btn-xs btn-default btn-zero-row" title="Set 0"><i class="fa fa-times text-muted"></i></button>')
-            + '</td>'
-            + '</tr>';
-
-        $tbody.append(rowHtml);
-    }
-
-    // Hitung total live
-    $(document).on('input change', '.input-batch-qty', function() {
-        var val = parseFloat($(this).val()) || 0;
-        if (val < 0) {
-            $(this).val(0);
-        }
-        recalculateTotal();
-    });
-
-    // Set row qty to 0
-    $(document).on('click', '.btn-zero-row', function() {
-        $(this).closest('tr').find('.input-batch-qty').val(0).trigger('change');
-    });
-
-    // Hapus manual row
-    $(document).on('click', '.btn-remove-row', function() {
-        $(this).closest('tr').remove();
-        $('#batchListTable tbody tr').each(function(idx) {
-            $(this).find('td:first').text(idx + 1);
-        });
-        if ($('#batchListTable tbody tr').length === 0) {
-            $('#batchListTable tbody').append('<tr id="noBatchRow"><td colspan="7" class="text-center text-muted" style="padding: 20px;">Tidak ada batch yang dipilih.</td></tr>');
-        }
-        recalculateTotal();
-    });
-
-    // Tambah batch manual
-    $('#btnAddCustomBatch').on('click', function() {
-        var count = $('#batchListTable tbody tr:not(#noBatchRow)').length + 1;
-        appendBatchRow({
-            item_code: defaultProductCode,
-            lot_serial: '',
-            expired: '',
-            stock_qty: 'Manual',
-            allocated_qty: 0,
-            is_custom: true
-        }, count);
-        recalculateTotal();
-    });
-
-    // Kosongkan alokasi
-    $('#btnClearAllocation').on('click', function() {
-        $('.input-batch-qty').val(0);
-        recalculateTotal();
-    });
-
-    // Tombol Auto FEFO
-    $('#btnAutoAllocateFefo').on('click', function() {
+    // Klik tombol Pilih pada baris batch
+    $(document).on('click', '.btn-select-batch', function() {
         if (!currentItem) return;
-        $('.input-batch-qty').val(0);
-
-        var needed = currentItem.qty;
-        var $rows = $('#batchListTable tbody tr:not(#noBatchRow)');
-        $rows.each(function() {
-            if (needed <= 0) return false;
-            var $row = $(this);
-            var stock = parseFloat($row.find('td:nth-child(5) .badge').text());
-            var allocate = needed;
-            if (!isNaN(stock) && stock > 0) {
-                allocate = Math.min(needed, stock);
-            }
-            $row.find('.input-batch-qty').val(allocate);
-            needed -= allocate;
-        });
-
-        recalculateTotal();
-    });
-
-    function recalculateTotal() {
-        if (!currentItem) return;
-
-        var total = 0;
-        $('.input-batch-qty').each(function() {
-            var q = parseFloat($(this).val()) || 0;
-            total += q;
-        });
-
-        total = Math.round(total * 1000) / 1000;
-        var target = Math.round(currentItem.qty * 1000) / 1000;
-
-        $('#batchTotalAllocated').text(total);
-
-        var diff = Math.round((target - total) * 1000) / 1000;
-
-        var $badge = $('#batchStatusBadge');
-        var $callout = $('#batchSummaryBox');
-        var $btnSubmit = $('#btnSubmitBatchAllocation');
-
-        if (diff === 0) {
-            $callout.removeClass('alert-info alert-warning alert-danger').addClass('alert-success');
-            $badge.html('<span class="label label-success" style="font-size: 13px; padding: 4px 10px;"><i class="fa fa-check"></i> Sesuai Qty Order (' + target + ' ' + currentItem.unit + ')</span>');
-            $btnSubmit.prop('disabled', false);
-        } else if (diff > 0) {
-            $callout.removeClass('alert-info alert-success alert-danger').addClass('alert-warning');
-            $badge.html('<span class="label label-warning" style="font-size: 13px; padding: 4px 10px;"><i class="fa fa-exclamation-triangle"></i> Kurang ' + diff + ' ' + currentItem.unit + '</span>');
-            $btnSubmit.prop('disabled', true);
-        } else {
-            $callout.removeClass('alert-info alert-success alert-warning').addClass('alert-danger');
-            $badge.html('<span class="label label-danger" style="font-size: 13px; padding: 4px 10px;"><i class="fa fa-times"></i> Kelebihan ' + Math.abs(diff) + ' ' + currentItem.unit + '</span>');
-            $btnSubmit.prop('disabled', true);
-        }
-    }
-
-    // Submit simpan batch
-    $('#btnSubmitBatchAllocation').on('click', function() {
-        if (!currentItem) return;
-
-        var batches = [];
-        var hasError = false;
-
-        $('#batchListTable tbody tr:not(#noBatchRow)').each(function() {
-            var $row = $(this);
-            var qty = parseFloat($row.find('.input-batch-qty').val()) || 0;
-            if (qty > 0) {
-                var lot = $.trim($row.find('.input-lot-serial').val());
-                var exp = $.trim($row.find('.input-expired').val()) || null;
-                var code = $.trim($row.find('.input-item-code').val()) || defaultProductCode;
-
-                if (!lot) {
-                    alert('Harap isi nomor batch (lot/serial) untuk semua baris yang memiliki Qty > 0.');
-                    hasError = true;
-                    return false;
-                }
-
-                batches.push({
-                    lot_serial: lot,
-                    qty: qty,
-                    expired: exp,
-                    item_code: code
-                });
-            }
-        });
-
-        if (hasError) return;
 
         var $btn = $(this);
+        var lot = $btn.data('lot');
+        var exp = $btn.data('exp') || null;
+        var code = $btn.data('code') || defaultProductCode;
+        var stock = $btn.data('stock');
+
+        if (!confirm('Gunakan batch "' + lot + '" (Stok: ' + stock + ') untuk pesanan ini sebanyak ' + currentItem.qty + ' ' + currentItem.unit + '?')) {
+            return;
+        }
+
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
 
         var updateUrl = "{{ route('admin.orders.items.update-batches', ['order' => $order->id, 'item' => '__ITEM_ID__']) }}".replace('__ITEM_ID__', currentItem.id);
@@ -1774,17 +1541,24 @@ $(document).ready(function() {
             data: {
                 _token: "{{ csrf_token() }}",
                 _method: 'PUT',
-                batches: batches
+                batches: [
+                    {
+                        lot_serial: lot,
+                        qty: currentItem.qty,
+                        expired: exp,
+                        item_code: code
+                    }
+                ]
             },
             dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#modalEditBatch').modal('hide');
-                    alert(res.message || 'Alokasi batch berhasil diperbarui.');
+                    alert(res.message || 'Batch berhasil dipilih.');
                     window.location.reload();
                 } else {
-                    alert(res.message || 'Gagal memperbarui batch.');
-                    $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Simpan Alokasi Batch');
+                    alert(res.message || 'Gagal memilih batch.');
+                    $btn.prop('disabled', false).html('<i class="fa fa-check"></i> Pilih');
                 }
             },
             error: function(xhr) {
@@ -1793,7 +1567,7 @@ $(document).ready(function() {
                     msg = xhr.responseJSON.message;
                 }
                 alert(msg);
-                $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Simpan Alokasi Batch');
+                $btn.prop('disabled', false).html('<i class="fa fa-check"></i> Pilih');
             }
         });
     });
