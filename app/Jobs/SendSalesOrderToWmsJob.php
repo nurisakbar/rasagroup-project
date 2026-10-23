@@ -105,11 +105,8 @@ class SendSalesOrderToWmsJob implements ShouldQueue
         $payload = [
             'so_number' => $order->order_number,
             'items' => $itemsPayload,
+            'is_update' => false,
         ];
-
-        if ($order->wms_so_status !== null) {
-            $payload['is_update'] = true;
-        }
 
         try {
             $response = Http::withHeaders([

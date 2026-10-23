@@ -1188,10 +1188,8 @@
         $wmsPayload = [
             'so_number' => $order->order_number,
             'items' => $wmsItems,
+            'is_update' => false,
         ];
-        if ($order->wms_so_status !== null) {
-            $wmsPayload['is_update'] = true;
-        }
     @endphp
 
     <!-- Modal cURL QAD -->
