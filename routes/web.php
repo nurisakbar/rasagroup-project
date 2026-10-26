@@ -414,13 +414,25 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         Route::post('/orders/ajax/preview', [App\Http\Controllers\Warehouse\ManualOrderController::class, 'previewPricing'])->name('orders.preview-pricing');
         Route::get('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}', [App\Http\Controllers\Warehouse\OrderController::class, 'update'])->name('orders.update');
-        Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Warehouse\OrderController::class, 'suratJalanPdf'])->name('orders.surat-jalan-pdf');
+        Route::put('/orders/{order}/status', [App\Http\Controllers\Warehouse\OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::put('/orders/{order}/tracking', [App\Http\Controllers\Warehouse\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
+        Route::put('/orders/{order}/approve-finance', [App\Http\Controllers\Warehouse\OrderController::class, 'approveFinance'])->name('orders.approve-finance');
+        Route::post('/orders/{order}/notify-edms', [App\Http\Controllers\Warehouse\OrderController::class, 'notifyEdms'])->name('orders.notify-edms');
+        Route::get('/orders/{order}/track', [App\Http\Controllers\Warehouse\OrderController::class, 'trackOrder'])->name('orders.track');
+        Route::get('/orders/{order}/surat-jalan', [App\Http\Controllers\Warehouse\OrderController::class, 'suratJalanPdf'])->name('orders.surat-jalan');
+        Route::get('/orders/{order}/surat-jalan-pdf', [App\Http\Controllers\Warehouse\OrderController::class, 'suratJalanPdf'])->name('orders.surat-jalan-pdf');
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Warehouse\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Warehouse\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');
         Route::post('/orders/{order}/request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'requestPickup'])->name('orders.request-pickup');
         Route::post('/orders/{order}/cancel-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'cancelPickup'])->name('orders.cancel-pickup');
         Route::post('/orders/{order}/sync-qad', [App\Http\Controllers\Warehouse\OrderController::class, 'syncQad'])->name('orders.sync-qad');
+        Route::post('/orders/{order}/check-qad', [App\Http\Controllers\Warehouse\OrderController::class, 'checkQadStatus'])->name('orders.check-qad');
+        Route::post('/orders/{order}/sync-jubelio', [App\Http\Controllers\Warehouse\OrderController::class, 'syncJubelio'])->name('orders.sync-jubelio');
+        Route::post('/orders/{order}/check-wms', [App\Http\Controllers\Warehouse\OrderController::class, 'checkWmsStatus'])->name('orders.check-wms');
+        Route::post('/orders/{order}/sync-wms', [App\Http\Controllers\Warehouse\OrderController::class, 'syncWms'])->name('orders.sync-wms');
+        Route::get('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Warehouse\OrderController::class, 'getItemBatches'])->name('orders.items.batches');
+        Route::put('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Warehouse\OrderController::class, 'updateItemBatches'])->name('orders.items.update-batches');
         Route::post('/orders/{order}/debug-qid-sales-order', [App\Http\Controllers\Warehouse\OrderController::class, 'debugQidSalesOrder'])->name('orders.debug-qid-sales-order');
         Route::post('/orders/{order}/debug-request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'debugRequestPickup'])->name('orders.debug-request-pickup');
 
