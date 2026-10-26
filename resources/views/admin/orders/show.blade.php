@@ -1326,14 +1326,14 @@
                     <p><strong>1. Cek Status (GET)</strong></p>
                     <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlQadText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlQadText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/get?SalesOrderCode={{ $order->qid_sales_order_number ?? $order->order_number }}" \
+                        <pre id="curlQadText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim((string) config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/get?SalesOrderCode={{ $order->qid_sales_order_number ?? $order->order_number }}" \
 --header "Content-Type: application/json"</pre>
                     </div>
 
                     <p><strong>2. Kirim Data (POST)</strong></p>
                     <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlQadPostText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlQadPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim(config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/create" \
+                        <pre id="curlQadPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim((string) config('services.qad.base_url'), '/') }}/api/transaction/sales-orders/create" \
 --header "Content-Type: application/json" \
 --data-raw '{!! $qadPayload ? json_encode($qadPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : "{}" !!}'</pre>
                     </div>
@@ -1357,7 +1357,7 @@
                     <p><strong>1. Cek Status (GET)</strong></p>
                     <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlWmsText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlWmsText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders/{{ $order->order_number }}/status" \
+                        <pre id="curlWmsText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request GET "{{ rtrim((string) config('services.wms.api_url'), '/') }}/sales-orders/{{ $order->order_number }}/status" \
 --header "x-api-key: {{ config('services.wms.api_key') }}" \
 --header "Accept: application/json"</pre>
                     </div>
@@ -1365,7 +1365,7 @@
                     <p><strong>2. Kirim Data (POST)</strong></p>
                     <div style="position: relative; margin-bottom: 20px;">
                         <button type="button" class="btn btn-xs btn-default" style="position: absolute; right: 10px; top: 10px;" onclick="var text = document.getElementById('curlWmsPostText').innerText; navigator.clipboard.writeText(text).then(function() { alert('Disalin!'); });"><i class="fa fa-copy"></i> Copy</button>
-                        <pre id="curlWmsPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim(config('services.wms.api_url'), '/') }}/sales-orders" \
+                        <pre id="curlWmsPostText" style="background: #2b2b2b; color: #a9b7c6; border: none; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">curl --location --request POST "{{ rtrim((string) config('services.wms.api_url'), '/') }}/sales-orders" \
 --header "x-api-key: {{ config('services.wms.api_key') }}" \
 --header "Accept: application/json" \
 --header "Content-Type: application/json" \
