@@ -34,7 +34,9 @@ class TestQidSalesOrder3 extends Command
             "taxClass" => "PPN",
             "taxEnvironment" => "IDN",
             "isTaxable" => true,
-            "isSelfBillingEnabled" => true,
+            "isSelfBillingEnabled" => false,
+            "isSelfBillingOrder" => false,
+            "isSBAccountsEnabled" => false,
             "currencyCode" => "IDR",
             "isConfirmed" => true,
             "salesOrderLines" => [

@@ -35,7 +35,9 @@ class TestQidSalesOrder extends Command
             "isTaxable" => true,
             "isConfirmed" => true,
             "salespersonCode_01" => "SLS00001",
-            "isSelfBillingEnabled" => true,
+            "isSelfBillingEnabled" => false,
+            "isSelfBillingOrder" => false,
+            "isSBAccountsEnabled" => false,
             "currencyCode" => "IDR",
             "siteCode" => "MCR",
             "salesOrderLines" => [

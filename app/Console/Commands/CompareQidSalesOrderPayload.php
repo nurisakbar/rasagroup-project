@@ -68,7 +68,9 @@ class CompareQidSalesOrderPayload extends Command
             'taxClass' => 'PPN',
             'isTaxable' => true,
             'salespersonCode_01' => 'SLS00001',
-            'isSelfBillingEnabled' => true,
+            'isSelfBillingEnabled' => false,
+            'isSelfBillingOrder' => false,
+            'isSBAccountsEnabled' => false,
             'salesOrderLines' => [
                 [
                     'salesOrderNumber' => $ws,
