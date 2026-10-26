@@ -10,8 +10,8 @@
 | No. | Bagian Panduan | Uraian Prosedur Operasional |
 | :---: | :--- | :--- |
 | **1** | Pendahuluan & Gambaran Umum | Klasifikasi Pesanan (Retail Online & Distributor TOP) & Bagan Alur Siklus Pesanan |
-| **2** | Navigasi Dashboard & Filter | Pemahaman 6 Tahapan Pesanan (Tab Filter Status), Pencarian, & Fitur Export Excel |
-| **3** | SOP Verifikasi Pembayaran | • 3.1. Pembayaran Otomatis (Payment Gateway Faspay)<br>• 3.2. Pembayaran Transfer Manual (Verifikasi Bukti Transfer)<br>• 3.3. Persetujuan Kredit Distributor (Term of Payment - TOP) |
+| **2** | Navigasi Dashboard & Filter | Pemahaman Tahapan Pesanan (Tab Filter Status), Pencarian, & Fitur Export Excel |
+| **3** | SOP Verifikasi Pembayaran | • 3.1. Pembayaran Otomatis (Payment Gateway Faspay)<br>• 3.2. Persetujuan Kredit Distributor (Term of Payment - TOP) |
 | **4** | Pemrosesan & Integrasi Sistem | • 4.1. Pemeriksaan Detail Item & Alokasi Hub Pengirim<br>• 4.2. Sinkronisasi ke QAD ERP (Pesanan Distributor)<br>• 4.3. Sinkronisasi ke Jubelio ERP (Pesanan Retail / Hub)<br>• 4.4. Pengiriman Sales Order ke WMS Gudang<br>• 4.5. Karakteristik Stok & Batch: QAD/WMS vs Jubelio Omnichannel |
 | **5** | Pengelolaan Pengiriman & Logistik | • 5.1. SOP Pemrosesan Pesanan Tim E-Commerce (Alur Booking Ekspedisi & Input Resi)<br>• 5.2. Metode Pengambilan Mandiri di Hub (Self-Pickup) |
 | **6** | Dokumen Operasional | • 6.1. Cetak Surat Jalan Resmi (Delivery Note)<br>• 6.2. Unduh Proforma Invoice Resmi |
@@ -25,7 +25,7 @@
 
 Portal **RasaConnect** mengelola 2 (dua) kategori pesanan utama yang berasal dari kanal penjualan Rasa Group:
 1. **Online (Regular)**: Transaksi pelanggan langsung melalui e-commerce/web store retail B2C.
-2. **Distributor**: Transaksi grosir B2B dari mitra distributor terdaftar yang menggunakan termin pembayaran (*Term of Payment* / TOP) atau transfer, dengan verifikasi dokumen *Purchase Order* (PO).
+2. **Distributor**: Transaksi grosir B2B dari mitra distributor terdaftar yang menggunakan termin pembayaran (*Term of Payment* / TOP) atau pembayaran langsung via payment gateway, dengan verifikasi dokumen *Purchase Order* (PO).
 
 ### Diagram Alur Siklus Pesanan (End-to-End Workflow)
 
@@ -41,16 +41,15 @@ Untuk mengakses daftar transaksi, masuk ke menu samping kiri: **Laporan Pesanan 
 ![Tampilan Halaman Utama Manajemen Pesanan RasaConnect](manual_book_images/01_daftar_pesanan.png)
 *Gambar 2.1: Antarmuka Daftar Pesanan Admin RasaConnect dengan Filter Tahapan, Tipe Order, dan Sumber Hub Pengirim.*
 
-### A. Memahami 6 Tahapan Pesanan (Tab Filter Status)
+### A. Memahami Tahapan Pesanan (Tab Filter Status)
 Halaman ini dilengkapi dengan dropdown **Tahapan Pesanan** yang berfungsi memfilter transaksi berdasarkan urgensi tindak lanjut admin:
 
 | Nama Tahapan | Indikator Sistem | Arti & Tindakan Utama Admin |
 | :--- | :--- | :--- |
 | **Semua Tahapan** | `countSemua` | Menampilkan seluruh riwayat transaksi aktif maupun arsip. |
-| **Menunggu Pembayaran** | `pending` (tanpa bukti bayar) | Pembeli belum menyelesaikan pembayaran di gateway Faspay atau belum mengunggah bukti transfer. Pantau batas waktu kedaluwarsa. |
+| **Menunggu Pembayaran** | `pending` | Pembeli belum menyelesaikan pembayaran di gateway Faspay. Transaksi akan kedaluwarsa otomatis jika melewati batas waktu toleransi pembayaran. |
 | **Menunggu Approval Finance** | `term_of_payment` & `finance_approved = 0` | Khusus pesanan **Distributor TOP**. Status pesanan terkunci bagi staf operasional hingga tim Finance memeriksa limit kredit dan menyetujuinya. |
-| **Menunggu Konfirmasi** | `pending` + bukti transfer terunggah | Pesanan transfer manual dengan unggahan foto bukti bayar. Menampilkan tombol oranye **Verifikasi**. Admin wajib mencocokkan mutasi rekening bank. |
-| **Sedang Diproses** | `processing` / lunas / TOP approved | Pembayaran aman. Pesanan siap diteruskan ke gudang (WMS) dan disiapkan barangnya. |
+| **Sedang Diproses** | `processing` / lunas / TOP approved | Pembayaran aman / kredit disetujui. Pesanan siap diteruskan ke gudang (WMS) dan disiapkan barangnya. |
 | **Dikirim** | `shipped` | Barang sudah memiliki nomor resi kurir atau telah diambil langsung oleh pembeli di gudang. |
 | **Selesai** | `delivered` / `completed` | Barang telah diterima pelanggan. Hak poin loyalitas distributor otomatis aktif. |
 
@@ -73,35 +72,11 @@ Halaman ini dilengkapi dengan dropdown **Tahapan Pesanan** yang berfungsi memfil
 
 ---
 
-### 3.2. Pembayaran Transfer Manual (Verifikasi Bukti Transfer)
-Metode transfer manual antar-rekening bank memerlukan pemeriksaan fisik buku rekening atau *internet banking* perusahaan sebelum barang disiapkan.
-
-![Verifikasi Pembayaran Transfer Manual](manual_book_images/03_verifikasi_transfer_manual.png)
-*Gambar 3.1: Halaman Verifikasi Pembayaran Manual dengan Tautan Bukti Transfer dan Form Pembaruan Status.*
-
-#### Langkah-Langkah Verifikasi Admin:
-1. Buka filter tahapan **Menunggu Konfirmasi**.
-2. Pada baris transaksi yang bersangkutan, klik tombol oranye **Verifikasi** atau buka **Detail Pesanan**.
-3. Di tabel **Informasi Pesanan**, periksa baris **Bukti Pembayaran**:
-   - Klik tombol biru **Lihat Bukti Transfer** untuk membuka gambar bukti bayar.
-   - Cek rincian: nama pengirim, bank asal, nominal angka (harus tepat hingga digit terakhir), tanggal transaksi, dan nomor referensi.
-4. Buka *Internet Banking Corporate* Rasa Group:
-   - Pastikan dana sudah **efektif masuk** di mutasi rekening koran perusahaan (bukan transfer terjadwal atau *pending* kliring).
-5. Pada panel kanan (**Update Pesanan**):
-   - Ubah dropdown **Status Pembayaran Saat Ini** &rarr; pilih **Paid (Lunas)**.
-   - Klik tombol biru **Simpan Perubahan**.
-6. Sistem akan otomatis membuka kunci pesanan dan memindahkannya ke tab **Sedang Diproses**.
-
-> [!WARNING]
-> Jangan pernah menyetujui transaksi jika gambar bukti transfer buram, berupa struk transfer terjadwal (*scheduled payment*), atau nominal mutasi bank tidak cocok dengan total tagihan.
-
----
-
-### 3.3. Persetujuan Kredit Distributor (Term of Payment - TOP)
+### 3.2. Persetujuan Kredit Distributor (Term of Payment - TOP)
 Mitra distributor resmi memiliki fasilitas termin pembayaran (tempo 30, 45, atau 60 hari). Setiap transaksi baru akan dievaluasi oleh **Tim Finance**.
 
 ![Detail Pesanan Distributor TOP dan Approval Finance](manual_book_images/02_detail_pesanan_distributor_top.png)
-*Gambar 3.2: Informasi Finansial Distributor, Status Approval Finance, dan Riwayat Integrasi Sistem.*
+*Gambar 3.1: Informasi Finansial Distributor, Status Approval Finance, dan Riwayat Integrasi Sistem.*
 
 #### Langkah-Langkah Otorisasi Tim Finance:
 1. Masuk ke filter tahapan **Menunggu Approval Finance**.
@@ -316,7 +291,7 @@ Pembatalan pesanan hanya boleh dilakukan sebelum barang dikirim dan memiliki ala
 
 ### Q1: Mengapa formulir status pesanan di sebelah kanan terkunci dan tidak bisa diubah?
 > **Penyebab:** Sistem menerapkan pengaman (*safety lock*). Pesanan yang belum lunas atau pesanan TOP distributor yang belum di-approve finance secara otomatis mengunci dropdown status agar barang tidak keluar sebelum kepastian pembayaran aman.  
-> **Solusi:** Selesaikan verifikasi transfer manual (ubah status pembayaran ke *Paid*) atau minta otorisasi tim Finance untuk menekan tombol *Approve Finance*.
+> **Solusi:** Pastikan pembayaran pelanggan via gateway telah terkonfirmasi lunas (*Paid*) atau minta otorisasi tim Finance untuk menyetujui transaksi (*Approve Finance* khusus pesanan Distributor TOP).
 
 ---
 
@@ -360,7 +335,7 @@ Pembatalan pesanan hanya boleh dilakukan sebelum barang dikirim dan memiliki ala
 | **Delivered** | Status Pesanan | Kurir melaporkan bahwa barang telah sampai di alamat tujuan penerima. |
 | **Completed** | Status Pesanan | Transaksi tuntas sempurna. Hak poin reward telah masuk ke saldo mitra distributor. |
 | **Cancelled** | Status Pesanan | Pesanan dibatalkan permanen; stok inventori dan limit kredit dikembalikan. |
-| **Paid** | Status Pembayaran | Pembayaran telah lunas (baik via Faspay otomatis maupun transfer bank manual). |
+| **Paid** | Status Pembayaran | Pembayaran telah lunas terverifikasi otomatis melalui Payment Gateway Faspay. |
 | **Term of Payment** | Status Pembayaran | Skema transaksi kredit berjangka (tempo) khusus mitra distributor terverifikasi. |
 | **Finance Approval: 1** | Indikator Otorisasi | Transaksi kredit TOP telah disetujui resmi oleh Finance dan dilepaskan ke operasional hub. |
 | **Finance Approval: 0** | Indikator Otorisasi | Transaksi kredit TOP masih tertahan, menunggu evaluasi kelayakan kredit dari tim Finance. |

@@ -268,19 +268,19 @@ class WACloudHelper
     public static function sendPaymentNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
-            Log::warning('QAD WhatsApp API not configured. Cannot send payment notification.');
+            Log::warning('WhatsApp API not configured. Cannot send payment notification.');
             return null;
         }
 
-        if (!$order->address || !$order->address->phone) {
-            Log::warning('Order address or phone not available', [
+        $phone = ($order->user && $order->user->phone) ? $order->user->phone : ($order->address ? $order->address->phone : null);
+        if (!$phone) {
+            Log::warning('Order address or phone not available for payment notification', [
                 'order_id' => $order->id,
             ]);
             return null;
         }
 
         try {
-            $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
             $message = self::buildPaymentMessage($order);
             
             Log::info('Sending payment notification via WhatsApp', [
@@ -291,14 +291,65 @@ class WACloudHelper
                 'has_faspay_url' => !empty($order->faspay_redirect_url),
             ]);
             
-            $result = self::sendText($phone, $message);
+            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
+            $metaService = app(\App\Services\MetaWhatsAppService::class);
+            $useMetaTemplate = ($provider === 'meta' && $metaService->isConfigured());
+
+            $result = null;
+            if ($useMetaTemplate) {
+                $templateName = config('services.meta_wa.order_notification_template') ?: env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
+                $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
+                
+                try {
+                    if ($order->user && $order->user->role === 'distributor') {
+                        $orderUrl = route('distributor.orders.show', $order);
+                    } else {
+                        $orderUrl = route('orders.show', $order);
+                    }
+                } catch (\Throwable $e) {
+                    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+                    $orderUrl = ($order->user && $order->user->role === 'distributor')
+                        ? "{$baseUrl}/distributor/orders/{$order->id}"
+                        : "{$baseUrl}/orders/{$order->id}";
+                }
+
+                $hubName = $order->sourceWarehouse ? $order->sourceWarehouse->name : 'RasaConnect';
+
+                $components = [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $hubName],
+                            ['type' => 'text', 'text' => (string) $order->order_number],
+                            ['type' => 'text', 'text' => $orderUrl],
+                        ],
+                    ],
+                ];
+
+                Log::info('Sending payment notification via Meta Template', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                    'template' => $templateName,
+                ]);
+
+                $templateResult = self::sendTemplate($phone, $templateName, $languageCode, $components);
+                if (!empty($templateResult) && isset($templateResult['success']) && $templateResult['success']) {
+                    $result = $templateResult;
+                }
+            }
+
+            // Fallback ke pesan teks jika template tidak digunakan atau gagal
+            if (!$result) {
+                $result = self::sendText($phone, $message);
+            }
             
             if ($result) {
                 Log::info('Payment notification sent via WhatsApp', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'phone' => $phone,
-                    'message_id' => $result['message_id'] ?? null,
+                    'result' => $result,
                 ]);
             }
             
@@ -321,70 +372,86 @@ class WACloudHelper
     public static function sendThankYouNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
-            Log::warning('QAD WhatsApp API not configured. Cannot send thank you notification.');
+            Log::warning('WhatsApp API not configured. Cannot send thank you notification.');
             return null;
         }
 
-        if (!$order->address || !$order->address->phone) {
-            Log::warning('Order address or phone not available', [
+        $phone = ($order->user && $order->user->phone) ? $order->user->phone : ($order->address ? $order->address->phone : null);
+        if (!$phone) {
+            Log::warning('Order address or phone not available for thank you notification', [
                 'order_id' => $order->id,
             ]);
             return null;
         }
 
         try {
-            $phone = ($order->user && $order->user->phone) ? $order->user->phone : $order->address->phone;
-            $name = ($order->user && $order->user->name) ? $order->user->name : $order->address->recipient_name;
-            $provider = env('WHATSAPP_PROVIDER', 'wacloud');
-            
-            if ($provider !== 'meta') {
+            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
+            $metaService = app(\App\Services\MetaWhatsAppService::class);
+            $useMetaTemplate = ($provider === 'meta' && $metaService->isConfigured());
+
+            $result = null;
+            if ($useMetaTemplate) {
+                $templateName = config('services.meta_wa.order_notification_template') ?: env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
+                $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
+                
+                try {
+                    if ($order->user && $order->user->role === 'distributor') {
+                        $orderUrl = route('distributor.orders.show', $order);
+                    } else {
+                        $orderUrl = route('orders.show', $order);
+                    }
+                } catch (\Throwable $e) {
+                    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
+                    $orderUrl = ($order->user && $order->user->role === 'distributor')
+                        ? "{$baseUrl}/distributor/orders/{$order->id}"
+                        : "{$baseUrl}/orders/{$order->id}";
+                }
+
+                $hubName = $order->sourceWarehouse ? $order->sourceWarehouse->name : 'RasaConnect';
+
+                $components = [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $hubName],
+                            ['type' => 'text', 'text' => (string) $order->order_number],
+                            ['type' => 'text', 'text' => $orderUrl],
+                        ],
+                    ],
+                ];
+
+                Log::info('Sending thank you notification via Meta Template', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                    'template' => $templateName,
+                ]);
+
+                $templateResult = self::sendTemplate($phone, $templateName, $languageCode, $components);
+                if (!empty($templateResult) && isset($templateResult['success']) && $templateResult['success']) {
+                    $result = $templateResult;
+                }
+            }
+
+            if (!$result) {
                 $message = self::buildThankYouMessage($order);
                 Log::info('Sending thank you notification via WhatsApp Text', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'phone' => $phone,
                 ]);
-                
                 $result = self::sendText($phone, $message);
-                
-                if ($result) {
-                    Log::info('Thank you notification sent via WhatsApp Text', [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                        'phone' => $phone,
-                    ]);
-                }
-                
-                return $result;
             }
 
-            Log::info('Sending thank you notification via WhatsApp Template', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'phone' => $phone,
-            ]);
-
-            $components = [
-                [
-                    'type' => 'body',
-                    'parameters' => [
-                        ['type' => 'text', 'text' => $name],
-                        ['type' => 'text', 'text' => $order->order_number],
-                        ['type' => 'text', 'text' => $order->created_at->format('M j, Y')],
-                    ]
-                ]
-            ];
-            
-            $result = self::sendTemplate($phone, 'jaspers_market_order_confirmation_v1', 'en_US', $components);
-            
             if ($result) {
-                Log::info('Thank you notification sent via WhatsApp Template', [
+                Log::info('Thank you notification sent via WhatsApp', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'phone' => $phone,
+                    'result' => $result,
                 ]);
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             Log::error('Failed to send thank you notification via WhatsApp', [

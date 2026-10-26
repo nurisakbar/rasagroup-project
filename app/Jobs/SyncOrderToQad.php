@@ -289,12 +289,17 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     }
 
     /**
-     * salespersonCode_01 hanya diisi jika transaksi punya kode sales.
+     * salespersonCode_01 diisi dari order sales_code, atau fallback ke user/distributor sales_code.
      */
     protected function salespersonCodeForQad(): ?string
     {
         $code = trim((string) ($this->order->sales_code ?? ''));
         if ($code === '' || strcasecmp($code, 'null') === 0) {
+            $userCode = trim((string) ($this->order->user?->sales_code ?? ''));
+            if ($userCode !== '' && strcasecmp($userCode, 'null') !== 0) {
+                return $userCode;
+            }
+
             return null;
         }
 
@@ -533,7 +538,12 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             ]);
 
             if ($soNumber) {
-                $this->order->update(['qad_so_number' => $soNumber]);
+                $orderUpdates = ['qad_so_number' => $soNumber];
+                $salesCodeResolved = $this->salespersonCodeForQad();
+                if ($salesCodeResolved && empty($this->order->sales_code)) {
+                    $orderUpdates['sales_code'] = $salesCodeResolved;
+                }
+                $this->order->update($orderUpdates);
                 $this->appendSyncLog($payload, $result, $attempt, 'success');
                 Log::info('SyncOrderToQad: Sales Order created in QAD', ['qad_so' => $soNumber]);
 

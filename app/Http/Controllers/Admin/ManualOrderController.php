@@ -143,7 +143,7 @@ class ManualOrderController extends Controller
             })
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'email', 'phone', 'role', 'term_of_payment', 'qad_customer_code', 'pakai_ppn']);
+            ->get(['id', 'name', 'email', 'phone', 'role', 'term_of_payment', 'qad_customer_code', 'pakai_ppn', 'sales_code']);
 
         return response()->json([
             'results' => $users->map(function (User $user) {
@@ -162,6 +162,7 @@ class ManualOrderController extends Controller
                     'role' => $user->role,
                     'term_of_payment' => (int) ($user->term_of_payment ?? 0),
                     'qad_customer_code' => $user->qad_customer_code,
+                    'sales_code' => $user->sales_code,
                     'is_distributor' => $user->isDistributor(),
                     'pakai_ppn' => $user->usesPpn() ? 1 : 0,
                 ];

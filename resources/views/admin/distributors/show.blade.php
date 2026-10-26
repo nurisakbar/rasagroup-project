@@ -54,6 +54,21 @@
                                                 @endif
                                             </a>
                                         </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-id-card-o text-muted" style="width: 20px;"></i> Kode Customer QAD</b> <a class="pull-right">{{ $distributor->qad_customer_code ?: '-' }}</a>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <b><i class="fa fa-user-circle text-muted" style="width: 20px;"></i> Kode Sales</b> 
+                                            <a class="pull-right">
+                                                @if($distributor->salesPerson)
+                                                    {{ $distributor->salesPerson->name }} ({{ $distributor->sales_code }})
+                                                @elseif($distributor->sales_code)
+                                                    {{ $distributor->sales_code }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </a>
+                                        </li>
                                         <li class="list-group-item" style="border-bottom: 0; padding-bottom: 0;">
                                             <b><i class="fa fa-calendar-check-o text-muted" style="width: 20px;"></i> Terdaftar</b> <a class="pull-right">{{ $distributor->created_at->format('d M Y') }}</a>
                                         </li>

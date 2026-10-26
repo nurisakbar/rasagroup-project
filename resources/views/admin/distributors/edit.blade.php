@@ -168,19 +168,44 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('qad_customer_code') has-error @enderror">
-                            <label for="qad_customer_code">Kode Customer QAD</label>
-                            @php $qadCode = old('qad_customer_code', $distributor->qad_customer_code); @endphp
-                            <select id="qad_customer_code" name="qad_customer_code" class="form-control" style="width: 100%;">
-                                <option value="">-- Pilih kode customer QAD --</option>
-                                @if($qadCode)
-                                    <option value="{{ $qadCode }}" selected>{{ $qadCode }}</option>
-                                @endif
-                            </select>
-                            <p class="help-block">Cari dari master customer QAD (kode atau nama). Kosongkan jika belum ada.</p>
-                            @error('qad_customer_code')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group @error('qad_customer_code') has-error @enderror">
+                                    <label for="qad_customer_code">Kode Customer QAD</label>
+                                    @php $qadCode = old('qad_customer_code', $distributor->qad_customer_code); @endphp
+                                    <select id="qad_customer_code" name="qad_customer_code" class="form-control" style="width: 100%;">
+                                        <option value="">-- Pilih kode customer QAD --</option>
+                                        @if($qadCode)
+                                            <option value="{{ $qadCode }}" selected>{{ $qadCode }}</option>
+                                        @endif
+                                    </select>
+                                    <p class="help-block">Cari dari master customer QAD (kode atau nama). Kosongkan jika belum ada.</p>
+                                    @error('qad_customer_code')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group @error('sales_code') has-error @enderror">
+                                    <label for="sales_code">Kode Sales</label>
+                                    @php $salesVal = old('sales_code', $distributor->sales_code); @endphp
+                                    <select id="sales_code" name="sales_code" class="form-control" style="width: 100%;">
+                                        <option value="">-- Pilih Kode Sales (Opsional) --</option>
+                                        @foreach($salesList ?? [] as $sales)
+                                            <option value="{{ $sales->sales_code }}" {{ $salesVal == $sales->sales_code ? 'selected' : '' }}>
+                                                {{ $sales->name }} ({{ $sales->sales_code }})
+                                            </option>
+                                        @endforeach
+                                        @if($salesVal && (!isset($salesList) || !$salesList->contains('sales_code', $salesVal)))
+                                            <option value="{{ $salesVal }}" selected>{{ $salesVal }}</option>
+                                        @endif
+                                    </select>
+                                    <p class="help-block">Pilih sales penanggung jawab atau ketik kode sales (contoh: MCR025 atau SLS00049).</p>
+                                    @error('sales_code')
+                                        <span class="help-block text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         @include('admin.distributors.partials.payment-terms', [
@@ -298,6 +323,13 @@ $(document).ready(function() {
                 return data;
             }
         }
+    });
+
+    $('#sales_code').select2({
+        width: '100%',
+        tags: true,
+        placeholder: '-- Pilih atau ketik Kode Sales --',
+        allowClear: true
     });
 
     // Load regencies when province changes

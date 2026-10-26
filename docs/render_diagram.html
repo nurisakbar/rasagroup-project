@@ -46,15 +46,8 @@ flowchart TD
     A(["📥 Pesanan Baru Masuk"]):::startNode --> B{"Metode Pembayaran?"}:::decisionNode
 
     %% Faspay Gateway
-    B -->|"Faspay: VA / QRIS / CC"| C["⚡ Pembayaran Otomatis: Lunas"]:::successNode
+    B -->|"Payment Gateway Faspay (VA / QRIS / CC)"| C["⚡ Pembayaran Otomatis: Lunas"]:::successNode
     C --> G["📦 Tab: Sedang Diproses"]:::actionNode
-
-    %% Transfer Manual
-    B -->|"Transfer Bank Manual"| D["📄 Pembeli Upload Bukti Bayar"]:::processNode
-    D --> E["🔔 Tab: Menunggu Konfirmasi"]:::actionNode
-    E -->|"Admin Cek Mutasi Bank"| F{"Bukti Transfer Valid?"}:::decisionNode
-    F -->|"Ya"| C
-    F -->|"Tidak Valid"| Z1["❌ Tolak / Hubungi Pembeli"]:::warningNode
 
     %% Term of Payment (TOP)
     B -->|"Term of Payment / TOP"| H["🔒 Tab: Menunggu Approval Finance"]:::decisionNode

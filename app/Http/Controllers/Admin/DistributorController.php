@@ -264,7 +264,8 @@ class DistributorController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        return view('admin.distributors.create', compact('provinces'));
+        $salesList = User::where('role', User::ROLE_SALES)->orderBy('name')->get();
+        return view('admin.distributors.create', compact('provinces', 'salesList'));
     }
 
     /**
@@ -292,6 +293,7 @@ class DistributorController extends Controller
 
             // User data
             'user_name' => ['required', 'string', 'max:255'],
+            'sales_code' => ['nullable', 'string', 'max:50'],
             'payment_method' => ['nullable', 'string', 'in:TOP,CIA'],
             'credit_terms_code' => [
                 'nullable',
@@ -329,6 +331,7 @@ class DistributorController extends Controller
             'password' => Hash::make(Str::random(16)),
             'role' => User::ROLE_DISTRIBUTOR,
             'warehouse_id' => $warehouse->id,
+            'sales_code' => !empty($validated['sales_code']) ? trim($validated['sales_code']) : null,
             'distributor_status' => 'approved',
             'distributor_approved_at' => now(),
             'payment_method' => $validated['payment_method'] ?? null,
@@ -840,7 +843,9 @@ class DistributorController extends Controller
             }
         }
 
-        return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages'));
+        $salesList = User::where('role', User::ROLE_SALES)->orderBy('name')->get();
+
+        return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages', 'salesList'));
     }
 
     /**
@@ -863,6 +868,9 @@ class DistributorController extends Controller
         $qadCustomerCode = strtoupper(trim((string) $request->input('qad_customer_code', '')));
         $request->merge(['qad_customer_code' => $qadCustomerCode !== '' ? $qadCustomerCode : null]);
 
+        $salesCode = trim((string) $request->input('sales_code', ''));
+        $request->merge(['sales_code' => $salesCode !== '' ? $salesCode : null]);
+
         $validated = $request->validate([
             // Hub data
             'hub_name' => ['required', 'string', 'max:255'],
@@ -877,6 +885,7 @@ class DistributorController extends Controller
 
             // User data
             'user_name' => ['required', 'string', 'max:255'],
+            'sales_code' => ['nullable', 'string', 'max:50'],
             'qad_customer_code' => [
                 'nullable',
                 'string',
@@ -916,6 +925,7 @@ class DistributorController extends Controller
         $userData = [
             'name' => $validated['user_name'],
             'qad_customer_code' => $validated['qad_customer_code'] ?? null,
+            'sales_code' => $validated['sales_code'] ?? null,
             'phone' => $validated['hub_phone'],
             'payment_method' => $validated['payment_method'] ?? null,
             'term_of_payment' => $this->termOfPaymentFromRequest($validated),

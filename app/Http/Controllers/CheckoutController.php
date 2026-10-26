@@ -1209,7 +1209,7 @@ class CheckoutController extends Controller
                 'points_credited' => false,
                 'affiliate_id' => $affiliateId,
                 'affiliate_points' => $affiliatePoints,
-                'sales_code' => $request->sales_code,
+                'sales_code' => $request->sales_code ?: ($user?->sales_code ?? null),
                 'finance_approved' => $isFinanceApproved,
                 'finance_approved_at' => $financeApprovedAt,
             ]);
