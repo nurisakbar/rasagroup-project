@@ -279,7 +279,25 @@ class ZohoService
             $salesorderId = $order->zoho_salesorder_id;
             $zohoLineItems = [];
 
-            $taxId = ($order->pakai_ppn || ($order->user && $order->user->usesPpn())) ? $this->resolvePpnTaxId() : null;
+            $usesPpn = ($order->pakai_ppn || ($order->user && $order->user->usesPpn()));
+            $taxId = $usesPpn ? $this->resolvePpnTaxId() : null;
+
+            // Estimate rounding adjustment to make Zoho total match order->total_amount exactly
+            $estimatedDpp = 0.0;
+            foreach ($order->items as $item) {
+                $estimatedDpp += round($item->price * $item->quantity, 2);
+            }
+            $estimatedTax = ($usesPpn && $taxId) ? round($estimatedDpp * 0.11, 2) : 0.0;
+            $estimatedTotal = $estimatedDpp + $estimatedTax + (float) ($order->shipping_cost ?? 0);
+            $roundingAdjustment = round((float) $order->total_amount - $estimatedTotal, 2);
+
+            $adjustmentPayload = [];
+            if (abs($roundingAdjustment) > 0.001 && abs($roundingAdjustment) <= 1.0) {
+                $adjustmentPayload = [
+                    'adjustment' => $roundingAdjustment,
+                    'adjustment_description' => 'Pembulatan',
+                ];
+            }
 
             if (!$salesorderId) {
                 $lineItems = [];
@@ -296,7 +314,7 @@ class ZohoService
                     $lineItems[] = $lineItem;
                 }
 
-                $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", [
+                $soData = array_merge([
                     'customer_id' => $customerId,
                     'reference_number' => $order->order_number,
                     'date' => $order->created_at->format('Y-m-d'),
@@ -305,7 +323,9 @@ class ZohoService
                         ['api_name' => 'cf_source', 'value' => 'rasaconnect']
                     ],
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ]);
+                ], $adjustmentPayload);
+
+                $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", $soData);
 
                 if (!$soResponse->successful()) {
                     throw new \Exception('Failed to create Sales Order: ' . $soResponse->body());
@@ -345,12 +365,14 @@ class ZohoService
                     $invoiceLineItems[] = $invItem;
                 }
 
-                $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", [
+                $invData = array_merge([
                     'customer_id' => $customerId,
                     'reference_number' => $order->order_number,
                     'line_items' => $invoiceLineItems,
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ]);
+                ], $adjustmentPayload);
+
+                $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", $invData);
 
                 if (!$invResponse->successful()) {
                     throw new \Exception('Failed to create Invoice: ' . $invResponse->body());
@@ -379,15 +401,19 @@ class ZohoService
                 $mode = str_contains($pm, 'va') ? 'banktransfer' : 'cash';
                 if ($order->payment_method === 'faspay_qris') $mode = 'others';
 
+                $paymentAmount = ($invoiceBalance > 0 && abs($invoiceBalance - (float) $order->total_amount) < 1.0)
+                    ? $invoiceBalance
+                    : (float) $order->total_amount;
+
                 $payResponse = $this->client()->post("{$this->apiDomain}/books/v3/customerpayments", [
                     'customer_id' => $customerId,
                     'payment_mode' => $mode,
-                    'amount' => $order->total_amount,
+                    'amount' => $paymentAmount,
                     'date' => $order->finance_approved_at ? $order->finance_approved_at->format('Y-m-d') : now()->format('Y-m-d'),
                     'invoices' => [
                         [
                             'invoice_id' => $invoiceId,
-                            'amount_applied' => min($invoiceBalance, (float) $order->total_amount)
+                            'amount_applied' => $paymentAmount,
                         ]
                     ],
                     'reference_number' => $order->order_number
