@@ -6,6 +6,7 @@ use App\Models\Address;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\JubelioService;
+use App\Services\ZohoService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -63,6 +64,22 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 'order_id' => $this->order->id,
                 'jubelio_salesorder_id' => $this->order->jubelio_salesorder_id,
             ]);
+
+            // Pastikan data juga langsung dikirim ke Zoho jika belum terkirim
+            if (ZohoService::isConfigured() && ! $this->order->zoho_salesorder_id) {
+                try {
+                    app(ZohoService::class)->createOrderToPaymentFlow($this->order->fresh());
+                    Log::channel('jubelio_sales_order')->info('SyncOrderToJubelio: also synced directly to Zoho for existing Jubelio SO', [
+                        'order_id' => $this->order->id,
+                        'zoho_salesorder_id' => $this->order->fresh()->zoho_salesorder_id,
+                    ]);
+                } catch (\Throwable $ze) {
+                    Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho', [
+                        'order_id' => $this->order->id,
+                        'message' => $ze->getMessage(),
+                    ]);
+                }
+            }
 
             return;
         }
@@ -130,6 +147,28 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 'jubelio_salesorder_id' => $salesOrderId,
                 'jubelio_salesorder_no' => $salesOrderNo,
             ]);
+
+            // Kirim data langsung ke Zoho setelah berhasil dikirim ke Jubelio
+            try {
+                if (ZohoService::isConfigured()) {
+                    app(ZohoService::class)->createOrderToPaymentFlow($this->order->fresh());
+                    Log::channel('jubelio_sales_order')->info('SyncOrderToJubelio: also synced directly to Zoho', [
+                        'order_id' => $this->order->id,
+                        'zoho_salesorder_id' => $this->order->fresh()->zoho_salesorder_id,
+                        'zoho_invoice_id' => $this->order->fresh()->zoho_invoice_id,
+                        'zoho_payment_id' => $this->order->fresh()->zoho_payment_id,
+                    ]);
+                }
+            } catch (\Throwable $ze) {
+                Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho', [
+                    'order_id' => $this->order->id,
+                    'message' => $ze->getMessage(),
+                ]);
+                Log::error('SyncOrderToJubelio: failed syncing to Zoho', [
+                    'order_id' => $this->order->id,
+                    'message' => $ze->getMessage(),
+                ]);
+            }
         } catch (\Throwable $e) {
             Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed', [
                 'order_id' => $this->order->id,

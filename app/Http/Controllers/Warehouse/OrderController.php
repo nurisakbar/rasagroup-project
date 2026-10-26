@@ -926,7 +926,13 @@ class OrderController extends Controller
             $order->refresh();
 
             if ($order->jubelio_salesorder_id) {
-                return back()->with('success', 'Sales order berhasil dikirim ke Jubelio (No. SO: ' . ($order->jubelio_salesorder_no ?: ('ID ' . $order->jubelio_salesorder_id)) . ').');
+                $msg = 'Sales order berhasil dikirim ke Jubelio (No. SO: ' . ($order->jubelio_salesorder_no ?: ('ID ' . $order->jubelio_salesorder_id)) . ')';
+                if ($order->zoho_salesorder_id) {
+                    $msg .= ' dan langsung dikirim ke Zoho (SO ID: ' . $order->zoho_salesorder_id . ')';
+                }
+                $msg .= '.';
+
+                return back()->with('success', $msg);
             }
 
             return back()->with('error', 'Sinkronisasi Jubelio selesai tetapi belum menghasilkan ID/No. SO. Silakan cek log Jubelio.');
