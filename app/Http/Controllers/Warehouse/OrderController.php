@@ -940,6 +940,44 @@ class OrderController extends Controller
         }
     }
 
+    public function syncZoho(Order $order, \App\Services\ZohoService $zohoService)
+    {
+        $this->authorizeWarehouseOrder($order);
+
+        if (!\App\Services\ZohoService::isConfigured()) {
+            return back()->with('error', 'Konfigurasi Zoho Books belum lengkap di server (.env).');
+        }
+
+        try {
+            $zohoService->createOrderToPaymentFlow($order);
+            $order->refresh();
+
+            $msg = 'Pesanan ' . $order->order_number . ' berhasil dikirim ke Zoho Books.';
+            $details = [];
+            if ($order->zoho_salesorder_id) {
+                $details[] = 'SO: ' . $order->zoho_salesorder_id;
+            }
+            if ($order->zoho_invoice_id) {
+                $details[] = 'Inv: ' . $order->zoho_invoice_id;
+            }
+            if ($order->zoho_payment_id) {
+                $details[] = 'Payment: ' . $order->zoho_payment_id;
+            }
+            if (!empty($details)) {
+                $msg .= ' (' . implode(', ', $details) . ')';
+            }
+
+            return back()->with('success', $msg);
+        } catch (\Throwable $e) {
+            Log::error('Warehouse OrderController: Sync Zoho error', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan saat sinkronisasi Zoho: ' . $e->getMessage());
+        }
+    }
+
     public function checkWmsStatus(Order $order)
     {
         $this->authorizeWarehouseOrder($order);

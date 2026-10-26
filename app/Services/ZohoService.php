@@ -16,7 +16,18 @@ class ZohoService
     
     public function __construct()
     {
-        $this->orgId = config('services.zoho.org_id', env('ZOHO_ORG_ID'));
+        $this->orgId = (string) config('services.zoho.org_id', env('ZOHO_ORG_ID'));
+    }
+
+    /**
+     * Check if Zoho Books integration is configured
+     */
+    public static function isConfigured(): bool
+    {
+        return !empty(config('services.zoho.client_id'))
+            && !empty(config('services.zoho.client_secret'))
+            && !empty(config('services.zoho.refresh_token'))
+            && !empty(config('services.zoho.org_id'));
     }
 
     /**
@@ -324,7 +335,8 @@ class ZohoService
             // 3. Create Payment
             if (!$order->zoho_payment_id && $order->total_amount > 0) {
                 // If payment method exists, maybe map to Zoho payment_mode, fallback to banktransfer
-                $mode = str_contains(strtolower($order->payment_method), 'va') ? 'banktransfer' : 'cash';
+                $pm = strtolower((string) ($order->payment_method ?? ''));
+                $mode = str_contains($pm, 'va') ? 'banktransfer' : 'cash';
                 if ($order->payment_method === 'faspay_qris') $mode = 'others';
 
                 $payResponse = $this->client()->post("{$this->apiDomain}/books/v3/customerpayments", [

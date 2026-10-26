@@ -1330,6 +1330,44 @@
                         </li>
                         @endif
 
+                        <!-- Zoho Sync Log -->
+                        <li>
+                            @php
+                                $isZohoSynced = !empty($order->zoho_salesorder_id) || !empty($order->zoho_invoice_id) || !empty($order->zoho_payment_id);
+                                $isZohoComplete = !empty($order->zoho_salesorder_id) && !empty($order->zoho_invoice_id) && !empty($order->zoho_payment_id);
+                            @endphp
+                            <i class="fa {{ $isZohoComplete ? 'fa-check bg-green' : ($isZohoSynced ? 'fa-check bg-blue' : 'fa-clock-o bg-yellow') }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa {{ $isZohoSynced ? 'fa-check-circle text-success' : 'fa-clock-o text-yellow' }}"></i> {{ $isZohoComplete ? 'Terkirim' : ($isZohoSynced ? 'Tersinkron Sebagian' : 'Belum Terkirim') }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>Status Pengiriman ke Zoho</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($isZohoSynced)
+                                        <span class="label {{ $isZohoComplete ? 'label-success' : 'label-info' }}">
+                                            <i class="fa fa-check"></i> {{ $isZohoComplete ? 'Berhasil Terkirim ke Zoho' : 'Tersinkron Sebagian' }}
+                                        </span>
+                                        <div style="margin-top: 6px; font-size: 12px; line-height: 1.6;">
+                                            <div>Sales Order ID: <strong>{{ $order->zoho_salesorder_id ?: '-' }}</strong></div>
+                                            <div>Invoice ID: <strong>{{ $order->zoho_invoice_id ?: '-' }}</strong></div>
+                                            <div>Payment ID: <strong>{{ $order->zoho_payment_id ?: '-' }}</strong></div>
+                                        </div>
+                                    @else
+                                        <span class="label label-warning"><i class="fa fa-clock-o"></i> Belum Terkirim ke Zoho</span>
+                                    @endif
+
+                                    <div style="margin-top: 8px;">
+                                        <form action="{{ route('warehouse.orders.sync-zoho', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Mengirim...';">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs {{ $isZohoComplete ? 'btn-default' : 'btn-success' }}" title="Kirim pesanan ke Zoho sekarang">
+                                                <i class="fa fa-paper-plane"></i> {{ $isZohoComplete ? 'Kirim Ulang ke Zoho' : 'Kirim ke Zoho' }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
                         <li>
                             <i class="fa fa-clock-o bg-gray"></i>
                         </li>
