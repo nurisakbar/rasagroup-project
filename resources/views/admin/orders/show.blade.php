@@ -151,7 +151,7 @@
                         @if($order->preferred_shipping_date)
                         <tr class="bg-yellow">
                             <th><i class="fa fa-calendar"></i> Rencana Pengiriman</th>
-                            <td><strong>{{ $order->preferred_shipping_date->format('d M Y') }}</strong></td>
+                            <td><strong>{{ $order->preferred_shipping_date->format('d-m-Y') }}</strong></td>
                         </tr>
                         @endif
                         <tr>
@@ -189,7 +189,7 @@
                                     <p class="text-muted mb-0" style="margin-top: 5px;"><small><i class="fa fa-info-circle"></i> Catatan: {{ $order->payment_submit_note }}</small></p>
                                 @endif
                                 @if($order->payment_submitted_at)
-                                    <p class="text-muted mb-0"><small><i class="fa fa-clock-o"></i> Dikirim: {{ \App\Support\Wib::format($order->payment_submitted_at, 'd M Y, H:i') }} WIB</small></p>
+                                    <p class="text-muted mb-0"><small><i class="fa fa-clock-o"></i> Dikirim: {{ \App\Support\Wib::format($order->payment_submitted_at, 'd-m-Y H:i') }} WIB</small></p>
                                 @endif
                             </td>
                         </tr>
@@ -379,7 +379,7 @@
                                 <tbody>
                                     @foreach(array_reverse($order->qad_sync_history) as $history)
                                     <tr>
-                                        <td>{{ \App\Support\Wib::format($history['timestamp'] ?? null, 'd M Y H:i:s') }} WIB</td>
+                                        <td>{{ \App\Support\Wib::format($history['timestamp'] ?? null, 'd-m-Y H:i:s') }} WIB</td>
                                         <td>{{ $history['attempt'] ?? '-' }}</td>
                                         <td>
                                             @if(($history['status'] ?? '') === 'success')
@@ -572,7 +572,7 @@
                                                         @else
                                                             @if($order->ekspedisiku_pickup_status === 'success')
                                                                 <span class="text-success"><i class="fa fa-check-circle fa-2x"></i></span><br>
-                                                                <small style="display:block; margin-top:2px;">Requested: {{ $order->ekspedisiku_pickup_requested_at ? \App\Support\Wib::format($order->ekspedisiku_pickup_requested_at, 'd M H:i') : '' }} WIB</small>
+                                                                <small style="display:block; margin-top:2px;">Requested: {{ $order->ekspedisiku_pickup_requested_at ? \App\Support\Wib::format($order->ekspedisiku_pickup_requested_at, 'd-m-Y H:i') : '' }} WIB</small>
                                                                 <form action="{{ route('admin.orders.cancel-pickup', $order) }}" method="POST" style="margin-top: 8px;">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-xs btn-default text-danger" onclick="return confirm('Cancel request pickup?')">
@@ -625,7 +625,7 @@
                                                             <i class="fa fa-search"></i> Lacak Resi
                                                         </a>
                                                         @if($order->shipped_at)
-                                                            <br><small class="text-muted" style="display:block; margin-top:5px;">Dikirim: {{ \App\Support\Wib::format($order->shipped_at, 'd M H:i') }} WIB</small>
+                                                            <br><small class="text-muted" style="display:block; margin-top:5px;">Dikirim: {{ \App\Support\Wib::format($order->shipped_at, 'd-m-Y H:i') }} WIB</small>
                                                         @endif
                                                     @endif
                                                 </div>
@@ -651,7 +651,7 @@
                         </tr>
                         <tr>
                             <th>Ongkos Kirim</th>
-                            <td>Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
+                            <td>{{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                         </tr>
                         @if($order->sourceWarehouse)
                         <tr class="bg-info">
@@ -723,7 +723,7 @@
                                                                 <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
                                                             @endif
                                                             @if(!empty($batch['expired']))
-                                                                - Expired : {{ $batch['expired'] }}
+                                                                - Expired : {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}
                                                             @endif
                                                             @if(count($batches) > 1 && !empty($batch['qty']))
                                                                 ({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})
@@ -761,14 +761,14 @@
                                         @endif
                                     </td>
                                     <td class="text-right">
-                                        Rp {{ number_format($priceBefore, 0, ',', '.') }}
+                                        {{ number_format($priceBefore, 0, ',', '.') }}
                                     </td>
                                     <td class="text-right">
-                                        <span title="Rp {{ number_format($priceWithoutTax, 2, ',', '.') }}">Rp {{ number_format($priceWithoutTax, 0, ',', '.') }}</span>
+                                        <span title="{{ number_format($priceWithoutTax, 2, ',', '.') }}">{{ number_format($priceWithoutTax, 0, ',', '.') }}</span>
                                     </td>
                                     <td class="text-right">
                                         @if($lineDiscount > 0)
-                                            <span class="text-danger" title="Rp {{ number_format($lineDiscount, 2, ',', '.') }}">Rp {{ number_format($lineDiscount, 0, ',', '.') }}</span>
+                                            <span class="text-danger" title="{{ number_format($lineDiscount, 2, ',', '.') }}">{{ number_format($lineDiscount, 0, ',', '.') }}</span>
                                             @if($lineDiscountPercent > 0)
                                                 <br><small class="text-muted">({{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%)</small>
                                             @endif
@@ -783,7 +783,7 @@
                                         @endif
                                     </td>
                                     <td class="text-right">
-                                        <span title="Rp {{ number_format($lineSubtotal, 2, ',', '.') }}">Rp {{ number_format($lineSubtotal, 0, ',', '.') }}</span>
+                                        <span title="{{ number_format($lineSubtotal, 2, ',', '.') }}">{{ number_format($lineSubtotal, 0, ',', '.') }}</span>
                                     </td>
                                 </tr>
                             @endforeach
@@ -797,18 +797,18 @@
                             @endphp
                             <tr>
                                 <th colspan="5" class="text-right">Subtotal:</th>
-                                <td class="text-right">Rp {{ number_format($subtotalDpp, 0, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($subtotalDpp, 0, ',', '.') }}</td>
                             </tr>
                             @if($couponDiscount > 0)
                             <tr>
                                 <th colspan="5" class="text-right">Diskon:</th>
-                                <td class="text-right">-Rp {{ number_format($couponDiscount, 0, ',', '.') }}</td>
+                                <td class="text-right">-{{ number_format($couponDiscount, 0, ',', '.') }}</td>
                             </tr>
                             @endif
                             @if($orderUsesPpn && $taxAmount > 0)
                             <tr>
                                 <th colspan="5" class="text-right">Pajak ({{ $ppnLabel }}):</th>
-                                <td class="text-right">Rp {{ number_format($taxAmount, 0, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($taxAmount, 0, ',', '.') }}</td>
                             </tr>
                             @elseif(! $orderUsesPpn)
                             <tr>
@@ -818,11 +818,11 @@
                             @endif
                             <tr>
                                 <th colspan="5" class="text-right">Ongkos Kirim:</th>
-                                <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
+                                <td class="text-right">{{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
                             <tr style="font-size: 16px;">
                                 <th colspan="5" class="text-right">Total:</th>
-                                <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>
+                                <th class="text-right">{{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
                         </tfoot>
                     </table>
@@ -1063,7 +1063,7 @@
                         <li>
                             <i class="fa {{ $order->finance_approved ? 'fa-check bg-green' : ($order->payment_method === 'term_of_payment' ? 'fa-clock-o bg-yellow' : 'fa-minus bg-gray') }}"></i>
                             <div class="timeline-item border-0">
-                                <span class="time"><i class="fa fa-calendar"></i> {{ $order->finance_approved_at ? \App\Support\Wib::format($order->finance_approved_at, 'd M H:i') . ' WIB' : 'Menunggu' }}</span>
+                                <span class="time"><i class="fa fa-calendar"></i> {{ $order->finance_approved_at ? \App\Support\Wib::format($order->finance_approved_at, 'd-m-Y H:i') . ' WIB' : 'Menunggu' }}</span>
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>Approval Finance</strong>
                                 </h3>
@@ -1105,7 +1105,7 @@
                             @endphp
                             <i class="fa {{ $edmsIcon }} {{ $edmsColor }}"></i>
                             <div class="timeline-item border-0">
-                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->edms_notified_at ? \App\Support\Wib::format($order->edms_notified_at, 'd M H:i') . ' WIB' : '-' }}</span>
+                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->edms_notified_at ? \App\Support\Wib::format($order->edms_notified_at, 'd-m-Y H:i') . ' WIB' : '-' }}</span>
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>Notifikasi EDMS</strong>
                                 </h3>
@@ -1116,7 +1116,7 @@
                                         </span>
                                         @if($order->edms_notified_at)
                                             <div class="text-muted" style="font-size: 11px; margin-top: 4px;">
-                                                Terkirim pada {{ \App\Support\Wib::format($order->edms_notified_at, 'd M Y H:i') }} WIB
+                                                Terkirim pada {{ \App\Support\Wib::format($order->edms_notified_at, 'd-m-Y H:i') }} WIB
                                             </div>
                                         @endif
                                     @elseif($order->edms_notification_status === 'FAILED')
@@ -1167,7 +1167,7 @@
                             @endphp
                             <i class="fa {{ $wmsIcon }} {{ $wmsColor }}"></i>
                             <div class="timeline-item border-0">
-                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->wms_so_synced_at ? \App\Support\Wib::format($order->wms_so_synced_at, 'd M H:i') . ' WIB' : '-' }}</span>
+                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->wms_so_synced_at ? \App\Support\Wib::format($order->wms_so_synced_at, 'd-m-Y H:i') . ' WIB' : '-' }}</span>
                                 <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
                                     <strong>WMS Sales Order</strong>
                                 </h3>

@@ -9,7 +9,7 @@ final class Wib
 {
     public const TZ = 'Asia/Jakarta';
 
-    public static function format(mixed $value, string $format = 'd M Y H:i'): string
+    public static function format(mixed $value, string $format = 'd-m-Y H:i'): string
     {
         if ($value === null || $value === '') {
             return '';
