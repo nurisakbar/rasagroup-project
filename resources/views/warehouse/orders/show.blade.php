@@ -720,6 +720,7 @@
                             <tr>
                                 <th>Produk</th>
                                 <th class="text-right">Harga jual</th>
+                                <th class="text-right">Harga tanpa pajak</th>
                                 <th class="text-right">Diskon</th>
                                 <th class="text-center">Jumlah</th>
                                 <th class="text-right">Subtotal</th>
@@ -733,6 +734,9 @@
                             @foreach($order->items as $item)
                                 @php
                                     $priceBefore = $item->catalogUnitPrice() * $item->displayPriceMultiplier();
+                                    $orderUsesPpn = ($order->pakai_ppn ?? true) && (! $order->user || $order->user->usesPpn());
+                                    $itemTaxPercent = $orderUsesPpn ? \App\Models\Setting::taxPercent() : 0.0;
+                                    $priceWithoutTax = \App\Support\TaxAwarePrice::excludingTax($priceBefore, $itemTaxPercent);
                                     $priceAfter = $item->orderedPriceWithTax();
                                     $qtyDisplay = max(1, $item->displayQuantity());
                                     $lineBefore = $priceBefore * $qtyDisplay;
@@ -801,6 +805,9 @@
                                         Rp {{ number_format($priceBefore, 0, ',', '.') }}
                                     </td>
                                     <td class="text-right">
+                                        <span title="Rp {{ number_format($priceWithoutTax, 2, ',', '.') }}">Rp {{ number_format($priceWithoutTax, 0, ',', '.') }}</span>
+                                    </td>
+                                    <td class="text-right">
                                         @if($lineDiscount > 0)
                                             <span class="text-danger">Rp {{ number_format($lineDiscount, 0, ',', '.') }}</span>
                                             @if($lineDiscountPercent > 0)
@@ -825,21 +832,21 @@
                                 $couponDiscount = (float) ($order->discount_amount ?? 0);
                             @endphp
                             <tr>
-                                <th colspan="4" class="text-right">Subtotal:</th>
+                                <th colspan="5" class="text-right">Subtotal:</th>
                                 <td class="text-right">Rp {{ number_format($dppAfterTotal, 0, ',', '.') }}</td>
                             </tr>
                             @if($couponDiscount > 0)
                             <tr>
-                                <th colspan="4" class="text-right">Diskon:</th>
+                                <th colspan="5" class="text-right">Diskon:</th>
                                 <td class="text-right">-Rp {{ number_format($couponDiscount, 0, ',', '.') }}</td>
                             </tr>
                             @endif
                             <tr>
-                                <th colspan="4" class="text-right">Ongkos Kirim:</th>
+                                <th colspan="5" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
                             <tr style="font-size: 16px;">
-                                <th colspan="4" class="text-right">Total:</th>
+                                <th colspan="5" class="text-right">Total:</th>
                                 <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
                         </tfoot>

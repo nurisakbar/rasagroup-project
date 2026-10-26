@@ -31,6 +31,35 @@ class ZohoService
     }
 
     /**
+     * Resolve PPN (11%) Tax ID in Zoho Books
+     */
+    public function resolvePpnTaxId(): ?string
+    {
+        return Cache::remember('zoho_ppn_tax_id', 86400, function () {
+            try {
+                $response = $this->client()->get("{$this->apiDomain}/books/v3/settings/taxes");
+                if ($response->successful()) {
+                    $taxes = $response->json('taxes') ?? [];
+                    foreach ($taxes as $tax) {
+                        if (($tax['tax_percentage'] ?? 0) == 11 && strtolower((string) ($tax['status'] ?? '')) === 'active') {
+                            return (string) $tax['tax_id'];
+                        }
+                    }
+                    foreach ($taxes as $tax) {
+                        if (str_contains(strtolower((string) ($tax['tax_name'] ?? '')), 'ppn') && strtolower((string) ($tax['status'] ?? '')) === 'active') {
+                            return (string) $tax['tax_id'];
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ZohoService: failed to fetch taxes from Zoho', ['error' => $e->getMessage()]);
+            }
+
+            return '7386545000001141159'; // Default active PPN 11% Tax ID in Zoho Books
+        });
+    }
+
+    /**
      * Get active access token (cached or generate new)
      */
     public function getAccessToken(): string
@@ -250,15 +279,21 @@ class ZohoService
             $salesorderId = $order->zoho_salesorder_id;
             $zohoLineItems = [];
 
+            $taxId = ($order->pakai_ppn || ($order->user && $order->user->usesPpn())) ? $this->resolvePpnTaxId() : null;
+
             if (!$salesorderId) {
                 $lineItems = [];
                 foreach ($order->items as $item) {
                     $itemId = $this->resolveItem($item->product);
-                    $lineItems[] = [
+                    $lineItem = [
                         'item_id' => $itemId,
                         'quantity' => $item->quantity,
                         'rate' => $item->price,
                     ];
+                    if ($taxId) {
+                        $lineItem['tax_id'] = $taxId;
+                    }
+                    $lineItems[] = $lineItem;
                 }
 
                 $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", [
@@ -297,12 +332,17 @@ class ZohoService
             if (!$invoiceId) {
                 $invoiceLineItems = [];
                 foreach ($zohoLineItems as $zItem) {
-                    $invoiceLineItems[] = [
+                    $invItem = [
                         'item_id' => $zItem['item_id'],
                         'salesorder_item_id' => $zItem['line_item_id'] ?? null,
                         'quantity' => $zItem['quantity'],
                         'rate' => $zItem['rate'],
                     ];
+                    $appliedTaxId = !empty($zItem['tax_id']) ? $zItem['tax_id'] : $taxId;
+                    if ($appliedTaxId) {
+                        $invItem['tax_id'] = $appliedTaxId;
+                    }
+                    $invoiceLineItems[] = $invItem;
                 }
 
                 $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", [
