@@ -528,6 +528,30 @@ class OrderController extends Controller
     }
 
     /**
+     * Re-send or manually trigger finance approval notification to EDMS.
+     */
+    public function notifyEdms(Order $order)
+    {
+        try {
+            \App\Jobs\NotifyExternalFinanceApprovalNeeded::dispatchSync($order, force: true);
+            $order->refresh();
+
+            if ($order->edms_notification_status === 'SUCCESS') {
+                return back()->with('success', 'Notifikasi approval finance berhasil dikirim ke EDMS.');
+            } else {
+                $err = $order->edms_notification_error ?? 'Pengiriman ke EDMS belum berhasil.';
+                return back()->with('error', 'Gagal mengirim notifikasi ke EDMS: ' . $err);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Manual EDMS Notification Exception', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', 'Terjadi kesalahan saat mengirim ke EDMS: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Notify warehouse/hub after finance approves TOP.
      */
     private function notifyHubAfterFinanceApproval(Order $order): void

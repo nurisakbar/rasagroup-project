@@ -84,6 +84,10 @@ class Order extends Model
         'zoho_salesorder_id',
         'zoho_invoice_id',
         'zoho_payment_id',
+        'edms_notification_status',
+        'edms_notified_at',
+        'edms_notification_response',
+        'edms_notification_error',
     ];
 
     protected $hidden = [
@@ -108,6 +112,7 @@ class Order extends Model
         'payment_submitted_at' => 'datetime',
         'finance_approved' => 'boolean',
         'finance_approved_at' => 'datetime',
+        'edms_notified_at' => 'datetime',
         'qad_sync_history' => 'array',
     ];
 

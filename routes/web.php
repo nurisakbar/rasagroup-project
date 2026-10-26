@@ -302,6 +302,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/orders/{order}/tracking', [App\Http\Controllers\Admin\OrderController::class, 'updateTracking'])->name('orders.update-tracking');
         Route::put('/orders/{order}/payment', [App\Http\Controllers\Admin\OrderController::class, 'updatePayment'])->name('orders.update-payment');
         Route::put('/orders/{order}/approve-finance', [App\Http\Controllers\Admin\OrderController::class, 'approveFinance'])->name('orders.approve-finance');
+        Route::post('/orders/{order}/notify-edms', [App\Http\Controllers\Admin\OrderController::class, 'notifyEdms'])->name('orders.notify-edms');
         Route::get('/orders/{order}/track', [App\Http\Controllers\Admin\OrderController::class, 'trackOrder'])->name('orders.track');
         Route::post('/orders/{order}/ekspedisiku-booking', [App\Http\Controllers\Admin\OrderController::class, 'createEkspedisikuBooking'])->name('orders.ekspedisiku-booking');
         Route::post('/orders/{order}/ekspedisiku-reset-booking', [App\Http\Controllers\Admin\OrderController::class, 'resetEkspedisikuBooking'])->name('orders.ekspedisiku-reset-booking');

@@ -19,7 +19,7 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
 
     public int $backoff = 30;
 
-    public function __construct(public Order $order)
+    public function __construct(public Order $order, public bool $force = false)
     {
     }
 
@@ -32,12 +32,17 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
             ]);
+
+            $this->order->update([
+                'edms_notification_status' => 'SKIPPED',
+                'edms_notification_error' => 'FINANCE_APPROVAL_WEBHOOK_URL belum dikonfigurasi di environment.',
+            ]);
             return;
         }
 
         $this->order->loadMissing(['user', 'sourceWarehouse', 'items.product']);
 
-        if (!$this->order->isAwaitingFinanceApproval()) {
+        if (!$this->force && !$this->order->isAwaitingFinanceApproval()) {
             Log::info('Finance approval webhook skipped: order tidak menunggu approval', [
                 'order_id' => $this->order->id,
                 'finance_approved' => $this->order->finance_approved,
@@ -50,6 +55,7 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
+            'User-Agent' => 'RasaConnect/1.0 (Linux; Laravel)',
         ];
 
         $token = config('services.finance_approval.webhook_token');
@@ -68,25 +74,50 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
             'url' => $url,
         ]);
 
-        $response = Http::timeout((int) config('services.finance_approval.timeout', 15))
-            ->withHeaders($headers)
-            ->post($url, $payload);
+        try {
+            $response = Http::timeout((int) config('services.finance_approval.timeout', 15))
+                ->withHeaders($headers)
+                ->post($url, $payload);
 
-        if ($response->failed()) {
-            Log::error('Finance approval webhook gagal', [
+            if ($response->failed()) {
+                $errBody = $response->body();
+                Log::error('Finance approval webhook gagal', [
+                    'order_id' => $this->order->id,
+                    'status' => $response->status(),
+                    'body' => $errBody,
+                ]);
+
+                $this->order->update([
+                    'edms_notification_status' => 'FAILED',
+                    'edms_notified_at' => now(),
+                    'edms_notification_error' => 'HTTP ' . $response->status() . ': ' . substr($errBody, 0, 500),
+                ]);
+
+                $response->throw();
+            }
+
+            $resBody = $response->json() ?? $response->body();
+            Log::info('Finance approval webhook sukses', [
                 'order_id' => $this->order->id,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $resBody,
             ]);
 
-            $response->throw();
-        }
+            $this->order->update([
+                'edms_notification_status' => 'SUCCESS',
+                'edms_notified_at' => now(),
+                'edms_notification_response' => is_array($resBody) ? json_encode($resBody) : (string) $resBody,
+                'edms_notification_error' => null,
+            ]);
+        } catch (\Throwable $e) {
+            $this->order->update([
+                'edms_notification_status' => 'FAILED',
+                'edms_notified_at' => now(),
+                'edms_notification_error' => $e->getMessage(),
+            ]);
 
-        Log::info('Finance approval webhook sukses', [
-            'order_id' => $this->order->id,
-            'status' => $response->status(),
-            'body' => $response->json() ?? $response->body(),
-        ]);
+            throw $e;
+        }
     }
 
     protected function buildPayload(): array
