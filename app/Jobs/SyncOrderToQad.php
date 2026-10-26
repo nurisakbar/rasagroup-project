@@ -365,7 +365,6 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'purchaseOrderNumber' => $purchaseOrderNumber,
             'taxClass' => 'PPN',
             'isTaxable' => $this->isTaxableForQad(),
-            'salespersonCode_01' => $this->salespersonCodeForQad() ?? '',
             'isLinePricing' => true,
             'isReprice' => false,
             'isSelfBillingEnabled' => false,
@@ -373,6 +372,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             'isSBAccountsEnabled' => false,
             'salesOrderLines' => $lines,
         ];
+
+        $salespersonCode = $this->salespersonCodeForQad();
+        if (! empty($salespersonCode)) {
+            $payload['salespersonCode_01'] = $salespersonCode;
+        }
 
         return $payload;
     }
@@ -540,6 +544,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             if ($soNumber) {
                 $orderUpdates = ['qad_so_number' => $soNumber];
                 $salesCodeResolved = $this->salespersonCodeForQad();
+                if (! $salesCodeResolved && ! empty($data['soSalespersons'][0]['salespersonCode'])) {
+                    $salesCodeResolved = trim((string) $data['soSalespersons'][0]['salespersonCode']);
+                }
                 if ($salesCodeResolved && empty($this->order->sales_code)) {
                     $orderUpdates['sales_code'] = $salesCodeResolved;
                 }
