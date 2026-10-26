@@ -1059,52 +1059,75 @@
                                             <span class="text-muted">Tidak Berlaku (Bukan TOP)</span>
                                         @endif
                                     @endif
-
-                                    @if($order->payment_method === 'term_of_payment')
-                                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e4e7ea;">
-                                            <div style="margin-bottom: 4px;">
-                                                <strong style="font-size: 11px; text-transform: uppercase; color: #6c757d;">Notifikasi EDMS:</strong>
-                                                @if($order->edms_notification_status === 'SUCCESS')
-                                                    <span class="label label-success" title="Response: {{ is_array($order->edms_notification_response) ? json_encode($order->edms_notification_response) : $order->edms_notification_response }}">
-                                                        <i class="fa fa-check"></i> Terkirim ke EDMS
-                                                    </span>
-                                                    @if($order->edms_notified_at)
-                                                        <span class="text-muted" style="font-size: 11px; margin-left: 4px;">
-                                                            ({{ \App\Support\Wib::format($order->edms_notified_at, 'd M Y H:i') }} WIB)
-                                                        </span>
-                                                    @endif
-                                                @elseif($order->edms_notification_status === 'FAILED')
-                                                    <span class="label label-danger" title="{{ $order->edms_notification_error }}">
-                                                        <i class="fa fa-times"></i> Gagal Terkirim
-                                                    </span>
-                                                @elseif($order->edms_notification_status === 'SKIPPED')
-                                                    <span class="label label-default" title="{{ $order->edms_notification_error }}">
-                                                        <i class="fa fa-ban"></i> Dilewati
-                                                    </span>
-                                                @else
-                                                    <span class="label label-warning">
-                                                        <i class="fa fa-clock-o"></i> Belum Dikirim
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            @if($order->edms_notification_error)
-                                                <div class="text-danger" style="font-size: 11px; margin-bottom: 5px; background: #fff3f3; padding: 4px 6px; border-radius: 3px; border-left: 3px solid #dd4b39;">
-                                                    <i class="fa fa-exclamation-triangle"></i> {{ \Illuminate\Support\Str::limit($order->edms_notification_error, 140) }}
-                                                </div>
-                                            @endif
-
-                                            <form action="{{ route('admin.orders.notify-edms', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Mengirim...';">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs {{ $order->edms_notification_status === 'SUCCESS' ? 'btn-default' : 'btn-primary' }}" style="margin-top: 2px;" title="Kirim notifikasi approval finance ke EDMS">
-                                                    <i class="fa fa-paper-plane"></i> {{ $order->edms_notification_status === 'SUCCESS' ? 'Kirim Ulang ke EDMS' : 'Kirim Notifikasi ke EDMS' }}
-                                                </button>
-                                            </form>
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                         </li>
+
+                        <!-- Notifikasi EDMS Log (Section Terpisah) -->
+                        @if($order->payment_method === 'term_of_payment')
+                        <li>
+                            @php
+                                $edmsColor = 'bg-yellow';
+                                $edmsIcon = 'fa-clock-o';
+                                if($order->edms_notification_status === 'SUCCESS') {
+                                    $edmsColor = 'bg-green';
+                                    $edmsIcon = 'fa-paper-plane';
+                                } elseif($order->edms_notification_status === 'FAILED') {
+                                    $edmsColor = 'bg-red';
+                                    $edmsIcon = 'fa-exclamation-triangle';
+                                } elseif($order->edms_notification_status === 'SKIPPED') {
+                                    $edmsColor = 'bg-gray';
+                                    $edmsIcon = 'fa-ban';
+                                }
+                            @endphp
+                            <i class="fa {{ $edmsIcon }} {{ $edmsColor }}"></i>
+                            <div class="timeline-item border-0">
+                                <span class="time"><i class="fa fa-clock-o"></i> {{ $order->edms_notified_at ? \App\Support\Wib::format($order->edms_notified_at, 'd M H:i') . ' WIB' : '-' }}</span>
+                                <h3 class="timeline-header" style="border-bottom: none; font-size: 13px;">
+                                    <strong>Notifikasi EDMS</strong>
+                                </h3>
+                                <div class="timeline-body" style="padding-top: 0; padding-bottom: 5px;">
+                                    @if($order->edms_notification_status === 'SUCCESS')
+                                        <span class="label label-success" title="Response: {{ is_array($order->edms_notification_response) ? json_encode($order->edms_notification_response) : $order->edms_notification_response }}">
+                                            <i class="fa fa-check"></i> Terkirim ke EDMS
+                                        </span>
+                                        @if($order->edms_notified_at)
+                                            <div class="text-muted" style="font-size: 11px; margin-top: 4px;">
+                                                Terkirim pada {{ \App\Support\Wib::format($order->edms_notified_at, 'd M Y H:i') }} WIB
+                                            </div>
+                                        @endif
+                                    @elseif($order->edms_notification_status === 'FAILED')
+                                        <span class="label label-danger" title="{{ $order->edms_notification_error }}">
+                                            <i class="fa fa-times"></i> Gagal Terkirim
+                                        </span>
+                                    @elseif($order->edms_notification_status === 'SKIPPED')
+                                        <span class="label label-default" title="{{ $order->edms_notification_error }}">
+                                            <i class="fa fa-ban"></i> Dilewati (Config Kosong)
+                                        </span>
+                                    @else
+                                        <span class="label label-warning">
+                                            <i class="fa fa-clock-o"></i> Belum Dikirim ke EDMS
+                                        </span>
+                                    @endif
+
+                                    @if($order->edms_notification_error)
+                                        <div class="text-danger" style="font-size: 11px; margin-top: 5px; background: #fff3f3; padding: 4px 6px; border-radius: 3px; border-left: 3px solid #dd4b39;">
+                                            <i class="fa fa-exclamation-triangle"></i> {{ \Illuminate\Support\Str::limit($order->edms_notification_error, 140) }}
+                                        </div>
+                                    @endif
+
+                                    <div style="margin-top: 8px;">
+                                        <form action="{{ route('admin.orders.notify-edms', $order) }}" method="POST" style="display:inline;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=&quot;fa fa-spinner fa-spin&quot;></i> Mengirim...';">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs {{ $order->edms_notification_status === 'SUCCESS' ? 'btn-default' : 'btn-success' }}" title="Kirim notifikasi approval finance ke EDMS">
+                                                <i class="fa fa-paper-plane"></i> {{ $order->edms_notification_status === 'SUCCESS' ? 'Kirim Ulang ke EDMS' : 'Kirim ke EDMS' }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        @endif
 
                         <!-- WMS Sync Log -->
                         <li>
