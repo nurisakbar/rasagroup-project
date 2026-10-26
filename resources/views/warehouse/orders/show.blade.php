@@ -737,14 +737,18 @@
                                     $orderUsesPpn = ($order->pakai_ppn ?? true) && (! $order->user || $order->user->usesPpn());
                                     $itemTaxPercent = $orderUsesPpn ? \App\Models\Setting::taxPercent() : 0.0;
                                     $priceWithoutTax = \App\Support\TaxAwarePrice::excludingTax($priceBefore, $itemTaxPercent);
+                                    $priceWithoutTaxAfter = $item->unitPriceAfterDiscount();
                                     $priceAfter = $item->orderedPriceWithTax();
                                     $qtyDisplay = max(1, $item->displayQuantity());
                                     $lineBefore = $priceBefore * $qtyDisplay;
                                     $lineAfter = $priceAfter * $qtyDisplay;
                                     $dppBeforeTotal += $lineBefore;
                                     $dppAfterTotal += $lineAfter;
-                                    $lineDiscount = max(0, $priceBefore - $priceAfter);
-                                    $lineDiscountPercent = $priceBefore > 0 ? ($lineDiscount / $priceBefore) * 100 : 0;
+                                    $lineDiscount = max(0, $priceWithoutTax - $priceWithoutTaxAfter);
+                                    $lineDiscountPercent = $item->unitDiscountPercent();
+                                    if ($lineDiscountPercent <= 0 && $priceWithoutTax > 0) {
+                                        $lineDiscountPercent = ($lineDiscount / $priceWithoutTax) * 100;
+                                    }
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
                                 @endphp
                                 <tr>
@@ -809,7 +813,7 @@
                                     </td>
                                     <td class="text-right">
                                         @if($lineDiscount > 0)
-                                            <span class="text-danger">Rp {{ number_format($lineDiscount, 0, ',', '.') }}</span>
+                                            <span class="text-danger" title="Rp {{ number_format($lineDiscount, 2, ',', '.') }}">Rp {{ number_format($lineDiscount, 0, ',', '.') }}</span>
                                             @if($lineDiscountPercent > 0)
                                                 <br><small class="text-muted">({{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%)</small>
                                             @endif
