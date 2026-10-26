@@ -728,27 +728,23 @@
                         </thead>
                         <tbody>
                             @php
-                                $dppBeforeTotal = 0;
-                                $dppAfterTotal = 0;
+                                $subtotalDpp = 0;
+                                $orderUsesPpn = ($order->pakai_ppn ?? true) && (! $order->user || $order->user->usesPpn());
+                                $itemTaxPercent = $orderUsesPpn ? \App\Models\Setting::taxPercent() : 0.0;
                             @endphp
                             @foreach($order->items as $item)
                                 @php
                                     $priceBefore = $item->catalogUnitPrice() * $item->displayPriceMultiplier();
-                                    $orderUsesPpn = ($order->pakai_ppn ?? true) && (! $order->user || $order->user->usesPpn());
-                                    $itemTaxPercent = $orderUsesPpn ? \App\Models\Setting::taxPercent() : 0.0;
                                     $priceWithoutTax = \App\Support\TaxAwarePrice::excludingTax($priceBefore, $itemTaxPercent);
                                     $priceWithoutTaxAfter = $item->unitPriceAfterDiscount();
-                                    $priceAfter = $item->orderedPriceWithTax();
-                                    $qtyDisplay = max(1, $item->displayQuantity());
-                                    $lineBefore = $priceBefore * $qtyDisplay;
-                                    $lineAfter = $priceAfter * $qtyDisplay;
-                                    $dppBeforeTotal += $lineBefore;
-                                    $dppAfterTotal += $lineAfter;
                                     $lineDiscount = max(0, $priceWithoutTax - $priceWithoutTaxAfter);
                                     $lineDiscountPercent = $item->unitDiscountPercent();
                                     if ($lineDiscountPercent <= 0 && $priceWithoutTax > 0) {
                                         $lineDiscountPercent = ($lineDiscount / $priceWithoutTax) * 100;
                                     }
+                                    $qtyDisplay = max(1, $item->displayQuantity());
+                                    $lineSubtotal = max(0, $priceWithoutTax - $lineDiscount) * $qtyDisplay;
+                                    $subtotalDpp += $lineSubtotal;
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
                                 @endphp
                                 <tr>
@@ -827,22 +823,38 @@
                                             <div class="text-muted small">Basis: {{ number_format($item->quantity) }}</div>
                                         @endif
                                     </td>
-                                    <td class="text-right">Rp {{ number_format($lineAfter, 0, ',', '.') }}</td>
+                                    <td class="text-right">
+                                        <span title="Rp {{ number_format($lineSubtotal, 2, ',', '.') }}">Rp {{ number_format($lineSubtotal, 0, ',', '.') }}</span>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
                             @php
                                 $couponDiscount = (float) ($order->discount_amount ?? 0);
+                                $taxableAmount = max(0, $subtotalDpp - $couponDiscount);
+                                $taxAmount = $itemTaxPercent > 0 ? round($taxableAmount * ($itemTaxPercent / 100), 2) : 0.0;
+                                $ppnLabel = \App\Support\TaxAwarePrice::ppnLabel($itemTaxPercent);
                             @endphp
                             <tr>
                                 <th colspan="5" class="text-right">Subtotal:</th>
-                                <td class="text-right">Rp {{ number_format($dppAfterTotal, 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format($subtotalDpp, 0, ',', '.') }}</td>
                             </tr>
                             @if($couponDiscount > 0)
                             <tr>
                                 <th colspan="5" class="text-right">Diskon:</th>
                                 <td class="text-right">-Rp {{ number_format($couponDiscount, 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
+                            @if($orderUsesPpn && $taxAmount > 0)
+                            <tr>
+                                <th colspan="5" class="text-right">Pajak ({{ $ppnLabel }}):</th>
+                                <td class="text-right">Rp {{ number_format($taxAmount, 0, ',', '.') }}</td>
+                            </tr>
+                            @elseif(! $orderUsesPpn)
+                            <tr>
+                                <th colspan="5" class="text-right">Pajak:</th>
+                                <td class="text-right"><span class="text-muted">Dibebaskan (0%)</span></td>
                             </tr>
                             @endif
                             <tr>
