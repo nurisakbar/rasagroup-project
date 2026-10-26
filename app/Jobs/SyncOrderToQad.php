@@ -209,8 +209,8 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 ]);
             }
 
-            $soldPrice = (int) round(max(0.0, (float) $price));
-            $catalogPrice = (int) round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()));
+            $soldPrice = round(max(0.0, (float) $price), 2);
+            $catalogPrice = round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()), 2);
             $discountPercent = (float) $item->unitDiscountPercent();
             if ($discountPercent <= 0 && $catalogPrice > $soldPrice && $catalogPrice > 0) {
                 $discountPercent = round((($catalogPrice - $soldPrice) / $catalogPrice) * 100, 2);
