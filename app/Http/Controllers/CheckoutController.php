@@ -913,10 +913,10 @@ class CheckoutController extends Controller
             
             $wmsLocationCode = \App\Services\WmsService::locationCode($sourceWarehouse);
             $wmsStock = null;
-            if ($usesWms && $wmsLocationCode) {
+            if (($usesWms || $usesJubelio) && $wmsLocationCode) {
                 $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
                     $sourceWarehouse,
-                    $user->shelfLifeMonths()
+                    $user ? $user->shelfLifeMonths() : 0
                 );
             }
 
@@ -947,12 +947,22 @@ class CheckoutController extends Controller
                         }
                     }
 
-                    if ($availableStock === 0 && empty($checkedKeys)) {
-                        $stockErrors[] = "{$productName}: Produk tidak tersedia/belum di-assign di gudang Jubelio.";
-                        continue;
+                    // Pengecekan stock dari WMS juga jika tersedia
+                    $actualWmsStock = 0;
+                    if ($wmsLocationCode && $wmsStock !== null) {
+                        foreach ($productCodes as $code) {
+                            $key = strtoupper(trim((string) $code));
+                            $actualWmsStock += (int) ($wmsStock[$key] ?? 0);
+                        }
                     }
-                    if ($qty > $availableStock) {
-                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$availableStock} (Jubelio).";
+
+                    $finalAvailableStock = max($availableStock, $actualWmsStock);
+                    if ($finalAvailableStock === 0 && $dbStock > 0) {
+                        $finalAvailableStock = $dbStock;
+                    }
+
+                    if ($qty > $finalAvailableStock) {
+                        $stockErrors[] = "{$productName}: Dipesan {$qty}, tersedia {$finalAvailableStock} (Jubelio: {$availableStock}, WMS: {$actualWmsStock}).";
                     }
                 } else if ($wmsLocationCode && $wmsStock !== null) {
                     $productCodes = $cart->product->getAllCodes();
@@ -1683,7 +1693,7 @@ class CheckoutController extends Controller
             $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
             $wmsStock = null;
             
-            if ($usesWms && $wmsLocationCode) {
+            if (($usesWms || $usesJubelio) && $wmsLocationCode) {
                 $wmsStock = app(\App\Services\WmsService::class)->qtyByItemCode(
                     $currentHub,
                     $user?->shelfLifeMonths() ?? 0
@@ -1727,7 +1737,20 @@ class CheckoutController extends Controller
                             $availableStock += (int) ($jItem['available_qty'] ?? 0);
                         }
                     }
-                    $finalStock = $availableStock;
+
+                    // Pengecekan stock dari WMS juga jika tersedia
+                    $actualWmsStock = 0;
+                    if ($wmsLocationCode && $wmsStock !== null) {
+                        foreach ($productCodes as $code) {
+                            $key = strtoupper(trim((string) $code));
+                            $actualWmsStock += (int) ($wmsStock[$key] ?? 0);
+                        }
+                    }
+
+                    $finalStock = max($availableStock, $actualWmsStock);
+                    if ($finalStock === 0 && $dbStock > 0) {
+                        $finalStock = $dbStock;
+                    }
                 } else if ($wmsLocationCode && $wmsStock !== null) {
                     $productCodes = $cart->product->getAllCodes();
                     $actualWmsStock = 0;

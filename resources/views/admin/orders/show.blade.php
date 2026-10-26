@@ -678,9 +678,8 @@
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th class="text-right">Harga katalog</th>
-                                <th class="text-right">Diskon</th>
                                 <th class="text-right">Harga jual</th>
+                                <th class="text-right">Diskon</th>
                                 <th class="text-center">Jumlah</th>
                                 <th class="text-right">Subtotal</th>
                             </tr>
@@ -770,9 +769,6 @@
                                             -
                                         @endif
                                     </td>
-                                    <td class="text-right">
-                                        <strong>Rp {{ number_format($priceAfter, 0, ',', '.') }}</strong>
-                                    </td>
                                     <td class="text-center">
                                         {{ $item->orderedQuantityDescription() }}
                                         @if(! $item->displaysLargeUnit())
@@ -788,36 +784,23 @@
                                 $couponDiscount = (float) ($order->discount_amount ?? 0);
                             @endphp
                             <tr>
-                                <th colspan="5" class="text-right">Subtotal:</th>
+                                <th colspan="4" class="text-right">Subtotal:</th>
                                 <td class="text-right">Rp {{ number_format($dppAfterTotal, 0, ',', '.') }}</td>
                             </tr>
                             @if($couponDiscount > 0)
                             <tr>
-                                <th colspan="5" class="text-right">Diskon:</th>
+                                <th colspan="4" class="text-right">Diskon:</th>
                                 <td class="text-right">-Rp {{ number_format($couponDiscount, 0, ',', '.') }}</td>
                             </tr>
                             @endif
                             <tr>
-                                <th colspan="5" class="text-right">Ongkos Kirim:</th>
+                                <th colspan="4" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">Rp {{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
                             <tr style="font-size: 16px;">
-                                <th colspan="5" class="text-right">Total:</th>
+                                <th colspan="4" class="text-right">Total:</th>
                                 <th class="text-right">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
-                            @if($order->order_type === 'distributor')
-                            <tr class="bg-yellow">
-                                <th colspan="5" class="text-right"><i class="fa fa-star"></i> Poin Didapat:</th>
-                                <td class="text-right">
-                                    <strong>+{{ number_format($order->points_earned, 0, ',', '.') }}</strong>
-                                    @if($order->points_credited)
-                                        <span class="label label-success">Dikreditkan</span>
-                                    @else
-                                        <span class="label label-default">Pending</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endif
                         </tfoot>
                     </table>
                 </div>

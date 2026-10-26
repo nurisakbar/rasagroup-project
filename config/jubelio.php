@@ -51,4 +51,13 @@ return [
         'enabled' => env('JUBELIO_PRODUCT_CONTENT_SYNC_ENABLED', true),
         'replace_gallery' => env('JUBELIO_PRODUCT_CONTENT_REPLACE_GALLERY', true),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sinkronisasi Stok (GET /inventory/items/all-stocks/)
+    |--------------------------------------------------------------------------
+    */
+    'stock_sync' => [
+        'enabled' => env('JUBELIO_STOCK_SYNC_ENABLED', true),
+    ],
 ];

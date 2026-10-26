@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\QadInventory;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use Illuminate\Support\Facades\DB;
@@ -32,12 +33,32 @@ class JubelioStockSyncService
             throw new \RuntimeException('Tidak ada hub lokal yang cocok dengan lokasi Jubelio. Sinkronkan hub terlebih dahulu.');
         }
 
-        $productsByCode = Product::query()
+        $products = Product::query()
             ->whereNotNull('code')
             ->where('code', '!=', '')
-            ->pluck('id', 'code');
+            ->get(['id', 'code']);
+
+        $productsByCode = [];
+        foreach ($products as $p) {
+            $productsByCode[strtoupper(trim($p->code))] = $p->id;
+        }
 
         $stockItems = $this->jubelio->fetchStocksByItemIds($token, $itemIds);
+
+        // Ambil stok fisik dari WMS/QAD untuk gudang-gudang terkait
+        $warehouses = Warehouse::whereIn('id', array_values($locationToWarehouse))->get()->keyBy('id');
+        $wmsStockByWarehouse = [];
+        foreach ($warehouses as $wh) {
+            if (!empty($wh->qad_location_code)) {
+                $wmsStockByWarehouse[$wh->id] = QadInventory::where('qad_location_code', $wh->qad_location_code)
+                    ->where('qty', '>', 0)
+                    ->selectRaw('UPPER(TRIM(item_code)) as item_code, sum(qty) as total_qty')
+                    ->groupBy(DB::raw('UPPER(TRIM(item_code))'))
+                    ->pluck('total_qty', 'item_code')
+                    ->map(fn($q) => (int) $q)
+                    ->toArray();
+            }
+        }
 
         $stats = [
             'stock_rows' => 0,
@@ -46,11 +67,12 @@ class JubelioStockSyncService
             'skipped_locations' => 0,
         ];
 
-        DB::transaction(function () use ($stockItems, $locationToWarehouse, $productsByCode, &$stats) {
+        DB::transaction(function () use ($stockItems, $locationToWarehouse, $productsByCode, $wmsStockByWarehouse, &$stats) {
             $syncedProducts = [];
 
             foreach ($stockItems as $item) {
-                $itemCode = $item['item_code'] ?? null;
+                $rawCode = $item['item_code'] ?? null;
+                $itemCode = strtoupper(trim((string) $rawCode));
                 if (!$itemCode || !isset($productsByCode[$itemCode])) {
                     $stats['skipped_products']++;
                     continue;
@@ -68,13 +90,17 @@ class JubelioStockSyncService
                         continue;
                     }
 
+                    $jubelioQty = max(0, (int) ($locationStock['available'] ?? $locationStock['on_hand'] ?? 0));
+                    $wmsQty = (int) ($wmsStockByWarehouse[$warehouseId][$itemCode] ?? 0);
+                    $effectiveStock = max($jubelioQty, $wmsQty);
+
                     WarehouseStock::updateOrCreate(
                         [
                             'warehouse_id' => $warehouseId,
                             'product_id' => $productId,
                         ],
                         [
-                            'stock' => max(0, (int) ($locationStock['available'] ?? $locationStock['on_hand'] ?? 0)),
+                            'stock' => $effectiveStock,
                         ]
                     );
 
@@ -82,12 +108,106 @@ class JubelioStockSyncService
                 }
             }
 
+            // Pastikan item yang memiliki stok fisik di WMS tapi tidak terdaftar di Jubelio juga ter-update
+            foreach ($wmsStockByWarehouse as $whId => $wmsItems) {
+                foreach ($wmsItems as $wmsCode => $wmsQty) {
+                    if ($wmsQty <= 0) continue;
+                    $pId = $productsByCode[$wmsCode] ?? null;
+                    if (!$pId) continue;
+
+                    $existing = WarehouseStock::where('warehouse_id', $whId)->where('product_id', $pId)->first();
+                    if (!$existing || $existing->stock < $wmsQty) {
+                        WarehouseStock::updateOrCreate(
+                            ['warehouse_id' => $whId, 'product_id' => $pId],
+                            ['stock' => $wmsQty]
+                        );
+                        $syncedProducts[$pId] = true;
+                        $stats['stock_rows']++;
+                    }
+                }
+            }
+
             $stats['products'] = count($syncedProducts);
         });
 
-        Log::info('Jubelio stock sync finished', $stats);
+        Log::info('Jubelio and WMS stock sync finished', $stats);
 
         return $stats;
+    }
+
+    /**
+     * Sinkronkan stok satu gudang spesifik secara langsung (Jubelio + WMS).
+     */
+    public function syncWarehouse(Warehouse $warehouse): int
+    {
+        if (empty($warehouse->kode_hub)) {
+            return 0;
+        }
+
+        $token = $this->jubelio->login();
+        $locationId = $this->jubelio->findLocationIdByCode($token, $warehouse->kode_hub);
+        if (!$locationId) {
+            return 0;
+        }
+
+        $items = $this->jubelio->fetchItemsToSell($token, $locationId);
+        $products = Product::query()
+            ->whereNotNull('code')
+            ->where('code', '!=', '')
+            ->get(['id', 'code']);
+
+        $productsByCode = [];
+        foreach ($products as $p) {
+            $productsByCode[strtoupper(trim($p->code))] = $p->id;
+        }
+
+        $qadCode = $warehouse->qad_location_code;
+        $wmsTotals = [];
+        if (!empty($qadCode)) {
+            $wmsTotals = QadInventory::where('qad_location_code', $qadCode)
+                ->where('qty', '>', 0)
+                ->selectRaw('UPPER(TRIM(item_code)) as item_code, sum(qty) as total_qty')
+                ->groupBy(DB::raw('UPPER(TRIM(item_code))'))
+                ->pluck('total_qty', 'item_code')
+                ->map(fn($q) => (int) $q)
+                ->toArray();
+        }
+
+        $updated = 0;
+        DB::transaction(function () use ($items, $productsByCode, $wmsTotals, $warehouse, &$updated) {
+            foreach ($items as $item) {
+                $itemCode = strtoupper(trim((string) ($item['item_code'] ?? '')));
+                $productId = $productsByCode[$itemCode] ?? null;
+                if (!$productId) continue;
+
+                $jubelioQty = max(0, (int) ($item['available_qty'] ?? 0));
+                $wmsQty = (int) ($wmsTotals[$itemCode] ?? 0);
+                $finalStock = max($jubelioQty, $wmsQty);
+
+                WarehouseStock::updateOrCreate(
+                    ['warehouse_id' => $warehouse->id, 'product_id' => $productId],
+                    ['stock' => $finalStock]
+                );
+                $updated++;
+            }
+
+            foreach ($wmsTotals as $wmsCode => $wmsQty) {
+                if ($wmsQty <= 0) continue;
+                $productId = $productsByCode[$wmsCode] ?? null;
+                if (!$productId) continue;
+
+                $existing = WarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $productId)->first();
+                if (!$existing || $existing->stock < $wmsQty) {
+                    WarehouseStock::updateOrCreate(
+                        ['warehouse_id' => $warehouse->id, 'product_id' => $productId],
+                        ['stock' => $wmsQty]
+                    );
+                    $updated++;
+                }
+            }
+        });
+
+        return $updated;
     }
 
     /**

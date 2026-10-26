@@ -24,5 +24,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \App\Jobs\SyncQadInventoryJob::ensureQueued();
+        \App\Jobs\SyncJubelioStockJob::ensureQueued();
     }
 }

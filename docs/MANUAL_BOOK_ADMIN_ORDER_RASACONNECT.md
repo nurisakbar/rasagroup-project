@@ -1,7 +1,7 @@
 # BUKU PANDUAN OPERASIONAL ADMIN (MANUAL BOOK)
 ## Penerimaan, Verifikasi & Pemrosesan Pesanan Portal RasaConnect
 **Versi Dokumen:** 2.0 | **Tanggal Rilis:** Oktober 2026  
-**Klasifikasi:** Internal Operational Guide (SOP) | **Target Pengguna:** Admin CS, Admin Operasional Hub, & Tim Finance
+**Klasifikasi:** Internal Operational Guide (SOP) | **Target Pengguna:** Admin CS / E-Commerce (Ecom), Admin Operasional Hub, & Tim Finance
 
 ---
 
@@ -12,8 +12,8 @@
 | **1** | Pendahuluan & Gambaran Umum | Klasifikasi Pesanan (Retail Online & Distributor TOP) & Bagan Alur Siklus Pesanan |
 | **2** | Navigasi Dashboard & Filter | Pemahaman 6 Tahapan Pesanan (Tab Filter Status), Pencarian, & Fitur Export Excel |
 | **3** | SOP Verifikasi Pembayaran | • 3.1. Pembayaran Otomatis (Payment Gateway Faspay)<br>• 3.2. Pembayaran Transfer Manual (Verifikasi Bukti Transfer)<br>• 3.3. Persetujuan Kredit Distributor (Term of Payment - TOP) |
-| **4** | Pemrosesan & Integrasi Sistem | • 4.1. Pemeriksaan Detail Item & Alokasi Hub Pengirim<br>• 4.2. Sinkronisasi ke QAD ERP (Pesanan Distributor)<br>• 4.3. Sinkronisasi ke Jubelio ERP (Pesanan Retail / Hub)<br>• 4.4. Pengiriman Sales Order ke WMS Gudang |
-| **5** | Pengelolaan Pengiriman & Logistik | • 5.1. Metode Ekspedisi Partner (EkspedisiKu: Booking Resi, Pickup, Lacak)<br>• 5.2. Metode Pengambilan Mandiri di Hub (Self-Pickup) |
+| **4** | Pemrosesan & Integrasi Sistem | • 4.1. Pemeriksaan Detail Item & Alokasi Hub Pengirim<br>• 4.2. Sinkronisasi ke QAD ERP (Pesanan Distributor)<br>• 4.3. Sinkronisasi ke Jubelio ERP (Pesanan Retail / Hub)<br>• 4.4. Pengiriman Sales Order ke WMS Gudang<br>• 4.5. Karakteristik Stok & Batch: QAD/WMS vs Jubelio Omnichannel |
+| **5** | Pengelolaan Pengiriman & Logistik | • 5.1. SOP Pemrosesan Pesanan Tim E-Commerce (Alur Booking Ekspedisi & Input Resi)<br>• 5.2. Metode Pengambilan Mandiri di Hub (Self-Pickup) |
 | **6** | Dokumen Operasional | • 6.1. Cetak Surat Jalan Resmi (Delivery Note)<br>• 6.2. Unduh Proforma Invoice Resmi |
 | **7** | Penyelesaian & Pembatalan | • 7.1. Konfirmasi Selesai & Kredit Poin Loyalitas Distributor<br>• 7.2. Prosedur Pembatalan Pesanan (Cancel Order) & Safety Guard |
 | **8** | Panduan Troubleshooting & FAQ | Penanganan Status Terkunci, Error Booking Ekspedisi, dan Gagal Sinkron QAD |
@@ -154,28 +154,91 @@ Untuk pesanan distributor, data wajib tercatat di QAD ERP untuk pemotongan *mast
 
 ---
 
+### 4.5. Karakteristik Stok & Nomor Batch: QAD/WMS vs Jubelio Omnichannel
+
+Dalam ekosistem RasaConnect, terdapat pemisahan fungsi dan arsitektur data stok yang tegas antara sistem inventori **QAD ERP / WMS** dengan **Jubelio Omnichannel**:
+
+| Parameter Inventori | QAD ERP / WMS (Gudang & Batch) | Jubelio (Omnichannel & Marketplace) |
+| :--- | :--- | :--- |
+| **Fokus & Peran Utama** | Kontrol stok fisik gudang riil, mutu barang, dan rotasi masa berlaku (*shelf-life*). | Penyelarasan kuota penjualan online secara terpusat ke berbagai saluran marketplace (Shopee, Tokopedia, TikTok, Web). |
+| **Dukungan Stok Batch (Lot Serial)** | **YA (Penuh)**. Mencatat nomor batch fisik (`lot_serial`), tanggal kedaluwarsa (`expired_at`), dan kuantiti fisik per batch. | **TIDAK**. Jubelio tidak mengelola rincian nomor batch. Jubelio hanya mencatat **total kuantiti agregat per SKU** di lokasi gudang (`on_hand`, `on_order`, `available`). |
+| **Penarikan Multi-SKU (2 SKU atau Lebih)** | **Bisa (Simultan)**. Modul `WmsService::batchesForItemCodes()` dapat menarik data batch untuk 2 SKU atau lebih sekaligus dalam satu kali panggilan sistem. | **Bisa untuk Total Stok Saja**. Jubelio dapat menarik data multi-SKU via endpoint `all-stocks`, namun hasilnya tetap berupa total saldo kuantiti per lokasi tanpa nomor batch. |
+| **Metode Alokasi Barang** | Menerapkan algoritma **FEFO (*First Expired, First Out*)** untuk memprioritaskan batch dengan masa kedaluwarsa terdekat. | Menerapkan kuota saldo global yang dikurangi *safety stock / buffer stock* toko. |
+| **Tampilan di Admin Hub (`/admin/warehouses`)** | Tampil di kolom **Fisik (WMS)** beserta rincian di bawah nama item: `Batch: [No. Batch] - Expired: [YYYY-MM-DD] - Jumlah: [Qty]`. | Tampil di kolom **Stok (Jubelio)** dengan indikator warna status saldo penjualan (Hijau / Kuning / Merah). |
+| **Format Ekspor Excel** | Tersedia lengkap pada sheet kedua (*Detail Batch*) saat mengklik tombol hijau **[Download Stock & Batch]**. | Tersedia pada sheet pertama (*Ringkasan Stok*) sebagai saldo kumulatif toko. |
+
+> [!NOTE]
+> **Pedoman Operasional Admin:**
+> - Jika admin memerlukan verifikasi **nomor batch, tanggal kedaluwarsa, atau fisik barang di rak gudang**, gunakan selalu data dari **WMS / QAD ERP**.
+> - Jika admin memeriksa **kuota jual barang online yang terhubung ke marketplace**, rujuklah data dari **Jubelio**.
+
+---
+
 ## 5. PENGELOLAAN PENGIRIMAN & LOGISTIK
 
 ![Proses Pengiriman Ekspedisi dan Resi](manual_book_images/04_pengiriman_ekspedisi_resi.png)
 *Gambar 5.1: Panel Pengiriman EkspedisiKu dengan Alur 3-Langkah (Booking, Pickup, Lacak).*
 
-### 5.1. Metode Ekspedisi Partner (EkspedisiKu / JNE / Lion Parcel)
-RasaConnect menyediakan alur logistik mandiri terintegrasi multikurir:
+### 5.1. SOP Pemrosesan Pesanan Tim E-Commerce (Alur Ekspedisi: Booking API & Input Resi)
 
-#### Step 1: Buat Booking (Generate Nomor Resi / AWB)
-1. Pada kartu **1. Buat Booking**, klik tombol hijau **Buat Booking**.
-2. Sistem secara otomatis menghubungi API EkspedisiKu dan menerbitkan **Nomor Resi / AWB** resmi (misal: `JNE000000000045` atau `LP-982341920`).
-3. Status pesanan otomatis beralih menjadi **Shipped (Dikirim)**.
-4. *Reset Booking:* Jika ada perubahan pilihan kurir sebelum barang dijemput, admin dapat menekan tombol merah **Reset Booking** untuk mengosongkan resi dan membuat booking ulang.
+Tim E-Commerce bertanggung jawab memproses pesanan retail online B2C dari status **Sedang Diproses (Processing)** hingga paket siap dan diserahkan kepada kurir pengiriman (**Shipped**).
 
-#### Step 2: Request Pickup (Khusus Armada Lion Parcel / Pick-up Service)
-1. Setelah resi terbit, kartu **2. Request Pickup** akan aktif.
-2. Klik tombol kuning **Request Pickup** untuk mengirim panggilan armada kurir ke alamat hub pengirim.
-3. Status akan tercatat `Requested` beserta jam pemanggilan. Jika kurir berhalangan hadir, tersedia tombol **Cancel Pickup** dan **Request Ulang**.
+Alur kerja Tim E-Commerce mencakup 5 (lima) tahapan utama:
 
-#### Step 3: Lacak Pengiriman (Live Tracking)
-1. Klik tombol biru **Lacak Resi**.
-2. Sistem akan membuka modal pelacakan riwayat perjalanan paket secara real-time (*Manifested, On Transit, Out for Delivery, Delivered*).
+#### Tahap 1: Filter & Buka Pesanan yang Siap Diproses
+1. Masuk ke menu navigasi: **Laporan Pesanan &rarr; Pesanan** (`/admin/orders`).
+2. Pada filter dropdown:
+   - **Tahapan Pesanan**: Pilih **Sedang Diproses** (menampilkan pesanan yang pembayarannya telah terverifikasi/lunas).
+   - **Tipe Order**: Pilih **Online (Regular)** untuk fokus pada pesanan retail e-commerce.
+3. Klik tombol **Filter** atau klik langsung tombol aksi **[Detail]** (ikon mata/dokumen) pada baris pesanan yang hendak diproses.
+
+#### Tahap 2: Pengecekan Item & Cetak Dokumen Operasional
+Sebelum menerbitkan nomor resi pengiriman, lakukan verifikasi fisik dan cetak dokumen operasional:
+1. **Periksa Rincian Pesanan**: Pastikan SKU produk, jumlah pack/karton, dan ketersediaan stok di Hub Pengirim sudah sesuai.
+2. **Cetak Dokumen Pengiriman**:
+   - Klik tombol **[Cetak Surat Jalan]** pada bagian atas layar untuk mencetak Surat Jalan resmi (*Delivery Note*) rangkap 2 (1 lembar arsip gudang/hub, 1 lembar menyertai fisik paket).
+   - Jika pembeli membutuhkan invoice tagihan resmi, klik tombol **[Download Proforma Invoice]**.
+
+#### Tahap 3: Penerbitan Nomor Resi Pengiriman (2 Pilihan Alur)
+Admin E-Commerce dapat menerbitkan nomor resi melalui salah satu dari dua metode di bawah ini sesuai kurir yang digunakan:
+
+##### Opsi A — Buat Booking Otomatis (EkspedisiKu API Partner)
+*Metode ini digunakan untuk kurir terintegrasi sistem (seperti Lion Parcel, JNE, SiCepat, Lalamove, J&T, SAP, Ninja, ID Express, Borzo).*
+
+1. Pada panel pengiriman di bagian atas halaman detail pesanan, perhatikan kartu **1. Buat Booking**.
+2. Pastikan rincian ekspedisi, layanan, bobot paket, dan alamat penerima telah tampil benar.
+3. Klik tombol hijau **Buat Booking**.
+4. **Respon Sistem Otomatis:**
+   - Sistem menghubungi API EkspedisiKu dan secara real-time menerbitkan **Nomor Resi / AWB resmi** (contoh: `LP-982341920` atau `JNE000000000045`).
+   - Nomor resi otomatis tersimpan ke data pesanan (`tracking_number`).
+   - Status pesanan otomatis diperbarui menjadi **Shipped (Dikirim)** dan mencatat waktu pengiriman (`shipped_at`).
+   - Sinkronisasi Sales Order ke QAD/WMS otomatis dijadwalkan di latar belakang.
+5. **Fitur Reset Booking (Jika Terjadi Kesalahan):**
+   - Apabila terdapat pembatalan pesanan atau perubahan kurir sebelum paket diserahkan/dijemput, admin dapat mengklik tombol merah **Reset Booking** (didukung untuk Lion Parcel, Lalamove, SiCepat).
+   - Sistem akan mengosongkan nomor resi dan mengembalikan pesanan ke status sebelum booking agar admin dapat melakukan booking ulang.
+
+##### Opsi B — Input Nomor Resi Manual (Kurir Eksternal / Offline / Agen Drop-Off)
+*Metode ini digunakan jika pemesanan kurir dilakukan di luar sistem (misalnya: booking lewat aplikasi kurir pihak ketiga, kurir internal toko, drop-off mandiri ke counter agen, atau armada kargo khusus).*
+
+1. Geser layar ke panel sebelah kanan pada kartu **Update Pesanan**.
+2. Cari kolom input: **Nomor Resi Pengiriman** (`tracking_number`).
+3. Masukkan / ketik nomor resi fisik yang diterima dari pihak agen pengiriman (maksimal 100 karakter).
+4. Klik tombol biru **Simpan Perubahan** di bagian bawah form.
+5. **Automasi & Keamanan Sistem Saat Input Resi Manual:**
+   - **Perubahan Status Otomatis:** Jika pesanan masih berstatus *Pending* atau *Processing*, sistem secara otomatis mengubah status pesanan menjadi **Shipped (Dikirim)** tanpa perlu mengubah dropdown status secara manual.
+   - **Pencatatan Waktu Kirim:** Sistem otomatis mencatat stempel waktu pengiriman (`shipped_at = waktu sekarang`).
+   - **Notifikasi Pelanggan Otomatis:** Sistem langsung mengirimkan pesan WhatsApp otomatis ke nomor kontak pembeli yang berisi konfirmasi pengiriman beserta nomor resi untuk pelacakan.
+
+#### Tahap 4: Request Pickup (Khusus Armada Pick-up / Lion Parcel)
+1. Setelah nomor resi terbit pada kartu Step 1 (Buat Booking), kartu **2. Request Pickup** akan aktif secara otomatis.
+2. Klik tombol kuning **Request Pickup** untuk memanggil kurir agar datang menjemput barang di alamat Hub Pengirim.
+3. Status penjemputan akan tercatat `Requested` disertai jam request.
+4. *Penanganan Kendala:* Apabila kurir berhalangan hadir atau ada keterlambatan penjemputan, admin dapat menggunakan tombol **Cancel Pickup** dan melakukan **Request Ulang**.
+
+#### Tahap 5: Pemantauan Pengiriman (Live Tracking)
+1. Pada kartu **3. Lacak Pengiriman**, klik tombol biru **Lacak Resi**.
+2. Modal pop-up riwayat pengiriman akan muncul menampilkan status pelacakan langsung dari sistem kurir (*Manifested / Paket Diterima Agen*, *On Transit*, *Out for Delivery*, hingga *Delivered*).
+3. Setelah paket berstatus terkirim (*Delivered*), pesanan dapat diselesaikan pada sistem.
 
 ---
 
@@ -281,6 +344,12 @@ Pembatalan pesanan hanya boleh dilakukan sebelum barang dikirim dan memiliki ala
 
 ---
 
+### Q5: Mengapa sistem Jubelio tidak menampilkan rincian nomor batch dan tanggal expired seperti WMS?
+> **Penyebab:** Secara desain, Jubelio berfungsi sebagai *Omnichannel Inventory Hub* untuk menyinkronkan total kuota jual ke berbagai marketplace (Shopee, Tokopedia, TikTok Shop, dll.) dan tidak mengelola struktur inventori berbasis lot batch.  
+> **Solusi:** Rincian nomor batch (`lot_serial`) dan tanggal kedaluwarsa (`expired_at`) secara resmi dikelola oleh modul **WMS / QAD ERP**. Admin dapat melihat rincian batch langsung di menu **Gudang & Hub &rarr; Detail Gudang &rarr; Tab Informasi Stock** atau mengunduh laporan via tombol **Download Stock & Batch**.
+
+---
+
 ## 9. GLOSARIUM STATUS & INDIKATOR SISTEM
 
 | Istilah / Status | Kategori | Penjelasan & Makna Sistem |
@@ -298,6 +367,9 @@ Pembatalan pesanan hanya boleh dilakukan sebelum barang dikirim dan memiliki ala
 | **AR Outstanding** | Finansial | *Account Receivable* — total tagihan piutang distributor yang saat ini masih belum dilunasi. |
 | **Self-Pickup** | Logistik | Metode pengambilan mandiri barang oleh pembeli/kurir pembeli di gudang hub Rasa Group. |
 | **EkspedisiKu** | Logistik | Layanan integrasi multikurir agregator (Lion Parcel, JNE, SiCepat) dengan fitur otomatisasi AWB. |
+| **WMS Batch / Lot Serial** | Inventori | Nomor identitas produksi unik dari pabrik/gudang yang terikat pada kuantiti fisik barang dan tanggal kedaluwarsa (dikelola oleh QAD/WMS). |
+| **FEFO** | Inventori | *First Expired, First Out* — mekanisme pengambilan stok barang di gudang yang memprioritaskan batch dengan tanggal kedaluwarsa paling awal. |
+| **Stok Jubelio** | Omnichannel | Total saldo inventori terintegrasi per SKU yang dipublikasikan ke kanal penjualan online/marketplace. |
 
 ---
 *Manual Book ini dikelola secara berkala oleh Tim Product & Teknologi Rasa Group. Untuk pertanyaan lebih lanjut atau kendala sistem, hubungi tim IT Helpdesk.*

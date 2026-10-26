@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->cron("*/{$minutes} * * * *")
                 ->withoutOverlapping();
         }
+
+        if (config('jubelio.stock_sync.enabled', true)) {
+            $schedule->job(new \App\Jobs\SyncJubelioStockJob)
+                ->hourly()
+                ->withoutOverlapping();
+        }
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Di belakang nginx host yang terminate TLS (X-Forwarded-Proto).

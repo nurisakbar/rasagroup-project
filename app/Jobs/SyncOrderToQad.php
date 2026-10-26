@@ -184,6 +184,18 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             }
 
             $uom = $qadMaster['uom'] ?? null;
+            if (! $uom && $item->product?->unit) {
+                $uom = self::mapLocalUnitToQad($item->product->unit);
+                if ($uom) {
+                    Log::info('SyncOrderToQad: Resolved QAD UOM from local product unit fallback', [
+                        'order_id' => $this->order->id,
+                        'item_code' => $itemCode,
+                        'local_unit' => $item->product->unit,
+                        'mapped_uom' => $uom,
+                    ]);
+                }
+            }
+
             if (! $uom) {
                 $invalidUomItems[] = [
                     'item_code' => $itemCode,
@@ -241,6 +253,31 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         return ['ok' => true, 'lines' => $lines];
+    }
+
+    /**
+     * Map satuan lokal produk ke kode UOM standar QAD.
+     */
+    public static function mapLocalUnitToQad(?string $localUnit): ?string
+    {
+        if (! $localUnit) {
+            return null;
+        }
+
+        $unit = strtoupper(trim($localUnit));
+
+        return match ($unit) {
+            'BTL', 'BOTTLE' => 'BT',
+            'BX', 'BOX' => 'BX',
+            'PCS', 'PC', 'PIECE' => 'PC',
+            'PACK', 'PK' => 'PK',
+            'BUCKET', 'BC' => 'BC',
+            'CAN', 'CA' => 'CAN',
+            'KG' => 'KG',
+            'LT', 'LITER' => 'LT',
+            'BG', 'BAG' => 'BG',
+            default => (strlen($unit) <= 4 ? $unit : null),
+        };
     }
 
     /**
@@ -354,13 +391,15 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             );
         }
 
-        $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
-        if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
-            Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
-                'order_id' => $this->order->id,
-                'customer_code' => $user->qad_customer_code,
-                'response' => $dataRes,
-            ]);
+        if ($customerCode !== 'HUB00002' && ! empty($user->qad_customer_code)) {
+            $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
+            if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
+                Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
+                    'order_id' => $this->order->id,
+                    'customer_code' => $user->qad_customer_code,
+                    'response' => $dataRes,
+                ]);
+            }
         }
 
         // Persisted in DB so each order keeps a stable WSxxxxxx number for QID sync attempts.

@@ -542,21 +542,39 @@ class WarehouseController extends Controller
         $wmsBatches = [];
         $wmsLocationCode = WmsService::locationCode($warehouse);
         $wmsLastSyncAt = null;
-        if ($request->tab == 'stock' && $wmsLocationCode) {
-            try {
-                // Sync data dari WMS secara realtime sebelum menampilkan data
-                app(WmsService::class)->syncLocationBatches($wmsLocationCode);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Realtime WMS sync failed on show warehouse page', [
-                    'location' => $wmsLocationCode,
-                    'error' => $e->getMessage()
-                ]);
+        if ($request->tab == 'stock') {
+            // Sinkronisasi Jubelio secara realtime dengan cooldown 60 detik
+            if (! empty($warehouse->kode_hub)) {
+                $cacheKeyJubelio = 'warehouse_realtime_jubelio_' . $warehouse->id;
+                if (! \Illuminate\Support\Facades\Cache::has($cacheKeyJubelio)) {
+                    try {
+                        app(\App\Services\JubelioStockSyncService::class)->syncWarehouse($warehouse);
+                        \Illuminate\Support\Facades\Cache::put($cacheKeyJubelio, true, 60);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Realtime Jubelio sync failed on show warehouse page', [
+                            'warehouse_id' => $warehouse->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
             }
 
-            $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($wmsLocationCode);
-            $wmsLastSyncAt = QadInventory::query()
-                ->where('qad_location_code', $wmsLocationCode)
-                ->max('last_sync_at');
+            if ($wmsLocationCode) {
+                try {
+                    // Sync data dari WMS secara realtime sebelum menampilkan data
+                    app(WmsService::class)->syncLocationBatches($wmsLocationCode);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Realtime WMS sync failed on show warehouse page', [
+                        'location' => $wmsLocationCode,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                $wmsBatches = app(WmsService::class)->storedBatchesByItemCode($wmsLocationCode);
+                $wmsLastSyncAt = QadInventory::query()
+                    ->where('qad_location_code', $wmsLocationCode)
+                    ->max('last_sync_at');
+            }
         }
 
         return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches', 'wmsLocationCode', 'wmsLastSyncAt'));

@@ -574,8 +574,8 @@ class Order extends Model
             ->where(function ($q) {
                 $q->whereNull('qad_sync_history')
                   // Satu kali job jalan bisa mencatat 1-2 log failed.
-                  // Batas < 6 artinya maksimal sekitar 3 kali job retry.
-                  ->orWhereRaw("JSON_LENGTH(qad_sync_history) < 6");
+                  // Batas < 10 artinya maksimal sekitar 5-6 kali job retry sebelum dihentikan.
+                  ->orWhereRaw("JSON_LENGTH(qad_sync_history) < 10");
             });
     }
 
