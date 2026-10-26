@@ -380,7 +380,7 @@
                                 <tbody>
                                     @foreach(array_reverse($order->qad_sync_history) as $history)
                                     <tr>
-                                        <td>{{ \App\Support\Wib::format($history['timestamp'] ?? null, 'd-m-Y H:i') }} WIB</td>
+                                        <td>{{ \App\Support\Wib::format($history['timestamp'] ?? null, 'd-m-Y H:i') }}</td>
                                         <td>{{ $history['attempt'] ?? '-' }}</td>
                                         <td>
                                             @if(($history['status'] ?? '') === 'success')
