@@ -36,11 +36,16 @@ class JubelioStockSyncService
         $products = Product::query()
             ->whereNotNull('code')
             ->where('code', '!=', '')
-            ->get(['id', 'code']);
+            ->get(['id', 'code', 'alternate_codes']);
 
         $productsByCode = [];
+        $productAllCodes = [];
         foreach ($products as $p) {
-            $productsByCode[strtoupper(trim($p->code))] = $p->id;
+            $allCodes = $p->getAllCodes();
+            $productAllCodes[$p->id] = $allCodes;
+            foreach ($allCodes as $c) {
+                $productsByCode[strtoupper(trim($c))] = $p->id;
+            }
         }
 
         $stockItems = $this->jubelio->fetchStocksByItemIds($token, $itemIds);
@@ -91,7 +96,14 @@ class JubelioStockSyncService
                     }
 
                     $jubelioQty = max(0, (int) ($locationStock['available'] ?? $locationStock['on_hand'] ?? 0));
-                    $wmsQty = (int) ($wmsStockByWarehouse[$warehouseId][$itemCode] ?? 0);
+                    $wmsQty = 0;
+                    if (isset($productAllCodes[$productId])) {
+                        foreach ($productAllCodes[$productId] as $c) {
+                            $wmsQty += (int) ($wmsStockByWarehouse[$warehouseId][strtoupper(trim($c))] ?? 0);
+                        }
+                    } else {
+                        $wmsQty = (int) ($wmsStockByWarehouse[$warehouseId][$itemCode] ?? 0);
+                    }
                     $effectiveStock = max($jubelioQty, $wmsQty);
 
                     WarehouseStock::updateOrCreate(
@@ -115,11 +127,20 @@ class JubelioStockSyncService
                     $pId = $productsByCode[$wmsCode] ?? null;
                     if (!$pId) continue;
 
+                    $totalWmsForProduct = 0;
+                    if (isset($productAllCodes[$pId])) {
+                        foreach ($productAllCodes[$pId] as $c) {
+                            $totalWmsForProduct += (int) ($wmsStockByWarehouse[$whId][strtoupper(trim($c))] ?? 0);
+                        }
+                    } else {
+                        $totalWmsForProduct = $wmsQty;
+                    }
+
                     $existing = WarehouseStock::where('warehouse_id', $whId)->where('product_id', $pId)->first();
-                    if (!$existing || $existing->stock < $wmsQty) {
+                    if (!$existing || $existing->stock < $totalWmsForProduct) {
                         WarehouseStock::updateOrCreate(
                             ['warehouse_id' => $whId, 'product_id' => $pId],
-                            ['stock' => $wmsQty]
+                            ['stock' => $totalWmsForProduct]
                         );
                         $syncedProducts[$pId] = true;
                         $stats['stock_rows']++;
@@ -154,11 +175,16 @@ class JubelioStockSyncService
         $products = Product::query()
             ->whereNotNull('code')
             ->where('code', '!=', '')
-            ->get(['id', 'code']);
+            ->get(['id', 'code', 'alternate_codes']);
 
         $productsByCode = [];
+        $productAllCodes = [];
         foreach ($products as $p) {
-            $productsByCode[strtoupper(trim($p->code))] = $p->id;
+            $allCodes = $p->getAllCodes();
+            $productAllCodes[$p->id] = $allCodes;
+            foreach ($allCodes as $c) {
+                $productsByCode[strtoupper(trim($c))] = $p->id;
+            }
         }
 
         $qadCode = $warehouse->qad_location_code;
@@ -181,7 +207,16 @@ class JubelioStockSyncService
                 if (!$productId) continue;
 
                 $jubelioQty = max(0, (int) ($item['available_qty'] ?? 0));
-                $wmsQty = (int) ($wmsTotals[$itemCode] ?? 0);
+                
+                $wmsQty = 0;
+                if (isset($productAllCodes[$productId])) {
+                    foreach ($productAllCodes[$productId] as $c) {
+                        $wmsQty += (int) ($wmsTotals[strtoupper(trim($c))] ?? 0);
+                    }
+                } else {
+                    $wmsQty = (int) ($wmsTotals[$itemCode] ?? 0);
+                }
+
                 $finalStock = max($jubelioQty, $wmsQty);
 
                 WarehouseStock::updateOrCreate(
@@ -196,11 +231,20 @@ class JubelioStockSyncService
                 $productId = $productsByCode[$wmsCode] ?? null;
                 if (!$productId) continue;
 
+                $totalWmsForProduct = 0;
+                if (isset($productAllCodes[$productId])) {
+                    foreach ($productAllCodes[$productId] as $c) {
+                        $totalWmsForProduct += (int) ($wmsTotals[strtoupper(trim($c))] ?? 0);
+                    }
+                } else {
+                    $totalWmsForProduct = $wmsQty;
+                }
+
                 $existing = WarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $productId)->first();
-                if (!$existing || $existing->stock < $wmsQty) {
+                if (!$existing || $existing->stock < $totalWmsForProduct) {
                     WarehouseStock::updateOrCreate(
                         ['warehouse_id' => $warehouse->id, 'product_id' => $productId],
-                        ['stock' => $wmsQty]
+                        ['stock' => $totalWmsForProduct]
                     );
                     $updated++;
                 }
