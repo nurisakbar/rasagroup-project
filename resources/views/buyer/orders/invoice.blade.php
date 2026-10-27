@@ -1,12 +1,13 @@
 @php
     $invoice = $invoice ?? \App\Support\ProformaInvoice::fromOrder($order);
     $money = fn ($amount) => 'Rp' . number_format((float) $amount, 0, ',', '.');
+    $isPaid = $order->isPaidOrTopApproved();
 @endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Proforma Invoice {{ $invoice['invoice_no'] }}</title>
+    <title>{{ ($isPaid ? 'Invoice ' : 'Proforma Invoice ') . $invoice['invoice_no'] }}</title>
     <style>
         @page { margin: 42px 48px 48px 48px; }
         body {
@@ -105,7 +106,13 @@
     <table class="w-100">
         <tr>
             <td width="50%" valign="top">
-                <div class="title">PROFORMA<br>INVOICE</div>
+                <div class="title">
+                    @if($isPaid)
+                        INVOICE
+                    @else
+                        PROFORMA<br>INVOICE
+                    @endif
+                </div>
                 <img src="{{ public_path('logorasa.png') }}" class="logo" alt="Rasa Group">
             </td>
             <td width="50%" valign="top">

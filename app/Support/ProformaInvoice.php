@@ -98,6 +98,8 @@ class ProformaInvoice
             'shipping' => (float) ($order->shipping_cost ?? 0),
             'service_fee' => (float) ($order->payment_fee ?? 0),
             'total' => (float) $order->total_amount,
+            'is_paid' => $order->isPaidOrTopApproved(),
+            'title' => $order->isPaidOrTopApproved() ? 'INVOICE' : 'PROFORMA INVOICE',
         ];
     }
 

@@ -65,7 +65,9 @@ class OrderController extends Controller
 
         $pdf = Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
 
-        return $pdf->download('proforma-invoice-' . $order->order_number . '.pdf');
+        $filename = ($order->isPaidOrTopApproved() ? 'invoice-' : 'proforma-invoice-') . $order->order_number . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function trackOrder(Order $order)

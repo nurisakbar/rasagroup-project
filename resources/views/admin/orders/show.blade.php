@@ -42,8 +42,8 @@
                     </div>
                     @endif
                     <div class="pull-right" style="margin-right: 10px;">
-                        <a href="{{ route('admin.orders.invoice', $order) }}" class="btn btn-xs btn-default" title="Download Proforma Invoice">
-                            <i class="fa fa-download"></i> Download Proforma Invoice
+                        <a href="{{ route('admin.orders.invoice', $order) }}" class="btn btn-xs btn-default" title="{{ $order->isPaidOrTopApproved() ? 'Download Invoice' : 'Download Proforma Invoice' }}">
+                            <i class="fa fa-download"></i> {{ $order->isPaidOrTopApproved() ? 'Download Invoice' : 'Download Proforma Invoice' }}
                         </a>
                     </div>
                     <div class="pull-right" style="margin-right: 10px;">

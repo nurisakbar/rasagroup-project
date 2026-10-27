@@ -867,7 +867,9 @@ class OrderController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('proforma-invoice-' . $order->order_number . '.pdf');
+        $filename = ($order->isPaidOrTopApproved() ? 'invoice-' : 'proforma-invoice-') . $order->order_number . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function checkQadStatus(Order $order)
