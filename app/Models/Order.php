@@ -524,22 +524,28 @@ class Order extends Model
     }
 
     /**
-     * Hub selain FG (Jubelio) atau hub yang tersinkron Jubelio → sales order ke Jubelio.
+     * Yang dikirim ke Jubelio hanya pesanan dari gudang Ecommerce dan Hub Bekasi, selain itu tidak.
      */
     public function shouldSyncToJubelio(): bool
     {
         $this->loadMissing('sourceWarehouse');
         $warehouse = $this->sourceWarehouse;
 
-        if ($warehouse && in_array('jubelio', is_array($warehouse->sync_sources) ? $warehouse->sync_sources : [], true)) {
-            return true;
+        if (! $warehouse) {
+            return false;
         }
 
-        if ($warehouse && ! empty($warehouse->kode_hub) && $this->order_type === self::TYPE_REGULAR) {
-            return true;
-        }
+        $isBekasi = stripos($warehouse->name, 'bekasi') !== false
+            || $warehouse->qad_location_code === 'FG008'
+            || $warehouse->kode_hub === 'WHRG002'
+            || $warehouse->kode_hub === 'FG008';
 
-        return ! $this->sourceHubSendsSalesOrdersToQad();
+        $isEcomm = stripos($warehouse->name, 'ecomm') !== false
+            || stripos($warehouse->name, 'ecommerce') !== false
+            || stripos((string) $warehouse->kode_hub, 'ecomm') !== false
+            || in_array('ecommerce', (array) ($warehouse->target_role ?? []), true);
+
+        return $isBekasi || $isEcomm;
     }
 
     /**
