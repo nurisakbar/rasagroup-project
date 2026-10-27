@@ -1689,6 +1689,7 @@ class CheckoutController extends Controller
             $isDistributor = $user?->isDistributor() ?? false;
             $salesCode = request('sales_code') ?: session('sales_code');
             $usesWms = $isDistributor || !empty($salesCode);
+            $usesJubelio = !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
             
             $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
             $wmsStock = null;
@@ -1700,7 +1701,6 @@ class CheckoutController extends Controller
                 );
             }
 
-            $usesJubelio = !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
             $jubelioItems = null;
 
             if ($usesJubelio && $currentHub->kode_hub) {
