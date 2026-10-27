@@ -133,6 +133,14 @@ class SendSalesOrderToWmsJob implements ShouldQueue
                     'status' => $status,
                 ]);
 
+                // Jika pengiriman ke WMS berhasil, kirimkan sales order ke Jubelio secara paralel jika memenuhi syarat
+                if ($order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled() && empty($order->jubelio_salesorder_id)) {
+                    \App\Jobs\SyncOrderToJubelio::dispatch($order);
+                    Log::info('WMS Sync: Dispatched SyncOrderToJubelio in parallel after WMS success.', [
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
                 return;
             }
 

@@ -16,56 +16,55 @@ class SalesOrderSyncDispatcher
     public static function dispatch(Order $order): void
     {
         $order->refresh();
-        $target = self::resolveTarget($order);
 
-        if ($target === self::TARGET_JUBELIO) {
-            if (! empty($order->jubelio_salesorder_id)) {
-                Log::info('SalesOrderSyncDispatcher: Jubelio SO already exists, skip', [
-                    'order_id' => $order->id,
-                    'order_type' => $order->order_type,
-                    'jubelio_salesorder_id' => $order->jubelio_salesorder_id,
-                ]);
+        $dispatchedAny = false;
 
-                return;
-            }
-
-            SyncOrderToJubelio::dispatch($order);
-            Log::info('SalesOrderSyncDispatcher: SyncOrderToJubelio dispatched', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'order_type' => $order->order_type,
-            ]);
-
-            return;
-        }
-
-        if ($target === self::TARGET_QAD) {
+        // 1. Sinkronisasi QAD jika memenuhi syarat
+        if ($order->shouldSyncToQad() && self::isQadEnabled()) {
             if (! empty($order->qad_so_number)) {
                 Log::info('SalesOrderSyncDispatcher: QAD SO already exists, skip', [
                     'order_id' => $order->id,
                     'order_type' => $order->order_type,
                     'qad_so_number' => $order->qad_so_number,
                 ]);
-
-                return;
+            } else {
+                SyncOrderToQad::dispatch($order);
+                Log::info('SalesOrderSyncDispatcher: SyncOrderToQad dispatched', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_type' => $order->order_type,
+                ]);
             }
-
-            SyncOrderToQad::dispatch($order);
-            Log::info('SalesOrderSyncDispatcher: SyncOrderToQad dispatched', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'order_type' => $order->order_type,
-            ]);
-
-            return;
+            $dispatchedAny = true;
         }
 
-        Log::info('SalesOrderSyncDispatcher: no sales order target for order', [
-            'order_id' => $order->id,
-            'order_type' => $order->order_type,
-            'jubelio_enabled' => self::isJubelioEnabled(),
-            'qad_enabled' => self::isQadEnabled(),
-        ]);
+        // 2. Sinkronisasi Jubelio jika memenuhi syarat
+        if ($order->shouldSyncToJubelio() && self::isJubelioEnabled()) {
+            if (! empty($order->jubelio_salesorder_id)) {
+                Log::info('SalesOrderSyncDispatcher: Jubelio SO already exists, skip', [
+                    'order_id' => $order->id,
+                    'order_type' => $order->order_type,
+                    'jubelio_salesorder_id' => $order->jubelio_salesorder_id,
+                ]);
+            } else {
+                SyncOrderToJubelio::dispatch($order);
+                Log::info('SalesOrderSyncDispatcher: SyncOrderToJubelio dispatched', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_type' => $order->order_type,
+                ]);
+            }
+            $dispatchedAny = true;
+        }
+
+        if (! $dispatchedAny) {
+            Log::info('SalesOrderSyncDispatcher: no sales order target for order', [
+                'order_id' => $order->id,
+                'order_type' => $order->order_type,
+                'jubelio_enabled' => self::isJubelioEnabled(),
+                'qad_enabled' => self::isQadEnabled(),
+            ]);
+        }
     }
 
     public static function resolveTarget(Order $order): ?string
