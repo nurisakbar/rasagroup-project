@@ -307,8 +307,8 @@
                                             </div>
                                             
                                             @if($order->payment_method === 'term_of_payment')
-                                                <div class="mt-4 pt-3 border-top text-center">
-                                                    @if(!$order->finance_approved)
+                                                @if(!$order->finance_approved)
+                                                    <div class="mt-4 pt-3 border-top text-center">
                                                         <div class="alert alert-warning font-sm mb-0 rounded-pill text-start d-flex align-items-center">
                                                             <i class="fi-rs-time-fast mr-10 font-lg"></i>
                                                             <div>
@@ -316,16 +316,8 @@
                                                                 <div class="font-xs text-muted">Pesanan dengan Term of Payment sedang ditinjau oleh tim Finance.</div>
                                                             </div>
                                                         </div>
-                                                    @else
-                                                        <div class="alert alert-success font-sm mb-0 rounded-pill text-start d-flex align-items-center">
-                                                            <i class="fi-rs-check-circle mr-10 font-lg"></i>
-                                                            <div>
-                                                                <strong>Disetujui Finance</strong>
-                                                                <div class="font-xs text-muted">Metode Term of Payment telah disetujui. Pesanan siap diproses.</div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                </div>
+                                                    </div>
+                                                @endif
                                             @elseif($order->payment_status === 'pending')
                                                 <div class="mt-4 pt-3 border-top text-center">
                                                     <a href="{{ route('distributor.orders.success', $order) }}" class="btn btn-outline-brand rounded-pill w-100 mb-10">
