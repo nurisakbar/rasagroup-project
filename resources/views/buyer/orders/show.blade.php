@@ -32,7 +32,7 @@
                                     <h3 class="mb-0">Detail Pesanan <span class="text-brand">#{{ $order->order_number }}</span></h3>
                                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
                                         <a href="{{ route('buyer.orders.invoice', $order->id) }}" class="btn btn-brand rounded font-sm px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">
-                                            <i class="fi-rs-download mr-5"></i> Download Invoice
+                                            <i class="fi-rs-download mr-5"></i> {{ $order->isPaidOrTopApproved() ? 'Download Invoice' : 'Download Proforma Invoice' }}
                                         </a>
                                         @if($order->canConfirmReceipt())
                                         <form action="{{ route('buyer.orders.confirm-receipt', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin barang/paket pesanan ini sudah diterima dengan baik?');">
@@ -42,25 +42,7 @@
                                             </button>
                                         </form>
                                         @endif
-                                        @php
-                                            $statusClass = match($order->order_status) {
-                                                'pending' => 'bg-warning',
-                                                'processing' => 'bg-info',
-                                                'shipped' => 'bg-primary',
-                                                'delivered' => 'bg-success',
-                                                'cancelled' => 'bg-danger',
-                                                default => 'bg-secondary',
-                                            };
-                                            $statusLabel = match($order->order_status) {
-                                                'pending' => $order->payment_status === 'paid' ? 'Menunggu Diproses' : ($order->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran'),
-                                                'processing' => 'Sedang Diproses',
-                                                'shipped' => 'Dalam Pengiriman',
-                                                'delivered' => 'Selesai',
-                                                'cancelled' => 'Dibatalkan',
-                                                default => ucfirst($order->order_status),
-                                            };
-                                        @endphp
-                                        <span class="rounded {{ $statusClass }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $statusLabel }}</span>
+                                        <span class="rounded {{ $order->buyer_status_class }} text-white font-sm fw-bold px-4" style="height: 42px; display: inline-flex; align-items: center; white-space: nowrap;">{{ $order->buyer_status_label }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -281,8 +263,8 @@
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between mb-3 pb-2 border-bottom">
                                                     <span class="text-dark font-sm">Status Pembayaran</span>
-                                                    <span class="badge rounded-pill {{ $order->payment_status === 'paid' ? 'bg-success' : 'bg-warning' }} px-3">
-                                                        {{ strtoupper($order->payment_status) }}
+                                                    <span class="badge rounded-pill {{ $order->buyer_payment_status_class }} px-3">
+                                                        {{ $order->buyer_payment_status_label }}
                                                     </span>
                                                 </div>
                                                 @if($order->affiliate)
@@ -307,7 +289,27 @@
                                                 @endif
                                             </div>
 
-                                            @if($order->payment_status === 'pending')
+                                            @if($order->payment_method === 'term_of_payment')
+                                                <div class="mt-4 pt-3 border-top text-center">
+                                                    @if(!$order->finance_approved)
+                                                        <div class="alert alert-warning font-sm mb-0 rounded-pill text-start d-flex align-items-center">
+                                                            <i class="fi-rs-time-fast mr-10 font-lg"></i>
+                                                            <div>
+                                                                <strong>Menunggu Konfirmasi Finance</strong>
+                                                                <div class="font-xs text-muted">Pesanan dengan Term of Payment sedang ditinjau oleh tim Finance.</div>
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <div class="alert alert-success font-sm mb-0 rounded-pill text-start d-flex align-items-center">
+                                                            <i class="fi-rs-check-circle mr-10 font-lg"></i>
+                                                            <div>
+                                                                <strong>Disetujui Finance</strong>
+                                                                <div class="font-xs text-muted">Metode Term of Payment telah disetujui. Pesanan siap diproses.</div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @elseif($order->payment_status === 'pending')
                                                 <div class="mt-4 pt-3 border-top text-center">
                                                     @if($order->isPaymentExpired())
                                                         <div class="alert alert-danger font-sm mb-0 rounded-pill">

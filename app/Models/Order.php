@@ -236,6 +236,84 @@ class Order extends Model
         return $this->payment_status === 'pending' && $this->created_at->addMinutes(30)->isPast();
     }
 
+    public function getBuyerStatusLabelAttribute(): string
+    {
+        if ($this->order_status === 'pending') {
+            if ($this->payment_method === 'term_of_payment') {
+                return $this->finance_approved ? 'Menunggu Diproses' : 'Menunggu Konfirmasi Finance';
+            }
+
+            if ($this->payment_status === 'paid') {
+                return 'Menunggu Diproses';
+            }
+
+            return $this->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran';
+        }
+
+        return match ($this->order_status) {
+            'processing' => 'Sedang Diproses',
+            'shipped' => 'Dalam Pengiriman',
+            'delivered', 'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+            default => ucfirst($this->order_status),
+        };
+    }
+
+    public function getBuyerStatusClassAttribute(): string
+    {
+        if ($this->order_status === 'pending') {
+            if ($this->payment_method === 'term_of_payment') {
+                return $this->finance_approved ? 'bg-info' : 'bg-warning';
+            }
+
+            return $this->payment_status === 'paid' ? 'bg-info' : 'bg-warning';
+        }
+
+        return match ($this->order_status) {
+            'processing' => 'bg-info',
+            'shipped' => 'bg-primary',
+            'delivered', 'completed' => 'bg-success',
+            'cancelled' => 'bg-danger',
+            default => 'bg-secondary',
+        };
+    }
+
+    public function getBuyerPaymentStatusLabelAttribute(): string
+    {
+        if ($this->payment_method === 'term_of_payment') {
+            if ($this->payment_status === 'paid') {
+                return 'Lunas';
+            }
+            return $this->finance_approved ? 'Disetujui Finance' : 'Menunggu Konfirmasi Finance';
+        }
+
+        return match ($this->payment_status) {
+            'paid' => 'Lunas',
+            'pending' => $this->payment_proof ? 'Verifikasi Pembayaran' : 'Menunggu Pembayaran',
+            'failed' => 'Gagal',
+            'refunded' => 'Refund',
+            default => ucwords(str_replace('_', ' ', (string) $this->payment_status)),
+        };
+    }
+
+    public function getBuyerPaymentStatusClassAttribute(): string
+    {
+        if ($this->payment_method === 'term_of_payment') {
+            if ($this->payment_status === 'paid') {
+                return 'bg-success';
+            }
+            return $this->finance_approved ? 'bg-success' : 'bg-warning';
+        }
+
+        return match ($this->payment_status) {
+            'paid' => 'bg-success',
+            'pending' => 'bg-warning',
+            'failed' => 'bg-danger',
+            'refunded' => 'bg-info',
+            default => 'bg-secondary',
+        };
+    }
+
     /**
      * TOP order menunggu persetujuan finance (finance_approved = 0).
      */
@@ -303,7 +381,7 @@ class Order extends Model
             return true;
         }
 
-        if ($this->payment_status === 'term_of_payment') {
+        if ($this->payment_status === 'term_of_payment' && (bool) $this->finance_approved) {
             return true;
         }
 

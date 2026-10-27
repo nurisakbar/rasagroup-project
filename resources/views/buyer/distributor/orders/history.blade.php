@@ -110,29 +110,11 @@
                                                         <td class="pl-10 text-muted">{{ $order->created_at->format('d M Y') }}</td>
                                                         <td><strong class="text-heading">{{ $order->order_number }}</strong></td>
                                                         <td>
-                                                            @php
-                                                                $statusClass = [
-                                                                    'pending' => 'bg-warning',
-                                                                    'processing' => 'bg-info',
-                                                                    'shipped' => 'bg-primary',
-                                                                    'delivered' => 'bg-success',
-                                                                    'completed' => 'bg-success',
-                                                                    'cancelled' => 'bg-danger',
-                                                                ][$order->order_status] ?? 'bg-secondary';
-                                                            @endphp
-                                                            <span class="badge {{ $statusClass }}">{{ ucfirst($order->order_status) }}</span>
+                                                            <span class="badge {{ $order->buyer_status_class }}">{{ $order->buyer_status_label }}</span>
                                                         </td>
                                                         <td><strong class="text-brand">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong></td>
                                                         <td>
-                                                            @php
-                                                                $paymentClass = [
-                                                                    'pending' => 'bg-warning',
-                                                                    'paid' => 'bg-success',
-                                                                    'failed' => 'bg-danger',
-                                                                    'refunded' => 'bg-info',
-                                                                ][$order->payment_status] ?? 'bg-secondary';
-                                                            @endphp
-                                                            <span class="badge {{ $paymentClass }}">{{ ucwords(str_replace('_', ' ', $order->payment_status)) }}</span>
+                                                            <span class="badge {{ $order->buyer_payment_status_class }}">{{ $order->buyer_payment_status_label }}</span>
                                                         </td>
                                                         <td class="text-end pr-10">
                                                             @if($order->order_type === \App\Models\Order::TYPE_DISTRIBUTOR)

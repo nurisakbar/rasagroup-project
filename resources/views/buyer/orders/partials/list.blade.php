@@ -1,20 +1,13 @@
 <div class="orders-list">
     @forelse($orders as $order)
         @php
-            $statusLabel = match($order->order_status) {
-                'pending' => $order->payment_proof ? 'MENUNGGU PEMBAYARAN DIVERIFIKASI' : 'BELUM BAYAR',
-                'processing' => 'SEDANG DIKEMAS',
-                'shipped' => 'DIKIRIM',
-                'delivered' => 'SELESAI',
-                'cancelled' => 'DIBATALKAN',
-                default => strtoupper($order->order_status),
-            };
-            $statusColor = match($order->order_status) {
-                'pending' => '#ee4d2d',
-                'processing' => '#ee4d2d',
-                'shipped' => '#ee4d2d',
-                'delivered' => '#26aa99',
-                'cancelled' => '#757575',
+            $statusLabel = strtoupper($order->buyer_status_label);
+            $statusColor = match($order->buyer_status_class) {
+                'bg-warning' => '#ea580c',
+                'bg-info' => '#0284c7',
+                'bg-primary' => '#ee4d2d',
+                'bg-success' => '#26aa99',
+                'bg-danger' => '#757575',
                 default => '#ee4d2d',
             };
         @endphp

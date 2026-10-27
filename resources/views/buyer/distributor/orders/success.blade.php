@@ -56,7 +56,21 @@
             <div class="col-lg-12">
                 <div class="card border-0 shadow-sm p-40 border-radius-30" style="background-color: #ffffff;">
                     <div class="card-body text-center">
-                        @if($order->payment_status === 'pending')
+                        @if($order->payment_method === 'term_of_payment')
+                            @if(!$order->finance_approved)
+                                <div class="mb-30">
+                                    <i class="fi-rs-time-fast" style="font-size: 80px; color: #ea580c;"></i>
+                                </div>
+                                <h2 class="mb-20 checkout-page-title" style="font-weight: 700; color: #253D4E;">Menunggu Konfirmasi Finance</h2>
+                                <p class="text-dark mb-40">Pesanan Anda telah tercatat dengan metode <strong>Term of Payment</strong>. Saat ini pesanan Anda sedang menunggu persetujuan dari tim Finance.</p>
+                            @else
+                                <div class="mb-30">
+                                    <i class="fi-rs-check-circle" style="font-size: 80px; color: #3bb77e;"></i>
+                                </div>
+                                <h2 class="mb-20 checkout-page-title" style="font-weight: 700; color: #253D4E;">Pesanan Berhasil Disetujui!</h2>
+                                <p class="text-dark mb-40">Terima kasih atas pesanan Anda. Metode pembayaran <strong>Term of Payment</strong> telah disetujui oleh Finance dan pesanan Anda sedang kami proses.</p>
+                            @endif
+                        @elseif($order->payment_status === 'pending')
                             <div class="mb-30">
                                 <i class="fi-rs-document-signature" style="font-size: 80px; color: #ea580c;"></i>
                             </div>
@@ -540,7 +554,7 @@
                         @endif
 
                                                 <div class="d-flex flex-column flex-md-row justify-content-center align-items-stretch align-items-md-center gap-3 mt-10">
-                            @if($order->payment_status === 'pending')
+                            @if($order->payment_status === 'pending' && $order->payment_method !== 'term_of_payment')
                             <button type="button" class="btn text-white shadow-sm px-4 py-3" style="background-color: #6A1B1B; border-radius: 12px; min-width: 220px; font-weight: 600; border: none; letter-spacing: 0.5px;" data-bs-toggle="modal" data-bs-target="#changePaymentModal">
                                 <i class="fi-rs-refresh mr-5"></i> Ganti Metode Pembayaran
                             </button>
