@@ -9,72 +9,78 @@
     <meta charset="utf-8">
     <title>{{ ($isPaid ? 'Invoice ' : 'Proforma Invoice ') . $invoice['invoice_no'] }}</title>
     <style>
-        @page { margin: 42px 48px 48px 48px; }
+        @page {
+            size: a4 portrait;
+            margin: 32px 38px 32px 38px;
+        }
         body {
             font-family: Helvetica, Arial, sans-serif;
             color: #111827;
-            font-size: 12px;
-            line-height: 1.45;
+            font-size: 11px;
+            line-height: 1.4;
             margin: 0;
             padding: 0;
         }
         table { border-collapse: collapse; }
         .w-100 { width: 100%; }
         .title {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: 2px;
             line-height: 1.15;
             color: #111827;
             text-transform: uppercase;
         }
-        .logo { width: 168px; height: auto; margin-top: 22px; }
-        .barcode { text-align: right; padding-bottom: 8px; }
+        .logo { width: 156px; height: auto; margin-top: 16px; }
+        .barcode { text-align: right; padding-bottom: 6px; }
         .from {
-            width: 240px;
+            width: 250px;
             margin-left: auto;
             text-align: right;
-            font-size: 12px;
-            line-height: 1.55;
-            padding-top: 18px;
+            font-size: 11px;
+            line-height: 1.45;
+            padding-top: 14px;
             word-wrap: break-word;
         }
         .from strong, .bill-to strong {
             font-weight: 700;
         }
         .bill-to {
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.45;
         }
         .invoice-no {
-            width: 260px;
-            margin-left: auto;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             line-height: 1.3;
             text-align: right;
+            white-space: nowrap;
         }
         .order-date {
-            font-size: 13px;
+            font-size: 12px;
             text-align: right;
-            margin-top: 6px;
+            margin-top: 4px;
         }
         .items {
             width: 100%;
-            margin-top: 36px;
+            margin-top: 22px;
+        }
+        .items tr {
+            page-break-inside: avoid;
         }
         .items th {
             text-align: left;
             font-weight: 700;
-            font-size: 12px;
-            padding: 0 6px 12px 6px;
+            font-size: 11px;
+            padding: 0 6px 8px 6px;
             border-bottom: 1px solid #111827;
         }
         .items td {
-            padding: 11px 6px;
+            padding: 6px 6px;
             border-bottom: 1px solid #e5e7eb;
             vertical-align: top;
+            font-size: 11px;
         }
         .items .num, .items .qty, .items .price, .items .total {
             text-align: right;
@@ -82,23 +88,27 @@
         }
         .items .qty { text-align: center; }
         .items th.num { width: 6%; text-align: left; }
-        .items th.product { width: 26%; }
+        .items th.product { width: 34%; }
         .items th.qty { width: 12%; text-align: center; }
-        .items th.price, .items th.total { width: 18%; text-align: right; }
+        .items th.price, .items th.total { width: 16%; text-align: right; }
         .totals {
             width: 46%;
             margin-left: 54%;
             margin-top: 8px;
+            page-break-inside: avoid;
+        }
+        .totals tr {
+            page-break-inside: avoid;
         }
         .totals td {
-            padding: 8px 6px;
-            font-size: 12px;
+            padding: 5px 6px;
+            font-size: 11px;
         }
         .totals .amount { text-align: right; white-space: nowrap; }
         .totals .grand td {
             font-weight: 700;
-            font-size: 13px;
-            padding-top: 12px;
+            font-size: 12px;
+            padding-top: 8px;
         }
     </style>
 </head>
@@ -127,7 +137,7 @@
         </tr>
     </table>
 
-    <table class="w-100" style="margin-top: 36px;">
+    <table class="w-100" style="margin-top: 22px;">
         <tr>
             <td width="50%" valign="top" class="bill-to">
                 <strong>Bill to</strong><br>
@@ -140,7 +150,7 @@
                 <div class="invoice-no">Invoice no: {{ $invoice['invoice_no'] }}</div>
                 <div class="order-date">Order date: {{ $invoice['order_date'] }}</div>
                 @if($order->sales)
-                    <div class="order-date" style="margin-top: 12px; text-align: right;">
+                    <div class="order-date" style="margin-top: 10px; text-align: right;">
                         <strong>Sales:</strong> {{ $order->sales->name }}<br>
                         <strong>Email:</strong> {{ $order->sales->email ?? '-' }}
                     </div>
@@ -183,9 +193,12 @@
             <td>Subtotal</td>
             <td class="amount">{{ $money($invoice['subtotal_before'] ?? $invoice['subtotal']) }}</td>
         </tr>
+        @php
+            $totalDiscount = (float) (($invoice['item_discount'] ?? 0) + ($invoice['discount'] ?? 0));
+        @endphp
         <tr>
             <td>Diskon</td>
-            <td class="amount">-{{ $money(($invoice['item_discount'] ?? 0) + ($invoice['discount'] ?? 0)) }}</td>
+            <td class="amount">{{ $totalDiscount > 0 ? '-' : '' }}{{ $money($totalDiscount) }}</td>
         </tr>
         <tr>
             <td>{{ $invoice['ppn_label'] }}</td>

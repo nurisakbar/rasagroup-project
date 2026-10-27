@@ -1072,6 +1072,7 @@ class OrderController extends Controller
         $invoice = \App\Support\ProformaInvoice::fromOrder($order);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
+        $pdf->setPaper('a4', 'portrait');
 
         $filename = ($order->isPaidOrTopApproved() ? 'invoice-' : 'proforma-invoice-') . $order->order_number . '.pdf';
 
