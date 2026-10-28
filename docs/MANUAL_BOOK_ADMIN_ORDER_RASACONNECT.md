@@ -64,6 +64,9 @@ Sistem membatasi akses menu dan wewenang eksekusi berdasarkan peran kerja masing
 
 Dashboard admin (`/admin/dashboard`) adalah pusat komando visual untuk memantau performa harian dan bulanan seluruh lini usaha Rasa Group.
 
+![Dashboard Admin dan Snapshot GMV Bulan Berjalan](manual_book_images/01_dashboard_admin.png)
+*Gambar 2.1: Antarmuka Dashboard Admin dengan Kartu Metrik, Widget Snapshot GMV Bulan Berjalan, dan Grafik Tren Pesanan.*
+
 ### A. Kartu Indikator Utama (Executive Metric Cards)
 1. **Total Produk**: Jumlah SKU aktif dalam katalog sistem.
 2. **Total Pesanan**: Akumulasi pesanan yang pernah tercatat.
@@ -99,6 +102,9 @@ Portal mengelola 2 (dua) jenis pesanan utama:
 ### 3.1. Filter Tahapan Pesanan (Workflow Pipeline)
 Dropdown **Tahapan Pesanan** membagi transaksi ke dalam antrean kerja:
 
+![Daftar Pesanan dan Filter Tahapan](manual_book_images/01_daftar_pesanan.png)
+*Gambar 3.2: Antarmuka Daftar Pesanan Admin dengan Filter Tahapan, Tipe Order, dan Sumber Hub Pengirim.*
+
 | Tahapan Pesanan | Indikator Sistem | Arti & Prosedur Tindak Lanjut Admin |
 | :--- | :--- | :--- |
 | **Semua Tahapan** | `countSemua` | Menampilkan seluruh riwayat transaksi aktif maupun arsip. |
@@ -118,6 +124,9 @@ Dropdown **Tahapan Pesanan** membagi transaksi ke dalam antrean kerja:
 - **Admin tidak perlu menekan tombol verifikasi manual.**
 
 #### B. Persetujuan Kredit Distributor (Term of Payment - TOP)
+![Detail Pesanan Distributor TOP dan Approval Finance](manual_book_images/02_detail_pesanan_distributor_top.png)
+*Gambar 3.3: Informasi Finansial Distributor, Status Approval Finance, dan Riwayat Integrasi Sistem.*
+
 1. Tim Finance membuka filter tahapan **Menunggu Approval Finance**.
 2. Buka **Detail Pesanan** dan evaluasi panel **Informasi Finansial Distributor**:
    - **Credit Limit**: Total plafon kredit yang diberikan kepada distributor.
@@ -127,6 +136,13 @@ Dropdown **Tahapan Pesanan** membagi transaksi ke dalam antrean kerja:
 3. **Eksekusi:**
    - Jika sisa limit mencukupi dan tidak ada tunggakan jatuh tempo (*overdue*), klik tombol hijau: **Approve Finance (set ke 1)**.
    - Sistem membuka status pesanan, memicu sinkronisasi ke QAD ERP/WMS, dan mengirim notifikasi WhatsApp otomatis ke staf gudang hub pengirim.
+
+#### C. Verifikasi Bukti Transfer Bank Manual
+![Verifikasi Bukti Pembayaran Transfer Bank Manual](manual_book_images/03_verifikasi_transfer_manual.png)
+*Gambar 3.4: Panel Verifikasi Bukti Pembayaran Transfer Bank Manual.*
+
+- Jika transaksi menggunakan transfer rekening bank manual, periksa berkas bukti transfer yang diunggah pelanggan.
+- Cocokkan mutasi rekening koran bank. Jika dana telah masuk efektif, ubah status pembayaran menjadi **Paid**.
 
 ---
 
@@ -141,6 +157,9 @@ Pada halaman detail pesanan, terdapat panel integrasi sistem terpusat:
 ---
 
 ### 3.4. Pengelolaan Pengiriman & Ekspedisi
+
+![Proses Pengiriman Ekspedisi dan Resi](manual_book_images/04_pengiriman_ekspedisi_resi.png)
+*Gambar 3.5: Panel Pengiriman EkspedisiKu dengan Alur 3-Langkah (Booking, Pickup, Lacak).*
 
 #### Opsi A — Buat Booking Otomatis (EkspedisiKu API Partner / Lion Parcel / J&T / JNE)
 1. Pada kartu **1. Buat Booking**, periksa rincian ekspedisi, layanan kurir, bobot, dan alamat tujuan.
@@ -166,6 +185,12 @@ Pada halaman detail pesanan, terdapat panel integrasi sistem terpusat:
 - **Surat Jalan (Delivery Note)**: Klik tombol **[Cetak Surat Jalan]** di header atas untuk mencetak dokumen tanda terima fisik rangkap 2 (1 lembar arsip hub, 1 lembar menyertai barang) lengkap dengan nomor batch, kuantiti per pack/karton, dan kolom tanda tangan 3 pihak.
 - **Proforma Invoice**: Klik tombol **[Download Proforma Invoice]** untuk mengunduh berkas PDF penagihan resmi berformat barcode unik dengan rincian DPP, PPN 11%, dan rekening resmi perusahaan.
 
+![Surat Jalan Resmi Pengiriman Barang](manual_book_images/05_cetak_surat_jalan.png)
+*Gambar 3.6: Dokumen Surat Jalan Resmi Rasa Group (Delivery Note).*
+
+![Proforma Invoice Resmi RasaConnect](manual_book_images/06_proforma_invoice.png)
+*Gambar 3.7: Dokumen Proforma Invoice Resmi Rasa Group.*
+
 ---
 
 ### 3.6. Penyelesaian & Pembatalan Pesanan
@@ -179,6 +204,9 @@ Pada halaman detail pesanan, terdapat panel integrasi sistem terpusat:
 Menu: **Laporan Pesanan &rarr; Input Transaksi** (`/admin/orders/create`)
 
 Modul ini digunakan oleh staf e-commerce, admin sales, atau kasir showroom untuk menginput pesanan yang diterima secara offline (walk-in store), pemesanan via telepon/WhatsApp, maupun pesanan darurat distributor.
+
+![Formulir Pembuatan Pesanan Manual POS Kasir](manual_book_images/modul_04_input_transaksi_manual.png)
+*Gambar 4.1: Antarmuka Input Transaksi Manual dengan Pencarian Pelanggan, Atribusi Sales, Level Harga Otomatis, dan Alokasi Hub.*
 
 ### Langkah-Langkah Pembuatan Pesanan Manual:
 1. **Pilih Pelanggan (Customer)**:
@@ -210,6 +238,9 @@ Modul ini digunakan oleh staf e-commerce, admin sales, atau kasir showroom untuk
 Menu: **Laporan Pesanan &rarr; Laporan GMV** (`/admin/reports/gmv`)
 
 Modul ini menyajikan analisis finansial komprehensif atas total volume transaksi kotor, efektivitas promosi, nilai bersih barang dagangan, dan pendapatan riil perusahaan.
+
+![Dashboard Laporan dan Analisis GMV RasaConnect](manual_book_images/modul_05_laporan_analisis_gmv.png)
+*Gambar 5.1: Antarmuka Laporan GMV dengan Filter Periode Cepat, Waterfall Rekonsiliasi, Grafik Tren Harian, dan Kontribusi per Hub.*
 
 ### 5.1. Definisi & Rumus Metrik Finansial
 - **Gross GMV (Gross Merchandise Value)**: Total akumulasi nilai transaksi penjualan kotor sebelum dikurangi biaya operasional, diskon kupon, maupun ongkos kirim.  
@@ -247,6 +278,9 @@ Menu: **Data Hub** (`/admin/warehouses`)
 
 Modul ini mengatur seluruh titik distribusi fisik (Distribution Center / DC dan Hub Penjualan) serta stok inventori barang di masing-masing lokasi.
 
+![Daftar Master Hub dan Gudang Distribusi](manual_book_images/modul_06_data_hub_gudang.png)
+*Gambar 6.1: Antarmuka Master Hub dengan Pengaturan Wilayah Administratif, Jam Operasional, dan Pemetaan Multi-Sistem.*
+
 ### 6.1. Pengelolaan Master Hub & Identitas Lokasi
 1. Menambahkan atau mengubah data Hub: Nama Hub, Kode Hub (misal: `HUB-BKS`, `HUB-MGR`), Wilayah Administratif Indonesia (Provinsi, Kabupaten/Kota, Kecamatan, Kelurahan), Alamat Lengkap, Nomor Kontak, dan Jam Operasional.
 2. **Titik Koordinat Geografis (Latitude & Longitude)**: Wajib diisi dengan akurat karena digunakan oleh mesin penentu kurir instan/same-day (Lalamove & GoSend) untuk menghitung jarak tempuh penjemputan barang.
@@ -258,6 +292,9 @@ Agar setiap transaksi dan mutasi barang terhubung akurat ke sistem eksternal, se
 - **Zoho Books Branch & Location ID**: ID cabang/gudang di Zoho Books (misal: `Hub Bekasi: 7386545000004555006`, `Hub Maggiore: 7386545000004555140`). Memastikan Invoice dan Sales Order tercatat di pembukuan cabang yang tepat.
 
 ### 6.3. Manajemen Stok & Nomor Batch (Lot Serial & Expired Date)
+![Detail Hub dan Manajemen Stok Inventori WMS Multi-Batch](manual_book_images/modul_06_detail_hub_stok_wms.png)
+*Gambar 6.2: Tab Informasi Stok Gudang dengan Nomor Batch Fisik (Lot Serial), Tanggal Kedaluwarsa, Saldo Jubelio, dan Log Mutasi.*
+
 1. **Tab Informasi Stok (`/admin/warehouses/{id}`)**: Menampilkan daftar produk dengan dua saldo utama:
    - **Stok Fisik WMS**: Saldo fisik barang di gudang beserta rincian nomor batch (`lot_serial`) dan tanggal kedaluwarsa (`expired_at`).
    - **Stok Jubelio**: Saldo kuota agregat yang dipublikasikan ke kanal penjualan online/marketplace.
@@ -278,6 +315,9 @@ Menu: **Armada Pengiriman** (`/admin/armadas`)
 
 Modul ini mengelola armada kendaraan milik Rasa Group yang diperbantukan untuk pengiriman pesanan B2B, suplai antar-hub (*inter-hub transfer*), atau pengantaran khusus ke gerai/outlet mitra.
 
+![Manajemen Armada Pengiriman dan Driver Internal](manual_book_images/modul_07_armada_pengiriman.png)
+*Gambar 7.1: Daftar Armada Kendaraan Perusahaan, Nomor Polisi, Penugasan Kurir, Kapasitas Muatan, dan Status Operasional.*
+
 ### Prosedur Pengelolaan Armada:
 1. **Tambah Data Armada**:
    - Masukkan Nama/Tipe Armada (misal: *Blind Van Grand Max 01*, *Truk CDD Pendingin 02*, *Motor Delivery Hub Bekasi*).
@@ -297,6 +337,9 @@ Modul ini mengelola armada kendaraan milik Rasa Group yang diperbantukan untuk p
 Menu: **Distributor** (`/admin/distributors`)
 
 Mitra distributor adalah mitra dagang berskala besar yang memiliki hak distribusi wilayah dan fasilitas pembelian kredit dengan termin pembayaran (*Term of Payment* / TOP).
+
+![Manajemen Mitra Distributor dan Verifikasi Aplikasi](manual_book_images/modul_08_manajemen_distributor.png)
+*Gambar 8.1: Daftar Mitra Distributor Resmi dengan Pengaturan Credit Limit, Termin TOP, Target Belanja, dan Diskon Kategori.*
 
 ### 8.1. Verifikasi Aplikasi Calon Distributor Baru
 1. Masuk ke submenu **Aplikasi Distributor** (`/admin/distributors/applications`).
@@ -327,6 +370,9 @@ Menu: **Affiliator** (`/admin/driippreneurs`) dan **Penarikan Poin** (`/admin/po
 
 Program DRiiPPreneur adalah ekosistem kemitraan berbasis referral bagi barista, mixologist, cafe owner, dan kreator konten F&B untuk mempromosikan produk Rasa Group dan mendapatkan komisi berupa poin reward.
 
+![Manajemen Program Kemitraan DRiiPPreneur Affiliator](manual_book_images/modul_09_kemitraan_driippreneur.png)
+*Gambar 9.1: Pengelolaan Mitra Affiliator, Verifikasi Kelayakan (Eligibility), Kode Referral, dan Akumulasi Poin Reward.*
+
 ### 9.1. Verifikasi Kelayakan (Eligibility) Affiliator
 1. Buka menu **Affiliator**.
 2. Periksa profil mitra yang mengajukan diri.
@@ -338,6 +384,9 @@ Program DRiiPPreneur adalah ekosistem kemitraan berbasis referral bagi barista, 
 
 ### 9.3. SOP Otorisasi Penarikan Poin (Pencairan Dana ke Rekening)
 Menu: **Penarikan Poin** (`/admin/point-withdrawals`)
+
+![Persetujuan Penarikan Poin Affiliator Tim Finance](manual_book_images/modul_10_penarikan_poin_affiliator.png)
+*Gambar 9.2: Daftar Permohonan Pencairan Saldo Poin ke Rekening Bank dengan Alur Approval dan Eksekusi Transfer Finansial.*
 
 1. Tim Finance membuka daftar permohonan penarikan poin yang berstatus **Pending**.
 2. Periksa detail penarikan: Nama Mitra, Jumlah Poin yang Ditukar, Nominal Rupiah, Nama Bank, Nomor Rekening, dan Nama Pemilik Rekening.
@@ -355,6 +404,9 @@ Menu: **Biaya Layanan** (`/admin/payment-fees`)
 
 Modul ini dikelola oleh Tim Finance untuk mengatur biaya transaksi (*Merchant Discount Rate* / MDR) yang dikenakan oleh penyedia Payment Gateway (Faspay) untuk setiap metode pembayaran.
 
+![Pengaturan Tarif Fee Transaksi Payment Gateway Faspay](manual_book_images/modul_11_biaya_layanan_payment_fee.png)
+*Gambar 10.1: Konfigurasi Biaya Layanan Transaksi per Kanal Pembayaran (VA, QRIS, Kartu Kredit) dan Kebijakan Pembebanan Biaya.*
+
 ### Komponen Pengaturan Fee:
 1. **Metode Pembayaran**: Virtual Account Bank (BCA, Mandiri, BRI, BNI, Permata), QRIS, E-Wallet, dan Kartu Kredit.
 2. **Skema Perhitungan Fee**:
@@ -369,6 +421,9 @@ Modul ini dikelola oleh Tim Finance untuk mengatur biaya transaksi (*Merchant Di
 ## 11. MODUL DATA PENGGUNA & OUTLET (USER MANAGEMENT)
 
 Menu: **Data Pengguna** (`/admin/users`) dan **Data User Outlet** (`/admin/outlets`)
+
+![Manajemen Data Pengguna dan Penetapan Role Akses](manual_book_images/modul_12_manajemen_pengguna_users.png)
+*Gambar 11.1: Daftar Pengguna Sistem, Filter Peran (Role), Reset Password, dan Status Verifikasi Kontak WhatsApp.*
 
 ### 11.1. Tata Kelola Data Pengguna (Users)
 - **Kategori Peran Pengguna (User Roles)**:
@@ -391,6 +446,9 @@ Menu: **Data Pengguna** (`/admin/users`) dan **Data User Outlet** (`/admin/outle
 Menu: **Data Sales** (`/admin/sales`)
 
 Modul ini mendokumentasikan seluruh tenaga pemasar resmi (wiraniaga) Rasa Group untuk pencatatan komisi dan monitoring target penjualan.
+
+![Manajemen Master Salesperson dan Kode Sales](manual_book_images/modul_13_manajemen_sales.png)
+*Gambar 12.1: Daftar Wiraniaga Resmi, Kode Sales Unik, Coverage Area, dan Riwayat Transaksi Atribusi Penjualan.*
 
 ### Tata Cara Pengelolaan:
 1. **Tambah Master Sales**:
@@ -418,6 +476,9 @@ Tambahan Terkait:
  └── Voucher Promo (/admin/promos)
 ```
 
+![Manajemen Master Produk dan Katalog Dagang](manual_book_images/modul_14_master_produk.png)
+*Gambar 13.1: Master Katalog Produk dengan SKU, Brand, Kategori, Berat/Dimensi Logistik, Harga Ritel, dan Sinkronisasi Massal.*
+
 ### 13.1. Master Produk (`/admin/products`)
 - **Informasi Inti**: Nama Produk, Kode Produk / SKU, Brand, Kategori, Deskripsi, Komposisi, Saran Penyajian.
 - **Data Fisik (Sangat Kritikal untuk Ekspedisi)**:
@@ -434,6 +495,9 @@ Tambahan Terkait:
 - **Kategori (`/admin/categories`)**: Struktur klasifikasi produk (contoh: *Syrup*, *Powder*, *Sauce*, *Tea*, *Topping*).
 
 ### 13.3. Level Harga & Diskon Bertingkat
+![Pengaturan Potongan Harga Bertingkat Kuantiti Karton](manual_book_images/modul_15_level_harga_diskon_tier.png)
+*Gambar 13.2: Skema Diskon Bertingkat (Tiering Cart) Berdasarkan Jumlah Pembelian Satuan Pack dan Kartonan.*
+
 - **Level Harga (`/admin/price-levels`)**: Menetapkan harga khusus untuk kelompok pelanggan tertentu (misal: Harga Reseller Silver, Harga Reseller Gold, Harga Khusus Cafe Chain).
 - **Potongan Harga Bertingkat / Tiering (`/admin/discount-tiers`)**: Skema diskon otomatis saat kuantiti tertentu terpenuhi (contoh: Pembelian 6 s/d 11 botol diskon 5%; Pembelian $\ge 12$ botol / 1 karton diskon 12%).
 - **Voucher Promo (`/admin/promos`)**: Membuat kode kupon promosi belanja (contoh: `RASAHEMAT20`) dengan opsi diskon persentase atau nominal rupiah, masa kedaluwarsa kupon, kuota penggunaan, dan syarat minimum belanja.
@@ -443,6 +507,9 @@ Tambahan Terkait:
 ## 14. MODUL KONTEN WEBSITE & PEMASARAN (CMS)
 
 Modul ini dikelola oleh Tim Brand Marketing untuk memperbarui tampilan visual dan informasi storefront RasaConnect.
+
+![Pengelolaan Konten Banner Slider Halaman Beranda Web](manual_book_images/modul_16_konten_web_slider.png)
+*Gambar 14.1: Daftar Web Slider Promosi Storefront, Tautan Tujuan Kampanye, dan Pengaturan Urutan Prioritas Tampil.*
 
 ### 14.1. Web Slider (`/admin/sliders`)
 - Banner beranda dinamis yang tampil di bagian atas halaman web.
@@ -466,6 +533,9 @@ Modul ini dikelola oleh Tim Brand Marketing untuk memperbarui tampilan visual da
 Menu: **Pengaturan** (`/admin/settings`)
 
 Akses terbatas khusus **Super Admin** dan **IT Application Support**.
+
+![Pengaturan Sistem Terpusat Profil PPN dan Ekspedisi](manual_book_images/modul_17_pengaturan_sistem.png)
+*Gambar 15.1: Panel Pengaturan Identitas Perusahaan, Tarif PPN 11%, Rasio Poin Loyalitas, dan Aktivasi Layanan Ekspedisi.*
 
 ### 15.1. Tab Pengaturan Umum (General Settings)
 - **Nama Perusahaan / Portal**: Rasa Group / RasaConnect.
