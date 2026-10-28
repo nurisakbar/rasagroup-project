@@ -174,6 +174,17 @@
             <i class="fa fa-shopping-cart"></i> <span>LAPORAN PESANAN</span>
           </a>
         </li>
+        @endif
+
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin', 'finance', 'brand_marketing']))
+        <li class="{{ request()->routeIs('admin.reports.gmv.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.reports.gmv.index') }}">
+            <i class="fa fa-line-chart"></i> <span>LAPORAN GMV</span>
+          </a>
+        </li>
+        @endif
+
+        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.orders.create') ? 'active' : '' }}">
           <a href="{{ route('admin.orders.create') }}">
             <i class="fa fa-plus-square"></i> <span>INPUT TRANSAKSI</span>

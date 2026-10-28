@@ -54,6 +54,12 @@ class DashboardController extends Controller
             ->where('order_type', 'pos')
             ->count();
         
+        // GMV Summary for This Month
+        $thisMonthGmvSummary = app(\App\Services\GmvAnalyticsService::class)->getSummaryMetrics([
+            'start_date' => now()->startOfMonth(),
+            'end_date' => now()->endOfMonth(),
+        ]);
+        
         // Recent orders
         $recentOrders = Order::with('user')->latest()->take(5)->get();
         
@@ -121,7 +127,8 @@ class DashboardController extends Controller
             'chartLabels',
             'chartData',
             'warehouseLabels',
-            'warehouseData'
+            'warehouseData',
+            'thisMonthGmvSummary'
         ));
     }
 }

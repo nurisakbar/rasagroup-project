@@ -317,6 +317,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Admin\OrderController::class, 'getItemBatches'])->name('orders.items.batches');
         Route::put('/orders/{order}/items/{item}/batches', [App\Http\Controllers\Admin\OrderController::class, 'updateItemBatches'])->name('orders.items.update-batches');
 
+        // GMV Analytics & Reports
+        Route::prefix('reports/gmv')->name('reports.gmv.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\GmvReportController::class, 'index'])->name('index');
+            Route::get('/datatable', [App\Http\Controllers\Admin\GmvReportController::class, 'datatable'])->name('datatable');
+            Route::get('/export', [App\Http\Controllers\Admin\GmvReportController::class, 'export'])->name('export');
+        });
+
         // Menus Management
         Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);
 

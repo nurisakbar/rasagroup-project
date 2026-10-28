@@ -70,6 +70,57 @@
     </div>
     <!-- /.row -->
 
+    <!-- GMV & Revenue Snapshot (This Month) -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-solid" style="border-radius: 8px; border-left: 4px solid #6f1715; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;">
+                <div class="box-body" style="padding: 16px 20px;">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6" style="border-right: 1px solid #f0f0f0;">
+                            <span style="font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase;">
+                                <i class="fa fa-line-chart text-maroon"></i> Gross GMV Bulan Ini
+                            </span>
+                            <h3 style="margin: 6px 0 2px 0; font-weight: 800; color: #6f1715;">
+                                Rp {{ number_format($thisMonthGmvSummary['gross_gmv'], 0, ',', '.') }}
+                            </h3>
+                            <small class="text-muted">
+                                @if($thisMonthGmvSummary['growth_percentage'] >= 0)
+                                    <span class="text-success"><i class="fa fa-arrow-up"></i> +{{ $thisMonthGmvSummary['growth_percentage'] }}%</span>
+                                @else
+                                    <span class="text-danger"><i class="fa fa-arrow-down"></i> {{ $thisMonthGmvSummary['growth_percentage'] }}%</span>
+                                @endif
+                                vs bulan lalu
+                            </small>
+                        </div>
+                        <div class="col-md-3 col-sm-6" style="border-right: 1px solid #f0f0f0;">
+                            <span style="font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase;">
+                                <i class="fa fa-tags text-green"></i> Net Merchandise Value (NMV)
+                            </span>
+                            <h3 style="margin: 6px 0 2px 0; font-weight: 800; color: #00a65a;">
+                                Rp {{ number_format($thisMonthGmvSummary['net_merchandise_value'], 0, ',', '.') }}
+                            </h3>
+                            <small class="text-muted">Diskon: Rp {{ number_format($thisMonthGmvSummary['effective_discount'], 0, ',', '.') }}</small>
+                        </div>
+                        <div class="col-md-3 col-sm-6" style="border-right: 1px solid #f0f0f0;">
+                            <span style="font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase;">
+                                <i class="fa fa-check-circle text-orange"></i> Realized Revenue (Lunas)
+                            </span>
+                            <h3 style="margin: 6px 0 2px 0; font-weight: 800; color: #f39c12;">
+                                Rp {{ number_format($thisMonthGmvSummary['realized_revenue'], 0, ',', '.') }}
+                            </h3>
+                            <small class="text-muted">{{ number_format($thisMonthGmvSummary['paid_orders_count']) }} order lunas (AOV Rp {{ number_format($thisMonthGmvSummary['aov'], 0, ',', '.') }})</small>
+                        </div>
+                        <div class="col-md-3 col-sm-6 text-center" style="display: flex; align-items: center; justify-content: center; min-height: 70px;">
+                            <a href="{{ route('admin.reports.gmv.index') }}" class="btn btn-primary btn-sm btn-block" style="padding: 10px; font-weight: 600; border-radius: 6px;">
+                                <i class="fa fa-bar-chart"></i> Buka Laporan Lengkap GMV <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- This Month Statistics -->
     <div class="row">
         <div class="col-lg-3 col-xs-6">
