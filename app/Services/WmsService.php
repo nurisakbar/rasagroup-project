@@ -58,6 +58,46 @@ class WmsService
     }
 
     /**
+     * Cek status Sales Order di WMS berdasarkan nomor pesanan.
+     */
+    public function checkSalesOrderStatus(string $orderNumber): ?array
+    {
+        if (! $this->isConfigured()) {
+            Log::warning('WmsService: WMS API is not configured.');
+
+            return null;
+        }
+
+        $url = rtrim((string) config('services.wms.api_url'), '/') . '/sales-orders/' . $orderNumber . '/status';
+
+        try {
+            $response = Http::withHeaders([
+                'x-api-key' => (string) config('services.wms.api_key'),
+                'Accept' => 'application/json',
+            ])->timeout(30)->get($url);
+
+            if (! $response->successful()) {
+                Log::warning('WmsService: checkSalesOrderStatus failed', [
+                    'order_number' => $orderNumber,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            return $response->json();
+        } catch (\Throwable $e) {
+            Log::error('WmsService: checkSalesOrderStatus exception', [
+                'order_number' => $orderNumber,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * @param  array<int, mixed>  $rows
      * @param  array<string, list<array{lot_serial: string, qty: int, expired: ?string}>>  $grouped
      */

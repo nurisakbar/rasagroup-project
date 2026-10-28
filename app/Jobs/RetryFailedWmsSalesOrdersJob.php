@@ -39,19 +39,36 @@ class RetryFailedWmsSalesOrdersJob implements ShouldQueue, ShouldBeUnique
             ->limit(30)
             ->get();
 
-        if ($orders->isEmpty()) {
-            Log::info('RetryFailedWmsSalesOrdersJob: no failed WMS sales orders');
+        if ($orders->isNotEmpty()) {
+            Log::info('RetryFailedWmsSalesOrdersJob: dispatching retries', [
+                'count' => $orders->count(),
+                'order_numbers' => $orders->pluck('order_number')->all(),
+            ]);
 
-            return;
+            foreach ($orders as $order) {
+                SendSalesOrderToWmsJob::dispatch($order);
+            }
         }
 
-        Log::info('RetryFailedWmsSalesOrdersJob: dispatching retries', [
-            'count' => $orders->count(),
-            'order_numbers' => $orders->pluck('order_number')->all(),
-        ]);
+        // Cek pesanan yang masih berstatus QUEUED / UPDATE_QUEUED setelah > 2 menit
+        $queuedOrders = Order::query()
+            ->where('finance_approved', true)
+            ->where('order_status', '!=', 'cancelled')
+            ->whereIn('wms_so_status', ['QUEUED', 'UPDATE_QUEUED'])
+            ->where('wms_so_synced_at', '<=', now()->subMinutes(2))
+            ->orderBy('wms_so_synced_at')
+            ->limit(20)
+            ->get();
 
-        foreach ($orders as $order) {
-            SendSalesOrderToWmsJob::dispatch($order);
+        if ($queuedOrders->isNotEmpty()) {
+            Log::info('RetryFailedWmsSalesOrdersJob: dispatching status checks for queued orders', [
+                'count' => $queuedOrders->count(),
+                'order_numbers' => $queuedOrders->pluck('order_number')->all(),
+            ]);
+
+            foreach ($queuedOrders as $queuedOrder) {
+                CheckWmsOrderStatusJob::dispatch($queuedOrder);
+            }
         }
     }
 }

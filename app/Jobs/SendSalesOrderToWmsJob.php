@@ -120,8 +120,8 @@ class SendSalesOrderToWmsJob implements ShouldQueue
                 $responseData = $response->json();
                 $status = $responseData['data']['status'] ?? 'QUEUED';
 
-                if ($response->status() === 200) {
-                    $status = $responseData['data']['status'] ?? 'SUCCESS';
+                if ($response->status() === 200 && empty($responseData['data']['status'])) {
+                    $status = 'SUCCESS';
                 }
 
                 $order->wms_so_status = $status;
@@ -133,8 +133,16 @@ class SendSalesOrderToWmsJob implements ShouldQueue
                     'status' => $status,
                 ]);
 
-                // Jika pengiriman ke WMS berhasil, kirimkan sales order ke Jubelio secara paralel jika memenuhi syarat
-                if ($order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled() && empty($order->jubelio_salesorder_id)) {
+                // Jadwalkan pengecekan status akhir ke WMS 30 detik kemudian jika status masih QUEUED / antrean
+                if (in_array(strtoupper((string) $status), ['QUEUED', 'UPDATE_QUEUED', 'PENDING'], true)) {
+                    \App\Jobs\CheckWmsOrderStatusJob::dispatch($order)->delay(now()->addSeconds(30));
+                    Log::info('WMS Sync: Dispatched CheckWmsOrderStatusJob with 30s delay.', [
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
+                // Jika pengiriman ke WMS langsung SUCCESS, kirimkan sales order ke Jubelio secara paralel jika memenuhi syarat
+                if (strtoupper((string) $status) === 'SUCCESS' && $order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled() && empty($order->jubelio_salesorder_id)) {
                     \App\Jobs\SyncOrderToJubelio::dispatch($order);
                     Log::info('WMS Sync: Dispatched SyncOrderToJubelio in parallel after WMS success.', [
                         'order_number' => $order->order_number,

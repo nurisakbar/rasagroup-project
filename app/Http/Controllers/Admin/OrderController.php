@@ -1005,7 +1005,12 @@ class OrderController extends Controller
                 
                 $order->wms_so_status = $status;
                 $order->wms_so_failure_reason = $responseData['data']['failure_reason'] ?? null;
+                $order->wms_so_synced_at = now();
                 $order->save();
+
+                if (strtoupper($status) === 'SUCCESS' && $order->shouldSyncToJubelio() && \App\Support\SalesOrderSyncDispatcher::isJubelioEnabled() && empty($order->jubelio_salesorder_id)) {
+                    \App\Jobs\SyncOrderToJubelio::dispatch($order);
+                }
 
                 return back()->with('success', 'Status WMS berhasil diperbarui menjadi: ' . $status);
             } else {
