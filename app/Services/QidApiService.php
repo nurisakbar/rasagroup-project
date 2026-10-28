@@ -46,7 +46,7 @@ class QidApiService
         }
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::timeout(30)->withHeaders([
                 'Accept'       => 'text/plain',
                 'Content-Type' => 'application/json',
             ])->post("{$this->baseUrl}/authorization/login", [
@@ -253,7 +253,8 @@ class QidApiService
                 ]);
             }
 
-            $http = Http::withHeaders($this->authHeaders());
+            $http = Http::timeout((int) config('qidapi.timeout', 90))
+                ->withHeaders($this->authHeaders());
 
             $response = match (strtoupper($method)) {
                 'GET'    => $http->get($url, $data),
@@ -367,10 +368,14 @@ class QidApiService
      */
     protected function logSalesOrderDebug(string $phase, array $context): void
     {
-        Log::channel('qid_sales_order')->debug('QID Sales Order API', array_merge(
-            ['phase' => $phase],
-            $context
-        ));
+        try {
+            Log::channel('qid_sales_order')->debug('QID Sales Order API', array_merge(
+                ['phase' => $phase],
+                $context
+            ));
+        } catch (\Throwable $e) {
+            // Jangan gagalkan flow transaksi hanya karena masalah stream/file log
+        }
     }
 
     protected function isSalesOrderCreateEndpoint(string $endpoint): bool

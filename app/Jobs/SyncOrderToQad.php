@@ -499,17 +499,21 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'payload' => $payload,
             ]);
 
-            Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                'phase' => 'job_before_http_create',
-                'order_id' => $this->order->id,
-                'order_number' => $this->order->order_number,
-                'customer_code' => $user->qad_customer_code,
-                'attempt' => $attempt,
-                'method' => 'POST',
-                'endpoint' => $createEndpointUrl,
-                'endpoint_path' => $createEndpointPath,
-                'payload' => $payload,
-            ]);
+            try {
+                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                    'phase' => 'job_before_http_create',
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'customer_code' => $user->qad_customer_code,
+                    'attempt' => $attempt,
+                    'method' => 'POST',
+                    'endpoint' => $createEndpointUrl,
+                    'endpoint_path' => $createEndpointPath,
+                    'payload' => $payload,
+                ]);
+            } catch (\Throwable $e) {
+                // Abaikan jika log channel tidak dapat ditulis
+            }
 
             // Melakukan request beneran ke QAD
             $qadService = app(\App\Services\QadService::class);
@@ -532,14 +536,18 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                 'message' => is_array($result) ? ($result['message'] ?? null) : null,
             ]);
 
-            Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
-                'phase' => 'job_after_http_create',
-                'order_id' => $this->order->id,
-                'order_number' => $this->order->order_number,
-                'attempt' => $attempt,
-                'response' => $result,
-                'extracted_so_number' => $soNumber,
-            ]);
+            try {
+                Log::channel('qid_sales_order')->debug('SyncOrderToQad', [
+                    'phase' => 'job_after_http_create',
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'attempt' => $attempt,
+                    'response' => $result,
+                    'extracted_so_number' => $soNumber,
+                ]);
+            } catch (\Throwable $e) {
+                // Abaikan jika log channel tidak dapat ditulis
+            }
 
             if ($soNumber) {
                 $orderUpdates = ['qad_so_number' => $soNumber];

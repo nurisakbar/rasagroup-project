@@ -71,6 +71,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'permission' => 0666,
         ],
 
         'slack' => [
@@ -136,6 +137,7 @@ return [
             'level' => 'debug',
             'days' => 14,
             'replace_placeholders' => true,
+            'permission' => 0666,
         ],
 
         'jubelio_sales_order' => [
@@ -144,6 +146,7 @@ return [
             'level' => 'debug',
             'days' => 14,
             'replace_placeholders' => true,
+            'permission' => 0666,
         ],
 
         'jubelio_product_content' => [
@@ -152,6 +155,7 @@ return [
             'level' => 'debug',
             'days' => 14,
             'replace_placeholders' => true,
+            'permission' => 0666,
         ],
 
         'master_sync' => [
@@ -160,6 +164,7 @@ return [
             'level' => 'debug',
             'days' => 14,
             'replace_placeholders' => true,
+            'permission' => 0666,
         ],
 
         /*
