@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,88 @@ class ZohoService
             && !empty(config('services.zoho.client_secret'))
             && !empty(config('services.zoho.refresh_token'))
             && !empty(config('services.zoho.org_id'));
+    }
+
+    /**
+     * Get list of branches/locations from Zoho Books
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBranches(): array
+    {
+        if (!static::isConfigured()) {
+            return [];
+        }
+
+        return Cache::remember('zoho_branches_list', 86400, function () {
+            try {
+                $response = $this->client()->get("{$this->apiDomain}/books/v3/branches");
+                if ($response->successful()) {
+                    return $response->json('branches') ?? [];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ZohoService: failed to fetch branches from Zoho', ['error' => $e->getMessage()]);
+            }
+
+            return [];
+        });
+    }
+
+    /**
+     * Resolve the Zoho Location/Branch ID for a warehouse
+     */
+    public function resolveLocationId(?Warehouse $warehouse): string
+    {
+        $defaultBranchId = '7386545000000093096'; // Head Office (Primary)
+
+        if (!$warehouse) {
+            return $defaultBranchId;
+        }
+
+        $branches = $this->getBranches();
+        $activeBranchIds = [];
+        $primaryBranchId = $defaultBranchId;
+
+        foreach ($branches as $b) {
+            $bId = (string) ($b['branch_id'] ?? '');
+            if (!empty($b['is_primary_branch'])) {
+                $primaryBranchId = $bId;
+            }
+            if (!empty($b['is_branch_active']) && ($b['branch_status'] ?? '') === 'active') {
+                $activeBranchIds[] = $bId;
+            }
+        }
+
+        // 1. Direct explicit mapping from warehouse model
+        if (!empty($warehouse->zoho_location_id)) {
+            $mappedId = (string) $warehouse->zoho_location_id;
+            // If the mapped location is active in Zoho, use it
+            if (empty($activeBranchIds) || in_array($mappedId, $activeBranchIds, true)) {
+                return $mappedId;
+            }
+
+            Log::info("ZohoService: Mapped location {$mappedId} for warehouse {$warehouse->name} is inactive in Zoho. Falling back to primary branch {$primaryBranchId}.");
+            return $primaryBranchId;
+        }
+
+        // 2. Name / Code heuristic fallback
+        $name = strtolower($warehouse->name ?? '');
+
+        foreach ($branches as $b) {
+            $bId = (string) ($b['branch_id'] ?? '');
+            $bName = strtolower((string) ($b['branch_name'] ?? ''));
+
+            if (!empty($activeBranchIds) && !in_array($bId, $activeBranchIds, true)) {
+                continue;
+            }
+
+            if (str_contains($name, 'bekasi') && str_contains($bName, 'bekasi')) return $bId;
+            if (str_contains($name, 'maggiore') && str_contains($bName, 'maggiore')) return $bId;
+            if (str_contains($name, 'tomang') && str_contains($bName, 'tomang')) return $bId;
+            if (str_contains($name, 'surabaya') && str_contains($bName, 'surabaya')) return $bId;
+        }
+
+        return $primaryBranchId;
     }
 
     /**
@@ -271,9 +354,10 @@ class ZohoService
     public function createOrderToPaymentFlow(Order $order)
     {
         try {
-            $order->loadMissing(['user', 'items.product']);
+            $order->loadMissing(['user', 'items.product', 'sourceWarehouse']);
             
             $customerId = $this->resolveCustomer($order->user);
+            $locationId = $this->resolveLocationId($order->sourceWarehouse);
             
             // 1. Resolve or Create Sales Order
             $salesorderId = $order->zoho_salesorder_id;
@@ -307,6 +391,7 @@ class ZohoService
                         'item_id' => $itemId,
                         'quantity' => $item->quantity,
                         'rate' => $item->price,
+                        'location_id' => $locationId,
                     ];
                     if ($taxId) {
                         $lineItem['tax_id'] = $taxId;
@@ -316,6 +401,8 @@ class ZohoService
 
                 $soData = array_merge([
                     'customer_id' => $customerId,
+                    'branch_id' => $locationId,
+                    'location_id' => $locationId,
                     'reference_number' => $order->order_number,
                     'date' => $order->created_at->format('Y-m-d'),
                     'line_items' => $lineItems,
@@ -342,6 +429,9 @@ class ZohoService
                 if (!$order->zoho_invoice_id) {
                     $soData = $this->getSalesOrder($salesorderId);
                     $zohoLineItems = $soData['line_items'] ?? [];
+                    if (!empty($soData['branch_id'])) {
+                        $locationId = (string) $soData['branch_id'];
+                    }
                 }
             }
 
@@ -357,6 +447,7 @@ class ZohoService
                         'salesorder_item_id' => $zItem['line_item_id'] ?? null,
                         'quantity' => $zItem['quantity'],
                         'rate' => $zItem['rate'],
+                        'location_id' => $zItem['location_id'] ?? $locationId,
                     ];
                     $appliedTaxId = !empty($zItem['tax_id']) ? $zItem['tax_id'] : $taxId;
                     if ($appliedTaxId) {
@@ -367,6 +458,8 @@ class ZohoService
 
                 $invData = array_merge([
                     'customer_id' => $customerId,
+                    'branch_id' => $locationId,
+                    'location_id' => $locationId,
                     'reference_number' => $order->order_number,
                     'line_items' => $invoiceLineItems,
                     'shipping_charge' => $order->shipping_cost ?? 0,
@@ -387,6 +480,9 @@ class ZohoService
             } else {
                 $invData = $this->getInvoice($invoiceId);
                 $invoiceBalance = (float) ($invData['balance'] ?? $order->total_amount);
+                if (!empty($invData['branch_id'])) {
+                    $locationId = (string) $invData['branch_id'];
+                }
 
                 // Ensure invoice is marked as sent if it is still in draft
                 if (($invData['status'] ?? '') === 'draft') {
@@ -407,6 +503,8 @@ class ZohoService
 
                 $payResponse = $this->client()->post("{$this->apiDomain}/books/v3/customerpayments", [
                     'customer_id' => $customerId,
+                    'branch_id' => $locationId,
+                    'location_id' => $locationId,
                     'payment_mode' => $mode,
                     'amount' => $paymentAmount,
                     'date' => $order->finance_approved_at ? $order->finance_approved_at->format('Y-m-d') : now()->format('Y-m-d'),
@@ -427,7 +525,7 @@ class ZohoService
                 }
             }
 
-            Log::info("Successfully synced Order {$order->order_number} to Zoho.");
+            Log::info("Successfully synced Order {$order->order_number} to Zoho (Branch: {$locationId}).");
 
         } catch (\Exception $e) {
             Log::error('Zoho Integration Error: ' . $e->getMessage(), [

@@ -440,8 +440,9 @@ class WarehouseController extends Controller
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
         $qadLocations = $this->qadLocationsForForm();
+        $zohoLocations = app(\App\Services\ZohoService::class)->getBranches();
 
-        return view('admin.warehouses.create', compact('provinces', 'qadLocations'));
+        return view('admin.warehouses.create', compact('provinces', 'qadLocations', 'zohoLocations'));
     }
 
     /**
@@ -463,6 +464,7 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'qad_location_code' => 'nullable|string|max:50',
+            'zoho_location_id' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
             'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
@@ -488,6 +490,9 @@ class WarehouseController extends Controller
             'longitude' => $validated['longitude'] ?? null,
             'qad_location_code' => filled($validated['qad_location_code'] ?? null)
                 ? trim((string) $validated['qad_location_code'])
+                : null,
+            'zoho_location_id' => filled($validated['zoho_location_id'] ?? null)
+                ? trim((string) $validated['zoho_location_id'])
                 : null,
             'is_active' => $request->has('is_active'),
             'gudang_order_distributor' => $request->boolean('gudang_order_distributor'),
@@ -648,8 +653,9 @@ class WarehouseController extends Controller
         $villages = isset($villageRes['data']) ? $villageRes['data'] : [];
 
         $qadLocations = $this->qadLocationsForForm($warehouse);
+        $zohoLocations = app(\App\Services\ZohoService::class)->getBranches();
 
-        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages', 'qadLocations'));
+        return view('admin.warehouses.edit', compact('warehouse', 'provinces', 'regencies', 'districts', 'villages', 'qadLocations', 'zohoLocations'));
     }
 
     /**
@@ -671,6 +677,7 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'qad_location_code' => 'nullable|string|max:50',
+            'zoho_location_id' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
             'target_role.*' => 'string|in:ecommerce,distributor,outlet,umum',
@@ -678,6 +685,9 @@ class WarehouseController extends Controller
 
         $validated['qad_location_code'] = filled($validated['qad_location_code'] ?? null)
             ? trim((string) $validated['qad_location_code'])
+            : null;
+        $validated['zoho_location_id'] = filled($validated['zoho_location_id'] ?? null)
+            ? trim((string) $validated['zoho_location_id'])
             : null;
         $validated['is_active'] = $request->has('is_active');
         $validated['gudang_order_distributor'] = $request->boolean('gudang_order_distributor');

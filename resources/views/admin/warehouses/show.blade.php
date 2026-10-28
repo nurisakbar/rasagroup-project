@@ -67,6 +67,12 @@
                                         <td><span class="badge bg-purple">{{ $warehouse->kode_hub }}</span></td>
                                     </tr>
                                     @endif
+                                    @if($warehouse->zoho_location_id)
+                                    <tr>
+                                        <th>Lokasi Zoho Books</th>
+                                        <td><code>{{ $warehouse->zoho_location_id }}</code></td>
+                                    </tr>
+                                    @endif
                                     <tr>
                                         <th>Lokasi</th>
                                         <td>{{ $warehouse->full_location }}</td>

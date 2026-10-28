@@ -47,6 +47,22 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('zoho_location_id') has-error @enderror">
+                            <label for="zoho_location_id" id="label_zoho_location_id">Lokasi / Cabang Zoho Books</label>
+                            <select class="form-control select2" id="zoho_location_id" name="zoho_location_id" style="width: 100%;">
+                                <option value="">-- Pilih Lokasi Zoho (Default: Head Office) --</option>
+                                @foreach($zohoLocations ?? [] as $zLoc)
+                                    <option value="{{ $zLoc['branch_id'] }}" {{ old('zoho_location_id', $warehouse->zoho_location_id) == $zLoc['branch_id'] ? 'selected' : '' }}>
+                                        {{ $zLoc['branch_name'] }} ({{ $zLoc['branch_id'] }}){{ !empty($zLoc['is_primary_branch']) ? ' - Primary' : '' }}{{ empty($zLoc['is_branch_active']) || ($zLoc['branch_status'] ?? '') !== 'active' ? ' (Inactive di Zoho)' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="help-block">Digunakan untuk mapping cabang saat order disinkronkan ke Zoho Books (Sales Order, Invoice, & Payment).</p>
+                            @error('zoho_location_id')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group @error('province_id') has-error @enderror">

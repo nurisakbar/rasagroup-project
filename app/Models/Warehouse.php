@@ -21,6 +21,7 @@ class Warehouse extends Model
     protected $fillable = [
         'kode_hub',
         'qad_location_code',
+        'zoho_location_id',
         'name',
         'slug',
         'address',
