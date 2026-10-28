@@ -366,17 +366,44 @@ class ZohoService
             $usesPpn = ($order->pakai_ppn || ($order->user && $order->user->usesPpn()));
             $taxId = $usesPpn ? $this->resolvePpnTaxId() : null;
 
-            // Estimate rounding adjustment to make Zoho total match order->total_amount exactly
-            $estimatedDpp = 0.0;
+            // Calculate Gross DPP from line items
+            $grossDpp = 0.0;
             foreach ($order->items as $item) {
-                $estimatedDpp += round($item->price * $item->quantity, 2);
+                $grossDpp += round($item->price * $item->quantity, 2);
             }
-            $estimatedTax = ($usesPpn && $taxId) ? round($estimatedDpp * 0.11, 2) : 0.0;
-            $estimatedTotal = $estimatedDpp + $estimatedTax + (float) ($order->shipping_cost ?? 0);
-            $roundingAdjustment = round((float) $order->total_amount - $estimatedTotal, 2);
+
+            // Resolve Discount
+            $shippingCost = (float) ($order->shipping_cost ?? 0);
+            $totalAmount = (float) $order->total_amount;
+            $goodsTotal = max(0.0, $totalAmount - $shippingCost - (float) ($order->payment_fee ?? 0));
+
+            $discountAmount = 0.0;
+            if ((float) ($order->discount_amount ?? 0) > 0) {
+                $discountAmount = (float) $order->discount_amount;
+            } else {
+                $netDpp = $usesPpn ? round($goodsTotal / 1.11, 2) : $goodsTotal;
+                if ($grossDpp > $netDpp) {
+                    $discountAmount = round($grossDpp - $netDpp, 2);
+                }
+            }
+
+            // Calculate estimated tax and total with discount
+            $taxableDpp = max(0.0, $grossDpp - $discountAmount);
+            $estimatedTax = ($usesPpn && $taxId) ? round($taxableDpp * 0.11, 2) : 0.0;
+            $estimatedTotal = $taxableDpp + $estimatedTax + $shippingCost;
+            $roundingAdjustment = round($totalAmount - $estimatedTotal, 2);
+
+            $discountPayload = [];
+            if ($discountAmount > 0.01) {
+                $discountPayload = [
+                    'discount' => $discountAmount,
+                    'discount_type' => 'entity_level',
+                    'is_discount_before_tax' => true,
+                ];
+            }
 
             $adjustmentPayload = [];
-            if (abs($roundingAdjustment) > 0.001 && abs($roundingAdjustment) <= 1.0) {
+            if (abs($roundingAdjustment) > 0.001 && abs($roundingAdjustment) <= 5.0) {
                 $adjustmentPayload = [
                     'adjustment' => $roundingAdjustment,
                     'adjustment_description' => 'Pembulatan',
@@ -410,7 +437,7 @@ class ZohoService
                         ['api_name' => 'cf_source', 'value' => 'rasaconnect']
                     ],
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ], $adjustmentPayload);
+                ], $discountPayload, $adjustmentPayload);
 
                 $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", $soData);
 
@@ -463,7 +490,7 @@ class ZohoService
                     'reference_number' => $order->order_number,
                     'line_items' => $invoiceLineItems,
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ], $adjustmentPayload);
+                ], $discountPayload, $adjustmentPayload);
 
                 $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", $invData);
 
