@@ -188,19 +188,8 @@
                             <div class="col-md-6">
                                 <div class="form-group @error('sales_code') has-error @enderror">
                                     <label for="sales_code">Kode Sales</label>
-                                    @php $salesVal = old('sales_code', $distributor->sales_code); @endphp
-                                    <select id="sales_code" name="sales_code" class="form-control" style="width: 100%;">
-                                        <option value="">-- Pilih Kode Sales (Opsional) --</option>
-                                        @foreach($salesList ?? [] as $sales)
-                                            <option value="{{ $sales->sales_code }}" {{ $salesVal == $sales->sales_code ? 'selected' : '' }}>
-                                                {{ $sales->name }} ({{ $sales->sales_code }})
-                                            </option>
-                                        @endforeach
-                                        @if($salesVal && (!isset($salesList) || !$salesList->contains('sales_code', $salesVal)))
-                                            <option value="{{ $salesVal }}" selected>{{ $salesVal }}</option>
-                                        @endif
-                                    </select>
-                                    <p class="help-block">Pilih sales penanggung jawab atau ketik kode sales (contoh: MCR025 atau SLS00049).</p>
+                                    <input type="text" class="form-control" id="sales_code" name="sales_code" value="{{ old('sales_code', $distributor->sales_code) }}" placeholder="Contoh: SLS00049 atau MCR025">
+                                    <p class="help-block">Masukkan kode sales penanggung jawab. Kosongkan jika belum ada.</p>
                                     @error('sales_code')
                                         <span class="help-block text-danger">{{ $message }}</span>
                                     @enderror
@@ -325,12 +314,6 @@ $(document).ready(function() {
         }
     });
 
-    $('#sales_code').select2({
-        width: '100%',
-        tags: true,
-        placeholder: '-- Pilih atau ketik Kode Sales --',
-        allowClear: true
-    });
 
     // Load regencies when province changes
     $('#province_id').change(function() {
