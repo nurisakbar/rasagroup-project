@@ -102,7 +102,9 @@ class CheckoutController extends Controller
         $expeditions = Expedition::where('is_active', true)
             ->whereIn('code', $apiCourierCodes)
             ->get();
-        $defaultExpedition = $expeditions->firstWhere('code', 'lion_parcel') ?? $expeditions->first();
+        $defaultExpedition = (request()->filled('sales_code')
+            ? ($expeditions->firstWhere('code', 'kurir_toko') ?? $expeditions->firstWhere('code', 'self_pickup'))
+            : $expeditions->firstWhere('code', 'lion_parcel')) ?? $expeditions->first();
 
         $stockWarnings = [];
         // Re-detect best Hub based on default address
@@ -870,7 +872,7 @@ class CheckoutController extends Controller
         // Get source warehouse from cart
         $sourceWarehouse = $carts->first()->warehouse;
 
-        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse);
+        $expedition = $this->findAvailableExpedition($request->expedition_id, $sourceWarehouse, $address);
         if (!$expedition) {
             return back()->with('error', 'Ekspedisi tidak valid atau sudah tidak tersedia.');
         }
@@ -1881,15 +1883,15 @@ class CheckoutController extends Controller
             ->all();
 
         if (request()->filled('sales_code')) {
-            $allowed = ['lion_parcel'];
+            $allowed = [];
             if ($address) {
                 if ($address->isJabodetabek()) {
-                    $allowed = array_merge($allowed, ['kurir_toko', 'self_pickup']);
+                    $allowed = ['kurir_toko', 'self_pickup'];
                 } else {
-                    $allowed = array_merge($allowed, ['self_pickup']);
+                    $allowed = ['self_pickup'];
                 }
             } else {
-                $allowed = array_merge($allowed, ['kurir_toko', 'self_pickup']);
+                $allowed = ['kurir_toko', 'self_pickup'];
             }
             return array_values(array_intersect($dbCodes, $allowed));
         }
