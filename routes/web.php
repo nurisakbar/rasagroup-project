@@ -445,6 +445,15 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
         Route::post('/orders/{order}/debug-qid-sales-order', [App\Http\Controllers\Warehouse\OrderController::class, 'debugQidSalesOrder'])->name('orders.debug-qid-sales-order');
         Route::post('/orders/{order}/debug-request-pickup', [App\Http\Controllers\Warehouse\OrderController::class, 'debugRequestPickup'])->name('orders.debug-request-pickup');
 
+        // Affiliator (DRiiPPreneur) Management for Admin Hub
+        Route::prefix('driippreneurs')->name('driippreneurs.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'index'])->name('index');
+            Route::get('/{driippreneur}', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'show'])->name('show');
+            Route::put('/{driippreneur}/approve', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'approve'])->name('approve');
+            Route::put('/{driippreneur}/reject', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'reject'])->name('reject');
+            Route::put('/{driippreneur}/eligibility', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'updateEligibility'])->name('update-eligibility');
+        });
+
         // Hub Profile/Settings
         Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'update'])->name('profile.update');

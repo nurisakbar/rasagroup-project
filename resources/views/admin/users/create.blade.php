@@ -38,13 +38,23 @@
 
                     <div class="form-group @error('password') has-error @enderror">
                         <label for="password">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required placeholder="Minimal 8 karakter">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="Minimal 8 karakter">
+                            <span class="input-group-addon" style="cursor: pointer;" onclick="togglePasswordVisibility('password', 'icon-password')">
+                                <i class="fa fa-eye" id="icon-password"></i>
+                            </span>
+                        </div>
                         @error('password') <span class="help-block">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="form-group">
                         <label for="password_confirmation">Konfirmasi Password</label>
-                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi password">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi password">
+                            <span class="input-group-addon" style="cursor: pointer;" onclick="togglePasswordVisibility('password_confirmation', 'icon-password-confirmation')">
+                                <i class="fa fa-eye" id="icon-password-confirmation"></i>
+                            </span>
+                        </div>
                     </div>
 
                     <div class="form-group @error('role') has-error @enderror">
@@ -73,3 +83,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        var input = document.getElementById(inputId);
+        var icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+@endpush

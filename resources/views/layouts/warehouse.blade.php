@@ -116,6 +116,13 @@
             <i class="fa fa-shopping-cart"></i> <span>KELOLA PESANAN</span>
           </a>
         </li>
+        @if(auth()->check() && auth()->user()->sub_role === 'admin')
+        <li class="{{ request()->routeIs('warehouse.driippreneurs.*') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.driippreneurs.index') }}">
+            <i class="fa fa-users"></i> <span>AFFILIATOR</span>
+          </a>
+        </li>
+        @endif
         <li class="header">SETTING</li>
         <li class="{{ request()->routeIs('warehouse.profile') ? 'active' : '' }}">
           <a href="{{ route('warehouse.profile') }}">

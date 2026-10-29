@@ -1,0 +1,216 @@
+@extends('layouts.warehouse')
+
+@section('title', 'Detail Affiliator')
+@section('page-title', 'Detail Affiliator')
+@section('page-description', 'Detail informasi aplikasi Affiliator')
+
+@section('breadcrumb')
+    <li><a href="{{ route('warehouse.dashboard') }}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+    <li><a href="{{ route('warehouse.driippreneurs.index') }}">Affiliator</a></li>
+    <li class="active">Detail</li>
+@endsection
+
+@section('content')
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Informasi Aplikasi -->
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-user"></i> Informasi Aplikasi</h3>
+                    <div class="box-tools">
+                        <a href="{{ route('warehouse.driippreneurs.index') }}" class="btn btn-default btn-sm">
+                            <i class="fa fa-arrow-left"></i> Kembali
+                        </a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Nama</th>
+                            <td><strong>{{ $driippreneur->name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ $driippreneur->email }}</td>
+                        </tr>
+                        <tr>
+                            <th>No. HP</th>
+                            <td>{{ $driippreneur->phone ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status Aplikasi</th>
+                            <td>
+                                @if($driippreneur->driippreneur_status === 'pending')
+                                    <span class="label label-warning">Pending</span>
+                                @elseif($driippreneur->driippreneur_status === 'approved')
+                                    <span class="label label-success">Approved</span>
+                                @elseif($driippreneur->driippreneur_status === 'rejected')
+                                    <span class="label label-danger">Rejected</span>
+                                @else
+                                    <span class="label label-default">{{ $driippreneur->driippreneur_status }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Memenuhi Syarat</th>
+                            <td>
+                                <form action="{{ route('warehouse.driippreneurs.update-eligibility', $driippreneur) }}" method="POST" style="display:inline-flex; align-items:center;">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="is_eligible" class="form-control input-sm" onchange="this.form.submit()" style="width: auto;">
+                                        <option value="0" {{ $driippreneur->is_eligible == 0 ? 'selected' : '' }}>Tidak</option>
+                                        <option value="1" {{ $driippreneur->is_eligible == 1 ? 'selected' : '' }}>Ya</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Tanggal Pengajuan</th>
+                            <td>{{ $driippreneur->driippreneur_applied_at ? $driippreneur->driippreneur_applied_at->format('d M Y H:i') : '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dokumen Verifikasi -->
+            <div class="box box-info">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-file-text-o"></i> Dokumen Verifikasi</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">No. KTP</th>
+                            <td>{{ $driippreneur->no_ktp ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Foto KTP</th>
+                            <td>
+                                @if($driippreneur->ktp_file)
+                                    <a href="{{ Storage::url($driippreneur->ktp_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-eye"></i> Lihat Foto KTP
+                                    </a>
+                                @else
+                                    <span class="text-muted">Tidak ada file</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>No. NPWP</th>
+                            <td>{{ $driippreneur->no_npwp ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Foto NPWP</th>
+                            <td>
+                                @if($driippreneur->npwp_file)
+                                    <a href="{{ Storage::url($driippreneur->npwp_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fa fa-eye"></i> Lihat Foto NPWP
+                                    </a>
+                                @else
+                                    <span class="text-muted">Tidak ada file</span>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Informasi Rekening Bank -->
+            <div class="box box-success">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-bank"></i> Informasi Rekening Bank</h3>
+                </div>
+                <div class="box-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Nama Bank</th>
+                            <td>{{ $driippreneur->bank_name ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nomor Rekening</th>
+                            <td><code>{{ $driippreneur->bank_account_number ?? '-' }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Atas Nama</th>
+                            <td>{{ $driippreneur->bank_account_name ?? '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Action -->
+            <div class="box box-warning">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-cog"></i> Action</h3>
+                </div>
+                <div class="box-body">
+                    @if($driippreneur->driippreneur_status === 'pending')
+                        <form action="{{ route('warehouse.driippreneurs.approve', $driippreneur) }}" method="POST" style="margin-bottom: 10px;">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Setujui aplikasi Affiliator ini?');">
+                                <i class="fa fa-check"></i> Setujui Aplikasi
+                            </button>
+                        </form>
+                        
+                        <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#rejectModal">
+                            <i class="fa fa-times"></i> Tolak Aplikasi
+                        </button>
+                    @elseif($driippreneur->driippreneur_status === 'approved')
+                        <div class="alert alert-success">
+                            <i class="fa fa-check-circle"></i> Aplikasi sudah disetujui. User akan mendapatkan poin untuk setiap pembelian.
+                        </div>
+                    @elseif($driippreneur->driippreneur_status === 'rejected')
+                        <div class="alert alert-danger">
+                            <i class="fa fa-times-circle"></i> Aplikasi ditolak.
+                        </div>
+                    @endif
+
+                    <hr>
+                    <a href="{{ route('warehouse.driippreneurs.index') }}" class="btn btn-default btn-block">
+                        <i class="fa fa-arrow-left"></i> Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('warehouse.driippreneurs.reject', $driippreneur) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header bg-red">
+                        <button type="button" class="close" data-dismiss="modal" style="color: #fff;">&times;</button>
+                        <h4 class="modal-title" style="color: #fff;"><i class="fa fa-times"></i> Tolak Aplikasi</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tolak aplikasi Affiliator dari <strong>{{ $driippreneur->name }}</strong>?</p>
+                        <div class="form-group">
+                            <label for="rejection_reason">Alasan Penolakan (Opsional)</label>
+                            <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-times"></i> Tolak
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('styles')
+<style>
+    .bg-red {
+        background-color: #dd4b39 !important;
+    }
+</style>
+@endpush

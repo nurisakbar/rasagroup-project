@@ -475,7 +475,6 @@
                         <th>Tanggal</th>
                         <th>Pelanggan</th>
                         <th>Hub / Lokasi</th>
-                        <th>Kode Sales</th>
                         <th class="text-right">Gross GMV</th>
                         <th class="text-right">Diskon</th>
                         <th class="text-right">Ongkir</th>
@@ -662,13 +661,6 @@ $(document).ready(function() {
             { data: 'created_at', name: 'created_at' },
             { data: 'customer_name', name: 'user.name' },
             { data: 'warehouse_name', name: 'sourceWarehouse.name' },
-            { 
-                data: 'sales_code', 
-                name: 'sales_code',
-                render: function(val) {
-                    return val ? '<span class="label label-default">' + val + '</span>' : '-';
-                }
-            },
             { data: 'gross_gmv', name: 'gross_gmv', className: 'text-right' },
             { data: 'discount_amount', name: 'discount_amount', className: 'text-right' },
             { data: 'shipping_cost', name: 'shipping_cost', className: 'text-right' },
