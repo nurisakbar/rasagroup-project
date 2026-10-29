@@ -139,109 +139,167 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $lines = [];
         $invalidPriceItems = [];
         $invalidUomItems = [];
+        $lineIndex = 1;
 
-        foreach ($this->order->items as $index => $item) {
-            $itemCode = $item->product->code ?? $item->product->name ?? null;
-            $qadMaster = ['uom' => null, 'defaultPrice' => 0.0];
-            if ($itemCode !== null && $itemCode !== '') {
-                if (! array_key_exists($itemCode, $itemMasterCache)) {
-                    $itemRes = $qadService->getItem($itemCode);
-                    if (is_array($itemRes) && ! ($itemRes['error']['isError'] ?? false)) {
-                        $data = $itemRes['data'] ?? [];
-                        if (isset($data[0]) && is_array($data[0])) {
-                            $data = $data[0];
-                        }
-                        $uomRaw = $data['uom'] ?? $data['unitOfMeasure'] ?? $data['stockUom'] ?? null;
-                        $uomOk = is_string($uomRaw) ? trim($uomRaw) : '';
-                        $itemMasterCache[$itemCode] = [
-                            'uom' => $uomOk !== '' ? $uomOk : null,
-                            'defaultPrice' => (float) ($data['defaultPrice'] ?? 0),
-                        ];
-                    } else {
-                        $itemMasterCache[$itemCode] = ['uom' => null, 'defaultPrice' => 0.0];
+        foreach ($this->order->items as $item) {
+            $defaultCode = $item->product->code ?? $item->product->name ?? null;
+
+            // Kelompokkan kuantitas per item_code berdasarkan allocated_batches (agar selaras dengan WMS & alternate SKU)
+            $itemSplits = [];
+            if (! empty($item->allocated_batches) && is_array($item->allocated_batches)) {
+                $qtyByCode = [];
+                foreach ($item->allocated_batches as $batch) {
+                    $code = $batch['item_code'] ?? $defaultCode;
+                    if ($code !== null && $code !== '') {
+                        $qtyByCode[$code] = ($qtyByCode[$code] ?? 0) + (float) ($batch['qty'] ?? $batch['quantity'] ?? 0);
                     }
                 }
-                $qadMaster = $itemMasterCache[$itemCode];
-            }
-
-            $price = $this->qadLineSoldPrice($item);
-
-            if ($price <= 0) {
-                $invalidPriceItems[] = [
-                    'order_item_id' => $item->id ?? null,
-                    'item_code' => $item->product?->code ?? null,
-                    'order_item_price' => (float) ($item->price ?? 0),
-                    'product_master_price' => (float) ($item->product?->price ?? 0),
-                ];
-                Log::error('SyncOrderToQad: Invalid price for SO line', [
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'order_item_id' => $item->id ?? null,
-                    'item_code' => $item->product?->code ?? null,
-                    'sold_price' => $price,
-                    'catalog_price' => (float) ($item->product?->price ?? 0),
-                ]);
-            }
-
-            $uom = $qadMaster['uom'] ?? null;
-            if (! $uom && $item->product?->unit) {
-                $uom = self::mapLocalUnitToQad($item->product->unit);
-                if ($uom) {
-                    Log::info('SyncOrderToQad: Resolved QAD UOM from local product unit fallback', [
-                        'order_id' => $this->order->id,
-                        'item_code' => $itemCode,
-                        'local_unit' => $item->product->unit,
-                        'mapped_uom' => $uom,
-                    ]);
+                foreach ($qtyByCode as $code => $qty) {
+                    if ($qty > 0) {
+                        $itemSplits[] = [
+                            'item_code' => $code,
+                            'quantity' => (int) $qty,
+                        ];
+                    }
                 }
             }
 
-            if (! $uom) {
-                $invalidUomItems[] = [
-                    'item_code' => $itemCode,
-                    'local_unit' => $item->product?->unit,
+            if (empty($itemSplits)) {
+                $itemSplits[] = [
+                    'item_code' => $defaultCode,
+                    'quantity' => (int) $item->quantity,
                 ];
-                Log::error('SyncOrderToQad: Missing QAD UOM for SO line', [
-                    'order_id' => $this->order->id,
-                    'order_number' => $this->order->order_number,
-                    'item_code' => $itemCode,
-                    'local_unit' => $item->product?->unit,
-                ]);
+            } else {
+                // Pastikan jika ada selisih qty yang belum tercakup di batch, fallback ke defaultCode
+                $allocatedTotal = (int) array_sum(array_column($itemSplits, 'quantity'));
+                if ($allocatedTotal < (int) $item->quantity) {
+                    $diff = (int) $item->quantity - $allocatedTotal;
+                    $found = false;
+                    foreach ($itemSplits as &$split) {
+                        if ($split['item_code'] === $defaultCode) {
+                            $split['quantity'] += $diff;
+                            $found = true;
+                            break;
+                        }
+                    }
+                    unset($split);
+                    if (! $found && $defaultCode !== null && $defaultCode !== '') {
+                        $itemSplits[] = [
+                            'item_code' => $defaultCode,
+                            'quantity' => $diff,
+                        ];
+                    }
+                }
             }
 
-            $soldPrice = round(max(0.0, (float) $price), 2);
-            $catalogPrice = round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()), 2);
-            $discountPercent = (float) $item->unitDiscountPercent();
-            if ($discountPercent <= 0 && $catalogPrice > $soldPrice && $catalogPrice > 0) {
-                $discountPercent = round((($catalogPrice - $soldPrice) / $catalogPrice) * 100, 2);
+            foreach ($itemSplits as $split) {
+                $itemCode = $split['item_code'];
+                $lineQty = (int) $split['quantity'];
+                if ($lineQty <= 0) {
+                    continue;
+                }
+
+                $qadMaster = ['uom' => null, 'defaultPrice' => 0.0];
+                if ($itemCode !== null && $itemCode !== '') {
+                    if (! array_key_exists($itemCode, $itemMasterCache)) {
+                        $itemRes = $qadService->getItem($itemCode);
+                        if (is_array($itemRes) && ! ($itemRes['error']['isError'] ?? false)) {
+                            $data = $itemRes['data'] ?? [];
+                            if (isset($data[0]) && is_array($data[0])) {
+                                $data = $data[0];
+                            }
+                            $uomRaw = $data['uom'] ?? $data['unitOfMeasure'] ?? $data['stockUom'] ?? null;
+                            $uomOk = is_string($uomRaw) ? trim($uomRaw) : '';
+                            $itemMasterCache[$itemCode] = [
+                                'uom' => $uomOk !== '' ? $uomOk : null,
+                                'defaultPrice' => (float) ($data['defaultPrice'] ?? 0),
+                            ];
+                        } else {
+                            $itemMasterCache[$itemCode] = ['uom' => null, 'defaultPrice' => 0.0];
+                        }
+                    }
+                    $qadMaster = $itemMasterCache[$itemCode];
+                }
+
+                $price = $this->qadLineSoldPrice($item);
+
+                if ($price <= 0) {
+                    $invalidPriceItems[] = [
+                        'order_item_id' => $item->id ?? null,
+                        'item_code' => $itemCode,
+                        'order_item_price' => (float) ($item->price ?? 0),
+                        'product_master_price' => (float) ($item->product?->price ?? 0),
+                    ];
+                    Log::error('SyncOrderToQad: Invalid price for SO line', [
+                        'order_id' => $this->order->id,
+                        'order_number' => $this->order->order_number,
+                        'order_item_id' => $item->id ?? null,
+                        'item_code' => $itemCode,
+                        'sold_price' => $price,
+                        'catalog_price' => (float) ($item->product?->price ?? 0),
+                    ]);
+                }
+
+                $uom = $qadMaster['uom'] ?? null;
+                if (! $uom && $item->product?->unit) {
+                    $uom = self::mapLocalUnitToQad($item->product->unit);
+                    if ($uom) {
+                        Log::info('SyncOrderToQad: Resolved QAD UOM from local product unit fallback', [
+                            'order_id' => $this->order->id,
+                            'item_code' => $itemCode,
+                            'local_unit' => $item->product->unit,
+                            'mapped_uom' => $uom,
+                        ]);
+                    }
+                }
+
+                if (! $uom) {
+                    $invalidUomItems[] = [
+                        'item_code' => $itemCode,
+                        'local_unit' => $item->product?->unit,
+                    ];
+                    Log::error('SyncOrderToQad: Missing QAD UOM for SO line', [
+                        'order_id' => $this->order->id,
+                        'order_number' => $this->order->order_number,
+                        'item_code' => $itemCode,
+                        'local_unit' => $item->product?->unit,
+                    ]);
+                }
+
+                $soldPrice = round(max(0.0, (float) $price), 2);
+                $catalogPrice = round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()), 2);
+                $discountPercent = (float) $item->unitDiscountPercent();
+                if ($discountPercent <= 0 && $catalogPrice > $soldPrice && $catalogPrice > 0) {
+                    $discountPercent = round((($catalogPrice - $soldPrice) / $catalogPrice) * 100, 2);
+                }
+
+                $listPrice = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $catalogPrice : $soldPrice;
+                $discPercent = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $discountPercent : 0;
+
+                // netPrice = listPrice x (1 - discount%), boleh desimal (mis. 58559 x 80% = 46847.2) agar konsisten dengan hitungan QAD.
+                $netPrice = $discPercent > 0
+                    ? round($listPrice * (1 - ($discPercent / 100)), 2)
+                    : (float) $listPrice;
+
+                $lines[] = [
+                    'salesOrderNumber' => $qidSalesOrderNumber,
+                    'salesOrderLine' => $lineIndex++,
+                    'itemCode' => $itemCode,
+                    'quantityOrdered' => $lineQty,
+                    'unitOfMeasure' => $uom,
+                    'listPrice' => $listPrice,
+                    'discountPercent' => $discPercent,
+                    'netPrice' => $netPrice,
+                    'isFixedPrice' => true,
+                    'isReprice' => false,
+                    'dueDate' => $lineDueDate,
+                    'isTaxable' => $this->isTaxableForQad(),
+                    'salesAcct' => '41101',
+                    'salesCC' => '',
+                    'discountAcct' => '41101',
+                    'discountCC' => '',
+                ];
             }
-
-            $listPrice = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $catalogPrice : $soldPrice;
-            $discPercent = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $discountPercent : 0;
-
-            // netPrice = listPrice x (1 - discount%), boleh desimal (mis. 58559 x 80% = 46847.2) agar konsisten dengan hitungan QAD.
-            $netPrice = $discPercent > 0
-                ? round($listPrice * (1 - ($discPercent / 100)), 2)
-                : (float) $listPrice;
-
-            $lines[] = [
-                'salesOrderNumber' => $qidSalesOrderNumber,
-                'salesOrderLine' => $index + 1,
-                'itemCode' => $itemCode,
-                'quantityOrdered' => (int) $item->quantity,
-                'unitOfMeasure' => $uom,
-                'listPrice' => $listPrice,
-                'discountPercent' => $discPercent,
-                'netPrice' => $netPrice,
-                'isFixedPrice' => true,
-                'isReprice' => false,
-                'dueDate' => $lineDueDate,
-                'isTaxable' => $this->isTaxableForQad(),
-                'salesAcct' => '41101',
-                'salesCC' => '',
-                'discountAcct' => '41101',
-                'discountCC' => '',
-            ];
         }
 
         if (! empty($invalidPriceItems) || ! empty($invalidUomItems)) {
