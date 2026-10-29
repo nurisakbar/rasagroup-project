@@ -10,14 +10,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class DriippreneurController extends Controller
 {
-    public function __construct()
+    /**
+     * Pastikan user yang login adalah Admin Hub.
+     */
+    private function checkAdminHub(): void
     {
-        $this->middleware(function ($request, $next) {
-            if (auth()->user()?->sub_role !== 'admin') {
-                abort(403, 'Akses khusus Admin Hub.');
-            }
-            return $next($request);
-        });
+        if (auth()->user()?->sub_role !== 'admin') {
+            abort(403, 'Akses khusus Admin Hub.');
+        }
     }
 
     /**
@@ -25,6 +25,8 @@ class DriippreneurController extends Controller
      */
     public function index(Request $request)
     {
+        $this->checkAdminHub();
+
         if ($request->ajax()) {
             $query = User::whereNotNull('driippreneur_status');
 
@@ -102,6 +104,8 @@ class DriippreneurController extends Controller
      */
     public function show(User $driippreneur)
     {
+        $this->checkAdminHub();
+
         if (!$driippreneur->driippreneur_status) {
             abort(404);
         }
@@ -114,6 +118,8 @@ class DriippreneurController extends Controller
      */
     public function approve(User $driippreneur)
     {
+        $this->checkAdminHub();
+
         if (!$driippreneur->driippreneur_status || $driippreneur->driippreneur_status !== 'pending') {
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['error' => 'Aplikasi tidak dapat disetujui.'], 400);
@@ -142,6 +148,8 @@ class DriippreneurController extends Controller
      */
     public function reject(Request $request, User $driippreneur)
     {
+        $this->checkAdminHub();
+
         if (!$driippreneur->driippreneur_status || $driippreneur->driippreneur_status !== 'pending') {
             return back()->with('error', 'Aplikasi tidak dapat ditolak.');
         }
@@ -166,6 +174,8 @@ class DriippreneurController extends Controller
      */
     public function updateEligibility(Request $request, User $driippreneur)
     {
+        $this->checkAdminHub();
+
         $request->validate([
             'is_eligible' => 'nullable|boolean',
         ]);
