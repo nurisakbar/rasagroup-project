@@ -716,21 +716,21 @@
                 </div>
                 <div class="box-body">
                     @if($order->hasWmsBatchError())
-                        <div class="alert alert-danger" style="margin-bottom: 15px; border-left: 5px solid #d9534f; background-color: #fdf7f7; color: #a94442;">
+                        <div style="margin-bottom: 18px; border: 1px solid #f5c6cb; border-left: 5px solid #d9534f; background-color: #fff5f5; border-radius: 4px; padding: 14px 18px; color: #333333; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div style="display: flex; align-items: flex-start;">
-                                <div style="font-size: 22px; margin-right: 12px; color: #d9534f; line-height: 1;">
-                                    <i class="fa fa-exclamation-circle"></i>
+                                <div style="font-size: 26px; margin-right: 14px; color: #d9534f; line-height: 1; margin-top: 2px;">
+                                    <i class="fa fa-exclamation-triangle"></i>
                                 </div>
                                 <div style="flex: 1;">
-                                    <h4 style="margin-top: 0; margin-bottom: 5px; font-weight: 600; color: #c9302c; font-size: 15px;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #a94442; margin-bottom: 6px;">
                                         Sinkronisasi WMS Gagal: Masalah Alokasi Batch
-                                    </h4>
-                                    <p style="margin-bottom: 6px; font-size: 13px;">
+                                    </div>
+                                    <div style="font-size: 13px; color: #721c24; margin-bottom: 10px; line-height: 1.5; background: #ffeef0; padding: 8px 12px; border-radius: 4px; border: 1px solid #f5c6cb;">
                                         <strong>Pesan Error WMS:</strong> {{ $order->wms_so_failure_reason }}
-                                    </p>
-                                    <div style="font-size: 12px; color: #737373;">
-                                        <i class="fa fa-info-circle text-primary"></i> 
-                                        Item atau batch yang bermasalah ditandai dengan label <span class="label label-danger"><i class="fa fa-warning"></i> Gagal WMS</span> di bawah. Klik tombol <strong><i class="fa fa-pencil"></i> Ganti Batch</strong> untuk memilih batch lain yang tersedia di gudang/WMS, lalu klik <strong>Kirim ke WMS</strong> kembali.
+                                    </div>
+                                    <div style="font-size: 12px; color: #555555; line-height: 1.5;">
+                                        <i class="fa fa-info-circle text-primary" style="margin-right: 4px;"></i> 
+                                        Item atau batch yang bermasalah ditandai dengan label <span class="label label-danger" style="font-size: 10px; vertical-align: middle;"><i class="fa fa-times-circle"></i> Gagal WMS</span> di bawah. Silakan klik tombol <span class="label label-danger" style="font-size: 10px; vertical-align: middle;"><i class="fa fa-pencil"></i> Ganti Batch</span> untuk memilih batch lain yang tersedia di WMS, lalu klik <strong>Kirim ke WMS</strong> kembali.
                                     </div>
                                 </div>
                             </div>
@@ -786,21 +786,21 @@
                                                         $isBatchFailed = $order->isWmsFailedBatch($batch['lot_serial'] ?? null);
                                                     @endphp
                                                     @if($isBatchFailed)
-                                                        <div style="background: #fff0f0; border: 1px solid #f5c6cb; border-left: 4px solid #d9534f; border-radius: 4px; padding: 6px 10px; margin-top: 4px; margin-bottom: 4px;">
-                                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px;">
+                                                        <div style="background: #fff0f0; border: 1px solid #f5c6cb; border-left: 4px solid #d9534f; border-radius: 4px; padding: 8px 12px; margin-top: 6px; margin-bottom: 6px;">
+                                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                                                                 <div>
-                                                                    <strong class="text-danger">
+                                                                    <strong class="text-danger" style="font-size: 13px;">
                                                                         <i class="fa fa-times-circle"></i> Batch : {{ $batch['lot_serial'] ?? '-' }}
                                                                     </strong>
-                                                                    <span class="label label-danger" style="margin-left: 5px; font-size: 10px;">Gagal WMS</span>
+                                                                    <span class="label label-danger" style="margin-left: 6px; font-size: 10px; vertical-align: middle;">Gagal WMS</span>
                                                                     @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
                                                                         <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
                                                                     @endif
                                                                     @if(!empty($batch['expired']))
-                                                                        <span class="text-muted" style="font-size: 11px;">- Exp: {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}</span>
+                                                                        <span class="text-muted" style="font-size: 11px; margin-left: 4px;">- Exp: {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}</span>
                                                                     @endif
                                                                     @if(!empty($batch['qty']))
-                                                                        <span class="text-dark font-weight-bold" style="font-size: 11px;">({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})</span>
+                                                                        <span class="text-dark font-weight-bold" style="font-size: 11px; margin-left: 4px;">({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})</span>
                                                                     @endif
                                                                 </div>
                                                                 <div>
@@ -812,12 +812,13 @@
                                                                        data-batch-lot="{{ $batch['lot_serial'] ?? '' }}"
                                                                        data-batch-qty="{{ $batch['qty'] ?? (int)$item->quantity }}"
                                                                        data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                                       style="font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"
                                                                        title="Ganti Batch Bermasalah">
                                                                         <i class="fa fa-pencil"></i> Ganti Batch
                                                                     </a>
                                                                 </div>
                                                             </div>
-                                                            <div style="font-size: 11px; color: #a94442; margin-top: 3px;">
+                                                            <div style="font-size: 11px; color: #a94442; margin-top: 5px; font-weight: 600;">
                                                                 <i class="fa fa-exclamation-triangle"></i> {{ $order->wms_so_failure_reason }}
                                                             </div>
                                                         </div>
