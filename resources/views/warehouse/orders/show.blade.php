@@ -715,6 +715,27 @@
                     <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Item Pesanan</h3>
                 </div>
                 <div class="box-body">
+                    @if($order->hasWmsBatchError())
+                        <div class="alert alert-danger" style="margin-bottom: 15px; border-left: 5px solid #d9534f; background-color: #fdf7f7; color: #a94442;">
+                            <div style="display: flex; align-items: flex-start;">
+                                <div style="font-size: 22px; margin-right: 12px; color: #d9534f; line-height: 1;">
+                                    <i class="fa fa-exclamation-circle"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h4 style="margin-top: 0; margin-bottom: 5px; font-weight: 600; color: #c9302c; font-size: 15px;">
+                                        Sinkronisasi WMS Gagal: Masalah Alokasi Batch
+                                    </h4>
+                                    <p style="margin-bottom: 6px; font-size: 13px;">
+                                        <strong>Pesan Error WMS:</strong> {{ $order->wms_so_failure_reason }}
+                                    </p>
+                                    <div style="font-size: 12px; color: #737373;">
+                                        <i class="fa fa-info-circle text-primary"></i> 
+                                        Item atau batch yang bermasalah ditandai dengan label <span class="label label-danger"><i class="fa fa-warning"></i> Gagal WMS</span> di bawah. Klik tombol <strong><i class="fa fa-pencil"></i> Ganti Batch</strong> untuk memilih batch lain yang tersedia di gudang/WMS, lalu klik <strong>Kirim ke WMS</strong> kembali.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     <table class="table table-bordered">
                         <thead>
                             <tr>
@@ -746,59 +767,126 @@
                                     $lineSubtotal = max(0, $priceWithoutTax - $lineDiscount) * $qtyDisplay;
                                     $subtotalDpp += $lineSubtotal;
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
+                                    $isItemFailed = $order->isWmsFailedItem($item);
                                 @endphp
-                                <tr>
+                                <tr @if($isItemFailed) style="background-color: #fff9f9;" @endif>
                                     <td>
                                         @if($item->product)
                                             {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
                                         @else
                                             Produk tidak tersedia
                                         @endif
+                                        @if($isItemFailed)
+                                            <span class="label label-danger" style="margin-left: 6px; font-size: 10px;"><i class="fa fa-warning"></i> Perlu Penyesuaian Batch</span>
+                                        @endif
                                         @if(count($batches) > 0)
                                             <div style="margin-top: 5px;">
                                                 @foreach($batches as $batchIndex => $batch)
-                                                    <div>
-                                                        <em>
-                                                            Batch : {{ $batch['lot_serial'] ?? '-' }}
-                                                            @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
-                                                                <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
-                                                            @endif
-                                                            @if(!empty($batch['expired']))
-                                                                - Expired : {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}
-                                                            @endif
-                                                            @if(count($batches) > 1 && !empty($batch['qty']))
-                                                                ({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})
-                                                            @endif
-                                                        </em>
-                                                        <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
-                                                           data-item-id="{{ $item->id }}"
-                                                           data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
-                                                           data-item-qty="{{ (int) $item->quantity }}"
-                                                           data-batch-index="{{ $batchIndex }}"
-                                                           data-batch-lot="{{ $batch['lot_serial'] ?? '' }}"
-                                                           data-batch-qty="{{ $batch['qty'] ?? (int)$item->quantity }}"
-                                                           data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
-                                                           title="Edit Batch">
-                                                            <i class="fa fa-pencil"></i>
-                                                        </a>
-                                                    </div>
+                                                    @php
+                                                        $isBatchFailed = $order->isWmsFailedBatch($batch['lot_serial'] ?? null);
+                                                    @endphp
+                                                    @if($isBatchFailed)
+                                                        <div style="background: #fff0f0; border: 1px solid #f5c6cb; border-left: 4px solid #d9534f; border-radius: 4px; padding: 6px 10px; margin-top: 4px; margin-bottom: 4px;">
+                                                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px;">
+                                                                <div>
+                                                                    <strong class="text-danger">
+                                                                        <i class="fa fa-times-circle"></i> Batch : {{ $batch['lot_serial'] ?? '-' }}
+                                                                    </strong>
+                                                                    <span class="label label-danger" style="margin-left: 5px; font-size: 10px;">Gagal WMS</span>
+                                                                    @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
+                                                                        <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
+                                                                    @endif
+                                                                    @if(!empty($batch['expired']))
+                                                                        <span class="text-muted" style="font-size: 11px;">- Exp: {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}</span>
+                                                                    @endif
+                                                                    @if(!empty($batch['qty']))
+                                                                        <span class="text-dark font-weight-bold" style="font-size: 11px;">({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div>
+                                                                    <a href="javascript:void(0)" class="btn btn-xs btn-danger btn-edit-batch" 
+                                                                       data-item-id="{{ $item->id }}"
+                                                                       data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                                       data-item-qty="{{ (int) $item->quantity }}"
+                                                                       data-batch-index="{{ $batchIndex }}"
+                                                                       data-batch-lot="{{ $batch['lot_serial'] ?? '' }}"
+                                                                       data-batch-qty="{{ $batch['qty'] ?? (int)$item->quantity }}"
+                                                                       data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                                       title="Ganti Batch Bermasalah">
+                                                                        <i class="fa fa-pencil"></i> Ganti Batch
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                            <div style="font-size: 11px; color: #a94442; margin-top: 3px;">
+                                                                <i class="fa fa-exclamation-triangle"></i> {{ $order->wms_so_failure_reason }}
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <div>
+                                                            <em>
+                                                                Batch : {{ $batch['lot_serial'] ?? '-' }}
+                                                                @if(!empty($batch['item_code']) && $batch['item_code'] !== ($item->product?->code ?? ''))
+                                                                    <span class="text-primary font-weight-bold">[{{ $batch['item_code'] }}]</span>
+                                                                @endif
+                                                                @if(!empty($batch['expired']))
+                                                                    - Expired : {{ \App\Support\Wib::format($batch['expired'], 'd-m-Y') }}
+                                                                @endif
+                                                                @if(count($batches) > 1 && !empty($batch['qty']))
+                                                                    ({{ (int)$batch['qty'] }} {{ $item->product?->unit ?? 'PCS' }})
+                                                                @endif
+                                                            </em>
+                                                            <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
+                                                               data-item-id="{{ $item->id }}"
+                                                               data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                               data-item-qty="{{ (int) $item->quantity }}"
+                                                               data-batch-index="{{ $batchIndex }}"
+                                                               data-batch-lot="{{ $batch['lot_serial'] ?? '' }}"
+                                                               data-batch-qty="{{ $batch['qty'] ?? (int)$item->quantity }}"
+                                                               data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                               title="Edit Batch">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                        </div>
+                                                    @endif
                                                 @endforeach
                                             </div>
                                         @else
-                                            <div style="margin-top: 5px;">
-                                                <em>Batch : -</em>
-                                                <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
-                                                   data-item-id="{{ $item->id }}"
-                                                   data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
-                                                   data-item-qty="{{ (int) $item->quantity }}"
-                                                   data-batch-index="0"
-                                                   data-batch-lot=""
-                                                   data-batch-qty="{{ (int) $item->quantity }}"
-                                                   data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
-                                                   title="Pilih Batch">
-                                                    <i class="fa fa-pencil"></i>
-                                                </a>
-                                            </div>
+                                            @if($isItemFailed)
+                                                <div style="background: #fff0f0; border: 1px solid #f5c6cb; border-left: 4px solid #d9534f; border-radius: 4px; padding: 6px 10px; margin-top: 4px;">
+                                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                                        <strong class="text-danger"><i class="fa fa-times-circle"></i> Batch Belum Dipilih / Tidak Tersedia</strong>
+                                                        <a href="javascript:void(0)" class="btn btn-xs btn-danger btn-edit-batch" 
+                                                           data-item-id="{{ $item->id }}"
+                                                           data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                           data-item-qty="{{ (int) $item->quantity }}"
+                                                           data-batch-index="0"
+                                                           data-batch-lot=""
+                                                           data-batch-qty="{{ (int) $item->quantity }}"
+                                                           data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                           title="Pilih Batch">
+                                                            <i class="fa fa-pencil"></i> Pilih Batch
+                                                        </a>
+                                                    </div>
+                                                    <div style="font-size: 11px; color: #a94442; margin-top: 3px;">
+                                                        <i class="fa fa-exclamation-triangle"></i> {{ $order->wms_so_failure_reason }}
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div style="margin-top: 5px;">
+                                                    <em>Batch : -</em>
+                                                    <a href="javascript:void(0)" class="text-primary btn-edit-batch" style="margin-left: 6px;" 
+                                                       data-item-id="{{ $item->id }}"
+                                                       data-item-name="{{ $item->product ? ($item->product->code . ' - ' . ($item->product->display_name ?? $item->product->name)) : 'Item #' . $item->id }}"
+                                                       data-item-qty="{{ (int) $item->quantity }}"
+                                                       data-batch-index="0"
+                                                       data-batch-lot=""
+                                                       data-batch-qty="{{ (int) $item->quantity }}"
+                                                       data-item-unit="{{ $item->product?->unit ?? 'PCS' }}"
+                                                       title="Pilih Batch">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </a>
+                                                </div>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="text-right">

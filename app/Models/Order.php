@@ -760,4 +760,65 @@ class Order extends Model
 
         return false;
     }
+
+    /**
+     * Cek apakah pesanan mengalami kegagalan WMS karena masalah batch.
+     */
+    public function hasWmsBatchError(): bool
+    {
+        if (strtoupper((string) $this->wms_so_status) !== 'FAILED' || empty($this->wms_so_failure_reason)) {
+            return false;
+        }
+
+        $reason = strtolower($this->wms_so_failure_reason);
+
+        return str_contains($reason, 'batch') || str_contains($reason, 'stok wms');
+    }
+
+    /**
+     * Cek apakah batch tertentu gagal pada validasi WMS.
+     */
+    public function isWmsFailedBatch(?string $lotSerial): bool
+    {
+        if (! $this->hasWmsBatchError() || empty($lotSerial)) {
+            return false;
+        }
+
+        return stripos($this->wms_so_failure_reason, trim($lotSerial)) !== false;
+    }
+
+    /**
+     * Cek apakah item pesanan tertentu terdampak kegagalan WMS.
+     */
+    public function isWmsFailedItem(OrderItem $item): bool
+    {
+        if (! $this->hasWmsBatchError()) {
+            return false;
+        }
+
+        // 1. Cek dari batch yang dialokasikan
+        $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
+        foreach ($batches as $batch) {
+            if ($this->isWmsFailedBatch($batch['lot_serial'] ?? null)) {
+                return true;
+            }
+        }
+
+        // 2. Cek jika pesan error menyebut nama atau kode produk secara spesifik
+        $reason = strtolower($this->wms_so_failure_reason);
+        if ($item->product) {
+            $name = strtolower((string) ($item->product->name ?? ''));
+            $displayName = strtolower((string) ($item->product->display_name ?? ''));
+            $code = strtolower((string) ($item->product->code ?? ''));
+
+            if (($name !== '' && str_contains($reason, $name))
+                || ($displayName !== '' && str_contains($reason, $displayName))
+                || ($code !== '' && str_contains($reason, $code))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
+
