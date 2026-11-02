@@ -61,19 +61,22 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                 'jubelio_salesorder_id' => $this->order->jubelio_salesorder_id,
             ]);
 
-            // Pastikan data juga langsung dikirim ke Zoho jika belum terkirim
-            if (ZohoService::isConfigured() && ! $this->order->zoho_salesorder_id) {
+            // Pastikan data juga langsung dikirim ke Zoho jika belum terkirim lengkap (SO, invoice, payment)
+            if (ZohoService::isConfigured() && (! $this->order->zoho_salesorder_id || ! $this->order->zoho_invoice_id || ! $this->order->zoho_payment_id)) {
                 try {
                     app(ZohoService::class)->createOrderToPaymentFlow($this->order->fresh());
                     Log::channel('jubelio_sales_order')->info('SyncOrderToJubelio: also synced directly to Zoho for existing Jubelio SO', [
                         'order_id' => $this->order->id,
                         'zoho_salesorder_id' => $this->order->fresh()->zoho_salesorder_id,
+                        'zoho_invoice_id' => $this->order->fresh()->zoho_invoice_id,
+                        'zoho_payment_id' => $this->order->fresh()->zoho_payment_id,
                     ]);
                 } catch (\Throwable $ze) {
-                    Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho', [
+                    Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho, fallback to queue', [
                         'order_id' => $this->order->id,
                         'message' => $ze->getMessage(),
                     ]);
+                    \App\Jobs\SyncOrderToZohoJob::dispatch($this->order->id);
                 }
             }
 
@@ -156,14 +159,15 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
                     ]);
                 }
             } catch (\Throwable $ze) {
-                Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho', [
+                Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed syncing to Zoho, fallback to queue', [
                     'order_id' => $this->order->id,
                     'message' => $ze->getMessage(),
                 ]);
-                Log::error('SyncOrderToJubelio: failed syncing to Zoho', [
+                Log::error('SyncOrderToJubelio: failed syncing to Zoho, fallback to queue', [
                     'order_id' => $this->order->id,
                     'message' => $ze->getMessage(),
                 ]);
+                \App\Jobs\SyncOrderToZohoJob::dispatch($this->order->id);
             }
         } catch (\Throwable $e) {
             Log::channel('jubelio_sales_order')->error('SyncOrderToJubelio: failed', [
