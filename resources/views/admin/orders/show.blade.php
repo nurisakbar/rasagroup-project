@@ -127,6 +127,16 @@
                             <th>Tanggal Pesanan</th>
                             <td>{{ \App\Support\Wib::format($order->created_at) }} WIB</td>
                         </tr>
+                        @if($order->sales_code)
+                        <tr>
+                            <th>Kode Sales</th>
+                            <td><strong>{{ $order->sales_code }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Nama Sales</th>
+                            <td>{{ $order->sales?->name ?? '-' }}</td>
+                        </tr>
+                        @endif
                         @php
                             $isSelfPickupTop = $order->expedition && $order->expedition->code === 'self_pickup';
                         @endphp

@@ -18,6 +18,11 @@ return [
         'source' => (int) env('JUBELIO_SALES_ORDER_SOURCE', 1), // 1 = Internal
         'default_contact_id' => env('JUBELIO_DEFAULT_CONTACT_ID'),
         'default_location_id' => env('JUBELIO_DEFAULT_LOCATION_ID'),
+
+        // Kode produk RasaConnect => kode item di Jubelio, untuk produk yang SKU-nya berbeda.
+        'item_code_aliases' => [
+            'FDB010-MA06' => 'FDB010-MA07',
+        ],
     ],
 
     /*

@@ -212,10 +212,10 @@ File dokumen pengujian `J&T_API_Testcase_V3.0 x PTRDI.docx` yang berada di root 
 
 | Case | Modul | Skenario | Status | Catatan Teknis |
 | :---: | :--- | :--- | :---: | :--- |
-| **1.1** | API Order | Jakarta $\rightarrow$ Buah Batu (Bandung) | **PASS** | Resi terbit: `JO9001543805`, kode sortir `BDO-BDO93-34B`. |
-| **1.2** | API Order | Jakarta $\rightarrow$ Woyla (Aceh Barat) | **PASS** | Resi terbit: `JO9001746655`, kode sortir `BTJ-112`. |
-| **1.3** | API Order | Jakarta $\rightarrow$ Gondang-BJE (Bojonegoro) | **PASS** | Resi terbit: `JO9001732616`, kode sortir `LMG`. |
-| **1.4** | API Order | Jakarta $\rightarrow$ Gondang-MJK (Mojokerto) | **PASS** | Resi terbit: `JO9001274831`, rute Mojokerto valid. |
+| **1.1** | API Order | Jakarta $\rightarrow$ Buah Batu (Bandung) | **PASS** | Resi terbit: `JO9001543805`, kode sortir `BDO-BDO93-34B`. Sesuai master (`BDO` / `BDO001`). |
+| **1.2** | API Order | Jakarta $\rightarrow$ Woyla (Aceh Barat) | **PASS** | Resi terbit: `JO9001798288`, kode sortir `BTJ-MEH01`. Sesuai master (`MEH` / `MEH010`). |
+| **1.3** | API Order | Jakarta $\rightarrow$ Gondang-BJE (Bojonegoro) | **PASS** | Resi terbit: `JO9001226976`, kode sortir `LMG`. Sesuai master (`BJE` / `BJE015`). |
+| **1.4** | API Order | Jakarta $\rightarrow$ Gondang-MJK (Mojokerto) | **PASS** | Resi terbit: `JO9001422555`, kode sortir `SUB-MJK01`. Sesuai master (`MJK` / `MJK007`). |
 | **2** | API Order | Order dengan Asuransi (Rp500) | **PASS** | Order terbit dengan nominal barang Rp250.000. |
 | **3** | API Order | Order tanpa Asuransi (insurance: 0) | **PASS** | Order terbit normal. |
 | **4** | API Order | Order dengan COD (Rp150.000) | **PASS** | Order terbit dengan nilai COD Rp150.000. |

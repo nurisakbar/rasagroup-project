@@ -240,6 +240,8 @@ class JubelioService
     public function findItemToSellByCode(string $token, int $locationId, string $itemCode): ?array
     {
         $needle = strtoupper(trim($itemCode));
+        $needle = strtoupper((string) (config('jubelio.sales_order.item_code_aliases')[$needle] ?? $needle));
+
         foreach ($this->fetchItemsToSell($token, $locationId) as $item) {
             if (strtoupper(trim((string) ($item['item_code'] ?? ''))) === $needle) {
                 return $item;

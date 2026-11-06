@@ -110,7 +110,7 @@ populate_nested_table(doc.tables[3], 5, results['case1_1']['response'] + f"\n\n[
 
 # Table 4: Case 1.2 Woyla Aceh
 populate_nested_table(doc.tables[4], 3, results['case1_2']['request'])
-populate_nested_table(doc.tables[4], 5, results['case1_2']['response'] + f"\n\n[AUDIT QA: PASS - MAPPING CONFIRMATION NEEDED]\nResi terbit ({awb_wyl}), kode sortir BTJ-112. Parameter request: destination_code: BTJ, receiver_area: BTJ001.\nCatatan Teknis: Secara administratif Woyla berada di Kabupaten Aceh Barat. Mohon konfirmasi tim J&T apakah routing code BTJ001 sudah sesuai dengan master zonasi produksi J&T untuk Woyla.")
+populate_nested_table(doc.tables[4], 5, results['case1_2']['response'] + f"\n\n[AUDIT QA: PASS] Resi terbit ({awb_wyl}), kode sortir BTJ-MEH01. Parameter request terverifikasi master: destination_code: MEH, receiver_area: MEH010 (Kecamatan Woyla, Kota Meulaboh).")
 
 # Table 5: Case 1.3 Gondang Bojonegoro
 populate_nested_table(doc.tables[5], 3, results['case1_3']['request'])
