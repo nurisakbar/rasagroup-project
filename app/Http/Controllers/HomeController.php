@@ -35,7 +35,7 @@ class HomeController extends Controller
 
         $topSelling = (clone $baseQuery)
             ->with(['category', 'brand', 'warehouseStocks'])
-            ->orderBy('price', 'desc')
+            ->orderByEffectivePrice('desc')
             ->take(3)
             ->get();
 

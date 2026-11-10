@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Pricing\PricingContext;
 use App\Models\Scopes\SyncedInJubelioAndQadScope;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -275,6 +276,44 @@ class Product extends Model
         return $query->whereJsonContains('sync_sources', 'jubelio');
     }
 
+    /**
+     * Ekspresi SQL harga efektif: harga master warehouse konteks (bila ada), atau products.price.
+     *
+     * @return array{0: string, 1: array<int, mixed>}
+     */
+    public static function effectivePriceSql(): array
+    {
+        $warehouseId = PricingContext::current()->warehouseId();
+        if ($warehouseId === null) {
+            return ['products.price', []];
+        }
+
+        $now = now()->toDateTimeString();
+
+        return [
+            '(COALESCE((SELECT wpp.price FROM warehouse_product_prices wpp'
+                . ' WHERE wpp.warehouse_id = ? AND wpp.product_id = products.id AND wpp.effective_from <= ?'
+                . ' AND (wpp.effective_to IS NULL OR wpp.effective_to > ?)'
+                . ' ORDER BY wpp.effective_from DESC, wpp.created_at DESC LIMIT 1), products.price))',
+            [$warehouseId, $now, $now],
+        ];
+    }
+
+    /**
+     * Filter harga sesuai harga yang tampil di storefront (harga warehouse konteks).
+     */
+    public function scopeWhereEffectivePrice($query, string $operator, float $value): void
+    {
+        [$sql, $bindings] = static::effectivePriceSql();
+        $query->whereRaw($sql . ' ' . (in_array($operator, ['>=', '<=', '>', '<', '='], true) ? $operator : '=') . ' ?', [...$bindings, $value]);
+    }
+
+    public function scopeOrderByEffectivePrice($query, string $direction = 'asc'): void
+    {
+        [$sql, $bindings] = static::effectivePriceSql();
+        $query->orderByRaw($sql . ' ' . (strtolower($direction) === 'desc' ? 'DESC' : 'ASC'), $bindings);
+    }
+
     public function scopeOrderByInStockFirst($query, ?string $warehouseId = null): void
     {
         if (! \App\Support\ShopFulfillment::showStockOnStorefront()) {
@@ -463,8 +502,35 @@ class Product extends Model
         return $orderedQty;
     }
 
+    /**
+     * Harga katalog. Di storefront/keranjang/checkout memakai harga master warehouse aktif
+     * (lihat PricingContext); di luar itu (admin, job) harga global kolom products.price.
+     */
+    public function getPriceAttribute($value): ?string
+    {
+        $master = $this->exists ? PricingContext::current()->masterPriceFor($this->getKey()) : null;
+        if ($master !== null) {
+            return $master;
+        }
+
+        return $value === null ? null : number_format((float) $value, 2, '.', '');
+    }
+
+    /**
+     * Ada harga master warehouse yang sedang dipakai untuk produk ini.
+     */
+    public function usesWarehousePrice(): bool
+    {
+        return $this->exists && PricingContext::current()->masterPriceFor($this->getKey()) !== null;
+    }
+
     public function hasActiveDiscount(): bool
     {
+        // Harga warehouse menggantikan harga & diskon global produk.
+        if ($this->usesWarehousePrice()) {
+            return false;
+        }
+
         if (!$this->is_discount) {
             return false;
         }

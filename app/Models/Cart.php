@@ -219,8 +219,9 @@ class Cart extends Model
 
         $user = $this->user ?? \Illuminate\Support\Facades\Auth::user();
         
-        // Menampilkan harga normal (retail) dengan PPN di keranjang
-        $unit = (float) $product->price;
+        // Menampilkan harga normal (retail) dengan PPN di keranjang, sesuai harga warehouse keranjang.
+        $unit = (float) \App\Support\Pricing\PricingContext::current()
+            ->forWarehouse($this->warehouse_id, fn () => $product->price);
 
         if ($this->showsLargeUnitInCart()) {
             return $unit * (float) $product->unitsPerLargeEffective();

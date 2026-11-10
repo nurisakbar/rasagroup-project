@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Pricing\PricingContext;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Expedition;
@@ -890,6 +891,9 @@ class CheckoutController extends Controller
             return back()->with('error', 'Keranjang memiliki produk dari hub yang berbeda.');
         }
 
+        // Semua harga order ini mengikuti harga master hub pengirim.
+        PricingContext::current()->useWarehouse($sourceWarehouse->id);
+
         // Check stock availability
         if (! ShopFulfillment::assumeStockReady()) {
             $stockErrors = [];
@@ -1229,9 +1233,12 @@ class CheckoutController extends Controller
             $order->load('address');
 
             $discountService = new \App\Services\DiscountService();
+            // Diskon berjenjang (MOQ) dicatat per item agar invoice & QAD/Zoho sama dengan yang dibayar.
+            $tierLinePercents = $user->isDistributor() ? [] : $discountService->linePercentages($carts, $user, $request->sales_code);
 
             foreach ($carts as $cart) {
-                $lineUnit = $user->getProductPrice($cart->product);
+                $tierPercent = (float) ($tierLinePercents[(string) $cart->id] ?? 0);
+                $lineUnit = round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
 
                 $allocatedBatches = [];
                 $productCodes = $cart->product->getAllCodes();
@@ -1583,6 +1590,11 @@ class CheckoutController extends Controller
     {
         $user->loadMissing(['priceLevel', 'categoryDiscounts']);
 
+        // Harga mengikuti warehouse keranjang (= hub pengirim akhir setelah deteksi alamat).
+        if ($carts->isNotEmpty()) {
+            PricingContext::current()->useWarehouse($carts->first()->warehouse_id);
+        }
+
         $retailSubtotal = (float) $carts->sum(function ($cart) use ($user) {
             return $user->getProductPrice($cart->product) * (int) $cart->quantity;
         });
@@ -1615,7 +1627,8 @@ class CheckoutController extends Controller
                     : ($user->priceLevel->name ?? 'Diskon Distributor');
             }
         } else {
-            $discountData = $discountService->calculateCartDiscount($carts, $user);
+            // Diskon MOQ hanya bila pembeli menginput kode sales (query / form checkout).
+            $discountData = $discountService->calculateCartDiscount($carts, $user, request('sales_code'));
             $tieredDiscountAmount = $discountData['total_discount_amount'];
             $tieredDiscountDetails = $discountData['discount_details'];
             $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
@@ -1672,6 +1685,8 @@ class CheckoutController extends Controller
 
         if ($bestHub && $bestHub->id !== $currentWarehouseId) {
             $hubChanged = true;
+            // Harga ikut hub pengirim yang baru.
+            PricingContext::current()->useWarehouse($bestHub->id);
             Cart::where('user_id', Auth::id())
                 ->where('cart_type', 'regular')
                 ->update(['warehouse_id' => $bestHub->id]);

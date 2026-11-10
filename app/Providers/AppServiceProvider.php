@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Konteks harga per warehouse, baru untuk setiap request / job.
+        $this->app->scoped(\App\Support\Pricing\PricingContext::class);
     }
 
     /**

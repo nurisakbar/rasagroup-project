@@ -21,7 +21,7 @@ class WarehousePricesExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['warehouse_id', 'nama_warehouse', 'kode_produk', 'nama_produk', 'harga_global', 'harga_berlaku', 'harga_baru', 'berlaku_mulai', 'berlaku_sampai', 'catatan'];
+        return ['warehouse_id', 'nama_warehouse', 'kode_produk', 'nama_produk', 'harga_global', 'harga_berlaku', 'harga_baru', 'catatan'];
     }
 
     public function collection(): Collection
@@ -36,8 +36,6 @@ class WarehousePricesExport implements FromCollection, WithHeadings
             $product->name,
             (float) $product->price,
             (float) ($masters->get($product->id)?->price ?? $product->price),
-            null,
-            null,
             null,
             null,
         ]);

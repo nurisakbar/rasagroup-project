@@ -72,10 +72,10 @@ class ProductController extends Controller
 
         // Filter by price range
         if ($request->has('min_price') && $request->min_price) {
-            $query->where('price', '>=', $request->min_price);
+            $query->whereEffectivePrice('>=', (float) $request->min_price);
         }
         if ($request->has('max_price') && $request->max_price) {
-            $query->where('price', '<=', $request->max_price);
+            $query->whereEffectivePrice('<=', (float) $request->max_price);
         }
 
         $query->orderByInStockFirst($selectedHubId);
@@ -87,10 +87,10 @@ class ProductController extends Controller
         }
         switch ($sort) {
             case 'price_low':
-                $query->orderBy('price', 'asc')->orderBy('created_at', 'desc');
+                $query->orderByEffectivePrice('asc')->orderBy('created_at', 'desc');
                 break;
             case 'price_high':
-                $query->orderBy('price', 'desc')->orderBy('created_at', 'desc');
+                $query->orderByEffectivePrice('desc')->orderBy('created_at', 'desc');
                 break;
             case 'name':
                 $query->orderByRaw('COALESCE(commercial_name, name) asc')->orderBy('created_at', 'desc');
@@ -170,6 +170,9 @@ class ProductController extends Controller
         if ($excludeOwn && $selectedWarehouseId && (string) $selectedWarehouseId === $excludeOwn) {
             $selectedWarehouseId = null;
         }
+
+        // Harga di halaman detail mengikuti warehouse yang sedang ditampilkan.
+        \App\Support\Pricing\PricingContext::current()->useWarehouse($selectedWarehouseId ? (string) $selectedWarehouseId : null);
 
         // Get Related Products (Same category, excluding current product)
         $relatedProducts = Product::where('category_id', $product->category_id)

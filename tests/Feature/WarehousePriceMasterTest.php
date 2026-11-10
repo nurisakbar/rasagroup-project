@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseProductPrice;
+use App\Models\WarehouseStock;
 use App\Support\Pricing\WarehousePriceResolver;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
@@ -159,17 +160,30 @@ class WarehousePriceMasterTest extends TestCase
             ->assertJsonPath('rows.0.note', 'Penyesuaian ongkos');
     }
 
-    public function test_store_treats_input_dates_as_wib(): void
+    public function test_new_price_applies_now_and_replaces_previous(): void
     {
-        $this->actingAs($this->admin, 'admin')
-            ->postJson(route('admin.warehouse-prices.store', $this->warehouse), [
-                'product_id' => $this->product->id,
-                'price' => 11500,
-                'effective_from' => '2030-01-01T07:00',
-            ])->assertOk();
+        $url = route('admin.warehouse-prices.store', $this->warehouse);
 
-        $row = WarehouseProductPrice::where('product_id', $this->product->id)->firstOrFail();
-        $this->assertTrue($row->effective_from->equalTo(\Carbon\Carbon::parse('2030-01-01 00:00:00', 'UTC')));
+        // Tanggal dari klien diabaikan: harga baru selalu berlaku sekarang tanpa batas waktu.
+        $this->actingAs($this->admin, 'admin')->postJson($url, [
+            'product_id' => $this->product->id, 'price' => 11500,
+            'effective_from' => '2030-01-01T07:00', 'effective_to' => '2030-02-01T07:00',
+        ])->assertOk();
+        $this->actingAs($this->admin, 'admin')->postJson($url, ['product_id' => $this->product->id, 'price' => 12500])->assertOk();
+
+        $this->assertSame(12500.0, $this->resolve()['price']);
+
+        $rows = WarehouseProductPrice::where('product_id', $this->product->id)->get()->keyBy(fn ($row) => (int) $row->price);
+        $this->assertNull($rows[12500]->effective_to);
+        $this->assertTrue($rows[12500]->effective_from->lte(now()));
+        $this->assertNotNull($rows[11500]->effective_to, 'Harga lama ditutup saat digantikan.');
+
+        $this->actingAs($this->admin, 'admin')
+            ->getJson(route('admin.warehouse-prices.history', [$this->warehouse, $this->product]))
+            ->assertOk()
+            ->assertJsonPath('rows.0.price', 'Rp 12.500')
+            ->assertJsonPath('rows.0.status', 'Berlaku')
+            ->assertJsonPath('rows.1.status', 'Tidak berlaku');
     }
 
     public function test_store_rejects_invalid_input(): void
@@ -178,10 +192,8 @@ class WarehousePriceMasterTest extends TestCase
 
         $this->actingAs($this->admin, 'admin')->postJson($url, ['product_id' => $this->product->id, 'price' => 0])
             ->assertUnprocessable()->assertJsonValidationErrors('price');
-        $this->actingAs($this->admin, 'admin')->postJson($url, [
-            'product_id' => $this->product->id, 'price' => 1000,
-            'effective_from' => '2030-01-02T00:00', 'effective_to' => '2030-01-01T00:00',
-        ])->assertUnprocessable();
+        $this->actingAs($this->admin, 'admin')->postJson($url, ['product_id' => $this->product->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('price');
 
         $this->assertSame(0, WarehouseProductPrice::where('product_id', $this->product->id)->count());
     }
@@ -231,7 +243,7 @@ class WarehousePriceMasterTest extends TestCase
 
     private function csv(array $rows): UploadedFile
     {
-        $lines = ['warehouse_id,nama_warehouse,kode_produk,nama_produk,harga_global,harga_berlaku,harga_baru,berlaku_mulai,berlaku_sampai,catatan'];
+        $lines = ['warehouse_id,nama_warehouse,kode_produk,nama_produk,harga_global,harga_berlaku,harga_baru,catatan'];
         foreach ($rows as $row) {
             $lines[] = implode(',', $row);
         }
@@ -245,32 +257,35 @@ class WarehousePriceMasterTest extends TestCase
     {
         $code = $this->product->code;
         $file = $this->csv([
-            [$this->warehouse->id, 'A', $code, 'P', 10000, 10000, 14000, '', '', 'Import uji'],
-            [$this->otherWarehouse->id, 'B', $code, 'P', 10000, 10000, 16000, '2030-01-01 00:00', '', ''],
-            [$this->warehouse->id, 'A', $code, 'P', 10000, 10000, '', '', '', ''],
+            [$this->warehouse->id, 'A', $code, 'P', 10000, 10000, 14000, 'Import uji'],
+            [$this->otherWarehouse->id, 'B', $code, 'P', 10000, 10000, 16000, ''],
+            [$this->warehouse->id, 'A', $code, 'P', 10000, 10000, '', ''],
         ]);
+        $previous = $this->master(12000, '-1 day');
 
         $this->actingAs($this->admin, 'admin')
             ->post(route('admin.warehouse-prices.import'), ['file' => $file])
             ->assertSessionHas('success');
 
         $this->assertSame(14000.0, $this->resolve()['price']);
-        $this->assertSame(10000.0, $this->resolve($this->otherWarehouse)['price']);
+        $this->assertSame(16000.0, $this->resolve($this->otherWarehouse)['price']);
         $this->assertSame(2, WarehouseProductPrice::where('product_id', $this->product->id)->where('source', 'import')->count());
+        $this->assertNotNull($previous->fresh()->effective_to, 'Harga lama ditutup oleh import.');
     }
 
     public function test_import_is_all_or_nothing(): void
     {
         $file = $this->csv([
-            [$this->warehouse->id, 'A', $this->product->code, 'P', 10000, 10000, 14000, '', '', ''],
-            [$this->warehouse->id, 'A', 'KODE-TIDAK-ADA', 'P', 10000, 10000, 15000, '', '', ''],
-            ['bukan-warehouse', 'A', $this->product->code, 'P', 10000, 10000, 15000, '', '', ''],
+            [$this->warehouse->id, 'A', $this->product->code, 'P', 10000, 10000, 14000, ''],
+            [$this->warehouse->id, 'A', 'KODE-TIDAK-ADA', 'P', 10000, 10000, 15000, ''],
+            ['bukan-warehouse', 'A', $this->product->code, 'P', 10000, 10000, 15000, ''],
+            [$this->warehouse->id, 'A', $this->product->code, 'P', 10000, 10000, 15000, ''],
         ]);
 
         $this->actingAs($this->admin, 'admin')
             ->post(route('admin.warehouse-prices.import'), ['file' => $file])
             ->assertSessionHas('error')
-            ->assertSessionHas('import_errors', fn ($errors) => count($errors) === 2);
+            ->assertSessionHas('import_errors', fn ($errors) => count($errors) === 3);
 
         $this->assertSame(0, WarehouseProductPrice::where('product_id', $this->product->id)->count());
     }
@@ -291,5 +306,34 @@ class WarehousePriceMasterTest extends TestCase
         $this->assertSame($this->warehouse->id, $row[0]);
         $this->assertEquals(10000, $row[4]);
         $this->assertEquals(12000, $row[5]);
+    }
+
+    public function test_warehouse_stock_tab_shows_hub_price_and_editor(): void
+    {
+        WarehouseStock::create(['warehouse_id' => $this->warehouse->id, 'product_id' => $this->product->id, 'stock' => 5]);
+        $search = ['warehouse' => $this->warehouse, 'search' => $this->product->code];
+
+        // Tanpa harga master: harga global + tombol Set Harga.
+        $this->actingAs($this->admin, 'admin')->get(route('admin.warehouses.show', $search))
+            ->assertOk()
+            ->assertSee('Rp 10.000')
+            ->assertSee('btn-set-price', false)
+            ->assertSee('id="price-modal"', false);
+
+        $this->master(12500, '-1 hour');
+
+        $this->actingAs($this->admin, 'admin')->get(route('admin.warehouses.show', $search))
+            ->assertOk()
+            ->assertSee('Rp 12.500')
+            ->assertDontSee('Rp 10.000');
+
+        // Peran tanpa hak master harga tidak melihat tombol maupun modal.
+        $finance = User::factory()->create(['role' => 'finance', 'wa_verified_at' => now()]);
+        $response = $this->actingAs($finance, 'admin')->get(route('admin.warehouses.show', $search));
+        if ($response->status() === 200) {
+            $response->assertDontSee('btn-set-price', false)->assertDontSee('id="price-modal"', false);
+        } else {
+            $this->assertContains($response->status(), [302, 403]);
+        }
     }
 }

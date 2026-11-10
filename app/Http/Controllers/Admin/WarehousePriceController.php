@@ -98,22 +98,14 @@ class WarehousePriceController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', 'uuid', 'exists:products,id'],
             'price' => ['required', 'numeric', 'gt:0'],
-            'effective_from' => ['nullable', 'date'],
-            'effective_to' => ['nullable', 'date'],
             'note' => ['nullable', 'string', 'max:255'],
         ]);
 
-        [$from, $to] = $this->period($validated['effective_from'] ?? null, $validated['effective_to'] ?? null);
-        if ($to && $to->lte($from)) {
-            return response()->json(['message' => 'Tanggal berakhir harus setelah tanggal mulai.', 'errors' => ['effective_to' => ['Tanggal berakhir harus setelah tanggal mulai.']]], 422);
-        }
-
-        WarehouseProductPrice::create([
+        // Harga baru langsung berlaku tanpa batas waktu dan menggantikan harga sebelumnya.
+        WarehouseProductPrice::replaceCurrent([
             'warehouse_id' => $warehouse->id,
             'product_id' => $validated['product_id'],
             'price' => $validated['price'],
-            'effective_from' => $from,
-            'effective_to' => $to,
             'source' => WarehouseProductPrice::SOURCE_MANUAL,
             'note' => $validated['note'] ?? null,
             'created_by' => auth('admin')->id(),
@@ -135,6 +127,8 @@ class WarehousePriceController extends Controller
             ->where('warehouse_id', $warehouse->id)
             ->where('product_id', $product->id)
             ->orderByDesc('effective_from')
+            ->orderByRaw('effective_to IS NULL DESC')
+            ->orderByDesc('effective_to')
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (WarehouseProductPrice $row) => [
@@ -195,21 +189,6 @@ class WarehousePriceController extends Controller
         }
 
         return $back->with('success', "Import berhasil: {$import->imported} harga disimpan.");
-    }
-
-    /**
-     * Input tanggal dianggap WIB. Tanpa tanggal mulai, harga langsung berlaku.
-     *
-     * @return array{0: Carbon, 1: ?Carbon}
-     */
-    private function period(?string $from, ?string $to): array
-    {
-        $timezone = config('app.timezone');
-
-        return [
-            filled($from) ? Carbon::parse($from, Wib::TZ)->setTimezone($timezone) : now(),
-            filled($to) ? Carbon::parse($to, Wib::TZ)->setTimezone($timezone) : null,
-        ];
     }
 
     private function rupiah($value): string
