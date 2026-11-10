@@ -52,6 +52,8 @@ return [
         'client_secret' => env('ZOHO_CLIENT_SECRET'),
         'refresh_token' => env('ZOHO_REFRESH_TOKEN'),
         'org_id' => env('ZOHO_ORG_ID'),
+        // Kode akun penjualan (chart of accounts Zoho) untuk baris invoice; diskon per item ikut mengurangi akun ini.
+        'sales_account_code' => env('ZOHO_SALES_ACCOUNT_CODE', '41101'),
     ],
 
     'faspay' => [

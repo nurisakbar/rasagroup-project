@@ -58,6 +58,10 @@
                                             <b><i class="fa fa-id-card-o text-muted" style="width: 20px;"></i> Kode Customer QAD</b> <a class="pull-right">{{ $distributor->qad_customer_code ?: '-' }}</a>
                                         </li>
                                         <li class="list-group-item">
+                                            <b><i class="fa fa-link text-muted" style="width: 20px;"></i> Kode Sales Distributor</b>
+                                            <a class="pull-right" href="{{ route('register', ['distributor' => $distributor->distributor_sales_code]) }}" target="_blank" title="Link pendaftaran outlet">{{ $distributor->distributor_sales_code ?: '-' }}</a>
+                                        </li>
+                                        <li class="list-group-item">
                                             <b><i class="fa fa-user-circle text-muted" style="width: 20px;"></i> Kode Sales</b> 
                                             <a class="pull-right">
                                                 @if($distributor->salesPerson)
@@ -119,6 +123,9 @@
                     <li class="{{ $activeTab == 'staff' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'staff']) }}"><i class="fa fa-users"></i> Kelola Staff</a></li>
                     <li class="{{ $activeTab == 'target_belanja' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'target_belanja']) }}"><i class="fa fa-bullseye"></i> Target Belanja</a></li>
                     <li class="{{ $activeTab == 'diskon_kategori' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'diskon_kategori']) }}"><i class="fa fa-percent"></i> Diskon Kategori</a></li>
+                    @if(auth('admin')->user()?->role === \App\Models\User::ROLE_SUPER_ADMIN)
+                    <li class="{{ $activeTab == 'api' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'api']) }}">API</a></li>
+                    @endif
                     <li class="pull-right {{ $activeTab == 'danger' ? 'active' : '' }}"><a href="{{ route('admin.distributors.show', ['distributor' => $distributor->id, 'tab' => 'danger']) }}" class="text-red"><i class="fa fa-warning"></i> Danger Zone</a></li>
                 </ul>
                 <div class="tab-content">
@@ -220,6 +227,54 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(auth('admin')->user()?->role === \App\Models\User::ROLE_SUPER_ADMIN)
+                    <!-- Tab: API Key Penjualan Eksternal -->
+                    <div class="tab-pane {{ $activeTab == 'api' ? 'active' : '' }}" id="tab_api">
+                        <p class="text-muted">API key dipakai sistem distributor untuk mencatat penjualan mereka. Key hanya tampil sekali saat dibuat.</p>
+                        @if(session('new_api_key'))
+                            <div class="alert alert-warning">
+                                <strong>Salin sekarang, key ini tidak akan ditampilkan lagi:</strong>
+                                <input type="text" class="form-control" style="margin-top: 8px;" value="{{ session('new_api_key') }}" readonly aria-label="API key baru">
+                            </div>
+                        @endif
+                        <form method="POST" action="{{ route('admin.distributors.api-clients.store', $distributor) }}" class="form-inline" style="margin-bottom: 15px;">
+                            @csrf
+                            <input type="text" name="name" class="form-control" placeholder="Nama sistem, mis. ERP Pusat" required maxlength="100" aria-label="Nama sistem">
+                            <button type="submit" class="btn btn-primary">Buat API Key</button>
+                        </form>
+                        <table class="table table-bordered">
+                            <thead><tr><th>Nama</th><th>Key</th><th>Status</th><th>Terakhir Dipakai</th><th></th></tr></thead>
+                            <tbody>
+                                @forelse($distributor->distributorApiClients as $client)
+                                    <tr>
+                                        <td>{{ $client->name }}</td>
+                                        <td><code>{{ $client->key_prefix }}...</code></td>
+                                        <td>
+                                            @if($client->is_active)
+                                                <span class="label label-success">Aktif</span>
+                                            @else
+                                                <span class="label label-default">Dicabut</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $client->last_used_at ? \App\Support\Wib::format($client->last_used_at) . ' WIB' : '-' }}</td>
+                                        <td>
+                                            @if($client->is_active)
+                                                <form method="POST" action="{{ route('admin.distributors.api-clients.destroy', [$distributor, $client]) }}" onsubmit="return confirm('Cabut API key ini? Sistem yang memakainya akan berhenti mengirim data.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-xs">Cabut</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5" class="text-muted">Belum ada API key.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
 
                     <!-- Tab: Stock Monitoring -->
                     <div class="tab-pane {{ $activeTab == 'stock' ? 'active' : '' }}" id="tab_stock">

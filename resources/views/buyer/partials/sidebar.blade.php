@@ -39,6 +39,13 @@
                     <i class="fi-rs-clock {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Jadwal Operasional
                 </a>
             </li>
+            @if($isDistributor)
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.outlet-referral.*') ? 'active' : '' }}" href="{{ route('buyer.outlet-referral.index') }}">
+                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Rekrut Outlet
+                </a>
+            </li>
+            @endif
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
                     <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat Pembelian

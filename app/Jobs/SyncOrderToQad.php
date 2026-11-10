@@ -6,12 +6,12 @@ use App\Models\Address;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\QadService;
+use App\Support\Pricing\SalesLinePricing;
 use App\Support\QadBusinessRelationHeadOffice;
 use App\Support\QadCreditTerms;
 use App\Support\QadExistingCustomer;
 use App\Support\QadIntegration;
 use App\Support\QadWsOrderNumberGenerator;
-use App\Support\TaxAwarePrice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -266,20 +266,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
                     ]);
                 }
 
-                $soldPrice = round(max(0.0, (float) $price), 2);
-                $catalogPrice = round(TaxAwarePrice::excludingTax($item->catalogUnitPrice()), 2);
-                $discountPercent = (float) $item->unitDiscountPercent();
-                if ($discountPercent <= 0 && $catalogPrice > $soldPrice && $catalogPrice > 0) {
-                    $discountPercent = round((($catalogPrice - $soldPrice) / $catalogPrice) * 100, 2);
-                }
-
-                $listPrice = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $catalogPrice : $soldPrice;
-                $discPercent = ($discountPercent > 0 && $catalogPrice > $soldPrice) ? $discountPercent : 0;
-
-                // netPrice = listPrice x (1 - discount%), boleh desimal (mis. 58559 x 80% = 46847.2) agar konsisten dengan hitungan QAD.
-                $netPrice = $discPercent > 0
-                    ? round($listPrice * (1 - ($discPercent / 100)), 2)
-                    : (float) $listPrice;
+                // Diskon dikirim per item (termasuk diskon level order yang dilebur ke tiap baris).
+                $pricing = SalesLinePricing::forItem($item, (float) $price);
+                $listPrice = $pricing['list_price'];
+                $discPercent = $pricing['discount_percent'];
+                $netPrice = $pricing['net_price'];
 
                 $lines[] = [
                     'salesOrderNumber' => $qidSalesOrderNumber,
@@ -348,20 +339,27 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
     /**
      * salespersonCode_01 diisi dari order sales_code, atau fallback ke user/distributor sales_code.
+     * Kode milik distributor (DSTxxxxx) bukan salesperson QAD, jadi diganti sales PIC distributor tsb.
      */
     protected function salespersonCodeForQad(): ?string
     {
-        $code = trim((string) ($this->order->sales_code ?? ''));
-        if ($code === '' || strcasecmp($code, 'null') === 0) {
-            $userCode = trim((string) ($this->order->user?->sales_code ?? ''));
-            if ($userCode !== '' && strcasecmp($userCode, 'null') !== 0) {
-                return $userCode;
-            }
+        $code = $this->normalizeSalespersonCode($this->order->sales_code)
+            ?? $this->normalizeSalespersonCode($this->order->user?->sales_code);
 
+        if ($code === null) {
             return null;
         }
 
-        return $code;
+        $distributor = User::findDistributorBySalesCode($code);
+
+        return $distributor ? $this->normalizeSalespersonCode($distributor->sales_code) : $code;
+    }
+
+    protected function normalizeSalespersonCode(?string $code): ?string
+    {
+        $code = trim((string) $code);
+
+        return ($code === '' || strcasecmp($code, 'null') === 0) ? null : $code;
     }
 
     protected function isTaxableForQad(): bool

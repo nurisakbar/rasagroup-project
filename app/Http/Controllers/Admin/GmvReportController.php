@@ -59,7 +59,7 @@ class GmvReportController extends Controller
         $topSales = $this->analyticsService->getTopSales($filters, 5);
 
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get(['id', 'name', 'kode_hub']);
-        $salesList = User::where('role', User::ROLE_SALES)->whereNotNull('sales_code')->orderBy('name')->get(['id', 'name', 'sales_code']);
+        $salesList = User::salesCodeOptions();
 
         return view('admin.reports.gmv', compact(
             'metrics',

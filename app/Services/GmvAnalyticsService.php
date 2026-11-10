@@ -347,16 +347,17 @@ class GmvAnalyticsService
         $results = DB::table('orders')
             ->join('order_items', 'orders.id', '=', 'order_items.order_id')
             ->leftJoin('users', 'orders.sales_code', '=', 'users.sales_code')
+            ->leftJoin('users as distributors', 'orders.sales_code', '=', 'distributors.distributor_sales_code')
             ->whereIn('orders.id', (clone $ordersQuery)->pluck('id'))
             ->whereNotNull('orders.sales_code')
             ->where('orders.sales_code', '!=', '')
             ->select(
                 'orders.sales_code',
-                DB::raw('COALESCE(users.name, orders.sales_code) as salesperson_name'),
+                DB::raw('COALESCE(users.name, distributors.name, orders.sales_code) as salesperson_name'),
                 DB::raw('SUM(order_items.price * order_items.quantity) as gmv'),
                 DB::raw('COUNT(DISTINCT orders.id) as orders_count')
             )
-            ->groupBy('orders.sales_code', 'users.name')
+            ->groupBy('orders.sales_code', 'users.name', 'distributors.name')
             ->orderByDesc('gmv')
             ->limit($limit)
             ->get();

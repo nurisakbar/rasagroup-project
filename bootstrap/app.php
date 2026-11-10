@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'distributor' => \App\Http\Middleware\DistributorAccess::class,
             'wa.verified' => \App\Http\Middleware\EnsureWhatsAppIsVerified::class,
             'external.api.key' => \App\Http\Middleware\VerifyExternalApiKey::class,
+            'distributor.api.key' => \App\Http\Middleware\VerifyDistributorApiKey::class,
         ]);
         
         // Add affiliate tracking to web middleware

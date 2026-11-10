@@ -179,6 +179,15 @@ class Order extends Model
                     ->where('role', User::ROLE_SALES ?? 'sales');
     }
 
+    /**
+     * Distributor pemilik kode pada order, untuk outlet yang terdaftar lewat link distributor.
+     */
+    public function salesDistributor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_code', 'distributor_sales_code')
+                    ->where('role', User::ROLE_DISTRIBUTOR);
+    }
+
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class)->withTrashed();

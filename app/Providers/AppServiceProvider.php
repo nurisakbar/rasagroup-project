@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\RateLimiter::for('distributor-api', function (\Illuminate\Http\Request $request) {
+            $client = $request->attributes->get(\App\Http\Middleware\VerifyDistributorApiKey::CLIENT_ATTRIBUTE);
+
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(120)->by($client?->id ?: $request->ip());
+        });
+
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
             $view->with('globalCategories', \App\Models\Category::forStorefrontSidebar());
         });

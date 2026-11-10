@@ -184,6 +184,14 @@
         </li>
         @endif
 
+        @if(in_array($adminRole, \App\Http\Controllers\Admin\DistributorExternalSalesController::ALLOWED_ROLES, true))
+        <li class="{{ request()->routeIs('admin.reports.distributor-sales.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.reports.distributor-sales.index') }}">
+            <i class="fa fa-bar-chart"></i> <span>PENJUALAN DISTRIBUTOR</span>
+          </a>
+        </li>
+        @endif
+
         @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.orders.create') ? 'active' : '' }}">
           <a href="{{ route('admin.orders.create') }}">
@@ -265,7 +273,7 @@
         @endif
         
         @if(in_array($adminRole, ['super_admin', 'brand_marketing', 'ecommerce', 'sales_admin', 'it_application']))
-        <li class="treeview {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') || request()->routeIs('admin.menus.*') ? 'active menu-open' : '' }}">
+        <li class="treeview {{ request()->routeIs('admin.warehouse-prices.*') || request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') || request()->routeIs('admin.menus.*') ? 'active menu-open' : '' }}">
           <a href="#">
             <i class="fa fa-cube"></i> <span>MASTER DATA</span>
             <span class="pull-right-container">
@@ -287,6 +295,11 @@
             @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
             <li class="{{ request()->routeIs('admin.price-levels.*') ? 'active' : '' }}">
               <a href="{{ route('admin.price-levels.index') }}"><i class="fa fa-tags"></i> LEVEL HARGA</a>
+            </li>
+            @endif
+            @if(in_array($adminRole, \App\Http\Controllers\Admin\WarehousePriceController::ALLOWED_ROLES, true))
+            <li class="{{ request()->routeIs('admin.warehouse-prices.*') ? 'active' : '' }}">
+              <a href="{{ route('admin.warehouse-prices.index') }}"><i class="fa fa-money"></i> MASTER HARGA</a>
             </li>
             @endif
             @if(in_array($adminRole, ['super_admin', 'it_application']))

@@ -38,6 +38,13 @@
                                 <i class="fi-rs-lock mr-15"></i>Ubah Password
                             </a>
                         </li>
+                        @if(auth()->user()->isDistributor())
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('buyer.outlet-referral.index') }}">
+                                <i class="fi-rs-users mr-15"></i>Rekrut Outlet
+                            </a>
+                        </li>
+                        @endif
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.affiliate.index') }}">
                                 <i class="fi-rs-users mr-15"></i>Affiliasi

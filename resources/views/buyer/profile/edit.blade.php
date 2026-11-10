@@ -74,6 +74,13 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
+                                        @if(Auth::user()->referringDistributor)
+                                        <div class="form-group mb-20">
+                                            <label class="form-label-custom">Distributor</label>
+                                            <input type="text" class="form-control custom-input" value="{{ Auth::user()->referringDistributor->name }} ({{ Auth::user()->sales_code }})" readonly>
+                                            <small class="form-text text-muted font-xs mt-1 d-block">Akun Anda terdaftar melalui distributor ini.</small>
+                                        </div>
+                                        @else
                                         <div class="form-group mb-20">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label-custom mb-0">Nama Sales</label>
@@ -99,6 +106,7 @@
                                                 Pilih <em>-- Tanpa Sales (Kosongkan) --</em> atau klik tombol <strong>✕</strong> / <strong>Hapus Sales</strong> jika tidak ingin menggunakan sales.
                                             </small>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

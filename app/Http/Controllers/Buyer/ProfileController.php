@@ -44,6 +44,11 @@ class ProfileController extends Controller
             $validated['occupation'] = $trimmed === '' ? null : $trimmed;
         }
 
+        // Atribusi distributor dikunci: outlet tidak bisa mengganti kode yang didapat dari link pendaftaran.
+        if ($user->referringDistributor) {
+            unset($validated['sales_code']);
+        }
+
         if (array_key_exists('sales_code', $validated)) {
             $trimmed = is_string($validated['sales_code']) ? trim($validated['sales_code']) : null;
             $validated['sales_code'] = ($trimmed === '' || $trimmed === null) ? null : $trimmed;

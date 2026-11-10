@@ -57,6 +57,9 @@
                                     <h1 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700;">Daftar Akun</h1>
                                     <p class="mb-30" style="font-family: 'Lato', sans-serif; color: #7E7E7E;">Sudah punya akun? <a href="{{ route('login') }}" style="color: #6A1B1B; font-weight: 600;">Masuk di sini</a></p>
                                 </div>
+                                @if($invalidDistributorCode)
+                                    <div class="alert alert-warning font-sm">Link distributor tidak valid atau sudah tidak aktif. Anda tetap bisa mendaftar sebagai pembeli biasa.</div>
+                                @endif
                                 <form method="POST" action="{{ route('register') }}">
                                     @csrf
 
@@ -94,6 +97,15 @@
                                         </span>
                                     </div>
                                     
+                                    @if($referringDistributor)
+                                    <input type="hidden" name="distributor_code" value="{{ $referringDistributor->distributor_sales_code }}">
+                                    <div class="form-group mb-20">
+                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai outlet melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
+                                        @error('distributor_code')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    @else
                                     <div class="form-group mb-20">
                                         <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
                                             @php
@@ -112,7 +124,8 @@
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    
+                                    @endif
+
                                     <div class="form-group mb-20">
                                         <div class="chek-form">
                                             <div class="custome-checkbox">

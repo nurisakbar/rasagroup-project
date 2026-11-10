@@ -134,7 +134,7 @@
                         </tr>
                         <tr>
                             <th>Nama Sales</th>
-                            <td>{{ $order->sales?->name ?? '-' }}</td>
+                            <td>{{ $order->sales?->name ?? ($order->salesDistributor ? 'Distributor ' . $order->salesDistributor->name : '-') }}</td>
                         </tr>
                         @endif
                         @php

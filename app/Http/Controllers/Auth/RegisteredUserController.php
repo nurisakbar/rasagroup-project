@@ -17,9 +17,22 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        $distributorCode = $request->query('distributor');
+        $referringDistributor = $this->findReferringDistributor($distributorCode);
+
+        return view('auth.register', [
+            'referringDistributor' => $referringDistributor,
+            'invalidDistributorCode' => filled($distributorCode) && ! $referringDistributor,
+        ]);
+    }
+
+    private function findReferringDistributor(?string $code): ?User
+    {
+        $distributor = User::findDistributorBySalesCode($code);
+
+        return $distributor?->canReferOutlets() ? $distributor : null;
     }
 
     public function searchSales(Request $request)
@@ -62,6 +75,11 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'max:20', 'unique:'.User::class],
             'sales_code' => ['nullable', 'string', 'max:255'],
+            'distributor_code' => ['nullable', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
+                if (! $this->findReferringDistributor($value)) {
+                    $fail('Link pendaftaran distributor tidak valid.');
+                }
+            }],
         ]);
 
         $waCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -70,6 +88,10 @@ class RegisteredUserController extends Controller
         if ($salesCode && strpos($salesCode, ' - ') !== false) {
             $parts = explode(' - ', $salesCode);
             $salesCode = trim($parts[0]);
+        }
+
+        if ($request->filled('distributor_code')) {
+            $salesCode = $this->findReferringDistributor($request->distributor_code)->distributor_sales_code;
         }
 
         $user = User::create([

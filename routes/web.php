@@ -181,6 +181,7 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     // Affiliate
     Route::get('/affiliate', [App\Http\Controllers\Buyer\AffiliateController::class, 'index'])->name('affiliate.index');
     Route::put('/affiliate/bank', [App\Http\Controllers\Buyer\AffiliateController::class, 'updateBank'])->name('affiliate.bank.update');
+    Route::get('/outlet-referral', [App\Http\Controllers\Buyer\OutletReferralController::class, 'index'])->name('outlet-referral.index');
 });
 
 // Log Viewer Route (Access via /logs)
@@ -208,6 +209,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         // Master Data - Price Levels
         Route::resource('price-levels', App\Http\Controllers\Admin\PriceLevelController::class);
+
+        // Master harga per warehouse
+        Route::prefix('warehouse-prices')->name('warehouse-prices.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\WarehousePriceController::class, 'index'])->name('index');
+            Route::post('/import', [App\Http\Controllers\Admin\WarehousePriceController::class, 'import'])->name('import');
+            Route::get('/{warehouse:id}/datatable', [App\Http\Controllers\Admin\WarehousePriceController::class, 'datatable'])->name('datatable');
+            Route::get('/{warehouse:id}/export', [App\Http\Controllers\Admin\WarehousePriceController::class, 'export'])->name('export');
+            Route::post('/{warehouse:id}', [App\Http\Controllers\Admin\WarehousePriceController::class, 'store'])->name('store');
+            Route::get('/{warehouse:id}/products/{product}/history', [App\Http\Controllers\Admin\WarehousePriceController::class, 'history'])->name('history');
+            Route::delete('/{warehouse:id}/prices/{price}', [App\Http\Controllers\Admin\WarehousePriceController::class, 'destroy'])->name('destroy');
+        });
 
         // Master Data - Categories
         Route::resource('categories', App\Http\Controllers\Admin\CategoryController::class)->except(['show']);
@@ -324,6 +336,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/export', [App\Http\Controllers\Admin\GmvReportController::class, 'export'])->name('export');
         });
 
+        // Penjualan distributor dari sistem eksternal (hanya pencatatan)
+        Route::prefix('reports/distributor-sales')->name('reports.distributor-sales.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'index'])->name('index');
+            Route::get('/datatable', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'datatable'])->name('datatable');
+            Route::get('/export', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'export'])->name('export');
+            Route::get('/{sale}', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'show'])->name('show');
+        });
+
         // Menus Management
         Route::resource('menus', App\Http\Controllers\Admin\MenuController::class);
 
@@ -371,6 +391,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/distributors/{distributor}/documents/{document}', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'update'])->name('distributors.documents.update');
         Route::delete('/distributors/{distributor}/documents/{document}', [App\Http\Controllers\Admin\DistributorDocumentController::class, 'destroy'])->name('distributors.documents.destroy');
         Route::post('/distributors/{distributor}/sync-products', [App\Http\Controllers\Admin\DistributorController::class, 'syncProducts'])->name('distributors.sync-products');
+        Route::post('/distributors/{distributor}/api-clients', [App\Http\Controllers\Admin\DistributorApiClientController::class, 'store'])->name('distributors.api-clients.store');
+        Route::delete('/distributors/{distributor}/api-clients/{client}', [App\Http\Controllers\Admin\DistributorApiClientController::class, 'destroy'])->name('distributors.api-clients.destroy');
         Route::post('/distributors/{distributor}/users', [App\Http\Controllers\Admin\DistributorController::class, 'addUser'])->name('distributors.add-user');
         Route::put('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'updateUser'])->name('distributors.update-user');
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');

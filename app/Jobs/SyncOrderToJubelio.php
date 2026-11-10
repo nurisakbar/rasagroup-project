@@ -612,6 +612,12 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             return null;
         }
 
+        // Distributor bukan salesman Jubelio: cukup dicatat sebagai tag di catatan order.
+        $distributor = User::findDistributorBySalesCode($salesCode);
+        if ($distributor) {
+            return ['salesmen_id' => null, 'sales_name' => $distributor->name, 'sales_code' => $salesCode];
+        }
+
         $salesUser = User::where('sales_code', $salesCode)->first();
         $salesName = $salesUser?->name;
         $salesEmail = $salesUser?->email;

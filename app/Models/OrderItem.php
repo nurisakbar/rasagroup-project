@@ -22,12 +22,15 @@ class OrderItem extends Model
         'order_uom',
         'quantity_ordered',
         'price',
+        'catalog_price',
+        'price_master_id',
         'subtotal',
         'allocated_batches',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'catalog_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'quantity_ordered' => 'integer',
         'allocated_batches' => 'array',
@@ -138,8 +141,33 @@ class OrderItem extends Model
         return (float)$this->subtotal;
     }
 
+    protected static function booted(): void
+    {
+        // Kunci harga katalog saat penjualan bila pembuat order belum mengisinya.
+        static::creating(function (OrderItem $item) {
+            if ($item->catalog_price === null && $item->product_id) {
+                $item->catalog_price = Product::withoutGlobalScopes()->withTrashed()
+                    ->whereKey($item->product_id)
+                    ->value('price');
+            }
+        });
+    }
+
+    public function priceMaster(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseProductPrice::class, 'price_master_id');
+    }
+
+    /**
+     * Harga katalog (sebelum diskon) saat order dibuat. Harga produk terkini hanya cadangan
+     * untuk baris yang belum terkunci.
+     */
     public function catalogUnitPrice(): float
     {
+        if ($this->catalog_price !== null) {
+            return (float) $this->catalog_price;
+        }
+
         $this->loadMissing('product');
         if (! $this->product) {
             return (float) $this->price;

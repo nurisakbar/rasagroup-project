@@ -254,7 +254,7 @@ class Warehouse extends Model
             } elseif ($user->isOutlet() || $user->isBuyer()) {
                 $hasSalesCode = false;
                 if (request()->filled('sales_code')) {
-                    $hasSalesCode = \App\Models\User::where('sales_code', request('sales_code'))->where('role', 'sales')->exists();
+                    $hasSalesCode = \App\Models\User::isKnownSalesCode(request('sales_code'));
                 }
 
                 if ($hasSalesCode) {

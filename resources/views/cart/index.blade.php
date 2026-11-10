@@ -232,7 +232,13 @@
                     </style>
                     @auth
                         <form action="{{ route('checkout.index') }}" method="GET" id="checkout-form">
-                            @if(!Auth::user()->isDistributor())
+                            @if(Auth::user()->referringDistributor)
+                            <div class="mb-20 text-start">
+                                <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Distributor</h6>
+                                <p class="font-sm mb-0">{{ Auth::user()->referringDistributor->name }} ({{ Auth::user()->sales_code }})</p>
+                                <input type="hidden" name="sales_code" value="{{ Auth::user()->sales_code }}">
+                            </div>
+                            @elseif(!Auth::user()->isDistributor())
                             <div class="mb-20 text-start">
                                 <h6 class="mb-10"><i class="fi-rs-user mr-5 text-muted"></i>Nama Sales (Opsional)</h6>
                                 <div class="form-group mb-0">

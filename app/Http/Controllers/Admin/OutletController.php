@@ -19,7 +19,7 @@ class OutletController extends Controller
     {
         if ($request->ajax()) {
             $query = User::where('role', User::ROLE_OUTLET)
-                ->with('salesPerson')
+                ->with(['salesPerson', 'referringDistributor'])
                 ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code');
 
             if ($request->filled('sales_code')) {
@@ -33,7 +33,15 @@ class OutletController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('sales_name', function ($user) {
-                    return $user->salesPerson ? $user->salesPerson->name : '<span class="text-muted">-</span>';
+                    if ($user->salesPerson) {
+                        return e($user->salesPerson->name);
+                    }
+
+                    if ($user->referringDistributor) {
+                        return e($user->referringDistributor->name) . ' <span class="label label-info">Distributor</span>';
+                    }
+
+                    return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('action', function ($user) {
                     $editUrl = route('admin.outlets.edit', $user);
@@ -56,15 +64,16 @@ class OutletController extends Controller
                     return $user->created_at->format('d-m-Y');
                 })
                 ->filterColumn('sales_name', function($query, $keyword) {
-                    $query->whereHas('salesPerson', function($q) use($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%");
+                    $query->where(function ($inner) use ($keyword) {
+                        $inner->whereHas('salesPerson', fn ($q) => $q->where('name', 'like', "%{$keyword}%"))
+                            ->orWhereHas('referringDistributor', fn ($q) => $q->where('name', 'like', "%{$keyword}%"));
                     });
                 })
                 ->rawColumns(['sales_name', 'action'])
                 ->make(true);
         }
 
-        $salesList = User::where('role', User::ROLE_SALES)->get();
+        $salesList = User::salesCodeOptions();
         return view('admin.outlets.index', compact('salesList'));
     }
 
@@ -73,7 +82,7 @@ class OutletController extends Controller
      */
     public function create()
     {
-        $salesList = User::where('role', User::ROLE_SALES)->get();
+        $salesList = User::salesCodeOptions();
         return view('admin.outlets.create', compact('salesList'));
     }
 
@@ -87,7 +96,7 @@ class OutletController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'sales_code' => 'nullable|string|exists:users,sales_code',
+            'sales_code' => ['nullable', 'string', $this->knownSalesCodeRule()],
             'qad_customer_code' => 'nullable|string|max:255',
         ]);
 
@@ -114,7 +123,7 @@ class OutletController extends Controller
         }
 
         $user = $outlet; // to match view variable
-        $salesList = User::where('role', User::ROLE_SALES)->get();
+        $salesList = User::salesCodeOptions();
         return view('admin.outlets.edit', compact('user', 'salesList'));
     }
 
@@ -138,7 +147,7 @@ class OutletController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'sales_code' => 'nullable|string|exists:users,sales_code',
+            'sales_code' => ['nullable', 'string', $this->knownSalesCodeRule()],
             'qad_customer_code' => 'nullable|string|max:255',
         ]);
 
@@ -157,6 +166,15 @@ class OutletController extends Controller
         $outlet->update($data);
 
         return redirect()->route('admin.outlets.index')->with('success', 'Data Outlet berhasil diperbarui.');
+    }
+
+    private function knownSalesCodeRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) {
+            if (! User::isKnownSalesCode($value)) {
+                $fail('Kode sales tidak ditemukan.');
+            }
+        };
     }
 
     /**

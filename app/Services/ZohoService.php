@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Pricing\SalesLinePricing;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -140,6 +141,39 @@ class ZohoService
 
             return '7386545000001141159'; // Default active PPN 11% Tax ID in Zoho Books
         });
+    }
+
+    /**
+     * Account ID Zoho untuk akun penjualan (default kode 41101 "Sales"), dicari dari chart of accounts.
+     * Gagal keras bila akun tidak ditemukan agar penjualan tidak terposting ke akun yang salah.
+     */
+    public function resolveSalesAccountId(): string
+    {
+        $code = trim((string) config('services.zoho.sales_account_code', '41101'));
+        $cacheKey = 'zoho_sales_account_id_' . $code;
+
+        $cached = Cache::get($cacheKey);
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
+
+        $response = $this->client()->get("{$this->apiDomain}/books/v3/chartofaccounts", [
+            'filter_by' => 'AccountType.Income',
+            'per_page' => 200,
+        ]);
+
+        if ($response->successful()) {
+            foreach ($response->json('chartofaccounts') ?? [] as $account) {
+                if (trim((string) ($account['account_code'] ?? '')) === $code && ! empty($account['account_id'])) {
+                    $accountId = (string) $account['account_id'];
+                    Cache::put($cacheKey, $accountId, 86400);
+
+                    return $accountId;
+                }
+            }
+        }
+
+        throw new \Exception("Zoho: akun penjualan dengan kode {$code} tidak ditemukan di chart of accounts.");
     }
 
     /**
@@ -366,41 +400,21 @@ class ZohoService
             $usesPpn = ($order->pakai_ppn || ($order->user && $order->user->usesPpn()));
             $taxId = $usesPpn ? $this->resolvePpnTaxId() : null;
 
-            // Calculate Gross DPP from line items
-            $grossDpp = 0.0;
-            foreach ($order->items as $item) {
-                $grossDpp += round($item->price * $item->quantity, 2);
+            // Harga per item, sama dengan payload QAD: rate = harga list (DPP katalog), diskon = % per baris.
+            // Diskon lama di level order ikut dilebur ke tiap baris (lihat SalesLinePricing).
+            $linePricing = [];
+            $netDpp = 0.0;
+            foreach ($order->items as $index => $item) {
+                $pricing = SalesLinePricing::forItem($item, (float) $item->soldBaseUnitPrice());
+                $linePricing[$index] = $pricing;
+                $netDpp += round($pricing['net_price'] * (float) $item->quantity, 2);
             }
 
-            // Resolve Discount
             $shippingCost = (float) ($order->shipping_cost ?? 0);
             $totalAmount = (float) $order->total_amount;
-            $goodsTotal = max(0.0, $totalAmount - $shippingCost - (float) ($order->payment_fee ?? 0));
-
-            $discountAmount = 0.0;
-            if ((float) ($order->discount_amount ?? 0) > 0) {
-                $discountAmount = (float) $order->discount_amount;
-            } else {
-                $netDpp = $usesPpn ? round($goodsTotal / 1.11, 2) : $goodsTotal;
-                if ($grossDpp > $netDpp) {
-                    $discountAmount = round($grossDpp - $netDpp, 2);
-                }
-            }
-
-            // Calculate estimated tax and total with discount
-            $taxableDpp = max(0.0, $grossDpp - $discountAmount);
-            $estimatedTax = ($usesPpn && $taxId) ? round($taxableDpp * 0.11, 2) : 0.0;
-            $estimatedTotal = $taxableDpp + $estimatedTax + $shippingCost;
+            $estimatedTax = ($usesPpn && $taxId) ? round($netDpp * 0.11, 2) : 0.0;
+            $estimatedTotal = $netDpp + $estimatedTax + $shippingCost;
             $roundingAdjustment = round($totalAmount - $estimatedTotal, 2);
-
-            $discountPayload = [];
-            if ($discountAmount > 0.01) {
-                $discountPayload = [
-                    'discount' => $discountAmount,
-                    'discount_type' => 'entity_level',
-                    'is_discount_before_tax' => true,
-                ];
-            }
 
             $adjustmentPayload = [];
             if (abs($roundingAdjustment) > 0.001 && abs($roundingAdjustment) <= 5.0) {
@@ -410,16 +424,27 @@ class ZohoService
                 ];
             }
 
+            $itemLevelDiscount = [
+                'discount_type' => 'item_level',
+                'is_discount_before_tax' => true,
+            ];
+
+            $salesAccountId = $this->resolveSalesAccountId();
+            $soRecord = [];
+
             if (!$salesorderId) {
                 $lineItems = [];
-                foreach ($order->items as $item) {
-                    $itemId = $this->resolveItem($item->product);
+                foreach ($order->items->values() as $index => $item) {
+                    $pricing = $linePricing[$index];
                     $lineItem = [
-                        'item_id' => $itemId,
+                        'item_id' => $this->resolveItem($item->product),
                         'quantity' => $item->quantity,
-                        'rate' => $item->price,
+                        'rate' => $pricing['list_price'],
                         'location_id' => $locationId,
                     ];
+                    if ($pricing['discount_percent'] > 0) {
+                        $lineItem['discount'] = $pricing['discount_percent'] . '%';
+                    }
                     if ($taxId) {
                         $lineItem['tax_id'] = $taxId;
                     }
@@ -437,7 +462,7 @@ class ZohoService
                         ['api_name' => 'cf_source', 'value' => 'rasaconnect']
                     ],
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ], $discountPayload, $adjustmentPayload);
+                ], $itemLevelDiscount, $adjustmentPayload);
 
                 $soResponse = $this->client()->post("{$this->apiDomain}/books/v3/salesorders", $soData);
 
@@ -445,8 +470,9 @@ class ZohoService
                     throw new \Exception('Failed to create Sales Order: ' . $soResponse->body());
                 }
 
-                $salesorderId = $soResponse->json('salesorder.salesorder_id');
-                $zohoLineItems = $soResponse->json('salesorder.line_items');
+                $soRecord = $soResponse->json('salesorder') ?? [];
+                $salesorderId = $soRecord['salesorder_id'] ?? null;
+                $zohoLineItems = $soRecord['line_items'] ?? [];
                 $order->update(['zoho_salesorder_id' => $salesorderId]);
 
                 // Open SO
@@ -454,10 +480,10 @@ class ZohoService
             } else {
                 // If invoice is not created yet, retrieve SO line items
                 if (!$order->zoho_invoice_id) {
-                    $soData = $this->getSalesOrder($salesorderId);
-                    $zohoLineItems = $soData['line_items'] ?? [];
-                    if (!empty($soData['branch_id'])) {
-                        $locationId = (string) $soData['branch_id'];
+                    $soRecord = $this->getSalesOrder($salesorderId) ?? [];
+                    $zohoLineItems = $soRecord['line_items'] ?? [];
+                    if (!empty($soRecord['branch_id'])) {
+                        $locationId = (string) $soRecord['branch_id'];
                     }
                 }
             }
@@ -467,20 +493,43 @@ class ZohoService
             $invoiceBalance = 0.0;
 
             if (!$invoiceId) {
+                // SO lama (sebelum diskon per item) memakai harga net + diskon level dokumen: invoice mengikuti SO tsb.
+                $soIsItemLevel = ($soRecord['discount_type'] ?? '') === 'item_level'
+                    && count($zohoLineItems) === count($linePricing);
+
                 $invoiceLineItems = [];
-                foreach ($zohoLineItems as $zItem) {
+                foreach (array_values($zohoLineItems) as $index => $zItem) {
                     $invItem = [
                         'item_id' => $zItem['item_id'],
                         'salesorder_item_id' => $zItem['line_item_id'] ?? null,
                         'quantity' => $zItem['quantity'],
-                        'rate' => $zItem['rate'],
+                        'rate' => $soIsItemLevel ? $linePricing[$index]['list_price'] : $zItem['rate'],
                         'location_id' => $zItem['location_id'] ?? $locationId,
+                        'account_id' => $salesAccountId,
                     ];
+                    if ($soIsItemLevel && $linePricing[$index]['discount_percent'] > 0) {
+                        $invItem['discount'] = $linePricing[$index]['discount_percent'] . '%';
+                    }
                     $appliedTaxId = !empty($zItem['tax_id']) ? $zItem['tax_id'] : $taxId;
                     if ($appliedTaxId) {
                         $invItem['tax_id'] = $appliedTaxId;
                     }
                     $invoiceLineItems[] = $invItem;
+                }
+
+                if ($soIsItemLevel) {
+                    $invoiceTotals = array_merge($itemLevelDiscount, $adjustmentPayload);
+                } else {
+                    $invoiceTotals = [];
+                    if ((float) ($soRecord['discount'] ?? 0) > 0) {
+                        $invoiceTotals['discount'] = $soRecord['discount'];
+                        $invoiceTotals['discount_type'] = 'entity_level';
+                        $invoiceTotals['is_discount_before_tax'] = (bool) ($soRecord['is_discount_before_tax'] ?? true);
+                    }
+                    if (abs((float) ($soRecord['adjustment'] ?? 0)) > 0.001) {
+                        $invoiceTotals['adjustment'] = (float) $soRecord['adjustment'];
+                        $invoiceTotals['adjustment_description'] = $soRecord['adjustment_description'] ?? 'Pembulatan';
+                    }
                 }
 
                 $invData = array_merge([
@@ -490,7 +539,7 @@ class ZohoService
                     'reference_number' => $order->order_number,
                     'line_items' => $invoiceLineItems,
                     'shipping_charge' => $order->shipping_cost ?? 0,
-                ], $discountPayload, $adjustmentPayload);
+                ], $invoiceTotals);
 
                 $invResponse = $this->client()->post("{$this->apiDomain}/books/v3/invoices", $invData);
 

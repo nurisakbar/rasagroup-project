@@ -29,6 +29,8 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_OUTLET = 'outlet';
     const ROLE_SUPER_ADMIN = 'super_admin';
     const ROLE_SALES = 'sales';
+
+    const DISTRIBUTOR_SALES_CODE_PREFIX = 'DST';
     const ROLE_ECOMMERCE = 'ecommerce';
     const ROLE_BRAND_MARKETING = 'brand_marketing';
     const ROLE_FINANCE = 'finance';
@@ -100,6 +102,89 @@ class User extends Authenticatable implements MustVerifyEmail
                 $user->referral_code = static::generateUniqueReferralCode($user->name);
             }
         });
+
+        static::saving(function ($user) {
+            if ($user->role === self::ROLE_DISTRIBUTOR && $user->isDirty('role') && empty($user->distributor_sales_code)) {
+                $user->distributor_sales_code = static::generateDistributorSalesCode();
+            }
+        });
+    }
+
+    public static function generateDistributorSalesCode(): string
+    {
+        $prefix = self::DISTRIBUTOR_SALES_CODE_PREFIX;
+
+        $lastCode = static::withTrashed()
+            ->where('distributor_sales_code', 'like', $prefix . '%')
+            ->orderByRaw('LENGTH(distributor_sales_code) DESC')
+            ->orderByDesc('distributor_sales_code')
+            ->value('distributor_sales_code');
+
+        $next = $lastCode ? ((int) substr($lastCode, strlen($prefix))) + 1 : 1;
+
+        return $prefix . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Termasuk distributor nonaktif/terhapus: order lama tetap harus dikenali kode distributornya.
+     */
+    public static function findDistributorBySalesCode(?string $code): ?self
+    {
+        $code = strtoupper(trim((string) $code));
+
+        if ($code === '') {
+            return null;
+        }
+
+        return static::withTrashed()->where('distributor_sales_code', $code)->first();
+    }
+
+    /**
+     * Link pendaftaran hanya berlaku untuk distributor yang masih aktif.
+     */
+    public function canReferOutlets(): bool
+    {
+        return $this->isDistributor() && $this->is_active && ! $this->trashed();
+    }
+
+    /**
+     * Kode yang sah sebagai atribusi outlet: milik Sales atau milik Distributor.
+     */
+    public static function isKnownSalesCode(?string $code): bool
+    {
+        $code = trim((string) $code);
+
+        if ($code === '') {
+            return false;
+        }
+
+        return static::where(function ($query) use ($code) {
+            $query->where(fn ($q) => $q->where('role', self::ROLE_SALES)->where('sales_code', $code))
+                ->orWhere(fn ($q) => $q->where('role', self::ROLE_DISTRIBUTOR)->where('distributor_sales_code', $code));
+        })->exists();
+    }
+
+    /**
+     * Pilihan atribusi untuk form/filter admin: daftar Sales lalu Distributor.
+     *
+     * @return \Illuminate\Support\Collection<int, object{name: string, sales_code: string}>
+     */
+    public static function salesCodeOptions(): \Illuminate\Support\Collection
+    {
+        $sales = static::where('role', self::ROLE_SALES)
+            ->whereNotNull('sales_code')
+            ->where('sales_code', '!=', '')
+            ->orderBy('name')
+            ->get(['name', 'sales_code'])
+            ->map(fn ($user) => (object) ['name' => $user->name, 'sales_code' => $user->sales_code]);
+
+        $distributors = static::where('role', self::ROLE_DISTRIBUTOR)
+            ->whereNotNull('distributor_sales_code')
+            ->orderBy('name')
+            ->get(['name', 'distributor_sales_code'])
+            ->map(fn ($user) => (object) ['name' => 'Distributor ' . $user->name, 'sales_code' => $user->distributor_sales_code]);
+
+        return $sales->concat($distributors)->values();
     }
 
     public static function generateUniqueReferralCode($name = null)
@@ -239,6 +324,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function salesPerson(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sales_code', 'sales_code')->where('role', self::ROLE_SALES);
+    }
+
+    /**
+     * Distributor yang merekrut outlet ini lewat link pendaftaran.
+     */
+    public function referringDistributor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_DISTRIBUTOR);
+    }
+
+    public function distributorApiClients(): HasMany
+    {
+        return $this->hasMany(DistributorApiClient::class);
+    }
+
+    /**
+     * Outlet yang terdaftar lewat link distributor ini.
+     */
+    public function referredOutlets(): HasMany
+    {
+        return $this->hasMany(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_OUTLET);
     }
 
     public function isAgent(): bool
