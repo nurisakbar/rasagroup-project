@@ -117,14 +117,24 @@ class SendSalesOrderToWmsJob implements ShouldQueue
         $payload = [
             'so_number' => $order->order_number,
             'items' => $itemsPayload,
-            'is_update' => false,
         ];
 
+        // Kirim ulang: tandai is_update. Field ini hanya dikirim bila true, karena sebagian versi API WMS
+        // menolak properti yang tidak dikenal ("property is_update should not exist").
+        if ($order->wms_so_status !== null) {
+            $payload['is_update'] = true;
+        }
+
         try {
-            $response = Http::withHeaders([
-                'x-api-key' => $apiKey,
-                'Accept' => 'application/json',
-            ])->timeout(30)->post(rtrim($apiUrl, '/') . '/sales-orders', $payload);
+            $response = $this->postSalesOrder($apiUrl, $apiKey, $payload);
+
+            if (isset($payload['is_update']) && $this->rejectsIsUpdate($response)) {
+                Log::warning('WMS Sync: API WMS menolak is_update, kirim ulang tanpa field tersebut.', [
+                    'order_number' => $order->order_number,
+                ]);
+                unset($payload['is_update']);
+                $response = $this->postSalesOrder($apiUrl, $apiKey, $payload);
+            }
 
             $order->wms_so_synced_at = now();
 
@@ -266,6 +276,23 @@ class SendSalesOrderToWmsJob implements ShouldQueue
                 }
             }
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function postSalesOrder(string $apiUrl, string $apiKey, array $payload): \Illuminate\Http\Client\Response
+    {
+        return Http::withHeaders([
+            'x-api-key' => $apiKey,
+            'Accept' => 'application/json',
+        ])->timeout(30)->post(rtrim($apiUrl, '/') . '/sales-orders', $payload);
+    }
+
+    private function rejectsIsUpdate(\Illuminate\Http\Client\Response $response): bool
+    {
+        return $response->clientError()
+            && str_contains(strtolower($response->body()), 'is_update should not exist');
     }
 
     private function markFailed(Order $order, string $message): void
