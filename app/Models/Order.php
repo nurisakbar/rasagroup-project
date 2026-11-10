@@ -203,6 +203,28 @@ class Order extends Model
         return $this->belongsTo(Warehouse::class, 'source_warehouse_id');
     }
 
+    /**
+     * Kode lokasi WMS untuk order ini: Kode Lokasi QAD warehouse saat ini, lalu kode yang tersimpan saat
+     * checkout, lalu kode hub. Order yang dibuat sebelum warehouse punya Kode Lokasi QAD menyimpan kode
+     * hub (mis. WHMPRG003) yang tidak dikenal WMS, jadi data warehouse terbaru didahulukan.
+     */
+    public function wmsLocationCode(): ?string
+    {
+        $this->loadMissing('sourceWarehouse');
+
+        $current = trim((string) ($this->sourceWarehouse?->qad_location_code ?? ''));
+        $snapshot = trim((string) ($this->source_qad_location_code ?? ''));
+        $hub = trim((string) ($this->sourceWarehouse?->kode_hub ?? ''));
+
+        foreach ([$current, $snapshot, $hub] as $code) {
+            if ($code !== '') {
+                return $code;
+            }
+        }
+
+        return null;
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);

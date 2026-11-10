@@ -48,6 +48,18 @@ class SendSalesOrderToWmsJob implements ShouldQueue
             return;
         }
 
+        // Selaraskan kode lokasi order dengan Kode Lokasi QAD warehouse terbaru.
+        $location = $order->wmsLocationCode();
+        if ($location && $location !== $order->source_qad_location_code) {
+            Log::info('WMS Sync: kode lokasi order diperbarui mengikuti warehouse.', [
+                'order_number' => $order->order_number,
+                'from' => $order->source_qad_location_code,
+                'to' => $location,
+            ]);
+            $order->source_qad_location_code = $location;
+            $order->save();
+        }
+
         try {
             $this->assertOrderedItemBatches($order, $wms);
         } catch (WmsBatchValidationException $e) {
@@ -196,7 +208,7 @@ class SendSalesOrderToWmsJob implements ShouldQueue
 
     private function assertOrderedItemBatches(Order $order, WmsService $wms): void
     {
-        $location = $order->source_qad_location_code ?: WmsService::locationCode($order->sourceWarehouse);
+        $location = $order->wmsLocationCode();
         if (! $location) {
             throw new WmsBatchValidationException('Hub belum punya kode lokasi WMS/QAD.');
         }
