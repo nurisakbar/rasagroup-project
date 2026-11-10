@@ -247,7 +247,16 @@
                                                     @endforeach
                                                 @endif
                                             </td>
-                                            <td>Rp {{ number_format($stock->product->price, 0, ',', '.') }}</td>
+                                            <td style="white-space: nowrap;">
+                                                @php $masterPrice = $masterPrices->get($stock->product_id); @endphp
+                                                Rp {{ number_format($masterPrice?->price ?? $stock->product->price, 0, ',', '.') }}
+                                                @if($canManagePrices)
+                                                    <div style="margin-top: 5px;">
+                                                        <button type="button" class="btn btn-primary btn-xs btn-set-price" data-product-id="{{ $stock->product_id }}" data-product-name="{{ $stock->product->code }} - {{ $stock->product->name }}"><i class="fa fa-pencil"></i> Set Harga</button>
+                                                        <button type="button" class="btn btn-default btn-xs btn-history" data-product-id="{{ $stock->product_id }}" data-product-name="{{ $stock->product->code }} - {{ $stock->product->name }}"><i class="fa fa-history"></i> Riwayat</button>
+                                                    </div>
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 @if($stock->stock <= 10)
                                                     <span class="badge bg-red" style="font-size: 14px; padding: 5px 10px;" title="Stok Jubelio (Database)">{{ number_format($stock->stock) }}</span>
@@ -526,6 +535,20 @@
             </div>
         </div>
     </div>
+
+    @if($canManagePrices)
+        @include('admin.warehouse-prices.partials.editor', ['warehouse' => $warehouse])
+        @push('scripts')
+        <script>
+            // Muat ulang tab stok setelah modal harga ditutup agar harga yang berlaku langsung terlihat.
+            var warehousePriceChanged = false;
+            $(document).on('warehouse-price:changed', function () { warehousePriceChanged = true; });
+            $('#price-modal, #history-modal').on('hidden.bs.modal', function () {
+                if (warehousePriceChanged && !$('.modal.in').length) { window.location.reload(); }
+            });
+        </script>
+        @endpush
+    @endif
 
     @push('scripts')
     <script>

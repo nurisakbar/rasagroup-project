@@ -5,17 +5,14 @@ namespace App\Imports;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Models\WarehouseProductPrice;
-use App\Support\Wib;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 /**
  * Semua atau tidak sama sekali: satu baris salah membatalkan seluruh file, supaya master harga
- * tidak pernah terisi setengah.
+ * tidak pernah terisi setengah. Harga baru langsung berlaku tanpa batas waktu.
  */
 class WarehousePricesImport implements ToCollection, WithHeadingRow
 {
@@ -32,7 +29,6 @@ class WarehousePricesImport implements ToCollection, WithHeadingRow
     {
         $warehouseIds = Warehouse::pluck('id')->flip();
         $productIds = Product::pluck('id', 'code')->mapWithKeys(fn ($id, $code) => [strtoupper(trim($code)) => $id]);
-        $timezone = config('app.timezone');
         $now = now();
         $records = [];
         $seen = [];
@@ -61,22 +57,9 @@ class WarehousePricesImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            try {
-                $from = $this->parseDate($row['berlaku_mulai'] ?? null) ?? $now->copy()->setTimezone(Wib::TZ);
-                $to = $this->parseDate($row['berlaku_sampai'] ?? null);
-            } catch (\Throwable) {
-                $this->errors[] = "Baris {$line}: format tanggal tidak dikenali.";
-                continue;
-            }
-
-            if ($to && $to->lte($from)) {
-                $this->errors[] = "Baris {$line}: berlaku_sampai harus setelah berlaku_mulai.";
-                continue;
-            }
-
-            $key = $warehouseId . '|' . $productId . '|' . $from->toIso8601String();
+            $key = $warehouseId . '|' . $productId;
             if (isset($seen[$key])) {
-                $this->errors[] = "Baris {$line}: duplikat dengan baris {$seen[$key]} (warehouse, produk, dan tanggal mulai sama).";
+                $this->errors[] = "Baris {$line}: duplikat dengan baris {$seen[$key]} (warehouse dan produk sama).";
                 continue;
             }
             $seen[$key] = $line;
@@ -85,8 +68,6 @@ class WarehousePricesImport implements ToCollection, WithHeadingRow
                 'warehouse_id' => $warehouseId,
                 'product_id' => $productId,
                 'price' => (float) $price,
-                'effective_from' => $from->setTimezone($timezone),
-                'effective_to' => $to?->setTimezone($timezone),
                 'source' => WarehouseProductPrice::SOURCE_IMPORT,
                 'note' => filled($row['catatan'] ?? null) ? mb_substr(trim((string) $row['catatan']), 0, 255) : null,
                 'created_by' => $this->userId,
@@ -97,28 +78,12 @@ class WarehousePricesImport implements ToCollection, WithHeadingRow
             return;
         }
 
-        DB::transaction(function () use ($records) {
+        DB::transaction(function () use ($records, $now) {
             foreach ($records as $record) {
-                WarehouseProductPrice::create($record);
+                WarehouseProductPrice::replaceCurrent($record, $now);
             }
         });
 
         $this->imported = count($records);
-    }
-
-    /**
-     * Excel bisa mengirim tanggal sebagai angka serial atau teks. Teks tanpa zona waktu dianggap WIB.
-     */
-    private function parseDate(mixed $value): ?Carbon
-    {
-        if ($value === null || trim((string) $value) === '') {
-            return null;
-        }
-
-        if (is_numeric($value)) {
-            return Carbon::instance(ExcelDate::excelToDateTimeObject((float) $value))->shiftTimezone(Wib::TZ);
-        }
-
-        return Carbon::parse((string) $value, Wib::TZ);
     }
 }

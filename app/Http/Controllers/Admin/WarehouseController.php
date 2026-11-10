@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Support\Pricing\WarehousePriceResolver;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\OperationalHour;
@@ -536,7 +537,14 @@ class WarehouseController extends Controller
         }
         
         $stocks = $query->orderBy('updated_at', 'desc')->paginate(10);
-        
+
+        // Harga master yang berlaku di hub ini untuk produk di halaman (kosong = pakai harga global).
+        $masterPrices = app(WarehousePriceResolver::class)->masterPricesFor(
+            $warehouse->id,
+            $stocks->getCollection()->pluck('product_id')->filter()->values()->all()
+        );
+        $canManagePrices = in_array(auth('admin')->user()?->role, WarehousePriceController::ALLOWED_ROLES, true);
+
         // Get products not yet in this warehouse for adding
         $existingProductIds = $warehouse->stocks()->pluck('product_id')->toArray();
         $availableProducts = Product::where('status', 'active')
@@ -582,7 +590,7 @@ class WarehouseController extends Controller
             }
         }
 
-        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches', 'wmsLocationCode', 'wmsLastSyncAt'));
+        return view('admin.warehouses.show', compact('warehouse', 'stocks', 'availableProducts', 'wmsBatches', 'wmsLocationCode', 'wmsLastSyncAt', 'masterPrices', 'canManagePrices'));
     }
 
     /**

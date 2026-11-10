@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Pricing\PricingContext;
+use App\Support\Pricing\WarehousePriceResolver;
 use App\Models\Scopes\SyncedInJubelioAndQadScope;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -145,11 +147,27 @@ class OrderItem extends Model
     {
         // Kunci harga katalog saat penjualan bila pembuat order belum mengisinya.
         static::creating(function (OrderItem $item) {
-            if ($item->catalog_price === null && $item->product_id) {
-                $item->catalog_price = Product::withoutGlobalScopes()->withTrashed()
-                    ->whereKey($item->product_id)
-                    ->value('price');
+            if ($item->catalog_price !== null || ! $item->product_id) {
+                return;
             }
+
+            // Harga katalog yang dipakai flow pembuat order: harga master warehouse konteks (checkout
+            // storefront = hub pengirim), atau harga global bila tidak ada konteks (admin, job).
+            $warehouseId = PricingContext::current()->warehouseId();
+            $master = $warehouseId
+                ? app(WarehousePriceResolver::class)->masterPrice($item->product_id, $warehouseId)
+                : null;
+
+            if ($master) {
+                $item->catalog_price = $master->price;
+                $item->price_master_id = $master->id;
+
+                return;
+            }
+
+            $item->catalog_price = Product::withoutGlobalScopes()->withTrashed()
+                ->whereKey($item->product_id)
+                ->value('price');
         });
     }
 

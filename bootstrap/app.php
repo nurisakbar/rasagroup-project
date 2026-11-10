@@ -46,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\AffiliateReferralMiddleware::class,
             \App\Http\Middleware\CheckHubSelection::class,
+            \App\Http\Middleware\UseStorefrontPricing::class,
         ]);
         
         // API routes do not require authentication by default in Laravel 11

@@ -23,6 +23,13 @@ use App\Support\ShopFulfillment;
 
 class OrderController extends Controller
 {
+    public function __construct()
+    {
+        // Restock distributor selalu dikirim dari hub default distributor: harga ikut harga master hub tsb.
+        $defaultHubId = \App\Models\Setting::get('distributor_default_hub');
+        \App\Support\Pricing\PricingContext::current()->useWarehouse($defaultHubId ? (string) $defaultHubId : null);
+    }
+
     // Shipping rates per province
     private $shippingRates = [
         '11' => 15000, '12' => 15000, '13' => 18000, '14' => 20000, '15' => 22000,

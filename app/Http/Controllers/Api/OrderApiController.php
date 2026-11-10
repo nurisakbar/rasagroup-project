@@ -231,7 +231,8 @@ class OrderApiController extends Controller
                 return $user->getProductPrice($cart->product) * (int) $cart->quantity;
             });
 
-            $discountData = $discountService->calculateCartDiscount($carts, $user);
+            // Diskon MOQ hanya bila request menyertakan kode sales yang terdaftar.
+            $discountData = $discountService->calculateCartDiscount($carts, $user, $request->input('sales_code'));
             $tieredDiscountAmount = $discountData['total_discount_amount'];
             $subtotal = $retailSubtotal - $tieredDiscountAmount;
             $ppn = \App\Support\TaxAwarePrice::ppnOnDpp(
@@ -302,8 +303,12 @@ class OrderApiController extends Controller
                 'points_credited' => false,
             ]);
 
+            // Diskon berjenjang (MOQ) dicatat per item agar invoice & QAD/Zoho sama dengan yang dibayar.
+            $tierLinePercents = $discountData['line_percentages'] ?? [];
+
             foreach ($carts as $cart) {
-                $price = $user->getProductPrice($cart->product);
+                $tierPercent = (float) ($tierLinePercents[(string) $cart->id] ?? 0);
+                $price = round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
                 $itemSubtotal = $price * $cart->quantity;
 
                 $orderUom = $cart->showsLargeUnitInCart() ? 'large' : $cart->order_uom;
@@ -533,7 +538,8 @@ class OrderApiController extends Controller
                             'id' => $item->product->id,
                             'code' => $item->product->code,
                             'name' => $item->product->name,
-                            'price' => (float) $item->product->price,
+                            // Harga katalog saat transaksi (terkunci), bukan harga produk sekarang.
+                            'price' => (float) $item->catalogUnitPrice(),
                             'image' => $imageUrl,
                             'brand' => $item->product->brand->name ?? null,
                             'category' => $item->product->category->name ?? null,
@@ -623,7 +629,8 @@ class OrderApiController extends Controller
                             'id' => $item->product->id,
                             'code' => $item->product->code,
                             'name' => $item->product->name,
-                            'price' => (float) $item->product->price,
+                            // Harga katalog saat transaksi (terkunci), bukan harga produk sekarang.
+                            'price' => (float) $item->catalogUnitPrice(),
                             'image' => $imageUrl,
                         ],
                         'quantity' => $item->quantity,
