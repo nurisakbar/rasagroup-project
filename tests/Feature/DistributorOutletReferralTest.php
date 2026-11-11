@@ -111,7 +111,7 @@ class DistributorOutletReferralTest extends TestCase
         $code = $this->distributor->distributor_sales_code;
 
         $this->post('/register', $this->registrationPayload(['distributor_code' => $code]))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('register.success'));
 
         $outlet = User::where('email', 'outlet-baru@example.test')->firstOrFail();
         $this->assertSame(User::ROLE_OUTLET, $outlet->role);

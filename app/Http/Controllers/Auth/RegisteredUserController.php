@@ -113,6 +113,22 @@ class RegisteredUserController extends Controller
         }
         // OTP WhatsApp tidak dikirim di sini: dikirim saat pengguna membuka halaman verifikasi WhatsApp.
 
-        return redirect()->route('login')->with('status', 'Pendaftaran berhasil. Silakan cek email Anda untuk melakukan verifikasi akun sebelum login.');
+        // Halaman khusus berisi instruksi aktivasi lewat email (email disimpan di session, bukan di URL).
+        $request->session()->put('registered_email', $user->email);
+
+        return redirect()->route('register.success');
+    }
+
+    /**
+     * Halaman "Pendaftaran berhasil": instruksi cek email untuk aktivasi akun.
+     */
+    public function success(Request $request): View|RedirectResponse
+    {
+        $email = $request->session()->get('registered_email');
+        if (! $email) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.register-success', ['email' => $email]);
     }
 }
