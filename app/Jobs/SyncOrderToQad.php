@@ -371,8 +371,8 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     protected function resolveSalesOrderCustomerCode(?User $user): string
     {
         $warehouse = $this->order->sourceWarehouse;
-        if ($warehouse?->usesGenericQadCustomer()) {
-            return Warehouse::GENERIC_QAD_CUSTOMER_CODE;
+        if ($generic = $warehouse?->genericQadCustomerCode()) {
+            return $generic;
         }
 
         return (string) ($user?->qad_customer_code ?? '');
@@ -448,7 +448,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         $orderAddress = $this->order->address;
-        if ($orderAddress && $customerCode !== 'HUB00002') {
+        if ($orderAddress && ! Warehouse::isGenericQadCustomerCode($customerCode)) {
             QadBusinessRelationHeadOffice::patch(
                 $qadService,
                 $user,
@@ -457,7 +457,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             );
         }
 
-        if ($customerCode !== 'HUB00002' && ! empty($user->qad_customer_code)) {
+        if (! Warehouse::isGenericQadCustomerCode($customerCode) && ! empty($user->qad_customer_code)) {
             $dataRes = $qadService->createCustomerData(['customerCode' => $user->qad_customer_code]);
             if (is_array($dataRes) && ($dataRes['error']['isError'] ?? false)) {
                 Log::warning('SyncOrderToQad: createCustomerData returned error; continuing SO create', [
@@ -740,10 +740,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
         $warehouse = $this->order->sourceWarehouse;
         if ($warehouse?->usesGenericQadCustomer()) {
-            Log::info('SyncOrderToQad: Using generic HUB00002 customer code for hub', [
+            Log::info('SyncOrderToQad: Using generic hub customer code', [
                 'order_id' => $this->order->id,
                 'user_id' => $user->id,
                 'hub' => $warehouse->name,
+                'customer_code' => $warehouse->genericQadCustomerCode(),
             ]);
             return $user;
         }
@@ -819,7 +820,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         $user->refresh();
 
         $orderAddress = $this->order->address;
-        if ($orderAddress && $customerCode !== 'HUB00002') {
+        if ($orderAddress && ! Warehouse::isGenericQadCustomerCode($customerCode)) {
             QadBusinessRelationHeadOffice::patch(
                 $qadService,
                 $user,
@@ -828,9 +829,9 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
             );
         }
 
-        $createCustomerDataResponse = $customerCode !== 'HUB00002'
+        $createCustomerDataResponse = ! Warehouse::isGenericQadCustomerCode($customerCode)
             ? $qadService->createCustomerData(['customerCode' => $customerCode])
-            : ['message' => 'Generic HUB00002 customer used for hub ' . ($this->order->sourceWarehouse?->name ?? '') . ', createCustomerData skipped.'];
+            : ['message' => 'Generic customer ' . $customerCode . ' used for hub ' . ($this->order->sourceWarehouse?->name ?? '') . ', createCustomerData skipped.'];
 
         $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
         $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);

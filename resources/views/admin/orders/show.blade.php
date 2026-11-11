@@ -336,7 +336,7 @@
                                 @endphp
                                 @if($qadCustCode)
                                     <span class="label label-default" style="font-size: 14px;">{{ $qadCustCode }}</span>
-                                    @if($qadCustCode === 'HUB00002')
+                                    @if(\App\Models\Warehouse::isGenericQadCustomerCode($qadCustCode))
                                         <small class="text-muted">(customer generik {{ $order->sourceWarehouse?->name }})</small>
                                     @endif
                                 @else

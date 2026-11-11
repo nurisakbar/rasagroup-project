@@ -46,23 +46,46 @@ class Warehouse extends Model
         'sync_sources' => 'array',
     ];
 
-    /** Customer QAD generik untuk order dari hub tertentu (tanpa membuat customer per outlet). */
-    public const GENERIC_QAD_CUSTOMER_CODE = 'HUB00002';
-
-    /** Kode lokasi QAD hub yang memakai customer generik: FG008 = Hub Bekasi, FG007 = Hub Maggiore. */
-    public const GENERIC_QAD_CUSTOMER_LOCATIONS = ['FG008', 'FG007'];
-
     /**
-     * Order dari hub ini dikirim ke QAD dengan customer generik HUB00002: customer outlet tidak dibuat
-     * dan alamat/data customer tidak di-patch di QAD.
+     * Customer QAD generik per hub (kode lokasi QAD => kode customer). Order dari hub ini dikirim ke QAD
+     * dengan customer tsb: customer outlet tidak dibuat dan alamat/data customer tidak di-patch.
      */
+    public const GENERIC_QAD_CUSTOMERS = [
+        'FG008' => 'HUB00002', // Hub Bekasi
+        'FG007' => 'HUB00001', // Hub Maggiore
+    ];
+
+    /** Cadangan bila kode lokasi QAD belum diisi: dikenali dari nama hub. */
+    private const GENERIC_QAD_CUSTOMERS_BY_NAME = [
+        'bekasi' => 'HUB00002',
+        'maggiore' => 'HUB00001',
+    ];
+
+    public function genericQadCustomerCode(): ?string
+    {
+        $location = strtoupper(trim((string) $this->qad_location_code));
+        if (isset(self::GENERIC_QAD_CUSTOMERS[$location])) {
+            return self::GENERIC_QAD_CUSTOMERS[$location];
+        }
+
+        $name = strtolower((string) $this->name);
+        foreach (self::GENERIC_QAD_CUSTOMERS_BY_NAME as $needle => $code) {
+            if (str_contains($name, $needle)) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
+
     public function usesGenericQadCustomer(): bool
     {
-        $name = strtolower((string) $this->name);
+        return $this->genericQadCustomerCode() !== null;
+    }
 
-        return str_contains($name, 'bekasi')
-            || str_contains($name, 'maggiore')
-            || in_array(strtoupper(trim((string) $this->qad_location_code)), self::GENERIC_QAD_CUSTOMER_LOCATIONS, true);
+    public static function isGenericQadCustomerCode(?string $code): bool
+    {
+        return in_array((string) $code, self::GENERIC_QAD_CUSTOMERS, true);
     }
 
     public function getRouteKeyName()

@@ -667,12 +667,12 @@ class Order extends Model
 
     /**
      * Resolves the customer code used in QAD for this order.
-     * Orders fulfilled by Hub Bekasi (FG008) or Hub Maggiore (FG007) use the generic customer code HUB00002.
+     * Orders fulfilled by Hub Bekasi (FG008 → HUB00002) or Hub Maggiore (FG007 → HUB00001) use a generic customer code.
      */
     public function resolveQadCustomerCode(): ?string
     {
-        if ($this->sourceWarehouse?->usesGenericQadCustomer()) {
-            return Warehouse::GENERIC_QAD_CUSTOMER_CODE;
+        if ($generic = $this->sourceWarehouse?->genericQadCustomerCode()) {
+            return $generic;
         }
 
         return $this->user?->qad_customer_code ?: null;
