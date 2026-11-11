@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\QadService;
 use App\Support\Pricing\SalesLinePricing;
 use App\Support\QadBusinessRelationHeadOffice;
@@ -370,8 +371,8 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
     protected function resolveSalesOrderCustomerCode(?User $user): string
     {
         $warehouse = $this->order->sourceWarehouse;
-        if ($warehouse && (stripos($warehouse->name, 'bekasi') !== false || $warehouse->qad_location_code === 'FG008')) {
-            return 'HUB00002';
+        if ($warehouse?->usesGenericQadCustomer()) {
+            return Warehouse::GENERIC_QAD_CUSTOMER_CODE;
         }
 
         return (string) ($user?->qad_customer_code ?? '');
@@ -738,10 +739,11 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
         }
 
         $warehouse = $this->order->sourceWarehouse;
-        if ($warehouse && (stripos($warehouse->name, 'bekasi') !== false || $warehouse->qad_location_code === 'FG008')) {
-            Log::info('SyncOrderToQad: Using generic HUB00002 customer code for Hub Bekasi', [
+        if ($warehouse?->usesGenericQadCustomer()) {
+            Log::info('SyncOrderToQad: Using generic HUB00002 customer code for hub', [
                 'order_id' => $this->order->id,
                 'user_id' => $user->id,
+                'hub' => $warehouse->name,
             ]);
             return $user;
         }
@@ -828,7 +830,7 @@ class SyncOrderToQad implements ShouldQueue, ShouldBeUnique
 
         $createCustomerDataResponse = $customerCode !== 'HUB00002'
             ? $qadService->createCustomerData(['customerCode' => $customerCode])
-            : ['message' => 'Generic HUB00002 customer used for Hub Bekasi, createCustomerData skipped.'];
+            : ['message' => 'Generic HUB00002 customer used for hub ' . ($this->order->sourceWarehouse?->name ?? '') . ', createCustomerData skipped.'];
 
         $qidSalesOrderNumber = $this->getOrCreateQidSalesOrderNumber();
         $linesBuild = $this->buildSalesOrderLinesForPayload($qadService, $qidSalesOrderNumber);

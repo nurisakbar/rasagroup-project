@@ -328,7 +328,7 @@
                                 @if($qadCustCode)
                                     <span class="label label-default" style="font-size: 14px;">{{ $qadCustCode }}</span>
                                     @if($qadCustCode === 'HUB00002')
-                                        <small class="text-muted">(Hub Bekasi)</small>
+                                        <small class="text-muted">(customer generik {{ $order->sourceWarehouse?->name }})</small>
                                     @endif
                                 @else
                                     <span class="text-muted">—</span>

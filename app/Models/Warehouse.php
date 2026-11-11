@@ -46,6 +46,25 @@ class Warehouse extends Model
         'sync_sources' => 'array',
     ];
 
+    /** Customer QAD generik untuk order dari hub tertentu (tanpa membuat customer per outlet). */
+    public const GENERIC_QAD_CUSTOMER_CODE = 'HUB00002';
+
+    /** Kode lokasi QAD hub yang memakai customer generik: FG008 = Hub Bekasi, FG007 = Hub Maggiore. */
+    public const GENERIC_QAD_CUSTOMER_LOCATIONS = ['FG008', 'FG007'];
+
+    /**
+     * Order dari hub ini dikirim ke QAD dengan customer generik HUB00002: customer outlet tidak dibuat
+     * dan alamat/data customer tidak di-patch di QAD.
+     */
+    public function usesGenericQadCustomer(): bool
+    {
+        $name = strtolower((string) $this->name);
+
+        return str_contains($name, 'bekasi')
+            || str_contains($name, 'maggiore')
+            || in_array(strtoupper(trim((string) $this->qad_location_code)), self::GENERIC_QAD_CUSTOMER_LOCATIONS, true);
+    }
+
     public function getRouteKeyName()
     {
         return 'slug';
