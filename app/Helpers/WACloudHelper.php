@@ -18,25 +18,7 @@ class WACloudHelper
     public static function sendText(string $phone, string $message): ?array
     {
         try {
-            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
-            
-            if ($provider === 'wacloud') {
-                $wacloud = new WACloudService();
-                $formattedPhone = $wacloud->formatPhoneNumber($phone);
-                $result = $wacloud->sendTextMessage($formattedPhone, $message);
-                
-                if (isset($result['success']) && $result['success']) {
-                    Log::info('WhatsApp text message sent via WACloud', ['phone' => $formattedPhone]);
-                    return $result;
-                }
-                
-                Log::error('Failed to send WhatsApp via WACloud API', [
-                    'phone' => $formattedPhone,
-                    'message' => $result['message'] ?? 'Unknown error'
-                ]);
-                return null;
-            }
-
+            // Semua WhatsApp dikirim lewat Meta (WhatsApp Cloud API).
             $metaService = app(\App\Services\MetaWhatsAppService::class);
             $result = $metaService->sendText($phone, $message);
             
@@ -112,45 +94,35 @@ class WACloudHelper
      */
     public static function sendImage(string $phone, string $imageUrl, ?string $caption = null): ?array
     {
-        try {
-            $wacloud = new WACloudService();
-            
-            if (!$wacloud->isConfigured()) {
-                Log::warning('WACloud not configured. Cannot send image message.');
-                return null;
-            }
-
-            // Format phone number
-            $formattedPhone = $wacloud->formatPhoneNumber($phone);
-            
-            // Send image
-            $result = $wacloud->sendImageMessage($formattedPhone, $imageUrl, $caption);
-            
-            if (isset($result['success']) && $result['success']) {
-                Log::info('WhatsApp image message sent via helper', [
-                    'phone' => $formattedPhone,
-                    'image_url' => $imageUrl,
-                ]);
-                return $result;
-            }
-            
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Failed to send WhatsApp image message via helper', [
-                'phone' => $phone,
-                'image_url' => $imageUrl,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
+        return self::sendMediaViaMeta($phone, 'image', $imageUrl, null, $caption);
     }
 
     public static function sendDocument(string $phone, string $documentUrl, ?string $filename = null): ?array
     {
-        // ... (Keep existing implementation if it calls meta or update it if needed.
-        // For now, I'll just keep the signature but return null or forward to sendImage if it's actually an image)
-        // I will just use WACloud's sendImageMessage for now since the user referred to the image cURL as "contoh kirim pdf"
-        return self::sendImage($phone, $documentUrl, $filename);
+        return self::sendMediaViaMeta($phone, 'document', $documentUrl, $filename);
+    }
+
+    private static function sendMediaViaMeta(string $phone, string $type, string $url, ?string $filename = null, ?string $caption = null): ?array
+    {
+        try {
+            $result = app(\App\Services\MetaWhatsAppService::class)->sendMedia($phone, $type, $url, $filename, $caption);
+            if (! empty($result['success'])) {
+                Log::info('WhatsApp ' . $type . ' sent via Meta API', ['phone' => $phone, 'url' => $url]);
+
+                return $result;
+            }
+
+            Log::error('Failed to send WhatsApp ' . $type . ' via Meta API', [
+                'phone' => $phone,
+                'message' => $result['message'] ?? 'Unknown error',
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to send WhatsApp ' . $type . ' via helper', ['phone' => $phone, 'error' => $e->getMessage()]);
+
+            return null;
+        }
     }
 
     /**
@@ -246,17 +218,8 @@ class WACloudHelper
      */
     public static function isConfigured(): bool
     {
-        $metaService = app(\App\Services\MetaWhatsAppService::class);
-        if ($metaService->isConfigured()) {
-            return true;
-        }
-
-        $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
-        if ($provider === 'wacloud') {
-            return (new \App\Services\WACloudService())->isConfigured();
-        }
-
-        return app(\App\Services\QidApiService::class)->isConfigured();
+        // Semua WhatsApp dikirim lewat Meta.
+        return app(\App\Services\MetaWhatsAppService::class)->isConfigured();
     }
 
     /**
@@ -291,9 +254,8 @@ class WACloudHelper
                 'has_faspay_url' => !empty($order->faspay_redirect_url),
             ]);
             
-            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
             $metaService = app(\App\Services\MetaWhatsAppService::class);
-            $useMetaTemplate = ($provider === 'meta' && $metaService->isConfigured());
+            $useMetaTemplate = $metaService->isConfigured();
 
             $result = null;
             if ($useMetaTemplate) {
@@ -374,9 +336,8 @@ class WACloudHelper
         }
 
         try {
-            $provider = config('services.meta_wa.provider') ?: env('WHATSAPP_PROVIDER', 'meta');
             $metaService = app(\App\Services\MetaWhatsAppService::class);
-            $useMetaTemplate = ($provider === 'meta' && $metaService->isConfigured());
+            $useMetaTemplate = $metaService->isConfigured();
 
             $result = null;
             if ($useMetaTemplate) {
@@ -470,6 +431,14 @@ class WACloudHelper
         try {
             $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
             $message = self::buildTrackingMessage($order);
+            // {{1}} nama, {{2}} no. pesanan, {{3}} ekspedisi, {{4}} no. resi, {{5}} link pesanan
+            $templateResult = self::sendConfiguredTemplate('tracking_template', $phone, [
+                $order->user?->name ?: 'Pelanggan',
+                $order->order_number,
+                $order->expedition?->name ?: 'Kurir',
+                $order->tracking_number,
+                $order->customerOrderUrl(),
+            ], ['order_id' => $order->id, 'type' => 'tracking']);
             
             Log::info('Sending tracking notification via WhatsApp', [
                 'order_id' => $order->id,
@@ -478,7 +447,7 @@ class WACloudHelper
                 'tracking_number' => $order->tracking_number,
             ]);
             
-            $result = self::sendText($phone, $message);
+            $result = $templateResult ?? self::sendText($phone, $message);
             
             if ($result) {
                 Log::info('Tracking notification sent via WhatsApp', [
@@ -505,6 +474,48 @@ class WACloudHelper
      * @param \App\Models\Order $order Order model
      * @return array|null
      */
+    /**
+     * Kirim template Meta yang namanya diatur di config services.meta_wa.{$configKey}.
+     * Mengembalikan null bila template belum diatur atau gagal (pemanggil lalu mengirim teks via Meta).
+     *
+     * @param  list<string|int|float|null>  $params  parameter body {{1}}, {{2}}, ...
+     */
+    private static function sendConfiguredTemplate(string $configKey, ?string $phone, array $params, array $logContext = []): ?array
+    {
+        $templateName = config('services.meta_wa.' . $configKey);
+        if (! $phone || ! $templateName) {
+            return null;
+        }
+
+        $components = [[
+            'type' => 'body',
+            'parameters' => array_map(fn ($text) => ['type' => 'text', 'text' => (string) ($text ?? '-')], $params),
+        ]];
+
+        Log::info('Sending WhatsApp via Meta Template', $logContext + ['phone' => $phone, 'template' => $templateName]);
+
+        $result = self::sendTemplate($phone, $templateName, config('services.meta_wa.template_lang') ?: 'id', $components);
+
+        return (! empty($result) && ! empty($result['success'])) ? $result : null;
+    }
+
+    /**
+     * Kirim "pesanan siap diambil" lewat template Meta (META_WA_PICKUP_READY_TEMPLATE).
+     * Parameter body: {{1}} nama pembeli, {{2}} no. pesanan, {{3}} lokasi pengambilan,
+     * {{4}} waktu siap diambil, {{5}} catatan gudang, {{6}} link detail pesanan.
+     */
+    private static function sendPickupReadyTemplate(\App\Models\Order $order, ?string $phone): ?array
+    {
+        return self::sendConfiguredTemplate('pickup_ready_template', $phone, [
+            $order->user?->name ?: 'Pelanggan',
+            $order->order_number,
+            $order->pickupLocationText(),
+            $order->pickup_ready_at ? \App\Support\Wib::format($order->pickup_ready_at, 'd M Y, H:i') . ' WIB' : 'segera',
+            $order->pickup_note ?: '-',
+            $order->customerOrderUrl(),
+        ], ['order_id' => $order->id, 'type' => 'pickup_ready']);
+    }
+
     public static function sendPickupReadyNotification(\App\Models\Order $order): ?array
     {
         if (!self::isConfigured()) {
@@ -528,15 +539,21 @@ class WACloudHelper
 
         try {
             $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
-            $message = self::buildPickupReadyMessage($order);
-            
-            Log::info('Sending pickup ready notification via WhatsApp', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'phone' => $phone,
-            ]);
-            
-            $result = self::sendText($phone, $message);
+
+            // Template Meta agar pesan tetap sampai di luar jendela 24 jam; teks biasa sebagai cadangan.
+            $result = self::sendPickupReadyTemplate($order, $phone);
+
+            if (! $result) {
+                $message = self::buildPickupReadyMessage($order);
+
+                Log::info('Sending pickup ready notification via WhatsApp', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'phone' => $phone,
+                ]);
+
+                $result = self::sendText($phone, $message);
+            }
             
             if ($result) {
                 Log::info('Pickup ready notification sent via WhatsApp', [
@@ -587,6 +604,13 @@ class WACloudHelper
         try {
             $phone = $order->address && $order->address->phone ? $order->address->phone : ($order->user ? $order->user->phone : null);
             $message = self::buildPickupHandoverMessage($order);
+            // {{1}} nama, {{2}} no. pesanan, {{3}} waktu serah terima, {{4}} link pesanan
+            $templateResult = self::sendConfiguredTemplate('pickup_handover_template', $phone, [
+                $order->user?->name ?: 'Pelanggan',
+                $order->order_number,
+                $order->shipped_at ? \App\Support\Wib::format($order->shipped_at, 'd M Y, H:i') . ' WIB' : now(\App\Support\Wib::TZ)->format('d M Y, H:i') . ' WIB',
+                $order->customerOrderUrl(),
+            ], ['order_id' => $order->id, 'type' => 'pickup_handover']);
             
             Log::info('Sending pickup handover notification via WhatsApp', [
                 'order_id' => $order->id,
@@ -594,7 +618,7 @@ class WACloudHelper
                 'phone' => $phone,
             ]);
             
-            $result = self::sendText($phone, $message);
+            $result = $templateResult ?? self::sendText($phone, $message);
             
             if ($result) {
                 Log::info('Pickup handover notification sent via WhatsApp', [
@@ -1346,7 +1370,11 @@ class WACloudHelper
                 'status' => $user->driippreneur_status,
             ]);
             
-            $result = self::sendText($user->phone, $message);
+            // {{1}} nama, {{2}} status pendaftaran DRiiPPreneur
+            $result = self::sendConfiguredTemplate('driippreneur_status_template', $user->phone, [
+                $user->name ?: 'Pelanggan',
+                ucfirst((string) $user->driippreneur_status),
+            ], ['user_id' => $user->id, 'type' => 'driippreneur_status']) ?? self::sendText($user->phone, $message);
             
             if ($result) {
                 Log::info('DRiiPPreneur status notification sent via WhatsApp', [

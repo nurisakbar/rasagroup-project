@@ -153,4 +153,72 @@ class OrderNotificationTest extends TestCase
         // OrderCreatedMail memakai antrean (ShouldQueue).
         \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\OrderCreatedMail::class, 1);
     }
+
+    public function test_saving_pickup_ready_time_notifies_buyer_by_email_and_whatsapp(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        \Illuminate\Support\Facades\Queue::fake();
+        $this->useExpedition('self_pickup', 'Pengambilan Ditempat');
+        $this->order->forceFill(['payment_status' => 'paid', 'order_status' => 'processing', 'pickup_ready_at' => null])->save();
+        $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'wa_verified_at' => now()]);
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.orders.update', $this->order), [
+                'pickup_ready_at' => now()->addDay()->format('Y-m-d\\TH:i'),
+                'pickup_note' => 'Ambil di loket 2',
+            ])->assertRedirect();
+
+        \Illuminate\Support\Facades\Notification::assertSentTo($this->order->user, OrderPickupReadyNotification::class);
+        \Illuminate\Support\Facades\Queue::assertPushed(SendWhatsAppNotification::class, function ($job) {
+            return (new \ReflectionProperty($job, 'type'))->getValue($job) === 'pickup_ready';
+        });
+    }
+
+    public function test_pickup_ready_whatsapp_uses_meta_template_when_configured(): void
+    {
+        config(['services.meta_wa.pickup_ready_template' => 'rasaconnect_pesanan_siap_diambil', 'services.meta_wa.provider' => 'meta']);
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200)]);
+        $this->useExpedition('self_pickup', 'Pengambilan Ditempat');
+        $this->order->user->forceFill(['phone' => '081234567890'])->save();
+        $this->order->forceFill(['pickup_ready_at' => now()->addDay(), 'pickup_note' => 'Loket 2'])->save();
+
+        WACloudHelper::sendPickupReadyNotification($this->order->fresh(['user', 'address', 'sourceWarehouse']));
+
+        $templateRequest = collect(Http::recorded())->map(fn ($pair) => $pair[0])
+            ->first(fn ($request) => ($request->data()['type'] ?? null) === 'template');
+        $this->assertNotNull($templateRequest, 'WA siap diambil harus dikirim sebagai template Meta.');
+        $this->assertSame('rasaconnect_pesanan_siap_diambil', $templateRequest->data()['template']['name']);
+        $params = $templateRequest->data()['template']['components'][0]['parameters'];
+        $this->assertCount(6, $params);
+        $this->assertSame('Loket 2', $params[4]['text']);
+    }
+
+    public function test_all_whatsapp_goes_through_meta_even_if_provider_is_wacloud(): void
+    {
+        config([
+            'services.meta_wa.provider' => 'wacloud',
+            'services.meta_wa.token' => 'token-uji',
+            'services.meta_wa.phone_number_id' => '123',
+            'services.meta_wa.tracking_template' => 'rasaconnect_resi_pengiriman',
+        ]);
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200)]);
+
+        WACloudHelper::sendText('081234567890', 'Halo');
+        WACloudHelper::sendDocument('081234567890', 'https://contoh.test/invoice.pdf', 'invoice.pdf');
+
+        $this->useExpedition('kurir_toko', 'Diantar Ketempat');
+        $this->order->user->forceFill(['phone' => '081234567890'])->save();
+        $this->order->forceFill(['tracking_number' => 'RESI123'])->save();
+        WACloudHelper::sendTrackingNotification($this->order->fresh(['user', 'address', 'expedition']));
+
+        $requests = collect(Http::recorded())->map(fn ($pair) => $pair[0]);
+        $this->assertGreaterThanOrEqual(3, $requests->count());
+        $requests->each(fn ($request) => $this->assertStringStartsWith('https://graph.facebook.com/', $request->url()));
+
+        $this->assertSame(['text', 'document', 'template'], $requests->take(3)->map(fn ($r) => $r->data()['type'])->all());
+        $this->assertSame('invoice.pdf', $requests[1]->data()['document']['filename']);
+        $tracking = $requests[2]->data()['template'];
+        $this->assertSame('rasaconnect_resi_pengiriman', $tracking['name']);
+        $this->assertSame('RESI123', $tracking['components'][0]['parameters'][3]['text']);
+    }
 }

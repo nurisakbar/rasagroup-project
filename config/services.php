@@ -191,6 +191,16 @@ return [
         'otp_template' => env('META_WA_OTP_TEMPLATE', 'otp_register'),
         'otp_template_lang' => env('META_WA_OTP_TEMPLATE_LANG', 'en'),
         'order_notification_template' => env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru'),
+        // Template Meta "pesanan siap diambil" (6 parameter: nama, no. pesanan, lokasi, waktu siap, catatan, link).
+        // Kosong = kirim teks biasa (hanya sampai bila pembeli membalas dalam 24 jam terakhir).
+        'pickup_ready_template' => env('META_WA_PICKUP_READY_TEMPLATE'),
+        // Template lain (kosong = kirim teks via Meta, hanya sampai dalam jendela 24 jam):
+        // tracking: {{1}} nama, {{2}} no. pesanan, {{3}} ekspedisi, {{4}} no. resi, {{5}} link
+        'tracking_template' => env('META_WA_TRACKING_TEMPLATE'),
+        // serah terima: {{1}} nama, {{2}} no. pesanan, {{3}} waktu, {{4}} link
+        'pickup_handover_template' => env('META_WA_PICKUP_HANDOVER_TEMPLATE'),
+        // status DRiiPPreneur: {{1}} nama, {{2}} status
+        'driippreneur_status_template' => env('META_WA_DRIIPPRENEUR_STATUS_TEMPLATE'),
         'template_lang' => env('META_WA_TEMPLATE_LANG', 'id'),
         'provider' => env('WHATSAPP_PROVIDER', 'meta'),
     ],

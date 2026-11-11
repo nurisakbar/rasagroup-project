@@ -78,6 +78,54 @@ class MetaWhatsAppService
         }
     }
 
+    /**
+     * Kirim dokumen (mis. invoice PDF) atau gambar lewat Meta. $link harus URL publik.
+     */
+    public function sendMedia(string $phone, string $type, string $link, ?string $filename = null, ?string $caption = null): array
+    {
+        if (!$this->isConfigured()) {
+            return ['success' => false, 'message' => 'Meta WhatsApp is not configured'];
+        }
+
+        $type = $type === 'image' ? 'image' : 'document';
+        $media = ['link' => $link];
+        if ($caption) {
+            $media['caption'] = $caption;
+        }
+        if ($type === 'document' && $filename) {
+            $media['filename'] = $filename;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+                'Content-Type' => 'application/json',
+            ])->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $this->formatPhoneNumber($phone),
+                'type' => $type,
+                $type => $media,
+            ]);
+
+            if ($response->successful()) {
+                return ['success' => true, 'data' => $response->json()];
+            }
+
+            Log::error('Meta WhatsApp media failed', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'phone' => $phone,
+            ]);
+
+            return ['success' => false, 'message' => 'API request failed: ' . $response->body()];
+        } catch (\Exception $e) {
+            Log::error('Meta WhatsApp exception', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     public function sendTemplate(string $phone, string $templateName, string $languageCode = 'en_US', array $components = []): array
     {
         if (!$this->isConfigured()) {
