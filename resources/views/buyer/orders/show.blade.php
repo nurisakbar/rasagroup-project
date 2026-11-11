@@ -472,6 +472,10 @@
                                         <div class="card-header bg-white p-4 border-bottom">
                                             <h5 class="mb-0">Daftar Produk</h5>
                                         </div>
+                                        @php $breakdown = \App\Support\OrderLineBreakdown::fromOrder($order); @endphp
+                                        @if($breakdown['reliable'])
+                                            @include('buyer.orders.partials.line-breakdown', ['breakdown' => $breakdown])
+                                        @else
                                         <div class="card-body p-0">
                                             <div class="table-responsive">
                                                 <table class="table table-borderless align-middle mb-0">
@@ -548,6 +552,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

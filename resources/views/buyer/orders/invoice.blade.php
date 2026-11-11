@@ -110,6 +110,13 @@
             font-size: 12px;
             padding-top: 8px;
         }
+        /* Rincian per baris (harga termasuk PPN, harga sebelum PPN, diskon, PPN, total). */
+        .items.breakdown th, .items.breakdown td { font-size: 10px; padding-left: 4px; padding-right: 4px; }
+        .items.breakdown th.product { width: 26%; }
+        .items.breakdown th.qty { width: 9%; }
+        .items.breakdown th.price, .items.breakdown th.total { width: 12%; }
+        .items .sub { display: block; font-weight: 400; color: #6b7280; font-size: 9px; }
+        .note { margin-top: 14px; font-size: 9.5px; color: #4b5563; }
     </style>
 </head>
 <body>
@@ -159,6 +166,84 @@
         </tr>
     </table>
 
+    @php
+        $breakdown = \App\Support\OrderLineBreakdown::fromOrder($order);
+        $usesPpn = $breakdown['uses_ppn'];
+        $percentLabel = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',') . '%';
+    @endphp
+    @if($breakdown['reliable'])
+    <table class="items breakdown">
+        <thead>
+            <tr>
+                <th class="num">No</th>
+                <th class="product">Produk</th>
+                <th class="qty">Jumlah</th>
+                <th class="price">Harga satuan<span class="sub">{{ $usesPpn ? 'termasuk PPN' : 'tanpa PPN' }}</span></th>
+                @if($usesPpn)
+                    <th class="price">Harga<span class="sub">sebelum PPN</span></th>
+                @endif
+                <th class="price">Diskon<span class="sub">{{ $usesPpn ? 'dari harga sebelum PPN' : '&nbsp;' }}</span></th>
+                @if($usesPpn)
+                    <th class="price">{{ $breakdown['tax_label'] }}<span class="sub">&nbsp;</span></th>
+                @endif
+                <th class="total">Total<span class="sub">&nbsp;</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($breakdown['lines'] as $line)
+                <tr>
+                    <td class="num">{{ $line['no'] }}</td>
+                    <td>{{ strtoupper($line['name']) }}</td>
+                    <td class="qty">{{ $line['quantity_label'] }}</td>
+                    <td class="price">{{ $money($line['unit_price_incl']) }}</td>
+                    @if($usesPpn)
+                        <td class="price">{{ $money($line['line_dpp']) }}</td>
+                    @endif
+                    <td class="price">
+                        @if($line['discount_amount'] > 0)
+                            -{{ $money($line['discount_amount']) }}<span class="sub">{{ $percentLabel($line['discount_percent']) }}</span>
+                        @else
+                            -
+                        @endif
+                    </td>
+                    @if($usesPpn)
+                        <td class="price">{{ $money($line['ppn']) }}</td>
+                    @endif
+                    <td class="total">{{ $money($line['total']) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr>
+            <td>Subtotal produk</td>
+            <td class="amount">{{ $money($breakdown['products_total']) }}</td>
+        </tr>
+        @if($breakdown['order_discount'] > 0)
+            <tr>
+                <td>{{ $breakdown['order_discount_label'] }}</td>
+                <td class="amount">-{{ $money($breakdown['order_discount']) }}</td>
+            </tr>
+        @endif
+        <tr>
+            <td>Ongkos Kirim</td>
+            <td class="amount">{{ $money($breakdown['shipping']) }}</td>
+        </tr>
+        @if($breakdown['service_fee'] > 0)
+            <tr>
+                <td>Biaya Layanan</td>
+                <td class="amount">{{ $money($breakdown['service_fee']) }}</td>
+            </tr>
+        @endif
+        <tr class="grand">
+            <td>Total</td>
+            <td class="amount">{{ $money($breakdown['grand_total']) }}</td>
+        </tr>
+    </table>
+
+    <p class="note">{{ $breakdown['note'] }}</p>
+    @else
     <table class="items">
         <thead>
             <tr>
@@ -213,5 +298,6 @@
             <td class="amount">{{ $money($invoice['total']) }}</td>
         </tr>
     </table>
+    @endif
 </body>
 </html>

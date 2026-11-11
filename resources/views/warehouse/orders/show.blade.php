@@ -736,15 +736,20 @@
                             </div>
                         </div>
                     @endif
+                    @php
+                        // Rincian per baris: diskon (dari harga tanpa pajak) dan PPN per baris; total = jumlah baris.
+                        $orderBreakdown = \App\Support\OrderLineBreakdown::fromOrder($order);
+                    @endphp
                     <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th class="text-right">Harga jual</th>
-                                <th class="text-right">Harga tanpa pajak</th>
-                                <th class="text-right">Diskon</th>
+                                <th class="text-right">Harga jual<br><small class="text-muted">{{ $orderBreakdown['uses_ppn'] ? 'termasuk PPN' : 'tanpa PPN' }}</small></th>
+                                <th class="text-right">Harga tanpa pajak<br><small class="text-muted">per satuan</small></th>
+                                <th class="text-right">Diskon<br><small class="text-muted">dari harga tanpa pajak</small></th>
                                 <th class="text-center">Jumlah</th>
-                                <th class="text-right">Subtotal</th>
+                                <th class="text-right">{{ $orderBreakdown['uses_ppn'] ? $orderBreakdown['tax_label'] : 'Pajak' }}</th>
+                                <th class="text-right">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -768,6 +773,7 @@
                                     $subtotalDpp += $lineSubtotal;
                                     $batches = is_array($item->allocated_batches) ? $item->allocated_batches : [];
                                     $isItemFailed = $order->isWmsFailedItem($item);
+                                    $bLine = $orderBreakdown['reliable'] ? ($orderBreakdown['lines'][$loop->index] ?? null) : null;
                                 @endphp
                                 <tr @if($isItemFailed) style="background-color: #fff9f9;" @endif>
                                     <td>
@@ -897,10 +903,14 @@
                                         <span title="{{ number_format($priceWithoutTax, 2, ',', '.') }}">{{ number_format($priceWithoutTax, 0, ',', '.') }}</span>
                                     </td>
                                     <td class="text-right">
-                                        @if($lineDiscount > 0)
-                                            <span class="text-danger" title="{{ number_format($lineDiscount, 2, ',', '.') }}">{{ number_format($lineDiscount, 0, ',', '.') }}</span>
-                                            @if($lineDiscountPercent > 0)
-                                                <br><small class="text-muted">({{ rtrim(rtrim(number_format($lineDiscountPercent, 1, ',', '.'), '0'), ',') }}%)</small>
+                                        @php
+                                            $shownDiscount = $bLine ? $bLine['discount_amount'] : $lineDiscount;
+                                            $shownDiscountPercent = $bLine ? $bLine['discount_percent'] : $lineDiscountPercent;
+                                        @endphp
+                                        @if($shownDiscount > 0)
+                                            <span class="text-danger">-{{ number_format($shownDiscount, 0, ',', '.') }}</span>
+                                            @if($shownDiscountPercent > 0)
+                                                <br><small class="text-muted">({{ rtrim(rtrim(number_format($shownDiscountPercent, 1, ',', '.'), '0'), ',') }}%)</small>
                                             @endif
                                         @else
                                             -
@@ -913,11 +923,53 @@
                                         @endif
                                     </td>
                                     <td class="text-right">
-                                        <span title="{{ number_format($lineSubtotal, 2, ',', '.') }}">{{ number_format($lineSubtotal, 0, ',', '.') }}</span>
+                                        @if($bLine && $orderBreakdown['uses_ppn'])
+                                            {{ number_format($bLine['ppn'], 0, ',', '.') }}
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
+                                        @if($bLine)
+                                            <strong>{{ number_format($bLine['total'], 0, ',', '.') }}</strong>
+                                        @else
+                                            <span title="{{ number_format($lineSubtotal, 2, ',', '.') }}">{{ number_format($lineSubtotal, 0, ',', '.') }}</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
+                        @if($orderBreakdown['reliable'])
+                        <tfoot>
+                            <tr>
+                                <td colspan="7" class="text-muted small">{{ $orderBreakdown['note'] }}</td>
+                            </tr>
+                            <tr>
+                                <th colspan="6" class="text-right">Subtotal produk:</th>
+                                <td class="text-right">{{ number_format($orderBreakdown['products_total'], 0, ',', '.') }}</td>
+                            </tr>
+                            @if($orderBreakdown['order_discount'] > 0)
+                            <tr>
+                                <th colspan="6" class="text-right">{{ $orderBreakdown['order_discount_label'] }}:</th>
+                                <td class="text-right">-{{ number_format($orderBreakdown['order_discount'], 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
+                            <tr>
+                                <th colspan="6" class="text-right">Ongkos Kirim:</th>
+                                <td class="text-right">{{ number_format($orderBreakdown['shipping'], 0, ',', '.') }}</td>
+                            </tr>
+                            @if($orderBreakdown['service_fee'] > 0)
+                            <tr>
+                                <th colspan="6" class="text-right">Biaya Layanan:</th>
+                                <td class="text-right">{{ number_format($orderBreakdown['service_fee'], 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
+                            <tr style="font-size: 16px;">
+                                <th colspan="6" class="text-right">Total:</th>
+                                <th class="text-right">{{ number_format($orderBreakdown['grand_total'], 0, ',', '.') }}</th>
+                            </tr>
+                        </tfoot>
+                        @else
                         <tfoot>
                             @php
                                 $couponDiscount = (float) ($order->discount_amount ?? 0);
@@ -926,35 +978,36 @@
                                 $ppnLabel = \App\Support\TaxAwarePrice::ppnLabel($itemTaxPercent);
                             @endphp
                             <tr>
-                                <th colspan="5" class="text-right">Subtotal:</th>
+                                <th colspan="6" class="text-right">Subtotal:</th>
                                 <td class="text-right">{{ number_format($subtotalDpp, 0, ',', '.') }}</td>
                             </tr>
                             @if($couponDiscount > 0)
                             <tr>
-                                <th colspan="5" class="text-right">Diskon:</th>
+                                <th colspan="6" class="text-right">Diskon:</th>
                                 <td class="text-right">-{{ number_format($couponDiscount, 0, ',', '.') }}</td>
                             </tr>
                             @endif
                             @if($orderUsesPpn && $taxAmount > 0)
                             <tr>
-                                <th colspan="5" class="text-right">Pajak ({{ $ppnLabel }}):</th>
+                                <th colspan="6" class="text-right">Pajak ({{ $ppnLabel }}):</th>
                                 <td class="text-right">{{ number_format($taxAmount, 0, ',', '.') }}</td>
                             </tr>
                             @elseif(! $orderUsesPpn)
                             <tr>
-                                <th colspan="5" class="text-right">Pajak:</th>
+                                <th colspan="6" class="text-right">Pajak:</th>
                                 <td class="text-right"><span class="text-muted">Dibebaskan (0%)</span></td>
                             </tr>
                             @endif
                             <tr>
-                                <th colspan="5" class="text-right">Ongkos Kirim:</th>
+                                <th colspan="6" class="text-right">Ongkos Kirim:</th>
                                 <td class="text-right">{{ number_format($order->shipping_cost ?? 0, 0, ',', '.') }}</td>
                             </tr>
                             <tr style="font-size: 16px;">
-                                <th colspan="5" class="text-right">Total:</th>
+                                <th colspan="6" class="text-right">Total:</th>
                                 <th class="text-right">{{ number_format($order->total_amount, 0, ',', '.') }}</th>
                             </tr>
                         </tfoot>
+                        @endif
                     </table>
                 </div>
             </div>
