@@ -31,7 +31,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                                 <div class="form-group @error('qad_location_code') has-error @enderror">
                                     <label for="qad_location_code" id="label_location_code">Kode Lokasi QAD / Jubelio</label>
                                     <select class="form-control select2" id="qad_location_code" name="qad_location_code" style="width: 100%;">
@@ -48,7 +48,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group @error('qad_customer_code') has-error @enderror">
                                     <label for="qad_customer_code">Kode Customer QAD</label>
                                     <input type="text" class="form-control" id="qad_customer_code" name="qad_customer_code" maxlength="50" value="{{ old('qad_customer_code') }}" placeholder="Contoh: HUB00001">
