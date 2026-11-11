@@ -31,20 +31,34 @@
                             @enderror
                         </div>
 
-                        <div class="form-group @error('qad_location_code') has-error @enderror">
-                            <label for="qad_location_code" id="label_location_code">Kode Lokasi QAD / Jubelio</label>
-                            <select class="form-control select2" id="qad_location_code" name="qad_location_code" style="width: 100%;">
-                                <option value="">-- Pilih Lokasi QAD (Kosongkan jika tidak terhubung) --</option>
-                                @foreach($qadLocations as $loc)
-                                    <option value="{{ $loc['location'] }}" {{ old('qad_location_code', $warehouse->qad_location_code) == $loc['location'] ? 'selected' : '' }}>
-                                        {{ $loc['location'] }} - {{ $loc['description'] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="help-block">Kode yang diawali <strong>FG</strong> = gudang QAD (sales order ke QAD). Kode lain atau kosong = Jubelio.</p>
-                            @error('qad_location_code')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group @error('qad_location_code') has-error @enderror">
+                                    <label for="qad_location_code" id="label_location_code">Kode Lokasi QAD / Jubelio</label>
+                                    <select class="form-control select2" id="qad_location_code" name="qad_location_code" style="width: 100%;">
+                                        <option value="">-- Pilih Lokasi QAD (Kosongkan jika tidak terhubung) --</option>
+                                        @foreach($qadLocations as $loc)
+                                            <option value="{{ $loc['location'] }}" {{ old('qad_location_code', $warehouse->qad_location_code) == $loc['location'] ? 'selected' : '' }}>
+                                                {{ $loc['location'] }} - {{ $loc['description'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="help-block">Kode yang diawali <strong>FG</strong> = gudang QAD (sales order ke QAD). Kode lain atau kosong = Jubelio.</p>
+                                    @error('qad_location_code')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group @error('qad_customer_code') has-error @enderror">
+                                    <label for="qad_customer_code">Kode Customer QAD</label>
+                                    <input type="text" class="form-control" id="qad_customer_code" name="qad_customer_code" maxlength="50" value="{{ old('qad_customer_code', $warehouse->qad_customer_code) }}" placeholder="Contoh: HUB00001">
+                                    <p class="help-block">Isi bila sales order dari hub ini dikirim ke QAD dengan satu customer hub (customer outlet tidak dibuat). Kosongkan untuk memakai customer masing-masing outlet.</p>
+                                    @error('qad_customer_code')
+                                        <span class="help-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group @error('zoho_location_id') has-error @enderror">

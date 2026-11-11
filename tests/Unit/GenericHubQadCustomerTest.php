@@ -8,7 +8,7 @@ use App\Models\Warehouse;
 use Tests\TestCase;
 
 /**
- * Order dari Hub Bekasi (HUB00002) dan Hub Maggiore (HUB00001) dikirim ke QAD dengan customer generik.
+ * Hub dengan Kode Customer QAD mengirim sales order ke QAD memakai customer tsb; hub lain memakai customer outlet.
  */
 class GenericHubQadCustomerTest extends TestCase
 {
@@ -21,31 +21,24 @@ class GenericHubQadCustomerTest extends TestCase
         return $order;
     }
 
-    public function test_bekasi_uses_hub00002_and_maggiore_uses_hub00001(): void
+    public function test_hub_with_qad_customer_code_uses_it(): void
     {
-        $cases = [
-            ['Hub Bekasi', 'FG008', 'HUB00002'],
-            ['Hub Maggiore', 'FG007', 'HUB00001'],
-            // Dikenali dari kode lokasi bila nama berubah, dan dari nama bila kode lokasi belum diisi.
-            ['Gudang Serpong', 'FG007', 'HUB00001'],
-            ['Hub Maggiore', null, 'HUB00001'],
-            ['HUB BEKASI 2', null, 'HUB00002'],
-        ];
-
-        foreach ($cases as [$name, $location, $expected]) {
-            $hub = new Warehouse(['name' => $name, 'qad_location_code' => $location]);
+        foreach ([['Hub Bekasi', 'HUB00002'], ['Hub Maggiore', 'HUB00001'], ['Hub Baru', ' HUB00009 ']] as [$name, $code]) {
+            $hub = new Warehouse(['name' => $name, 'qad_customer_code' => $code]);
             $this->assertTrue($hub->usesGenericQadCustomer(), $name);
-            $this->assertSame($expected, $hub->genericQadCustomerCode(), $name);
-            $this->assertSame($expected, $this->order($hub)->resolveQadCustomerCode(), $name);
+            $this->assertSame(trim($code), $this->order($hub)->resolveQadCustomerCode(), $name);
         }
-
-        $this->assertTrue(Warehouse::isGenericQadCustomerCode('HUB00001'));
-        $this->assertTrue(Warehouse::isGenericQadCustomerCode('HUB00002'));
-        $this->assertFalse(Warehouse::isGenericQadCustomerCode('CS92913'));
     }
 
     public function test_other_hubs_use_outlet_customer_code(): void
     {
+        // Tanpa Kode Customer QAD (termasuk hub bernama Bekasi/Maggiore yang dikosongkan admin).
+        foreach ([['Hub Surabaya Tidar', null], ['Hub Maggiore', '']] as [$name, $code]) {
+            $hub = new Warehouse(['name' => $name, 'qad_location_code' => 'FG011', 'qad_customer_code' => $code]);
+            $this->assertFalse($hub->usesGenericQadCustomer(), $name);
+            $this->assertSame('CS92913', $this->order($hub)->resolveQadCustomerCode(), $name);
+        }
+
         $hub = new Warehouse(['name' => 'Hub Surabaya Tidar', 'qad_location_code' => 'FG011']);
 
         $this->assertFalse($hub->usesGenericQadCustomer());

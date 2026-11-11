@@ -465,6 +465,7 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'qad_location_code' => 'nullable|string|max:50',
+            'qad_customer_code' => 'nullable|string|max:50',
             'zoho_location_id' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
@@ -491,6 +492,9 @@ class WarehouseController extends Controller
             'longitude' => $validated['longitude'] ?? null,
             'qad_location_code' => filled($validated['qad_location_code'] ?? null)
                 ? trim((string) $validated['qad_location_code'])
+                : null,
+            'qad_customer_code' => filled($validated['qad_customer_code'] ?? null)
+                ? strtoupper(trim((string) $validated['qad_customer_code']))
                 : null,
             'zoho_location_id' => filled($validated['zoho_location_id'] ?? null)
                 ? trim((string) $validated['zoho_location_id'])
@@ -685,6 +689,7 @@ class WarehouseController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'qad_location_code' => 'nullable|string|max:50',
+            'qad_customer_code' => 'nullable|string|max:50',
             'zoho_location_id' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'target_role' => 'required|array',
@@ -693,6 +698,9 @@ class WarehouseController extends Controller
 
         $validated['qad_location_code'] = filled($validated['qad_location_code'] ?? null)
             ? trim((string) $validated['qad_location_code'])
+            : null;
+        $validated['qad_customer_code'] = filled($validated['qad_customer_code'] ?? null)
+            ? strtoupper(trim((string) $validated['qad_customer_code']))
             : null;
         $validated['zoho_location_id'] = filled($validated['zoho_location_id'] ?? null)
             ? trim((string) $validated['zoho_location_id'])

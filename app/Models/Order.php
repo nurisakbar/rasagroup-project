@@ -671,7 +671,8 @@ class Order extends Model
 
     /**
      * Resolves the customer code used in QAD for this order.
-     * Orders fulfilled by Hub Bekasi (FG008 → HUB00002) or Hub Maggiore (FG007 → HUB00001) use a generic customer code.
+     * Orders fulfilled by a hub with a Kode Customer QAD (e.g. Hub Bekasi HUB00002, Hub Maggiore HUB00001)
+     * use that hub customer instead of the outlet's own customer.
      */
     public function resolveQadCustomerCode(): ?string
     {

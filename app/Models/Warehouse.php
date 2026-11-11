@@ -21,6 +21,7 @@ class Warehouse extends Model
     protected $fillable = [
         'kode_hub',
         'qad_location_code',
+        'qad_customer_code',
         'zoho_location_id',
         'name',
         'slug',
@@ -46,36 +47,18 @@ class Warehouse extends Model
         'sync_sources' => 'array',
     ];
 
+    /** @var array<int, string>|null kode customer QAD yang dipakai hub (cache per request) */
+    private static ?array $hubQadCustomerCodes = null;
+
     /**
-     * Customer QAD generik per hub (kode lokasi QAD => kode customer). Order dari hub ini dikirim ke QAD
-     * dengan customer tsb: customer outlet tidak dibuat dan alamat/data customer tidak di-patch.
+     * Kode customer QAD hub (diisi admin di form hub). Bila ada, sales order dari hub ini dikirim ke QAD
+     * memakai customer tsb: customer outlet tidak dibuat dan alamat/data customer tidak di-patch.
      */
-    public const GENERIC_QAD_CUSTOMERS = [
-        'FG008' => 'HUB00002', // Hub Bekasi
-        'FG007' => 'HUB00001', // Hub Maggiore
-    ];
-
-    /** Cadangan bila kode lokasi QAD belum diisi: dikenali dari nama hub. */
-    private const GENERIC_QAD_CUSTOMERS_BY_NAME = [
-        'bekasi' => 'HUB00002',
-        'maggiore' => 'HUB00001',
-    ];
-
     public function genericQadCustomerCode(): ?string
     {
-        $location = strtoupper(trim((string) $this->qad_location_code));
-        if (isset(self::GENERIC_QAD_CUSTOMERS[$location])) {
-            return self::GENERIC_QAD_CUSTOMERS[$location];
-        }
+        $code = trim((string) $this->qad_customer_code);
 
-        $name = strtolower((string) $this->name);
-        foreach (self::GENERIC_QAD_CUSTOMERS_BY_NAME as $needle => $code) {
-            if (str_contains($name, $needle)) {
-                return $code;
-            }
-        }
-
-        return null;
+        return $code !== '' ? $code : null;
     }
 
     public function usesGenericQadCustomer(): bool
@@ -83,9 +66,30 @@ class Warehouse extends Model
         return $this->genericQadCustomerCode() !== null;
     }
 
+    /**
+     * Apakah kode customer ini milik sebuah hub (bukan customer outlet).
+     */
     public static function isGenericQadCustomerCode(?string $code): bool
     {
-        return in_array((string) $code, self::GENERIC_QAD_CUSTOMERS, true);
+        $code = trim((string) $code);
+        if ($code === '') {
+            return false;
+        }
+
+        self::$hubQadCustomerCodes ??= static::query()
+            ->whereNotNull('qad_customer_code')
+            ->where('qad_customer_code', '<>', '')
+            ->pluck('qad_customer_code')
+            ->map(fn ($value) => trim((string) $value))
+            ->all();
+
+        return in_array($code, self::$hubQadCustomerCodes, true);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => self::$hubQadCustomerCodes = null);
+        static::deleted(fn () => self::$hubQadCustomerCodes = null);
     }
 
     public function getRouteKeyName()
