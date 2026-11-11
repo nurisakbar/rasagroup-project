@@ -182,6 +182,8 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/affiliate', [App\Http\Controllers\Buyer\AffiliateController::class, 'index'])->name('affiliate.index');
     Route::put('/affiliate/bank', [App\Http\Controllers\Buyer\AffiliateController::class, 'updateBank'])->name('affiliate.bank.update');
     Route::get('/outlet-referral', [App\Http\Controllers\Buyer\OutletReferralController::class, 'index'])->name('outlet-referral.index');
+    Route::get('/outlet-referral/{outlet}/discounts', [App\Http\Controllers\Buyer\OutletReferralController::class, 'editDiscounts'])->name('outlet-referral.discounts.edit');
+    Route::post('/outlet-referral/{outlet}/discounts', [App\Http\Controllers\Buyer\OutletReferralController::class, 'updateDiscounts'])->name('outlet-referral.discounts.update');
 });
 
 // Log Viewer Route (Access via /logs)
@@ -398,6 +400,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/distributors/{distributor}/users/{user}', [App\Http\Controllers\Admin\DistributorController::class, 'removeUser'])->name('distributors.remove-user');
         Route::post('/distributors/{distributor}/target-belanja', [App\Http\Controllers\Admin\DistributorController::class, 'updateTargetBelanja'])->name('distributors.target-belanja.update');
         Route::post('/distributors/{distributor}/category-discounts', [App\Http\Controllers\Admin\DistributorController::class, 'updateCategoryDiscounts'])->name('distributors.category-discounts.update');
+        Route::post('/distributors/{distributor}/outlet-discount-max', [App\Http\Controllers\Admin\DistributorController::class, 'updateOutletDiscountMax'])->name('distributors.outlet-discount-max.update');
         Route::delete('/distributors/{distributor}', [App\Http\Controllers\Admin\DistributorController::class, 'destroy'])->name('distributors.destroy');
         Route::post('/distributors/sync-qad', [App\Http\Controllers\Admin\DistributorController::class, 'syncQadCustomers'])->name('distributors.sync-qad');
     });

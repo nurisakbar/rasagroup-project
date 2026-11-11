@@ -1632,13 +1632,23 @@ class CheckoutController extends Controller
             $tieredDiscountAmount = $discountData['total_discount_amount'];
             $tieredDiscountDetails = $discountData['discount_details'];
             $subtotalAfterDistributor = $retailSubtotal - $tieredDiscountAmount;
+
+            // Outlet yang mendapat diskon dari distributor perekrut (belanja di hub distributor).
+            $outletDistributorDiscount = max(0.0, $catalogSubtotalDpp - $retailSubtotal);
+            if ($outletDistributorDiscount > 0.5) {
+                $distributorPriceDiscount = $outletDistributorDiscount;
+                $priceLevelName = 'Diskon Distributor';
+            }
         }
 
         $taxPercent = TaxAwarePrice::percentIfEnabled($user->usesPpn());
         $ppn = TaxAwarePrice::ppnOnDpp($subtotalAfterDistributor, $taxPercent);
         
         $subtotalWithPpn = $subtotalAfterDistributor + $ppn;
-        $distributorDiscountWithPpn = max(0.0, $catalogSubtotalWithPpn - $subtotalWithPpn);
+        $distributorDiscountWithPpn = $user->isDistributor()
+            ? max(0.0, $catalogSubtotalWithPpn - $subtotalWithPpn)
+            // Outlet: hanya potongan dari distributor (diskon MOQ punya baris sendiri).
+            : $distributorPriceDiscount * (1 + ($taxPercent / 100));
 
         // Scale tiered discounts to include PPN so the UI math adds up
         $taxMultiplier = 1 + ($taxPercent / 100);
@@ -1655,7 +1665,7 @@ class CheckoutController extends Controller
             'tiered_discount_details' => $tieredDiscountDetails,
             'subtotal_after_distributor' => $subtotalWithPpn,
             'price_level_name' => $priceLevelName,
-            'show_distributor_pricing' => $user->isDistributor()
+            'show_distributor_pricing' => ($user->isDistributor() || $priceLevelName === 'Diskon Distributor')
                 && $distributorDiscountWithPpn > 0.5,
             'show_tiered_discount' => $tieredDiscountAmount > 0,
             'tax_percent' => $taxPercent,

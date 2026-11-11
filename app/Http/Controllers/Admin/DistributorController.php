@@ -723,6 +723,28 @@ class DistributorController extends Controller
     }
 
     /**
+     * Batas diskon (%) yang boleh diberikan distributor kepada outlet rekrutannya.
+     */
+    public function updateOutletDiscountMax(Request $request, User $distributor)
+    {
+        if (! $distributor->isDistributor()) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'outlet_discount_max' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $max = round((float) ($validated['outlet_discount_max'] ?? 0), 2);
+        $distributor->forceFill(['outlet_discount_max' => $max > 0 ? $max : null])->save();
+
+        return redirect()->route('admin.distributors.show', ['distributor' => $distributor, 'tab' => 'diskon_kategori'])
+            ->with('success', $max > 0
+                ? 'Distributor boleh memberi diskon ke outlet maksimal ' . rtrim(rtrim(number_format($max, 2, ',', '.'), '0'), ',') . '%.'
+                : 'Distributor tidak lagi boleh memberi diskon ke outlet.');
+    }
+
+    /**
      * Update category discounts for a distributor.
      */
     public function updateCategoryDiscounts(Request $request, User $distributor)

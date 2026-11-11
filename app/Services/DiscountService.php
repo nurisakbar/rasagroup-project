@@ -144,6 +144,12 @@ class DiscountService
         foreach ($carts as $cartItem) {
             $product = $cartItem->product;
             $group = $product ? $this->getProductCategoryGroup($product) : null;
+
+            // Item dengan diskon dari distributor perekrut (di hub distributor): diskon MOQ tidak berlaku.
+            if ($group && $user->outletDistributorDiscountFor($product, $cartItem->warehouse_id) > 0) {
+                $group = null;
+            }
+
             $lines[(string) $cartItem->id] = $group ? $percentages[$group] : 0.0;
             if ($group) {
                 $groupSubtotals[$group] += $user->getProductPrice($product) * (int) $cartItem->quantity;

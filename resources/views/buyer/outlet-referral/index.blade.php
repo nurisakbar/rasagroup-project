@@ -55,6 +55,13 @@
                                 <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">
                                     Outlet Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
                                 </h5>
+                                <p class="text-muted font-sm mb-15">
+                                    @if($discountMax > 0)
+                                        Anda bisa memberi diskon per kategori untuk tiap outlet, maksimal {{ rtrim(rtrim(number_format($discountMax, 2, ',', '.'), '0'), ',') }}%. Diskon berlaku saat outlet belanja dari hub Anda.
+                                    @else
+                                        Admin belum mengizinkan Anda memberi diskon ke outlet.
+                                    @endif
+                                </p>
                                 @if($outlets->isEmpty())
                                     <p class="text-muted font-sm mb-0">Belum ada outlet yang mendaftar lewat link Anda.</p>
                                 @else
@@ -65,6 +72,7 @@
                                                     <th>Nama Outlet</th>
                                                     <th>No. HP</th>
                                                     <th>Tanggal Daftar</th>
+                                                    <th>Diskon</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -73,6 +81,11 @@
                                                         <td>{{ $outlet->name }}</td>
                                                         <td>{{ $outlet->phone ?: '-' }}</td>
                                                         <td>{{ $outlet->created_at->format('d M Y') }}</td>
+                                                        <td>
+                                                            <a class="btn btn-sm px-15" style="background-color: #6A1B1B; color: #fff;" href="{{ route('buyer.outlet-referral.discounts.edit', $outlet) }}">
+                                                                {{ $outlet->discount_count > 0 ? $outlet->discount_count . ' kategori' : 'Atur Diskon' }}
+                                                            </a>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

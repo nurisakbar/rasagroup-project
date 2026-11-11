@@ -645,6 +645,23 @@
 
                     <!-- Tab: Diskon Kategori -->
                     <div class="tab-pane {{ $activeTab == 'diskon_kategori' ? 'active' : '' }}" id="tab_diskon_kategori">
+                        <div class="box box-solid box-default">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Diskon dari Distributor ke Outlet</h3>
+                            </div>
+                            <form action="{{ route('admin.distributors.outlet-discount-max.update', $distributor) }}" method="POST" class="box-body">
+                                @csrf
+                                <p class="text-muted">Distributor bisa memberi diskon per kategori kepada outlet rekrutannya (berlaku saat outlet belanja dari hub distributor). Tentukan batas maksimalnya; kosongkan atau 0 untuk tidak mengizinkan.</p>
+                                <div class="form-inline">
+                                    <label for="outlet_discount_max" style="margin-right: 8px;">Maks. diskon ke outlet</label>
+                                    <div class="input-group" style="width: 160px; margin-right: 8px;">
+                                        <input type="number" step="0.01" min="0" max="100" class="form-control" id="outlet_discount_max" name="outlet_discount_max" value="{{ $distributor->outlet_discount_max ? rtrim(rtrim(number_format((float) $distributor->outlet_discount_max, 2, '.', ''), '0'), '.') : '' }}" placeholder="0">
+                                        <span class="input-group-addon">%</span>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Simpan</button>
+                                </div>
+                            </form>
+                        </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">
