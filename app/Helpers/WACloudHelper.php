@@ -300,18 +300,7 @@ class WACloudHelper
                 $templateName = config('services.meta_wa.order_notification_template') ?: env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
                 $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
                 
-                try {
-                    if ($order->user && $order->user->role === 'distributor') {
-                        $orderUrl = route('distributor.orders.show', $order);
-                    } else {
-                        $orderUrl = route('orders.show', $order);
-                    }
-                } catch (\Throwable $e) {
-                    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
-                    $orderUrl = ($order->user && $order->user->role === 'distributor')
-                        ? "{$baseUrl}/distributor/orders/{$order->id}"
-                        : "{$baseUrl}/orders/{$order->id}";
-                }
+                $orderUrl = $order->customerOrderUrl();
 
                 $hubName = $order->sourceWarehouse ? $order->sourceWarehouse->name : 'RasaConnect';
 
@@ -394,18 +383,7 @@ class WACloudHelper
                 $templateName = config('services.meta_wa.order_notification_template') ?: env('META_WA_ORDER_NOTIFICATION_TEMPLATE', 'rasaconnect_notifikasi_order_baru');
                 $languageCode = config('services.meta_wa.template_lang') ?: env('META_WA_TEMPLATE_LANG', 'id');
                 
-                try {
-                    if ($order->user && $order->user->role === 'distributor') {
-                        $orderUrl = route('distributor.orders.show', $order);
-                    } else {
-                        $orderUrl = route('orders.show', $order);
-                    }
-                } catch (\Throwable $e) {
-                    $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
-                    $orderUrl = ($order->user && $order->user->role === 'distributor')
-                        ? "{$baseUrl}/distributor/orders/{$order->id}"
-                        : "{$baseUrl}/orders/{$order->id}";
-                }
+                $orderUrl = $order->customerOrderUrl();
 
                 $hubName = $order->sourceWarehouse ? $order->sourceWarehouse->name : 'RasaConnect';
 

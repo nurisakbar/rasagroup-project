@@ -24,7 +24,7 @@ class OrderCompletedNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $url = url('/orders/' . $this->order->id);
+        $url = $this->order->customerOrderUrl();
         $timeStr = $this->order->received_at ? Carbon::parse($this->order->received_at)->format('d M Y, H:i') . ' WIB' : now()->format('d M Y, H:i') . ' WIB';
 
         $mail = (new MailMessage)

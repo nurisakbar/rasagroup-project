@@ -25,9 +25,7 @@ class OrderPickupReadyNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         $isDistributor = $this->order->order_type === Order::TYPE_DISTRIBUTOR;
-        $url = $isDistributor
-            ? url('/distributor/orders/' . $this->order->id)
-            : url('/orders/' . $this->order->id);
+        $url = $this->order->customerOrderUrl();
 
         $readyTime = $this->order->pickup_ready_at ? Carbon::parse($this->order->pickup_ready_at)->format('d M Y, H:i') . ' WIB' : 'Segera';
         $note = $this->order->pickup_note ?: 'Harap menunjukkan nomor pesanan / invoice ini saat menemui petugas gudang.';

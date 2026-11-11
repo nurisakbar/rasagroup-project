@@ -24,12 +24,10 @@ class OrderShippedNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $isSelfPickup = $this->order->expedition && in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']);
+        $isSelfPickup = $this->order->isSelfPickup();
 
         $isDistributor = $this->order->order_type === Order::TYPE_DISTRIBUTOR;
-        $url = $isDistributor 
-            ? url('/distributor/orders/' . $this->order->id) 
-            : url('/orders/' . $this->order->id);
+        $url = $this->order->customerOrderUrl();
 
         $timeStr = $this->order->shipped_at ? Carbon::parse($this->order->shipped_at)->format('d M Y, H:i') . ' WIB' : now()->format('d M Y, H:i') . ' WIB';
 

@@ -370,6 +370,20 @@ class Order extends Model
     }
 
     /**
+     * Link halaman detail pesanan untuk pembeli (dipakai di email & WA): distributor ke panel distributor,
+     * selain itu ke /buyer/orders/{order}.
+     */
+    public function customerOrderUrl(): string
+    {
+        $this->loadMissing('user');
+        $isDistributor = $this->order_type === self::TYPE_DISTRIBUTOR || $this->user?->role === User::ROLE_DISTRIBUTOR;
+
+        return $isDistributor
+            ? route('distributor.orders.show', $this)
+            : route('buyer.orders.show', $this);
+    }
+
+    /**
      * Cek apakah ekspedisi pesanan adalah Ambil di Tempat (Self Pickup)
      */
     public function isSelfPickup(): bool
@@ -377,6 +391,11 @@ class Order extends Model
         $code = strtolower($this->expedition?->code ?? '');
         $name = strtolower($this->expedition?->name ?? '');
         $service = strtolower($this->expedition_service ?? '');
+
+        // Kode ekspedisi menentukan: Kurir Toko = diantar ke tempat, walau nama layanannya tertulis "Self Pickup".
+        if (in_array($code, ['kurir_toko', 'antar_tempat', 'internal'], true)) {
+            return false;
+        }
 
         return in_array($code, ['self_pickup', 'pickup'], true)
             || str_contains($name, 'ambil')

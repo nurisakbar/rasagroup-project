@@ -23,9 +23,10 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $isSelfPickup = $this->order->expedition && in_array($this->order->expedition->code, ['self_pickup', 'kurir_toko']);
+        $isSelfPickup = $this->order->isSelfPickup();
+        $isKurirToko = ! $isSelfPickup && $this->order->isKurirToko();
 
-        $url = url('/orders/' . $this->order->id);
+        $url = $this->order->customerOrderUrl();
 
         $mail = (new MailMessage)
             ->subject('Pesanan Diproses - #' . $this->order->order_number . ' | Rasaconnect')
@@ -36,6 +37,9 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
         if ($isSelfPickup) {
             $mail->line('Metode: Pengambilan Ditempat di gudang.')
                  ->line('Anda akan menerima notifikasi email berikutnya apabila barang telah selesai disiapkan dan siap untuk Anda ambil di gudang.');
+        } elseif ($isKurirToko) {
+            $mail->line('Metode: Diantar ke tempat Anda oleh kurir toko.')
+                 ->line('Anda akan menerima notifikasi email berikutnya apabila pesanan sedang diantar ke alamat Anda.');
         } else {
             $mail->line('Pesanan Anda akan segera diserahkan kepada pihak kurir/ekspedisi (' . ($this->order->expedition->name ?? 'Reguler') . ').')
                  ->line('Anda akan menerima notifikasi email berikutnya beserta nomor resi apabila pesanan telah dalam pengiriman.');
