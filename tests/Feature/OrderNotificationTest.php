@@ -99,4 +99,27 @@ class OrderNotificationTest extends TestCase
         $this->order->forceFill(['payment_status' => 'paid'])->save();
         $this->assertTrue($this->order->fresh()->isPaidOrTopApproved());
     }
+
+    public function test_paid_order_email_attaches_invoice_pdf(): void
+    {
+        $this->useExpedition('kurir_toko', 'Diantar Ketempat');
+        $this->order->forceFill(['payment_status' => 'paid'])->save();
+        $order = $this->order->fresh(['expedition', 'user']);
+
+        $mail = (new OrderProcessingNotification($order))->toMail($order->user);
+
+        $this->assertCount(1, $mail->rawAttachments);
+        $attachment = $mail->rawAttachments[0];
+        $this->assertSame('invoice-' . $order->order_number . '.pdf', $attachment['name']);
+        $this->assertSame('application/pdf', $attachment['options']['mime']);
+        $this->assertStringStartsWith('%PDF', $attachment['data']);
+        $this->assertContains('Invoice pesanan Anda terlampir pada email ini.', $mail->introLines);
+
+        // Email benar-benar bisa dirender dan dikirim (driver array).
+        config(['mail.default' => 'array']);
+        $order->user->notifyNow(new OrderProcessingNotification($order));
+        $sent = app('mailer')->getSymfonyTransport()->messages();
+        $this->assertCount(1, $sent);
+        $this->assertCount(1, $sent[0]->getOriginalMessage()->getAttachments());
+    }
 }

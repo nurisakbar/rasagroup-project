@@ -3,10 +3,12 @@
 namespace App\Notifications\Orders;
 
 use App\Models\Order;
+use App\Support\OrderInvoicePdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class OrderProcessingNotification extends Notification implements ShouldQueue
 {
@@ -43,6 +45,19 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
         } else {
             $mail->line('Pesanan Anda akan segera diserahkan kepada pihak kurir/ekspedisi (' . ($this->order->expedition->name ?? 'Reguler') . ').')
                  ->line('Anda akan menerima notifikasi email berikutnya beserta nomor resi apabila pesanan telah dalam pengiriman.');
+        }
+
+        // Lampirkan invoice PDF; bila gagal dibuat, email tetap terkirim tanpa lampiran.
+        try {
+            $mail->attachData(OrderInvoicePdf::render($this->order), OrderInvoicePdf::filename($this->order), [
+                'mime' => 'application/pdf',
+            ]);
+            $mail->line('Invoice pesanan Anda terlampir pada email ini.');
+        } catch (\Throwable $e) {
+            Log::warning('OrderProcessingNotification: gagal melampirkan invoice PDF', [
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return $mail->action('Lihat Detail Pesanan', $url)

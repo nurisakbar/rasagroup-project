@@ -60,15 +60,10 @@ class OrderController extends Controller
             abort(403);
         }
 
-        $order->load(\App\Support\ProformaInvoice::relations());
-        $invoice = \App\Support\ProformaInvoice::fromOrder($order);
-
-        $pdf = Pdf::loadView('buyer.orders.invoice', compact('order', 'invoice'));
-        $pdf->setPaper('a4', 'portrait');
-
-        $filename = ($order->isPaidOrTopApproved() ? 'invoice-' : 'proforma-invoice-') . $order->order_number . '.pdf';
-
-        return $pdf->download($filename);
+        return response(\App\Support\OrderInvoicePdf::render($order), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . \App\Support\OrderInvoicePdf::filename($order) . '"',
+        ]);
     }
 
     public function trackOrder(Order $order)
