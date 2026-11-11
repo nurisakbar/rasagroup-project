@@ -22,11 +22,20 @@ class ZohoService
     }
 
     /**
+     * Saklar integrasi Zoho (ZOHO_ENABLED). Dimatikan di server dev agar order uji tidak masuk ke Zoho.
+     */
+    public static function isEnabled(): bool
+    {
+        return (bool) config('services.zoho.enabled', true);
+    }
+
+    /**
      * Check if Zoho Books integration is configured
      */
     public static function isConfigured(): bool
     {
-        return !empty(config('services.zoho.client_id'))
+        return static::isEnabled()
+            && !empty(config('services.zoho.client_id'))
             && !empty(config('services.zoho.client_secret'))
             && !empty(config('services.zoho.refresh_token'))
             && !empty(config('services.zoho.org_id'));
@@ -181,6 +190,10 @@ class ZohoService
      */
     public function getAccessToken(): string
     {
+        if (! static::isEnabled()) {
+            throw new \RuntimeException('Integrasi Zoho dimatikan (ZOHO_ENABLED=false).');
+        }
+
         return Cache::remember('zoho_access_token', 3500, function () {
             $response = Http::asForm()->post('https://accounts.zoho.com/oauth/v2/token', [
                 'refresh_token' => config('services.zoho.refresh_token', env('ZOHO_REFRESH_TOKEN')),
@@ -207,6 +220,10 @@ class ZohoService
      */
     protected function client()
     {
+        if (! static::isEnabled()) {
+            throw new \RuntimeException('Integrasi Zoho dimatikan (ZOHO_ENABLED=false).');
+        }
+
         return Http::withToken($this->getAccessToken())
             ->withHeaders(['Content-Type' => 'application/json'])
             ->withQueryParameters(['organization_id' => $this->orgId]);
@@ -387,6 +404,15 @@ class ZohoService
      */
     public function createOrderToPaymentFlow(Order $order)
     {
+        if (! static::isEnabled()) {
+            Log::info('Zoho: sync dilewati karena integrasi Zoho dimatikan (ZOHO_ENABLED=false).', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+
+            return;
+        }
+
         try {
             $order->loadMissing(['user', 'items.product', 'sourceWarehouse']);
             

@@ -65,6 +65,11 @@
                             <label for="zoho_location_id" id="label_zoho_location_id">Lokasi / Cabang Zoho Books</label>
                             <select class="form-control select2" id="zoho_location_id" name="zoho_location_id" style="width: 100%;">
                                 <option value="">-- Pilih Lokasi Zoho (Default: Head Office) --</option>
+                                @php $currentZoho = old('zoho_location_id', $warehouse->zoho_location_id); @endphp
+                                @if($currentZoho && ! collect($zohoLocations ?? [])->contains(fn ($z) => (string) ($z['branch_id'] ?? '') === (string) $currentZoho))
+                                    {{-- Daftar cabang tidak tersedia (mis. Zoho dimatikan): pertahankan nilai yang tersimpan. --}}
+                                    <option value="{{ $currentZoho }}" selected>{{ $currentZoho }} (tersimpan)</option>
+                                @endif
                                 @foreach($zohoLocations ?? [] as $zLoc)
                                     <option value="{{ $zLoc['branch_id'] }}" {{ old('zoho_location_id', $warehouse->zoho_location_id) == $zLoc['branch_id'] ? 'selected' : '' }}>
                                         {{ $zLoc['branch_name'] }} ({{ $zLoc['branch_id'] }}){{ !empty($zLoc['is_primary_branch']) ? ' - Primary' : '' }}{{ empty($zLoc['is_branch_active']) || ($zLoc['branch_status'] ?? '') !== 'active' ? ' (Inactive di Zoho)' : '' }}
