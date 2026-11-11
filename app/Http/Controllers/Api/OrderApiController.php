@@ -398,7 +398,8 @@ class OrderApiController extends Controller
             // Dispatch background job to send payment notification
             \App\Jobs\SendWhatsAppNotification::dispatch($order, 'payment');
 
-            // TOP: notifikasi hub dikirim setelah finance approve; non-TOP pakai warehouse_new_order setelah bayar
+            // Notifikasi hub hanya terkirim bila order sudah dibayar (dicek di SendWhatsAppNotification);
+            // order baru biasanya belum dibayar, notifikasi hub dikirim dari alur pembayaran / approve finance.
             if ($order->payment_method !== 'term_of_payment') {
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             }

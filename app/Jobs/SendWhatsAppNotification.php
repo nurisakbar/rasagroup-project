@@ -15,6 +15,9 @@ class SendWhatsAppNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /** Jenis notifikasi yang dikirim ke hub (pemilik/staf gudang). */
+    public const HUB_TYPES = ['warehouse_notification', 'warehouse_new_order'];
+
     /**
      * @var Order
      */
@@ -55,6 +58,19 @@ class SendWhatsAppNotification implements ShouldQueue
             'expedition',
             'sourceWarehouse',
         ]);
+
+        // Notifikasi WA ke hub hanya untuk order yang sudah dibayar (atau TOP yang sudah disetujui finance).
+        // Order yang baru dibuat / belum dibayar tidak memicu WA ke hub.
+        if (in_array($this->type, self::HUB_TYPES, true) && ! $this->order->isPaidOrTopApproved()) {
+            Log::info('WhatsApp ke hub dilewati: order belum dibayar', [
+                'order_id' => $this->order->id,
+                'order_number' => $this->order->order_number,
+                'type' => $this->type,
+                'payment_status' => $this->order->payment_status,
+            ]);
+
+            return;
+        }
 
         Log::info('Processing background WhatsApp notification', [
             'order_id' => $this->order->id,

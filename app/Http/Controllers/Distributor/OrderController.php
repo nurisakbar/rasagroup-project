@@ -693,7 +693,8 @@ class OrderController extends Controller
                 'sourceWarehouse',
             ]);
 
-            // TOP: notifikasi hub dikirim setelah finance approve
+            // Notifikasi hub hanya terkirim bila order sudah dibayar (dicek di SendWhatsAppNotification);
+            // order baru biasanya belum dibayar, notifikasi hub dikirim dari alur pembayaran / approve finance.
             if ($order->payment_method !== 'term_of_payment') {
                 \App\Jobs\SendWhatsAppNotification::dispatch($order, 'warehouse_new_order');
             }
