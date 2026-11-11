@@ -110,10 +110,8 @@ class RegisteredUserController extends Controller
         if (env('BYPASS_WA_VERIFICATION', true)) {
             $user->wa_verified_at = now();
             $user->save();
-        } else {
-            // Dispatch WhatsApp Verification Job to queue
-            \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $waCode);
         }
+        // OTP WhatsApp tidak dikirim di sini: dikirim saat pengguna membuka halaman verifikasi WhatsApp.
 
         return redirect()->route('login')->with('status', 'Pendaftaran berhasil. Silakan cek email Anda untuk melakukan verifikasi akun sebelum login.');
     }

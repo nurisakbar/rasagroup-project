@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class WhatsAppVerificationController extends Controller
 {
@@ -17,9 +18,44 @@ class WhatsAppVerificationController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        return $user->wa_verified_at
-            ? redirect()->route('wa.verify.success')
-            : view('auth.verify-wa');
+        if ($user->wa_verified_at) {
+            return redirect()->route('wa.verify.success');
+        }
+
+        // OTP dikirim saat halaman verifikasi dibuka (bukan saat registrasi), dengan jeda agar refresh
+        // halaman tidak mengirim ulang terus-menerus.
+        $otpSent = $this->sendOtpIfDue($user);
+
+        return view('auth.verify-wa', ['otpSent' => $otpSent]);
+    }
+
+    /** Jeda minimal antar pengiriman OTP otomatis saat membuka halaman verifikasi. */
+    private const OTP_AUTO_SEND_COOLDOWN_SECONDS = 120;
+
+    /**
+     * Kirim OTP bila nomor sudah ada dan belum dikirim dalam jeda terakhir.
+     * Mengembalikan true bila OTP sudah/baru dikirim (pengguna tinggal memasukkan kode).
+     */
+    private function sendOtpIfDue(User $user): bool
+    {
+        if (! $user->phone) {
+            return false;
+        }
+
+        $cacheKey = 'wa_otp_auto_sent:' . $user->id;
+        if (Cache::has($cacheKey)) {
+            return true;
+        }
+
+        if (! $user->wa_verification_code) {
+            $user->wa_verification_code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->save();
+        }
+
+        \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $user->wa_verification_code);
+        Cache::put($cacheKey, true, self::OTP_AUTO_SEND_COOLDOWN_SECONDS);
+
+        return true;
     }
 
     /**
@@ -37,7 +73,13 @@ class WhatsAppVerificationController extends Controller
             return redirect()->route('wa.verify');
         }
 
-        return view('auth.verify-wa-success');
+        // Halaman asal sebelum dialihkan ke verifikasi (mis. halaman produk saat tambah ke keranjang).
+        $continueUrl = $request->session()->pull('url.intended');
+        if ($continueUrl && str_contains($continueUrl, '/verify-wa')) {
+            $continueUrl = null;
+        }
+
+        return view('auth.verify-wa-success', ['continueUrl' => $continueUrl]);
     }
 
     public function verify(Request $request)
@@ -53,6 +95,8 @@ class WhatsAppVerificationController extends Controller
                 'wa_verified_at' => now(),
                 'wa_verification_code' => null,
             ]);
+
+            Cache::forget('wa_otp_auto_sent:' . $user->id);
 
             return redirect()->route('wa.verify.success');
         }
@@ -75,6 +119,7 @@ class WhatsAppVerificationController extends Controller
         }
 
         \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $user->wa_verification_code);
+        Cache::put('wa_otp_auto_sent:' . $user->id, true, self::OTP_AUTO_SEND_COOLDOWN_SECONDS);
 
         return back()->with('status', 'verification-link-sent');
     }
@@ -91,6 +136,7 @@ class WhatsAppVerificationController extends Controller
         $user->save();
 
         \App\Jobs\SendWhatsAppVerificationJob::dispatch($user, $user->wa_verification_code);
+        Cache::put('wa_otp_auto_sent:' . $user->id, true, self::OTP_AUTO_SEND_COOLDOWN_SECONDS);
 
         return back()->with('status', 'verification-link-sent')->with('success', 'Nomor WhatsApp berhasil diperbarui.');
     }

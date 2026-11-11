@@ -42,9 +42,15 @@
                             <a href="{{ route('home') }}" class="btn hover-up flex-sm-fill" style="background-color: transparent; color: #6A1B1B; border: 2px solid #6A1B1B; border-radius: 12px; height: 52px; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;">
                                 Ke beranda
                             </a>
-                            <a href="{{ route('dashboard') }}" class="btn btn-heading flex-sm-fill hover-up" style="background-color: #6A1B1B; color: #fff; border: none; border-radius: 12px; height: 52px; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;">
-                                Ke dashboard <i class="fi-rs-arrow-right ml-8"></i>
-                            </a>
+                            @if(!empty($continueUrl))
+                                <a href="{{ $continueUrl }}" class="btn btn-heading flex-sm-fill hover-up" style="background-color: #6A1B1B; color: #fff; border: none; border-radius: 12px; height: 52px; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;">
+                                    Lanjut belanja <i class="fi-rs-arrow-right ml-8"></i>
+                                </a>
+                            @else
+                                <a href="{{ route('dashboard') }}" class="btn btn-heading flex-sm-fill hover-up" style="background-color: #6A1B1B; color: #fff; border: none; border-radius: 12px; height: 52px; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;">
+                                    Ke dashboard <i class="fi-rs-arrow-right ml-8"></i>
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

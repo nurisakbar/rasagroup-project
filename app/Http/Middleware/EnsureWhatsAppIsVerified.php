@@ -24,9 +24,21 @@ class EnsureWhatsAppIsVerified
             }
 
             if (! $user->wa_verified_at) {
-                return $request->expectsJson()
-                        ? abort(403, 'Your WhatsApp number is not verified.')
-                        : redirect()->route('wa.verify');
+                // Kembali ke halaman asal setelah verifikasi (mis. halaman produk saat tambah ke keranjang).
+                $returnTo = $request->isMethod('GET') && ! $request->expectsJson()
+                    ? $request->fullUrl()
+                    : url()->previous();
+                $request->session()->put('url.intended', $returnTo);
+
+                if ($request->expectsJson()) {
+                    // Frontend (tambah ke keranjang, dll.) mengalihkan ke halaman verifikasi, bukan menampilkan error.
+                    return response()->json([
+                        'message' => 'Silakan verifikasi nomor WhatsApp Anda terlebih dahulu.',
+                        'redirect' => route('wa.verify'),
+                    ], 403);
+                }
+
+                return redirect()->route('wa.verify');
             }
         }
 
