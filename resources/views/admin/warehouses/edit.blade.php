@@ -244,12 +244,25 @@
                             @enderror
                         </div>
 
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="is_active" value="1" {{ old('is_active', $warehouse->is_active) ? 'checked' : '' }}>
-                                Hub Aktif
-                            </label>
-                            <p class="help-block">Hub yang tidak aktif tidak akan ditampilkan dalam pilihan</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', $warehouse->is_active) ? 'checked' : '' }}>
+                                        Hub Aktif
+                                    </label>
+                                    <p class="help-block">Hub yang tidak aktif tidak akan ditampilkan dalam pilihan</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" name="send_to_jubelio" value="1" {{ old('send_to_jubelio', $warehouse->send_to_jubelio) ? 'checked' : '' }}>
+                                        Kirim ke Jubelio
+                                    </label>
+                                    <p class="help-block">Jika dicentang, sales order dari hub ini dikirim ke Jubelio.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- /.box-body -->

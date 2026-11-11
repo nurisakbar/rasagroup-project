@@ -46,7 +46,7 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
         $this->order->loadMissing('sourceWarehouse');
 
         if (! $this->order->shouldSyncToJubelio()) {
-            Log::info('SyncOrderToJubelio: skipped (hanya untuk pesanan dari ecom, hub bekasi, dan hub maggiore)', [
+            Log::info('SyncOrderToJubelio: skipped (hub pengirim tidak dicentang Kirim ke Jubelio)', [
                 'order_id' => $this->order->id,
                 'order_type' => $this->order->order_type,
                 'warehouse' => $this->order->sourceWarehouse?->name,

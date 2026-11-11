@@ -210,12 +210,27 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                    <strong>Hub Aktif</strong>
-                                </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
+                                            <strong>Hub Aktif</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" name="send_to_jubelio" value="1" {{ old('send_to_jubelio') ? 'checked' : '' }}>
+                                            <strong>Kirim ke Jubelio</strong>
+                                        </label>
+                                    </div>
+                                    <p class="help-block">Jika dicentang, sales order dari hub ini dikirim ke Jubelio.</p>
+                                </div>
                             </div>
                         </div>
 

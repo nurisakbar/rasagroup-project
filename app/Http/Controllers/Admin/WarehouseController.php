@@ -500,6 +500,7 @@ class WarehouseController extends Controller
                 ? trim((string) $validated['zoho_location_id'])
                 : null,
             'is_active' => $request->has('is_active'),
+            'send_to_jubelio' => $request->boolean('send_to_jubelio'),
             'gudang_order_distributor' => $request->boolean('gudang_order_distributor'),
         ]);
 
@@ -706,6 +707,7 @@ class WarehouseController extends Controller
             ? trim((string) $validated['zoho_location_id'])
             : null;
         $validated['is_active'] = $request->has('is_active');
+        $validated['send_to_jubelio'] = $request->boolean('send_to_jubelio');
         $validated['gudang_order_distributor'] = $request->boolean('gudang_order_distributor');
 
         if ($request->hasFile('signature')) {

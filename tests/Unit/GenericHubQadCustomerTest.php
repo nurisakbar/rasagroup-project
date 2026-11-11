@@ -45,19 +45,11 @@ class GenericHubQadCustomerTest extends TestCase
         $this->assertSame('CS92913', $this->order($hub)->resolveQadCustomerCode());
     }
 
-    public function test_jubelio_sync_includes_bekasi_maggiore_and_ecommerce_only(): void
+    public function test_jubelio_sync_follows_hub_checkbox(): void
     {
-        $cases = [
-            ['Hub Bekasi', 'FG008', 'WHRG002', true],
-            ['Hub Maggiore', 'FG007', 'WHMPRG003', true],
-            ['Gudang Lain', null, 'WHMPRG003', true],
-            ['Ecommerce Tomang', 'WHECOMM1', 'WHECOMM1', true],
-            ['Hub Surabaya Tidar', 'FG011', 'WHSBY01', false],
-        ];
-
-        foreach ($cases as [$name, $location, $kodeHub, $expected]) {
-            $order = $this->order(new Warehouse(['name' => $name, 'qad_location_code' => $location, 'kode_hub' => $kodeHub, 'target_role' => ['outlet']]));
-            $this->assertSame($expected, $order->shouldSyncToJubelio(), $name);
-        }
+        $this->assertTrue($this->order(new Warehouse(['name' => 'Hub Baru', 'send_to_jubelio' => true]))->shouldSyncToJubelio());
+        // Nama hub tidak lagi menentukan: Bekasi tanpa centang tidak dikirim.
+        $this->assertFalse($this->order(new Warehouse(['name' => 'Hub Bekasi', 'qad_location_code' => 'FG008', 'send_to_jubelio' => false]))->shouldSyncToJubelio());
+        $this->assertFalse($this->order(new Warehouse(['name' => 'Hub Surabaya Tidar']))->shouldSyncToJubelio());
     }
 }

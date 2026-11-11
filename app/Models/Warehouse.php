@@ -38,11 +38,13 @@ class Warehouse extends Model
         'latitude',
         'longitude',
         'is_active',
+        'send_to_jubelio',
         'target_role',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'send_to_jubelio' => 'boolean',
         'target_role' => 'array',
         'sync_sources' => 'array',
     ];
