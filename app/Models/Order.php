@@ -633,7 +633,7 @@ class Order extends Model
     }
 
     /**
-     * Yang dikirim ke Jubelio hanya pesanan dari gudang Ecommerce dan Hub Bekasi, selain itu tidak.
+     * Yang dikirim ke Jubelio hanya pesanan dari gudang Ecommerce, Hub Bekasi, dan Hub Maggiore.
      */
     public function shouldSyncToJubelio(): bool
     {
@@ -654,7 +654,11 @@ class Order extends Model
             || stripos((string) $warehouse->kode_hub, 'ecomm') !== false
             || in_array('ecommerce', (array) ($warehouse->target_role ?? []), true);
 
-        return $isBekasi || $isEcomm;
+        $isMaggiore = stripos($warehouse->name, 'maggiore') !== false
+            || $warehouse->qad_location_code === 'FG007'
+            || $warehouse->kode_hub === 'WHMPRG003';
+
+        return $isBekasi || $isMaggiore || $isEcomm;
     }
 
     /**

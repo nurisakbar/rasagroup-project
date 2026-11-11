@@ -51,4 +51,20 @@ class GenericHubQadCustomerTest extends TestCase
         $this->assertFalse($hub->usesGenericQadCustomer());
         $this->assertSame('CS92913', $this->order($hub)->resolveQadCustomerCode());
     }
+
+    public function test_jubelio_sync_includes_bekasi_maggiore_and_ecommerce_only(): void
+    {
+        $cases = [
+            ['Hub Bekasi', 'FG008', 'WHRG002', true],
+            ['Hub Maggiore', 'FG007', 'WHMPRG003', true],
+            ['Gudang Lain', null, 'WHMPRG003', true],
+            ['Ecommerce Tomang', 'WHECOMM1', 'WHECOMM1', true],
+            ['Hub Surabaya Tidar', 'FG011', 'WHSBY01', false],
+        ];
+
+        foreach ($cases as [$name, $location, $kodeHub, $expected]) {
+            $order = $this->order(new Warehouse(['name' => $name, 'qad_location_code' => $location, 'kode_hub' => $kodeHub, 'target_role' => ['outlet']]));
+            $this->assertSame($expected, $order->shouldSyncToJubelio(), $name);
+        }
+    }
 }
