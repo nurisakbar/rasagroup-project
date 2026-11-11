@@ -150,6 +150,25 @@ class Order extends Model
             }
         });
 
+        static::updated(function (Order $order) {
+            // Notifikasi ke pembeli saat pesanan sampai / selesai, dari jalur mana pun (webhook kurir,
+            // admin, warehouse, pembeli, Jubelio). Email "Pesanan Selesai" sudah dikirim per jalur.
+            if (! $order->wasChanged('order_status') || ! $order->user_id) {
+                return;
+            }
+
+            if ($order->order_status === 'delivered') {
+                if (\Illuminate\Support\Facades\Cache::add('order_delivered_mail:' . $order->id, true, now()->addDays(30))) {
+                    $order->user?->notify(new \App\Notifications\Orders\OrderDeliveredNotification($order));
+                }
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'delivered')->afterCommit();
+            }
+
+            if ($order->order_status === 'completed') {
+                \App\Jobs\SendWhatsAppNotification::dispatch($order, 'completed')->afterCommit();
+            }
+        });
+
         static::created(function (Order $order) {
             // Notifikasi eksternal otomatis untuk transaksi yang butuh approval finance
             if ($order->isAwaitingFinanceApproval() && config('services.finance_approval.enabled', true)) {

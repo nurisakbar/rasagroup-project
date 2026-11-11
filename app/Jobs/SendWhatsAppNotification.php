@@ -22,7 +22,7 @@ class SendWhatsAppNotification implements ShouldQueue
      * Jenis notifikasi yang cukup terkirim sekali per order (dipicu dari beberapa jalur: webhook
      * pembayaran, halaman sukses, approve finance).
      */
-    public const ONCE_PER_ORDER_TYPES = ['thank_you', 'warehouse_notification', 'warehouse_new_order'];
+    public const ONCE_PER_ORDER_TYPES = ['thank_you', 'warehouse_notification', 'warehouse_new_order', 'delivered', 'completed'];
 
     public static function sentKey(string $orderId, string $type): string
     {
@@ -119,6 +119,10 @@ class SendWhatsAppNotification implements ShouldQueue
                     break;
                 case 'warehouse_notification':
                     WACloudHelper::notifyWarehouseOwnersAboutPayment($this->order);
+                    break;
+                case 'delivered':
+                case 'completed':
+                    WACloudHelper::sendOrderStatusNotification($this->order, $this->type);
                     break;
                 case 'warehouse_new_order':
                     WACloudHelper::notifyWarehouseOwnersAboutNewOrder($this->order);

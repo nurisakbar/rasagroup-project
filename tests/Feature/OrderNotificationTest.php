@@ -221,4 +221,57 @@ class OrderNotificationTest extends TestCase
         $this->assertSame('rasaconnect_resi_pengiriman', $tracking['name']);
         $this->assertSame('RESI123', $tracking['components'][0]['parameters'][3]['text']);
     }
+
+    private function whatsAppTypes(): array
+    {
+        return \Illuminate\Support\Facades\Queue::pushed(SendWhatsAppNotification::class)
+            ->map(fn ($job) => (new \ReflectionProperty($job, 'type'))->getValue($job))
+            ->values()->all();
+    }
+
+    public function test_delivered_status_notifies_buyer_by_email_and_whatsapp_once(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        \Illuminate\Support\Facades\Queue::fake();
+        \Illuminate\Support\Facades\Cache::forget('order_delivered_mail:' . $this->order->id);
+        $this->order->forceFill(['order_status' => 'shipped'])->save();
+
+        // Mis. webhook kurir menandai paket sudah sampai.
+        $this->order->update(['order_status' => 'delivered', 'received_at' => now()]);
+        // Status disimpan ulang: tidak mengirim email lagi.
+        $this->order->forceFill(['order_status' => 'shipped'])->save();
+        $this->order->update(['order_status' => 'delivered']);
+
+        \Illuminate\Support\Facades\Notification::assertSentToTimes($this->order->user, \App\Notifications\Orders\OrderDeliveredNotification::class, 1);
+        $this->assertContains('delivered', $this->whatsAppTypes());
+
+        $mail = (new \App\Notifications\Orders\OrderDeliveredNotification($this->order->fresh(['expedition', 'user'])))->toMail($this->order->user);
+        $this->assertStringContainsString('Pesanan Sudah Sampai', $mail->subject);
+        $this->assertSame($this->order->customerOrderUrl(), $mail->actionUrl);
+    }
+
+    public function test_completed_status_sends_whatsapp_to_buyer(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        \Illuminate\Support\Facades\Queue::fake();
+        $this->order->forceFill(['order_status' => 'delivered'])->save();
+
+        $this->order->update(['order_status' => 'completed']);
+
+        $this->assertContains('completed', $this->whatsAppTypes());
+    }
+
+    public function test_status_whatsapp_uses_meta_text_with_order_link_without_template(): void
+    {
+        config(['services.meta_wa.token' => 'token-uji', 'services.meta_wa.phone_number_id' => '123', 'services.meta_wa.delivered_template' => null]);
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200)]);
+        $this->order->user->forceFill(['phone' => '081234567890'])->save();
+
+        WACloudHelper::sendOrderStatusNotification($this->order->fresh(['user', 'address']), 'delivered');
+
+        $request = collect(Http::recorded())->map(fn ($pair) => $pair[0])->first();
+        $this->assertStringStartsWith('https://graph.facebook.com/', $request->url());
+        $this->assertStringContainsString('Pesanan Sudah Sampai', $request->data()['text']['body']);
+        $this->assertStringContainsString($this->order->customerOrderUrl(), $request->data()['text']['body']);
+    }
 }

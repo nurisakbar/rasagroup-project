@@ -201,6 +201,9 @@ return [
         'pickup_handover_template' => env('META_WA_PICKUP_HANDOVER_TEMPLATE'),
         // status DRiiPPreneur: {{1}} nama, {{2}} status
         'driippreneur_status_template' => env('META_WA_DRIIPPRENEUR_STATUS_TEMPLATE'),
+        // pesanan sampai / selesai: {{1}} nama, {{2}} no. pesanan, {{3}} link
+        'delivered_template' => env('META_WA_DELIVERED_TEMPLATE'),
+        'completed_template' => env('META_WA_COMPLETED_TEMPLATE'),
         'template_lang' => env('META_WA_TEMPLATE_LANG', 'id'),
         'provider' => env('WHATSAPP_PROVIDER', 'meta'),
     ],

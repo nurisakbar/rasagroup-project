@@ -1105,6 +1105,52 @@ class WACloudHelper
      * @param \App\Models\Order $order Order model
      * @return string
      */
+    /**
+     * WA ke pembeli: pesanan sudah sampai (status delivered) atau selesai (completed).
+     * Template Meta: META_WA_DELIVERED_TEMPLATE / META_WA_COMPLETED_TEMPLATE
+     * ({{1}} nama, {{2}} no. pesanan, {{3}} link pesanan); teks via Meta sebagai cadangan.
+     */
+    public static function sendOrderStatusNotification(\App\Models\Order $order, string $status): ?array
+    {
+        if (! self::isConfigured() || ! in_array($status, ['delivered', 'completed'], true)) {
+            return null;
+        }
+
+        $order->loadMissing(['user', 'address']);
+        $phone = $order->address && $order->address->phone ? $order->address->phone : $order->user?->phone;
+        if (! $phone) {
+            Log::warning('No phone number available for order status notification', ['order_id' => $order->id, 'status' => $status]);
+
+            return null;
+        }
+
+        $name = $order->user?->name ?: 'Pelanggan';
+        $url = $order->customerOrderUrl();
+        $result = self::sendConfiguredTemplate($status . '_template', $phone, [$name, $order->order_number, $url], [
+            'order_id' => $order->id,
+            'type' => $status,
+        ]);
+
+        if (! $result) {
+            $isDistributor = $order->order_type === \App\Models\Order::TYPE_DISTRIBUTOR;
+            $message = $status === 'delivered'
+                ? "*Pesanan Sudah Sampai*\n\nHalo {$name}, pesanan *#{$order->order_number}* telah sampai di alamat tujuan.\n\n"
+                    . ($isDistributor
+                        ? 'Silakan periksa barang, lalu klik "Masukkan ke Stock" pada halaman pesanan: '
+                        : 'Silakan periksa barang, lalu klik "Konfirmasi Sudah Diterima" pada halaman pesanan: ')
+                    . $url
+                : "*Pesanan Selesai*\n\nHalo {$name}, pesanan *#{$order->order_number}* telah selesai. Terima kasih telah berbelanja di RasaConnect!\n\nDetail pesanan: {$url}";
+
+            $result = self::sendText($phone, $message);
+        }
+
+        if ($result) {
+            Log::info('Order status notification sent via WhatsApp', ['order_id' => $order->id, 'status' => $status, 'phone' => $phone]);
+        }
+
+        return $result;
+    }
+
     private static function buildPickupHandoverMessage(\App\Models\Order $order): string
     {
         $message = "*Pesanan Anda Telah Diserahkan!*\n\n";
