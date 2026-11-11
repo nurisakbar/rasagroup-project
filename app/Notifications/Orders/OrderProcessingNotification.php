@@ -37,8 +37,9 @@ class OrderProcessingNotification extends Notification implements ShouldQueue
             ->line('Total Pesanan: Rp ' . number_format($this->order->total_amount, 0, ',', '.'));
 
         if ($isSelfPickup) {
-            $mail->line('Metode: Pengambilan Ditempat di gudang.')
-                 ->line('Anda akan menerima notifikasi email berikutnya apabila barang telah selesai disiapkan dan siap untuk Anda ambil di gudang.');
+            $mail->line('Metode: Pengambilan Ditempat.')
+                 ->line('Lokasi pengambilan: ' . $this->order->pickupLocationText() . '.')
+                 ->line('Anda akan menerima notifikasi email berikutnya apabila barang telah selesai disiapkan dan siap untuk Anda ambil.');
         } elseif ($isKurirToko) {
             $mail->line('Metode: Diantar ke tempat Anda oleh kurir toko.')
                  ->line('Anda akan menerima notifikasi email berikutnya apabila pesanan sedang diantar ke alamat Anda.');

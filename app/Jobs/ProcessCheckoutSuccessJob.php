@@ -61,9 +61,16 @@ class ProcessCheckoutSuccessJob implements ShouldQueue
             ]);
         }
 
+        // Email konfirmasi order cukup sekali, walau halaman sukses dibuka berkali-kali.
+        $createdMailKey = 'order_created_mail_sent:' . $order->id;
         try {
-            if ($order->user && $order->user->email) {
-                \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderCreatedMail($order));
+            if ($order->user && $order->user->email && \Illuminate\Support\Facades\Cache::add($createdMailKey, true, now()->addDays(30))) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderCreatedMail($order));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Cache::forget($createdMailKey);
+                    throw $e;
+                }
             }
         } catch (\Throwable $e) {
             Log::error('ProcessCheckoutSuccessJob: failed to send OrderCreatedMail', [

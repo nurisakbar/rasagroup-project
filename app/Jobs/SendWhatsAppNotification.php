@@ -19,6 +19,17 @@ class SendWhatsAppNotification implements ShouldQueue
     public const HUB_TYPES = ['warehouse_notification', 'warehouse_new_order'];
 
     /**
+     * Jenis notifikasi yang cukup terkirim sekali per order (dipicu dari beberapa jalur: webhook
+     * pembayaran, halaman sukses, approve finance).
+     */
+    public const ONCE_PER_ORDER_TYPES = ['thank_you', 'warehouse_notification', 'warehouse_new_order'];
+
+    public static function sentKey(string $orderId, string $type): string
+    {
+        return 'wa_sent:' . $orderId . ':' . $type;
+    }
+
+    /**
      * @var Order
      */
     protected $order;
@@ -72,6 +83,18 @@ class SendWhatsAppNotification implements ShouldQueue
             return;
         }
 
+        $onceKey = in_array($this->type, self::ONCE_PER_ORDER_TYPES, true)
+            ? self::sentKey((string) $this->order->id, $this->type)
+            : null;
+        if ($onceKey && \Illuminate\Support\Facades\Cache::has($onceKey)) {
+            Log::info('WhatsApp dilewati: sudah pernah terkirim untuk order ini', [
+                'order_id' => $this->order->id,
+                'type' => $this->type,
+            ]);
+
+            return;
+        }
+
         Log::info('Processing background WhatsApp notification', [
             'order_id' => $this->order->id,
             'type' => $this->type,
@@ -105,6 +128,10 @@ class SendWhatsAppNotification implements ShouldQueue
                         'type' => $this->type,
                     ]);
                     break;
+            }
+
+            if ($onceKey) {
+                \Illuminate\Support\Facades\Cache::put($onceKey, true, now()->addDays(30));
             }
         } catch (\Exception $e) {
             Log::error('Failed to send background WhatsApp notification', [

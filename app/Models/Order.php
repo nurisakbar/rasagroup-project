@@ -384,6 +384,27 @@ class Order extends Model
     }
 
     /**
+     * Lokasi pengambilan untuk teks email/WA: "Hub Bekasi, Jl. ..., Kec. ..., KOTA ...".
+     */
+    public function pickupLocationText(): string
+    {
+        $this->loadMissing('sourceWarehouse');
+        $w = $this->sourceWarehouse;
+        if (! $w) {
+            return 'gudang kami';
+        }
+
+        $parts = array_filter([
+            $w->name,
+            $w->address,
+            $w->district_name ? 'Kec. ' . $w->district_name : null,
+            $w->regency_name,
+        ], fn ($part) => filled($part));
+
+        return implode(', ', array_unique($parts));
+    }
+
+    /**
      * Cek apakah ekspedisi pesanan adalah Ambil di Tempat (Self Pickup)
      */
     public function isSelfPickup(): bool

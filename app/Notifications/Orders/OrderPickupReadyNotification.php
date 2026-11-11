@@ -43,9 +43,10 @@ class OrderPickupReadyNotification extends Notification implements ShouldQueue
                  ->line('Silakan ikuti instruksi di atas untuk pengambilan atau penerimaan stok barang pesanan Anda.');
         } else {
             $mail->line('Pesanan Anda #' . $this->order->order_number . ' telah selesai disiapkan oleh gudang dan sekarang berstatus SIAP UNTUK PENGAMBILAN DITEMPAT.')
+                 ->line('Lokasi pengambilan: ' . $this->order->pickupLocationText() . '.')
                  ->line('Jadwal Siap Diambil: ' . $readyTime)
                  ->line('Catatan / Instruksi Gudang: ' . $note)
-                 ->line('Silakan datang ke lokasi gudang kami sesuai jadwal dan instruksi di atas untuk pengambilan barang pesanan Anda.');
+                 ->line('Silakan datang ke lokasi di atas sesuai jadwal dan instruksi untuk pengambilan barang pesanan Anda.');
         }
 
         return $mail->action('Lihat Detail & Instruksi Pengambilan', $url)

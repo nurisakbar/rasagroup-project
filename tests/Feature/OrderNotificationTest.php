@@ -62,7 +62,7 @@ class OrderNotificationTest extends TestCase
             $text = $this->mailText(new OrderProcessingNotification($this->order));
 
             $this->assertStringContainsString('Diantar ke tempat', $text, $service);
-            $this->assertStringNotContainsString('Pengambilan Ditempat di gudang', $text, $service);
+            $this->assertStringNotContainsString('Pengambilan Ditempat', $text, $service);
         }
     }
 
@@ -70,7 +70,9 @@ class OrderNotificationTest extends TestCase
     {
         $this->useExpedition('self_pickup', 'Pengambilan Ditempat');
 
-        $this->assertStringContainsString('Pengambilan Ditempat di gudang', $this->mailText(new OrderProcessingNotification($this->order)));
+        $text = $this->mailText(new OrderProcessingNotification($this->order));
+        $this->assertStringContainsString('Metode: Pengambilan Ditempat', $text);
+        $this->assertStringContainsString('Lokasi pengambilan: ' . $this->order->sourceWarehouse->name, $text);
     }
 
     public function test_email_detail_links_open_buyer_order_page(): void
@@ -121,5 +123,34 @@ class OrderNotificationTest extends TestCase
         $sent = app('mailer')->getSymfonyTransport()->messages();
         $this->assertCount(1, $sent);
         $this->assertCount(1, $sent[0]->getOriginalMessage()->getAttachments());
+    }
+
+    public function test_thank_you_and_hub_whatsapp_sent_only_once_per_order(): void
+    {
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200)]);
+        \Illuminate\Support\Facades\Cache::forget(SendWhatsAppNotification::sentKey($this->order->id, 'thank_you'));
+        $this->order->user->forceFill(['phone' => '081234567890'])->save();
+        $this->order->forceFill(['payment_status' => 'paid'])->save();
+
+        (new SendWhatsAppNotification($this->order->fresh(), 'thank_you'))->handle();
+        $afterFirst = count(Http::recorded());
+        $this->assertGreaterThan(0, $afterFirst);
+
+        // Dipicu lagi (mis. halaman sukses dibuka ulang): tidak mengirim lagi.
+        (new SendWhatsAppNotification($this->order->fresh(), 'thank_you'))->handle();
+        $this->assertCount($afterFirst, Http::recorded());
+    }
+
+    public function test_order_created_email_sent_once_even_if_success_page_reopened(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        \Illuminate\Support\Facades\Queue::fake();
+        \Illuminate\Support\Facades\Cache::forget('order_created_mail_sent:' . $this->order->id);
+
+        (new \App\Jobs\ProcessCheckoutSuccessJob((string) $this->order->id))->handle();
+        (new \App\Jobs\ProcessCheckoutSuccessJob((string) $this->order->id))->handle();
+
+        // OrderCreatedMail memakai antrean (ShouldQueue).
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\OrderCreatedMail::class, 1);
     }
 }
