@@ -20,7 +20,12 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): View
     {
-        return view('auth.reset-password', ['request' => $request]);
+        // View memakai $token & $email: token dari URL /reset-password/{token}, email dari ?email= di link reset.
+        return view('auth.reset-password', [
+            'request' => $request,
+            'token' => (string) $request->route('token'),
+            'email' => (string) $request->query('email', ''),
+        ]);
     }
 
     /**
