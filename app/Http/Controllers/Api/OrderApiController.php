@@ -776,12 +776,19 @@ class OrderApiController extends Controller
         }
 
         // Build payload for EDMS
+        $credit = \App\Support\FinanceApprovalCredit::forOrder($order);
         $payload = [
             'transaction_id' => $order->id,
             'transaction_number' => $order->order_number,
             'user_id' => $order->user_id,
             'customer_name' => $order->user ? $order->user->name : 'Unknown',
             'amount' => (float) $order->total_amount,
+            // Kredit pembeli untuk pertimbangan approval finance
+            'ar_outstanding' => $credit['ar_outstanding'],
+            'credit_limit' => $credit['credit_limit'],
+            'existing_top_transactions' => $credit['existing_top_transactions'],
+            'accumulated_debt' => $credit['accumulated_debt'],
+            'remaining_credit_limit' => $credit['remaining_credit_limit'],
             'payment_method' => $order->payment_method,
             'status' => 'pending_approval',
             'items' => $order->items->map(function ($item) {

@@ -124,6 +124,7 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
     {
         $order = $this->order;
         $user = $order->user;
+        $credit = \App\Support\FinanceApprovalCredit::forOrder($order);
 
         return [
             // Required by EDMS
@@ -131,6 +132,9 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
             'transaction_number' => $order->order_number,
             'customer_name' => $user?->name ?? 'Unknown',
             'amount' => (float) $order->total_amount,
+            // Kredit pembeli untuk pertimbangan approval finance
+            'ar_outstanding' => $credit['ar_outstanding'],
+            'credit_limit' => $credit['credit_limit'],
 
             // Original payload structure
             'event' => 'finance_approval_needed',
@@ -159,12 +163,11 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
                 'phone' => $user?->phone,
                 'role' => $user?->role,
                 'term_of_payment' => $user?->term_of_payment,
-                'credit_limit' => $user?->credit_limit !== null ? (float) $user->credit_limit : null,
-                'ar_outstanding' => $user?->getArOutstandingAmount(),
-                'existing_top_transactions' => $user?->getExistingTopTransactionTotal($order->id),
-                'accumulated_debt' => $user
-                    ? $user->getAccumulatedTopDebt($order->id) + (float) $order->total_amount
-                    : (float) $order->total_amount,
+                'credit_limit' => $credit['credit_limit'],
+                'ar_outstanding' => $credit['ar_outstanding'],
+                'existing_top_transactions' => $credit['existing_top_transactions'],
+                'accumulated_debt' => $credit['accumulated_debt'],
+                'remaining_credit_limit' => $credit['remaining_credit_limit'],
             ],
             'items' => $order->items->map(function ($item) {
                 return [
