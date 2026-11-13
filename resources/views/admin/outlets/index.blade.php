@@ -64,7 +64,6 @@
                         <thead>
                             <tr>
                                 <th>No</th>
-                                <th>Kode QAD</th>
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Phone</th>
@@ -108,7 +107,6 @@
             },
             columns: [
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'qad_customer_code', name: 'qad_customer_code'},
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'phone', name: 'phone'},
@@ -127,7 +125,7 @@
                 @endif
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[{{ ($tab === 'buyer' ? 5 : 6) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
+            order: [[{{ ($tab === 'buyer' ? 4 : 5) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

@@ -18,12 +18,6 @@
             <form action="{{ route(($routePrefix ?? 'admin.outlets') . '.store') }}" method="POST">
                 @csrf
                 <div class="box-body">
-                    <div class="form-group @error('qad_customer_code') has-error @enderror">
-                        <label for="qad_customer_code">Kode Customer QAD (opsional)</label>
-                        <input type="text" class="form-control" id="qad_customer_code" name="qad_customer_code" value="{{ old('qad_customer_code') }}" placeholder="Masukkan kode QAD">
-                        @error('qad_customer_code') <span class="help-block">{{ $message }}</span> @enderror
-                    </div>
-
                     <div class="form-group @error('name') has-error @enderror">
                         <label for="name">Nama Outlet</label>
                         <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required placeholder="Masukkan nama outlet">

@@ -178,7 +178,7 @@ class HubOutletMenuTest extends TestCase
         $this->assertSame((string) $this->hub->id, (string) User::where('email', $payload['email'])->value('hub_id'));
     }
 
-    public function test_central_admin_sees_hub_column_and_sets_hub(): void
+    public function test_central_admin_sees_hub_column_and_hub_is_read_only_on_edit(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'wa_verified_at' => now()]);
         $rows = $this->actingAs($admin, 'admin')
@@ -186,11 +186,12 @@ class HubOutletMenuTest extends TestCase
             ->assertOk()->json('data');
         $this->assertSame('Hub Uji Lain', collect($rows)->firstWhere('name', 'Outlet Hub Lain')['hub'] ?? null);
 
+        // Hub tidak bisa diubah lewat form edit (read-only).
         $this->actingAs($admin, 'admin')->put(route('admin.outlets.update', $this->otherHubOutlet), [
-            'name' => $this->otherHubOutlet->name, 'email' => $this->otherHubOutlet->email, 'hub_id' => $this->hub->id,
+            'hub_id' => $this->hub->id, 'is_reseller' => 0,
         ])->assertRedirect();
-        $this->assertSame((string) $this->hub->id, (string) $this->otherHubOutlet->fresh()->hub_id);
-        $this->assertContains('Outlet Hub Lain', $this->names('outlet'));
+        $this->assertSame((string) $this->otherHub->id, (string) $this->otherHubOutlet->fresh()->hub_id);
+        $this->assertNotContains('Outlet Hub Lain', $this->names('outlet'));
     }
 
     public function test_setting_sales_hub_assigns_its_outlets_without_hub(): void

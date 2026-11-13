@@ -113,7 +113,7 @@ class OutletController extends Controller
         if ($request->ajax()) {
             $query = $this->tabQuery($tab)
                 ->with(['salesPerson', 'referringDistributor', 'hub:id,name'])
-                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code', 'is_reseller', 'reseller_marked_at', 'hub_id');
+                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'is_reseller', 'reseller_marked_at', 'hub_id');
 
             if ($request->filled('sales_code')) {
                 if ($request->sales_code === 'none') {
@@ -238,7 +238,6 @@ class OutletController extends Controller
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'sales_code' => $this->salesCodeRules(),
-            'qad_customer_code' => 'nullable|string|max:255',
             'hub_id' => $this->hubRules(),
         ]);
 
@@ -249,7 +248,6 @@ class OutletController extends Controller
             'password' => Hash::make($request->password),
             'role' => User::ROLE_OUTLET,
             'sales_code' => $request->sales_code,
-            'qad_customer_code' => $request->qad_customer_code,
             'hub_id' => $this->resolveHubId($request, null, $request->sales_code),
         ]);
 
@@ -266,10 +264,9 @@ class OutletController extends Controller
         }
 
         $user = $outlet; // to match view variable
-        $salesList = $this->salesOptions($user);
         $levelChanges = $user->levelChanges()->with('changer:id,name')->limit(20)->get();
 
-        return view('admin.outlets.edit', compact('user', 'salesList', 'levelChanges') + $this->panel());
+        return view('admin.outlets.edit', compact('user', 'levelChanges') + $this->panel());
     }
 
     /**
@@ -281,33 +278,12 @@ class OutletController extends Controller
             abort(403);
         }
 
+        // Form edit hanya mengubah level reseller; data lain (nama, email, telepon, sales, hub, kode QAD) read-only.
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($outlet->id),
-            ],
-            'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
-            'sales_code' => $this->salesCodeRules($outlet),
-            'qad_customer_code' => 'nullable|string|max:255',
-            'hub_id' => $this->hubRules($outlet),
+            'is_reseller' => ['nullable', 'boolean'],
         ]);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'sales_code' => $request->sales_code,
-            'qad_customer_code' => $request->qad_customer_code,
-        ];
-
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
+        $data = [];
 
         // Level reseller bisa diberikan ke user biasa maupun outlet.
         $fromLevel = $outlet->customerLevel();
@@ -317,17 +293,12 @@ class OutletController extends Controller
             $data['reseller_marked_at'] = $markReseller ? now() : null;
         }
 
-        // Reseller tidak memakai kode sales untuk diskon: input sales tidak ditampilkan, kode sales lama
-        // (sales/distributor perekrut outlet) tetap disimpan agar kembali berlaku bila level dikembalikan.
-        if ($markReseller) {
-            unset($data['sales_code']);
-        }
-
-        // Hub tetap tercatat saat level berubah; berubah hanya bila admin memilih hub lain atau sales diganti.
-        $data['hub_id'] = $this->resolveHubId($request, $outlet, $data['sales_code'] ?? $outlet->sales_code);
+        // Kode sales perekrut & hub tetap tersimpan saat level berubah (kembali berlaku bila dikembalikan ke outlet).
 
         DB::transaction(function () use ($outlet, $data, $fromLevel) {
-            $outlet->update($data);
+            if ($data !== []) {
+                $outlet->update($data);
+            }
 
             $toLevel = $outlet->customerLevel();
             if ($toLevel !== $fromLevel) {

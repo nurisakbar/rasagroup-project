@@ -253,24 +253,25 @@ class DistributorOutletReferralTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->put(route('admin.outlets.update', $outlet), [
                 'name' => 'Outlet Edit',
-                'email' => $outlet->email,
-                'sales_code' => $code,
+                'sales_code' => '',
             ])
             ->assertRedirect(route('admin.outlets.index', ['tab' => 'outlet']));
 
+        // Form edit read-only: kode distributor & nama tidak berubah.
         $this->assertSame($code, $outlet->fresh()->sales_code);
-        $this->assertSame('Outlet Edit', $outlet->fresh()->name);
+        $this->assertSame($outlet->name, $outlet->fresh()->name);
     }
 
     public function test_admin_outlet_rejects_unknown_sales_code(): void
     {
-        $outlet = $this->outlet(null);
         $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'wa_verified_at' => now()]);
 
         $this->actingAs($admin, 'admin')
-            ->put(route('admin.outlets.update', $outlet), [
-                'name' => $outlet->name,
-                'email' => $outlet->email,
+            ->post(route('admin.outlets.store'), [
+                'name' => 'Outlet Kode Salah',
+                'email' => 'kode.salah.' . uniqid() . '@contoh.test',
+                'password' => 'rahasia123',
+                'password_confirmation' => 'rahasia123',
                 'sales_code' => 'TIDAKADA',
             ])
             ->assertSessionHasErrors('sales_code');

@@ -91,7 +91,7 @@ class OutletTabsResellerTest extends TestCase
         $payload = ['name' => $this->outlet->name, 'email' => $this->outlet->email];
 
         $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->outlet))
-            ->assertOk()->assertSee('Tandai sebagai Reseller')->assertSee('distributor perekrut tidak berlaku');
+            ->assertOk()->assertSee('Tandai sebagai Reseller')->assertDontSee('distributor perekrut tidak berlaku');
 
         // Outlet -> Reseller: role tetap outlet, kode sales perekrut tetap tersimpan.
         $this->actingAs($this->admin, 'admin')
@@ -206,26 +206,29 @@ class OutletTabsResellerTest extends TestCase
         $this->assertSame(0.0, $service->calculateCartDiscount($small, $this->buyer->fresh(), null)['line_percentages'][$s->id]);
     }
 
-    public function test_reseller_edit_form_hides_sales_and_keeps_sales_code(): void
+    public function test_edit_form_is_read_only_except_reseller_flag(): void
     {
-        $this->buyer->forceFill(['is_reseller' => true, 'reseller_marked_at' => now()])->save();
+        $this->outlet->forceFill(['qad_customer_code' => 'QADLAMA01'])->save();
 
-        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->buyer))
+        $html = $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->outlet))
             ->assertOk()
-            ->assertSee('id="sales-code-group" style="display: none;"', false);
+            ->assertDontSee('Kode Customer QAD')
+            ->assertDontSee('Password Baru')
+            ->assertDontSee('name="sales_code"', false)
+            ->assertDontSee('Reseller pindah ke tab Reseller')
+            ->getContent();
+        $this->assertSame(5, substr_count($html, ' readonly>'));
 
-        $salesCode = User::where('role', User::ROLE_SALES)->whereNotNull('sales_code')->value('sales_code');
-        $this->actingAs($this->admin, 'admin')->put(route('admin.outlets.update', $this->buyer), [
-            'name' => $this->buyer->name, 'email' => $this->buyer->email, 'is_reseller' => 1,
-            'sales_code' => $salesCode,
+        // Data lain yang dikirim diabaikan; hanya level reseller yang berubah.
+        $this->actingAs($this->admin, 'admin')->put(route('admin.outlets.update', $this->outlet), [
+            'name' => 'Nama Diubah', 'email' => 'diubah@contoh.test', 'phone' => '0800', 'password' => 'rahasia123',
+            'password_confirmation' => 'rahasia123', 'qad_customer_code' => 'QADBARU', 'is_reseller' => 1,
         ])->assertRedirect(route('admin.outlets.index', ['tab' => 'reseller']));
 
-        $this->assertNull($this->buyer->fresh()->sales_code);
-
-        // User biasa (bukan reseller): pilihan sales tampil.
-        $this->buyer->forceFill(['is_reseller' => false])->save();
-        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->buyer))
-            ->assertOk()
-            ->assertSee('id="sales-code-group" style=""', false);
+        $fresh = $this->outlet->fresh();
+        $this->assertTrue($fresh->is_reseller);
+        $this->assertSame(['Outlet Uji Tab', 'QADLAMA01'], [$fresh->name, $fresh->qad_customer_code]);
+        $this->assertNotSame('diubah@contoh.test', $fresh->email);
+        $this->assertFalse(\Illuminate\Support\Facades\Hash::check('rahasia123', $fresh->password));
     }
 }
