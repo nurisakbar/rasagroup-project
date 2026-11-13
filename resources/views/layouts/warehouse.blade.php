@@ -117,13 +117,6 @@
           </a>
         </li>
         @if(auth()->check() && auth()->user()->sub_role === 'admin')
-        <li class="{{ request()->routeIs('warehouse.driippreneurs.*') ? 'active' : '' }}">
-          <a href="{{ route('warehouse.driippreneurs.index') }}">
-            <i class="fa fa-users"></i> <span>AFFILIATOR</span>
-          </a>
-        </li>
-        @endif
-        @if(auth()->check() && auth()->user()->sub_role === 'admin')
         <li class="{{ request()->routeIs('warehouse.outlets.*') ? 'active' : '' }}">
           <a href="{{ route('warehouse.outlets.index') }}">
             <i class="fa fa-building-o"></i> <span>OUTLET DAN RESELLER</span>
