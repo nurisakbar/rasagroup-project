@@ -137,11 +137,20 @@ class FinanceApprovalPayloadTest extends TestCase
         $this->assertSame(0, $baru['days_overdue']);
         $this->assertSame('unpaid', $baru['status']);
 
+        // Keterangan sumber data.
+        $this->assertSame(30, $credit['term_of_payment_days']);
+        $this->assertSame('manual', $credit['ar_outstanding_source']);
+        $this->assertSame('estimated_from_order_date_plus_term', $credit['pending_invoice_due_date_basis']);
+        $this->assertNotEmpty($credit['credit_notes']);
+        $this->assertStringContainsString('30 hari', implode(' ', $credit['credit_notes']));
+
         // Ikut terkirim di webhook EDMS.
         config(['services.finance_approval.webhook_url' => 'https://edms.test/approval']);
         Http::fake(['*' => Http::response(['ok' => true], 200)]);
         (new NotifyExternalFinanceApprovalNeeded($this->order->fresh(), force: true))->handle();
         Http::assertSent(fn (Request $request) => $request->data()['pending_invoice_count'] === 2
+            && $request->data()['term_of_payment_days'] === 30
+            && is_array($request->data()['credit_notes'])
             && count($request->data()['pending_invoices']) === 2
             && $request->data()['pending_invoice_overdue_total'] === 700000.0);
     }

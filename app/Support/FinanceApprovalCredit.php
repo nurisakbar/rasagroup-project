@@ -24,7 +24,12 @@ class FinanceApprovalCredit
      *     pending_invoice_total: float,
      *     pending_invoice_overdue_count: int,
      *     pending_invoice_overdue_total: float,
-     *     pending_invoices: list<array<string, mixed>>
+     *     pending_invoices: list<array<string, mixed>>,
+     *     term_of_payment_days: ?int,
+     *     ar_outstanding_source: string,
+     *     ar_outstanding_updated_at: ?string,
+     *     pending_invoice_due_date_basis: string,
+     *     credit_notes: list<string>
      * }
      */
     public static function forOrder(Order $order): array
@@ -50,6 +55,38 @@ class FinanceApprovalCredit
             'pending_invoice_overdue_count' => $pending['overdue_count'],
             'pending_invoice_overdue_total' => round($pending['overdue_total'], 2),
             'pending_invoices' => $pending['items'],
+        ] + self::notes($user, $pending['count'], $arOutstanding);
+    }
+
+    /**
+     * Keterangan sumber data untuk ditampilkan di EDMS.
+     *
+     * @return array{term_of_payment_days: ?int, ar_outstanding_source: string, ar_outstanding_updated_at: ?string, pending_invoice_due_date_basis: string, credit_notes: list<string>}
+     */
+    private static function notes(?\App\Models\User $user, int $pendingCount, float $arOutstanding): array
+    {
+        $termDays = $user?->term_of_payment !== null ? (int) $user->term_of_payment : null;
+        $syncedAt = $user?->ar_balance_last_sync_at ? \Carbon\Carbon::parse($user->ar_balance_last_sync_at) : null;
+        $source = $syncedAt ? 'qad' : 'manual';
+
+        $notes = [
+            $syncedAt
+                ? 'AR outstanding dari QAD, terakhir diperbarui ' . $syncedAt->timezone(Wib::TZ)->format('d M Y H:i') . ' WIB.'
+                : 'AR outstanding diisi manual oleh admin RasaConnect (belum tersinkron dari QAD).',
+            'Pending invoice = pesanan tempo di RasaConnect yang belum lunas (tidak termasuk pesanan yang sedang diajukan).',
+            'Jatuh tempo pending invoice adalah perkiraan: tanggal pesanan + tempo pembayaran pelanggan'
+                . ($termDays !== null ? ' (' . $termDays . ' hari).' : '.'),
+        ];
+        if ($pendingCount > 0 && $arOutstanding > 0) {
+            $notes[] = 'Sebagian pending invoice mungkin sudah tercatat di AR outstanding QAD, sehingga total utang bisa terhitung ganda.';
+        }
+
+        return [
+            'term_of_payment_days' => $termDays,
+            'ar_outstanding_source' => $source,
+            'ar_outstanding_updated_at' => $syncedAt?->toIso8601String(),
+            'pending_invoice_due_date_basis' => 'estimated_from_order_date_plus_term',
+            'credit_notes' => $notes,
         ];
     }
 

@@ -795,6 +795,11 @@ class OrderApiController extends Controller
             'pending_invoice_overdue_count' => $credit['pending_invoice_overdue_count'],
             'pending_invoice_overdue_total' => $credit['pending_invoice_overdue_total'],
             'pending_invoices' => $credit['pending_invoices'],
+            'term_of_payment_days' => $credit['term_of_payment_days'],
+            'ar_outstanding_source' => $credit['ar_outstanding_source'],
+            'ar_outstanding_updated_at' => $credit['ar_outstanding_updated_at'],
+            'pending_invoice_due_date_basis' => $credit['pending_invoice_due_date_basis'],
+            'credit_notes' => $credit['credit_notes'],
             'payment_method' => $order->payment_method,
             'status' => 'pending_approval',
             'items' => $order->items->map(function ($item) {
