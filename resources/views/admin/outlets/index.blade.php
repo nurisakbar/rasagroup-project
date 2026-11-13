@@ -24,7 +24,6 @@
         $showHub = ($canChooseHub ?? true) && $tab !== 'buyer';
         $showAction = $tab !== 'buyer';
         $tabHelp = [
-            'outlet' => 'User yang saat mendaftar memasukkan kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk mengubah levelnya menjadi reseller.',
             'reseller' => 'Outlet atau user ecom yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
             'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales.',
         ];
@@ -47,7 +46,9 @@
                     @endif
                 </ul>
                 <div class="tab-content">
-                    <p class="text-muted">{{ $tabHelp[$tab] }}</p>
+                    @if(! empty($tabHelp[$tab]))
+                        <p class="text-muted">{{ $tabHelp[$tab] }}</p>
+                    @endif
                     @if($tab === 'outlet')
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-md-4">
