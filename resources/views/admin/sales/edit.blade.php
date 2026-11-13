@@ -38,6 +38,20 @@
                             @enderror
                         </div>
 
+                        <div class="form-group @error('warehouse_id') has-error @enderror">
+                            <label for="warehouse_id">Hub</label>
+                            <select class="form-control" id="warehouse_id" name="warehouse_id">
+                                <option value="">- Pilih Hub -</option>
+                                @foreach($hubs as $hub)
+                                    <option value="{{ $hub->id }}" {{ (string) old('warehouse_id', $sale->warehouse_id) === (string) $hub->id ? 'selected' : '' }}>{{ $hub->name }}</option>
+                                @endforeach
+                            </select>
+                            <span class="help-block">Hub asal kode sales ini. Pilihan hanya hub dengan Gudang Order "outlet".</span>
+                            @error('warehouse_id')
+                                <span class="help-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="form-group @error('email') has-error @enderror">
                             <label for="email">Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $sale->email) }}" required>

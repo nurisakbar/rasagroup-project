@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +15,9 @@ class SalesController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $sales = User::where('role', User::ROLE_SALES)->select('id', 'sales_code', 'name', 'email', 'phone', 'monthly_target', 'is_active', 'created_at');
+            $sales = User::where('role', User::ROLE_SALES)
+                ->with('warehouse:id,name')
+                ->select('id', 'sales_code', 'name', 'email', 'phone', 'monthly_target', 'is_active', 'warehouse_id', 'created_at');
 
             return DataTables::of($sales)
                 ->addIndexColumn()
@@ -40,6 +43,12 @@ class SalesController extends Controller
                         ? '<span class="label label-success">Aktif</span>' 
                         : '<span class="label label-danger">Tidak Aktif</span>';
                 })
+                ->addColumn('hub', function ($sale) {
+                    return $sale->warehouse?->name ?? '-';
+                })
+                ->filterColumn('hub', function ($query, $keyword) {
+                    $query->whereHas('warehouse', fn ($q) => $q->where('name', 'like', '%' . $keyword . '%'));
+                })
                 ->editColumn('phone', function ($sale) {
                     return $sale->phone ?: '-';
                 })
@@ -58,7 +67,7 @@ class SalesController extends Controller
 
     public function create()
     {
-        return view('admin.sales.create');
+        return view('admin.sales.create', ['hubs' => $this->outletHubs()]);
     }
 
     public function store(Request $request)
@@ -75,6 +84,7 @@ class SalesController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'sales_code' => 'nullable|string|max:255',
+            'warehouse_id' => ['nullable', Rule::in($this->outletHubs()->pluck('id')->all())],
             'monthly_target' => 'nullable|numeric',
             'password' => 'required|string|min:8|confirmed',
             'is_active' => 'nullable|boolean',
@@ -85,6 +95,7 @@ class SalesController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'sales_code' => $request->sales_code,
+            'warehouse_id' => $request->warehouse_id ?: null,
             'monthly_target' => $request->monthly_target,
             'password' => Hash::make($request->password),
             'role' => User::ROLE_SALES,
@@ -100,7 +111,9 @@ class SalesController extends Controller
             return redirect()->route('admin.sales.index')->with('error', 'Hanya dapat mengubah data Sales.');
         }
 
-        return view('admin.sales.edit', compact('sale'));
+        $hubs = $this->outletHubs($sale->warehouse_id);
+
+        return view('admin.sales.edit', compact('sale', 'hubs'));
     }
 
     public function update(Request $request, User $sale)
@@ -127,6 +140,7 @@ class SalesController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'sales_code' => 'nullable|string|max:255',
+            'warehouse_id' => ['nullable', Rule::in($this->outletHubs($sale->warehouse_id)->pluck('id')->all())],
             'monthly_target' => 'nullable|numeric',
             'password' => 'nullable|string|min:8|confirmed',
             'is_active' => 'nullable|boolean',
@@ -137,6 +151,7 @@ class SalesController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'sales_code' => $request->sales_code,
+            'warehouse_id' => $request->warehouse_id ?: null,
             'monthly_target' => $request->monthly_target,
             'is_active' => $request->has('is_active') ? 1 : 0,
         ];
@@ -148,6 +163,18 @@ class SalesController extends Controller
         $sale->update($data);
 
         return redirect()->route('admin.sales.index')->with('success', 'Data Sales berhasil diperbarui.');
+    }
+
+    /**
+     * Pilihan hub untuk sales: hub aktif dengan Gudang Order "outlet".
+     * Hub yang sudah terpasang tetap ikut ditampilkan walau tidak lagi memenuhi syarat.
+     */
+    private function outletHubs(?string $currentId = null)
+    {
+        return Warehouse::query()
+            ->where(fn ($q) => $q->outletHubs()->when($currentId, fn ($q) => $q->orWhere('id', $currentId)))
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function destroy(User $sale)

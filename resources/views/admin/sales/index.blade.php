@@ -37,6 +37,7 @@
                             <tr>
                                 <th>No</th>
                                 <th>Kode Sales</th>
+                                <th>Hub</th>
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>No. Telepon</th>
@@ -69,6 +70,7 @@
             columns: [
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'sales_code', name: 'sales_code'},
+                {data: 'hub', name: 'hub', orderable: false},
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'phone', name: 'phone', defaultContent: '-'},
@@ -76,7 +78,7 @@
                 {data: 'created_at', name: 'created_at'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[6, 'desc']],
+            order: [[7, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

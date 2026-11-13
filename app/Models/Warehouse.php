@@ -56,6 +56,16 @@ class Warehouse extends Model
      * Kode customer QAD hub (diisi admin di form hub). Bila ada, sales order dari hub ini dikirim ke QAD
      * memakai customer tsb: customer outlet tidak dibuat dan alamat/data customer tidak di-patch.
      */
+    /**
+     * Hub aktif yang melayani order outlet (Gudang Order berisi "outlet").
+     */
+    public function scopeOutletHubs($query)
+    {
+        return $query->where('is_active', true)
+            ->whereRaw('JSON_VALID(`target_role`)')
+            ->whereRaw('JSON_CONTAINS(`target_role`, ?)', [json_encode('outlet')]);
+    }
+
     public function genericQadCustomerCode(): ?string
     {
         $code = trim((string) $this->qad_customer_code);
