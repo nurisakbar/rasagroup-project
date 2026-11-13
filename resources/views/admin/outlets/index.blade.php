@@ -27,12 +27,6 @@
             'buyer' => 'User biasa yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab Reseller.',
         ];
     @endphp
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            {{ session('success') }}
-        </div>
-    @endif
     <div class="row">
         <div class="col-xs-12">
             <div class="nav-tabs-custom">
