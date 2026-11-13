@@ -60,6 +60,9 @@ class FinanceApprovalPayloadTest extends TestCase
             return $request->url() === 'https://edms.test/approval'
                 && $data['ar_outstanding'] === 2500000.0
                 && $data['credit_limit'] === 10000000.0
+                && $data['existing_top_transactions'] === 0.0
+                && $data['accumulated_debt'] === 4000000.0
+                && $data['remaining_credit_limit'] === 6000000.0
                 && $data['customer']['ar_outstanding'] === 2500000.0
                 && $data['customer']['credit_limit'] === 10000000.0
                 // 10 jt - (2,5 jt AR + 1,5 jt order ini)
@@ -73,7 +76,9 @@ class FinanceApprovalPayloadTest extends TestCase
 
         $this->postJson(route('api.orders.edms-approval', $this->order->id))->assertOk()
             ->assertJsonPath('data.payload.ar_outstanding', 2500000)
-            ->assertJsonPath('data.payload.credit_limit', 10000000);
+            ->assertJsonPath('data.payload.credit_limit', 10000000)
+            ->assertJsonPath('data.payload.accumulated_debt', 4000000)
+            ->assertJsonPath('data.payload.remaining_credit_limit', 6000000);
 
         Http::assertSent(fn (Request $request) => str_contains($request->url(), 'edms.rasagroupoffice.com')
             && $request->data()['ar_outstanding'] === 2500000.0

@@ -135,6 +135,9 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
             // Kredit pembeli untuk pertimbangan approval finance
             'ar_outstanding' => $credit['ar_outstanding'],
             'credit_limit' => $credit['credit_limit'],
+            'existing_top_transactions' => $credit['existing_top_transactions'],
+            'accumulated_debt' => $credit['accumulated_debt'],
+            'remaining_credit_limit' => $credit['remaining_credit_limit'],
 
             // Original payload structure
             'event' => 'finance_approval_needed',
