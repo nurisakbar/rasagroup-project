@@ -22,8 +22,8 @@
     @php
         $tabLabels = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'];
         $tabHelp = [
-            'outlet' => 'User yang saat mendaftar memasukkan kode sales.',
-            'reseller' => 'User biasa yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
+            'outlet' => 'User yang saat mendaftar memasukkan kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk mengubah levelnya menjadi reseller.',
+            'reseller' => 'Outlet atau user biasa yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
             'buyer' => 'User biasa yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab Reseller.',
         ];
     @endphp
@@ -72,6 +72,9 @@
                                 @if($tab === 'outlet')
                                     <th>Nama Sales</th>
                                 @endif
+                                @if($tab === 'reseller')
+                                    <th>Asal</th>
+                                @endif
                                 <th>Tanggal Daftar</th>
                                 @if($tab === 'reseller')
                                     <th>Reseller Sejak</th>
@@ -110,13 +113,16 @@
                 @if($tab === 'outlet')
                 {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false},
                 @endif
+                @if($tab === 'reseller')
+                {data: 'origin', name: 'role', searchable: false},
+                @endif
                 {data: 'created_at', name: 'created_at'},
                 @if($tab === 'reseller')
                 {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false},
                 @endif
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[{{ $tab === 'outlet' ? 6 : 5 }}, 'desc']],
+            order: [[{{ $tab === 'buyer' ? 5 : 6 }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

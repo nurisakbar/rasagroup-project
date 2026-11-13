@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserLevelChange;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +17,7 @@ class OutletController extends Controller
     /**
      * Display a listing of the resource.
      */
-    /** Tab halaman: outlet (daftar dengan kode sales), reseller (user biasa bertanda reseller), user biasa. */
+    /** Tab halaman: outlet (daftar dengan kode sales), reseller (outlet/user biasa bertanda reseller), user biasa. */
     public const TABS = ['outlet', 'reseller', 'buyer'];
 
     public function index(Request $request)
@@ -68,6 +70,9 @@ class OutletController extends Controller
                 ->editColumn('created_at', function ($user) {
                     return $user->created_at->format('d-m-Y');
                 })
+                ->addColumn('origin', function ($user) {
+                    return $user->role === User::ROLE_OUTLET ? 'Outlet' : 'User Biasa';
+                })
                 ->addColumn('reseller_marked', function ($user) {
                     return $user->reseller_marked_at ? $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d-m-Y') : '-';
                 })
@@ -90,15 +95,15 @@ class OutletController extends Controller
     /**
      * Query tiap tab:
      * - outlet: user yang mendaftar dengan kode sales (role outlet);
-     * - reseller: user biasa yang ditandai reseller;
+     * - reseller: outlet atau user biasa yang ditandai reseller;
      * - buyer: user biasa yang belum ditandai reseller.
      */
     private function tabQuery(string $tab)
     {
         return match ($tab) {
-            'reseller' => User::where('role', User::ROLE_BUYER)->where('is_reseller', true),
+            'reseller' => User::whereIn('role', [User::ROLE_OUTLET, User::ROLE_BUYER])->where('is_reseller', true),
             'buyer' => User::where('role', User::ROLE_BUYER)->where('is_reseller', false),
-            default => User::where('role', User::ROLE_OUTLET),
+            default => User::where('role', User::ROLE_OUTLET)->where('is_reseller', false),
         };
     }
 
@@ -107,11 +112,7 @@ class OutletController extends Controller
      */
     private function tabFor(User $user): string
     {
-        if ($user->role === User::ROLE_BUYER) {
-            return $user->isReseller() ? 'reseller' : 'buyer';
-        }
-
-        return 'outlet';
+        return $user->customerLevel();
     }
 
     private function isManageable(User $user): bool
@@ -166,7 +167,9 @@ class OutletController extends Controller
 
         $user = $outlet; // to match view variable
         $salesList = User::salesCodeOptions();
-        return view('admin.outlets.edit', compact('user', 'salesList'));
+        $levelChanges = $user->levelChanges()->with('changer:id,name')->limit(20)->get();
+
+        return view('admin.outlets.edit', compact('user', 'salesList', 'levelChanges'));
     }
 
     /**
@@ -205,21 +208,33 @@ class OutletController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Penanda reseller hanya untuk user biasa (buyer).
-        if ($outlet->role === User::ROLE_BUYER) {
-            $markReseller = $request->boolean('is_reseller');
-            if ($markReseller !== $outlet->isReseller()) {
-                $data['is_reseller'] = $markReseller;
-                $data['reseller_marked_at'] = $markReseller ? now() : null;
-            }
-
-            // Reseller tidak memakai kode sales: input sales tidak ditampilkan, kode sales tidak diubah.
-            if ($markReseller) {
-                unset($data['sales_code']);
-            }
+        // Level reseller bisa diberikan ke user biasa maupun outlet.
+        $fromLevel = $outlet->customerLevel();
+        $markReseller = $request->boolean('is_reseller');
+        if ($markReseller !== $outlet->isReseller()) {
+            $data['is_reseller'] = $markReseller;
+            $data['reseller_marked_at'] = $markReseller ? now() : null;
         }
 
-        $outlet->update($data);
+        // Reseller tidak memakai kode sales untuk diskon: input sales tidak ditampilkan, kode sales lama
+        // (sales/distributor perekrut outlet) tetap disimpan agar kembali berlaku bila level dikembalikan.
+        if ($markReseller) {
+            unset($data['sales_code']);
+        }
+
+        DB::transaction(function () use ($outlet, $data, $fromLevel) {
+            $outlet->update($data);
+
+            $toLevel = $outlet->customerLevel();
+            if ($toLevel !== $fromLevel) {
+                UserLevelChange::create([
+                    'user_id' => $outlet->id,
+                    'from_level' => $fromLevel,
+                    'to_level' => $toLevel,
+                    'changed_by' => auth('admin')->id() ?? auth()->id(),
+                ]);
+            }
+        });
 
         $tab = $this->tabFor($outlet->fresh());
         $label = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'][$tab];

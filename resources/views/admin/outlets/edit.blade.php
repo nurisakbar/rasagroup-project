@@ -13,7 +13,7 @@
     <div class="col-md-6">
         <div class="box box-warning">
             <div class="box-header with-border">
-                <h3 class="box-title">Form Edit {{ $user->role === \App\Models\User::ROLE_BUYER ? ($user->is_reseller ? 'Reseller' : 'User Biasa') : 'Outlet' }}</h3>
+                <h3 class="box-title">Form Edit {{ \App\Models\UserLevelChange::label($user->customerLevel()) }}</h3>
             </div>
             <form action="{{ route('admin.outlets.update', $user) }}" method="POST">
                 @csrf
@@ -64,8 +64,8 @@
                         </div>
                     </div>
 
-                    @if($user->role === \App\Models\User::ROLE_BUYER)
-                        <div class="form-group" style="padding: 10px; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px;">
+                    @php $isOutletUser = $user->role === \App\Models\User::ROLE_OUTLET; @endphp
+                    <div class="form-group" style="padding: 10px; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px;">
                             <div class="checkbox" style="margin: 0;">
                                 <label>
                                     <input type="hidden" name="is_reseller" value="0">
@@ -74,15 +74,26 @@
                                 </label>
                             </div>
                             <p class="help-block" style="margin-bottom: 0;">
-                                Reseller pindah ke tab Reseller dan mendapat diskon reseller tanpa perlu kode sales: lebih dari 50 karton per grup, 15% (Syrup &amp; Sauce) dan 8% (Pulp, Powder, Cocoa).
+                                Reseller pindah ke tab Reseller dan mendapat diskon reseller tanpa perlu kode sales: lebih dari 50 karton per grup, 15% (Syrup &amp; Sauce) dan 8% (Pulp, Powder, Cocoa). 50 karton atau kurang tidak mendapat diskon.
+                                @if($isOutletUser)
+                                    Sebagai reseller, diskon karton outlet dan diskon dari distributor perekrut tidak berlaku lagi; pesanan dikirim dari hub outlet. Hapus centang untuk mengembalikan ke level Outlet.
+                                @endif
                                 @if($user->reseller_marked_at)
                                     Ditandai sejak {{ $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d M Y H:i') }} WIB.
                                 @endif
                             </p>
                         </div>
-                    @endif
 
-                    @php $isResellerNow = $user->role === \App\Models\User::ROLE_BUYER && old('is_reseller', $user->is_reseller); @endphp
+                    @php $isResellerNow = (bool) old('is_reseller', $user->is_reseller); @endphp
+                    @if($isOutletUser && $user->sales_code)
+                        <div class="form-group" id="origin-sales-info" style="{{ $isResellerNow ? '' : 'display: none;' }}">
+                            <label>Sales / Distributor Perekrut</label>
+                            <p class="form-control-static">
+                                {{ $user->salesPerson?->name ?? $user->referringDistributor?->name ?? '-' }} ({{ $user->sales_code }})
+                                <br><small class="text-muted">Tetap tersimpan sebagai catatan, tidak dipakai untuk diskon selama berstatus reseller.</small>
+                            </p>
+                        </div>
+                    @endif
                     <div class="form-group @error('sales_code') has-error @enderror" id="sales-code-group" style="{{ $isResellerNow ? 'display: none;' : '' }}">
                         <label for="sales_code">Nama Sales (opsional)</label>
                         <select class="form-control select2" style="width: 100%;" id="sales_code" name="sales_code">
@@ -95,10 +106,28 @@
                         </select>
                         @error('sales_code') <span class="help-block">{{ $message }}</span> @enderror
                     </div>
+
+                    @if($levelChanges->isNotEmpty())
+                        <div class="form-group">
+                            <label>Riwayat Perubahan Level</label>
+                            <table class="table table-condensed table-bordered" style="margin-bottom: 0;">
+                                <thead><tr><th>Waktu</th><th>Perubahan</th><th>Oleh</th></tr></thead>
+                                <tbody>
+                                    @foreach($levelChanges as $change)
+                                        <tr>
+                                            <td>{{ $change->created_at?->timezone(\App\Support\Wib::TZ)->format('d M Y H:i') }} WIB</td>
+                                            <td>{{ \App\Models\UserLevelChange::label($change->from_level) }} &rarr; {{ \App\Models\UserLevelChange::label($change->to_level) }}</td>
+                                            <td>{{ $change->changer?->name ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="box-footer">
-                    <a href="{{ route('admin.outlets.index', ['tab' => $user->role === \App\Models\User::ROLE_BUYER ? ($user->is_reseller ? 'reseller' : 'buyer') : 'outlet']) }}" class="btn btn-default">Kembali</a>
+                    <a href="{{ route('admin.outlets.index', ['tab' => $user->customerLevel()]) }}" class="btn btn-default">Kembali</a>
                     <button type="submit" class="btn btn-warning pull-right">Perbarui User</button>
                 </div>
             </form>
@@ -133,6 +162,7 @@
         $('#is_reseller').on('change', function () {
             var reseller = $(this).is(':checked');
             $('#sales-code-group').toggle(!reseller);
+            $('#origin-sales-info').toggle(reseller);
             $('#sales_code').prop('disabled', reseller);
         });
         if ($('#is_reseller').is(':checked')) {

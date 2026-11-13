@@ -103,7 +103,7 @@ class CheckoutController extends Controller
         $expeditions = Expedition::where('is_active', true)
             ->whereIn('code', $apiCourierCodes)
             ->get();
-        $defaultExpedition = (request()->filled('sales_code')
+        $defaultExpedition = ((request()->filled('sales_code') || (Auth::user()?->isReseller() ?? false))
             ? ($expeditions->firstWhere('code', 'kurir_toko') ?? $expeditions->firstWhere('code', 'self_pickup'))
             : $expeditions->firstWhere('code', 'lion_parcel')) ?? $expeditions->first();
 
@@ -135,6 +135,7 @@ class CheckoutController extends Controller
         $tieredDiscountAmount = $pricing['tiered_discount_amount'];
         $tieredDiscountDetails = $pricing['tiered_discount_details'];
         $showTieredDiscount = $pricing['show_tiered_discount'];
+        $resellerHints = app(\App\Services\DiscountService::class)->resellerHints($carts, Auth::user());
         $subtotal = $pricing['subtotal_after_distributor'];
         $priceLevelName = $pricing['price_level_name'];
         $showDistributorPricing = $pricing['show_distributor_pricing'];
@@ -331,6 +332,7 @@ class CheckoutController extends Controller
         'tieredDiscountAmount',
         'tieredDiscountDetails',
         'showTieredDiscount',
+        'resellerHints',
         'priceLevelName',
         'showDistributorPricing',
         'ppn',
@@ -900,7 +902,7 @@ class CheckoutController extends Controller
             
             $isDistributor = $user && $user->isDistributor();
             $salesCode = request('sales_code') ?: session('sales_code');
-            $usesWms = $isDistributor || !empty($salesCode);
+            $usesWms = $isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false);
             $usesJubelio = !$usesWms && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
             $jubelioItems = null;
 
@@ -1715,7 +1717,7 @@ class CheckoutController extends Controller
             $user = \Illuminate\Support\Facades\Auth::user();
             $isDistributor = $user?->isDistributor() ?? false;
             $salesCode = request('sales_code') ?: session('sales_code');
-            $usesWms = $isDistributor || !empty($salesCode);
+            $usesWms = $isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false);
             $usesJubelio = !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
             
             $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
@@ -1907,7 +1909,8 @@ class CheckoutController extends Controller
             ->values()
             ->all();
 
-        if (request()->filled('sales_code')) {
+        // Jalur outlet (kode sales atau reseller): hanya kurir toko / ambil sendiri.
+        if (request()->filled('sales_code') || (\Auth::user()?->isReseller() ?? false)) {
             $allowed = [];
             if ($address) {
                 if ($address->isJabodetabek()) {

@@ -130,7 +130,7 @@ class DiscountTierTest extends TestCase
     public function test_subdist_needs_more_than_fifty_cartons(): void
     {
         $subdist = new User(['role' => 'outlet']);
-        $subdist->sub_role = 'reseller';
+        $subdist->is_reseller = true;
 
         $this->assertSame(0.0, $this->service->tierPercentage($subdist, 'syrup_sauce', 50));
         $this->assertSame(15.0, $this->service->tierPercentage($subdist, 'syrup_sauce', 51));

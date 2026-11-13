@@ -361,6 +361,33 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Level pembeli di halaman Outlet dan Reseller: reseller (outlet/user biasa bertanda reseller),
+     * outlet, atau buyer (user biasa).
+     */
+    public function customerLevel(): string
+    {
+        if ($this->isReseller()) {
+            return 'reseller';
+        }
+
+        return $this->role === self::ROLE_OUTLET ? 'outlet' : 'buyer';
+    }
+
+    /**
+     * Pembeli dilayani lewat jalur outlet (hub outlet, stok WMS, kurir toko/ambil sendiri):
+     * reseller selalu, selain itu bila checkout memakai kode sales.
+     */
+    public function usesOutletChannel(bool $hasSalesCode): bool
+    {
+        return $this->isReseller() || $hasSalesCode;
+    }
+
+    public function levelChanges(): HasMany
+    {
+        return $this->hasMany(UserLevelChange::class)->latest('created_at')->latest('id');
+    }
+
+    /**
      * Batas diskon (%) yang boleh diberikan distributor ini ke outletnya. 0 = belum diizinkan admin.
      */
     public function outletDiscountMax(): float
@@ -374,7 +401,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function outletDistributorDiscountFor(Product $product, ?string $warehouseId = null): float
     {
-        if ($this->role !== self::ROLE_OUTLET || ! $product->category_id || ! $this->sales_code) {
+        // Reseller memakai tier diskon reseller; diskon distributor perekrut tidak berlaku.
+        if ($this->role !== self::ROLE_OUTLET || $this->isReseller() || ! $product->category_id || ! $this->sales_code) {
             return 0.0;
         }
 

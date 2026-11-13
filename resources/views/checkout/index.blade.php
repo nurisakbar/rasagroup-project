@@ -634,6 +634,17 @@
                                     </tr>
                                     @endforeach
                                 @endif
+                                @foreach($resellerHints ?? [] as $hint)
+                                    <tr class="rg-checkout-total-row reseller-hint-row">
+                                        <td colspan="2" class="py-2">
+                                            <small class="text-muted">
+                                                <i class="fi-rs-info"></i>
+                                                Diskon reseller {{ $hint['group_name'] }} {{ rtrim(rtrim(number_format($hint['percentage'], 1, ',', '.'), '0'), ',') }}% berlaku di atas 50 karton.
+                                                Saat ini {{ $hint['cartons'] }} karton, tambah {{ $hint['cartons_needed'] }} karton lagi.
+                                            </small>
+                                        </td>
+                                    </tr>
+                                @endforeach
                                 <tr class="rg-checkout-total-row" id="ppnRow" @if(empty($showPpn) || ($ppn ?? 0) <= 0) style="display: none;" @endif>
                                     <th class="cart_total_label align-middle pb-3">
                                         <h6 class="text-muted mb-0" id="ppnLabelDisplay">{{ $ppnLabel ?? 'PPN' }}</h6>

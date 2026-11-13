@@ -142,6 +142,20 @@ class OutletDistributorDiscountTest extends TestCase
         $this->assertSame(2.5, $service->calculateCartDiscount(collect([$cart]), $outlet, $sales->sales_code)['line_percentages'][$cart->id]);
     }
 
+    public function test_distributor_discount_off_when_outlet_becomes_reseller(): void
+    {
+        $this->giveDiscount(5);
+        $this->assertSame(5.0, $this->outlet->fresh()->outletDistributorDiscountFor($this->product, $this->distributorHub->id));
+
+        $this->outlet->forceFill(['is_reseller' => true])->save();
+        $this->assertSame(0.0, $this->outlet->fresh()->outletDistributorDiscountFor($this->product, $this->distributorHub->id));
+        $this->assertEqualsWithDelta(TaxAwarePrice::excludingTax(111000), $this->priceAt($this->distributorHub), 0.01);
+
+        // Dikembalikan ke outlet: diskon distributor (yang tetap tersimpan) berlaku lagi.
+        $this->outlet->forceFill(['is_reseller' => false])->save();
+        $this->assertSame(5.0, $this->outlet->fresh()->outletDistributorDiscountFor($this->product, $this->distributorHub->id));
+    }
+
     public function test_distributor_saves_discounts_within_max(): void
     {
         $url = route('buyer.outlet-referral.discounts.update', $this->outlet);

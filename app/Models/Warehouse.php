@@ -315,8 +315,8 @@ class Warehouse extends Model
                     $hasSalesCode = \App\Models\User::isKnownSalesCode(request('sales_code'));
                 }
 
-                if ($hasSalesCode) {
-                    $rolesAllowed = ['outlet']; // Jika punya kode sales di URL, dikirim dari gudang outlet
+                if ($user->usesOutletChannel($hasSalesCode)) {
+                    $rolesAllowed = ['outlet']; // Kode sales di URL atau reseller: dikirim dari gudang outlet
                 } else {
                     $rolesAllowed = ['ecommerce']; // Jika tanpa kode sales di URL, dikirim dari gudang ecommerce
                 }
@@ -395,7 +395,7 @@ class Warehouse extends Model
 
         $user = \Illuminate\Support\Facades\Auth::user();
         $hasSalesCode = request()->filled('sales_code');
-        $shouldUseWms = $user && ($user->isDistributor() || ($user->isOutlet() && $hasSalesCode));
+        $shouldUseWms = $user && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
 
         if ($shouldUseWms) {
             $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(

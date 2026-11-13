@@ -21,7 +21,8 @@ use App\Models\User;
  * sendiri (memakai isi karton masing-masing produk). Tiap grup mendapat persen dari tier kartonnya sendiri.
  *
  * Diskon hanya berlaku bila pembeli menginput kode sales yang terdaftar (sales atau distributor),
- * kecuali reseller (ditandai admin) yang selalu memakai tier "Subdist / Reseller".
+ * kecuali reseller (outlet atau user biasa yang ditandai admin) yang selalu memakai tier "Subdist / Reseller"
+ * tanpa kode sales. Reseller yang belanja 50 karton atau kurang per grup tidak mendapat diskon.
  */
 class DiscountService
 {
@@ -90,7 +91,7 @@ class DiscountService
         $isSyrupSauce = $group === 'syrup_sauce';
 
         if ($this->getCustomerType($user) === 'subdist') {
-            return $cartons > 50 ? ($isSyrupSauce ? 15.0 : 8.0) : 0.0;
+            return $cartons > self::RESELLER_MIN_CARTONS_EXCLUSIVE ? ($isSyrupSauce ? 15.0 : 8.0) : 0.0;
         }
 
         return match (true) {
@@ -100,6 +101,37 @@ class DiscountService
             $cartons >= 1 => $isSyrupSauce ? 2.5 : 2.0,
             default => 0.0,
         };
+    }
+
+    /** Batas karton tier reseller: lebih dari angka ini per grup baru mendapat diskon. */
+    public const RESELLER_MIN_CARTONS_EXCLUSIVE = 50;
+
+    /**
+     * Info untuk reseller: grup yang belum mencapai tier reseller dan kekurangan kartonnya.
+     *
+     * @param \Illuminate\Support\Collection<int, Cart> $carts
+     * @return list<array{group_name: string, cartons: int, cartons_needed: int, percentage: float}>
+     */
+    public function resellerHints($carts, User $user): array
+    {
+        if (! $user->isReseller()) {
+            return [];
+        }
+
+        $hints = [];
+        foreach ($this->cartonsPerGroup($carts) as $group => $cartons) {
+            if ($cartons <= 0 || $cartons > self::RESELLER_MIN_CARTONS_EXCLUSIVE) {
+                continue;
+            }
+            $hints[] = [
+                'group_name' => $group === 'syrup_sauce' ? 'Syrup & Sauce' : 'Powder, Pulp & Lainnya',
+                'cartons' => $cartons,
+                'cartons_needed' => self::RESELLER_MIN_CARTONS_EXCLUSIVE + 1 - $cartons,
+                'percentage' => $this->tierPercentage($user, $group, self::RESELLER_MIN_CARTONS_EXCLUSIVE + 1),
+            ];
+        }
+
+        return $hints;
     }
 
     /**
@@ -188,10 +220,6 @@ class DiscountService
      */
     private function getCustomerType(User $user): string
     {
-        $type = 'outlet';
-        if ($user->isReseller() || $user->sub_role === 'reseller' || $user->sub_role === 'subdist') {
-            $type = 'subdist';
-        }
-        return $type;
+        return $user->isReseller() ? 'subdist' : 'outlet';
     }
 }
