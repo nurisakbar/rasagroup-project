@@ -97,12 +97,6 @@
                     </div>
                 </div>
 
-                    <div class="callout callout-warning" style="margin-bottom: 0;">
-                        <h4><i class="icon fa fa-warning"></i> Penting</h4>
-                        <p>Mengubah data ini akan berdampak pada hak akses pengguna tersebut di dalam sistem.</p>
-                    </div>
-                </div>
-
                 <div class="box-footer">
                     <a href="{{ route('admin.outlets.index', ['tab' => $user->role === \App\Models\User::ROLE_BUYER ? ($user->is_reseller ? 'reseller' : 'buyer') : 'outlet']) }}" class="btn btn-default">Kembali</a>
                     <button type="submit" class="btn btn-warning pull-right">Perbarui User</button>
