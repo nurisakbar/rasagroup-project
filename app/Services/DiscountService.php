@@ -20,7 +20,8 @@ use App\Models\User;
  * MOQ dihitung PER GRUP: karton Syrup & Sauce dijumlah sendiri, karton Pulp/Powder/Cocoa dsb dijumlah
  * sendiri (memakai isi karton masing-masing produk). Tiap grup mendapat persen dari tier kartonnya sendiri.
  *
- * Diskon hanya berlaku bila pembeli menginput kode sales yang terdaftar (sales atau distributor).
+ * Diskon hanya berlaku bila pembeli menginput kode sales yang terdaftar (sales atau distributor),
+ * kecuali reseller (ditandai admin) yang selalu memakai tier "Subdist / Reseller".
  */
 class DiscountService
 {
@@ -113,11 +114,12 @@ class DiscountService
     }
 
     /**
-     * Diskon MOQ hanya untuk pembelian dengan kode sales yang diinput dan terdaftar.
+     * Diskon MOQ berlaku untuk pembelian dengan kode sales yang diinput dan terdaftar, atau untuk
+     * reseller (status reseller diberikan admin, tidak perlu kode sales).
      */
-    public function isEligible(?string $salesCode): bool
+    public function isEligible(?string $salesCode, ?User $user = null): bool
     {
-        return User::isKnownSalesCode($salesCode);
+        return ($user && $user->isReseller()) || User::isKnownSalesCode($salesCode);
     }
 
     /**
@@ -132,7 +134,7 @@ class DiscountService
      */
     public function calculateCartDiscount($carts, User $user, ?string $salesCode = null): array
     {
-        $eligible = $this->isEligible($salesCode);
+        $eligible = $this->isEligible($salesCode, $user);
         $cartons = $this->cartonsPerGroup($carts);
         $percentages = [];
         foreach ($cartons as $group => $count) {

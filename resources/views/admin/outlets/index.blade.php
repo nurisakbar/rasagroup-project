@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Data User Outlet')
-@section('page-title', 'Manajemen Data User Outlet')
+@section('title', 'Outlet dan Reseller')
+@section('page-title', 'Outlet dan Reseller')
 @section('page-description', 'Outlet, reseller, dan user biasa')
 
 @section('breadcrumb')
-    <li class="active">Data Outlet</li>
+    <li class="active">Outlet dan Reseller</li>
 @endsection
 
 @push('styles')
@@ -23,7 +23,7 @@
         $tabLabels = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'];
         $tabHelp = [
             'outlet' => 'User yang saat mendaftar memasukkan kode sales.',
-            'reseller' => 'User biasa yang ditandai sebagai reseller. Reseller mendapat tier diskon "Subdist / Reseller".',
+            'reseller' => 'User biasa yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
             'buyer' => 'User biasa yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab Reseller.',
         ];
     @endphp

@@ -259,7 +259,7 @@
         </li>
         <li class="{{ request()->routeIs('admin.outlets.*') ? 'active' : '' }}">
           <a href="{{ route('admin.outlets.index') }}">
-            <i class="fa fa-building-o"></i> <span>DATA USER OUTLET</span>
+            <i class="fa fa-building-o"></i> <span>OUTLET DAN RESELLER</span>
           </a>
         </li>
         @endif

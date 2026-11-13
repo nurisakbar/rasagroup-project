@@ -109,4 +109,35 @@ class OutletTabsResellerTest extends TestCase
         $this->assertSame(8.0, $service->tierPercentage($this->buyer->fresh(), 'others', 51));
         $this->assertSame(0.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 1));
     }
+
+    private function cart(string $category, int $quantity): \App\Models\Cart
+    {
+        $product = new \App\Models\Product(['name' => $category, 'price' => 111000, 'unit' => 'BT', 'large_unit' => 'CTN', 'units_per_large' => 6]);
+        $product->setRelation('category', new \App\Models\Category(['name' => $category]));
+        $cart = new \App\Models\Cart(['quantity' => $quantity]);
+        $cart->id = (string) \Illuminate\Support\Str::uuid();
+        $cart->setRelation('product', $product);
+
+        return $cart;
+    }
+
+    public function test_reseller_gets_discount_without_sales_code(): void
+    {
+        $service = new DiscountService();
+        $carts = collect([$syrup = $this->cart('Syrup', 51 * 6), $pulp = $this->cart('PULP', 51 * 6)]);
+
+        // User biasa tanpa kode sales: tidak dapat diskon MOQ.
+        $plain = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
+        $this->assertSame(0.0, $plain['line_percentages'][$syrup->id]);
+
+        // Reseller tanpa kode sales: 51 karton -> 15% (Syrup & Sauce) dan 8% (Pulp).
+        $this->buyer->forceFill(['is_reseller' => true])->save();
+        $reseller = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
+        $this->assertSame(15.0, $reseller['line_percentages'][$syrup->id]);
+        $this->assertSame(8.0, $reseller['line_percentages'][$pulp->id]);
+
+        // Reseller di bawah/sama dengan 50 karton: belum dapat diskon.
+        $small = collect([$s = $this->cart('Syrup', 50 * 6)]);
+        $this->assertSame(0.0, $service->calculateCartDiscount($small, $this->buyer->fresh(), null)['line_percentages'][$s->id]);
+    }
 }

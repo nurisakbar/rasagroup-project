@@ -4,7 +4,7 @@
 @section('page-title', 'Tambah Outlet')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.outlets.index') }}">Data Outlet</a></li>
+    <li><a href="{{ route('admin.outlets.index') }}">Outlet dan Reseller</a></li>
     <li class="active">Tambah</li>
 @endsection
 

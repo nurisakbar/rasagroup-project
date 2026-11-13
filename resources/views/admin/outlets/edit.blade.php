@@ -4,7 +4,7 @@
 @section('page-title', 'Edit Outlet')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.outlets.index') }}">Data Outlet</a></li>
+    <li><a href="{{ route('admin.outlets.index') }}">Outlet dan Reseller</a></li>
     <li class="active">Edit</li>
 @endsection
 
@@ -74,7 +74,7 @@
                                 </label>
                             </div>
                             <p class="help-block" style="margin-bottom: 0;">
-                                Reseller pindah ke tab Reseller dan mendapat tier diskon "Subdist / Reseller".
+                                Reseller pindah ke tab Reseller dan mendapat diskon reseller tanpa perlu kode sales: lebih dari 50 karton per grup, 15% (Syrup &amp; Sauce) dan 8% (Pulp, Powder, Cocoa).
                                 @if($user->reseller_marked_at)
                                     Ditandai sejak {{ $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d M Y H:i') }} WIB.
                                 @endif
