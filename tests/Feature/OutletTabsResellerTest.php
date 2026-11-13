@@ -107,13 +107,13 @@ class OutletTabsResellerTest extends TestCase
         $this->assertNotContains('Outlet Uji Tab', $this->names('outlet'));
 
         $row = collect($this->tabData('reseller'))->firstWhere('name', 'Outlet Uji Tab');
-        $this->assertSame('Outlet', $row['origin']);
+        $this->assertArrayNotHasKey('origin', $row);
 
-        // Riwayat tercatat dan tampil di form edit.
+        // Riwayat tercatat untuk audit, tidak ditampilkan di form edit.
         $change = \App\Models\UserLevelChange::where('user_id', $this->outlet->id)->latest('id')->first();
         $this->assertSame(['outlet', 'reseller', (string) $this->admin->id], [$change->from_level, $change->to_level, (string) $change->changed_by]);
         $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->outlet))
-            ->assertOk()->assertSee('Riwayat Perubahan Level')->assertSee('Sales / Distributor Perekrut');
+            ->assertOk()->assertDontSee('Riwayat Perubahan Level')->assertSee('Sales / Distributor Perekrut');
 
         // Reseller -> Outlet: kembali ke tab Outlet dengan kode sales semula.
         $this->actingAs($this->admin, 'admin')

@@ -73,9 +73,6 @@
                                 @if($tab === 'outlet')
                                     <th>Nama Sales</th>
                                 @endif
-                                @if($tab === 'reseller')
-                                    <th>Asal</th>
-                                @endif
                                 <th>Tanggal Daftar</th>
                                 @if($tab === 'reseller')
                                     <th>Reseller Sejak</th>
@@ -116,16 +113,13 @@
                 @if($tab === 'outlet')
                 {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false},
                 @endif
-                @if($tab === 'reseller')
-                {data: 'origin', name: 'role', searchable: false},
-                @endif
                 {data: 'created_at', name: 'created_at'},
                 @if($tab === 'reseller')
                 {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false},
                 @endif
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[{{ ($tab === 'buyer' ? 4 : 5) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
+            order: [[{{ ($tab === 'outlet' ? 5 : 4) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

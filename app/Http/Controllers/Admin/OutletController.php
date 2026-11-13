@@ -166,9 +166,6 @@ class OutletController extends Controller
                 ->filterColumn('hub', function ($query, $keyword) {
                     $query->whereHas('hub', fn ($q) => $q->where('name', 'like', "%{$keyword}%"));
                 })
-                ->addColumn('origin', function ($user) {
-                    return $user->role === User::ROLE_OUTLET ? 'Outlet' : 'Ecom';
-                })
                 ->addColumn('reseller_marked', function ($user) {
                     return $user->reseller_marked_at ? $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d-m-Y') : '-';
                 })
@@ -264,9 +261,8 @@ class OutletController extends Controller
         }
 
         $user = $outlet; // to match view variable
-        $levelChanges = $user->levelChanges()->with('changer:id,name')->limit(20)->get();
 
-        return view('admin.outlets.edit', compact('user', 'levelChanges') + $this->panel());
+        return view('admin.outlets.edit', compact('user') + $this->panel());
     }
 
     /**

@@ -62,23 +62,6 @@
                         @endif
                     </div>
 
-                    @if($levelChanges->isNotEmpty())
-                        <div class="form-group">
-                            <label>Riwayat Perubahan Level</label>
-                            <table class="table table-condensed table-bordered" style="margin-bottom: 0;">
-                                <thead><tr><th>Waktu</th><th>Perubahan</th><th>Oleh</th></tr></thead>
-                                <tbody>
-                                    @foreach($levelChanges as $change)
-                                        <tr>
-                                            <td>{{ $change->created_at?->timezone(\App\Support\Wib::TZ)->format('d M Y H:i') }} WIB</td>
-                                            <td>{{ \App\Models\UserLevelChange::label($change->from_level) }} &rarr; {{ \App\Models\UserLevelChange::label($change->to_level) }}</td>
-                                            <td>{{ $change->changer?->name ?? '-' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
                 </div>
 
                 <div class="box-footer">

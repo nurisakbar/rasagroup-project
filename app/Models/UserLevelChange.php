@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Catatan perubahan level pembeli oleh admin (mis. outlet -> reseller).
+ * Catatan audit perubahan level pembeli (outlet / ecom <-> reseller): siapa, kapan, dari level apa ke apa.
+ * Hanya untuk audit; tidak ditampilkan di aplikasi.
  */
 class UserLevelChange extends Model
 {
