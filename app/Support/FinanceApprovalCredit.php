@@ -31,11 +31,11 @@ class FinanceApprovalCredit
         $accumulatedDebt = $arOutstanding + $existingTop + (float) $order->total_amount;
 
         return [
-            'credit_limit' => $creditLimit,
-            'ar_outstanding' => $arOutstanding,
-            'existing_top_transactions' => $existingTop,
-            'accumulated_debt' => $accumulatedDebt,
-            'remaining_credit_limit' => $creditLimit !== null ? $creditLimit - $accumulatedDebt : null,
+            'credit_limit' => $creditLimit !== null ? round($creditLimit, 2) : null,
+            'ar_outstanding' => round($arOutstanding, 2),
+            'existing_top_transactions' => round($existingTop, 2),
+            'accumulated_debt' => round($accumulatedDebt, 2),
+            'remaining_credit_limit' => $creditLimit !== null ? round($creditLimit - $accumulatedDebt, 2) : null,
         ];
     }
 }

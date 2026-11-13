@@ -58,6 +58,8 @@ class FinanceApprovalPayloadTest extends TestCase
             $data = $request->data();
 
             return $request->url() === 'https://edms.test/approval'
+                && $data['payment_method'] === 'term_of_payment'
+                && filled($data['payment_method_label'])
                 && $data['ar_outstanding'] === 2500000.0
                 && $data['credit_limit'] === 10000000.0
                 && $data['existing_top_transactions'] === 0.0

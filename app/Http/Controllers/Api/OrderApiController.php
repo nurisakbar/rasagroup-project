@@ -783,6 +783,7 @@ class OrderApiController extends Controller
             'user_id' => $order->user_id,
             'customer_name' => $order->user ? $order->user->name : 'Unknown',
             'amount' => (float) $order->total_amount,
+            'payment_method_label' => $order->formatted_payment_method,
             // Kredit pembeli untuk pertimbangan approval finance
             'ar_outstanding' => $credit['ar_outstanding'],
             'credit_limit' => $credit['credit_limit'],

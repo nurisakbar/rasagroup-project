@@ -132,6 +132,8 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
             'transaction_number' => $order->order_number,
             'customer_name' => $user?->name ?? 'Unknown',
             'amount' => (float) $order->total_amount,
+            'payment_method' => $order->payment_method,
+            'payment_method_label' => $order->formatted_payment_method,
             // Kredit pembeli untuk pertimbangan approval finance
             'ar_outstanding' => $credit['ar_outstanding'],
             'credit_limit' => $credit['credit_limit'],
