@@ -245,4 +245,45 @@ class OutletTabsResellerTest extends TestCase
             ->assertSee('<th>Hub</th>', false)
             ->assertSee('<th>Action</th>', false);
     }
+
+    /** Kirim pencarian ColumnControl untuk satu kolom tab outlet, kembalikan nama yang cocok. */
+    private function columnSearch(string $data, string $logic, string $value): array
+    {
+        $columns = [];
+        foreach (['DT_RowIndex', 'name', 'email', 'phone', 'hub', 'sales_name', 'created_at', 'action'] as $col) {
+            // Sama dengan halaman: No, Nama Sales, dan Action tidak ikut pencarian global.
+            $searchable = in_array($col, ['DT_RowIndex', 'sales_name', 'action'], true) ? 'false' : 'true';
+            $columns[] = ['data' => $col, 'name' => $col, 'searchable' => $searchable, 'orderable' => 'false', 'search' => ['value' => '', 'regex' => 'false']]
+                + ($col === $data ? ['columnControl' => ['search' => ['value' => $value, 'logic' => $logic, 'type' => 'text']]] : []);
+        }
+
+        // Yajra menyimpan request pertama sebagai singleton; reset agar tiap request test memakai input baru.
+        app()->forgetInstance('datatables.request');
+        app()->forgetInstance('datatables');
+        $res = $this->actingAs($this->admin, 'admin')
+            ->getJson(route('admin.outlets.index', ['tab' => 'outlet', 'draw' => 1, 'start' => 0, 'length' => -1, 'columns' => $columns]), ['X-Requested-With' => 'XMLHttpRequest']);
+
+        return array_column($res->assertOk()->json('data'), 'name');
+    }
+
+    public function test_column_control_search_filters_server_side(): void
+    {
+        $sales = User::factory()->create(['role' => User::ROLE_SALES, 'name' => 'Sales Kolom Uji', 'sales_code' => 'TCC' . strtoupper(substr(uniqid(), -6)), 'wa_verified_at' => now()]);
+        $other = User::factory()->create(['role' => User::ROLE_OUTLET, 'name' => 'Outlet Lain Kolom', 'wa_verified_at' => now()]);
+        $this->outlet->forceFill(['sales_code' => $sales->sales_code])->save();
+
+        $this->assertContains('Outlet Uji Tab', $this->columnSearch('name', 'contains', 'uji tab'));
+        $this->assertNotContains('Outlet Lain Kolom', $this->columnSearch('name', 'contains', 'uji tab'));
+        $this->assertSame(['Outlet Uji Tab'], array_values(array_intersect(['Outlet Uji Tab', 'Outlet Lain Kolom'], $this->columnSearch('name', 'starts', 'Outlet Uji'))));
+        $this->assertNotContains('Outlet Uji Tab', $this->columnSearch('name', 'notContains', 'Uji Tab'));
+        $this->assertContains('Outlet Uji Tab', $this->columnSearch('email', 'equal', $this->outlet->email));
+
+        // Kolom relasi (Nama Sales).
+        $this->assertSame(['Outlet Uji Tab'], $this->columnSearch('sales_name', 'contains', 'Kolom Uji'));
+        $this->assertNotContains('Outlet Uji Tab', $this->columnSearch('sales_name', 'empty', ''));
+        $this->assertContains('Outlet Lain Kolom', $this->columnSearch('sales_name', 'empty', ''));
+
+        // Karakter wildcard LIKE diperlakukan sebagai teks biasa.
+        $this->assertSame([], $this->columnSearch('name', 'contains', '%'));
+    }
 }

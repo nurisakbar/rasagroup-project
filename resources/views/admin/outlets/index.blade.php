@@ -9,12 +9,11 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap.min.css">
+{{-- DataTables 3 + ColumnControl (urut & cari per kolom di judul kolom), tema Bootstrap 3. --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs@3.1.5/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-columncontrol-bs@2.1.3/css/columnControl.bootstrap.min.css">
 <style>
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 0;
-        margin: 0;
-    }
+    #users-table thead th { white-space: nowrap; }
 </style>
 @endpush
 
@@ -48,21 +47,6 @@
                     @if(! empty($tabHelp[$tab]))
                         <p class="text-muted">{{ $tabHelp[$tab] }}</p>
                     @endif
-                    @if($tab === 'outlet')
-                    <div class="row" style="margin-bottom: 15px;">
-                        <div class="col-md-4">
-                            <label for="filter_sales">Filter by Sales:</label>
-                            <select id="filter_sales" class="form-control select2" style="width: 100%;">
-                                <option value="">Semua Sales</option>
-                                <option value="none">-- Tanpa Sales --</option>
-                                @foreach($salesList as $sales)
-                                    <option value="{{ $sales->sales_code }}">{{ $sales->name }} ({{ $sales->sales_code }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    @endif
-
                     <table id="users-table" class="table table-bordered table-striped" style="width: 100%;">
                         <thead>
                             <tr>
@@ -94,39 +78,44 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@3.1.5/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs@3.1.5/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-columncontrol@2.1.3/js/dataTables.columnControl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-columncontrol-bs@2.1.3/js/columnControl.bootstrap.min.js"></script>
 <script>
     $(function () {
+        // Kontrol di judul kolom: tombol urut + menu (urut naik/turun & cari teks).
+        var textControl = ['order', ['orderAsc', 'orderDesc', 'orderClear', 'spacer', 'searchText']];
+        var searchOnly = [['searchText']];
+        var orderOnly = ['order', ['orderAsc', 'orderDesc', 'orderClear']];
+
         var table = $('#users-table').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
-                url: @json(route(($routePrefix ?? 'admin.outlets') . '.index', ['tab' => $tab])),
-                data: function (d) {
-                    d.sales_code = $('#filter_sales').val() || '';
-                }
+                url: @json(route(($routePrefix ?? 'admin.outlets') . '.index', ['tab' => $tab]))
             },
             columns: [
-                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'name', name: 'name'},
-                {data: 'email', name: 'email'},
-                {data: 'phone', name: 'phone'},
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, columnControl: []},
+                {data: 'name', name: 'name', columnControl: textControl},
+                {data: 'email', name: 'email', columnControl: textControl},
+                {data: 'phone', name: 'phone', type: 'string', className: 'dt-left', columnControl: textControl},
                 @if($showHub)
-                {data: 'hub', name: 'hub', orderable: false},
+                {data: 'hub', name: 'hub', orderable: false, columnControl: searchOnly},
                 @endif
                 @if($tab === 'outlet')
-                {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false},
+                {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false, columnControl: searchOnly},
                 @endif
-                {data: 'created_at', name: 'created_at'},
+                {data: 'created_at', name: 'created_at', columnControl: orderOnly},
                 @if($tab === 'reseller')
-                {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false},
+                {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false, columnControl: orderOnly},
                 @endif
                 @if($showAction)
-                {data: 'action', name: 'action', orderable: false, searchable: false},
+                {data: 'action', name: 'action', orderable: false, searchable: false, columnControl: []},
                 @endif
             ],
             order: [[{{ ($tab === 'outlet' ? 5 : 4) + ($showHub ? 1 : 0) }}, 'desc']],
+            ordering: {indicators: false, handler: false},
             language: {
                 processing: "Memproses...",
                 search: "Cari:",
@@ -134,22 +123,36 @@
                 info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                 infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
                 infoFiltered: "(disaring dari _MAX_ data keseluruhan)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada data",
                 paginate: {
                     first: "Pertama",
                     previous: "Sebelumnya",
                     next: "Selanjutnya",
                     last: "Terakhir"
+                },
+                columnControl: {
+                    order: "Urutkan",
+                    orderAsc: "Urutkan A-Z / terlama",
+                    orderDesc: "Urutkan Z-A / terbaru",
+                    orderClear: "Hapus urutan",
+                    dropdown: "Menu kolom",
+                    searchClear: "Hapus pencarian",
+                    buttons: {searchClear: "Hapus pencarian"},
+                    search: {
+                        text: {
+                            contains: "Mengandung",
+                            notContains: "Tidak mengandung",
+                            equal: "Sama dengan",
+                            notEqual: "Tidak sama dengan",
+                            starts: "Diawali",
+                            ends: "Diakhiri",
+                            empty: "Kosong",
+                            notEmpty: "Tidak kosong"
+                        }
+                    }
                 }
             }
-        });
-
-        $('#filter_sales').select2({
-            placeholder: "Pilih Sales",
-            allowClear: true
-        });
-
-        $('#filter_sales').on('change', function() {
-            table.draw();
         });
 
         $(document).on('submit', '.delete-form', function(e) {

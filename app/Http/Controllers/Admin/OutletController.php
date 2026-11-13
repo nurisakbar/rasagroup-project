@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserLevelChange;
 use App\Models\Warehouse;
+use App\Support\DataTables\ColumnControlFilter;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -115,13 +116,14 @@ class OutletController extends Controller
                 ->with(['salesPerson', 'referringDistributor', 'hub:id,name'])
                 ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'is_reseller', 'reseller_marked_at', 'hub_id');
 
-            if ($request->filled('sales_code')) {
-                if ($request->sales_code === 'none') {
-                    $query->whereNull('sales_code');
-                } else {
-                    $query->where('sales_code', $request->sales_code);
-                }
-            }
+            // Pencarian per kolom dari DataTables ColumnControl.
+            ColumnControlFilter::apply($query, $request, [
+                'name' => 'name',
+                'email' => 'email',
+                'phone' => 'phone',
+                'hub' => ['hub' => 'name'],
+                'sales_name' => ['salesPerson' => 'name', 'referringDistributor' => 'name'],
+            ]);
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -179,10 +181,9 @@ class OutletController extends Controller
                 ->make(true);
         }
 
-        $salesList = User::salesCodeOptions();
         $counts = collect($this->tabs())->mapWithKeys(fn ($key) => [$key => $this->tabQuery($key)->count()]);
 
-        return view('admin.outlets.index', compact('salesList', 'tab', 'counts') + $this->panel());
+        return view('admin.outlets.index', compact('tab', 'counts') + $this->panel());
     }
 
     /**
