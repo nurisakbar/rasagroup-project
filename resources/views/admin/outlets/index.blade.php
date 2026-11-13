@@ -24,7 +24,6 @@
         $showHub = ($canChooseHub ?? true) && $tab !== 'buyer';
         $showAction = $tab !== 'buyer';
         $tabHelp = [
-            'reseller' => 'Outlet atau user ecom yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
             'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales.',
         ];
     @endphp
