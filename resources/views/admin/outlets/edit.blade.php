@@ -94,6 +94,8 @@
                             </p>
                         </div>
                     @endif
+                    @include('admin.outlets.partials.hub-field')
+
                     <div class="form-group @error('sales_code') has-error @enderror" id="sales-code-group" style="{{ $isResellerNow ? 'display: none;' : '' }}">
                         <label for="sales_code">Nama Sales (opsional)</label>
                         <select class="form-control select2" style="width: 100%;" id="sales_code" name="sales_code">

@@ -103,6 +103,8 @@ class RegisteredUserController extends Controller
             'wa_verification_code' => $waCode,
             'is_potential_distributor' => $request->has('is_potential_distributor') ? 1 : 0,
             'sales_code' => $salesCode,
+            // Outlet tercatat di hub milik sales yang kodenya dipakai saat daftar.
+            'hub_id' => User::hubIdForSalesCode($salesCode),
         ]);
 
         event(new Registered($user));

@@ -54,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_reseller',
         'reseller_marked_at',
         'warehouse_id',
+        'hub_id',
         'no_ktp',
         'no_npwp',
         'distributor_status',
@@ -171,6 +172,35 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return \Illuminate\Support\Collection<int, object{name: string, sales_code: string}>
      */
+    /**
+     * Hub milik sales dengan kode ini (Data Sales > Hub). Kode distributor / tidak dikenal: null.
+     */
+    public static function hubIdForSalesCode(?string $code): ?string
+    {
+        $code = trim((string) $code);
+        if ($code === '') {
+            return null;
+        }
+
+        $hubId = static::where('role', self::ROLE_SALES)->where('sales_code', $code)->value('warehouse_id');
+
+        return $hubId ? (string) $hubId : null;
+    }
+
+    /**
+     * Pilihan sales untuk satu hub (Admin Hub): hanya sales yang terdaftar di hub tersebut.
+     */
+    public static function salesCodeOptionsForHub(string $hubId): \Illuminate\Support\Collection
+    {
+        return static::where('role', self::ROLE_SALES)
+            ->where('warehouse_id', $hubId)
+            ->whereNotNull('sales_code')
+            ->where('sales_code', '!=', '')
+            ->orderBy('name')
+            ->get(['name', 'sales_code'])
+            ->map(fn ($user) => (object) ['name' => $user->name, 'sales_code' => $user->sales_code]);
+    }
+
     public static function salesCodeOptions(): \Illuminate\Support\Collection
     {
         $sales = static::where('role', self::ROLE_SALES)
@@ -263,6 +293,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    /** Hub asal outlet/reseller (dari sales saat daftar). */
+    public function hub(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'hub_id');
     }
 
     public function priceLevel(): BelongsTo

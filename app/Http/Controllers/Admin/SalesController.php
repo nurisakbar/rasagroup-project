@@ -162,6 +162,14 @@ class SalesController extends Controller
 
         $sale->update($data);
 
+        // Outlet/reseller dari sales ini yang belum tercatat di hub mana pun ikut ke hub sales.
+        if ($sale->warehouse_id && $sale->sales_code) {
+            User::whereIn('role', [User::ROLE_OUTLET, User::ROLE_BUYER])
+                ->where('sales_code', $sale->sales_code)
+                ->whereNull('hub_id')
+                ->update(['hub_id' => $sale->warehouse_id]);
+        }
+
         return redirect()->route('admin.sales.index')->with('success', 'Data Sales berhasil diperbarui.');
     }
 

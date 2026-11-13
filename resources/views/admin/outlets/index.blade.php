@@ -68,6 +68,9 @@
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Phone</th>
+                                @if($canChooseHub ?? true)
+                                    <th>Hub</th>
+                                @endif
                                 @if($tab === 'outlet')
                                     <th>Nama Sales</th>
                                 @endif
@@ -109,6 +112,9 @@
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'phone', name: 'phone'},
+                @if($canChooseHub ?? true)
+                {data: 'hub', name: 'hub', orderable: false},
+                @endif
                 @if($tab === 'outlet')
                 {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false},
                 @endif
@@ -121,7 +127,7 @@
                 @endif
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[{{ $tab === 'buyer' ? 5 : 6 }}, 'desc']],
+            order: [[{{ ($tab === 'buyer' ? 5 : 6) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserLevelChange;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -49,8 +50,60 @@ class OutletController extends Controller
             'routePrefix' => $this->routePrefix,
             'layout' => $this->layout,
             'canDelete' => $this->canDelete,
+            'canChooseHub' => $this->canChooseHub(),
+            'hubOptions' => $this->canChooseHub() ? Warehouse::outletHubs()->orderBy('name')->get(['id', 'name']) : collect(),
             'tabLabels' => array_intersect_key(self::TAB_LABELS, array_flip($this->tabs())),
         ];
+    }
+
+    /** Batasi data sesuai panel (admin pusat: semua data). */
+    protected function scopeToPanel($query)
+    {
+        return $query;
+    }
+
+    /** Admin pusat boleh memilih hub outlet; Admin Hub tidak. */
+    protected function canChooseHub(): bool
+    {
+        return true;
+    }
+
+    /** Pilihan sales di form. */
+    protected function salesOptions(?User $user = null): \Illuminate\Support\Collection
+    {
+        return User::salesCodeOptions();
+    }
+
+    /** Aturan validasi kode sales. */
+    protected function salesCodeRules(?User $user = null): array
+    {
+        return ['nullable', 'string', $this->knownSalesCodeRule()];
+    }
+
+    /**
+     * Hub outlet yang disimpan: pilihan admin bila diisi, selain itu hub milik sales,
+     * dan bila sales belum punya hub tetap memakai hub yang sudah tercatat.
+     */
+    protected function resolveHubId(Request $request, ?User $user, ?string $salesCode): ?string
+    {
+        if ($request->filled('hub_id')) {
+            return (string) $request->hub_id;
+        }
+
+        return User::hubIdForSalesCode($salesCode) ?? $user?->hub_id;
+    }
+
+    private function hubRules(?User $user = null): array
+    {
+        if (! $this->canChooseHub()) {
+            return ['prohibited'];
+        }
+        $allowed = Warehouse::outletHubs()->pluck('id')->map(fn ($id) => (string) $id)->all();
+        if ($user?->hub_id) {
+            $allowed[] = (string) $user->hub_id;
+        }
+
+        return ['nullable', Rule::in($allowed)];
     }
 
     public function index(Request $request)
@@ -59,8 +112,8 @@ class OutletController extends Controller
 
         if ($request->ajax()) {
             $query = $this->tabQuery($tab)
-                ->with(['salesPerson', 'referringDistributor'])
-                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code', 'is_reseller', 'reseller_marked_at');
+                ->with(['salesPerson', 'referringDistributor', 'hub:id,name'])
+                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code', 'is_reseller', 'reseller_marked_at', 'hub_id');
 
             if ($request->filled('sales_code')) {
                 if ($request->sales_code === 'none') {
@@ -107,6 +160,12 @@ class OutletController extends Controller
                 ->editColumn('created_at', function ($user) {
                     return $user->created_at->format('d-m-Y');
                 })
+                ->addColumn('hub', function ($user) {
+                    return $user->hub?->name ?? '-';
+                })
+                ->filterColumn('hub', function ($query, $keyword) {
+                    $query->whereHas('hub', fn ($q) => $q->where('name', 'like', "%{$keyword}%"));
+                })
                 ->addColumn('origin', function ($user) {
                     return $user->role === User::ROLE_OUTLET ? 'Outlet' : 'Ecom';
                 })
@@ -137,11 +196,11 @@ class OutletController extends Controller
      */
     private function tabQuery(string $tab)
     {
-        return match ($tab) {
+        return $this->scopeToPanel(match ($tab) {
             'reseller' => User::whereIn('role', [User::ROLE_OUTLET, User::ROLE_BUYER])->where('is_reseller', true),
             'buyer' => User::where('role', User::ROLE_BUYER)->where('is_reseller', false),
             default => User::where('role', User::ROLE_OUTLET)->where('is_reseller', false),
-        };
+        });
     }
 
     /**
@@ -155,7 +214,8 @@ class OutletController extends Controller
     protected function isManageable(User $user): bool
     {
         return in_array($user->role, [User::ROLE_OUTLET, User::ROLE_BUYER], true)
-            && in_array($user->customerLevel(), $this->tabs(), true);
+            && in_array($user->customerLevel(), $this->tabs(), true)
+            && $this->scopeToPanel(User::whereKey($user->getKey()))->exists();
     }
 
     /**
@@ -163,7 +223,7 @@ class OutletController extends Controller
      */
     public function create()
     {
-        $salesList = User::salesCodeOptions();
+        $salesList = $this->salesOptions();
         return view('admin.outlets.create', compact('salesList') + $this->panel());
     }
 
@@ -177,8 +237,9 @@ class OutletController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'sales_code' => ['nullable', 'string', $this->knownSalesCodeRule()],
+            'sales_code' => $this->salesCodeRules(),
             'qad_customer_code' => 'nullable|string|max:255',
+            'hub_id' => $this->hubRules(),
         ]);
 
         User::create([
@@ -189,6 +250,7 @@ class OutletController extends Controller
             'role' => User::ROLE_OUTLET,
             'sales_code' => $request->sales_code,
             'qad_customer_code' => $request->qad_customer_code,
+            'hub_id' => $this->resolveHubId($request, null, $request->sales_code),
         ]);
 
         return redirect()->route($this->routePrefix . '.index')->with('success', 'Outlet berhasil ditambahkan.');
@@ -204,7 +266,7 @@ class OutletController extends Controller
         }
 
         $user = $outlet; // to match view variable
-        $salesList = User::salesCodeOptions();
+        $salesList = $this->salesOptions($user);
         $levelChanges = $user->levelChanges()->with('changer:id,name')->limit(20)->get();
 
         return view('admin.outlets.edit', compact('user', 'salesList', 'levelChanges') + $this->panel());
@@ -230,8 +292,9 @@ class OutletController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'sales_code' => ['nullable', 'string', $this->knownSalesCodeRule()],
+            'sales_code' => $this->salesCodeRules($outlet),
             'qad_customer_code' => 'nullable|string|max:255',
+            'hub_id' => $this->hubRules($outlet),
         ]);
 
         $data = [
@@ -259,6 +322,9 @@ class OutletController extends Controller
         if ($markReseller) {
             unset($data['sales_code']);
         }
+
+        // Hub tetap tercatat saat level berubah; berubah hanya bila admin memilih hub lain atau sales diganti.
+        $data['hub_id'] = $this->resolveHubId($request, $outlet, $data['sales_code'] ?? $outlet->sales_code);
 
         DB::transaction(function () use ($outlet, $data, $fromLevel) {
             $outlet->update($data);
