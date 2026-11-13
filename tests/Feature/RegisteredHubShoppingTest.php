@@ -64,11 +64,16 @@ class RegisteredHubShoppingTest extends TestCase
         $this->assertSame((string) $this->hub->id, (string) $cart->fresh()->warehouse_id);
     }
 
-    public function test_address_based_hub_is_registered_hub_even_if_other_is_nearer_or_big_order(): void
+    public function test_address_based_hub_is_registered_hub_but_big_order_goes_to_mm2100(): void
     {
         $address = $this->address($this->outlet);
         $this->assertSame((string) $this->hub->id, (string) Warehouse::findBestHubForAddress($address)->id);
-        $this->assertSame((string) $this->hub->id, (string) Warehouse::findBestHubForAddress($address, null, 30000000)->id);
+        $this->assertSame((string) $this->hub->id, (string) Warehouse::findBestHubForAddress($address, null, 24999999)->id);
+
+        // Aturan order >= 25 juta tetap berlaku: dikirim dari DC MM2100.
+        $mm2100 = Warehouse::where('is_active', true)->where('name', 'like', '%MM2100%')->first()
+            ?? Warehouse::create(['name' => 'DC MM2100 Uji', 'slug' => 'dc-mm2100-uji', 'is_active' => true, 'target_role' => ['distributor']]);
+        $this->assertSame((string) $mm2100->id, (string) Warehouse::findBestHubForAddress($address, null, 25000000)->id);
 
         // Tanpa hub terdaftar: tetap memakai aturan lama (hub terdekat sesuai jalur).
         $plain = User::factory()->create(['role' => User::ROLE_BUYER, 'wa_verified_at' => now()]);
@@ -95,5 +100,24 @@ class RegisteredHubShoppingTest extends TestCase
             ->withSession(['selected_hub_id' => $this->otherHub->id])
             ->get(route('home'))
             ->assertSessionHas('selected_hub_id', $this->otherHub->id);
+    }
+
+    public function test_checkout_keeps_hub_chosen_for_big_order(): void
+    {
+        $mm2100 = Warehouse::where('is_active', true)->where('name', 'like', '%MM2100%')->first()
+            ?? Warehouse::create(['name' => 'DC MM2100 Uji', 'slug' => 'dc-mm2100-uji', 'is_active' => true, 'target_role' => ['distributor']]);
+        $product = Product::withoutGlobalScopes()->firstOrFail();
+        $cart = Cart::create(['user_id' => $this->outlet->id, 'cart_type' => 'regular', 'product_id' => $product->id, 'warehouse_id' => $mm2100->id, 'quantity' => 1]);
+
+        // Di checkout (mis. hitung ongkir) hub & keranjang tidak ditarik kembali ke hub terdaftar.
+        $this->actingAs($this->outlet)
+            ->withSession(['selected_hub_id' => $mm2100->id])
+            ->get(route('checkout.check-stock'));
+        $this->assertSame((string) $mm2100->id, (string) $cart->fresh()->warehouse_id);
+
+        // Kembali ke toko: stok & keranjang mengikuti hub terdaftar lagi (checkout akan menghitung ulang).
+        $this->actingAs($this->outlet)->withSession(['selected_hub_id' => $mm2100->id])
+            ->get(route('home'))->assertSessionHas('selected_hub_id', $this->hub->id);
+        $this->assertSame((string) $this->hub->id, (string) $cart->fresh()->warehouse_id);
     }
 }

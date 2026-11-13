@@ -11,12 +11,14 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Outlet/reseller yang terdaftar di sebuah hub: hub belanja di session dikunci ke hub tersebut,
  * sehingga stok & harga di toko selalu dari hub terdaftar. Isi keranjang ikut dipindah ke hub itu.
+ *
+ * Halaman checkout dikecualikan: di sana hub ditentukan ulang (order >= 25 juta dikirim dari DC MM2100).
  */
 class CheckHubSelection
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->is('admin', 'admin/*', 'warehouse', 'warehouse/*') && Auth::guard('web')->check()) {
+        if (! $request->is('admin', 'admin/*', 'warehouse', 'warehouse/*', 'checkout', 'checkout/*') && Auth::guard('web')->check()) {
             $hub = Auth::guard('web')->user()->registeredShoppingHub();
 
             if ($hub && (string) session('selected_hub_id') !== (string) $hub->id) {
