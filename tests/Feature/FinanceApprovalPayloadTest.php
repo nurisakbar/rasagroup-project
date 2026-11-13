@@ -96,4 +96,53 @@ class FinanceApprovalPayloadTest extends TestCase
         $this->assertSame(0.0, $credit['ar_outstanding']);
         $this->assertNull($credit['remaining_credit_limit']);
     }
+
+    private function topOrder(string $number, float $amount, string $createdAt, string $paymentStatus = 'term_of_payment', string $orderStatus = 'processing'): void
+    {
+        $copy = $this->order->replicate();
+        $copy->forceFill([
+            'order_number' => $number,
+            'qid_sales_order_number' => $number,
+            'total_amount' => $amount,
+            'payment_method' => 'term_of_payment',
+            'payment_status' => $paymentStatus,
+            'order_status' => $orderStatus,
+            'finance_approved' => true,
+        ]);
+        $copy->saveQuietly();
+        DB::table('orders')->where('id', $copy->id)->update(['created_at' => $createdAt]);
+    }
+
+    public function test_pending_invoices_are_listed_with_overdue_info(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        // Tempo pelanggan 30 hari.
+        $this->topOrder('TST-LAMA', 700000, now()->subDays(45)->toDateTimeString());   // lewat jatuh tempo 15 hari
+        $this->topOrder('TST-BARU', 300000, now()->subDays(5)->toDateTimeString());    // belum jatuh tempo
+        $this->topOrder('TST-LUNAS', 999000, now()->subDays(10)->toDateTimeString(), 'paid');
+        $this->topOrder('TST-BATAL', 888000, now()->subDays(10)->toDateTimeString(), 'term_of_payment', 'cancelled');
+
+        $credit = \App\Support\FinanceApprovalCredit::forOrder($this->order->fresh());
+
+        $this->assertSame(2, $credit['pending_invoice_count']);
+        $this->assertSame(1000000.0, $credit['pending_invoice_total']);
+        $this->assertSame(1000000.0, $credit['existing_top_transactions']);
+        $this->assertSame(1, $credit['pending_invoice_overdue_count']);
+        $this->assertSame(700000.0, $credit['pending_invoice_overdue_total']);
+
+        [$lama, $baru] = $credit['pending_invoices'];
+        $this->assertSame('TST-LAMA', $lama['order_number']);
+        $this->assertSame(15, $lama['days_overdue']);
+        $this->assertStringStartsWith('RG-', $lama['invoice_number']);
+        $this->assertSame(0, $baru['days_overdue']);
+        $this->assertSame('unpaid', $baru['status']);
+
+        // Ikut terkirim di webhook EDMS.
+        config(['services.finance_approval.webhook_url' => 'https://edms.test/approval']);
+        Http::fake(['*' => Http::response(['ok' => true], 200)]);
+        (new NotifyExternalFinanceApprovalNeeded($this->order->fresh(), force: true))->handle();
+        Http::assertSent(fn (Request $request) => $request->data()['pending_invoice_count'] === 2
+            && count($request->data()['pending_invoices']) === 2
+            && $request->data()['pending_invoice_overdue_total'] === 700000.0);
+    }
 }

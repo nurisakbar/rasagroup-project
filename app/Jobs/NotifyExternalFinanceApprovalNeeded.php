@@ -140,6 +140,12 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
             'existing_top_transactions' => $credit['existing_top_transactions'],
             'accumulated_debt' => $credit['accumulated_debt'],
             'remaining_credit_limit' => $credit['remaining_credit_limit'],
+            // Pending invoice: order tempo (TOP) pelanggan yang belum lunas
+            'pending_invoice_count' => $credit['pending_invoice_count'],
+            'pending_invoice_total' => $credit['pending_invoice_total'],
+            'pending_invoice_overdue_count' => $credit['pending_invoice_overdue_count'],
+            'pending_invoice_overdue_total' => $credit['pending_invoice_overdue_total'],
+            'pending_invoices' => $credit['pending_invoices'],
 
             // Original payload structure
             'event' => 'finance_approval_needed',
@@ -173,6 +179,8 @@ class NotifyExternalFinanceApprovalNeeded implements ShouldQueue
                 'existing_top_transactions' => $credit['existing_top_transactions'],
                 'accumulated_debt' => $credit['accumulated_debt'],
                 'remaining_credit_limit' => $credit['remaining_credit_limit'],
+                'pending_invoice_count' => $credit['pending_invoice_count'],
+                'pending_invoice_total' => $credit['pending_invoice_total'],
             ],
             'items' => $order->items->map(function ($item) {
                 return [
