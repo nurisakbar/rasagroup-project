@@ -301,6 +301,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Warehouse::class, 'hub_id');
     }
 
+    /**
+     * Hub belanja tetap untuk outlet/reseller yang terdaftar di sebuah hub (hub aktif):
+     * stok, harga, dan pengiriman toko selalu dari hub ini.
+     */
+    public function registeredShoppingHub(): ?Warehouse
+    {
+        if (! in_array($this->role, [self::ROLE_OUTLET, self::ROLE_BUYER], true) || ! $this->hub_id) {
+            return null;
+        }
+
+        $hub = $this->hub;
+
+        return $hub && $hub->is_active ? $hub : null;
+    }
+
     public function priceLevel(): BelongsTo
     {
         return $this->belongsTo(PriceLevel::class);

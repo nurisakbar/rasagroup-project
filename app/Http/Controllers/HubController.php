@@ -289,6 +289,11 @@ class HubController extends Controller
 
         $warehouse = Warehouse::find($request->warehouse_id);
 
+        $registeredHub = Auth::user()?->registeredShoppingHub();
+        if ($registeredHub && (string) $registeredHub->id !== (string) $warehouse->id) {
+            return redirect()->route('home')->with('info', "Lokasi belanja Anda mengikuti hub terdaftar: {$registeredHub->name}.");
+        }
+
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
         if ($excludeHubId && (string) $warehouse->id === $excludeHubId) {
             return back()->with('error', 'Sebagai distributor, Anda tidak dapat memilih hub sendiri sebagai lokasi belanja.');
@@ -324,7 +329,9 @@ class HubController extends Controller
 
         // Get all active hubs with coordinates
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
+        $registeredHub = Auth::user()?->registeredShoppingHub();
         $hubs = Warehouse::where('is_active', true)
+            ->when($registeredHub, fn ($q) => $q->whereKey($registeredHub->id))
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))

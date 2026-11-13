@@ -294,6 +294,12 @@ class Warehouse extends Model
     {
         $exclude = $excludeWarehouseId;
         $user = $address->user;
+
+        // Outlet/reseller yang terdaftar di sebuah hub selalu belanja dari hub tersebut.
+        $registeredHub = $user?->registeredShoppingHub();
+        if ($registeredHub && (string) $registeredHub->id !== (string) $exclude) {
+            return $registeredHub;
+        }
         
         // Custom Logic: If total >= 25,000,000 force MM2100 hub
         if ($totalAmount >= 25000000) {
