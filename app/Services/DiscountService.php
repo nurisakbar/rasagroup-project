@@ -32,9 +32,9 @@ class DiscountService
     private const GROUP_SYRUP_SAUCE = ['Syrup', 'SAUCE'];
 
     /**
-     * Kategori grup 2 (Pulp, Powder, Cocoa, dsb)
+     * Kategori grup 2 (Pulp, Powder, Cocoa, Accessories, dsb)
      */
-    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'PUREE', 'TEA', 'TOPPING', 'JELLY', 'RAMOE'];
+    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'PUREE', 'TEA', 'TOPPING', 'JELLY', 'RAMOE', 'ACCESSORIES', 'ACCESORIS', 'AKSESORIS'];
 
     /**
      * Isi karton bila produk tidak punya data satuan besar.

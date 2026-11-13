@@ -153,4 +153,13 @@ class DiscountTierTest extends TestCase
         $this->assertSame(2.5, $result['line_percentages'][$syrup->id]);
         $this->assertSame(2.0, $result['line_percentages'][$pulp->id]);
     }
+
+    public function test_accessories_category_is_in_pulp_powder_cocoa_group(): void
+    {
+        foreach (['Accessories', 'ACCESORIS'] as $name) {
+            $product = new \App\Models\Product(['name' => 'Aksesoris Uji']);
+            $product->setRelation('category', new \App\Models\Category(['name' => $name]));
+            $this->assertSame('others', $this->service->getProductCategoryGroup($product), $name);
+        }
+    }
 }
