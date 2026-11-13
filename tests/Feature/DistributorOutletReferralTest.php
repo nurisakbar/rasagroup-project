@@ -256,7 +256,7 @@ class DistributorOutletReferralTest extends TestCase
                 'email' => $outlet->email,
                 'sales_code' => $code,
             ])
-            ->assertRedirect(route('admin.outlets.index'));
+            ->assertRedirect(route('admin.outlets.index', ['tab' => 'outlet']));
 
         $this->assertSame($code, $outlet->fresh()->sales_code);
         $this->assertSame('Outlet Edit', $outlet->fresh()->name);

@@ -15,12 +15,17 @@ class OutletController extends Controller
     /**
      * Display a listing of the resource.
      */
+    /** Tab halaman: outlet (daftar dengan kode sales), reseller (user biasa bertanda reseller), user biasa. */
+    public const TABS = ['outlet', 'reseller', 'buyer'];
+
     public function index(Request $request)
     {
+        $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'outlet';
+
         if ($request->ajax()) {
-            $query = User::where('role', User::ROLE_OUTLET)
+            $query = $this->tabQuery($tab)
                 ->with(['salesPerson', 'referringDistributor'])
-                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code');
+                ->select('id', 'name', 'email', 'phone', 'role', 'created_at', 'sales_code', 'qad_customer_code', 'is_reseller', 'reseller_marked_at');
 
             if ($request->filled('sales_code')) {
                 if ($request->sales_code === 'none') {
@@ -63,6 +68,9 @@ class OutletController extends Controller
                 ->editColumn('created_at', function ($user) {
                     return $user->created_at->format('d-m-Y');
                 })
+                ->addColumn('reseller_marked', function ($user) {
+                    return $user->reseller_marked_at ? $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d-m-Y') : '-';
+                })
                 ->filterColumn('sales_name', function($query, $keyword) {
                     $query->where(function ($inner) use ($keyword) {
                         $inner->whereHas('salesPerson', fn ($q) => $q->where('name', 'like', "%{$keyword}%"))
@@ -74,7 +82,41 @@ class OutletController extends Controller
         }
 
         $salesList = User::salesCodeOptions();
-        return view('admin.outlets.index', compact('salesList'));
+        $counts = collect(self::TABS)->mapWithKeys(fn ($key) => [$key => $this->tabQuery($key)->count()]);
+
+        return view('admin.outlets.index', compact('salesList', 'tab', 'counts'));
+    }
+
+    /**
+     * Query tiap tab:
+     * - outlet: user yang mendaftar dengan kode sales (role outlet);
+     * - reseller: user biasa yang ditandai reseller;
+     * - buyer: user biasa yang belum ditandai reseller.
+     */
+    private function tabQuery(string $tab)
+    {
+        return match ($tab) {
+            'reseller' => User::where('role', User::ROLE_BUYER)->where('is_reseller', true),
+            'buyer' => User::where('role', User::ROLE_BUYER)->where('is_reseller', false),
+            default => User::where('role', User::ROLE_OUTLET),
+        };
+    }
+
+    /**
+     * Tab tempat user berada setelah disimpan.
+     */
+    private function tabFor(User $user): string
+    {
+        if ($user->role === User::ROLE_BUYER) {
+            return $user->isReseller() ? 'reseller' : 'buyer';
+        }
+
+        return 'outlet';
+    }
+
+    private function isManageable(User $user): bool
+    {
+        return in_array($user->role, [User::ROLE_OUTLET, User::ROLE_BUYER], true);
     }
 
     /**
@@ -118,7 +160,7 @@ class OutletController extends Controller
      */
     public function edit(User $outlet)
     {
-        if ($outlet->role !== User::ROLE_OUTLET) {
+        if (! $this->isManageable($outlet)) {
             return redirect()->route('admin.outlets.index')->with('error', 'Role user ini tidak dapat diubah di sini.');
         }
 
@@ -132,7 +174,7 @@ class OutletController extends Controller
      */
     public function update(Request $request, User $outlet)
     {
-        if ($outlet->role !== User::ROLE_OUTLET) {
+        if (! $this->isManageable($outlet)) {
             abort(403);
         }
 
@@ -163,9 +205,22 @@ class OutletController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        // Penanda reseller hanya untuk user biasa (buyer).
+        if ($outlet->role === User::ROLE_BUYER) {
+            $markReseller = $request->boolean('is_reseller');
+            if ($markReseller !== $outlet->isReseller()) {
+                $data['is_reseller'] = $markReseller;
+                $data['reseller_marked_at'] = $markReseller ? now() : null;
+            }
+        }
+
         $outlet->update($data);
 
-        return redirect()->route('admin.outlets.index')->with('success', 'Data Outlet berhasil diperbarui.');
+        $tab = $this->tabFor($outlet->fresh());
+        $label = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'][$tab];
+
+        return redirect()->route('admin.outlets.index', ['tab' => $tab])
+            ->with('success', 'Data ' . $outlet->name . ' berhasil diperbarui (tab ' . $label . ').');
     }
 
     private function knownSalesCodeRule(): \Closure
@@ -182,12 +237,13 @@ class OutletController extends Controller
      */
     public function destroy(User $outlet)
     {
-        if ($outlet->role !== User::ROLE_OUTLET) {
+        if (! $this->isManageable($outlet)) {
             abort(403);
         }
 
+        $tab = $this->tabFor($outlet);
         $outlet->delete();
 
-        return redirect()->route('admin.outlets.index')->with('success', 'Outlet berhasil dihapus.');
+        return redirect()->route('admin.outlets.index', ['tab' => $tab])->with('success', 'User berhasil dihapus.');
     }
 }

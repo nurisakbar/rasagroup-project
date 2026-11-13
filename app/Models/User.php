@@ -51,6 +51,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'occupation',
         'role',
         'sub_role',
+        'is_reseller',
+        'reseller_marked_at',
         'warehouse_id',
         'no_ktp',
         'no_npwp',
@@ -253,6 +255,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'date_of_birth' => 'date',
             'pakai_ppn' => 'boolean',
             'outlet_discount_max' => 'decimal:2',
+            'is_reseller' => 'boolean',
+            'reseller_marked_at' => 'datetime',
         ];
     }
 
@@ -346,6 +350,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function outletCategoryDiscounts(): HasMany
     {
         return $this->hasMany(OutletCategoryDiscount::class, 'outlet_id');
+    }
+
+    /**
+     * User biasa (buyer) yang ditandai admin sebagai reseller.
+     */
+    public function isReseller(): bool
+    {
+        return (bool) $this->is_reseller;
     }
 
     /**

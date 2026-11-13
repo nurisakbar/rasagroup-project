@@ -187,7 +187,7 @@ class DiscountService
     private function getCustomerType(User $user): string
     {
         $type = 'outlet';
-        if ($user->sub_role === 'reseller' || $user->sub_role === 'subdist') {
+        if ($user->isReseller() || $user->sub_role === 'reseller' || $user->sub_role === 'subdist') {
             $type = 'subdist';
         }
         return $type;

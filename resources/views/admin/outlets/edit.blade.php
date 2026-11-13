@@ -13,7 +13,7 @@
     <div class="col-md-6">
         <div class="box box-warning">
             <div class="box-header with-border">
-                <h3 class="box-title">Form Edit Outlet</h3>
+                <h3 class="box-title">Form Edit {{ $user->role === \App\Models\User::ROLE_BUYER ? ($user->is_reseller ? 'Reseller' : 'User Biasa') : 'Outlet' }}</h3>
             </div>
             <form action="{{ route('admin.outlets.update', $user) }}" method="POST">
                 @csrf
@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="form-group @error('name') has-error @enderror">
-                        <label for="name">Nama Outlet</label>
+                        <label for="name">Nama</label>
                         <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $user->name) }}" required placeholder="Masukkan nama outlet">
                         @error('name') <span class="help-block">{{ $message }}</span> @enderror
                     </div>
@@ -64,6 +64,24 @@
                         </div>
                     </div>
 
+                    @if($user->role === \App\Models\User::ROLE_BUYER)
+                        <div class="form-group" style="padding: 10px; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px;">
+                            <div class="checkbox" style="margin: 0;">
+                                <label>
+                                    <input type="hidden" name="is_reseller" value="0">
+                                    <input type="checkbox" name="is_reseller" value="1" {{ old('is_reseller', $user->is_reseller) ? 'checked' : '' }}>
+                                    <strong>Tandai sebagai Reseller</strong>
+                                </label>
+                            </div>
+                            <p class="help-block" style="margin-bottom: 0;">
+                                Reseller pindah ke tab Reseller dan mendapat tier diskon "Subdist / Reseller".
+                                @if($user->reseller_marked_at)
+                                    Ditandai sejak {{ $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d M Y H:i') }} WIB.
+                                @endif
+                            </p>
+                        </div>
+                    @endif
+
                     <div class="form-group @error('sales_code') has-error @enderror">
                         <label for="sales_code">Nama Sales (opsional)</label>
                         <select class="form-control select2" style="width: 100%;" id="sales_code" name="sales_code">
@@ -85,7 +103,7 @@
                 </div>
 
                 <div class="box-footer">
-                    <a href="{{ route('admin.outlets.index') }}" class="btn btn-default">Kembali</a>
+                    <a href="{{ route('admin.outlets.index', ['tab' => $user->role === \App\Models\User::ROLE_BUYER ? ($user->is_reseller ? 'reseller' : 'buyer') : 'outlet']) }}" class="btn btn-default">Kembali</a>
                     <button type="submit" class="btn btn-warning pull-right">Perbarui User</button>
                 </div>
             </form>

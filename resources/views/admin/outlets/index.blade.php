@@ -2,7 +2,7 @@
 
 @section('title', 'Data User Outlet')
 @section('page-title', 'Manajemen Data User Outlet')
-@section('page-description', 'Kelola data pengguna dengan role outlet')
+@section('page-description', 'Outlet, reseller, dan user biasa')
 
 @section('breadcrumb')
     <li class="active">Data Outlet</li>
@@ -19,19 +19,40 @@
 @endpush
 
 @section('content')
+    @php
+        $tabLabels = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'];
+        $tabHelp = [
+            'outlet' => 'User yang saat mendaftar memasukkan kode sales.',
+            'reseller' => 'User biasa yang ditandai sebagai reseller. Reseller mendapat tier diskon "Subdist / Reseller".',
+            'buyer' => 'User biasa yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab Reseller.',
+        ];
+    @endphp
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            {{ session('success') }}
+        </div>
+    @endif
     <div class="row">
         <div class="col-xs-12">
-            <div class="box">
-                <div class="box-header">
-                    <h3 class="box-title">Daftar Outlet</h3>
-                    <div class="box-tools">
-                        <a href="{{ route('admin.outlets.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fa fa-plus"></i> Tambah Outlet
-                        </a>
-                    </div>
-                </div>
-                <!-- /.box-header -->
-                <div class="box-body">
+            <div class="nav-tabs-custom">
+                <ul class="nav nav-tabs">
+                    @foreach($tabLabels as $key => $label)
+                        <li class="{{ $tab === $key ? 'active' : '' }}">
+                            <a href="{{ route('admin.outlets.index', ['tab' => $key]) }}">{{ $label }} <span class="badge">{{ number_format($counts[$key] ?? 0, 0, ',', '.') }}</span></a>
+                        </li>
+                    @endforeach
+                    @if($tab === 'outlet')
+                        <li class="pull-right" style="padding: 6px 10px 0 0;">
+                            <a href="{{ route('admin.outlets.create') }}" class="btn btn-primary btn-sm" style="color: #fff; padding: 5px 10px;">
+                                <i class="fa fa-plus"></i> Tambah Outlet
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+                <div class="tab-content">
+                    <p class="text-muted">{{ $tabHelp[$tab] }}</p>
+                    @if($tab === 'outlet')
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-md-4">
                             <label for="filter_sales">Filter by Sales:</label>
@@ -44,8 +65,9 @@
                             </select>
                         </div>
                     </div>
-                    
-                    <table id="users-table" class="table table-bordered table-striped">
+                    @endif
+
+                    <table id="users-table" class="table table-bordered table-striped" style="width: 100%;">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -53,19 +75,20 @@
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th>Nama Sales</th>
+                                @if($tab === 'outlet')
+                                    <th>Nama Sales</th>
+                                @endif
                                 <th>Tanggal Daftar</th>
+                                @if($tab === 'reseller')
+                                    <th>Reseller Sejak</th>
+                                @endif
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Data akan di-load via DataTables server-side -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
-                <!-- /.box-body -->
             </div>
-            <!-- /.box -->
         </div>
     </div>
 @endsection
@@ -79,9 +102,9 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('admin.outlets.index') }}",
+                url: @json(route('admin.outlets.index', ['tab' => $tab])),
                 data: function (d) {
-                    d.sales_code = $('#filter_sales').val();
+                    d.sales_code = $('#filter_sales').val() || '';
                 }
             },
             columns: [
@@ -90,11 +113,16 @@
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'phone', name: 'phone'},
+                @if($tab === 'outlet')
                 {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false},
+                @endif
                 {data: 'created_at', name: 'created_at'},
+                @if($tab === 'reseller')
+                {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false},
+                @endif
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            order: [[5, 'desc']],
+            order: [[{{ $tab === 'outlet' ? 6 : 5 }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",
@@ -121,7 +149,7 @@
         });
 
         $(document).on('submit', '.delete-form', function(e) {
-            if (!confirm('Apakah Anda yakin ingin menghapus outlet ini?')) {
+            if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) {
                 e.preventDefault();
             }
         });
