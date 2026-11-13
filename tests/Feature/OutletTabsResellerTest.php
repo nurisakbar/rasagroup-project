@@ -231,4 +231,18 @@ class OutletTabsResellerTest extends TestCase
         $this->assertNotSame('diubah@contoh.test', $fresh->email);
         $this->assertFalse(\Illuminate\Support\Facades\Hash::check('rahasia123', $fresh->password));
     }
+
+    public function test_ecom_tab_has_no_hub_column_and_no_actions(): void
+    {
+        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.index', ['tab' => 'buyer']))
+            ->assertOk()
+            ->assertDontSee('<th>Hub</th>', false)
+            ->assertDontSee('<th>Action</th>', false)
+            ->assertDontSee("data: 'action'", false);
+
+        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.index', ['tab' => 'outlet']))
+            ->assertOk()
+            ->assertSee('<th>Hub</th>', false)
+            ->assertSee('<th>Action</th>', false);
+    }
 }

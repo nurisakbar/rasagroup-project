@@ -20,10 +20,13 @@
 
 @section('content')
     @php
+        // Tab ECOM: tanpa kolom Hub dan tanpa tombol Edit/Hapus.
+        $showHub = ($canChooseHub ?? true) && $tab !== 'buyer';
+        $showAction = $tab !== 'buyer';
         $tabHelp = [
             'outlet' => 'User yang saat mendaftar memasukkan kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk mengubah levelnya menjadi reseller.',
             'reseller' => 'Outlet atau user ecom yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
-            'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab RESELLER.',
+            'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales.',
         ];
     @endphp
     <div class="row">
@@ -67,7 +70,7 @@
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                @if($canChooseHub ?? true)
+                                @if($showHub)
                                     <th>Hub</th>
                                 @endif
                                 @if($tab === 'outlet')
@@ -77,7 +80,9 @@
                                 @if($tab === 'reseller')
                                     <th>Reseller Sejak</th>
                                 @endif
-                                <th>Action</th>
+                                @if($showAction)
+                                    <th>Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -107,7 +112,7 @@
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
                 {data: 'phone', name: 'phone'},
-                @if($canChooseHub ?? true)
+                @if($showHub)
                 {data: 'hub', name: 'hub', orderable: false},
                 @endif
                 @if($tab === 'outlet')
@@ -117,9 +122,11 @@
                 @if($tab === 'reseller')
                 {data: 'reseller_marked', name: 'reseller_marked_at', searchable: false},
                 @endif
-                {data: 'action', name: 'action', orderable: false, searchable: false}
+                @if($showAction)
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+                @endif
             ],
-            order: [[{{ ($tab === 'outlet' ? 5 : 4) + (($canChooseHub ?? true) ? 1 : 0) }}, 'desc']],
+            order: [[{{ ($tab === 'outlet' ? 5 : 4) + ($showHub ? 1 : 0) }}, 'desc']],
             language: {
                 processing: "Memproses...",
                 search: "Cari:",
