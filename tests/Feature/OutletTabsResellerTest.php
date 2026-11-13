@@ -140,4 +140,27 @@ class OutletTabsResellerTest extends TestCase
         $small = collect([$s = $this->cart('Syrup', 50 * 6)]);
         $this->assertSame(0.0, $service->calculateCartDiscount($small, $this->buyer->fresh(), null)['line_percentages'][$s->id]);
     }
+
+    public function test_reseller_edit_form_hides_sales_and_keeps_sales_code(): void
+    {
+        $this->buyer->forceFill(['is_reseller' => true, 'reseller_marked_at' => now()])->save();
+
+        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->buyer))
+            ->assertOk()
+            ->assertSee('id="sales-code-group" style="display: none;"', false);
+
+        $salesCode = User::where('role', User::ROLE_SALES)->whereNotNull('sales_code')->value('sales_code');
+        $this->actingAs($this->admin, 'admin')->put(route('admin.outlets.update', $this->buyer), [
+            'name' => $this->buyer->name, 'email' => $this->buyer->email, 'is_reseller' => 1,
+            'sales_code' => $salesCode,
+        ])->assertRedirect(route('admin.outlets.index', ['tab' => 'reseller']));
+
+        $this->assertNull($this->buyer->fresh()->sales_code);
+
+        // User biasa (bukan reseller): pilihan sales tampil.
+        $this->buyer->forceFill(['is_reseller' => false])->save();
+        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.edit', $this->buyer))
+            ->assertOk()
+            ->assertSee('id="sales-code-group" style=""', false);
+    }
 }

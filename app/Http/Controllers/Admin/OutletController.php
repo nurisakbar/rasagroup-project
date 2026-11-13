@@ -212,6 +212,11 @@ class OutletController extends Controller
                 $data['is_reseller'] = $markReseller;
                 $data['reseller_marked_at'] = $markReseller ? now() : null;
             }
+
+            // Reseller tidak memakai kode sales: input sales tidak ditampilkan, kode sales tidak diubah.
+            if ($markReseller) {
+                unset($data['sales_code']);
+            }
         }
 
         $outlet->update($data);

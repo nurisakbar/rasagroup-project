@@ -69,7 +69,7 @@
                             <div class="checkbox" style="margin: 0;">
                                 <label>
                                     <input type="hidden" name="is_reseller" value="0">
-                                    <input type="checkbox" name="is_reseller" value="1" {{ old('is_reseller', $user->is_reseller) ? 'checked' : '' }}>
+                                    <input type="checkbox" name="is_reseller" value="1" id="is_reseller" {{ old('is_reseller', $user->is_reseller) ? 'checked' : '' }}>
                                     <strong>Tandai sebagai Reseller</strong>
                                 </label>
                             </div>
@@ -82,7 +82,8 @@
                         </div>
                     @endif
 
-                    <div class="form-group @error('sales_code') has-error @enderror">
+                    @php $isResellerNow = $user->role === \App\Models\User::ROLE_BUYER && old('is_reseller', $user->is_reseller); @endphp
+                    <div class="form-group @error('sales_code') has-error @enderror" id="sales-code-group" style="{{ $isResellerNow ? 'display: none;' : '' }}">
                         <label for="sales_code">Nama Sales (opsional)</label>
                         <select class="form-control select2" style="width: 100%;" id="sales_code" name="sales_code">
                             <option value="">-- Pilih Sales --</option>
@@ -133,6 +134,16 @@
             placeholder: "Pilih Sales",
             allowClear: true
         });
+
+        // Reseller tidak memakai kode sales: sembunyikan pilihan sales saat ditandai reseller.
+        $('#is_reseller').on('change', function () {
+            var reseller = $(this).is(':checked');
+            $('#sales-code-group').toggle(!reseller);
+            $('#sales_code').prop('disabled', reseller);
+        });
+        if ($('#is_reseller').is(':checked')) {
+            $('#sales_code').prop('disabled', true);
+        }
     });
 </script>
 @endpush
