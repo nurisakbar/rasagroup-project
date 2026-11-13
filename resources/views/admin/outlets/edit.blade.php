@@ -1,10 +1,10 @@
-@extends('layouts.admin')
+@extends($layout ?? 'layouts.admin')
 
 @section('title', 'Edit Outlet')
 @section('page-title', 'Edit Outlet')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.outlets.index') }}">Outlet dan Reseller</a></li>
+    <li><a href="{{ route(($routePrefix ?? 'admin.outlets') . '.index') }}">Outlet dan Reseller</a></li>
     <li class="active">Edit</li>
 @endsection
 
@@ -15,7 +15,7 @@
             <div class="box-header with-border">
                 <h3 class="box-title">Form Edit {{ \App\Models\UserLevelChange::label($user->customerLevel()) }}</h3>
             </div>
-            <form action="{{ route('admin.outlets.update', $user) }}" method="POST">
+            <form action="{{ route(($routePrefix ?? 'admin.outlets') . '.update', $user) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="box-body">
@@ -127,7 +127,7 @@
                 </div>
 
                 <div class="box-footer">
-                    <a href="{{ route('admin.outlets.index', ['tab' => $user->customerLevel()]) }}" class="btn btn-default">Kembali</a>
+                    <a href="{{ route(($routePrefix ?? 'admin.outlets') . '.index', ['tab' => $user->customerLevel()]) }}" class="btn btn-default">Kembali</a>
                     <button type="submit" class="btn btn-warning pull-right">Perbarui User</button>
                 </div>
             </form>

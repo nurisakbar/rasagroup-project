@@ -1,8 +1,8 @@
-@extends('layouts.admin')
+@extends($layout ?? 'layouts.admin')
 
 @section('title', 'Outlet dan Reseller')
 @section('page-title', 'Outlet dan Reseller')
-@section('page-description', 'Outlet, reseller, dan user biasa')
+@section('page-description', 'Outlet, reseller, dan ecom')
 
 @section('breadcrumb')
     <li class="active">Outlet dan Reseller</li>
@@ -20,11 +20,10 @@
 
 @section('content')
     @php
-        $tabLabels = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'];
         $tabHelp = [
             'outlet' => 'User yang saat mendaftar memasukkan kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk mengubah levelnya menjadi reseller.',
-            'reseller' => 'Outlet atau user biasa yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
-            'buyer' => 'User biasa yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab Reseller.',
+            'reseller' => 'Outlet atau user ecom yang ditandai sebagai reseller. Diskon reseller (tanpa perlu kode sales): lebih dari 50 karton per grup mendapat 15% untuk DRiPP Syrup & Sauce dan 8% untuk DRiPP Pulp, Powder, Cocoa.',
+            'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales. Edit lalu centang "Tandai sebagai Reseller" untuk memindahkannya ke tab RESELLER.',
         ];
     @endphp
     <div class="row">
@@ -33,12 +32,12 @@
                 <ul class="nav nav-tabs">
                     @foreach($tabLabels as $key => $label)
                         <li class="{{ $tab === $key ? 'active' : '' }}">
-                            <a href="{{ route('admin.outlets.index', ['tab' => $key]) }}">{{ $label }} <span class="badge">{{ number_format($counts[$key] ?? 0, 0, ',', '.') }}</span></a>
+                            <a href="{{ route(($routePrefix ?? 'admin.outlets') . '.index', ['tab' => $key]) }}">{{ $label }} <span class="badge">{{ number_format($counts[$key] ?? 0, 0, ',', '.') }}</span></a>
                         </li>
                     @endforeach
                     @if($tab === 'outlet')
                         <li class="pull-right" style="padding: 6px 10px 0 0;">
-                            <a href="{{ route('admin.outlets.create') }}" class="btn btn-primary btn-sm" style="color: #fff; padding: 5px 10px;">
+                            <a href="{{ route(($routePrefix ?? 'admin.outlets') . '.create') }}" class="btn btn-primary btn-sm" style="color: #fff; padding: 5px 10px;">
                                 <i class="fa fa-plus"></i> Tambah Outlet
                             </a>
                         </li>
@@ -99,7 +98,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: @json(route('admin.outlets.index', ['tab' => $tab])),
+                url: @json(route(($routePrefix ?? 'admin.outlets') . '.index', ['tab' => $tab])),
                 data: function (d) {
                     d.sales_code = $('#filter_sales').val() || '';
                 }

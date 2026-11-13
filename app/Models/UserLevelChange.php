@@ -14,7 +14,7 @@ class UserLevelChange extends Model
 
     public const LABELS = [
         'outlet' => 'Outlet',
-        'buyer' => 'User Biasa',
+        'buyer' => 'Ecom',
         'reseller' => 'Reseller',
     ];
 

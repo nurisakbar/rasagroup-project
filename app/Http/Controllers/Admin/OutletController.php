@@ -20,9 +20,42 @@ class OutletController extends Controller
     /** Tab halaman: outlet (daftar dengan kode sales), reseller (outlet/user biasa bertanda reseller), user biasa. */
     public const TABS = ['outlet', 'reseller', 'buyer'];
 
+    /** Label tab (huruf kapital). Tab "buyer" = user biasa / pembeli ecommerce. */
+    public const TAB_LABELS = ['outlet' => 'OUTLET', 'reseller' => 'RESELLER', 'buyer' => 'ECOM'];
+
+    /** Prefix nama route & layout panel; dipakai ulang oleh panel Admin Hub. */
+    protected string $routePrefix = 'admin.outlets';
+
+    protected string $layout = 'layouts.admin';
+
+    protected bool $canDelete = true;
+
+    /** Tab yang boleh diakses di panel ini. */
+    protected function tabs(): array
+    {
+        return self::TABS;
+    }
+
+    /** User yang melakukan perubahan (untuk riwayat level). */
+    protected function actorId(): ?string
+    {
+        return auth('admin')->id();
+    }
+
+    /** Data tampilan panel untuk semua view outlet. */
+    protected function panel(): array
+    {
+        return [
+            'routePrefix' => $this->routePrefix,
+            'layout' => $this->layout,
+            'canDelete' => $this->canDelete,
+            'tabLabels' => array_intersect_key(self::TAB_LABELS, array_flip($this->tabs())),
+        ];
+    }
+
     public function index(Request $request)
     {
-        $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'outlet';
+        $tab = in_array($request->query('tab'), $this->tabs(), true) ? $request->query('tab') : 'outlet';
 
         if ($request->ajax()) {
             $query = $this->tabQuery($tab)
@@ -51,13 +84,17 @@ class OutletController extends Controller
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('action', function ($user) {
-                    $editUrl = route('admin.outlets.edit', $user);
-                    $deleteUrl = route('admin.outlets.destroy', $user);
-                    
-                    return '
+                    $editUrl = route($this->routePrefix . '.edit', $user);
+                    $editButton = '
                         <a href="' . $editUrl . '" class="btn btn-warning btn-xs" title="Edit">
                             <i class="fa fa-edit"></i> Edit
-                        </a>
+                        </a>';
+                    if (! $this->canDelete) {
+                        return $editButton;
+                    }
+                    $deleteUrl = route($this->routePrefix . '.destroy', $user);
+
+                    return $editButton . '
                         <form action="' . $deleteUrl . '" method="POST" style="display: inline-block;" class="delete-form">
                             ' . csrf_field() . '
                             ' . method_field('DELETE') . '
@@ -71,7 +108,7 @@ class OutletController extends Controller
                     return $user->created_at->format('d-m-Y');
                 })
                 ->addColumn('origin', function ($user) {
-                    return $user->role === User::ROLE_OUTLET ? 'Outlet' : 'User Biasa';
+                    return $user->role === User::ROLE_OUTLET ? 'Outlet' : 'Ecom';
                 })
                 ->addColumn('reseller_marked', function ($user) {
                     return $user->reseller_marked_at ? $user->reseller_marked_at->timezone(\App\Support\Wib::TZ)->format('d-m-Y') : '-';
@@ -87,9 +124,9 @@ class OutletController extends Controller
         }
 
         $salesList = User::salesCodeOptions();
-        $counts = collect(self::TABS)->mapWithKeys(fn ($key) => [$key => $this->tabQuery($key)->count()]);
+        $counts = collect($this->tabs())->mapWithKeys(fn ($key) => [$key => $this->tabQuery($key)->count()]);
 
-        return view('admin.outlets.index', compact('salesList', 'tab', 'counts'));
+        return view('admin.outlets.index', compact('salesList', 'tab', 'counts') + $this->panel());
     }
 
     /**
@@ -115,9 +152,10 @@ class OutletController extends Controller
         return $user->customerLevel();
     }
 
-    private function isManageable(User $user): bool
+    protected function isManageable(User $user): bool
     {
-        return in_array($user->role, [User::ROLE_OUTLET, User::ROLE_BUYER], true);
+        return in_array($user->role, [User::ROLE_OUTLET, User::ROLE_BUYER], true)
+            && in_array($user->customerLevel(), $this->tabs(), true);
     }
 
     /**
@@ -126,7 +164,7 @@ class OutletController extends Controller
     public function create()
     {
         $salesList = User::salesCodeOptions();
-        return view('admin.outlets.create', compact('salesList'));
+        return view('admin.outlets.create', compact('salesList') + $this->panel());
     }
 
     /**
@@ -153,7 +191,7 @@ class OutletController extends Controller
             'qad_customer_code' => $request->qad_customer_code,
         ]);
 
-        return redirect()->route('admin.outlets.index')->with('success', 'Outlet berhasil ditambahkan.');
+        return redirect()->route($this->routePrefix . '.index')->with('success', 'Outlet berhasil ditambahkan.');
     }
 
     /**
@@ -162,14 +200,14 @@ class OutletController extends Controller
     public function edit(User $outlet)
     {
         if (! $this->isManageable($outlet)) {
-            return redirect()->route('admin.outlets.index')->with('error', 'Role user ini tidak dapat diubah di sini.');
+            return redirect()->route($this->routePrefix . '.index')->with('error', 'User ini tidak dapat diubah di sini.');
         }
 
         $user = $outlet; // to match view variable
         $salesList = User::salesCodeOptions();
         $levelChanges = $user->levelChanges()->with('changer:id,name')->limit(20)->get();
 
-        return view('admin.outlets.edit', compact('user', 'salesList', 'levelChanges'));
+        return view('admin.outlets.edit', compact('user', 'salesList', 'levelChanges') + $this->panel());
     }
 
     /**
@@ -231,16 +269,19 @@ class OutletController extends Controller
                     'user_id' => $outlet->id,
                     'from_level' => $fromLevel,
                     'to_level' => $toLevel,
-                    'changed_by' => auth('admin')->id() ?? auth()->id(),
+                    'changed_by' => $this->actorId(),
                 ]);
             }
         });
 
         $tab = $this->tabFor($outlet->fresh());
-        $label = ['outlet' => 'Outlet', 'reseller' => 'Reseller', 'buyer' => 'User Biasa'][$tab];
+        $message = 'Data ' . $outlet->name . ' berhasil diperbarui (tab ' . self::TAB_LABELS[$tab] . ').';
+        if (! in_array($tab, $this->tabs(), true)) {
+            // Mis. Admin Hub mencabut reseller dari user ecom: user pindah ke tab yang tidak tampil di panel ini.
+            return redirect()->route($this->routePrefix . '.index', ['tab' => 'reseller'])->with('success', $message);
+        }
 
-        return redirect()->route('admin.outlets.index', ['tab' => $tab])
-            ->with('success', 'Data ' . $outlet->name . ' berhasil diperbarui (tab ' . $label . ').');
+        return redirect()->route($this->routePrefix . '.index', ['tab' => $tab])->with('success', $message);
     }
 
     private function knownSalesCodeRule(): \Closure
@@ -257,13 +298,13 @@ class OutletController extends Controller
      */
     public function destroy(User $outlet)
     {
-        if (! $this->isManageable($outlet)) {
+        if (! $this->canDelete || ! $this->isManageable($outlet)) {
             abort(403);
         }
 
         $tab = $this->tabFor($outlet);
         $outlet->delete();
 
-        return redirect()->route('admin.outlets.index', ['tab' => $tab])->with('success', 'User berhasil dihapus.');
+        return redirect()->route($this->routePrefix . '.index', ['tab' => $tab])->with('success', 'User berhasil dihapus.');
     }
 }

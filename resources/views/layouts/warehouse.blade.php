@@ -123,6 +123,13 @@
           </a>
         </li>
         @endif
+        @if(auth()->check() && auth()->user()->sub_role === 'admin')
+        <li class="{{ request()->routeIs('warehouse.outlets.*') ? 'active' : '' }}">
+          <a href="{{ route('warehouse.outlets.index') }}">
+            <i class="fa fa-building-o"></i> <span>OUTLET DAN RESELLER</span>
+          </a>
+        </li>
+        @endif
         <li class="header">SETTING</li>
         <li class="{{ request()->routeIs('warehouse.profile') ? 'active' : '' }}">
           <a href="{{ route('warehouse.profile') }}">

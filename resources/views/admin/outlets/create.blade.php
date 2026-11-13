@@ -1,10 +1,10 @@
-@extends('layouts.admin')
+@extends($layout ?? 'layouts.admin')
 
 @section('title', 'Tambah Outlet')
 @section('page-title', 'Tambah Outlet')
 
 @section('breadcrumb')
-    <li><a href="{{ route('admin.outlets.index') }}">Outlet dan Reseller</a></li>
+    <li><a href="{{ route(($routePrefix ?? 'admin.outlets') . '.index') }}">Outlet dan Reseller</a></li>
     <li class="active">Tambah</li>
 @endsection
 
@@ -15,7 +15,7 @@
             <div class="box-header with-border">
                 <h3 class="box-title">Form Tambah Outlet</h3>
             </div>
-            <form action="{{ route('admin.outlets.store') }}" method="POST">
+            <form action="{{ route(($routePrefix ?? 'admin.outlets') . '.store') }}" method="POST">
                 @csrf
                 <div class="box-body">
                     <div class="form-group @error('qad_customer_code') has-error @enderror">
@@ -68,7 +68,7 @@
                 </div>
 
                 <div class="box-footer">
-                    <a href="{{ route('admin.outlets.index') }}" class="btn btn-default">Kembali</a>
+                    <a href="{{ route(($routePrefix ?? 'admin.outlets') . '.index') }}" class="btn btn-default">Kembali</a>
                     <button type="submit" class="btn btn-primary pull-right">Simpan User</button>
                 </div>
             </form>

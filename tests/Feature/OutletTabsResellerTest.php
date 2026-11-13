@@ -51,7 +51,7 @@ class OutletTabsResellerTest extends TestCase
     public function test_tabs_separate_outlets_resellers_and_regular_users(): void
     {
         $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.index'))
-            ->assertOk()->assertSee('Outlet')->assertSee('Reseller')->assertSee('User Biasa');
+            ->assertOk()->assertSee('OUTLET')->assertSee('RESELLER')->assertSee('ECOM');
 
         $this->assertContains('Outlet Uji Tab', $this->names('outlet'));
         $this->assertNotContains('Buyer Uji Tab', $this->names('outlet'));

@@ -479,6 +479,10 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
             Route::put('/{driippreneur}/eligibility', [App\Http\Controllers\Warehouse\DriippreneurController::class, 'updateEligibility'])->name('update-eligibility');
         });
 
+        // Outlet dan Reseller (khusus Admin Hub; tanpa tab ECOM & tanpa hapus)
+        Route::resource('outlets', App\Http\Controllers\Warehouse\OutletController::class)
+            ->except(['show', 'destroy'])
+            ->parameters(['outlets' => 'outlet']);
         // Hub Profile/Settings
         Route::get('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\Warehouse\ProfileController::class, 'update'])->name('profile.update');
