@@ -194,9 +194,10 @@
                                     <li>
                                         <a class="{{ request()->routeIs('information-channels.*') ? 'active' : '' }}" href="{{ route('information-channels.index') }}">SALURAN INFORMASI</a>
                                     </li>
-                                    <li>
+                                    {{-- Menu AFFILIATOR disembunyikan sementara. --}}
+                                    {{-- <li>
                                         <a class="{{ request()->routeIs('affiliator.*') ? 'active' : '' }}" href="{{ route('affiliator.register') }}">AFFILIATOR</a>
-                                    </li>
+                                    </li> --}}
 
                                 </ul>
                             </nav>
