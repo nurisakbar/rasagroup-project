@@ -44,6 +44,11 @@
                                 <i class="fi-rs-users mr-15"></i>Rekrut Outlet
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('buyer.forecast.index') }}">
+                                <i class="fi-rs-chart-histogram mr-15"></i>Forecast
+                            </a>
+                        </li>
                         @endif
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.affiliate.index') }}">

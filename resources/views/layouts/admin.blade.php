@@ -191,6 +191,13 @@
           </a>
         </li>
         @endif
+        @if(in_array($adminRole, \App\Http\Controllers\Admin\DistributorForecastReportController::ALLOWED_ROLES, true))
+        <li class="{{ request()->routeIs('admin.reports.distributor-forecast.*') ? 'active' : '' }}">
+          <a href="{{ route('admin.reports.distributor-forecast.index') }}">
+            <i class="fa fa-line-chart"></i> <span>FORECAST DISTRIBUTOR</span>
+          </a>
+        </li>
+        @endif
 
         @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
         <li class="{{ request()->routeIs('admin.orders.create') ? 'active' : '' }}">

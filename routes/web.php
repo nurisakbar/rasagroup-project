@@ -184,6 +184,14 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::get('/outlet-referral', [App\Http\Controllers\Buyer\OutletReferralController::class, 'index'])->name('outlet-referral.index');
     Route::get('/outlet-referral/{outlet}/discounts', [App\Http\Controllers\Buyer\OutletReferralController::class, 'editDiscounts'])->name('outlet-referral.discounts.edit');
     Route::post('/outlet-referral/{outlet}/discounts', [App\Http\Controllers\Buyer\OutletReferralController::class, 'updateDiscounts'])->name('outlet-referral.discounts.update');
+
+    // Forecast kebutuhan distributor per outlet rekrutan
+    Route::get('/forecast', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'index'])->name('forecast.index');
+    Route::post('/forecast/lines', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'store'])->name('forecast.store');
+    Route::put('/forecast', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'update'])->name('forecast.update');
+    Route::delete('/forecast/lines/{line}', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'destroy'])->name('forecast.destroy');
+    Route::get('/forecast/export', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'export'])->name('forecast.export');
+    Route::post('/forecast/import', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'import'])->name('forecast.import');
 });
 
 // Log Viewer Route (Access via /logs)
@@ -337,6 +345,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/datatable', [App\Http\Controllers\Admin\GmvReportController::class, 'datatable'])->name('datatable');
             Route::get('/export', [App\Http\Controllers\Admin\GmvReportController::class, 'export'])->name('export');
         });
+
+        // Forecast kebutuhan dari distributor
+        Route::get('reports/distributor-forecast', [App\Http\Controllers\Admin\DistributorForecastReportController::class, 'index'])->name('reports.distributor-forecast.index');
+        Route::get('reports/distributor-forecast/export', [App\Http\Controllers\Admin\DistributorForecastReportController::class, 'export'])->name('reports.distributor-forecast.export');
 
         // Penjualan distributor dari sistem eksternal (hanya pencatatan)
         Route::prefix('reports/distributor-sales')->name('reports.distributor-sales.')->group(function () {

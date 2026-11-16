@@ -45,6 +45,11 @@
                     <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Rekrut Outlet
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.forecast.*') ? 'active' : '' }}" href="{{ route('buyer.forecast.index') }}">
+                    <i class="fi-rs-chart-histogram {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Forecast
+                </a>
+            </li>
             @endif
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
