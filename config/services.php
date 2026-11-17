@@ -49,7 +49,7 @@ return [
 
     'zoho' => [
         // false = tidak ada data yang dikirim ke Zoho (mis. di server dev).
-        'enabled' => filter_var(env('ZOHO_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'enabled' => filter_var(env('ZOHO_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
         'client_id' => env('ZOHO_CLIENT_ID'),
         'client_secret' => env('ZOHO_CLIENT_SECRET'),
         'refresh_token' => env('ZOHO_REFRESH_TOKEN'),

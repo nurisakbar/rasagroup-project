@@ -49,7 +49,15 @@ class OutletController extends AdminOutletController implements HasMiddleware
 
     protected function scopeToPanel($query)
     {
-        return $query->where('hub_id', $this->hubId());
+        $hubId = $this->hubId();
+        $salesCodes = User::salesCodeOptionsForHub($hubId)->pluck('sales_code')->all();
+
+        // Tercatat di hub ini, ATAU sales-nya sales hub ini, ATAU pernah order dari hub ini.
+        return $query->where(function ($q) use ($hubId, $salesCodes) {
+            $q->where('hub_id', $hubId)
+                ->when($salesCodes, fn ($q) => $q->orWhereIn('sales_code', $salesCodes))
+                ->orWhereHas('orders', fn ($o) => $o->where('source_warehouse_id', $hubId));
+        });
     }
 
     protected function canChooseHub(): bool
