@@ -10,8 +10,11 @@ use App\Services\DiscountService;
 /**
  * Rincian harga per baris pesanan untuk tampilan (halaman pesanan, email, invoice, admin).
  *
- * Aturan: harga katalog (harga di website) sudah termasuk PPN. Diskon dihitung dari harga sebelum PPN,
- * sedangkan PPN tetap dihitung dari harga di website (tidak berkurang oleh diskon). Diskon dan PPN ditampilkan per baris, sehingga ringkasan cukup berisi
+ * Aturan: harga katalog sudah termasuk PPN. Diskon dihitung dari harga sebelum PPN (DPP), lalu PPN
+ * dihitung dari DPP setelah diskon. Diskon tidak mengurangi PPN untuk kedua kalinya.
+ *
+ * Per baris:  DPP = harga sebelum PPN x jumlah;  DPP setelah diskon = DPP - diskon;
+ *             PPN = DPP setelah diskon x tarif;  total baris = DPP setelah diskon + PPN. Diskon dan PPN ditampilkan per baris, sehingga ringkasan cukup berisi
  * subtotal produk (jumlah kolom total), ongkos kirim, biaya layanan, dan total bayar.
  *
  * Jumlah total baris + ongkir + biaya layanan selalu sama dengan total pesanan: selisih pembulatan
@@ -68,11 +71,11 @@ class OrderLineBreakdown
             $unitDpp = (float) $item->unitPriceBeforeDiscount();
             $unitAfter = (float) $item->unitPriceAfterDiscount();
 
-            $lineDpp = round($unitDpp * $qty);
-            $lineAfter = round(min($unitDpp, $unitAfter) * $qty);
-            $discount = max(0.0, $lineDpp - $lineAfter);
-            // PPN dari harga di website (sebelum diskon); diskon hanya mengurangi harga tanpa PPN.
-            $ppn = round($lineDpp * $taxRate);
+            $calc = self::calculateLine($unitDpp, $unitAfter, $qty, $taxRate);
+            $lineDpp = $calc['line_dpp'];
+            $lineAfter = $calc['line_dpp_after_discount'];
+            $discount = $calc['discount_amount'];
+            $ppn = $calc['ppn'];
 
             $lines[] = [
                 'item' => $item,
@@ -88,7 +91,7 @@ class OrderLineBreakdown
                 'discount_amount' => $discount,
                 'line_dpp_after_discount' => $lineAfter,
                 'ppn' => $ppn,
-                'total' => $lineAfter + $ppn,
+                'total' => $calc['total'],
             ];
         }
 
@@ -100,21 +103,19 @@ class OrderLineBreakdown
         $orderDiscount = round((float) ($order->discount_amount ?? 0) * (1 + $taxRate));
 
         $productsTotal = array_sum(array_column($lines, 'total'));
-        $difference = $grandTotal - ($productsTotal - $orderDiscount + $shipping + $serviceFee);
+        $difference = self::difference($grandTotal, $productsTotal, $orderDiscount, $shipping, $serviceFee);
 
         // Order sebelum diskon MOQ dicatat per item: total sudah dipotong tetapi harga item belum.
         if ($difference < -self::ROUNDING_TOLERANCE && $taxRate > 0) {
             $rebuilt = self::withReconstructedMoqDiscount($order, $lines, $taxRate);
             if ($rebuilt !== null) {
-                // Order lama ditagih dengan PPN dari harga setelah diskon: cocokkan ke total tersimpan dengan aturan itu.
-                $legacyTotal = array_sum(array_column($rebuilt, 'legacy_total'));
                 $rebuiltTotal = array_sum(array_column($rebuilt, 'total'));
-                $rebuiltDifference = $grandTotal - ($legacyTotal - $orderDiscount + $shipping + $serviceFee);
+                $rebuiltDifference = self::difference($grandTotal, $rebuiltTotal, $orderDiscount, $shipping, $serviceFee);
                 // Dipakai hanya bila hasilnya cocok dengan total tersimpan (selisih pembulatan saja).
                 if (abs($rebuiltDifference) <= self::ROUNDING_TOLERANCE) {
                     $lines = $rebuilt;
                     $productsTotal = $rebuiltTotal;
-                    $difference = $grandTotal - ($rebuiltTotal - $orderDiscount + $shipping + $serviceFee);
+                    $difference = $rebuiltDifference;
                 }
             }
         }
@@ -151,9 +152,42 @@ class OrderLineBreakdown
             // Selisih total tersimpan terhadap jumlah baris (0 bila konsisten); ditampilkan sebagai baris penyesuaian.
             'adjustment' => round($difference, 2),
             'note' => $usesPpn && $taxPercent > 0
-                ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN; PPN dihitung dari harga di website (sebelum diskon).'
+                ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN, lalu PPN dihitung dari harga setelah diskon.'
                 : 'Harga tanpa PPN. Diskon dihitung dari harga per baris.',
         ];
+    }
+
+    /**
+     * Rumus satu baris (murni, tanpa database). Semua nilai dibulatkan ke rupiah penuh dengan round().
+     *
+     * @param  float  $unitDppBefore  harga satuan sebelum PPN dan sebelum diskon
+     * @param  float  $unitDppAfter   harga satuan sebelum PPN setelah diskon (tidak boleh melebihi harga sebelum diskon)
+     * @param  float  $taxRate        tarif PPN sebagai pecahan (0.11); 0 bila tanpa PPN
+     * @return array{line_dpp: float, line_dpp_after_discount: float, discount_amount: float, ppn: float, total: float}
+     */
+    public static function calculateLine(float $unitDppBefore, float $unitDppAfter, int $qty, float $taxRate): array
+    {
+        $qty = max(1, $qty);
+        $lineDpp = round($unitDppBefore * $qty);
+        $lineAfter = round(min($unitDppBefore, $unitDppAfter) * $qty);
+        $ppn = round($lineAfter * $taxRate);
+
+        return [
+            'line_dpp' => $lineDpp,
+            'line_dpp_after_discount' => $lineAfter,
+            'discount_amount' => max(0.0, $lineDpp - $lineAfter),
+            'ppn' => $ppn,
+            'total' => $lineAfter + $ppn,
+        ];
+    }
+
+    /**
+     * Selisih total pesanan tersimpan terhadap jumlah baris + ongkir + biaya layanan - diskon pesanan.
+     * Diskon sudah ada di total tiap baris, jadi tidak dikurangkan lagi pada subtotal.
+     */
+    public static function difference(float $grandTotal, float $productsTotal, float $orderDiscount, float $shipping, float $serviceFee): float
+    {
+        return $grandTotal - ($productsTotal - $orderDiscount + $shipping + $serviceFee);
     }
 
     /**
@@ -190,7 +224,6 @@ class OrderLineBreakdown
 
         $changed = false;
         foreach ($lines as $index => $line) {
-            $lines[$index]['legacy_total'] = $line['total'];
             $item = $line['item'];
             $group = $item->product ? $service->getProductCategoryGroup($item->product) : null;
             $percent = $group ? $service->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0)) : 0.0;
@@ -199,15 +232,13 @@ class OrderLineBreakdown
             }
 
             $unitAfter = round($line['unit_price_dpp'] * (1 - $percent / 100), 2);
-            $lineAfter = round($unitAfter * $line['quantity']);
-            $ppn = round($line['line_dpp'] * $taxRate);
+            $calc = self::calculateLine($line['unit_price_dpp'], $unitAfter, $line['quantity'], $taxRate);
 
-            $lines[$index]['legacy_total'] = $lineAfter + round($lineAfter * $taxRate);
             $lines[$index]['discount_percent'] = $percent;
-            $lines[$index]['discount_amount'] = max(0.0, $line['line_dpp'] - $lineAfter);
-            $lines[$index]['line_dpp_after_discount'] = $lineAfter;
-            $lines[$index]['ppn'] = $ppn;
-            $lines[$index]['total'] = $lineAfter + $ppn;
+            $lines[$index]['discount_amount'] = $calc['discount_amount'];
+            $lines[$index]['line_dpp_after_discount'] = $calc['line_dpp_after_discount'];
+            $lines[$index]['ppn'] = $calc['ppn'];
+            $lines[$index]['total'] = $calc['total'];
             $changed = true;
         }
 
