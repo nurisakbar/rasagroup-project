@@ -10,8 +10,8 @@ use App\Services\DiscountService;
 /**
  * Rincian harga per baris pesanan untuk tampilan (halaman pesanan, email, invoice, admin).
  *
- * Aturan: harga katalog sudah termasuk PPN. Diskon dihitung dari harga sebelum PPN, lalu PPN dihitung
- * dari harga setelah diskon. Diskon dan PPN ditampilkan per baris, sehingga ringkasan cukup berisi
+ * Aturan: harga katalog (harga di website) sudah termasuk PPN. Diskon dihitung dari harga sebelum PPN,
+ * sedangkan PPN tetap dihitung dari harga di website (tidak berkurang oleh diskon). Diskon dan PPN ditampilkan per baris, sehingga ringkasan cukup berisi
  * subtotal produk (jumlah kolom total), ongkos kirim, biaya layanan, dan total bayar.
  *
  * Jumlah total baris + ongkir + biaya layanan selalu sama dengan total pesanan: selisih pembulatan
@@ -71,7 +71,8 @@ class OrderLineBreakdown
             $lineDpp = round($unitDpp * $qty);
             $lineAfter = round(min($unitDpp, $unitAfter) * $qty);
             $discount = max(0.0, $lineDpp - $lineAfter);
-            $ppn = round($lineAfter * $taxRate);
+            // PPN dari harga di website (sebelum diskon); diskon hanya mengurangi harga tanpa PPN.
+            $ppn = round($lineDpp * $taxRate);
 
             $lines[] = [
                 'item' => $item,
@@ -105,13 +106,15 @@ class OrderLineBreakdown
         if ($difference < -self::ROUNDING_TOLERANCE && $taxRate > 0) {
             $rebuilt = self::withReconstructedMoqDiscount($order, $lines, $taxRate);
             if ($rebuilt !== null) {
+                // Order lama ditagih dengan PPN dari harga setelah diskon: cocokkan ke total tersimpan dengan aturan itu.
+                $legacyTotal = array_sum(array_column($rebuilt, 'legacy_total'));
                 $rebuiltTotal = array_sum(array_column($rebuilt, 'total'));
-                $rebuiltDifference = $grandTotal - ($rebuiltTotal - $orderDiscount + $shipping + $serviceFee);
+                $rebuiltDifference = $grandTotal - ($legacyTotal - $orderDiscount + $shipping + $serviceFee);
                 // Dipakai hanya bila hasilnya cocok dengan total tersimpan (selisih pembulatan saja).
                 if (abs($rebuiltDifference) <= self::ROUNDING_TOLERANCE) {
                     $lines = $rebuilt;
                     $productsTotal = $rebuiltTotal;
-                    $difference = $rebuiltDifference;
+                    $difference = $grandTotal - ($rebuiltTotal - $orderDiscount + $shipping + $serviceFee);
                 }
             }
         }
@@ -148,7 +151,7 @@ class OrderLineBreakdown
             // Selisih total tersimpan terhadap jumlah baris (0 bila konsisten); ditampilkan sebagai baris penyesuaian.
             'adjustment' => round($difference, 2),
             'note' => $usesPpn && $taxPercent > 0
-                ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN, lalu PPN dihitung dari harga setelah diskon.'
+                ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN; PPN dihitung dari harga di website (sebelum diskon).'
                 : 'Harga tanpa PPN. Diskon dihitung dari harga per baris.',
         ];
     }
@@ -187,6 +190,7 @@ class OrderLineBreakdown
 
         $changed = false;
         foreach ($lines as $index => $line) {
+            $lines[$index]['legacy_total'] = $line['total'];
             $item = $line['item'];
             $group = $item->product ? $service->getProductCategoryGroup($item->product) : null;
             $percent = $group ? $service->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0)) : 0.0;
@@ -196,8 +200,9 @@ class OrderLineBreakdown
 
             $unitAfter = round($line['unit_price_dpp'] * (1 - $percent / 100), 2);
             $lineAfter = round($unitAfter * $line['quantity']);
-            $ppn = round($lineAfter * $taxRate);
+            $ppn = round($line['line_dpp'] * $taxRate);
 
+            $lines[$index]['legacy_total'] = $lineAfter + round($lineAfter * $taxRate);
             $lines[$index]['discount_percent'] = $percent;
             $lines[$index]['discount_amount'] = max(0.0, $line['line_dpp'] - $lineAfter);
             $lines[$index]['line_dpp_after_discount'] = $lineAfter;
