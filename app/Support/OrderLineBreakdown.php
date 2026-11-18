@@ -49,6 +49,7 @@ class OrderLineBreakdown
      *     shipping: float,
      *     service_fee: float,
      *     grand_total: float,
+     *     adjustment: float,
      *     note: string
      * }
      */
@@ -128,6 +129,8 @@ class OrderLineBreakdown
             'shipping' => $shipping,
             'service_fee' => $serviceFee,
             'grand_total' => $grandTotal,
+            // Selisih total tersimpan terhadap jumlah baris (0 bila konsisten); ditampilkan sebagai baris penyesuaian.
+            'adjustment' => round($difference, 2),
             'note' => $usesPpn && $taxPercent > 0
                 ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN, lalu PPN dihitung dari harga setelah diskon.'
                 : 'Harga tanpa PPN. Diskon dihitung dari harga per baris.',

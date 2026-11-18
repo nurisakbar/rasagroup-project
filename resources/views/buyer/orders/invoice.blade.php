@@ -171,7 +171,7 @@
         $usesPpn = $breakdown['uses_ppn'];
         $percentLabel = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',') . '%';
     @endphp
-    @if($breakdown['reliable'])
+    @if($breakdown['lines'] !== [])
     <table class="items breakdown">
         <thead>
             <tr>
@@ -203,7 +203,7 @@
                         @if($line['discount_amount'] > 0)
                             -{{ $money($line['discount_amount']) }}<span class="sub">{{ $percentLabel($line['discount_percent']) }}</span>
                         @else
-                            -
+                            0
                         @endif
                     </td>
                     @if($usesPpn)
@@ -230,6 +230,12 @@
             <td>Ongkos Kirim</td>
             <td class="amount">{{ $money($breakdown['shipping']) }}</td>
         </tr>
+        @if(abs($breakdown['adjustment']) >= 0.5)
+            <tr>
+                <td>Penyesuaian</td>
+                <td class="amount">{{ $breakdown['adjustment'] < 0 ? '-' : '' }}{{ $money(abs($breakdown['adjustment'])) }}</td>
+            </tr>
+        @endif
         @if($breakdown['service_fee'] > 0)
             <tr>
                 <td>Biaya Layanan</td>
