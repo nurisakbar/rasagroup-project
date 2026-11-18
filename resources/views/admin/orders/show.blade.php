@@ -713,12 +713,12 @@
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th class="text-right">Harga jual<br><small class="text-muted">{{ $orderBreakdown['uses_ppn'] ? 'termasuk PPN' : 'tanpa PPN' }}</small></th>
-                                <th class="text-right">Harga tanpa pajak<br><small class="text-muted">per satuan</small></th>
+                                <th class="text-right">Harga satuan<br><small class="text-muted">{{ $orderBreakdown['uses_ppn'] ? 'termasuk PPN' : 'tanpa PPN' }}</small></th>
+                                <th class="text-right">Harga satuan<br><small class="text-muted">{{ $orderBreakdown['uses_ppn'] ? 'sebelum PPN' : 'tanpa pajak' }}</small></th>
                                 <th class="text-right">Diskon<br><small class="text-muted">dari harga tanpa pajak</small></th>
                                 <th class="text-center">Jumlah</th>
                                 <th class="text-right">{{ $orderBreakdown['uses_ppn'] ? $orderBreakdown['tax_label'] : 'Pajak' }}</th>
-                                <th class="text-right">Total</th>
+                                <th class="text-right">Total{!! $orderBreakdown['reliable'] ? '' : '<br><small class="text-muted">sebelum PPN</small>' !!}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -866,10 +866,10 @@
                                         @endif
                                     </td>
                                     <td class="text-right">
-                                        {{ number_format($priceBefore, 0, ',', '.') }}
+                                        {{ number_format($bLine ? $bLine['unit_price_incl'] : $priceBefore, 0, ',', '.') }}
                                     </td>
                                     <td class="text-right">
-                                        <span title="{{ number_format($priceWithoutTax, 2, ',', '.') }}">{{ number_format($priceWithoutTax, 0, ',', '.') }}</span>
+                                        <span title="{{ number_format($priceWithoutTax, 2, ',', '.') }}">{{ number_format($bLine ? $bLine['unit_price_dpp'] : $priceWithoutTax, 0, ',', '.') }}</span>
                                     </td>
                                     <td class="text-right">
                                         @php

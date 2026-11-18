@@ -180,7 +180,7 @@
                 <th class="qty">Jumlah</th>
                 <th class="price">Harga satuan<span class="sub">{{ $usesPpn ? 'termasuk PPN' : 'tanpa PPN' }}</span></th>
                 @if($usesPpn)
-                    <th class="price">Harga<span class="sub">sebelum PPN</span></th>
+                    <th class="price">Harga satuan<span class="sub">sebelum PPN</span></th>
                 @endif
                 <th class="price">Diskon<span class="sub">{{ $usesPpn ? 'dari harga sebelum PPN' : '&nbsp;' }}</span></th>
                 @if($usesPpn)
@@ -197,7 +197,7 @@
                     <td class="qty">{{ $line['quantity_label'] }}</td>
                     <td class="price">{{ $money($line['unit_price_incl']) }}</td>
                     @if($usesPpn)
-                        <td class="price">{{ $money($line['line_dpp']) }}</td>
+                        <td class="price">{{ $money($line['unit_price_dpp']) }}</td>
                     @endif
                     <td class="price">
                         @if($line['discount_amount'] > 0)
@@ -250,9 +250,11 @@
                 <th class="num">S.No</th>
                 <th class="product">Product</th>
                 <th class="qty">Quantity</th>
-                <th class="price">Harga katalog</th>
-                <th class="price">Harga jual</th>
-                <th class="total">Total</th>
+                <th class="price">Harga satuan<span class="sub">{{ $usesPpn ? 'termasuk PPN' : 'tanpa PPN' }}</span></th>
+                @if($usesPpn)
+                    <th class="price">Harga satuan<span class="sub">sebelum PPN</span></th>
+                @endif
+                <th class="total">Total<span class="sub">{{ $usesPpn ? 'sebelum PPN' : '&nbsp;' }}</span></th>
             </tr>
         </thead>
         <tbody>
@@ -261,13 +263,19 @@
                     <td class="num">{{ $item['no'] }}</td>
                     <td>{{ $item['name'] }}</td>
                     <td class="qty">{{ $item['quantity'] }}</td>
-                    <td class="price">{{ $money($item['unit_price_before'] ?? $item['unit_price']) }}</td>
-                    <td class="price">{{ $money($item['unit_price_after'] ?? $item['unit_price']) }}</td>
+                    @php
+                        $unitDpp = (float) ($item['unit_price_before'] ?? $item['unit_price']);
+                        $unitIncl = round($unitDpp * (1 + ($usesPpn ? $breakdown['tax_percent'] : 0) / 100));
+                    @endphp
+                    <td class="price">{{ $money($unitIncl) }}</td>
+                    @if($usesPpn)
+                        <td class="price">{{ $money($unitDpp) }}</td>
+                    @endif
                     <td class="total">{{ $money($item['total_price']) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">Tidak ada item pada pesanan ini.</td>
+                    <td colspan="{{ $usesPpn ? 5 : 4 }}">Tidak ada item pada pesanan ini.</td>
                 </tr>
             @endforelse
         </tbody>
