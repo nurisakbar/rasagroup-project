@@ -413,6 +413,12 @@ class ZohoService
             return;
         }
 
+        if (! $order->shouldSyncToZoho()) {
+            Log::info('Zoho: sync dilewati karena gudang pengirim ditandai ecom.', ['order_number' => $order->order_number]);
+
+            return;
+        }
+
         try {
             $order->loadMissing(['user', 'items.product', 'sourceWarehouse']);
             

@@ -702,6 +702,26 @@ class Order extends Model
     }
 
     /**
+     * Order dari gudang yang ditandai ecom tidak dikirim ke WMS dan Zoho (hanya Jubelio).
+     */
+    public function shipsFromEcommerceWarehouse(): bool
+    {
+        $this->loadMissing('sourceWarehouse');
+
+        return (bool) $this->sourceWarehouse?->isEcommerce();
+    }
+
+    public function shouldSyncToWms(): bool
+    {
+        return ! $this->shipsFromEcommerceWarehouse();
+    }
+
+    public function shouldSyncToZoho(): bool
+    {
+        return ! $this->shipsFromEcommerceWarehouse();
+    }
+
+    /**
      * Hub kode lokasi FG… → sales order ke QAD.
      */
     public function shouldSyncToQad(): bool
@@ -751,6 +771,7 @@ class Order extends Model
         return $query
             ->where('finance_approved', true)
             ->where('order_status', '!=', 'cancelled')
+            ->whereDoesntHave('sourceWarehouse', fn ($w) => $w->ecommerce())
             ->where(function ($q) {
                 $q->whereNull('wms_so_status')
                     ->orWhereRaw('UPPER(wms_so_status) = ?', ['FAILED']);

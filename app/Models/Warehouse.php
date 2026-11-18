@@ -219,6 +219,26 @@ class Warehouse extends Model
     /**
      * Kode lokasi diawali FG = gudang QAD. Selain itu (kosong atau kode lain) = Jubelio.
      */
+    public function isEcommerce(): bool
+    {
+        // Sengaja tanpa target_role 'ecommerce': hub biasa (mis. Hub Surabaya Tidar) juga melayani role itu.
+        return str_contains(strtolower((string) $this->name), 'ecomm')
+            || str_contains(strtolower((string) $this->kode_hub), 'ecomm')
+            || str_contains(strtolower((string) $this->qad_location_code), 'ecomm');
+    }
+
+    /**
+     * Gudang yang ditandai ecom (lihat isEcommerce()).
+     */
+    public function scopeEcommerce($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereRaw("LOWER(COALESCE(name, '')) LIKE '%ecomm%'")
+                ->orWhereRaw("LOWER(COALESCE(kode_hub, '')) LIKE '%ecomm%'")
+                ->orWhereRaw("LOWER(COALESCE(qad_location_code, '')) LIKE '%ecomm%'");
+        });
+    }
+
     public function hasQadLocationCode(): bool
     {
         $code = strtoupper(trim((string) ($this->qad_location_code ?? '')));

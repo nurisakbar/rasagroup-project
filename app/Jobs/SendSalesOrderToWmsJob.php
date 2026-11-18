@@ -36,6 +36,12 @@ class SendSalesOrderToWmsJob implements ShouldQueue
             return;
         }
 
+        if (! $order->shouldSyncToWms()) {
+            Log::info('WMS Sync: dilewati, gudang pengirim ditandai ecom.', ['order_number' => $order->order_number]);
+
+            return;
+        }
+
         $this->order = $order;
         $order->loadMissing('items.product');
 

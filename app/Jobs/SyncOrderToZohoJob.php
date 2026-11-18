@@ -41,6 +41,11 @@ class SyncOrderToZohoJob implements ShouldQueue
             return;
         }
 
+        if (! $order->shouldSyncToZoho()) {
+            Log::info("SyncOrderToZohoJob: Order {$order->order_number} dilewati, gudang pengirim ditandai ecom.");
+            return;
+        }
+
         // Only sync if status is paid (or logic allows it) and not already synced
         if ($order->zoho_salesorder_id && $order->zoho_invoice_id && $order->zoho_payment_id) {
             Log::info("SyncOrderToZohoJob: Order {$order->order_number} is already fully synced to Zoho.");
