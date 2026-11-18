@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
+use App\Services\DiscountService;
 
 /**
  * Rincian harga per baris pesanan untuk tampilan (halaman pesanan, email, invoice, admin).
@@ -99,6 +100,21 @@ class OrderLineBreakdown
 
         $productsTotal = array_sum(array_column($lines, 'total'));
         $difference = $grandTotal - ($productsTotal - $orderDiscount + $shipping + $serviceFee);
+
+        // Order sebelum diskon MOQ dicatat per item: total sudah dipotong tetapi harga item belum.
+        if ($difference < -self::ROUNDING_TOLERANCE && $taxRate > 0) {
+            $rebuilt = self::withReconstructedMoqDiscount($order, $lines, $taxRate);
+            if ($rebuilt !== null) {
+                $rebuiltTotal = array_sum(array_column($rebuilt, 'total'));
+                $rebuiltDifference = $grandTotal - ($rebuiltTotal - $orderDiscount + $shipping + $serviceFee);
+                // Dipakai hanya bila hasilnya cocok dengan total tersimpan (selisih pembulatan saja).
+                if (abs($rebuiltDifference) <= self::ROUNDING_TOLERANCE) {
+                    $lines = $rebuilt;
+                    $productsTotal = $rebuiltTotal;
+                    $difference = $rebuiltDifference;
+                }
+            }
+        }
         if ($lines !== [] && $difference != 0.0 && abs($difference) <= self::ROUNDING_TOLERANCE) {
             $last = array_key_last($lines);
             if ($taxRate > 0) {
@@ -135,6 +151,62 @@ class OrderLineBreakdown
                 ? 'Harga sudah termasuk ' . $taxLabel . '. Diskon dihitung dari harga sebelum PPN, lalu PPN dihitung dari harga setelah diskon.'
                 : 'Harga tanpa PPN. Diskon dihitung dari harga per baris.',
         ];
+    }
+
+    /**
+     * Rekonstruksi diskon MOQ (kode sales) per baris untuk order lama yang diskonnya hanya mengurangi total.
+     * Aturan sama dengan DiscountService (tier per grup kategori, karton dibulatkan ke bawah).
+     *
+     * @param  list<array<string, mixed>>  $lines
+     * @return list<array<string, mixed>>|null  null bila tidak berlaku
+     */
+    private static function withReconstructedMoqDiscount(Order $order, array $lines, float $taxRate): ?array
+    {
+        $user = $order->user;
+        if (! $user || trim((string) $order->sales_code) === '') {
+            return null;
+        }
+
+        foreach ($lines as $line) {
+            if ($line['discount_amount'] > 0) {
+                return null;
+            }
+        }
+
+        $service = new DiscountService();
+        if (! $service->isEligible($order->sales_code, $user)) {
+            return null;
+        }
+
+        $order->loadMissing('items.product.category');
+        $carts = $order->items->map(fn (OrderItem $item) => (object) [
+            'product' => $item->product,
+            'quantity' => (int) $item->quantity,
+        ]);
+        $cartons = $service->cartonsPerGroup($carts);
+
+        $changed = false;
+        foreach ($lines as $index => $line) {
+            $item = $line['item'];
+            $group = $item->product ? $service->getProductCategoryGroup($item->product) : null;
+            $percent = $group ? $service->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0)) : 0.0;
+            if ($percent <= 0) {
+                continue;
+            }
+
+            $unitAfter = round($line['unit_price_dpp'] * (1 - $percent / 100), 2);
+            $lineAfter = round($unitAfter * $line['quantity']);
+            $ppn = round($lineAfter * $taxRate);
+
+            $lines[$index]['discount_percent'] = $percent;
+            $lines[$index]['discount_amount'] = max(0.0, $line['line_dpp'] - $lineAfter);
+            $lines[$index]['line_dpp_after_discount'] = $lineAfter;
+            $lines[$index]['ppn'] = $ppn;
+            $lines[$index]['total'] = $lineAfter + $ppn;
+            $changed = true;
+        }
+
+        return $changed ? $lines : null;
     }
 
     public static function rupiah(float $value): string
