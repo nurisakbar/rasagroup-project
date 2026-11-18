@@ -127,6 +127,24 @@ class DiscountTierTest extends TestCase
         }
     }
 
+    public function test_outlet_above_thirty_cartons_uses_maximum_discount(): void
+    {
+        foreach ([31, 50, 200] as $cartons) {
+            $this->assertSame(10.0, $this->service->tierPercentage($this->outlet, 'syrup_sauce', $cartons), "Syrup {$cartons} karton");
+            $this->assertSame(6.0, $this->service->tierPercentage($this->outlet, 'others', $cartons), "Others {$cartons} karton");
+        }
+    }
+
+    public function test_categories_outside_reference_table_get_no_group(): void
+    {
+        foreach (['Puree', 'Tea', 'Topping', 'Jelly', 'Ramoe', 'Paste', 'Homecafe'] as $category) {
+            $this->assertSame(['syrup_sauce' => 0, 'others' => 0], $this->service->cartonsPerGroup(collect([$this->line($category, 60)])), $category);
+        }
+        foreach (['Pulp', 'Powder', 'Cocoa', 'Accessories'] as $category) {
+            $this->assertSame(10, $this->service->cartonsPerGroup(collect([$this->line($category, 60)]))['others'], $category);
+        }
+    }
+
     public function test_subdist_needs_more_than_fifty_cartons(): void
     {
         $subdist = new User(['role' => 'outlet']);

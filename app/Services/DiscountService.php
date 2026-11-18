@@ -16,6 +16,7 @@ use App\Models\User;
  * | Outlet             | 3–8 karton         | 5%            | 4%                       |
  * | Outlet             | 9–18 karton        | 7,5%          | 5%                       |
  * | Outlet             | 19–30 karton       | 10%           | 6%                       |
+ * | Outlet             | > 30 karton        | 10%           | 6% (tier tertinggi)      |
  *
  * MOQ dihitung PER GRUP: karton Syrup & Sauce dijumlah sendiri, karton Pulp/Powder/Cocoa dsb dijumlah
  * sendiri (memakai isi karton masing-masing produk). Tiap grup mendapat persen dari tier kartonnya sendiri.
@@ -32,9 +33,10 @@ class DiscountService
     private const GROUP_SYRUP_SAUCE = ['Syrup', 'SAUCE'];
 
     /**
-     * Kategori grup 2 (Pulp, Powder, Cocoa, Accessories, dsb)
+     * Kategori grup 2 (Pulp, Powder, Cocoa, Accessories) sesuai tabel referensi diskon.
+     * Kategori lain di luar tabel (mis. Puree, Tea, Topping, Paste) tidak mendapat diskon MOQ.
      */
-    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'PUREE', 'TEA', 'TOPPING', 'JELLY', 'RAMOE', 'ACCESSORIES', 'ACCESORIS', 'AKSESORIS'];
+    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'ACCESSORIES', 'ACCESORIS', 'AKSESORIS'];
 
     /**
      * Isi karton bila produk tidak punya data satuan besar.
@@ -94,6 +96,7 @@ class DiscountService
             return $cartons > self::RESELLER_MIN_CARTONS_EXCLUSIVE ? ($isSyrupSauce ? 15.0 : 8.0) : 0.0;
         }
 
+        // Di atas 30 karton tetap memakai diskon maksimal (tier 19–30 karton).
         return match (true) {
             $cartons >= 19 => $isSyrupSauce ? 10.0 : 6.0,
             $cartons >= 9 => $isSyrupSauce ? 7.5 : 5.0,
