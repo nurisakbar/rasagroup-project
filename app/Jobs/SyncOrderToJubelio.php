@@ -9,10 +9,12 @@ use App\Services\JubelioService;
 use App\Services\ZohoService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
@@ -41,7 +43,34 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
         ]);
     }
 
+    /**
+     * Serialisasi per order: ShouldBeUnique tidak berlaku untuk dispatchSync (mis. halaman sukses checkout),
+     * sehingga job antrean (webhook) dan job sync bisa berjalan bersamaan dan membuat SO Jubelio ganda.
+     * Lock + baca ulang jubelio_salesorder_id memastikan hanya satu SO yang dibuat per order.
+     */
     public function handle(JubelioService $jubelio): void
+    {
+        $lock = Cache::lock('jubelio-sync-order-'.$this->order->id, $this->timeout);
+
+        try {
+            $lock->block(120);
+        } catch (LockTimeoutException $e) {
+            Log::warning('SyncOrderToJubelio: lock timeout, sync lain masih berjalan untuk order ini', [
+                'order_id' => $this->order->id,
+            ]);
+
+            return;
+        }
+
+        try {
+            $this->order->refresh();
+            $this->syncOrder($jubelio);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    protected function syncOrder(JubelioService $jubelio): void
     {
         $this->order->loadMissing('sourceWarehouse');
 
