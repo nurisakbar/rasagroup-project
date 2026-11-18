@@ -499,6 +499,14 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             return ['ok' => false, 'issues' => $issues];
         }
 
+        // Diskon per baris mengikuti rincian invoice (OrderLineBreakdown): harga katalog + diskon baris,
+        // sehingga Jubelio, QAD, invoice, dan halaman admin menampilkan angka yang sama per baris.
+        $itemRows = $this->applyInvoiceBreakdown($itemRows);
+        $useBreakdown = collect($itemRows)->contains(fn ($row) => isset($row['forced_amount']));
+        if ($useBreakdown) {
+            $grossSubtotal = round((float) collect($itemRows)->sum('line_gross'), 2);
+        }
+
         // 2. Tentukan total diskon (baik diskon eksplisit maupun diskon tiering keranjang)
         $orderSubtotal = (float) ($this->order->subtotal ?? 0);
         $explicitDiscount = (float) ($this->order->discount_amount ?? 0);
@@ -506,6 +514,11 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             ? ($grossSubtotal - $orderSubtotal)
             : 0.0;
         $totalDiscount = max($explicitDiscount, $tierDiscount);
+        if ($useBreakdown) {
+            $totalDiscount = round((float) collect($itemRows)->sum(
+                fn ($row) => isset($row['forced_amount']) ? max(0.0, $row['line_gross'] - $row['forced_amount']) : 0.0
+            ), 2);
+        }
         $totalDiscount = round($totalDiscount, 2);
 
         // 3. Alokasikan diskon ke masing-masing item
@@ -521,7 +534,9 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             $lineGross = $row['line_gross'];
 
             $lineDisc = 0.0;
-            if ($totalDiscount > 0.5 && $grossSubtotal > 0) {
+            if ($useBreakdown) {
+                $lineDisc = isset($row['forced_amount']) ? max(0.0, round($lineGross - $row['forced_amount'], 2)) : 0.0;
+            } elseif ($totalDiscount > 0.5 && $grossSubtotal > 0) {
                 if ($idx === $count - 1) {
                     $lineDisc = max(0.0, round($totalDiscount - $allocatedDiscountTotal, 2));
                 } else {
@@ -632,6 +647,50 @@ class SyncOrderToJubelio implements ShouldQueue, ShouldBeUnique
             'payment_method' => $this->mapPaymentMethod(),
             'items' => $items,
         ];
+    }
+
+    /**
+     * Ganti harga dan diskon baris yang ber-diskon dengan nilai dari OrderLineBreakdown (harga katalog,
+     * jumlah baris = total baris di invoice). Baris tanpa diskon dan order yang rinciannya tidak cocok
+     * dengan total tersimpan tetap memakai perilaku lama.
+     *
+     * @param  list<array<string, mixed>>  $itemRows
+     * @return list<array<string, mixed>>
+     */
+    private function applyInvoiceBreakdown(array $itemRows): array
+    {
+        $breakdown = \App\Support\OrderLineBreakdown::fromOrder($this->order);
+        if (! $breakdown['reliable']) {
+            return $itemRows;
+        }
+
+        $byItem = [];
+        foreach ($breakdown['lines'] as $line) {
+            $byItem[$line['item']->id] = $line;
+        }
+
+        foreach ($itemRows as $index => $row) {
+            $line = $byItem[$row['item']->id] ?? null;
+            if (! $line || $line['discount_amount'] <= 0) {
+                continue;
+            }
+
+            $unit = (float) $row['item']->catalogUnitPrice();
+            if (! $breakdown['uses_ppn']) {
+                $unit = \App\Support\TaxAwarePrice::excludingTax($unit);
+            }
+            $gross = round($unit * $row['qty'], 2);
+            $amount = (float) ($breakdown['uses_ppn'] ? $line['total'] : $line['line_dpp_after_discount']);
+            if ($gross <= $amount) {
+                continue;
+            }
+
+            $itemRows[$index]['price'] = $unit;
+            $itemRows[$index]['line_gross'] = $gross;
+            $itemRows[$index]['forced_amount'] = $amount;
+        }
+
+        return $itemRows;
     }
 
     private function resolveSalesman(JubelioService $jubelio, string $token): ?array
