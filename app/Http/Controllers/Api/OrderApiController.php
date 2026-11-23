@@ -647,22 +647,24 @@ class OrderApiController extends Controller
      * Update finance approval status.
      *
      * POST /api/orders/finance-approval
-     * Header: X-Token
+     * Header: X-API-KEY (RASACONNECT_API_KEY) atau X-Token. Kunci lama (X-Token = FINANCE_APPROVAL_X_TOKEN) tetap berlaku.
      * Body: order_id
      */
     public function updateFinanceApproval(Request $request): JsonResponse
     {
         $expected = (string) config('services.finance_approval.x_token');
-        $provided = (string) $request->header('X-Token', '');
+        $provided = (string) ($request->header('X-API-KEY') ?: $request->header('X-Token', ''));
 
-        if ($expected === '') {
+        $shared = \App\Support\ApiKey::shared();
+
+        if (! \App\Support\ApiKey::anyConfigured($expected, $shared)) {
             return response()->json([
                 'success' => false,
-                'message' => 'FINANCE_APPROVAL_X_TOKEN belum dikonfigurasi.',
+                'message' => 'FINANCE_APPROVAL_X_TOKEN / RASACONNECT_API_KEY belum dikonfigurasi.',
             ], 503);
         }
 
-        if ($provided === '' || ! hash_equals($expected, $provided)) {
+        if (! \App\Support\ApiKey::matches($provided, $expected, $shared)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Token tidak valid.',

@@ -33,12 +33,13 @@ class WmsBatchUpdateController extends Controller
     public function update(Request $request): JsonResponse
     {
         $expectedKey = (string) config('services.wms.webhook_key');
-        if ($expectedKey === '') {
-            return $this->fail('WMS_WEBHOOK_KEY belum dikonfigurasi di server.', 500);
+        $sharedKey = \App\Support\ApiKey::shared();
+        if (! \App\Support\ApiKey::anyConfigured($expectedKey, $sharedKey)) {
+            return $this->fail('WMS_WEBHOOK_KEY / RASACONNECT_API_KEY belum dikonfigurasi di server.', 500);
         }
 
         $providedKey = (string) ($request->header('x-api-key') ?? '');
-        if ($providedKey === '' || ! hash_equals($expectedKey, $providedKey)) {
+        if (! \App\Support\ApiKey::matches($providedKey, $expectedKey, $sharedKey)) {
             return $this->fail('Unauthorized: x-api-key tidak valid.', 401);
         }
 

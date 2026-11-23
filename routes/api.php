@@ -121,3 +121,8 @@ Route::prefix('v1/external/qris')->middleware('external.api.key')->group(functio
     Route::post('/resend-webhook/{referenceNo}', [\App\Http\Controllers\Api\ExternalQrisController::class, 'resendWebhook'])->name('api.external.qris.resend-webhook');
 });
 
+// API GMV (read-only, dilindungi X-API-KEY = RASACONNECT_API_KEY)
+Route::prefix('v1/gmv')->middleware(['gmv.api.key', 'throttle:60,1'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\GmvApiController::class, 'summary'])->name('api.gmv.summary');
+    Route::get('/daily', [\App\Http\Controllers\Api\GmvApiController::class, 'daily'])->name('api.gmv.daily');
+});

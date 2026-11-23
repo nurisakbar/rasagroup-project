@@ -15,10 +15,11 @@ class VerifyExternalApiKey
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $expectedKey = config('services.external_qris.api_key');
+        $expectedKey = (string) config('services.external_qris.api_key');
+        $sharedKey = \App\Support\ApiKey::shared();
         
         // Ensure an API key is configured
-        if (empty($expectedKey)) {
+        if (! \App\Support\ApiKey::anyConfigured($expectedKey, $sharedKey)) {
             return response()->json([
                 'status' => 'error',
                 'responseCode' => '5000000',
@@ -36,7 +37,7 @@ class VerifyExternalApiKey
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (!hash_equals($expectedKey, (string) $providedKey)) {
+        if (! \App\Support\ApiKey::matches((string) $providedKey, $expectedKey, $sharedKey)) {
             return response()->json([
                 'status' => 'error',
                 'responseCode' => '4030000',

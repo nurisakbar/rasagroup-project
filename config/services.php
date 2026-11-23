@@ -174,6 +174,12 @@ return [
     |--------------------------------------------------------------------------
     | API Key proteksi untuk endpoint generate & query QRIS yang diakses aplikasi lain.
     */
+    // Kunci bersama (X-API-KEY) yang diterima semua endpoint server-to-server RasaConnect,
+    // berdampingan dengan kunci lama tiap service (lihat App\Support\ApiKey).
+    'rasaconnect' => [
+        'api_key' => env('RASACONNECT_API_KEY'),
+    ],
+
     'external_qris' => [
         'api_key' => env('EXTERNAL_QRIS_API_KEY', 'rasa-qris-secret-key-2026'),
         'default_callback_url' => env('EXTERNAL_QRIS_DEFAULT_CALLBACK_URL'),
