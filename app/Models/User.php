@@ -284,7 +284,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'driippreneur_applied_at' => 'datetime',
             'date_of_birth' => 'date',
             'pakai_ppn' => 'boolean',
-            'outlet_discount_max' => 'decimal:2',
             'is_reseller' => 'boolean',
             'reseller_marked_at' => 'datetime',
         ];
@@ -396,14 +395,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Diskon per brand & kategori yang diberikan distributor perekrut kepada outlet ini.
-     */
-    public function outletCategoryDiscounts(): HasMany
-    {
-        return $this->hasMany(OutletCategoryDiscount::class, 'outlet_id');
-    }
-
-    /**
      * User biasa (buyer) yang ditandai admin sebagai reseller.
      */
     public function isReseller(): bool
@@ -436,50 +427,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function levelChanges(): HasMany
     {
         return $this->hasMany(UserLevelChange::class)->latest('created_at')->latest('id');
-    }
-
-    /**
-     * Batas diskon (%) yang boleh diberikan distributor ini ke outletnya. 0 = belum diizinkan admin.
-     */
-    public function outletDiscountMax(): float
-    {
-        return $this->isDistributor() ? max(0.0, min(100.0, (float) ($this->outlet_discount_max ?? 0))) : 0.0;
-    }
-
-    /**
-     * Diskon (%) dari distributor perekrut untuk produk ini. Hanya berlaku bila outlet belanja dari hub
-     * milik distributor tersebut (warehouse konteks harga), dan tidak melebihi batas dari admin.
-     */
-    public function outletDistributorDiscountFor(Product $product, ?string $warehouseId = null): float
-    {
-        // Reseller memakai tier diskon reseller; diskon distributor perekrut tidak berlaku.
-        if ($this->role !== self::ROLE_OUTLET || $this->isReseller() || ! $product->category_id || ! $this->sales_code) {
-            return 0.0;
-        }
-
-        $distributor = $this->referringDistributor;
-        if (! $distributor || ! $distributor->canReferOutlets() || ! $distributor->warehouse_id) {
-            return 0.0;
-        }
-
-        $warehouseId ??= \App\Support\Pricing\PricingContext::current()->warehouseId();
-        if ($warehouseId === null || (string) $warehouseId !== (string) $distributor->warehouse_id) {
-            return 0.0;
-        }
-
-        $max = $distributor->outletDiscountMax();
-        if ($max <= 0) {
-            return 0.0;
-        }
-
-        $this->loadMissing('outletCategoryDiscounts');
-        $row = $this->outletCategoryDiscounts
-            ->where('distributor_id', $distributor->id)
-            ->where('brand_id', $product->brand_id)
-            ->where('category_id', $product->category_id)
-            ->first();
-
-        return $row ? min($max, max(0.0, (float) $row->discount_percentage)) : 0.0;
     }
 
     /**
@@ -701,11 +648,6 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $inclusive = (float) $product->final_price;
 
-        // Outlet rekrutan distributor yang belanja di hub distributor tsb: diskon dari distributor.
-        $outletPercent = $this->outletDistributorDiscountFor($product);
-        if ($outletPercent > 0) {
-            return \App\Support\TaxAwarePrice::applyDiscount($inclusive, $outletPercent);
-        }
         $categoryPercent = $this->categoryDiscountPercentageFor($product);
         if ($categoryPercent > 0) {
             return \App\Support\TaxAwarePrice::applyDiscount($inclusive, $categoryPercent);
