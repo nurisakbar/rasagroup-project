@@ -1265,6 +1265,15 @@ class CheckoutController extends Controller
                     }
                 }
                 
+                // Distributor: hanya batch dengan qty tersedia minimal satu satuan terbesar (mis. 1 karton) yang boleh dialokasikan.
+                if ($user->isDistributor()) {
+                    $minBatchQty = $cart->product->unitsPerLargeEffective();
+                    $availableProductBatches = array_values(array_filter(
+                        $availableProductBatches,
+                        fn ($b) => (float) ($b['qty'] ?? 0) >= $minBatchQty
+                    ));
+                }
+
                 // FEFO sort the aggregated batches
                 usort($availableProductBatches, function ($a, $b) {
                     return strtotime($a['expired'] ?? '2099-12-31') <=> strtotime($b['expired'] ?? '2099-12-31');
@@ -1284,6 +1293,13 @@ class CheckoutController extends Controller
                         $batch['qty'] -= $take;
                         $qtyNeeded -= $take;
                     }
+                }
+
+                if ($user->isDistributor() && $wmsLocationCode && $qtyNeeded > 0) {
+                    throw new \RuntimeException(
+                        "Stok batch {$cart->product->display_name} tidak mencukupi untuk distributor "
+                        . "(batch harus minimal {$cart->product->unitsPerLargeEffective()} per batch, kurang {$qtyNeeded})."
+                    );
                 }
 
                 $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;

@@ -125,11 +125,12 @@ class SendSalesOrderToWmsJob implements ShouldQueue
             'items' => $itemsPayload,
         ];
 
-        // Kirim ulang: tandai is_update. Field ini hanya dikirim bila true, karena sebagian versi API WMS
-        // menolak properti yang tidak dikenal ("property is_update should not exist").
-        if ($order->wms_so_status !== null) {
-            $payload['is_update'] = true;
-        }
+        // is_update selalu dikirim: true bila order sudah pernah dikirim ke WMS (wms_so_status terisi),
+        // false bila belum. Bila API WMS lama menolak properti ini, dikirim ulang tanpa field tersebut.
+        // Pengecualian: gagal dengan "belum bisa diverifikasi ke sistem pusat" berarti SO belum pernah masuk WMS.
+        $neverReachedWms = $order->wms_so_status !== null
+            && str_contains(strtolower((string) $order->wms_so_failure_reason), 'belum bisa diverifikasi');
+        $payload['is_update'] = $order->wms_so_status !== null && ! $neverReachedWms;
 
         try {
             $response = $this->postSalesOrder($apiUrl, $apiKey, $payload);
