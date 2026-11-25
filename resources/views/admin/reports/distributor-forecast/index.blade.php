@@ -84,8 +84,6 @@
                         <th>No</th>
                         <th>Distributor</th>
                         <th>Customer Name</th>
-                        <th>Bill-To</th>
-                        <th>Sales</th>
                         <th>Item Number</th>
                         <th>Description</th>
                         <th>Brand</th>
@@ -103,6 +101,17 @@
 @push('scripts')
 <script>
     $(function () {
+        // Pilihan distributor bisa dicari (nama atau kode distributor)
+        $('#distributor_id').select2({
+            theme: 'bootstrap',
+            width: '100%',
+            placeholder: 'Semua distributor',
+            allowClear: true,
+            language: { noResults: function () { return 'Distributor tidak ditemukan'; }, searching: function () { return 'Mencari...'; } }
+        });
+        // Menghapus pilihan (x) langsung menampilkan semua distributor
+        $('#distributor_id').on('select2:clear', function () { $(this).closest('form').trigger('submit'); });
+
         $('#forecast-table').DataTable({
             processing: true,
             serverSide: true,
@@ -112,8 +121,6 @@
                 {data: 'DT_RowIndex', searchable: false},
                 {data: 'distributor'},
                 {data: 'customer'},
-                {data: 'bill_to'},
-                {data: 'sales'},
                 {data: 'item_number'},
                 {data: 'description'},
                 {data: 'brand'},
