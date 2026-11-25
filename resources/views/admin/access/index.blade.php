@@ -29,6 +29,7 @@
                         <th class="text-center">Pengguna</th>
                         <th class="text-center">Modul dapat dilihat</th>
                         <th class="text-center">Akses penuh</th>
+                        <th>Status</th>
                         <th width="160px"></th>
                     </tr>
                 </thead>
@@ -41,6 +42,13 @@
                                 <span class="label {{ $r['view'] > 0 ? 'label-primary' : 'label-default' }}">{{ $r['view'] }} dari {{ $modules - 1 }}</span>
                             </td>
                             <td class="text-center">{{ $r['full'] }} modul</td>
+                            <td>
+                                @if($r['changed'] === 0)
+                                    <span class="label label-success">Sesuai bawaan</span>
+                                @else
+                                    <span class="label label-warning">{{ $r['changed'] }} modul diubah dari bawaan</span>
+                                @endif
+                            </td>
                             <td class="text-right">
                                 <a href="{{ route('admin.access.roles.edit', $r['role']) }}" class="btn btn-primary btn-sm"><i class="fa fa-key"></i> Atur hak akses</a>
                             </td>

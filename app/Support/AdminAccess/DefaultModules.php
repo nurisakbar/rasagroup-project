@@ -67,6 +67,35 @@ class DefaultModules
     /** Modul yang aksesnya selalu hanya untuk super_admin dan tidak bisa diberikan ke role lain. */
     public const SUPER_ADMIN_ONLY = ['access_control'];
 
+    /** Apakah role ini mendapat akses penuh ke modul ini pada pengaturan bawaan. */
+    public static function isDefaultGranted(string $role, string $moduleKey): bool
+    {
+        return in_array($role, self::definitions()[$moduleKey]['roles'] ?? [], true);
+    }
+
+    /**
+     * Jumlah modul bawaan yang izinnya kini berbeda dari pengaturan bawaan untuk role ini
+     * (dicabut, ditambah, atau sebagian aksi saja).
+     *
+     * @param array<string, array<string, bool>> $perms izin saat ini: key modul => [view, create, edit, delete]
+     */
+    public static function changedCount(string $role, array $perms): int
+    {
+        $changed = 0;
+        foreach (array_keys(self::definitions()) as $key) {
+            if (in_array($key, self::SUPER_ADMIN_ONLY, true)) {
+                continue;
+            }
+            $p = $perms[$key] ?? null;
+            $full = $p && $p['view'] && $p['create'] && $p['edit'] && $p['delete'];
+            if (($p && ! $full) || (bool) $full !== self::isDefaultGranted($role, $key)) {
+                $changed++;
+            }
+        }
+
+        return $changed;
+    }
+
     /** Isi modul bawaan dan izin awalnya. Aman dijalankan berulang: tidak menimpa pengaturan yang sudah ada. */
     public static function seed(): void
     {

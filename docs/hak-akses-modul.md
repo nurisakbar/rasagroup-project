@@ -33,6 +33,9 @@ Daftar tunggal di `User::ADMIN_PANEL_ROLES` (dipakai halaman login dan middlewar
 
 - `ADMIN_RBAC_ENFORCE=false` di `.env` mematikan penegakan di server (hanya menu yang disaring). Tidak disarankan.
 - Migrasi `2026_11_26_100000_create_admin_access_tables` mengisi modul dan izin awal yang **meniru akses menu sebelumnya**.
-  Tombol "Kembalikan ke bawaan" di matriks mengembalikan satu role ke pengaturan awal itu.
+  Tombol "Kembalikan ke bawaan" di matriks mengembalikan satu role ke pengaturan awal itu. Halaman Hak Akses menandai modul
+  yang bawaan untuk sebuah role ("bawaan") dan yang sudah berbeda dari bawaan ("diubah" / "tambahan"), serta status per role
+  ("Sesuai bawaan" atau "N modul diubah dari bawaan"). Kesamaan data awal dengan sidebar lama sudah diverifikasi terhadap
+  versi sidebar di git (26 item menu, 0 perbedaan).
 - Aksi pada rute yang memakai pengikatan model (mis. `DELETE /admin/xxx/{id}`) untuk id yang tidak ada mengembalikan 404
   lebih dulu (pengikatan model berjalan sebelum middleware); untuk id yang ada, izin tetap ditegakkan.

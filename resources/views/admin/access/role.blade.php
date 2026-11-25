@@ -22,7 +22,17 @@
 @endpush
 
 @section('content')
-    <div class="callout callout-warning">
+    <div class="callout {{ $changedCount === 0 ? 'callout-success' : 'callout-warning' }}" style="margin-bottom:10px;">
+        <p>
+            @if($changedCount === 0)
+                <i class="fa fa-check-circle"></i> Hak akses role ini <strong>masih sesuai pengaturan bawaan</strong> (akses menu lama sebelum fitur ini).
+            @else
+                <i class="fa fa-pencil"></i> <strong>{{ $changedCount }} modul</strong> sudah diubah dari pengaturan bawaan. Baris yang diubah ditandai <span class="label label-warning">diubah</span>.
+            @endif
+            Tanda <span class="label label-success">bawaan</span> menunjukkan modul yang sejak awal bisa diakses penuh oleh role ini.
+        </p>
+    </div>
+    <div class="callout callout-info">
         <p>Mencentang <strong>Tambah</strong>, <strong>Ubah</strong>, atau <strong>Hapus</strong> otomatis mengaktifkan <strong>Lihat</strong>. Tanpa <strong>Lihat</strong>, modul tidak muncul di menu dan tidak bisa dibuka.</p>
     </div>
 
@@ -45,7 +55,12 @@
                     <tbody>
                         @php $lastGroup = '__none__'; @endphp
                         @foreach($modules as $m)
-                            @php $p = $perms->get($m->id); @endphp
+                            @php
+                                $p = $perms->get($m->id);
+                                $isDef = (bool) ($defaults[$m->key] ?? false);
+                                $isFull = $p && $p->can_view && $p->can_create && $p->can_edit && $p->can_delete;
+                                $isChanged = $m->is_system ? (($p && ! $isFull) || (bool) $isFull !== $isDef) : (bool) $p;
+                            @endphp
                             @if(($m->group ?? '') !== $lastGroup && $m->group)
                                 <tr class="group-row"><td colspan="6">{{ $m->group }}</td></tr>
                             @endif
@@ -55,6 +70,8 @@
                                     <i class="fa {{ $m->icon }}"></i> <strong>{{ $m->name }}</strong>
                                     @unless($m->is_active) <span class="label label-default">nonaktif</span> @endunless
                                     @unless($m->show_in_menu) <span class="label label-info">tanpa menu</span> @endunless
+                                    @if($isDef) <span class="label label-success">bawaan</span> @endif
+                                    @if($isChanged) <span class="label label-warning">{{ $m->is_system ? 'diubah' : 'tambahan' }}</span> @endif
                                     <span class="mod-sub">{{ $m->key }}</span>
                                 </td>
                                 @foreach(['view', 'create', 'edit', 'delete'] as $a)

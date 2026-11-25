@@ -45,6 +45,7 @@ class AccessControlController extends Controller
                 'users' => User::where('role', $role)->count(),
                 'view' => count(array_filter($perms, fn ($p) => $p['view'])),
                 'full' => count(array_filter($perms, fn ($p) => $p['view'] && $p['create'] && $p['edit'] && $p['delete'])),
+                'changed' => DefaultModules::changedCount($role, $perms),
             ];
         });
 
@@ -64,6 +65,8 @@ class AccessControlController extends Controller
             'modules' => $modules,
             'perms' => $perms,
             'users' => User::where('role', $role)->count(),
+            'defaults' => collect(DefaultModules::definitions())->map(fn ($d, $key) => DefaultModules::isDefaultGranted($role, $key))->all(),
+            'changedCount' => DefaultModules::changedCount($role, AdminAccess::permissionsOf($role)),
         ]);
     }
 
