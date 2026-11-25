@@ -20,7 +20,6 @@ use Yajra\DataTables\Facades\DataTables;
 
 class WarehousePriceController extends Controller
 {
-    public const ALLOWED_ROLES = [User::ROLE_SUPER_ADMIN, 'ecommerce'];
 
     public function index(Request $request)
     {
@@ -198,6 +197,6 @@ class WarehousePriceController extends Controller
 
     private function authorizeAccess(): void
     {
-        abort_unless(in_array(auth('admin')->user()?->role, self::ALLOWED_ROLES, true), 403);
+        // Hak akses dijaga middleware modul (EnsureAdminModuleAccess); tidak ada pengecekan role di sini.
     }
 }

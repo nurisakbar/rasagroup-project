@@ -10,11 +10,6 @@ class PaymentFeeController extends Controller
 {
     public function index()
     {
-        // For finance and super_admin only
-        if (!in_array(auth()->user()->role, ['super_admin', 'finance'])) {
-            abort(403);
-        }
-
         $faspayChannels = ['bca_va', 'mandiri_va', 'bri_va', 'bni_va', 'cimb_va', 'permata_va', 'sinarmas_va', 'maybank_va', 'danamon_va', 'bsi_va', 'qris'];
         $faspayFees = [];
         $faspayActive = [];
@@ -29,10 +24,6 @@ class PaymentFeeController extends Controller
 
     public function update(Request $request)
     {
-        if (!in_array(auth()->user()->role, ['super_admin', 'finance'])) {
-            abort(403);
-        }
-
         $rules = [];
         $faspayChannels = ['bca_va', 'mandiri_va', 'bri_va', 'bni_va', 'cimb_va', 'permata_va', 'sinarmas_va', 'maybank_va', 'danamon_va', 'bsi_va', 'qris'];
         foreach ($faspayChannels as $channel) {

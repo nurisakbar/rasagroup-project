@@ -548,7 +548,7 @@ class WarehouseController extends Controller
             $warehouse->id,
             $stocks->getCollection()->pluck('product_id')->filter()->values()->all()
         );
-        $canManagePrices = in_array(auth('admin')->user()?->role, WarehousePriceController::ALLOWED_ROLES, true);
+        $canManagePrices = \App\Support\AdminAccess\AdminAccess::canUser(auth('admin')->user(), 'warehouse_prices', 'view');
 
         // Get products not yet in this warehouse for adding
         $existingProductIds = $warehouse->stocks()->pluck('product_id')->toArray();

@@ -18,7 +18,6 @@ use Yajra\DataTables\Facades\DataTables;
  */
 class DistributorForecastReportController extends Controller
 {
-    public const ALLOWED_ROLES = [User::ROLE_SUPER_ADMIN, 'finance'];
 
     public function index(Request $request)
     {
@@ -26,21 +25,10 @@ class DistributorForecastReportController extends Controller
         [$year, $distributorId] = $this->filters($request);
 
         if ($request->ajax()) {
-            $salesNames = [];
-
             return DataTables::of($this->query($year, $distributorId))
                 ->addIndexColumn()
                 ->addColumn('distributor', fn ($line) => e($line->forecast->distributor->name ?? '-'))
                 ->addColumn('customer', fn ($line) => e($line->outlet->name ?? '-'))
-                ->addColumn('bill_to', fn ($line) => e($line->outlet ? DistributorForecastService::billTo($line->outlet) : '-'))
-                ->addColumn('sales', function ($line) use (&$salesNames) {
-                    $distributor = $line->forecast->distributor;
-                    if (! $distributor) {
-                        return '-';
-                    }
-
-                    return e($salesNames[$distributor->id] ??= DistributorForecastService::salesName($distributor) ?: '-');
-                })
                 ->addColumn('item_number', fn ($line) => e($line->product->code ?? '-'))
                 ->addColumn('description', fn ($line) => e($line->product->name ?? '-'))
                 ->addColumn('brand', fn ($line) => e($line->product->brand->name ?? '-'))
@@ -111,6 +99,6 @@ class DistributorForecastReportController extends Controller
 
     private function authorizeAccess(): void
     {
-        abort_unless(in_array(auth('admin')->user()?->role, self::ALLOWED_ROLES, true), 403);
+        // Hak akses dijaga middleware modul (EnsureAdminModuleAccess); tidak ada pengecekan role di sini.
     }
 }

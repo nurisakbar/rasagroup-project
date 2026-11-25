@@ -205,8 +205,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Admin Protected Routes
-    Route::middleware(['auth:admin', 'agent'])->group(function () {
+    Route::middleware(['auth:admin', 'agent', 'admin.module'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Hak akses modul panel admin (hanya super_admin): matriks per role dan kelola modul
+        Route::prefix('access')->name('access.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\AccessControlController::class, 'index'])->name('index');
+            Route::get('/roles/{role}', [App\Http\Controllers\Admin\AccessControlController::class, 'editRole'])->name('roles.edit');
+            Route::put('/roles/{role}', [App\Http\Controllers\Admin\AccessControlController::class, 'updateRole'])->name('roles.update');
+            Route::post('/roles/{role}/reset', [App\Http\Controllers\Admin\AccessControlController::class, 'resetRole'])->name('roles.reset');
+            Route::resource('modules', App\Http\Controllers\Admin\AdminModuleController::class)->except(['show']);
+        });
         Route::post('/logout', [App\Http\Controllers\Admin\Auth\AdminLoginController::class, 'destroy'])->name('logout');
 
         // Admin Profile
