@@ -42,6 +42,15 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_IT_APPLICATION = 'it_application';
     const ROLE_INVENTORY_MANAGER = 'inventory_manager';
 
+    /**
+     * Role yang boleh masuk panel admin (/admin). Akses per modul diatur dinamis lewat menu Hak Akses
+     * (tabel admin_modules dan admin_role_permissions); daftar ini hanya menentukan siapa yang bisa login.
+     */
+    public const ADMIN_PANEL_ROLES = [
+        'super_admin', 'ecommerce', 'sales_admin', 'brand_marketing', 'finance',
+        'customer_service', 'it_application', 'inventory_manager', 'sales', 'agent',
+    ];
+
     protected $keyType = 'string';
     public $incrementing = false;
 

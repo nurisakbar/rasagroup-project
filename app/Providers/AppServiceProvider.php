@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // @adminCan('modul', 'aksi'): cek hak akses modul panel admin di Blade.
+        \Illuminate\Support\Facades\Blade::if('adminCan', function (string $module, string $action = 'view') {
+            return \App\Support\AdminAccess\AdminAccess::canUser(auth('admin')->user() ?? auth()->user(), $module, $action);
+        });
+
         \Illuminate\Support\Facades\RateLimiter::for('distributor-api', function (\Illuminate\Http\Request $request) {
             $client = $request->attributes->get(\App\Http\Middleware\VerifyDistributorApiKey::CLIENT_ATTRIBUTE);
 
