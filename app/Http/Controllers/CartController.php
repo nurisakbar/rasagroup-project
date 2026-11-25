@@ -149,7 +149,7 @@ class CartController extends Controller
         $carts = $this->currentRegularCarts();
 
         // Get the warehouse for this cart (all items should be from same warehouse)
-        $cartWarehouse = $carts->first()?->warehouse;
+        $cartWarehouse = $this->stockWarehouse($carts->first()?->warehouse);
 
         if ($cartWarehouse) {
             $productIds = $carts->pluck('product_id')->toArray();
@@ -196,7 +196,7 @@ class CartController extends Controller
             : $qtyInput;
 
         $availableStock = PHP_INT_MAX;
-        $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+        $warehouse = $this->stockWarehouse(\App\Models\Warehouse::find($cart->warehouse_id));
         if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
             $availableStock = $warehouse->getAvailableStock($product);
         }
@@ -528,8 +528,9 @@ class CartController extends Controller
         $existingQty = $cart ? (int) $cart->quantity : 0;
         
         $availableStock = PHP_INT_MAX;
-        if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
-            $availableStock = $warehouse->getAvailableStock($product);
+        $stockWarehouse = $this->stockWarehouse($warehouse);
+        if (! \App\Support\ShopFulfillment::assumeStockReady() && $stockWarehouse) {
+            $availableStock = $stockWarehouse->getAvailableStock($product);
         }
         
         if ($existingQty + $requestedBaseQty > $availableStock) {
@@ -822,7 +823,7 @@ class CartController extends Controller
         $baseNeeded = $product->orderedQuantityToBase($newOrd, $uom);
 
         if (! ShopFulfillment::assumeStockReady()) {
-            $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+            $warehouse = $this->stockWarehouse(\App\Models\Warehouse::find($cart->warehouse_id));
             $availableStock = $warehouse ? $warehouse->getAvailableStock($product) : 0;
 
             if ($baseNeeded > $availableStock) {
@@ -843,5 +844,16 @@ class CartController extends Controller
             'line' => ['quantity_input' => $newOrd],
             'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
         ]);
+    }
+
+    /**
+     * Gudang pembanding stok: subdist selalu gudang distributor yang dipilihnya
+     * (bukan kolom warehouse_id di keranjang yang bisa tertinggal), lainnya gudang keranjang.
+     */
+    private function stockWarehouse(?\App\Models\Warehouse $cartWarehouse): ?\App\Models\Warehouse
+    {
+        $user = Auth::user();
+
+        return ($user && $user->isSubdist()) ? ($user->subdistWarehouse() ?? $cartWarehouse) : $cartWarehouse;
     }
 }

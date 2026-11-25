@@ -25,6 +25,8 @@ class RegisteredUserController extends Controller
         return view('auth.register', [
             'referringDistributor' => $referringDistributor,
             'invalidDistributorCode' => filled($distributorCode) && ! $referringDistributor,
+        ], [
+            'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
         ]);
     }
 
@@ -74,12 +76,15 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'max:20', 'unique:'.User::class],
+            'terms' => ['accepted'],
             'sales_code' => ['nullable', 'string', 'max:255'],
             'distributor_code' => ['nullable', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
                 if (! $this->findReferringDistributor($value)) {
                     $fail('Link pendaftaran distributor tidak valid.');
                 }
             }],
+        ], [
+            'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
         ]);
 
         $waCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);

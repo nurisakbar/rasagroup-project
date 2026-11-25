@@ -16,6 +16,9 @@ use App\Traits\HasOperationalHours;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    /** Cache per instance untuk hasOwnSalesCode(). */
+    protected ?bool $hasOwnSalesCodeCache = null;
+
     use HasFactory, Notifiable, HasUuids, HasOperationalHours, SoftDeletes;
 
     const ROLE_ECOM = 'ecom';
@@ -461,6 +464,19 @@ class User extends Authenticatable implements MustVerifyEmail
      * Pembeli dilayani lewat jalur outlet (hub outlet, stok WMS, kurir toko/ambil sendiri):
      * reseller selalu, selain itu bila checkout memakai kode sales.
      */
+    /**
+     * Outlet yang kode sales di profilnya valid dianggap berkode sales di semua halaman,
+     * tidak bergantung pada parameter ?sales_code= di URL. Dipakai untuk memilih hub dan sumber stok.
+     */
+    public function hasOwnSalesCode(): bool
+    {
+        if (! $this->isOutlet()) {
+            return false;
+        }
+
+        return $this->hasOwnSalesCodeCache ??= static::isKnownSalesCode($this->sales_code);
+    }
+
     public function usesOutletChannel(bool $hasSalesCode): bool
     {
         return $this->isReseller() || $hasSalesCode;
@@ -472,17 +488,58 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Gudang distributor induk subdist: sumber stok dan alamat asal pengiriman semua order subdist.
+     * Semua gudang milik distributor ini: gudang utama (users.warehouse_id) lebih dulu, lalu gudang tambahan.
+     *
+     * @return \Illuminate\Support\Collection<int, Warehouse>
      */
-    public function subdistWarehouse(): ?Warehouse
+    public function distributorWarehouses(): \Illuminate\Support\Collection
+    {
+        if (! $this->isDistributor()) {
+            return collect();
+        }
+
+        $primary = $this->warehouse_id ? Warehouse::find($this->warehouse_id) : null;
+        $extras = Warehouse::where('owner_distributor_id', $this->id)
+            ->when($primary, fn ($q) => $q->where('id', '!=', $primary->id))
+            ->orderBy('name')->get();
+
+        return collect([$primary])->filter()->concat($extras)->values();
+    }
+
+    /**
+     * Gudang distributor induk yang bisa dipilih subdist (utama lebih dulu).
+     *
+     * @return \Illuminate\Support\Collection<int, Warehouse>
+     */
+    public function subdistWarehouseOptions(): \Illuminate\Support\Collection
     {
         if (! $this->isSubdist()) {
-            return null;
+            return collect();
         }
 
         $distributor = $this->referringDistributor;
 
-        return $distributor && $distributor->canReferOutlets() ? $distributor->warehouse : null;
+        return $distributor && $distributor->canReferOutlets() ? $distributor->distributorWarehouses() : collect();
+    }
+
+    /**
+     * Gudang asal order subdist: pilihan subdist (bila masih siap), selain itu gudang siap pertama
+     * (utama lebih dulu). Bila tidak ada yang siap, gudang utama dikembalikan agar alasannya bisa ditampilkan.
+     */
+    public function subdistWarehouse(): ?Warehouse
+    {
+        $options = $this->subdistWarehouseOptions();
+        if ($options->isEmpty()) {
+            return null;
+        }
+
+        $selectedId = session('subdist_warehouse_id');
+        $selected = $selectedId ? $options->firstWhere('id', $selectedId) : null;
+        if ($selected && $selected->isReadyForSubdist()) {
+            return $selected;
+        }
+
+        return $options->first(fn (Warehouse $w) => $w->isReadyForSubdist()) ?? $options->first();
     }
 
     /**
@@ -494,16 +551,21 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        $warehouse = $this->subdistWarehouse();
-        if (! $warehouse || ! $warehouse->is_active) {
-            return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+        $options = $this->subdistWarehouseOptions();
+        if ($options->isEmpty() || $options->contains(fn (Warehouse $w) => $w->isReadyForSubdist())) {
+            $warehouse = $this->subdistWarehouse();
+            if (! $warehouse) {
+                return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+            }
+
+            return null;
         }
 
-        if (! $warehouse->district_id) {
+        if ($options->contains(fn (Warehouse $w) => $w->is_active)) {
             return 'Alamat gudang distributor Anda belum lengkap, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
         }
 
-        return null;
+        return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
     }
 
     /**

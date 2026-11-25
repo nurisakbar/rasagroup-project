@@ -18,7 +18,7 @@ class SubdistStockService
      *
      * @throws \RuntimeException bila stok tidak cukup
      */
-    public function deduct(Order $order, string $productId, int $quantity, string $productName = ''): void
+    public function deduct(Order $order, string $productId, int $quantity, string $productName = '', ?string $notes = null): void
     {
         $stock = WarehouseStock::where('warehouse_id', $order->source_warehouse_id)
             ->where('product_id', $productId)
@@ -37,7 +37,47 @@ class SubdistStockService
 
         $stock->decrement('stock', $quantity);
 
-        $this->record($order, $productId, $before, $before - $quantity, -$quantity, 'Order subdist ' . $order->order_number);
+        $this->record($order, $productId, $before, $before - $quantity, -$quantity, $notes ?? 'Order subdist ' . $order->order_number);
+    }
+
+    /**
+     * Pastikan stok order ini sudah terpotong dari gudang asalnya. Aman dipanggil berulang:
+     * hanya memotong selisih yang belum terpotong (dihitung dari riwayat stok order ini), jadi
+     * order yang stoknya sudah terpotong saat dibuat tidak dipotong dua kali.
+     *
+     * @return int jumlah total unit yang baru dipotong pada pemanggilan ini
+     *
+     * @throws \RuntimeException bila stok gudang tidak mencukupi (tidak ada yang dipotong)
+     */
+    public function ensureDeducted(Order $order, string $reason = 'status pesanan'): int
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            $order->loadMissing('items.product');
+            $total = 0;
+
+            foreach ($order->items as $item) {
+                $net = (int) WarehouseStockHistory::where('order_id', $order->id)
+                    ->where('warehouse_id', $order->source_warehouse_id)
+                    ->where('product_id', $item->product_id)
+                    ->sum('quantity_added');
+
+                $needed = (int) $item->quantity - max(0, -$net);
+                if ($needed <= 0) {
+                    continue;
+                }
+
+                $this->deduct(
+                    $order,
+                    (string) $item->product_id,
+                    $needed,
+                    (string) ($item->product?->display_name ?? $item->product?->name ?? ''),
+                    "Pemotongan stok ({$reason}) order subdist {$order->order_number}"
+                );
+                $total += $needed;
+            }
+
+            return $total;
+        });
     }
 
     /**

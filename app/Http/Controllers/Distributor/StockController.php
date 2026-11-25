@@ -18,7 +18,8 @@ class StockController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $warehouse = $user->warehouse;
+        $warehouses = $user->distributorWarehouses();
+        $warehouse = $this->currentWarehouse($request);
 
         if ($request->ajax()) {
             $query = WarehouseStock::with(['product.brand', 'product.category'])
@@ -110,18 +111,14 @@ class StockController extends Controller
                         <i class="fi-rs-edit mr-5"></i> Update
                     </button>';
                     
-                    $historyBtn = '<a href="' . route('distributor.stock.history', $stock) . '" class="btn btn-info btn-sm text-white px-3" title="Riwayat Stock">
-                        <i class="fi-rs-time-past"></i>
-                    </a>';
-                    
-                    return '<div class="d-flex justify-content-end gap-2">' . $updateBtn . ' ' . $historyBtn . '</div>';
+                    return '<div class="d-flex justify-content-end gap-2">' . $updateBtn . '</div>';
                 })
                 ->setRowClass(fn (WarehouseStock $stock) => $stock->stock <= 10 ? 'stock-row-low' : '')
                 ->rawColumns(['product_image', 'product_name', 'product_brand', 'stock_badge', 'action'])
                 ->make(true);
         }
 
-        return view('buyer.distributor.stock.index', compact('warehouse'));
+        return view('buyer.distributor.stock.index', compact('warehouse', 'warehouses'));
     }
 
     /**
@@ -131,8 +128,8 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        // Ensure user can only update their own warehouse stock
-        if ($stock->warehouse_id !== $user->warehouse_id) {
+        // Ensure user can only update stock of their own warehouses
+        if (! $user->distributorWarehouses()->contains('id', $stock->warehouse_id)) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -169,10 +166,10 @@ class StockController extends Controller
     /**
      * Sync all products to warehouse.
      */
-    public function sync()
+    public function sync(Request $request)
     {
         $user = Auth::user();
-        $warehouse = $user->warehouse;
+        $warehouse = $this->currentWarehouse($request);
 
         // Get all active products not in this warehouse
         $existingProductIds = WarehouseStock::where('warehouse_id', $warehouse->id)
@@ -193,7 +190,8 @@ class StockController extends Controller
             $count++;
         }
 
-        return back()->with('success', "{$count} produk berhasil disinkronkan.");
+        return redirect()->route('distributor.stock.index', ['warehouse_id' => $warehouse->id])
+            ->with('success', "{$count} produk berhasil disinkronkan ke {$warehouse->name}.");
     }
 
     /**
@@ -203,8 +201,8 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        // Ensure user can only view their own warehouse stock history
-        if ($stock->warehouse_id !== $user->warehouse_id) {
+        // Ensure user can only view stock history of their own warehouses
+        if (! $user->distributorWarehouses()->contains('id', $stock->warehouse_id)) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -250,6 +248,20 @@ class StockController extends Controller
         }
 
         return view('distributor.stock.history', compact('stock'));
+    }
+
+    /**
+     * Gudang yang sedang dikelola: ?warehouse_id= (harus milik distributor ini), default gudang utama.
+     */
+    private function currentWarehouse(Request $request)
+    {
+        $warehouses = Auth::user()->distributorWarehouses();
+        $chosen = $request->filled('warehouse_id') ? $warehouses->firstWhere('id', $request->input('warehouse_id')) : null;
+        if ($request->filled('warehouse_id') && ! $chosen) {
+            abort(403, 'Gudang bukan milik Anda.');
+        }
+
+        return $chosen ?? $warehouses->first() ?? abort(404, 'Gudang belum tersedia.');
     }
 }
 

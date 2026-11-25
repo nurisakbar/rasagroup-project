@@ -174,6 +174,52 @@ class DistributorForecastService
         return $rows->values();
     }
 
+    /**
+     * Baris template Excel: setiap subdist × semua produk master aktif (kode, nama, merek sudah terisi),
+     * jumlah per bulan kosong kecuali yang sudah ada di forecast. Produk non-aktif yang sudah punya
+     * baris forecast tetap ikut agar angkanya tidak hilang dari file.
+     *
+     * @param string|null $outletId hanya satu subdist, atau semua subdist rekrutan bila null
+     * @return Collection<int, array<int, mixed>>
+     */
+    public function templateRows(DistributorForecast $forecast, ?string $outletId = null): Collection
+    {
+        $distributor = $forecast->distributor;
+
+        $outlets = $this->outlets($distributor);
+        if ($outletId !== null) {
+            $outlets = $outlets->filter(fn ($outlet) => (string) $outlet->id === $outletId)->values();
+        }
+
+        $lines = $forecast->lines()->whereIn('outlet_id', $outlets->pluck('id'))->get()
+            ->keyBy(fn (DistributorForecastLine $line) => $line->outlet_id . '|' . $line->product_id);
+
+        $products = Product::withoutGlobalScopes()->with('brand:id,name')
+            ->whereNotNull('code')
+            ->where(fn ($q) => $q->where('status', 'active')->orWhereIn('id', $lines->pluck('product_id')->unique()))
+            ->orderBy('code')
+            ->get(['id', 'code', 'name', 'brand_id']);
+
+        $rows = collect();
+        foreach ($outlets as $outlet) {
+            foreach ($products as $product) {
+                $line = $lines->get($outlet->id . '|' . $product->id);
+                $rows->push(array_merge(
+                    [$outlet->name, $product->code, $product->name, $product->brand->name ?? ''],
+                    array_map(fn ($m) => $line ? $line->qty($m) : null, range(1, 12))
+                ));
+            }
+        }
+
+        return $rows;
+    }
+
+    /** Judul kolom template yang diunduh distributor (tanpa Bill-To dan NewSalesName). */
+    public static function templateHeadings(): array
+    {
+        return array_merge(['Customer Name', 'Item Number', 'Description', 'Brand'], array_values(DistributorForecast::MONTHS));
+    }
+
     public static function headings(): array
     {
         return array_merge(['Customer Name', 'Bill-To', 'NewSalesName', 'Item Number', 'Description', 'Brand'], array_values(DistributorForecast::MONTHS));

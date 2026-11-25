@@ -40,21 +40,26 @@
     @if($carts->isEmpty())
         <div class="row justify-content-center mt-50 mb-50">
             <div class="col-lg-6 text-center">
-                <div class="empty-cart-wrapper p-5" style="background: #ffffff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02);">
-                    <div class="icon-wrapper mx-auto mb-30" style="width: 120px; height: 120px; background: rgba(107, 29, 29, 0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="fi-rs-shopping-cart" style="font-size: 50px; color: #6B1D1D;"></i>
+                <div class="empty-cart-wrapper px-4 py-5 p-md-5" style="background: #ffffff; border-radius: 24px; box-shadow: 0 10px 30px rgba(106, 27, 27, 0.12); border: 1px solid #E3D6C8;">
+                    <div class="icon-wrapper mx-auto mb-30" style="width: 128px; height: 128px; background: rgba(107, 29, 29, 0.07); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 12px rgba(107, 29, 29, 0.04);">
+                        <i class="fi-rs-shopping-cart" style="font-size: 54px; color: #6B1D1D; line-height: 1;"></i>
                     </div>
-                    <h2 class="mb-20" style="font-weight: 800; color: #253D4E;">Keranjang Anda Kosong</h2>
-                    <p class="font-lg text-muted mb-40 px-md-4">
-                        Sepertinya Anda belum menambahkan produk apapun ke keranjang. Jelajahi katalog kami dan temukan produk favorit Anda!
+                    <h2 class="mb-15" style="font-weight: 800; color: #253D4E; font-size: clamp(24px, 7vw, 34px); line-height: 1.25;">Keranjang Anda Kosong</h2>
+                    <p class="mb-30 mx-auto" style="color: #5B6B7B; font-size: 16px; line-height: 1.7; max-width: 420px;">
+                        Belum ada produk di keranjang. Jelajahi katalog kami dan temukan produk favorit Anda.
                     </p>
-                    <a href="{{ route('products.index') }}" class="btn" style="background-color: #6B1D1D; color: #FFFFFF; border-radius: 12px; font-weight: 700; padding: 16px 36px; border: none; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(107, 29, 29, 0.2);">
+                    <a href="{{ route('products.index') }}" class="btn w-100" style="background-color: #6B1D1D !important; color: #FFFFFF !important; border-radius: 12px; font-weight: 700; padding: 16px 36px; border: none; font-size: 16px; max-width: 360px; transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(107, 29, 29, 0.25);">
                         <i class="fi-rs-shopping-bag mr-10"></i>Mulai Belanja Sekarang
                     </a>
+                    <div class="mt-25 pt-20" style="border-top: 1px solid #F0E6DB;">
+                        <span style="color: #7E7E7E; font-size: 14px;">Sudah pernah memesan?</span>
+                        <a href="{{ route('buyer.orders.index') }}" style="color: #6B1D1D; font-weight: 700; font-size: 14px;">Lihat riwayat pesanan</a>
+                    </div>
                 </div>
             </div>
         </div>
     @else
+        @include('partials.subdist-warehouse-picker')
         <div class="row">
             <div class="col-lg-8">
                 <div class="table-responsive shopping-summery rg-cart-table-wrap">

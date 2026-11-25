@@ -130,6 +130,7 @@ Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdmin
 // Buyer Routes
 Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/subdist/warehouse', [App\Http\Controllers\Buyer\SubdistWarehouseController::class, 'select'])->name('subdist.warehouse.select');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/invoice', [App\Http\Controllers\Buyer\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
@@ -548,6 +549,14 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         })->name('dashboard');
 
         Route::get('/profile', [App\Http\Controllers\Distributor\ProfileController::class, 'index'])->name('profile');
+
+        // Lokasi gudang (sumber kirim & titik ambil subdist), diatur distributor sendiri; boleh lebih dari satu
+        Route::get('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'index'])->name('warehouse-location.index');
+        Route::get('/warehouse-location/create', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'create'])->name('warehouse-location.create');
+        Route::post('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'store'])->name('warehouse-location.store');
+        Route::get('/warehouse-location/{id}/edit', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'edit'])->name('warehouse-location.edit');
+        Route::put('/warehouse-location/{id}', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'update'])->name('warehouse-location.update');
+        Route::post('/warehouse-location/{id}/toggle', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'toggle'])->name('warehouse-location.toggle');
         
         // Stock Management
         Route::get('/stock', [App\Http\Controllers\Distributor\StockController::class, 'index'])->name('stock.index');

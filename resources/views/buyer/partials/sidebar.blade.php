@@ -17,6 +17,11 @@
                     <i class="fi-rs-box {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Kelola Stock
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::is('distributor.warehouse-location.*') ? 'active' : '' }}" href="{{ route('distributor.warehouse-location.index') }}">
+                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Lokasi Gudang
+                </a>
+            </li>
             {{-- Point Of Sales disembunyikan sesuai permintaan --}}
             <li class="nav-item d-none">
                 <a class="nav-link {{ Route::is('distributor.pos.*') ? 'active' : '' }}" href="{{ route('distributor.pos.index') }}">
@@ -47,7 +52,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.forecast.*') ? 'active' : '' }}" href="{{ route('buyer.forecast.index') }}">
-                    <i class="fi-rs-chart-histogram {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Forecast
+                    <i class="fi-rs-stats {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Forecast
                 </a>
             </li>
             @endif

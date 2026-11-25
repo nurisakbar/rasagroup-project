@@ -24,8 +24,8 @@
                     <div class="tab-content account dashboard-content pl-lg-4 pl-0">
                         <div class="tab-pane fade show active" role="tabpanel">
                                     <div class="d-flex justify-content-between align-items-center mb-40">
-                                        <h3 class="mb-0 address-header">Alamat Pengiriman</h3>
-                                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm">
+                                        <h3 class="mb-0 address-header" style="font-size: clamp(18px, 6vw, 30px); white-space: nowrap;">Alamat Pengiriman</h3>
+                                        <a href="{{ route('buyer.addresses.create') }}" class="btn btn-sm flex-shrink-0 ms-2" style="white-space: nowrap; padding-left: 14px; padding-right: 14px;">
                                             <i class="fi-rs-plus mr-5"></i> Tambah Baru
                                         </a>
                                     </div>

@@ -708,6 +708,21 @@
                                  <div class="payment-content" style="display: block;">
                                      <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong id="sourceWarehouseName">{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
                                      <p class="font-xs text-muted mb-0" id="sourceWarehouseLocation">{{ $sourceWarehouse->full_location ?? '' }}</p>
+                                     @include('partials.subdist-warehouse-picker')
+                                     @if(Auth::user()->isSubdist() && !empty($sourceWarehouse))
+                                         <div class="mt-10 p-10" style="background: #FAF6F1; border: 1px solid #E3D6C8; border-radius: 10px;">
+                                             <p class="font-xs mb-5" style="color: #6A1B1B; font-weight: 700;"><i class="fi-rs-marker mr-5"></i>Lokasi gudang distributor (titik ambil)</p>
+                                             @if(filled($sourceWarehouse->address))
+                                                 <p class="font-xs mb-5">{{ $sourceWarehouse->address }}</p>
+                                             @endif
+                                             @if(filled($sourceWarehouse->phone))
+                                                 <p class="font-xs mb-5"><i class="fi-rs-phone-call mr-5"></i>{{ $sourceWarehouse->phone }}</p>
+                                             @endif
+                                             @if(filled($sourceWarehouse->latitude) && filled($sourceWarehouse->longitude))
+                                                 <a href="https://www.google.com/maps?q={{ $sourceWarehouse->latitude }},{{ $sourceWarehouse->longitude }}" target="_blank" rel="noopener" class="font-xs" style="color: #6A1B1B; font-weight: 700;">Lihat di peta</a>
+                                             @endif
+                                         </div>
+                                     @endif
                                  </div>
                              </div>
                         </div>

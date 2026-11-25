@@ -293,6 +293,89 @@ class Order extends Model
         return $this->payment_status === 'pending' && $this->created_at->addMinutes(30)->isPast();
     }
 
+    /** Istilah status pesanan (bahasa Indonesia) untuk panel distributor. */
+    public const ORDER_STATUS_LABELS = [
+        'pending' => 'Menunggu Diproses',
+        'processing' => 'Sedang Diproses',
+        'shipped' => 'Dalam Pengiriman',
+        'delivered' => 'Sudah Diterima',
+        'completed' => 'Selesai',
+        'cancelled' => 'Dibatalkan',
+    ];
+
+    /** Istilah status pembayaran (bahasa Indonesia). */
+    public const PAYMENT_STATUS_LABELS = [
+        'pending' => 'Menunggu Pembayaran',
+        'paid' => 'Lunas',
+        'failed' => 'Gagal',
+        'refunded' => 'Dikembalikan',
+        'term_of_payment' => 'Tempo',
+    ];
+
+    /** Mode pemenuhan menurut ekspedisi: ambil di tempat, diantar ketempat (kurir distributor), atau kurir biasa. */
+    public function fulfillmentMode(): string
+    {
+        $this->loadMissing('expedition');
+
+        return match ($this->expedition?->code) {
+            'self_pickup' => 'pickup',
+            'kurir_toko' => 'store_delivery',
+            default => 'courier',
+        };
+    }
+
+    /**
+     * Pilihan status yang tersedia beserta istilahnya, sesuai mode pemenuhan.
+     * Nilai di database tetap sama; hanya istilah dan pilihan yang disesuaikan.
+     *
+     * @return array<string, string>
+     */
+    public function statusOptions(): array
+    {
+        return match ($this->fulfillmentMode()) {
+            'pickup' => [
+                'pending' => 'Menunggu Diproses',
+                'processing' => 'Sedang Disiapkan',
+                'shipped' => 'Siap Diambil',
+                'completed' => 'Sudah Diambil',
+                'cancelled' => 'Dibatalkan',
+            ],
+            'store_delivery' => [
+                'pending' => 'Menunggu Diproses',
+                'processing' => 'Sedang Disiapkan',
+                'shipped' => 'Sedang Diantar',
+                'delivered' => 'Sudah Diterima',
+                'completed' => 'Selesai',
+                'cancelled' => 'Dibatalkan',
+            ],
+            default => self::ORDER_STATUS_LABELS,
+        };
+    }
+
+    /** Istilah status pesanan ini (sesuai ekspedisi). */
+    public function statusLabel(): string
+    {
+        $options = $this->statusOptions();
+        if (isset($options[$this->order_status])) {
+            return $options[$this->order_status];
+        }
+
+        // Pickup tidak punya opsi "delivered", tetapi data lama bisa saja berstatus itu.
+        return $this->fulfillmentMode() === 'pickup' && $this->order_status === 'delivered'
+            ? 'Sudah Diambil'
+            : self::orderStatusLabel($this->order_status);
+    }
+
+    public static function orderStatusLabel(?string $status): string
+    {
+        return self::ORDER_STATUS_LABELS[$status] ?? ucfirst((string) $status);
+    }
+
+    public static function paymentStatusLabel(?string $status): string
+    {
+        return self::PAYMENT_STATUS_LABELS[$status] ?? ucwords(str_replace('_', ' ', (string) $status));
+    }
+
     public function getBuyerStatusLabelAttribute(): string
     {
         if ($this->order_status === 'pending') {
@@ -305,6 +388,11 @@ class Order extends Model
             }
 
             return $this->payment_proof ? 'Menunggu Pembayaran Diverifikasi' : 'Menunggu Pembayaran';
+        }
+
+        // Ambil di tempat / diantar ketempat memakai istilah sendiri (Siap Diambil, Sedang Diantar, dst.).
+        if ($this->order_status !== 'cancelled' && $this->fulfillmentMode() !== 'courier') {
+            return $this->statusLabel();
         }
 
         return match ($this->order_status) {

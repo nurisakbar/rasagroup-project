@@ -489,15 +489,11 @@ class CheckoutController extends Controller
         
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
 
-        // Calculate discount
-        $totalQuantity = $carts->sum('quantity');
-        $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
+        // Aturan DiscountTier lama dinonaktifkan (sama seperti halaman checkout dan proses pesanan);
+        // diskon MOQ dihitung per kategori di cartPricingBreakdown. Jangan dipakai lagi di sini, kalau tidak
+        // total di layar berbeda dengan yang ditagih.
         $discountAmount = 0;
         $discountPercent = 0;
-        if ($applicableDiscount) {
-            $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
-            $discountPercent = $applicableDiscount->discount_percent;
-        }
 
         $total = $subtotal - $discountAmount + $ppn + $shippingCost;
 
