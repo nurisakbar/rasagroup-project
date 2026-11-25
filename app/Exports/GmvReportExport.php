@@ -82,7 +82,7 @@ class GmvReportExport implements FromCollection, WithHeadings, WithMapping, With
             $order->order_number,
             $order->created_at->format('d/m/Y H:i'),
             $order->user?->name ?? 'Tamu',
-            strtoupper((string) ($order->user?->role ?? 'buyer')),
+            strtoupper((string) ($order->user?->role ?? 'ecom')),
             $order->sourceWarehouse?->name ?? '-',
             $totalQty,
             $grossDpp,

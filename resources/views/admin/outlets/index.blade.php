@@ -20,10 +20,13 @@
 @section('content')
     @php
         // Tab ECOM: tanpa kolom Hub dan tanpa tombol Edit/Hapus.
-        $showHub = ($canChooseHub ?? true) && $tab !== 'buyer';
-        $showAction = $tab !== 'buyer';
+        $showHub = ($canChooseHub ?? true) && $tab !== 'ecom';
+        $showAction = $tab !== 'ecom';
+        // Tab OUTLET dan SUBDIST punya kolom perekrut (sales / distributor).
+        $showRecruiter = in_array($tab, ['outlet', 'subdist'], true);
         $tabHelp = [
-            'buyer' => 'User ecom (pembeli biasa) yang mendaftar tanpa kode sales.',
+            'ecom' => 'User ecom yang mendaftar tanpa kode sales dan tanpa kode distributor.',
+            'subdist' => 'Subdist: user yang mendaftar memakai kode distributor.',
         ];
     @endphp
     <div class="row">
@@ -57,8 +60,8 @@
                                 @if($showHub)
                                     <th>Hub</th>
                                 @endif
-                                @if($tab === 'outlet')
-                                    <th>Nama Sales</th>
+                                @if($showRecruiter)
+                                    <th>{{ $tab === 'subdist' ? 'Distributor' : 'Nama Sales' }}</th>
                                 @endif
                                 <th>Tanggal Daftar</th>
                                 @if($tab === 'reseller')
@@ -103,7 +106,7 @@
                 @if($showHub)
                 {data: 'hub', name: 'hub', orderable: false, columnControl: searchOnly},
                 @endif
-                @if($tab === 'outlet')
+                @if($showRecruiter)
                 {data: 'sales_name', name: 'salesPerson.name', orderable: false, searchable: false, columnControl: searchOnly},
                 @endif
                 {data: 'created_at', name: 'created_at', columnControl: orderOnly},
@@ -114,7 +117,7 @@
                 {data: 'action', name: 'action', orderable: false, searchable: false, columnControl: []},
                 @endif
             ],
-            order: [[{{ ($tab === 'outlet' ? 5 : 4) + ($showHub ? 1 : 0) }}, 'desc']],
+            order: [[{{ ($showRecruiter ? 5 : 4) + ($showHub ? 1 : 0) }}, 'desc']],
             ordering: {indicators: false, handler: false},
             language: {
                 processing: "Memproses...",

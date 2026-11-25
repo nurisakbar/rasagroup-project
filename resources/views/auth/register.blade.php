@@ -100,7 +100,7 @@
                                     @if($referringDistributor)
                                     <input type="hidden" name="distributor_code" value="{{ $referringDistributor->distributor_sales_code }}">
                                     <div class="form-group mb-20">
-                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai outlet melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
+                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai subdist melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror

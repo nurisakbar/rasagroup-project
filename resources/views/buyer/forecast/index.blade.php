@@ -38,7 +38,7 @@
                         <div>
                             <h3 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Forecast {{ $year }}</h3>
                             <p class="forecast-help mb-0">
-                                Perkiraan kebutuhan per outlet rekrutan dan produk, dalam <strong>satuan botol/pcs</strong>.
+                                Perkiraan kebutuhan per subdist rekrutan dan produk, dalam <strong>satuan botol/pcs</strong>.
                                 Bulan yang sudah berjalan dikunci.
                                 @if($salesName) Sales Rasa: <strong>{{ $salesName }}</strong>. @endif
                             </p>
@@ -65,8 +65,8 @@
 
                         @if($outlets->isEmpty())
                             <div class="alert alert-warning mb-0">
-                                Belum ada outlet rekrutan. Forecast diisi per outlet yang mendaftar lewat link
-                                <a href="{{ route('buyer.outlet-referral.index') }}">Rekrut Outlet</a>.
+                                Belum ada subdist rekrutan. Forecast diisi per subdist yang mendaftar lewat link
+                                <a href="{{ route('buyer.outlet-referral.index') }}">Rekrut Subdist</a>.
                             </div>
                         @else
                             <div class="row g-3 mb-20">

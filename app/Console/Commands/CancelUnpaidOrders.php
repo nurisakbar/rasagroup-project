@@ -48,7 +48,8 @@ class CancelUnpaidOrders extends Command
         foreach ($orders as $order) {
             DB::beginTransaction();
             try {
-                if (! ShopFulfillment::assumeStockReady()) {
+                // Order subdist dikembalikan stoknya oleh event Order saat status jadi cancelled.
+                if (! $order->fulfilled_by_distributor && ! ShopFulfillment::assumeStockReady()) {
                     // Return stock to warehouse
                     foreach ($order->items as $item) {
                         $warehouseId = $order->source_warehouse_id ?? $order->warehouse_id;

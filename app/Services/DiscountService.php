@@ -7,23 +7,25 @@ use App\Models\Product;
 use App\Models\User;
 
 /**
- * Diskon berjenjang (MOQ) untuk outlet & subdist/reseller:
+ * Strata diskon MOQ untuk outlet & subdist:
  *
- * | Tipe customer      | MOQ (total karton) | Syrup & Sauce | Pulp, Powder, Cocoa, dll |
- * |--------------------|--------------------|---------------|--------------------------|
- * | Subdist / Reseller | > 50 karton        | 15%           | 8%                       |
- * | Outlet             | 1–2 karton         | 2,5%          | 2%                       |
- * | Outlet             | 3–8 karton         | 5%            | 4%                       |
- * | Outlet             | 9–18 karton        | 7,5%          | 5%                       |
- * | Outlet             | 19–30 karton       | 10%           | 6%                       |
- * | Outlet             | > 30 karton        | 10%           | 6% (tier tertinggi)      |
+ * | Tipe customer | MOQ (total karton) | Syrup & Sauce | Pulp, Powder, Cocoa, dll |
+ * |---------------|--------------------|---------------|--------------------------|
+ * | Subdist       | > 50 karton        | 10%           | 7%                       |
+ * | Outlet        | 1-2 karton         | 0%            | 0%                       |
+ * | Outlet        | 3-5 karton         | 4%            | 2%                       |
+ * | Outlet        | 6-10 karton        | 5%            | 4%                       |
+ * | Outlet        | 11-20 karton       | 6%            | 5%                       |
+ * | Outlet        | 21-32 karton       | 7%            | 6%                       |
+ * | Outlet        | > 32 karton        | 7%            | 6% (tier tertinggi)      |
  *
  * MOQ dihitung PER GRUP: karton Syrup & Sauce dijumlah sendiri, karton Pulp/Powder/Cocoa dsb dijumlah
  * sendiri (memakai isi karton masing-masing produk). Tiap grup mendapat persen dari tier kartonnya sendiri.
  *
- * Diskon hanya berlaku bila pembeli menginput kode sales yang terdaftar (sales atau distributor),
- * kecuali reseller (outlet atau user biasa yang ditandai admin) yang selalu memakai tier "Subdist / Reseller"
- * tanpa kode sales. Reseller yang belanja 50 karton atau kurang per grup tidak mendapat diskon.
+ * Subdist = user yang mendaftar lewat kode distributor (role subdist) atau user yang ditandai admin
+ * (flag reseller). Subdist selalu memakai tier "Subdist" tanpa kode sales; yang belanja 50 karton atau
+ * kurang per grup tidak mendapat diskon. Outlet dan ecom hanya mendapat diskon bila menginput kode sales
+ * yang terdaftar (sales atau distributor).
  */
 class DiscountService
 {
@@ -93,44 +95,44 @@ class DiscountService
         $isSyrupSauce = $group === 'syrup_sauce';
 
         if ($this->getCustomerType($user) === 'subdist') {
-            return $cartons > self::RESELLER_MIN_CARTONS_EXCLUSIVE ? ($isSyrupSauce ? 15.0 : 8.0) : 0.0;
+            return $cartons > self::SUBDIST_MIN_CARTONS_EXCLUSIVE ? ($isSyrupSauce ? 10.0 : 7.0) : 0.0;
         }
 
-        // Di atas 30 karton tetap memakai diskon maksimal (tier 19–30 karton).
+        // Di atas 32 karton tetap memakai diskon maksimal (tier 21-32 karton).
         return match (true) {
-            $cartons >= 19 => $isSyrupSauce ? 10.0 : 6.0,
-            $cartons >= 9 => $isSyrupSauce ? 7.5 : 5.0,
-            $cartons >= 3 => $isSyrupSauce ? 5.0 : 4.0,
-            $cartons >= 1 => $isSyrupSauce ? 2.5 : 2.0,
+            $cartons >= 21 => $isSyrupSauce ? 7.0 : 6.0,
+            $cartons >= 11 => $isSyrupSauce ? 6.0 : 5.0,
+            $cartons >= 6 => $isSyrupSauce ? 5.0 : 4.0,
+            $cartons >= 3 => $isSyrupSauce ? 4.0 : 2.0,
             default => 0.0,
         };
     }
 
-    /** Batas karton tier reseller: lebih dari angka ini per grup baru mendapat diskon. */
-    public const RESELLER_MIN_CARTONS_EXCLUSIVE = 50;
+    /** Batas karton tier subdist: lebih dari angka ini per grup baru mendapat diskon. */
+    public const SUBDIST_MIN_CARTONS_EXCLUSIVE = 50;
 
     /**
-     * Info untuk reseller: grup yang belum mencapai tier reseller dan kekurangan kartonnya.
+     * Info untuk subdist: grup yang belum mencapai tier subdist dan kekurangan kartonnya.
      *
      * @param \Illuminate\Support\Collection<int, Cart> $carts
      * @return list<array{group_name: string, cartons: int, cartons_needed: int, percentage: float}>
      */
-    public function resellerHints($carts, User $user): array
+    public function subdistHints($carts, User $user): array
     {
-        if (! $user->isReseller()) {
+        if (! $user->usesSubdistTier()) {
             return [];
         }
 
         $hints = [];
         foreach ($this->cartonsPerGroup($carts) as $group => $cartons) {
-            if ($cartons <= 0 || $cartons > self::RESELLER_MIN_CARTONS_EXCLUSIVE) {
+            if ($cartons <= 0 || $cartons > self::SUBDIST_MIN_CARTONS_EXCLUSIVE) {
                 continue;
             }
             $hints[] = [
                 'group_name' => $group === 'syrup_sauce' ? 'Syrup & Sauce' : 'Powder, Pulp & Lainnya',
                 'cartons' => $cartons,
-                'cartons_needed' => self::RESELLER_MIN_CARTONS_EXCLUSIVE + 1 - $cartons,
-                'percentage' => $this->tierPercentage($user, $group, self::RESELLER_MIN_CARTONS_EXCLUSIVE + 1),
+                'cartons_needed' => self::SUBDIST_MIN_CARTONS_EXCLUSIVE + 1 - $cartons,
+                'percentage' => $this->tierPercentage($user, $group, self::SUBDIST_MIN_CARTONS_EXCLUSIVE + 1),
             ];
         }
 
@@ -150,11 +152,11 @@ class DiscountService
 
     /**
      * Diskon MOQ berlaku untuk pembelian dengan kode sales yang diinput dan terdaftar, atau untuk
-     * reseller (status reseller diberikan admin, tidak perlu kode sales).
+     * subdist (tidak perlu kode sales).
      */
     public function isEligible(?string $salesCode, ?User $user = null): bool
     {
-        return ($user && $user->isReseller()) || User::isKnownSalesCode($salesCode);
+        return ($user && $user->usesSubdistTier()) || User::isKnownSalesCode($salesCode);
     }
 
     /**
@@ -217,6 +219,6 @@ class DiscountService
      */
     private function getCustomerType(User $user): string
     {
-        return $user->isReseller() ? 'subdist' : 'outlet';
+        return $user->usesSubdistTier() ? 'subdist' : 'outlet';
     }
 }

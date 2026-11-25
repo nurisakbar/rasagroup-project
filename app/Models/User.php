@@ -18,7 +18,8 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable, HasUuids, HasOperationalHours, SoftDeletes;
 
-    const ROLE_BUYER = 'buyer';
+    const ROLE_ECOM = 'ecom';
+    const ROLE_SUBDIST = 'subdist';
     const ROLE_RESELLER = 'reseller';
     const ROLE_AGENT = 'agent';
     const ROLE_WAREHOUSE = 'warehouse';
@@ -58,6 +59,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'no_ktp',
         'no_npwp',
         'distributor_status',
+        'distributor_applied_at',
+        'distributor_approved_at',
         'distributor_province_id',
         'distributor_regency_id',
         'distributor_address',
@@ -279,6 +282,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'wa_verified_at' => 'datetime',
+            'distributor_applied_at' => 'datetime',
+            'distributor_approved_at' => 'datetime',
             'password' => 'hashed',
             'points' => 'integer',
             'driippreneur_applied_at' => 'datetime',
@@ -306,7 +311,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function registeredShoppingHub(): ?Warehouse
     {
-        if (! in_array($this->role, [self::ROLE_OUTLET, self::ROLE_BUYER], true) || ! $this->hub_id) {
+        // Subdist selalu belanja dari gudang distributornya.
+        if ($this->isSubdist()) {
+            $warehouse = $this->subdistWarehouse();
+
+            return $warehouse && $warehouse->is_active ? $warehouse : null;
+        }
+
+        if (! in_array($this->role, [self::ROLE_OUTLET, self::ROLE_ECOM], true) || ! $this->hub_id) {
             return null;
         }
 
@@ -318,6 +330,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function priceLevel(): BelongsTo
     {
         return $this->belongsTo(PriceLevel::class);
+    }
+
+    /**
+     * Provinsi domisili pengajuan distributor (dibaca dari view wilayah; atribut: id, name).
+     */
+    public function distributorProvince(): BelongsTo
+    {
+        return $this->belongsTo(WilayahAdministratif::class, 'distributor_province_id', 'province_id')
+            ->select('province_id', 'province_id as id', 'province_name as name');
+    }
+
+    /**
+     * Kabupaten/kota domisili pengajuan distributor (atribut: id, name).
+     */
+    public function distributorRegency(): BelongsTo
+    {
+        return $this->belongsTo(WilayahAdministratif::class, 'distributor_regency_id', 'regency_id')
+            ->select('regency_id', 'regency_id as id', 'regency_name as name');
     }
 
     public function distributorWilayah(): BelongsTo
@@ -395,7 +425,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * User biasa (buyer) yang ditandai admin sebagai reseller.
+     * User ecom yang ditandai admin sebagai reseller.
      */
     public function isReseller(): bool
     {
@@ -403,8 +433,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Level pembeli di halaman Outlet dan Reseller: reseller (outlet/user biasa bertanda reseller),
-     * outlet, atau buyer (user biasa).
+     * Memakai strata diskon subdist (> 50 karton): role subdist, atau user yang ditandai admin.
+     */
+    public function usesSubdistTier(): bool
+    {
+        return $this->isSubdist() || $this->isReseller();
+    }
+
+    /**
+     * Level pembeli di halaman Outlet dan Reseller: reseller (outlet/subdist/ecom bertanda reseller),
+     * outlet, subdist, atau ecom.
      */
     public function customerLevel(): string
     {
@@ -412,7 +450,11 @@ class User extends Authenticatable implements MustVerifyEmail
             return 'reseller';
         }
 
-        return $this->role === self::ROLE_OUTLET ? 'outlet' : 'buyer';
+        return match ($this->role) {
+            self::ROLE_OUTLET => 'outlet',
+            self::ROLE_SUBDIST => 'subdist',
+            default => 'ecom',
+        };
     }
 
     /**
@@ -430,11 +472,46 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Outlet yang terdaftar lewat link distributor ini.
+     * Gudang distributor induk subdist: sumber stok dan alamat asal pengiriman semua order subdist.
      */
-    public function referredOutlets(): HasMany
+    public function subdistWarehouse(): ?Warehouse
     {
-        return $this->hasMany(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_OUTLET);
+        if (! $this->isSubdist()) {
+            return null;
+        }
+
+        $distributor = $this->referringDistributor;
+
+        return $distributor && $distributor->canReferOutlets() ? $distributor->warehouse : null;
+    }
+
+    /**
+     * Alasan subdist belum bisa berbelanja (distributor/gudang belum siap), atau null bila siap.
+     */
+    public function subdistFulfillmentProblem(): ?string
+    {
+        if (! $this->isSubdist()) {
+            return null;
+        }
+
+        $warehouse = $this->subdistWarehouse();
+        if (! $warehouse || ! $warehouse->is_active) {
+            return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+        }
+
+        if (! $warehouse->district_id) {
+            return 'Alamat gudang distributor Anda belum lengkap, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Subdist: user yang terdaftar lewat link/kode distributor ini.
+     */
+    public function referredSubdists(): HasMany
+    {
+        return $this->hasMany(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_SUBDIST);
     }
 
     public function isAgent(): bool
@@ -482,9 +559,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->pakai_ppn !== false;
     }
 
-    public function isBuyer(): bool
+    public function isEcom(): bool
     {
-        return $this->role === self::ROLE_BUYER;
+        return $this->role === self::ROLE_ECOM;
+    }
+
+    public function isSubdist(): bool
+    {
+        return $this->role === self::ROLE_SUBDIST;
     }
 
     /**
@@ -493,10 +575,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function showsStorefrontIdentity(): bool
     {
         return in_array($this->role, [
-            self::ROLE_BUYER,
+            self::ROLE_ECOM,
             self::ROLE_RESELLER,
             self::ROLE_DISTRIBUTOR,
             self::ROLE_OUTLET,
+            self::ROLE_SUBDIST,
             self::ROLE_DRIIPPRENEUR,
             self::ROLE_AFFILIATOR,
         ], true);
@@ -533,7 +616,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canApplyAsDistributor(): bool
     {
-        return $this->role === self::ROLE_BUYER && empty($this->distributor_status);
+        return $this->role === self::ROLE_ECOM && empty($this->distributor_status);
     }
 
     public function hasDistributorApplicationPending(): bool
@@ -553,7 +636,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canApplyAsDriippreneur(): bool
     {
-        return $this->role === self::ROLE_BUYER && empty($this->driippreneur_status);
+        return $this->role === self::ROLE_ECOM && empty($this->driippreneur_status);
     }
 
     public function hasDriippreneurApplicationPending(): bool
@@ -730,10 +813,11 @@ class User extends Authenticatable implements MustVerifyEmail
             self::ROLE_INVENTORY_MANAGER => 'Inventory Manager',
             self::ROLE_DISTRIBUTOR => 'Distributor',
             self::ROLE_OUTLET => 'Outlet',
+            self::ROLE_SUBDIST => 'Subdist',
             self::ROLE_DRIIPPRENEUR => 'Driippreneur',
             self::ROLE_AFFILIATOR => 'Affiliator',
             'agent' => 'Agen',
-            'buyer' => 'Buyer',
+            self::ROLE_ECOM => 'Ecom',
         ];
 
         return $labels[$this->role] ?? ucwords(str_replace('_', ' ', (string) ($this->role ?? 'Admin')));

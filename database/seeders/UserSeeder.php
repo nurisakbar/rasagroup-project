@@ -60,7 +60,7 @@ class UserSeeder extends Seeder
                     'name' => $buyer['name'],
                     'password' => Hash::make('password'),
                     'phone' => $buyer['phone'],
-                    'role' => User::ROLE_BUYER,
+                    'role' => User::ROLE_ECOM,
                     'email_verified_at' => now(),
                     'wa_verified_at' => now(),
                 ]

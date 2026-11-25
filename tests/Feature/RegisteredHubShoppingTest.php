@@ -76,7 +76,7 @@ class RegisteredHubShoppingTest extends TestCase
         $this->assertSame((string) $mm2100->id, (string) Warehouse::findBestHubForAddress($address, null, 25000000)->id);
 
         // Tanpa hub terdaftar: tetap memakai aturan lama (hub terdekat sesuai jalur).
-        $plain = User::factory()->create(['role' => User::ROLE_BUYER, 'wa_verified_at' => now()]);
+        $plain = User::factory()->create(['role' => User::ROLE_ECOM, 'wa_verified_at' => now()]);
         $this->assertNotSame((string) $this->hub->id, (string) Warehouse::findBestHubForAddress($this->address($plain))?->id);
     }
 

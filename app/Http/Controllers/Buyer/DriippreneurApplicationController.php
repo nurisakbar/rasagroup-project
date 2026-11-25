@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +17,7 @@ class DriippreneurApplicationController extends Controller
         $user = Auth::user();
 
         // Check if user already applied or is already a driippreneur
-        if ($user->role !== 'buyer') {
+        if ($user->role !== User::ROLE_ECOM) {
             return redirect()->route('buyer.dashboard')
                 ->with('error', 'Anda tidak dapat mendaftar sebagai DRiiPPreneur.');
         }

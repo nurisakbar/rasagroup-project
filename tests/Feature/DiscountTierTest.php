@@ -115,10 +115,11 @@ class DiscountTierTest extends TestCase
     public function test_outlet_tiers_match_table(): void
     {
         $expected = [
-            1 => [2.5, 2.0], 2 => [2.5, 2.0],
-            3 => [5.0, 4.0], 8 => [5.0, 4.0],
-            9 => [7.5, 5.0], 18 => [7.5, 5.0],
-            19 => [10.0, 6.0], 30 => [10.0, 6.0],
+            1 => [0.0, 0.0], 2 => [0.0, 0.0],
+            3 => [4.0, 2.0], 5 => [4.0, 2.0],
+            6 => [5.0, 4.0], 10 => [5.0, 4.0],
+            11 => [6.0, 5.0], 20 => [6.0, 5.0],
+            21 => [7.0, 6.0], 32 => [7.0, 6.0],
         ];
 
         foreach ($expected as $cartons => [$syrup, $others]) {
@@ -127,10 +128,10 @@ class DiscountTierTest extends TestCase
         }
     }
 
-    public function test_outlet_above_thirty_cartons_uses_maximum_discount(): void
+    public function test_outlet_above_thirty_two_cartons_uses_maximum_discount(): void
     {
-        foreach ([31, 50, 200] as $cartons) {
-            $this->assertSame(10.0, $this->service->tierPercentage($this->outlet, 'syrup_sauce', $cartons), "Syrup {$cartons} karton");
+        foreach ([33, 50, 200] as $cartons) {
+            $this->assertSame(7.0, $this->service->tierPercentage($this->outlet, 'syrup_sauce', $cartons), "Syrup {$cartons} karton");
             $this->assertSame(6.0, $this->service->tierPercentage($this->outlet, 'others', $cartons), "Others {$cartons} karton");
         }
     }
@@ -147,12 +148,11 @@ class DiscountTierTest extends TestCase
 
     public function test_subdist_needs_more_than_fifty_cartons(): void
     {
-        $subdist = new User(['role' => 'outlet']);
-        $subdist->is_reseller = true;
+        $subdist = new User(['role' => 'subdist']);
 
         $this->assertSame(0.0, $this->service->tierPercentage($subdist, 'syrup_sauce', 50));
-        $this->assertSame(15.0, $this->service->tierPercentage($subdist, 'syrup_sauce', 51));
-        $this->assertSame(8.0, $this->service->tierPercentage($subdist, 'others', 51));
+        $this->assertSame(10.0, $this->service->tierPercentage($subdist, 'syrup_sauce', 51));
+        $this->assertSame(7.0, $this->service->tierPercentage($subdist, 'others', 51));
     }
 
     public function test_no_discount_without_valid_sales_code(): void

@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Rekrut Outlet')
+@section('title', 'Rekrut Subdist')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> Akun Saya
-            <span></span> Rekrut Outlet
+            <span></span> Rekrut Subdist
         </div>
     </div>
 </div>
@@ -24,7 +24,7 @@
                     <div class="tab-pane fade show active" role="tabpanel">
                         <div class="card border-0 shadow-sm border-radius-20 overflow-hidden mb-40" style="background-color: #ffffff;">
                             <div class="card-header bg-white border-bottom-0 p-30 pb-0">
-                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Rekrut Outlet</h3>
+                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Rekrut Subdist</h3>
                                 <p class="text-muted font-sm">Bagikan link di bawah ini. Outlet yang mendaftar lewat link ini tercatat atas nama distributor Anda.</p>
                             </div>
                             <div class="card-body p-30 pt-10">
@@ -47,13 +47,13 @@
                                         </button>
                                     </div>
                                     <a class="btn btn-sm" style="background-color: #25D366; color: #fff;" target="_blank" rel="noopener noreferrer"
-                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai outlet ' . $user->name . ' melalui link berikut: ' . $registerLink) }}">
+                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai subdist ' . $user->name . ' melalui link berikut: ' . $registerLink) }}">
                                         Bagikan ke WhatsApp
                                     </a>
                                 </div>
 
                                 <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">
-                                    Outlet Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
+                                    Subdist Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
                                 </h5>
                                 @if($outlets->isEmpty())
                                     <p class="text-muted font-sm mb-0">Belum ada outlet yang mendaftar lewat link Anda.</p>
@@ -62,7 +62,7 @@
                                         <table class="table font-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>Nama Outlet</th>
+                                                    <th>Nama Subdist</th>
                                                     <th>No. HP</th>
                                                     <th>Tanggal Daftar</th>
                                                 </tr>

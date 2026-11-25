@@ -140,7 +140,21 @@ class StockController extends Controller
             'stock' => ['required', 'integer', 'min:0'],
         ]);
 
+        $before = (int) $stock->stock;
         $stock->update(['stock' => $validated['stock']]);
+
+        // Penyesuaian manual dicatat agar stok order subdist bisa diaudit.
+        if ($before !== (int) $validated['stock']) {
+            WarehouseStockHistory::create([
+                'warehouse_id' => $stock->warehouse_id,
+                'product_id' => $stock->product_id,
+                'user_id' => $user->id,
+                'stock_before' => $before,
+                'stock_after' => (int) $validated['stock'],
+                'quantity_added' => (int) $validated['stock'] - $before,
+                'notes' => 'Penyesuaian manual distributor',
+            ]);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

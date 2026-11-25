@@ -43,7 +43,7 @@ class DistributorForecastTest extends TestCase
         $this->distributor = User::factory()->create(['role' => User::ROLE_DISTRIBUTOR, 'wa_verified_at' => now(), 'is_active' => true]);
         $this->distributor->refresh();
         $this->outlet = User::factory()->create([
-            'role' => User::ROLE_OUTLET, 'name' => 'Outlet Forecast Uji', 'email' => 'outlet.forecast.' . uniqid() . '@contoh.test',
+            'role' => User::ROLE_SUBDIST, 'name' => 'Outlet Forecast Uji', 'email' => 'outlet.forecast.' . uniqid() . '@contoh.test',
             'sales_code' => $this->distributor->distributor_sales_code, 'wa_verified_at' => now(),
         ]);
         $this->otherOutlet = User::factory()->create(['role' => User::ROLE_OUTLET, 'name' => 'Outlet Bukan Rekrutan', 'wa_verified_at' => now()]);

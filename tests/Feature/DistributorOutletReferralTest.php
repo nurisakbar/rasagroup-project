@@ -47,9 +47,9 @@ class DistributorOutletReferralTest extends TestCase
         ], $overrides);
     }
 
-    private function outlet(?string $salesCode): User
+    private function outlet(?string $salesCode, string $role = User::ROLE_OUTLET): User
     {
-        return User::factory()->create(['role' => User::ROLE_OUTLET, 'sales_code' => $salesCode, 'wa_verified_at' => now()]);
+        return User::factory()->create(['role' => $role, 'sales_code' => $salesCode, 'wa_verified_at' => now()]);
     }
 
     private function qadSalespersonFor(?string $orderSalesCode, ?User $customer = null): ?string
@@ -76,7 +76,7 @@ class DistributorOutletReferralTest extends TestCase
 
     public function test_buyer_promoted_to_distributor_gets_code_and_existing_code_is_stable(): void
     {
-        $buyer = User::factory()->create(['role' => User::ROLE_BUYER]);
+        $buyer = User::factory()->create(['role' => User::ROLE_ECOM]);
         $this->assertNull($buyer->distributor_sales_code);
 
         $buyer->update(['role' => User::ROLE_DISTRIBUTOR]);
@@ -106,7 +106,7 @@ class DistributorOutletReferralTest extends TestCase
             ->assertSee('name="sales_code"', false);
     }
 
-    public function test_registering_via_link_creates_outlet_under_distributor(): void
+    public function test_registering_via_link_creates_subdist_under_distributor(): void
     {
         $code = $this->distributor->distributor_sales_code;
 
@@ -114,10 +114,10 @@ class DistributorOutletReferralTest extends TestCase
             ->assertRedirect(route('register.success'));
 
         $outlet = User::where('email', 'outlet-baru@example.test')->firstOrFail();
-        $this->assertSame(User::ROLE_OUTLET, $outlet->role);
+        $this->assertSame(User::ROLE_SUBDIST, $outlet->role);
         $this->assertSame($code, $outlet->sales_code);
         $this->assertTrue($outlet->referringDistributor->is($this->distributor));
-        $this->assertCount(1, $this->distributor->referredOutlets);
+        $this->assertCount(1, $this->distributor->referredSubdists);
     }
 
     public function test_distributor_code_wins_over_tampered_sales_code(): void
@@ -154,14 +154,14 @@ class DistributorOutletReferralTest extends TestCase
         $this->post('/logout');
         $this->post('/register', $this->registrationPayload(['email' => 'pembeli@example.test', 'phone' => '081299990002']));
         $buyer = User::where('email', 'pembeli@example.test')->firstOrFail();
-        $this->assertSame(User::ROLE_BUYER, $buyer->role);
+        $this->assertSame(User::ROLE_ECOM, $buyer->role);
         $this->assertNull($buyer->sales_code);
     }
 
     public function test_profile_update_cannot_change_distributor_attribution(): void
     {
         $code = $this->distributor->distributor_sales_code;
-        $outlet = $this->outlet($code);
+        $outlet = $this->outlet($code, User::ROLE_SUBDIST);
 
         $this->actingAs($outlet)->put(route('buyer.profile.update'), [
             'name' => 'Nama Diubah',
@@ -193,7 +193,7 @@ class DistributorOutletReferralTest extends TestCase
         $code = $this->distributor->distributor_sales_code;
 
         $this->assertNull($this->qadSalespersonFor($code));
-        $this->assertNull($this->qadSalespersonFor(null, $this->outlet($code)));
+        $this->assertNull($this->qadSalespersonFor(null, $this->outlet($code, User::ROLE_SUBDIST)));
 
         $this->distributor->update(['sales_code' => 'SLS00049']);
         $this->assertSame('SLS00049', $this->qadSalespersonFor($code));
@@ -226,7 +226,7 @@ class DistributorOutletReferralTest extends TestCase
     public function test_distributor_page_shows_link_and_own_outlets_only(): void
     {
         $code = $this->distributor->distributor_sales_code;
-        $own = $this->outlet($code);
+        $own = $this->outlet($code, User::ROLE_SUBDIST);
         $other = $this->outlet('MCR001');
         $this->distributor->forceFill(['wa_verified_at' => now()])->save();
 
@@ -239,7 +239,7 @@ class DistributorOutletReferralTest extends TestCase
 
     public function test_distributor_page_is_forbidden_for_non_distributor(): void
     {
-        $buyer = User::factory()->create(['role' => User::ROLE_BUYER, 'wa_verified_at' => now()]);
+        $buyer = User::factory()->create(['role' => User::ROLE_ECOM, 'wa_verified_at' => now()]);
 
         $this->actingAs($buyer)->get(route('buyer.outlet-referral.index'))->assertForbidden();
     }
@@ -247,7 +247,7 @@ class DistributorOutletReferralTest extends TestCase
     public function test_admin_can_update_outlet_keeping_distributor_code(): void
     {
         $code = $this->distributor->distributor_sales_code;
-        $outlet = $this->outlet($code);
+        $outlet = $this->outlet($code, User::ROLE_SUBDIST);
         $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'wa_verified_at' => now()]);
 
         $this->actingAs($admin, 'admin')
@@ -255,7 +255,7 @@ class DistributorOutletReferralTest extends TestCase
                 'name' => 'Outlet Edit',
                 'sales_code' => '',
             ])
-            ->assertRedirect(route('admin.outlets.index', ['tab' => 'outlet']));
+            ->assertRedirect(route('admin.outlets.index', ['tab' => 'subdist']));
 
         // Form edit read-only: kode distributor & nama tidak berubah.
         $this->assertSame($code, $outlet->fresh()->sales_code);

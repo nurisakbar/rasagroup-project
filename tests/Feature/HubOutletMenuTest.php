@@ -53,7 +53,7 @@ class HubOutletMenuTest extends TestCase
         $this->otherHubOutlet = User::factory()->create([
             'role' => User::ROLE_OUTLET, 'name' => 'Outlet Hub Lain', 'hub_id' => $this->otherHub->id, 'wa_verified_at' => now(),
         ]);
-        $this->buyer = User::factory()->create(['role' => User::ROLE_BUYER, 'name' => 'Ecom Uji Hub', 'hub_id' => $this->hub->id, 'wa_verified_at' => now()]);
+        $this->buyer = User::factory()->create(['role' => User::ROLE_ECOM, 'name' => 'Ecom Uji Hub', 'hub_id' => $this->hub->id, 'wa_verified_at' => now()]);
     }
 
     private function names(string $tab): array
@@ -75,8 +75,8 @@ class HubOutletMenuTest extends TestCase
         $this->assertContains('Outlet Uji Hub', $this->names('outlet'));
         $this->assertNotContains('Outlet Hub Lain', $this->names('outlet'));
         // Tab ECOM diminta lewat URL: kembali ke tab OUTLET, user ecom tidak tampil.
-        $this->assertNotContains('Ecom Uji Hub', $this->names('buyer'));
-        $this->assertContains('Outlet Uji Hub', $this->names('buyer'));
+        $this->assertNotContains('Ecom Uji Hub', $this->names('ecom'));
+        $this->assertContains('Outlet Uji Hub', $this->names('ecom'));
     }
 
     public function test_hub_admin_cannot_open_ecom_user(): void

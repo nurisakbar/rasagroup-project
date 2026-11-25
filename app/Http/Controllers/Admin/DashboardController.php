@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $totalProducts = Product::count();
         $totalOrders = Order::count();
         $pendingOrders = Order::where('order_status', 'pending')->count();
-        $totalBuyers = User::where('role', 'buyer')->count();
+        $totalBuyers = User::where('role', User::ROLE_ECOM)->count();
         $totalResellers = User::where('role', 'reseller')->count();
         $totalDistributors = User::where('role', User::ROLE_DISTRIBUTOR)->count();
         $totalDriippreneurs = User::where('role', User::ROLE_DRIIPPRENEUR)->count();

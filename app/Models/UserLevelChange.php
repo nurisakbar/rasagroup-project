@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Catatan audit perubahan level pembeli (outlet / ecom <-> reseller): siapa, kapan, dari level apa ke apa.
+ * Catatan audit perubahan level pembeli (outlet / subdist / ecom <-> reseller): siapa, kapan, dari level apa ke apa.
  * Hanya untuk audit; tidak ditampilkan di aplikasi.
  */
 class UserLevelChange extends Model
@@ -15,7 +15,8 @@ class UserLevelChange extends Model
 
     public const LABELS = [
         'outlet' => 'Outlet',
-        'buyer' => 'Ecom',
+        'subdist' => 'Subdist',
+        'ecom' => 'Ecom',
         'reseller' => 'Reseller',
     ];
 

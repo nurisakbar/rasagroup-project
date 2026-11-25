@@ -348,6 +348,12 @@ class CartController extends Controller
             return $denied;
         }
 
+        if ($problem = Auth::user()->subdistFulfillmentProblem()) {
+            return $request->ajax()
+                ? response()->json(['error' => $problem], 422)
+                : back()->with('error', $problem);
+        }
+
         $this->tryApplyShoppingAddressFromUser();
         $this->ensureShoppingHubInSession($request->input('warehouse_id'));
 

@@ -32,7 +32,7 @@ class DistributorForecastService
             return collect();
         }
 
-        return $distributor->referredOutlets()->orderBy('name')->get(['id', 'name', 'email', 'qad_customer_code', 'sales_code']);
+        return $distributor->referredSubdists()->orderBy('name')->get(['id', 'name', 'email', 'qad_customer_code', 'sales_code']);
     }
 
     /** Kode pelanggan untuk kolom Bill-To: kode customer QAD outlet, atau email bila belum ada. */

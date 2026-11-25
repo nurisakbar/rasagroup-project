@@ -31,6 +31,7 @@ class Order extends Model
         'expedition_id',
         'expedition_service',
         'source_warehouse_id',
+        'fulfilled_by_distributor',
         'source_qad_location_code',
         'subtotal',
         'shipping_cost',
@@ -100,6 +101,7 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'pakai_ppn' => 'boolean',
+        'fulfilled_by_distributor' => 'boolean',
         'total_amount' => 'decimal:2',
         'points_credited' => 'boolean',
         'paid_at' => 'datetime',
@@ -151,6 +153,11 @@ class Order extends Model
         });
 
         static::updated(function (Order $order) {
+            // Order subdist dibatalkan: kembalikan stok gudang distributor (idempoten).
+            if ($order->wasChanged('order_status') && $order->order_status === 'cancelled' && $order->fulfilled_by_distributor) {
+                app(\App\Services\SubdistStockService::class)->restore($order);
+            }
+
             // Notifikasi ke pembeli saat pesanan sampai / selesai, dari jalur mana pun (webhook kurir,
             // admin, warehouse, pembeli, Jubelio). Email "Pesanan Selesai" sudah dikirim per jalur.
             if (! $order->wasChanged('order_status') || ! $order->user_id) {
@@ -696,6 +703,10 @@ class Order extends Model
      */
     public function shouldSyncToJubelio(): bool
     {
+        if ($this->skipsExternalSync()) {
+            return false;
+        }
+
         $this->loadMissing('sourceWarehouse');
 
         return (bool) $this->sourceWarehouse?->send_to_jubelio;
@@ -711,9 +722,17 @@ class Order extends Model
         return (bool) $this->sourceWarehouse?->isEcommerce();
     }
 
+    /**
+     * Order subdist dipenuhi dari stok distributor: tidak dikirim ke QAD, Jubelio, maupun WMS.
+     */
+    public function skipsExternalSync(): bool
+    {
+        return (bool) $this->fulfilled_by_distributor;
+    }
+
     public function shouldSyncToWms(): bool
     {
-        return ! $this->shipsFromEcommerceWarehouse();
+        return ! $this->skipsExternalSync() && ! $this->shipsFromEcommerceWarehouse();
     }
 
     public function shouldSyncToZoho(): bool
@@ -726,7 +745,7 @@ class Order extends Model
      */
     public function shouldSyncToQad(): bool
     {
-        return $this->sourceHubSendsSalesOrdersToQad();
+        return ! $this->skipsExternalSync() && $this->sourceHubSendsSalesOrdersToQad();
     }
 
     /**

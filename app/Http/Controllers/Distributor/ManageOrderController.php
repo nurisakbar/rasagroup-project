@@ -55,6 +55,8 @@ class ManageOrderController extends Controller
                         $html .= '<br><span class="label label-info" style="font-size: 10px;"><i class="fa fa-cash-register"></i> OFFLINE (POS)</span>';
                     } elseif ($order->order_type === 'distributor') {
                         $html .= '<br><span class="label label-warning" style="font-size: 10px;">DISTRIBUTOR</span>';
+                    } elseif ($order->fulfilled_by_distributor) {
+                        $html .= '<br><span class="label label-success" style="font-size: 10px;"><i class="fa fa-sitemap"></i> SUBDIST</span>';
                     } else {
                         $html .= '<br><span class="label label-primary" style="font-size: 10px;"><i class="fa fa-globe"></i> ONLINE</span>';
                     }

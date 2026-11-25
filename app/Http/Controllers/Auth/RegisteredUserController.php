@@ -90,16 +90,24 @@ class RegisteredUserController extends Controller
             $salesCode = trim($parts[0]);
         }
 
-        if ($request->filled('distributor_code')) {
+        // Kode distributor => subdist; kode sales => outlet; tanpa kode => ecom.
+        $viaDistributor = $request->filled('distributor_code');
+        if ($viaDistributor) {
             $salesCode = $this->findReferringDistributor($request->distributor_code)->distributor_sales_code;
         }
+
+        $role = match (true) {
+            $viaDistributor => User::ROLE_SUBDIST,
+            ! empty($salesCode) => User::ROLE_OUTLET,
+            default => User::ROLE_ECOM,
+        };
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => !empty($salesCode) ? 'outlet' : 'buyer',
+            'role' => $role,
             'wa_verification_code' => $waCode,
             'is_potential_distributor' => $request->has('is_potential_distributor') ? 1 : 0,
             'sales_code' => $salesCode,

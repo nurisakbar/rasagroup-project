@@ -17,7 +17,7 @@ class OutletReferralController extends Controller
         abort_unless($user->isDistributor(), 403);
 
         $registerLink = route('register', ['distributor' => $user->distributor_sales_code]);
-        $outlets = $user->referredOutlets()->latest()->paginate(10);
+        $outlets = $user->referredSubdists()->latest()->paginate(10);
 
         return view('buyer.outlet-referral.index', compact('user', 'registerLink', 'outlets'));
     }

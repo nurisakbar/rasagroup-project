@@ -314,7 +314,12 @@ class Warehouse extends Model
     {
         $exclude = $excludeWarehouseId;
         $user = $address->user;
-        
+
+        // Subdist: selalu gudang distributornya, tanpa aturan jarak maupun nilai order.
+        if ($user?->isSubdist()) {
+            return $user->subdistWarehouse();
+        }
+
         // Custom Logic: If total >= 25,000,000 force MM2100 hub
         if ($totalAmount >= 25000000) {
             $mm2100 = self::where('is_active', true)->where('name', 'like', '%MM2100%')->first();
@@ -335,7 +340,7 @@ class Warehouse extends Model
         if ($user) {
             if ($user->isDistributor()) {
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
-            } elseif ($user->isOutlet() || $user->isBuyer()) {
+            } elseif ($user->isOutlet() || $user->isSubdist() || $user->isEcom()) {
                 $hasSalesCode = false;
                 if (request()->filled('sales_code')) {
                     $hasSalesCode = \App\Models\User::isKnownSalesCode(request('sales_code'));
@@ -421,7 +426,8 @@ class Warehouse extends Model
 
         $user = \Illuminate\Support\Facades\Auth::user();
         $hasSalesCode = request()->filled('sales_code');
-        $shouldUseWms = $user && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
+        // Subdist memakai stok manual gudang distributor, bukan WMS.
+        $shouldUseWms = $user && ! $user->isSubdist() && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
 
         if ($shouldUseWms) {
             $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(

@@ -32,7 +32,7 @@ class OutletTabsResellerTest extends TestCase
 
         $this->admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'wa_verified_at' => now()]);
         $this->outlet = User::factory()->create(['role' => User::ROLE_OUTLET, 'name' => 'Outlet Uji Tab', 'wa_verified_at' => now()]);
-        $this->buyer = User::factory()->create(['role' => User::ROLE_BUYER, 'name' => 'Buyer Uji Tab', 'wa_verified_at' => now()]);
+        $this->buyer = User::factory()->create(['role' => User::ROLE_ECOM, 'name' => 'Buyer Uji Tab', 'wa_verified_at' => now()]);
     }
 
     private function tabData(string $tab): array
@@ -55,7 +55,7 @@ class OutletTabsResellerTest extends TestCase
 
         $this->assertContains('Outlet Uji Tab', $this->names('outlet'));
         $this->assertNotContains('Buyer Uji Tab', $this->names('outlet'));
-        $this->assertContains('Buyer Uji Tab', $this->names('buyer'));
+        $this->assertContains('Buyer Uji Tab', $this->names('ecom'));
         $this->assertNotContains('Buyer Uji Tab', $this->names('reseller'));
     }
 
@@ -74,12 +74,12 @@ class OutletTabsResellerTest extends TestCase
         $this->assertTrue($fresh->is_reseller);
         $this->assertNotNull($fresh->reseller_marked_at);
         $this->assertContains('Buyer Uji Tab', $this->names('reseller'));
-        $this->assertNotContains('Buyer Uji Tab', $this->names('buyer'));
+        $this->assertNotContains('Buyer Uji Tab', $this->names('ecom'));
 
         // Centang dilepas: kembali ke User Biasa.
         $this->actingAs($this->admin, 'admin')
             ->put(route('admin.outlets.update', $this->buyer), $payload + ['is_reseller' => 0])
-            ->assertRedirect(route('admin.outlets.index', ['tab' => 'buyer']));
+            ->assertRedirect(route('admin.outlets.index', ['tab' => 'ecom']));
         $this->assertFalse($this->buyer->fresh()->is_reseller);
         $this->assertNull($this->buyer->fresh()->reseller_marked_at);
     }
@@ -135,21 +135,21 @@ class OutletTabsResellerTest extends TestCase
         $sales = User::factory()->create(['role' => User::ROLE_SALES, 'sales_code' => 'TSQ' . strtoupper(substr(uniqid(), -6)), 'wa_verified_at' => now()]);
         $carts = collect([$syrup = $this->cart('Syrup', 20 * 6)]);
 
-        // Outlet dengan kode sales: 20 karton -> tier outlet 10%.
-        $this->assertSame(10.0, $service->calculateCartDiscount($carts, $this->outlet->fresh(), $sales->sales_code)['line_percentages'][$syrup->id]);
+        // Outlet dengan kode sales: 20 karton -> tier outlet 6%.
+        $this->assertSame(6.0, $service->calculateCartDiscount($carts, $this->outlet->fresh(), $sales->sales_code)['line_percentages'][$syrup->id]);
 
         // Outlet jadi reseller: 20 karton belum dapat diskon (tier reseller > 50 karton).
         $this->outlet->forceFill(['is_reseller' => true])->save();
         $reseller = $this->outlet->fresh();
         $this->assertSame(0.0, $service->calculateCartDiscount($carts, $reseller, $sales->sales_code)['line_percentages'][$syrup->id]);
         $big = collect([$s = $this->cart('Syrup', 51 * 6)]);
-        $this->assertSame(15.0, $service->calculateCartDiscount($big, $reseller, null)['line_percentages'][$s->id]);
+        $this->assertSame(10.0, $service->calculateCartDiscount($big, $reseller, null)['line_percentages'][$s->id]);
 
         // Info kekurangan karton untuk reseller.
-        $hints = $service->resellerHints($carts, $reseller);
-        $this->assertSame([['group_name' => 'Syrup & Sauce', 'cartons' => 20, 'cartons_needed' => 31, 'percentage' => 15.0]], $hints);
-        $this->assertSame([], $service->resellerHints($big, $reseller));
-        $this->assertSame([], $service->resellerHints($carts, $this->buyer->fresh()));
+        $hints = $service->subdistHints($carts, $reseller);
+        $this->assertSame([['group_name' => 'Syrup & Sauce', 'cartons' => 20, 'cartons_needed' => 31, 'percentage' => 10.0]], $hints);
+        $this->assertSame([], $service->subdistHints($big, $reseller));
+        $this->assertSame([], $service->subdistHints($carts, $this->buyer->fresh()));
     }
 
     public function test_reseller_always_uses_outlet_channel(): void
@@ -164,14 +164,15 @@ class OutletTabsResellerTest extends TestCase
     public function test_reseller_gets_subdist_reseller_discount_tier(): void
     {
         $service = new DiscountService();
-        // User biasa: tier outlet (1 karton 2,5%, 19+ karton 10%).
-        $this->assertSame(2.5, $service->tierPercentage($this->buyer, 'syrup_sauce', 1));
-        $this->assertSame(10.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 60));
+        // User biasa: tier outlet (1 karton 0%, 3-5 karton 4%, 21+ karton 7%).
+        $this->assertSame(0.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 1));
+        $this->assertSame(4.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 3));
+        $this->assertSame(7.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 60));
 
-        // Reseller: tier Subdist / Reseller (> 50 karton 15% / 8%, di bawahnya belum dapat).
+        // Reseller: tier Subdist (> 50 karton 10% / 7%, di bawahnya belum dapat).
         $this->buyer->forceFill(['is_reseller' => true])->save();
-        $this->assertSame(15.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 51));
-        $this->assertSame(8.0, $service->tierPercentage($this->buyer->fresh(), 'others', 51));
+        $this->assertSame(10.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 51));
+        $this->assertSame(7.0, $service->tierPercentage($this->buyer->fresh(), 'others', 51));
         $this->assertSame(0.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 1));
     }
 
@@ -195,11 +196,11 @@ class OutletTabsResellerTest extends TestCase
         $plain = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
         $this->assertSame(0.0, $plain['line_percentages'][$syrup->id]);
 
-        // Reseller tanpa kode sales: 51 karton -> 15% (Syrup & Sauce) dan 8% (Pulp).
+        // Reseller tanpa kode sales: 51 karton -> 10% (Syrup & Sauce) dan 7% (Pulp).
         $this->buyer->forceFill(['is_reseller' => true])->save();
         $reseller = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
-        $this->assertSame(15.0, $reseller['line_percentages'][$syrup->id]);
-        $this->assertSame(8.0, $reseller['line_percentages'][$pulp->id]);
+        $this->assertSame(10.0, $reseller['line_percentages'][$syrup->id]);
+        $this->assertSame(7.0, $reseller['line_percentages'][$pulp->id]);
 
         // Reseller di bawah/sama dengan 50 karton: belum dapat diskon.
         $small = collect([$s = $this->cart('Syrup', 50 * 6)]);
@@ -234,7 +235,7 @@ class OutletTabsResellerTest extends TestCase
 
     public function test_ecom_tab_has_no_hub_column_and_no_actions(): void
     {
-        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.index', ['tab' => 'buyer']))
+        $this->actingAs($this->admin, 'admin')->get(route('admin.outlets.index', ['tab' => 'ecom']))
             ->assertOk()
             ->assertDontSee('<th>Hub</th>', false)
             ->assertDontSee('<th>Action</th>', false)

@@ -62,6 +62,11 @@ class PricingContext
 
     public function warehouseId(): ?string
     {
+        // Subdist: harga sama dengan harga global (perusahaan tidak membedakan harga per gudang distributor).
+        if (app()->bound('auth') && \Illuminate\Support\Facades\Auth::guard('web')->user()?->isSubdist()) {
+            return null;
+        }
+
         if ($this->hasOverride) {
             return $this->override;
         }

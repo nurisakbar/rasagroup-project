@@ -634,12 +634,12 @@
                                     </tr>
                                     @endforeach
                                 @endif
-                                @foreach($resellerHints ?? [] as $hint)
-                                    <tr class="rg-checkout-total-row reseller-hint-row">
+                                @foreach($subdistHints ?? [] as $hint)
+                                    <tr class="rg-checkout-total-row subdist-hint-row">
                                         <td colspan="2" class="py-2">
                                             <small class="text-muted">
                                                 <i class="fi-rs-info"></i>
-                                                Diskon reseller {{ $hint['group_name'] }} {{ rtrim(rtrim(number_format($hint['percentage'], 1, ',', '.'), '0'), ',') }}% berlaku di atas 50 karton.
+                                                Diskon subdist {{ $hint['group_name'] }} {{ rtrim(rtrim(number_format($hint['percentage'], 1, ',', '.'), '0'), ',') }}% berlaku di atas 50 karton.
                                                 Saat ini {{ $hint['cartons'] }} karton, tambah {{ $hint['cartons_needed'] }} karton lagi.
                                             </small>
                                         </td>
@@ -1308,13 +1308,20 @@
         var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
         var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
         var isDistributor = {{ Auth::user()->isDistributor() ? 'true' : 'false' }};
-        var isOutletOrBuyer = {{ in_array(Auth::user()->role, ['outlet', 'buyer']) ? 'true' : 'false' }};
+        var isOutletOrBuyer = {{ in_array(Auth::user()->role, ['outlet', 'subdist', 'ecom']) ? 'true' : 'false' }};
         var salesCode = new URLSearchParams(window.location.search).get('sales_code');
         var hasSalesCode = salesCode !== null && salesCode.trim() !== '';
         
         var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
         var selfPickupCard = $('.expedition-card[data-expedition-code="self_pickup"]');
-        
+
+        // Subdist: diantar distributor (tanpa batas wilayah) dan ambil di tempat selalu tersedia.
+        if ({{ Auth::user()->isSubdist() ? 'true' : 'false' }}) {
+            if (kurirTokoCard.length) kurirTokoCard.parent().show();
+            if (selfPickupCard.length) selfPickupCard.parent().show();
+            return;
+        }
+
         if (hasSalesCode) {
             if (isJabodetabek) {
                 if (kurirTokoCard.length) kurirTokoCard.parent().show();
