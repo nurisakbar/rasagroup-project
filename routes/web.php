@@ -367,6 +367,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'index'])->name('index');
             Route::get('/datatable', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'datatable'])->name('datatable');
             Route::get('/export', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'export'])->name('export');
+            Route::get('/dokumentasi-api', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'docs'])->name('docs');
             Route::get('/{sale}', [App\Http\Controllers\Admin\DistributorExternalSalesController::class, 'show'])->name('show');
         });
 

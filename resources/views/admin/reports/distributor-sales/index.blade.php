@@ -51,6 +51,7 @@
                     <div class="col-md-2 col-sm-12" style="margin-top: 25px;">
                         <button type="submit" class="btn btn-primary"><i class="fa fa-filter"></i> Terapkan</button>
                         <a class="btn btn-success" href="{{ route('admin.reports.distributor-sales.export', $filters) }}"><i class="fa fa-file-excel-o"></i> Excel</a>
+                        <a class="btn btn-default" href="{{ route('admin.reports.distributor-sales.docs') }}" target="_blank" rel="noopener"><i class="fa fa-book"></i> Dokumentasi API</a>
                     </div>
                 </div>
             </form>
