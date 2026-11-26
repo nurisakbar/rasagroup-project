@@ -28,6 +28,7 @@
     <div class="box box-default">
         <div class="box-header with-border">
             <a href="{{ route('admin.reports.distributor-sales.index') }}" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> Kembali ke laporan</a>
+            <a href="{{ route('admin.reports.distributor-sales.docs.pdf') }}" class="btn btn-danger btn-sm"><i class="fa fa-file-pdf-o"></i> Unduh PDF</a>
             <button type="button" class="btn btn-default btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Cetak</button>
         </div>
         <div class="box-body api-docs">{!! $html !!}</div>
