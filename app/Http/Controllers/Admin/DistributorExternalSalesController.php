@@ -21,6 +21,30 @@ class DistributorExternalSalesController extends Controller
     {
     }
 
+    /** Dokumentasi API untuk tim IT distributor, dirender dari docs/API_PENJUALAN_DISTRIBUTOR.md. */
+    public function docs(Request $request)
+    {
+        $this->authorizeAccess();
+
+        return view('admin.reports.distributor-sales.docs', ['html' => $this->docsHtml($request)]);
+    }
+
+    public function docsPdf(Request $request)
+    {
+        $this->authorizeAccess();
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.reports.distributor-sales.docs-pdf', ['html' => $this->docsHtml($request)])
+            ->setPaper('a4')
+            ->download('Dokumentasi-API-Penjualan-Distributor.pdf');
+    }
+
+    private function docsHtml(Request $request): string
+    {
+        $markdown = str_replace('<domain-rasaconnect>', $request->getHttpHost(), (string) file_get_contents(base_path('docs/API_PENJUALAN_DISTRIBUTOR.md')));
+
+        return \Illuminate\Support\Str::markdown($markdown);
+    }
+
     public function index(Request $request)
     {
         $this->authorizeAccess();
