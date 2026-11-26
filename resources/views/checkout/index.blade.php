@@ -580,6 +580,17 @@
                                             </td>
                                         </tr>
                                     @endforeach
+                                    @foreach(app(\App\Services\BonusService::class)->giftLines($carts, Auth::user()) as $bonusLine)
+                                        <tr>
+                                            <td class="image product-thumbnail" style="width: 60px;"><span class="badge bg-success">BONUS</span></td>
+                                            <td>
+                                                <h6 class="w-160 mb-5">{{ $bonusLine->product->display_name }}</h6>
+                                                <span class="font-xs text-muted">{{ $bonusLine->getAttribute('bonus_rule_name') }}</span>
+                                            </td>
+                                            <td><h6 class="text-muted pl-20 pr-20">x {{ $bonusLine->quantity }}</h6></td>
+                                            <td><h4 class="text-success">Gratis</h4></td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>

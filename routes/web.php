@@ -103,6 +103,8 @@ Route::get('/cart/{product}', function (\App\Models\Product $product) {
 
 Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::get('/bonus-pembelian', [App\Http\Controllers\CartController::class, 'bonus'])->name('cart.bonus');
+    Route::post('/bonus-pembelian/pilih', [App\Http\Controllers\CartController::class, 'chooseBonus'])->name('cart.bonus.choose');
     Route::post('/cart/bulk-delete', [App\Http\Controllers\CartController::class, 'bulkDelete'])->name('cart.bulk-delete');
     Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
     Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
@@ -275,6 +277,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Discount Tiers Management
         Route::resource('discount-tiers', App\Http\Controllers\Admin\DiscountTierController::class)->except(['show']);
+        Route::get('/bonus-rules/search-products', [App\Http\Controllers\Admin\BonusRuleController::class, 'searchProducts'])->name('bonus-rules.search-products');
+        Route::resource('bonus-rules', App\Http\Controllers\Admin\BonusRuleController::class)->except(['show']);
 
         // Warehouses CRUD
         Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');

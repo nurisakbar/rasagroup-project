@@ -145,6 +145,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="bonus-panel" data-url="{{ route('cart.bonus') }}" data-choose-url="{{ route('cart.bonus.choose') }}">@include('cart._bonus')</div>
                 <div class="divider-2 mb-30"></div>
                 <div class="cart-action text-end">
                     <button type="button" class="btn btn-outline-danger mr-10" id="btn-delete-selected" style="display: none;"><i class="fi-rs-trash mr-5"></i>Hapus Terpilih</button>
@@ -567,6 +568,24 @@
             return m ? m.getAttribute('content') : '';
         }
 
+        window.refreshBonusPanel = function () {
+            var panel = document.getElementById('bonus-panel');
+            if (!panel) return;
+            fetch(panel.getAttribute('data-url'), {headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
+                .then(function (r) { return r.text(); })
+                .then(function (html) { panel.innerHTML = html; });
+        };
+        document.addEventListener('change', function (e) {
+            var sel = e.target.closest ? e.target.closest('.js-bonus-choice') : null;
+            var panel = document.getElementById('bonus-panel');
+            if (!sel || !panel || !sel.value) return;
+            var token = document.querySelector('meta[name="csrf-token"]');
+            fetch(panel.getAttribute('data-choose-url'), {
+                method: 'POST', credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token ? token.content : ''},
+                body: JSON.stringify({rule_id: sel.getAttribute('data-rule'), product_id: sel.value})
+            }).then(function () { window.refreshBonusPanel(); });
+        });
         function updateCartQtyAjax(form, input) {
             var action = form.getAttribute('action');
             var qty = parseInt(String(input.value).replace(/\D/g, ''), 10);
@@ -631,6 +650,7 @@
                             subEl.textContent = line.line_subtotal_formatted;
                         }
                     }
+                    if (typeof window.refreshBonusPanel === 'function') { window.refreshBonusPanel(); }
                     if (typeof window.calculateCartTotals === 'function') {
                         window.calculateCartTotals();
                     }
@@ -825,6 +845,7 @@
                     window.location.reload();
                     return;
                 }
+                if (typeof window.refreshBonusPanel === 'function') { window.refreshBonusPanel(); }
 
                 if (rowsToRemove && rowsToRemove.length) {
                     rowsToRemove.forEach(row => row.remove());

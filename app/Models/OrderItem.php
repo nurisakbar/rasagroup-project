@@ -27,6 +27,8 @@ class OrderItem extends Model
         'catalog_price',
         'price_master_id',
         'subtotal',
+        'is_bonus',
+        'bonus_rule_id',
         'allocated_batches',
     ];
 

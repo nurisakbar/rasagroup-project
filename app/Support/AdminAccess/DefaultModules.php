@@ -49,6 +49,7 @@ class DefaultModules
             'pages' => $m('HALAMAN STATIS', null, 'fa-file-text', 'admin.pages.index', ['admin.pages.*'], 230, true, ['it_application']),
             'information_channels' => $m('SALURAN INFORMASI', null, 'fa-info-circle', 'admin.information-channels.index', ['admin.information-channels.*'], 240, true, ['brand_marketing']),
             'discount_tiers' => $m('POTONGAN HARGA', null, 'fa-percent', 'admin.discount-tiers.index', ['admin.discount-tiers.*'], 250, true, ['ecommerce', 'sales_admin']),
+            'bonus_rules' => $m('BONUS PEMBELIAN', null, 'fa-gift', 'admin.bonus-rules.index', ['admin.bonus-rules.*'], 255, true, ['ecommerce', 'sales_admin']),
             'settings' => $m('PENGATURAN', null, 'fa-cog', 'admin.settings.index', ['admin.settings.*'], 260, true, ['it_application']),
             // Tanpa menu: tetap dikontrol aksesnya.
             'promos' => $m('PROMO', null, 'fa-gift', 'admin.promos.index', ['admin.promos.*'], 270, false, []),

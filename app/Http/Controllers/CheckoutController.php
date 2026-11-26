@@ -881,6 +881,13 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        // Bonus pembelian: hadiah masuk sebagai item harga Rp0 (stok & batch diproses seperti item biasa).
+        $bonusService = app(\App\Services\BonusService::class);
+        if ($bonusService->pendingChoices($carts, $user) !== []) {
+            return redirect()->route('cart.index')->with('error', 'Pilih produk bonus Anda di keranjang sebelum checkout.');
+        }
+        $bonusLines = $bonusService->giftLines($carts, $user);
+
         // Get source warehouse from cart
         $sourceWarehouse = $carts->first()->warehouse;
 
@@ -939,9 +946,14 @@ class CheckoutController extends Controller
                 );
             }
 
-            foreach ($carts as $cart) {
-                $productName = $cart->product->display_name;
-                $qty = $cart->quantity;
+            // Hadiah ikut dicek stoknya; bila produknya sama dengan item yang dibeli, jumlahnya digabung.
+            $bonusQtyByProduct = $bonusLines->groupBy('product_id')->map(fn ($g) => (int) $g->sum('quantity'));
+            $paidProductIds = $carts->pluck('product_id');
+            $stockCarts = $carts->concat($bonusLines->reject(fn ($b) => $paidProductIds->contains($b->product_id)));
+
+            foreach ($stockCarts as $cart) {
+                $productName = $cart->product->display_name . ($cart->getAttribute('is_bonus') ? ' (bonus)' : '');
+                $qty = $cart->quantity + ($cart->getAttribute('is_bonus') ? 0 : (int) ($bonusQtyByProduct[$cart->product_id] ?? 0));
                 $productCode = $cart->product->code;
                 
                 $stock = \App\Models\WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
@@ -1022,7 +1034,7 @@ class CheckoutController extends Controller
             $subtotal = $pricing['subtotal_after_distributor'];
             $ppn = $pricing['ppn'];
 
-            $totalWeight = $carts->sum(function ($cart) {
+            $totalWeight = $carts->concat($bonusLines)->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
             });
 
@@ -1250,9 +1262,10 @@ class CheckoutController extends Controller
             // Diskon berjenjang (MOQ) dicatat per item agar invoice & QAD/Zoho sama dengan yang dibayar.
             $tierLinePercents = $user->isDistributor() ? [] : $discountService->linePercentages($carts, $user, $request->sales_code);
 
-            foreach ($carts as $cart) {
+            foreach ($carts->concat($bonusLines) as $cart) {
+                $isBonusLine = (bool) $cart->getAttribute('is_bonus');
                 $tierPercent = (float) ($tierLinePercents[(string) $cart->id] ?? 0);
-                $lineUnit = round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
+                $lineUnit = $isBonusLine ? 0.0 : round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
 
                 $allocatedBatches = [];
                 $productCodes = $cart->product->getAllCodes();
@@ -1314,8 +1327,8 @@ class CheckoutController extends Controller
                     );
                 }
 
-                $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;
-                $quantityOrdered = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered;
+                $orderUom = $isBonusLine ? null : ($cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom);
+                $quantityOrdered = $isBonusLine ? null : ($cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered);
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -1326,6 +1339,8 @@ class CheckoutController extends Controller
                     'price' => $lineUnit,
                     'subtotal' => $lineUnit * $cart->quantity,
                     'allocated_batches' => !empty($allocatedBatches) ? $allocatedBatches : null,
+                    'is_bonus' => $isBonusLine,
+                    'bonus_rule_id' => $isBonusLine ? $cart->getAttribute('bonus_rule_id') : null,
                 ]);
 
                 if ($order->fulfilled_by_distributor) {
@@ -1352,6 +1367,7 @@ class CheckoutController extends Controller
                 $deleteQuery->whereIn('id', $request->cart_ids);
             }
             $deletedCartCount = $deleteQuery->delete();
+            $bonusService->clearChoices($user);
 
             // Handle Faspay payment (to get invoice URL)
             $faspayInvoiceUrl = null;

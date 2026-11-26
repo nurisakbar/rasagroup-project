@@ -500,7 +500,7 @@
                                                                         <div>
                                                                             <h6 class="font-sm mb-1 text-dark">
                                                                                 @if($item->product)
-                                                                                    {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                                                                    {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }} @if($item->is_bonus)<span class="label label-success" style="font-size:10px;">BONUS</span>@endif
                                                                                 @else
                                                                                     Produk dihapus
                                                                                 @endif

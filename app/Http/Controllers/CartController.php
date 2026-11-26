@@ -144,6 +144,28 @@ class CartController extends Controller
         return $request->ajax() || $request->wantsJson();
     }
 
+    /** Panel bonus pembelian (dimuat ulang lewat AJAX saat isi keranjang berubah). */
+    public function bonus()
+    {
+        $carts = $this->currentRegularCarts();
+
+        return view('cart._bonus', ['bonus' => app(\App\Services\BonusService::class)->evaluate($carts, Auth::user())]);
+    }
+
+    public function chooseBonus(Request $request)
+    {
+        $data = $request->validate(['rule_id' => 'required|string', 'product_id' => 'required|string']);
+        $rule = \App\Models\BonusRule::running()->with('giftProducts')->find($data['rule_id']);
+        $product = \App\Models\Product::find($data['product_id']);
+        $ok = $rule && $product && Auth::user() && app(\App\Services\BonusService::class)->setChoice(Auth::user(), $rule, $product);
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => (bool) $ok], $ok ? 200 : 422);
+        }
+
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Pilihan hadiah disimpan.' : 'Pilihan hadiah tidak valid.');
+    }
+
     public function index()
     {
         $carts = $this->currentRegularCarts();
@@ -171,7 +193,9 @@ class CartController extends Controller
         $totalWeightFormatted = $this->formatTotalWeightGrams($totalWeight);
         $salesList = \App\Models\User::where('role', 'sales')->get();
 
-        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted', 'salesList'));
+        $bonus = app(\App\Services\BonusService::class)->evaluate($carts, Auth::user());
+
+        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted', 'salesList', 'bonus'));
     }
 
     public function update(Request $request, Cart $cart)
