@@ -111,6 +111,8 @@ Route::prefix('v1/distributor')->middleware(['distributor.api.key', 'throttle:di
     // Nomor SO sistem eksternal boleh mengandung garis miring, mis. SO/2026/001
     Route::get('/sales/{externalOrderNumber}', [\App\Http\Controllers\Api\DistributorExternalSaleController::class, 'show'])->where('externalOrderNumber', '.*')->name('api.distributor.sales.show');
     Route::get('/products', [\App\Http\Controllers\Api\DistributorExternalSaleController::class, 'products'])->name('api.distributor.products');
+    Route::get('/categories', [\App\Http\Controllers\Api\DistributorExternalSaleController::class, 'categories'])->name('api.distributor.categories');
+    Route::get('/brands', [\App\Http\Controllers\Api\DistributorExternalSaleController::class, 'brands'])->name('api.distributor.brands');
 });
 
 // External Application API - QRIS Service (Protected by X-API-KEY)

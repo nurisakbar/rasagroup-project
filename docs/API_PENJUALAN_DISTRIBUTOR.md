@@ -82,9 +82,57 @@ Respons `201` (baru) atau `200` (diperbarui):
 
 `GET /sales/{external_order_number}` mengembalikan data order yang sudah diterima, hanya untuk distributor pemilik key.
 
-## Daftar kode produk
+## Data master: produk, kategori, brand
 
-`GET /products` mengembalikan produk aktif beserta kode, kode alternatif, nama, dan satuannya.
+Ketiganya hanya untuk dibaca (`GET`) dan memakai `X-API-KEY` yang sama. Hanya produk aktif yang ditampilkan. Harga tidak disertakan karena bergantung pada level harga masing-masing customer.
+
+### `GET /products`
+
+Daftar produk aktif beserta kode, kode alternatif, nama, satuan, brand, dan kategori. Gunakan `code` (atau salah satu `alternate_codes`) sebagai `items[].product_code` saat mengirim penjualan.
+
+Parameter query (semua opsional):
+
+| Parameter | Keterangan |
+|---|---|
+| `brand` | `id` atau `slug` brand, mis. `?brand=dripp` |
+| `category` | `id` atau `slug` kategori, mis. `?category=syrup` |
+| `search` | Cari di nama atau kode produk |
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "code": "FDA010-BN01",
+      "alternate_codes": [],
+      "name": "DRiPP Banana Syrup",
+      "unit": "BTL",
+      "large_unit": "CTN",
+      "units_per_large": 6,
+      "brand": { "id": "019f94da-...", "name": "DRiPP", "slug": "dripp" },
+      "category": { "id": "019f94da-...", "name": "Syrup", "slug": "syrup" }
+    }
+  ]
+}
+```
+
+`units_per_large` adalah isi satu satuan besar (mis. 1 CTN = 6 BTL), `null` bila produk tidak punya satuan besar.
+
+### `GET /categories`
+
+Daftar kategori aktif beserta jumlah produk aktifnya.
+
+```json
+{ "success": true, "data": [ { "id": "019f94da-...", "name": "Syrup", "slug": "syrup", "products_count": 42 } ] }
+```
+
+### `GET /brands`
+
+Daftar brand aktif beserta jumlah produk aktifnya.
+
+```json
+{ "success": true, "data": [ { "id": "019f94da-...", "name": "DRiPP", "slug": "dripp", "products_count": 120 } ] }
+```
 
 ## Kode error
 
