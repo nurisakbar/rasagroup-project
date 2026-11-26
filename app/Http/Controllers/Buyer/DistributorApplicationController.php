@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WilayahAdministratif;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class DistributorApplicationController extends Controller
 {
@@ -17,7 +19,7 @@ class DistributorApplicationController extends Controller
         $user = Auth::user();
 
         // Check if user already applied or is already a distributor
-        if ($user->role !== 'buyer') {
+        if ($user->role !== User::ROLE_ECOM) {
             return redirect()->route('buyer.dashboard')
                 ->with('error', 'Anda tidak dapat mendaftar sebagai distributor.');
         }
@@ -46,8 +48,9 @@ class DistributorApplicationController extends Controller
         $validated = $request->validate([
             'no_ktp' => ['required', 'string', 'size:16', 'regex:/^[0-9]+$/'],
             'no_npwp' => ['required', 'string', 'min:15', 'max:20'],
-            'distributor_province_id' => ['required', 'exists:provinces,id'],
-            'distributor_regency_id' => ['required', 'exists:regencies,id'],
+            // Wilayah dibaca dari view wilayah administratif (tabel provinces/regencies tidak ada).
+            'distributor_province_id' => ['required', Rule::exists(WilayahAdministratif::class, 'province_id')],
+            'distributor_regency_id' => ['required', Rule::exists(WilayahAdministratif::class, 'regency_id')->where('province_id', $request->input('distributor_province_id'))],
             'distributor_address' => ['required', 'string', 'min:10'],
         ], [
             'no_ktp.required' => 'Nomor KTP wajib diisi.',

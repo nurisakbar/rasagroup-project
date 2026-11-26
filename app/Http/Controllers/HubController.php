@@ -20,6 +20,7 @@ class HubController extends Controller
 
         $query = Warehouse::with(['wilayah'])
             ->where('is_active', true)
+            ->publicHubs()
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->withCount(['stocks as products_count' => function ($q) {
                 $q->whereHas('product', function ($p) {
@@ -54,6 +55,7 @@ class HubController extends Controller
 
         $activeHubQuery = Warehouse::query()
             ->where('is_active', true)
+            ->publicHubs()
             ->whereNotNull('province_id')
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId));
 
@@ -71,6 +73,7 @@ class HubController extends Controller
             && $provinces->contains(fn ($p) => (string) $p->id === (string) $request->province_id)) {
             $regencyIdsWithHubs = Warehouse::query()
                 ->where('is_active', true)
+                ->publicHubs()
                 ->where('province_id', $request->province_id)
                 ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
                 ->whereNotNull('regency_id')
@@ -145,6 +148,7 @@ class HubController extends Controller
 
         $hasHubs = Warehouse::query()
             ->where('is_active', true)
+            ->publicHubs()
             ->where('province_id', $provinceId)
             ->exists();
 
@@ -154,6 +158,7 @@ class HubController extends Controller
 
         $regencyIdsWithHubs = Warehouse::query()
             ->where('is_active', true)
+            ->publicHubs()
             ->where('province_id', $provinceId)
             ->whereNotNull('regency_id')
             ->distinct()
@@ -181,6 +186,7 @@ class HubController extends Controller
     {
         $query = Warehouse::with(['wilayah'])
             ->where('is_active', true)
+            ->publicHubs()
             ->withCount(['stocks as products_count' => function ($q) {
                 $q->whereHas('product', function ($p) {
                     $p->where('status', 'active');
@@ -330,7 +336,7 @@ class HubController extends Controller
         // Get all active hubs with coordinates
         $excludeHubId = Auth::user()?->distributorShoppingExcludedWarehouseId();
         $registeredHub = Auth::user()?->registeredShoppingHub();
-        $hubs = Warehouse::where('is_active', true)
+        $hubs = Warehouse::publicHubs()->where('is_active', true)
             ->when($registeredHub, fn ($q) => $q->whereKey($registeredHub->id))
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
@@ -431,6 +437,7 @@ class HubController extends Controller
 
         $hubs = Warehouse::with(['wilayah'])
             ->where('is_active', true)
+            ->publicHubs()
             ->when($excludeHubId, fn ($q) => $q->where('id', '!=', $excludeHubId))
             ->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")

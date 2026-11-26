@@ -16,7 +16,6 @@ use Yajra\DataTables\Facades\DataTables;
 class DistributorExternalSalesController extends Controller
 {
     /** Data penjualan antar-distributor sensitif; middleware admin saja terlalu longgar. */
-    public const ALLOWED_ROLES = [User::ROLE_SUPER_ADMIN, 'finance'];
 
     public function __construct(private DistributorExternalSalesReport $report)
     {
@@ -76,6 +75,6 @@ class DistributorExternalSalesController extends Controller
 
     private function authorizeAccess(): void
     {
-        abort_unless(in_array(auth('admin')->user()?->role, self::ALLOWED_ROLES, true), 403);
+        // Hak akses dijaga middleware modul (EnsureAdminModuleAccess); tidak ada pengecekan role di sini.
     }
 }

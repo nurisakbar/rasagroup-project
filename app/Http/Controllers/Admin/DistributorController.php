@@ -184,6 +184,7 @@ class DistributorController extends Controller
 
         $validated = $request->validate([
             'hub_name' => ['required', 'string', 'max:255'],
+            'province_id' => ['required'],
             'regency_id' => ['required'],
             'district_id' => ['required'],
             'village_id' => ['nullable'],

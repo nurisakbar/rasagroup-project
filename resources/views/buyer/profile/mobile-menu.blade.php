@@ -40,13 +40,18 @@
                         </li>
                         @if(auth()->user()->isDistributor())
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('distributor.warehouse-location.index') }}">
+                                <i class="fi-rs-marker mr-15"></i>Lokasi Gudang
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.outlet-referral.index') }}">
-                                <i class="fi-rs-users mr-15"></i>Rekrut Outlet
+                                <i class="fi-rs-users mr-15"></i>Rekrut Subdist
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.forecast.index') }}">
-                                <i class="fi-rs-chart-histogram mr-15"></i>Forecast
+                                <i class="fi-rs-stats mr-15"></i>Forecast
                             </a>
                         </li>
                         @endif

@@ -580,6 +580,17 @@
                                             </td>
                                         </tr>
                                     @endforeach
+                                    @foreach(app(\App\Services\BonusService::class)->giftLines($carts, Auth::user()) as $bonusLine)
+                                        <tr>
+                                            <td class="image product-thumbnail" style="width: 60px;"><span class="badge bg-success">BONUS</span></td>
+                                            <td>
+                                                <h6 class="w-160 mb-5">{{ $bonusLine->product->display_name }}</h6>
+                                                <span class="font-xs text-muted">{{ $bonusLine->getAttribute('bonus_rule_name') }}</span>
+                                            </td>
+                                            <td><h6 class="text-muted pl-20 pr-20">x {{ $bonusLine->quantity }}</h6></td>
+                                            <td><h4 class="text-success">Gratis</h4></td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -634,12 +645,12 @@
                                     </tr>
                                     @endforeach
                                 @endif
-                                @foreach($resellerHints ?? [] as $hint)
-                                    <tr class="rg-checkout-total-row reseller-hint-row">
+                                @foreach($subdistHints ?? [] as $hint)
+                                    <tr class="rg-checkout-total-row subdist-hint-row">
                                         <td colspan="2" class="py-2">
                                             <small class="text-muted">
                                                 <i class="fi-rs-info"></i>
-                                                Diskon reseller {{ $hint['group_name'] }} {{ rtrim(rtrim(number_format($hint['percentage'], 1, ',', '.'), '0'), ',') }}% berlaku di atas 50 karton.
+                                                Diskon subdist {{ $hint['group_name'] }} {{ rtrim(rtrim(number_format($hint['percentage'], 1, ',', '.'), '0'), ',') }}% berlaku di atas 50 karton.
                                                 Saat ini {{ $hint['cartons'] }} karton, tambah {{ $hint['cartons_needed'] }} karton lagi.
                                             </small>
                                         </td>
@@ -708,6 +719,21 @@
                                  <div class="payment-content" style="display: block;">
                                      <p class="font-sm mb-0"><i class="fi-rs-building mr-5"></i> Dikirim dari: <strong id="sourceWarehouseName">{{ $sourceWarehouse->name ?? 'Gudang Pusat' }}</strong></p>
                                      <p class="font-xs text-muted mb-0" id="sourceWarehouseLocation">{{ $sourceWarehouse->full_location ?? '' }}</p>
+                                     @include('partials.subdist-warehouse-picker')
+                                     @if(Auth::user()->isSubdist() && !empty($sourceWarehouse))
+                                         <div class="mt-10 p-10" style="background: #FAF6F1; border: 1px solid #E3D6C8; border-radius: 10px;">
+                                             <p class="font-xs mb-5" style="color: #6A1B1B; font-weight: 700;"><i class="fi-rs-marker mr-5"></i>Lokasi gudang distributor (titik ambil)</p>
+                                             @if(filled($sourceWarehouse->address))
+                                                 <p class="font-xs mb-5">{{ $sourceWarehouse->address }}</p>
+                                             @endif
+                                             @if(filled($sourceWarehouse->phone))
+                                                 <p class="font-xs mb-5"><i class="fi-rs-phone-call mr-5"></i>{{ $sourceWarehouse->phone }}</p>
+                                             @endif
+                                             @if(filled($sourceWarehouse->latitude) && filled($sourceWarehouse->longitude))
+                                                 <a href="https://www.google.com/maps?q={{ $sourceWarehouse->latitude }},{{ $sourceWarehouse->longitude }}" target="_blank" rel="noopener" class="font-xs" style="color: #6A1B1B; font-weight: 700;">Lihat di peta</a>
+                                             @endif
+                                         </div>
+                                     @endif
                                  </div>
                              </div>
                         </div>
@@ -1308,13 +1334,20 @@
         var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
         var isJabodetabek = selectedCard.data('is-jabodetabek') == '1';
         var isDistributor = {{ Auth::user()->isDistributor() ? 'true' : 'false' }};
-        var isOutletOrBuyer = {{ in_array(Auth::user()->role, ['outlet', 'buyer']) ? 'true' : 'false' }};
+        var isOutletOrBuyer = {{ in_array(Auth::user()->role, ['outlet', 'subdist', 'ecom']) ? 'true' : 'false' }};
         var salesCode = new URLSearchParams(window.location.search).get('sales_code');
         var hasSalesCode = salesCode !== null && salesCode.trim() !== '';
         
         var kurirTokoCard = $('.expedition-card[data-expedition-code="kurir_toko"]');
         var selfPickupCard = $('.expedition-card[data-expedition-code="self_pickup"]');
-        
+
+        // Subdist: diantar distributor (tanpa batas wilayah) dan ambil di tempat selalu tersedia.
+        if ({{ Auth::user()->isSubdist() ? 'true' : 'false' }}) {
+            if (kurirTokoCard.length) kurirTokoCard.parent().show();
+            if (selfPickupCard.length) selfPickupCard.parent().show();
+            return;
+        }
+
         if (hasSalesCode) {
             if (isJabodetabek) {
                 if (kurirTokoCard.length) kurirTokoCard.parent().show();

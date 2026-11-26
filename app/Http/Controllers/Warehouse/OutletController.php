@@ -39,7 +39,7 @@ class OutletController extends AdminOutletController implements HasMiddleware
 
     protected function tabs(): array
     {
-        return ['outlet', 'reseller'];
+        return ['outlet', 'subdist', 'reseller'];
     }
 
     protected function actorId(): ?string

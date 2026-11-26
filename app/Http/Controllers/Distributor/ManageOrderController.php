@@ -25,7 +25,7 @@ class ManageOrderController extends Controller
 
         if ($request->ajax()) {
             $query = Order::with(['user', 'expedition', 'sourceWarehouse.wilayah'])
-                ->where('source_warehouse_id', $warehouse->id)
+                ->whereIn('source_warehouse_id', $this->ownWarehouseIds())
                 ->where('finance_approved', true);
 
             // Filter by status
@@ -50,63 +50,64 @@ class ManageOrderController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('order_info', function ($order) {
-                    $html = '<strong>' . $order->order_number . '</strong>';
                     if ($order->order_type === 'pos') {
-                        $html .= '<br><span class="label label-info" style="font-size: 10px;"><i class="fa fa-cash-register"></i> OFFLINE (POS)</span>';
+                        $type = '<span class="mo-badge mo-tone-info">Offline (POS)</span>';
                     } elseif ($order->order_type === 'distributor') {
-                        $html .= '<br><span class="label label-warning" style="font-size: 10px;">DISTRIBUTOR</span>';
+                        $type = '<span class="mo-badge mo-tone-warn">Distributor</span>';
+                    } elseif ($order->fulfilled_by_distributor) {
+                        $type = '<span class="mo-badge mo-tone-primary">Subdist</span>';
                     } else {
-                        $html .= '<br><span class="label label-primary" style="font-size: 10px;"><i class="fa fa-globe"></i> ONLINE</span>';
+                        $type = '<span class="mo-badge mo-tone-primary">Online</span>';
                     }
-                    $html .= '<br><small class="text-muted">' . $order->created_at->format('d M Y H:i') . '</small>';
-                    return $html;
+
+                    return '<div class="mo-order"><strong>' . e($order->order_number) . '</strong>' . $type . '</div>'
+                        . '<div class="mo-date">' . $order->created_at->format('d M Y, H:i') . '</div>';
                 })
                 ->addColumn('buyer_info', function ($order) {
-                    return $order->user->name . '<br><small class="text-muted">' . $order->user->email . '</small>';
+                    return '<div class="mo-buyer"><strong>' . e($order->user->name) . '</strong>'
+                        . '<span class="mo-email" title="' . e($order->user->email) . '">' . e($order->user->email) . '</span></div>';
                 })
                 ->addColumn('expedition_info', function ($order) {
+                    if ($order->fulfillmentMode() === 'pickup') {
+                        return '<span class="mo-exp"><i class="fi-rs-shop"></i> Ambil di tempat</span>';
+                    }
+                    if ($order->fulfillmentMode() === 'store_delivery') {
+                        return '<span class="mo-exp"><i class="fi-rs-package"></i> Diantar Ketempat</span>';
+                    }
                     if ($order->expedition) {
-                        $html = $order->expedition->name;
-                        if ($order->tracking_number) {
-                            $html .= '<br><code style="font-size: 11px;">' . $order->tracking_number . '</code>';
-                        } else {
-                            $html .= '<br><small class="text-warning">Belum ada resi</small>';
-                        }
+                        $html = '<span class="mo-exp">' . e($order->expedition->name) . '</span>';
+                        $html .= $order->tracking_number
+                            ? '<div class="mo-resi">' . e($order->tracking_number) . '</div>'
+                            : '<div class="mo-resi mo-resi-none">Belum ada resi</div>';
+
                         return $html;
                     }
-                    return '<span class="text-muted">-</span>';
+
+                    return '<span class="mo-muted">-</span>';
                 })
                 ->addColumn('total_formatted', function ($order) {
-                    return '<strong>Rp ' . number_format($order->total_amount, 0, ',', '.') . '</strong>';
+                    return '<span class="mo-total">Rp ' . number_format($order->total_amount, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('status_badge', function ($order) {
-                    $statusClass = [
-                        'pending' => 'warning',
-                        'processing' => 'info',
-                        'shipped' => 'primary',
-                        'delivered' => 'success',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                    ][$order->order_status] ?? 'default';
-                    return '<span class="label label-' . $statusClass . '">' . ucfirst($order->order_status) . '</span>';
+                    $tone = [
+                        'pending' => 'warn', 'processing' => 'info', 'shipped' => 'primary',
+                        'delivered' => 'ok', 'completed' => 'ok', 'cancelled' => 'bad',
+                    ][$order->order_status] ?? 'muted';
+
+                    return '<span class="mo-badge mo-status mo-tone-' . $tone . '">' . e($order->statusLabel()) . '</span>';
                 })
                 ->addColumn('payment_badge', function ($order) {
-                    $paymentClass = [
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'failed' => 'danger',
-                        'refunded' => 'info',
-                    ][$order->payment_status] ?? 'default';
-                    return '<span class="label label-' . $paymentClass . '">' . ucfirst($order->payment_status) . '</span>';
+                    $tone = [
+                        'paid' => 'ok', 'failed' => 'bad', 'refunded' => 'info',
+                    ][$order->payment_status] ?? 'warn';
+
+                    return '<span class="mo-badge mo-status mo-tone-' . $tone . '">' . e(Order::paymentStatusLabel($order->payment_status)) . '</span>';
                 })
                 ->addColumn('action', function ($order) {
-                    $html = '<a href="' . route('distributor.manage-orders.show', $order) . '" class="btn btn-info btn-xs" style="margin-right: 4px;">
-                        <i class="fa fa-eye"></i> Detail
-                    </a>';
-                    $html .= '<a href="' . route('distributor.manage-orders.surat-jalan-pdf', $order) . '" target="_blank" class="btn btn-primary btn-xs">
-                        <i class="fa fa-print"></i> Cetak
-                    </a>';
-                    return $html;
+                    return '<div class="mo-actions">'
+                        . '<a href="' . route('distributor.manage-orders.show', $order) . '" class="mo-btn mo-btn-main">Detail</a>'
+                        . '<a href="' . route('distributor.manage-orders.surat-jalan-pdf', $order) . '" target="_blank" class="mo-btn mo-btn-out mo-btn-icon" title="Cetak surat jalan"><i class="fi-rs-print"></i><span class="mo-btn-text">Cetak</span></a>'
+                        . '</div>';
                 })
                 ->rawColumns(['order_info', 'buyer_info', 'expedition_info', 'total_formatted', 'status_badge', 'payment_badge', 'action'])
                 ->orderColumn('created_at', function ($query, $order) {
@@ -127,7 +128,7 @@ class ManageOrderController extends Controller
         $warehouse = $user->warehouse;
 
         // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
+        if (! in_array($order->source_warehouse_id, $this->ownWarehouseIds(), true)) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -149,7 +150,7 @@ class ManageOrderController extends Controller
         $warehouse = $user->warehouse;
 
         // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
+        if (! in_array($order->source_warehouse_id, $this->ownWarehouseIds(), true)) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -207,6 +208,25 @@ class ManageOrderController extends Controller
             $messages[] = 'Status pembayaran';
         }
 
+        // Order subdist: stok gudang distributor harus sinkron dengan status. Selain batal, pastikan
+        // stok sudah terpotong (tidak ganda bila sudah terpotong saat order dibuat); batal mengembalikan stok.
+        $stockNote = null;
+        if (! empty($updateData['order_status']) && $order->fulfilled_by_distributor) {
+            $stock = app(\App\Services\SubdistStockService::class);
+            try {
+                if ($updateData['order_status'] === 'cancelled') {
+                    $stock->restore($order);
+                    $stockNote = 'Stok gudang dikembalikan.';
+                } else {
+                    $label = $order->statusOptions()[$updateData['order_status']] ?? $updateData['order_status'];
+                    $cut = $stock->ensureDeducted($order, 'status ' . $label);
+                    $stockNote = $cut > 0 ? "Stok gudang dipotong {$cut} unit." : null;
+                }
+            } catch (\RuntimeException $e) {
+                return back()->with('error', 'Status tidak diubah. ' . $e->getMessage());
+            }
+        }
+
         if (!empty($updateData)) {
             $oldStatus = $order->order_status;
             $order->update($updateData);
@@ -217,7 +237,7 @@ class ManageOrderController extends Controller
                 }
             }
 
-            $message = 'Berhasil memperbarui: ' . implode(', ', $messages);
+            $message = 'Berhasil memperbarui: ' . implode(', ', $messages) . ($stockNote ? '. ' . $stockNote : '');
             return back()->with('success', $message);
         }
 
@@ -233,7 +253,7 @@ class ManageOrderController extends Controller
         $warehouse = $user->warehouse;
 
         // Verify the order belongs to user's warehouse
-        if ($order->source_warehouse_id !== $warehouse->id) {
+        if (! in_array($order->source_warehouse_id, $this->ownWarehouseIds(), true)) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -249,5 +269,15 @@ class ManageOrderController extends Controller
         return $pdf->stream('Surat_Jalan_' . $order->order_number . '.pdf');
     }
 
+
+    /**
+     * ID semua gudang milik distributor ini (utama + tambahan).
+     *
+     * @return array<int, string>
+     */
+    private function ownWarehouseIds(): array
+    {
+        return Auth::user()->distributorWarehouses()->pluck('id')->map(fn ($id) => (string) $id)->all();
+    }
 }
 

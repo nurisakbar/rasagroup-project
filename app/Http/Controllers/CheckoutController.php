@@ -41,6 +41,10 @@ class CheckoutController extends Controller
             return $denied;
         }
 
+        if ($problem = Auth::user()->subdistFulfillmentProblem()) {
+            return redirect()->route('cart.index')->with('error', $problem);
+        }
+
         Auth::user()->loadMissing('priceLevel');
 
         $query = Cart::with(['product', 'warehouse.wilayah'])
@@ -103,7 +107,7 @@ class CheckoutController extends Controller
         $expeditions = Expedition::where('is_active', true)
             ->whereIn('code', $apiCourierCodes)
             ->get();
-        $defaultExpedition = ((request()->filled('sales_code') || (Auth::user()?->isReseller() ?? false))
+        $defaultExpedition = ((request()->filled('sales_code') || (Auth::user()?->isReseller() ?? false) || (Auth::user()?->isSubdist() ?? false))
             ? ($expeditions->firstWhere('code', 'kurir_toko') ?? $expeditions->firstWhere('code', 'self_pickup'))
             : $expeditions->firstWhere('code', 'lion_parcel')) ?? $expeditions->first();
 
@@ -135,7 +139,7 @@ class CheckoutController extends Controller
         $tieredDiscountAmount = $pricing['tiered_discount_amount'];
         $tieredDiscountDetails = $pricing['tiered_discount_details'];
         $showTieredDiscount = $pricing['show_tiered_discount'];
-        $resellerHints = app(\App\Services\DiscountService::class)->resellerHints($carts, Auth::user());
+        $subdistHints = app(\App\Services\DiscountService::class)->subdistHints($carts, Auth::user());
         $subtotal = $pricing['subtotal_after_distributor'];
         $priceLevelName = $pricing['price_level_name'];
         $showDistributorPricing = $pricing['show_distributor_pricing'];
@@ -332,7 +336,7 @@ class CheckoutController extends Controller
         'tieredDiscountAmount',
         'tieredDiscountDetails',
         'showTieredDiscount',
-        'resellerHints',
+        'subdistHints',
         'priceLevelName',
         'showDistributorPricing',
         'ppn',
@@ -485,15 +489,11 @@ class CheckoutController extends Controller
         
         \Log::info('Final shipping cost:', ['cost' => $shippingCost]);
 
-        // Calculate discount
-        $totalQuantity = $carts->sum('quantity');
-        $applicableDiscount = \App\Models\DiscountTier::getApplicableDiscount($totalQuantity);
+        // Aturan DiscountTier lama dinonaktifkan (sama seperti halaman checkout dan proses pesanan);
+        // diskon MOQ dihitung per kategori di cartPricingBreakdown. Jangan dipakai lagi di sini, kalau tidak
+        // total di layar berbeda dengan yang ditagih.
         $discountAmount = 0;
         $discountPercent = 0;
-        if ($applicableDiscount) {
-            $discountAmount = ($subtotal * $applicableDiscount->discount_percent) / 100;
-            $discountPercent = $applicableDiscount->discount_percent;
-        }
 
         $total = $subtotal - $discountAmount + $ppn + $shippingCost;
 
@@ -828,6 +828,11 @@ class CheckoutController extends Controller
         ]);
 
         $user = Auth::user();
+
+        if ($problem = $user->subdistFulfillmentProblem()) {
+            return redirect()->route('cart.index')->with('error', $problem);
+        }
+
         $allowedPayments = [
             'faspay', 'manual_transfer', 'faspay_qris', 'faspay_direct_debit', 
             'faspay_permata_va', 'faspay_mandiri_va', 'faspay_bri_va', 'faspay_cimb_va', 'faspay_bni_va',
@@ -835,6 +840,10 @@ class CheckoutController extends Controller
         ];
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
+        }
+        // Subdist: hanya channel Faspay (tanpa TOP dan tanpa transfer manual).
+        if ($user->isSubdist()) {
+            $allowedPayments = array_values(array_filter($allowedPayments, fn ($m) => str_starts_with($m, 'faspay')));
         }
 
         $request->validate([
@@ -872,6 +881,13 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        // Bonus pembelian: hadiah masuk sebagai item harga Rp0 (stok & batch diproses seperti item biasa).
+        $bonusService = app(\App\Services\BonusService::class);
+        if ($bonusService->pendingChoices($carts, $user) !== []) {
+            return redirect()->route('cart.index')->with('error', 'Pilih produk bonus Anda di keranjang sebelum checkout.');
+        }
+        $bonusLines = $bonusService->giftLines($carts, $user);
+
         // Get source warehouse from cart
         $sourceWarehouse = $carts->first()->warehouse;
 
@@ -902,8 +918,10 @@ class CheckoutController extends Controller
             
             $isDistributor = $user && $user->isDistributor();
             $salesCode = request('sales_code') ?: session('sales_code');
-            $usesWms = $isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false);
-            $usesJubelio = !$usesWms && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
+            $isSubdist = $user?->isSubdist() ?? false;
+            // Subdist: stok manual gudang distributor (WarehouseStock), tanpa WMS dan Jubelio.
+            $usesWms = ! $isSubdist && ($isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false));
+            $usesJubelio = ! $isSubdist && !$usesWms && is_array($sourceWarehouse->sync_sources) && in_array('jubelio', $sourceWarehouse->sync_sources);
             $jubelioItems = null;
 
             if ($usesJubelio && $sourceWarehouse->kode_hub) {
@@ -928,9 +946,14 @@ class CheckoutController extends Controller
                 );
             }
 
-            foreach ($carts as $cart) {
-                $productName = $cart->product->display_name;
-                $qty = $cart->quantity;
+            // Hadiah ikut dicek stoknya; bila produknya sama dengan item yang dibeli, jumlahnya digabung.
+            $bonusQtyByProduct = $bonusLines->groupBy('product_id')->map(fn ($g) => (int) $g->sum('quantity'));
+            $paidProductIds = $carts->pluck('product_id');
+            $stockCarts = $carts->concat($bonusLines->reject(fn ($b) => $paidProductIds->contains($b->product_id)));
+
+            foreach ($stockCarts as $cart) {
+                $productName = $cart->product->display_name . ($cart->getAttribute('is_bonus') ? ' (bonus)' : '');
+                $qty = $cart->quantity + ($cart->getAttribute('is_bonus') ? 0 : (int) ($bonusQtyByProduct[$cart->product_id] ?? 0));
                 $productCode = $cart->product->code;
                 
                 $stock = \App\Models\WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
@@ -1011,7 +1034,7 @@ class CheckoutController extends Controller
             $subtotal = $pricing['subtotal_after_distributor'];
             $ppn = $pricing['ppn'];
 
-            $totalWeight = $carts->sum(function ($cart) {
+            $totalWeight = $carts->concat($bonusLines)->sum(function ($cart) {
                 return ($cart->product->weight ?? 500) * $cart->quantity;
             });
 
@@ -1199,6 +1222,7 @@ class CheckoutController extends Controller
                 'expedition_id' => $expedition->id,
                 'expedition_service' => $request->expedition_service,
                 'source_warehouse_id' => $sourceWarehouse->id,
+                'fulfilled_by_distributor' => $user->isSubdist(),
                 'source_qad_location_code' => $wmsLocationCode,
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
@@ -1238,9 +1262,10 @@ class CheckoutController extends Controller
             // Diskon berjenjang (MOQ) dicatat per item agar invoice & QAD/Zoho sama dengan yang dibayar.
             $tierLinePercents = $user->isDistributor() ? [] : $discountService->linePercentages($carts, $user, $request->sales_code);
 
-            foreach ($carts as $cart) {
+            foreach ($carts->concat($bonusLines) as $cart) {
+                $isBonusLine = (bool) $cart->getAttribute('is_bonus');
                 $tierPercent = (float) ($tierLinePercents[(string) $cart->id] ?? 0);
-                $lineUnit = round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
+                $lineUnit = $isBonusLine ? 0.0 : round($user->getProductPrice($cart->product) * (1 - $tierPercent / 100), 2);
 
                 $allocatedBatches = [];
                 $productCodes = $cart->product->getAllCodes();
@@ -1302,8 +1327,8 @@ class CheckoutController extends Controller
                     );
                 }
 
-                $orderUom = $cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom;
-                $quantityOrdered = $cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered;
+                $orderUom = $isBonusLine ? null : ($cart->showsLargeUnitInCart() ? ($cart->product->large_unit ?? 'CTN') : $cart->order_uom);
+                $quantityOrdered = $isBonusLine ? null : ($cart->showsLargeUnitInCart() ? $cart->cartQuantityInputValue() : $cart->quantity_ordered);
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -1314,10 +1339,19 @@ class CheckoutController extends Controller
                     'price' => $lineUnit,
                     'subtotal' => $lineUnit * $cart->quantity,
                     'allocated_batches' => !empty($allocatedBatches) ? $allocatedBatches : null,
+                    'is_bonus' => $isBonusLine,
+                    'bonus_rule_id' => $isBonusLine ? $cart->getAttribute('bonus_rule_id') : null,
                 ]);
 
-                // Stok lokal tidak dikurangi — asumsi ready; fulfillment via Jubelio/WMS
-                if (! ShopFulfillment::assumeStockReady()) {
+                if ($order->fulfilled_by_distributor) {
+                    // Subdist: potong stok gudang distributor (dengan kunci baris dan riwayat stok).
+                    app(\App\Services\SubdistStockService::class)->deduct(
+                        $order,
+                        (string) $cart->product_id,
+                        (int) $cart->quantity,
+                        (string) $cart->product->display_name
+                    );
+                } elseif (! ShopFulfillment::assumeStockReady()) {
                     $stock = WarehouseStock::where('warehouse_id', $sourceWarehouse->id)
                         ->where('product_id', $cart->product_id)
                         ->first();
@@ -1333,6 +1367,7 @@ class CheckoutController extends Controller
                 $deleteQuery->whereIn('id', $request->cart_ids);
             }
             $deletedCartCount = $deleteQuery->delete();
+            $bonusService->clearChoices($user);
 
             // Handle Faspay payment (to get invoice URL)
             $faspayInvoiceUrl = null;
@@ -1723,8 +1758,9 @@ class CheckoutController extends Controller
             $user = \Illuminate\Support\Facades\Auth::user();
             $isDistributor = $user?->isDistributor() ?? false;
             $salesCode = request('sales_code') ?: session('sales_code');
-            $usesWms = $isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false);
-            $usesJubelio = !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
+            $isSubdist = $user?->isSubdist() ?? false;
+            $usesWms = ! $isSubdist && ($isDistributor || !empty($salesCode) || ($user?->isReseller() ?? false));
+            $usesJubelio = ! $isSubdist && !$usesWms && is_array($currentHub->sync_sources) && in_array('jubelio', $currentHub->sync_sources);
             
             $wmsLocationCode = \App\Services\WmsService::locationCode($currentHub);
             $wmsStock = null;
@@ -1914,6 +1950,11 @@ class CheckoutController extends Controller
             ->filter()
             ->values()
             ->all();
+
+        // Subdist: diantar distributor (tanpa batas wilayah) atau ambil di tempat, sama seperti hub.
+        if (\Auth::user()?->isSubdist()) {
+            return array_values(array_intersect($dbCodes, ['kurir_toko', 'self_pickup']));
+        }
 
         // Jalur outlet (kode sales atau reseller): hanya kurir toko / ambil sendiri.
         if (request()->filled('sales_code') || (\Auth::user()?->isReseller() ?? false)) {

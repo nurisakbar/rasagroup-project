@@ -103,6 +103,8 @@ Route::get('/cart/{product}', function (\App\Models\Product $product) {
 
 Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::get('/bonus-pembelian', [App\Http\Controllers\CartController::class, 'bonus'])->name('cart.bonus');
+    Route::post('/bonus-pembelian/pilih', [App\Http\Controllers\CartController::class, 'chooseBonus'])->name('cart.bonus.choose');
     Route::post('/cart/bulk-delete', [App\Http\Controllers\CartController::class, 'bulkDelete'])->name('cart.bulk-delete');
     Route::post('/cart/{product}', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
     Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
@@ -130,6 +132,7 @@ Route::middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdmin
 // Buyer Routes
 Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\Http\Middleware\PreventSuperAdminFromBuyer::class])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/subdist/warehouse', [App\Http\Controllers\Buyer\SubdistWarehouseController::class, 'select'])->name('subdist.warehouse.select');
     Route::get('/orders', [App\Http\Controllers\Buyer\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [App\Http\Controllers\Buyer\OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/invoice', [App\Http\Controllers\Buyer\OrderController::class, 'downloadInvoice'])->name('orders.invoice');
@@ -204,8 +207,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Admin Protected Routes
-    Route::middleware(['auth:admin', 'agent'])->group(function () {
+    Route::middleware(['auth:admin', 'agent', 'admin.module'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Hak akses modul panel admin (hanya super_admin): matriks per role dan kelola modul
+        Route::prefix('access')->name('access.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\AccessControlController::class, 'index'])->name('index');
+            Route::get('/roles/{role}', [App\Http\Controllers\Admin\AccessControlController::class, 'editRole'])->name('roles.edit');
+            Route::put('/roles/{role}', [App\Http\Controllers\Admin\AccessControlController::class, 'updateRole'])->name('roles.update');
+            Route::post('/roles/{role}/reset', [App\Http\Controllers\Admin\AccessControlController::class, 'resetRole'])->name('roles.reset');
+            Route::resource('modules', App\Http\Controllers\Admin\AdminModuleController::class)->except(['show']);
+        });
         Route::post('/logout', [App\Http\Controllers\Admin\Auth\AdminLoginController::class, 'destroy'])->name('logout');
 
         // Admin Profile
@@ -265,6 +277,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Discount Tiers Management
         Route::resource('discount-tiers', App\Http\Controllers\Admin\DiscountTierController::class)->except(['show']);
+        Route::get('/bonus-rules/search-products', [App\Http\Controllers\Admin\BonusRuleController::class, 'searchProducts'])->name('bonus-rules.search-products');
+        Route::resource('bonus-rules', App\Http\Controllers\Admin\BonusRuleController::class)->except(['show']);
 
         // Warehouses CRUD
         Route::delete('/warehouses/all', [App\Http\Controllers\Admin\WarehouseController::class, 'destroyAll'])->name('warehouses.destroy-all');
@@ -548,6 +562,14 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         })->name('dashboard');
 
         Route::get('/profile', [App\Http\Controllers\Distributor\ProfileController::class, 'index'])->name('profile');
+
+        // Lokasi gudang (sumber kirim & titik ambil subdist), diatur distributor sendiri; boleh lebih dari satu
+        Route::get('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'index'])->name('warehouse-location.index');
+        Route::get('/warehouse-location/create', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'create'])->name('warehouse-location.create');
+        Route::post('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'store'])->name('warehouse-location.store');
+        Route::get('/warehouse-location/{id}/edit', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'edit'])->name('warehouse-location.edit');
+        Route::put('/warehouse-location/{id}', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'update'])->name('warehouse-location.update');
+        Route::post('/warehouse-location/{id}/toggle', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'toggle'])->name('warehouse-location.toggle');
         
         // Stock Management
         Route::get('/stock', [App\Http\Controllers\Distributor\StockController::class, 'index'])->name('stock.index');

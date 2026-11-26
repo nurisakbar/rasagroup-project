@@ -132,7 +132,7 @@ class ManualOrderController extends Controller
         $q = trim((string) $request->get('q', ''));
 
         $users = User::query()
-            ->whereIn('role', [User::ROLE_BUYER, User::ROLE_DISTRIBUTOR, User::ROLE_OUTLET])
+            ->whereIn('role', [User::ROLE_ECOM, User::ROLE_DISTRIBUTOR, User::ROLE_OUTLET, User::ROLE_SUBDIST])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($inner) use ($q) {
                     $inner->where('name', 'like', "%{$q}%")

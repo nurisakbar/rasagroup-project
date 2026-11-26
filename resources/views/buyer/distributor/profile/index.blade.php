@@ -42,6 +42,9 @@
                                         <a href="{{ route('buyer.addresses.index') }}" class="btn btn-sm rounded-pill" style="border: 2px solid #253D4E; color: #253D4E; background: #fff; font-weight: 600;">
                                             <i class="fi-rs-marker mr-5"></i>Kelola alamat
                                         </a>
+                                        <a href="{{ route('distributor.warehouse-location.index') }}" class="btn btn-sm rounded-pill" style="border: 2px solid #6A1B1B; color: #6A1B1B; background: #fff; font-weight: 600;">
+                                            <i class="fi-rs-building mr-5"></i>Lokasi gudang
+                                        </a>
                                         <a href="{{ route('distributor.orders.history') }}" class="btn btn-sm rounded-pill" style="border: 2px solid #3BB77E; color: #3BB77E; background: #fff; font-weight: 600;">
                                             <i class="fi-rs-history mr-5"></i>Riwayat Pembelian
                                         </a>

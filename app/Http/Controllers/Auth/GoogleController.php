@@ -58,7 +58,7 @@ class GoogleController extends Controller
                     'google_token' => $user->token,
                     'google_refresh_token' => $user->refreshToken,
                     'password' => bcrypt(Str::random(16)),
-                    'role' => User::ROLE_BUYER,
+                    'role' => User::ROLE_ECOM,
                     'email_verified_at' => now(), // Google emails are already verified
                 ]);
 

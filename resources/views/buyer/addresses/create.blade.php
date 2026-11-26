@@ -22,15 +22,15 @@
             </div>
             <div class="col-lg-8">
                 <div class="card border-0 shadow-sm border-radius-20 overflow-hidden" style="background-color: #ffffff;">
-                    <div class="card-header bg-white border-bottom p-30">
+                    <div class="card-header bg-white border-bottom p-30 address-card-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Tambah Alamat Baru</h3>
-                            <a href="{{ ($redirectToCheckout ?? false) ? (session('checkout_return_origin') === 'distributor_checkout' ? route('distributor.orders.checkout') : route('checkout.index')) : route('buyer.addresses.index') }}" class="btn btn-sm btn-outline-rasa rounded-pill">
+                            <h3 class="mb-0 address-card-title" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Tambah Alamat Baru</h3>
+                            <a href="{{ ($redirectToCheckout ?? false) ? (session('checkout_return_origin') === 'distributor_checkout' ? route('distributor.orders.checkout') : route('checkout.index')) : route('buyer.addresses.index') }}" class="address-back-btn">
                                 <i class="fi-rs-arrow-left mr-5"></i> Kembali
                             </a>
                         </div>
                     </div>
-                    <div class="card-body p-30 p-md-40">
+                    <div class="card-body p-30 p-md-40 address-card-body">
                         @if ($errors->any())
                             <div class="alert alert-danger border-radius-12 border-0 mb-30" style="background-color: #fff5f5; color: #c53030;">
                                 <ul class="mb-0 font-sm">
@@ -48,7 +48,7 @@
                             @endif
 
                             <div class="mb-40">
-                                <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-user mr-10"></i> Informasi Penerima</h5>
+                                <h5 class="mb-20 address-section-title" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-user"></i> Informasi Penerima</h5>
                                 
                                 <div class="form-group mb-25">
                                     <label class="form-label-custom">Simpan Alamat Sebagai</label>
@@ -98,7 +98,7 @@
                             </div>
 
                             <div class="mb-40">
-                                <h5 class="mb-20" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-marker mr-10"></i> Informasi Lokasi</h5>
+                                <h5 class="mb-20 address-section-title" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-marker"></i> Informasi Lokasi</h5>
                                 
                                 <div class="row g-4">
                                     <div class="col-md-6">
@@ -251,6 +251,28 @@
 
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
+</style>
+
+<style>
+    /* Penyempurnaan tampilan form alamat */
+    .address-card-title { font-size: clamp(20px, 5.5vw, 28px); line-height: 1.2; }
+    .address-back-btn { background-color: #FAF6F1 !important; color: #6A1B1B !important; border: 1.5px solid #D9CFC4 !important; border-radius: 12px !important; font-weight: 700; font-size: 13px !important; padding: 10px 16px !important; height: auto !important; line-height: 1.2 !important; box-shadow: none !important; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+    .address-back-btn:hover { background-color: #6A1B1B !important; color: #fff !important; border-color: #6A1B1B !important; }
+    .address-section-title { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid #F0E6DB; margin-bottom: 22px !important; }
+    .address-section-title i { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(106, 27, 27, 0.1); color: #6A1B1B; font-size: 17px; margin: 0 !important; }
+    .label-selector .btn-check + label.btn.btn-outline-maroon-pill.px-4.py-2 { background-color: #FAF6F1 !important; color: #6A1B1B !important; border: 1.5px solid #D9CFC4 !important; box-shadow: none !important; padding: 9px 18px !important; height: auto !important; display: inline-flex; align-items: center; gap: 6px; }
+    .label-selector .btn-check:checked + label.btn.btn-outline-maroon-pill.px-4.py-2 { background-color: #6A1B1B !important; color: #fff !important; border-color: #6A1B1B !important; box-shadow: 0 4px 12px rgba(106, 27, 27, 0.25) !important; }
+    .label-selector .btn-check + label.btn.btn-outline-maroon-pill.px-4.py-2 i { margin: 0 !important; line-height: 1; }
+    .icon-field { display: inline-flex !important; align-items: center; justify-content: center; line-height: 1 !important; height: 20px; }
+    .custom-input { height: 54px !important; }
+    .custom-input:focus { border-color: #6A1B1B !important; }
+    #btnSubmit { background-color: #6A1B1B !important; color: #fff !important; border: none !important; border-radius: 12px !important; height: 56px; font-weight: 700; font-size: 16px; box-shadow: 0 8px 20px rgba(106, 27, 27, 0.25); }
+    #btnSubmit:hover { background-color: #531414 !important; }
+    #is_default + label { cursor: pointer; }
+    @media (max-width: 575px) {
+        .address-card-header { padding: 18px !important; }
+        .address-card-body { padding: 20px 16px !important; }
+    }
 </style>
 
 @push('scripts')

@@ -15,6 +15,10 @@ class HomeController extends Controller
     public function index()
     {
         $selectedHubId = session('selected_hub_id');
+        // Subdist melihat stok gudang distributornya, bukan hub dari sesi.
+        if ($subdistWarehouse = auth()->user()?->subdistWarehouse()) {
+            $selectedHubId = $subdistWarehouse->id;
+        }
         $baseQuery = Product::frontendFilter()
             ->whereHas('brand', function ($q) {
                 $q->where('is_active', true);

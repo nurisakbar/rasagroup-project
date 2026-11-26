@@ -167,7 +167,7 @@
 
                                         <!-- Step 3: Selesai -->
                                         @php
-                                            $pickupStep3Completed = !empty($order->shipped_at) || in_array($order->order_status, ['shipped', 'delivered', 'completed']);
+                                            $pickupStep3Completed = !empty($order->received_at) || in_array($order->order_status, ['delivered', 'completed']);
                                         @endphp
                                         <div class="d-flex align-items-center flex-fill">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
@@ -179,10 +179,8 @@
                                                 <small class="font-xs {{ $pickupStep3Completed ? 'text-success fw-bold' : 'text-muted' }}">
                                                     @if($order->received_at)
                                                         🤝 Diterima: {{ $order->received_at->format('d M Y, H:i') }} WIB
-                                                    @elseif($order->shipped_at)
-                                                        🤝 Diserahkan: {{ $order->shipped_at->format('d M Y, H:i') }} WIB
                                                     @elseif($pickupStep3Completed)
-                                                        🤝 Barang sudah diserahkan / diambil
+                                                        🤝 Barang sudah diambil
                                                     @else
                                                         Menunggu pengambilan pembeli
                                                     @endif
@@ -218,7 +216,7 @@
                                             <span class="text-muted font-sm">
                                                 @if($isSelfPickup)
                                                     @if($order->shipped_at)
-                                                        Barang telah diserahkan/diambil pada <strong>{{ $order->shipped_at->format('d M Y, H:i') }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di samping.
+                                                        Barang siap diambil di gudang sejak <strong>{{ $order->shipped_at->format('d M Y, H:i') }} WIB</strong>. Jika barang sudah Anda terima dengan baik, silakan klik tombol konfirmasi di samping.
                                                     @else
                                                         Pesanan pengambilan di tempat telah dibayar / disetujui. Jika Anda sudah mengambil dan menerima barang dengan baik di gudang, silakan klik tombol konfirmasi di samping.
                                                     @endif
@@ -384,7 +382,7 @@
                                                     <span class="fw-bold font-sm {{ $order->pickup_ready_at ? 'text-success' : 'text-dark' }}">{{ $order->pickup_ready_at ? $order->pickup_ready_at->format('d M Y, H:i') . ' WIB' : 'Menunggu Jadwal' }}</span>
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between mb-2 pb-2 border-bottom">
-                                                    <span class="text-dark font-sm">2. Waktu Diserahkan (Handover)</span>
+                                                    <span class="text-dark font-sm">2. Siap Diambil Sejak</span>
                                                     <span class="fw-bold font-sm {{ $order->shipped_at ? 'text-primary' : 'text-dark' }}">{{ $order->shipped_at ? $order->shipped_at->format('d M Y, H:i') . ' WIB' : 'Belum Diambil' }}</span>
                                                 </div>
                                                 <div class="info-item d-flex justify-content-between">
@@ -502,7 +500,7 @@
                                                                         <div>
                                                                             <h6 class="font-sm mb-1 text-dark">
                                                                                 @if($item->product)
-                                                                                    {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                                                                    {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }} @if($item->is_bonus)<span class="label label-success" style="font-size:10px;">BONUS</span>@endif
                                                                                 @else
                                                                                     Produk dihapus
                                                                                 @endif

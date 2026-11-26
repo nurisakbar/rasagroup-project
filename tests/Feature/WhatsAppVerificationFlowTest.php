@@ -35,7 +35,7 @@ class WhatsAppVerificationFlowTest extends TestCase
 
         Queue::fake();
         $this->user = User::factory()->create([
-            'role' => 'buyer',
+            'role' => 'ecom',
             'phone' => '08' . random_int(1000000000, 1999999999),
             'email_verified_at' => now(),
             'wa_verified_at' => null,

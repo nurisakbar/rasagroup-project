@@ -504,7 +504,7 @@
                                                                                  onerror="this.src='{{ asset('themes/nest-frontend/assets/imgs/shop/product-1-1.jpg') }}'">
                                                                         </div>
                                                                         <div>
-                                                                            <h6 class="font-sm mb-1 text-dark">{{ $item->product->display_name }}</h6>
+                                                                            <h6 class="font-sm mb-1 text-dark">{{ $item->product->display_name }}</h6> @if($item->is_bonus)<span class="label label-success" style="font-size:10px;">BONUS</span>@endif
                                                                             <span class="font-xs text-muted">SKU: {{ $item->sku ?? '-' }}</span>
                                                                         </div>
                                                                     </div>

@@ -228,7 +228,8 @@
                         <label style="font-size: 11px; font-weight: 600;">TIPE PELANGGAN</label>
                         <select name="user_role" id="filter-user-role" class="form-control input-sm">
                             <option value="all">-- Semua Tipe Pelanggan --</option>
-                            <option value="buyer" {{ ($filters['user_role'] ?? '') === 'buyer' ? 'selected' : '' }}>Buyer / Retail</option>
+                            <option value="ecom" {{ ($filters['user_role'] ?? '') === 'ecom' ? 'selected' : '' }}>Ecom</option>
+                            <option value="subdist" {{ ($filters['user_role'] ?? '') === 'subdist' ? 'selected' : '' }}>Subdist</option>
                             <option value="reseller" {{ ($filters['user_role'] ?? '') === 'reseller' ? 'selected' : '' }}>Reseller</option>
                             <option value="distributor" {{ ($filters['user_role'] ?? '') === 'distributor' ? 'selected' : '' }}>Distributor</option>
                             <option value="driippreneur" {{ ($filters['user_role'] ?? '') === 'driippreneur' ? 'selected' : '' }}>Affiliator / DRiiPPreneur</option>

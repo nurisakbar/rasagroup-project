@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'agent' => \App\Http\Middleware\EnsureUserIsAgent::class,
+            'admin.module' => \App\Http\Middleware\EnsureAdminModuleAccess::class,
             'warehouse' => \App\Http\Middleware\WarehouseAccess::class,
             'driippreneur' => \App\Http\Middleware\DriippreneurAccess::class,
             'distributor' => \App\Http\Middleware\DistributorAccess::class,

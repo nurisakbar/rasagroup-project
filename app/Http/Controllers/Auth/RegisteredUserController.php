@@ -25,6 +25,8 @@ class RegisteredUserController extends Controller
         return view('auth.register', [
             'referringDistributor' => $referringDistributor,
             'invalidDistributorCode' => filled($distributorCode) && ! $referringDistributor,
+        ], [
+            'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
         ]);
     }
 
@@ -74,12 +76,15 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'max:20', 'unique:'.User::class],
+            'terms' => ['accepted'],
             'sales_code' => ['nullable', 'string', 'max:255'],
             'distributor_code' => ['nullable', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
                 if (! $this->findReferringDistributor($value)) {
                     $fail('Link pendaftaran distributor tidak valid.');
                 }
             }],
+        ], [
+            'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
         ]);
 
         $waCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -90,16 +95,24 @@ class RegisteredUserController extends Controller
             $salesCode = trim($parts[0]);
         }
 
-        if ($request->filled('distributor_code')) {
+        // Kode distributor => subdist; kode sales => outlet; tanpa kode => ecom.
+        $viaDistributor = $request->filled('distributor_code');
+        if ($viaDistributor) {
             $salesCode = $this->findReferringDistributor($request->distributor_code)->distributor_sales_code;
         }
+
+        $role = match (true) {
+            $viaDistributor => User::ROLE_SUBDIST,
+            ! empty($salesCode) => User::ROLE_OUTLET,
+            default => User::ROLE_ECOM,
+        };
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => !empty($salesCode) ? 'outlet' : 'buyer',
+            'role' => $role,
             'wa_verification_code' => $waCode,
             'is_potential_distributor' => $request->has('is_potential_distributor') ? 1 : 0,
             'sales_code' => $salesCode,

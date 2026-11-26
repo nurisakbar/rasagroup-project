@@ -111,6 +111,10 @@
             color: #000 !important;
         }
 
+        /* Footer disembunyikan di tampilan mobile/tablet */
+        @media (max-width: 991.98px) {
+            footer.main { display: none !important; }
+        }
         footer .hotline p {
             color: var(--primary-rasa) !important;
         }

@@ -12,11 +12,13 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 /**
- * Upload forecast dari Excel (format: Customer Name, Bill-To, NewSalesName, Item Number, Description, Brand, January..December).
+ * Upload forecast dari Excel (format template: Customer Name, Item Number, Description, Brand, January..December;
+ * format lama dengan kolom Bill-To dan NewSalesName tetap diterima).
  *
- * - Outlet dicocokkan lewat Bill-To (kode customer QAD atau email outlet), lalu nama persis; hanya outlet rekrutan.
+ * - Subdist dicocokkan lewat Customer Name (nama persis, harus unik di antara subdist rekrutan); bila file memuat
+ *   Bill-To (kode customer QAD atau email), itu diutamakan. Hanya subdist rekrutan.
  * - Produk dicocokkan lewat Item Number (kode produk).
- * - Baris yang ada di file ditambahkan/diperbarui; baris lain di forecast tidak dihapus.
+ * - Baris yang ada di file dan berisi angka ditambahkan/diperbarui; baris tanpa angka dilewati; baris lain di forecast tidak dihapus.
  * - Bulan terkunci diabaikan. Satu baris salah membatalkan seluruh file.
  */
 class DistributorForecastImport implements ToCollection, WithHeadingRow
@@ -70,19 +72,26 @@ class DistributorForecastImport implements ToCollection, WithHeadingRow
                 $hasQty = true;
             }
 
-            // Baris bantuan outlet tanpa produk & tanpa angka dilewati.
-            if ($itemNumber === '' && ! $hasQty) {
+            // Baris tanpa angka dilewati: baris bantuan outlet, dan produk di template yang belum diisi
+            // (tidak membuat baris forecast kosong). Isi 0 bila ingin mencatat nol.
+            if (! $hasQty) {
                 continue;
             }
 
             $billTo = strtolower(trim((string) ($row['bill_to'] ?? '')));
             $outlet = $billTo !== '' ? ($byCode[$billTo] ?? null) : null;
             if (! $outlet) {
-                $candidates = $byName[strtolower(trim((string) ($row['customer_name'] ?? '')))] ?? [];
+                $name = strtolower(trim((string) ($row['customer_name'] ?? '')));
+                $candidates = $byName[$name] ?? [];
                 $outlet = count($candidates) === 1 ? $candidates[0] : null;
+
+                if (! $outlet && count($candidates) > 1) {
+                    $this->errors[] = "Baris {$line}: ada lebih dari satu subdist bernama \"" . trim((string) $row['customer_name']) . "\". Ubah salah satu namanya atau isi kolom Bill-To dengan email subdist.";
+                    continue;
+                }
             }
             if (! $outlet) {
-                $this->errors[] = "Baris {$line}: outlet tidak ditemukan di daftar outlet rekrutan Anda (cek Bill-To / Customer Name).";
+                $this->errors[] = "Baris {$line}: subdist tidak ditemukan di daftar subdist rekrutan Anda (cek Customer Name; jangan ubah kolom itu dari template).";
                 continue;
             }
 

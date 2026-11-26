@@ -38,9 +38,24 @@ class Warehouse extends Model
         'latitude',
         'longitude',
         'is_active',
+        'owner_distributor_id',
         'send_to_jubelio',
         'target_role',
     ];
+
+    /**
+     * Distributor pemilik gudang (gudang tambahan buatan distributor sendiri).
+     */
+    public function ownerDistributor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_distributor_id');
+    }
+
+    /** Gudang siap melayani subdist: aktif dan alamat (kecamatan) lengkap. */
+    public function isReadyForSubdist(): bool
+    {
+        return (bool) $this->is_active && filled($this->district_id);
+    }
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -59,6 +74,16 @@ class Warehouse extends Model
     /**
      * Hub aktif yang melayani order outlet (Gudang Order berisi "outlet").
      */
+    /** Sembunyikan gudang khusus subdist (buatan distributor) dari daftar/pilihan hub umum. */
+    public function scopePublicHubs($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('target_role')
+                ->orWhereRaw('NOT JSON_VALID(`target_role`)')
+                ->orWhereRaw('NOT JSON_CONTAINS(`target_role`, ?)', [json_encode('subdist')]);
+        });
+    }
+
     public function scopeOutletHubs($query)
     {
         return $query->where('is_active', true)
@@ -314,7 +339,12 @@ class Warehouse extends Model
     {
         $exclude = $excludeWarehouseId;
         $user = $address->user;
-        
+
+        // Subdist: selalu gudang distributornya, tanpa aturan jarak maupun nilai order.
+        if ($user?->isSubdist()) {
+            return $user->subdistWarehouse();
+        }
+
         // Custom Logic: If total >= 25,000,000 force MM2100 hub
         if ($totalAmount >= 25000000) {
             $mm2100 = self::where('is_active', true)->where('name', 'like', '%MM2100%')->first();
@@ -335,9 +365,9 @@ class Warehouse extends Model
         if ($user) {
             if ($user->isDistributor()) {
                 $rolesAllowed = ['distributor']; // STRICTLY distributor only
-            } elseif ($user->isOutlet() || $user->isBuyer()) {
-                $hasSalesCode = false;
-                if (request()->filled('sales_code')) {
+            } elseif ($user->isOutlet() || $user->isSubdist() || $user->isEcom()) {
+                $hasSalesCode = $user->hasOwnSalesCode();
+                if (! $hasSalesCode && request()->filled('sales_code')) {
                     $hasSalesCode = \App\Models\User::isKnownSalesCode(request('sales_code'));
                 }
 
@@ -420,8 +450,9 @@ class Warehouse extends Model
             ->value('stock') ?? 0;
 
         $user = \Illuminate\Support\Facades\Auth::user();
-        $hasSalesCode = request()->filled('sales_code');
-        $shouldUseWms = $user && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
+        $hasSalesCode = request()->filled('sales_code') || ($user?->hasOwnSalesCode() ?? false);
+        // Subdist memakai stok manual gudang distributor, bukan WMS.
+        $shouldUseWms = $user && ! $user->isSubdist() && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
 
         if ($shouldUseWms) {
             $wmsStockMap = app(\App\Services\WmsService::class)->qtyByItemCode(

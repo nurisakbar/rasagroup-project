@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Log;
 
 class Product extends Model
 {
+    /** Cache per request: stok gudang distributor untuk subdist (warehouse_id => [product_id => stok]). */
+    protected static array $subdistStockMap = [];
+
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $keyType = 'string';
@@ -407,6 +410,23 @@ class Product extends Model
     {
         if (auth()->check()) {
             $user = auth()->user();
+
+            // Subdist: stok yang tampil selalu stok gudang distributornya (bukan hub di session),
+            // diambil dari stok manual gudang tersebut, bukan WMS.
+            if ($user->isSubdist()) {
+                $distributorWarehouse = $user->subdistWarehouse();
+
+                if (! $distributorWarehouse) {
+                    return 0;
+                }
+
+                self::$subdistStockMap[$distributorWarehouse->id] ??= \App\Models\WarehouseStock::where('warehouse_id', $distributorWarehouse->id)
+                    ->pluck('stock', 'product_id')
+                    ->all();
+
+                return (int) (self::$subdistStockMap[$distributorWarehouse->id][$this->id] ?? 0);
+            }
+
             $selectedHubId = session('selected_hub_id');
             
             // Jika belum ada hub terpilih di session, coba cari otomatis berdasarkan alamat utama
@@ -428,8 +448,8 @@ class Product extends Model
             if ($selectedHubId) {
                 $warehouse = \App\Models\Warehouse::find($selectedHubId);
                 
-                $hasSalesCode = request()->filled('sales_code');
-                $shouldUseWms = $user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode);
+                $hasSalesCode = request()->filled('sales_code') || $user->hasOwnSalesCode();
+                $shouldUseWms = ! $user->isSubdist() && ($user->isDistributor() || $user->isReseller() || ($user->isOutlet() && $hasSalesCode));
 
                 // Ambil dari WMS jika Distributor atau Outlet ber-kode sales
                 if ($shouldUseWms && $warehouse) {

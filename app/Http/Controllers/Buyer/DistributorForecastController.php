@@ -32,11 +32,28 @@ class DistributorForecastController extends Controller
         $year = $this->year($request);
         $forecast = $this->service->forecastFor($distributor, $year);
 
-        $lines = $forecast->lines()->with(['outlet:id,name,email,qad_customer_code', 'product:id,code,name,brand_id,unit', 'product.brand:id,name'])->get()
-            ->sortBy(fn ($line) => strtolower(($line->outlet->name ?? '') . '|' . ($line->product->code ?? '')))
-            ->values();
+        $allLines = $forecast->lines()->with(['product:id,code,name,brand_id,unit', 'product.brand:id,name'])->get();
         $outlets = $this->service->outlets($distributor);
-        $products = Product::where('status', 'active')->whereNotNull('code')->orderBy('code')->get(['id', 'code', 'name']);
+
+        // Subdist yang sedang diisi: pilihan user, selain itu subdist pertama yang sudah punya baris, selain itu yang pertama.
+        $selectedId = (string) $request->input('outlet', '');
+        if (! $outlets->contains(fn ($o) => (string) $o->id === $selectedId)) {
+            $withLines = $allLines->pluck('outlet_id')->map(fn ($id) => (string) $id)->unique();
+            $selectedId = (string) ($outlets->first(fn ($o) => $withLines->contains((string) $o->id))?->id ?? $outlets->first()?->id ?? '');
+        }
+        $selectedOutlet = $outlets->first(fn ($o) => (string) $o->id === $selectedId);
+
+        $lines = $allLines->filter(fn ($line) => (string) $line->outlet_id === $selectedId)
+            ->sortBy(fn ($line) => strtolower($line->product->code ?? ''))
+            ->values();
+
+        // Ringkasan per subdist untuk pilihan di langkah 1.
+        $outletSummary = $allLines->groupBy(fn ($line) => (string) $line->outlet_id)
+            ->map(fn ($group) => ['products' => $group->count(), 'units' => $group->sum(fn ($line) => $line->total())]);
+
+        $addedProductIds = $lines->pluck('product_id')->all();
+        $products = Product::where('status', 'active')->whereNotNull('code')
+            ->whereNotIn('id', $addedProductIds)->orderBy('code')->get(['id', 'code', 'name']);
         $totals = collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => $lines->sum(fn ($line) => $line->qty($m))]);
 
         return view('buyer.forecast.index', [
@@ -45,6 +62,9 @@ class DistributorForecastController extends Controller
             'years' => DistributorForecast::selectableYears(),
             'lines' => $lines,
             'outlets' => $outlets,
+            'selectedOutlet' => $selectedOutlet,
+            'outletSummary' => $outletSummary,
+            'grandUnits' => $allLines->sum(fn ($line) => $line->total()),
             'products' => $products,
             'totals' => $totals,
             'salesName' => DistributorForecastService::salesName($distributor),
@@ -52,7 +72,7 @@ class DistributorForecastController extends Controller
         ]);
     }
 
-    /** Tambah baris outlet × produk (atau isi baris yang sudah ada). */
+    /** Tambah satu atau beberapa produk ke forecast sebuah subdist (baris dibuat kosong bila belum ada). */
     public function store(Request $request): RedirectResponse
     {
         $distributor = $this->distributor();
@@ -61,25 +81,38 @@ class DistributorForecastController extends Controller
 
         $validated = $request->validate([
             'outlet_id' => ['required', Rule::in($outletIds)],
-            'product_id' => ['required', Rule::exists('products', 'id')],
+            'product_id' => ['nullable', 'required_without:product_ids', Rule::exists('products', 'id')],
+            'product_ids' => ['nullable', 'required_without:product_id', 'array', 'max:200'],
+            'product_ids.*' => [Rule::exists('products', 'id')],
             'qty' => ['nullable', 'array'],
             'qty.*' => ['nullable', 'integer', 'min:0', 'max:99999999'],
         ], [
-            'outlet_id.in' => 'Outlet harus outlet rekrutan Anda.',
+            'outlet_id.in' => 'Subdist harus subdist rekrutan Anda.',
+            'product_id.required_without' => 'Pilih minimal satu produk.',
+            'product_ids.required_without' => 'Pilih minimal satu produk.',
         ]);
 
+        $outlet = User::findOrFail($validated['outlet_id']);
+        $productIds = collect($validated['product_ids'] ?? [])->when(! empty($validated['product_id']), fn ($c) => $c->push($validated['product_id']))->unique()->values();
         $forecast = $this->service->forecastFor($distributor, $year);
-        $result = $this->service->saveLine(
-            $forecast,
-            User::findOrFail($validated['outlet_id']),
-            Product::withoutGlobalScopes()->findOrFail($validated['product_id']),
-            $validated['qty'] ?? [],
-            Auth::id(),
-            'web'
-        );
 
-        return redirect()->route('buyer.forecast.index', ['year' => $year])
-            ->with('success', 'Baris forecast disimpan.' . $this->lockedNote($result['ignored_locked']));
+        $ignored = [];
+        foreach ($productIds as $productId) {
+            $result = $this->service->saveLine(
+                $forecast,
+                $outlet,
+                Product::withoutGlobalScopes()->findOrFail($productId),
+                $validated['qty'] ?? [],
+                Auth::id(),
+                'web'
+            );
+            $ignored = array_merge($ignored, $result['ignored_locked']);
+        }
+
+        $count = $productIds->count();
+
+        return $this->toIndex($year, $outlet->id)
+            ->with('success', ($count > 1 ? "{$count} produk ditambahkan" : 'Produk ditambahkan') . " ke forecast {$outlet->name}. Isi jumlah per bulan lalu simpan." . $this->lockedNote($ignored));
     }
 
     /** Simpan semua angka di tabel sekaligus. */
@@ -108,7 +141,7 @@ class DistributorForecastController extends Controller
             $ignored = array_merge($ignored, $result['ignored_locked']);
         }
 
-        return redirect()->route('buyer.forecast.index', ['year' => $year])
+        return $this->toIndex($year, $request->input('outlet'))
             ->with('success', $changed > 0 ? "Forecast disimpan ({$changed} angka berubah)." . $this->lockedNote($ignored) : 'Tidak ada perubahan.');
     }
 
@@ -122,18 +155,31 @@ class DistributorForecastController extends Controller
         }
 
         $year = $line->forecast->year;
+        $outletId = $line->outlet_id;
         $this->service->deleteLine($line, Auth::id());
 
-        return redirect()->route('buyer.forecast.index', ['year' => $year])->with('success', 'Baris forecast dihapus.');
+        return $this->toIndex($year, $outletId)->with('success', 'Produk dihapus dari forecast.');
     }
 
+    /** Unduh template berisi semua produk master: subdist terpilih (?outlet=) atau semua subdist (tanpa ?outlet). */
     public function export(Request $request)
     {
         $distributor = $this->distributor();
         $year = $this->year($request);
         $forecast = $this->service->forecastFor($distributor, $year);
 
-        return Excel::download(new DistributorForecastExport($forecast), "forecast_{$distributor->distributor_sales_code}_{$year}.xlsx");
+        $outlet = null;
+        if ($request->filled('outlet')) {
+            $outlet = $this->service->outlets($distributor)->first(fn ($o) => (string) $o->id === (string) $request->input('outlet'));
+            abort_unless($outlet, 404);
+        }
+
+        $suffix = $outlet ? '_' . \Illuminate\Support\Str::slug($outlet->name) : '_semua-subdist';
+
+        return Excel::download(
+            new DistributorForecastExport($forecast, $outlet ? (string) $outlet->id : null),
+            "forecast_{$distributor->distributor_sales_code}_{$year}{$suffix}.xlsx"
+        );
     }
 
     public function import(Request $request): RedirectResponse
@@ -156,6 +202,11 @@ class DistributorForecastController extends Controller
 
         return redirect()->route('buyer.forecast.index', ['year' => $year])
             ->with('success', "Upload berhasil: {$import->saved} baris diproses, {$import->changedCells} angka berubah.{$note}");
+    }
+
+    private function toIndex(int $year, $outletId = null): RedirectResponse
+    {
+        return redirect()->route('buyer.forecast.index', array_filter(['year' => $year, 'outlet' => $outletId]));
     }
 
     private function distributor(): User

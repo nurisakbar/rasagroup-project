@@ -13,6 +13,10 @@ class ProductController extends Controller
     {
         Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
+        // Subdist melihat stok gudang distributornya, bukan hub dari sesi.
+        if ($subdistWarehouse = auth()->user()?->subdistWarehouse()) {
+            $selectedHubId = $subdistWarehouse->id;
+        }
 
         $query = Product::with(['category', 'brand', 'warehouseStocks'])
             ->frontendFilter()
@@ -164,6 +168,10 @@ class ProductController extends Controller
 
         Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
+        // Subdist melihat stok gudang distributornya, bukan hub dari sesi.
+        if ($subdistWarehouse = auth()->user()?->subdistWarehouse()) {
+            $selectedHubId = $subdistWarehouse->id;
+        }
         $selectedWarehouseId = $request->query('warehouse_id', $selectedHubId);
 
         $excludeOwn = Auth::user()?->distributorShoppingExcludedWarehouseId();
@@ -240,6 +248,10 @@ class ProductController extends Controller
             
         Auth::user()?->forgetOwnHubShoppingSelectionIfSet();
         $selectedHubId = session('selected_hub_id');
+        // Subdist melihat stok gudang distributornya, bukan hub dari sesi.
+        if ($subdistWarehouse = auth()->user()?->subdistWarehouse()) {
+            $selectedHubId = $subdistWarehouse->id;
+        }
         return view('themes.nest.partials.quick-view-content', compact('product', 'selectedHubId'))->render();
     }
     public function searchSuggestions(Request $request)

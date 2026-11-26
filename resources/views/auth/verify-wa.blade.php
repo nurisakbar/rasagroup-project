@@ -15,13 +15,13 @@
     <div class="container">
         <div class="row">
             <div class="col-xl-6 col-lg-8 col-md-10 m-auto">
-                <div class="login_wrap widget-taber-content background-white p-30 border-radius-15 shadow-sm">
+                <div class="login_wrap widget-taber-content p-30 border-radius-15" style="background-color: #ffffff !important; border: 1px solid #E3D6C8; box-shadow: 0 10px 30px rgba(106, 27, 27, 0.12) !important;">
                     <div class="padding_eight_all">
                         <div class="heading_s1 text-center">
                             <i class="fi-rs-smartphone display-1 mb-20 text-brand"></i>
-                            <h1 class="mb-5">Verifikasi WhatsApp</h1>
+                            <h1 class="mb-5" style="font-size: clamp(20px, 7.5vw, 40px); white-space: nowrap;">Verifikasi WhatsApp</h1>
                             @if(auth()->user()->phone)
-                                <p class="mb-30">Kami telah mengirimkan kode verifikasi 6 digit ke nomor WhatsApp Anda: <strong>{{ auth()->user()->phone }}</strong></p>
+                                <p class="mb-30">Kami telah mengirimkan kode verifikasi 6 digit ke nomor WhatsApp Anda:<strong class="d-block mt-10" style="font-size: clamp(24px, 7vw, 34px); color: #6A1B1B; letter-spacing: 1px; line-height: 1.2;">{{ auth()->user()->phone }}</strong></p>
                             @else
                                 <p class="mb-30 text-danger">Anda belum mendaftarkan nomor WhatsApp. Silakan masukkan nomor WhatsApp Anda di bawah ini untuk memulai verifikasi.</p>
                             @endif
@@ -111,13 +111,16 @@
 <style>
     .otp-input {
         width: 50px;
-        height: 60px;
+        height: 64px;
+        padding: 0 !important;
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 2.1rem !important;
         font-weight: 700;
-        border: 2px solid #e9ecef;
+        color: #6A1B1B;
+        line-height: 1;
+        border: 2px solid #D9CFC4 !important;
         border-radius: 12px;
-        background-color: #fff;
+        background-color: #FAF6F1 !important;
         transition: all 0.2s;
     }
     .otp-input:focus {
@@ -128,8 +131,8 @@
     @media (max-width: 480px) {
         .otp-input {
             width: 40px;
-            height: 50px;
-            font-size: 1.2rem;
+            height: 54px;
+            font-size: 1.7rem !important;
         }
     }
 

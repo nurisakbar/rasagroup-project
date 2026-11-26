@@ -235,6 +235,9 @@
         font-size: 13px;
         transition: all 0.2s;
     }
+    /* Spesifisitas lebih tinggi agar tidak kalah oleh gaya .btn tema */
+    .btn-check + label.btn.btn-outline-maroon-pill.px-4.py-2 { background-color: #FAF6F1 !important; color: #6A1B1B !important; border: 1.5px solid #D9CFC4 !important; box-shadow: none !important; }
+    .btn-check:checked + label.btn.btn-outline-maroon-pill.px-4.py-2 { background-color: #6A1B1B !important; color: #fff !important; border-color: #6A1B1B !important; box-shadow: 0 4px 12px rgba(106, 27, 27, 0.25) !important; }
     .btn-check:checked + .btn-outline-maroon-pill {
         background-color: #6A1B1B !important;
         color: #fff !important;

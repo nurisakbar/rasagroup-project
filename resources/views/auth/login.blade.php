@@ -61,11 +61,11 @@
                                     <div class="login_footer form-group mb-50 d-flex justify-content-between align-items-center">
                                         <div class="chek-form">
                                             <div class="custome-checkbox">
-                                                <input class="form-check-input" type="checkbox" name="remember" id="exampleCheckbox1" value="" />
+                                                <input class="form-check-input" type="checkbox" name="remember" id="exampleCheckbox1" value="1" />
                                                 <label class="form-check-label" for="exampleCheckbox1"><span style="color: #6A1B1B; font-weight: 600; font-size: 14px;">Ingat saya</span></label>
                                             </div>
                                         </div>
-                                        <a class="text-muted small" href="{{ route('password.request') }}" style="color: #A1A1A1 !important;">Lupa kata sandi?</a>
+                                        <a href="{{ route('password.request') }}" style="color: #6A1B1B !important; font-weight: 700; font-size: 15px; text-decoration: none;">Lupa kata sandi?</a>
                                     </div>
                                     <div class="form-group">
                                         <button type="submit" class="btn btn-heading btn-block hover-up" name="login" style="width: 100%; background-color: #6f1715; color: #ffffff; border-radius: 10px; height: 50px; font-weight: 600; border: none; font-size: 16px;">Masuk</button>

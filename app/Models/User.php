@@ -16,9 +16,13 @@ use App\Traits\HasOperationalHours;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    /** Cache per instance untuk hasOwnSalesCode(). */
+    protected ?bool $hasOwnSalesCodeCache = null;
+
     use HasFactory, Notifiable, HasUuids, HasOperationalHours, SoftDeletes;
 
-    const ROLE_BUYER = 'buyer';
+    const ROLE_ECOM = 'ecom';
+    const ROLE_SUBDIST = 'subdist';
     const ROLE_RESELLER = 'reseller';
     const ROLE_AGENT = 'agent';
     const ROLE_WAREHOUSE = 'warehouse';
@@ -37,6 +41,15 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_CUSTOMER_SERVICE = 'customer_service';
     const ROLE_IT_APPLICATION = 'it_application';
     const ROLE_INVENTORY_MANAGER = 'inventory_manager';
+
+    /**
+     * Role yang boleh masuk panel admin (/admin). Akses per modul diatur dinamis lewat menu Hak Akses
+     * (tabel admin_modules dan admin_role_permissions); daftar ini hanya menentukan siapa yang bisa login.
+     */
+    public const ADMIN_PANEL_ROLES = [
+        'super_admin', 'ecommerce', 'sales_admin', 'brand_marketing', 'finance',
+        'customer_service', 'it_application', 'inventory_manager', 'sales', 'agent',
+    ];
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -58,6 +71,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'no_ktp',
         'no_npwp',
         'distributor_status',
+        'distributor_applied_at',
+        'distributor_approved_at',
         'distributor_province_id',
         'distributor_regency_id',
         'distributor_address',
@@ -279,6 +294,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'wa_verified_at' => 'datetime',
+            'distributor_applied_at' => 'datetime',
+            'distributor_approved_at' => 'datetime',
             'password' => 'hashed',
             'points' => 'integer',
             'driippreneur_applied_at' => 'datetime',
@@ -306,7 +323,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function registeredShoppingHub(): ?Warehouse
     {
-        if (! in_array($this->role, [self::ROLE_OUTLET, self::ROLE_BUYER], true) || ! $this->hub_id) {
+        // Subdist selalu belanja dari gudang distributornya.
+        if ($this->isSubdist()) {
+            $warehouse = $this->subdistWarehouse();
+
+            return $warehouse && $warehouse->is_active ? $warehouse : null;
+        }
+
+        if (! in_array($this->role, [self::ROLE_OUTLET, self::ROLE_ECOM], true) || ! $this->hub_id) {
             return null;
         }
 
@@ -318,6 +342,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function priceLevel(): BelongsTo
     {
         return $this->belongsTo(PriceLevel::class);
+    }
+
+    /**
+     * Provinsi domisili pengajuan distributor (dibaca dari view wilayah; atribut: id, name).
+     */
+    public function distributorProvince(): BelongsTo
+    {
+        return $this->belongsTo(WilayahAdministratif::class, 'distributor_province_id', 'province_id')
+            ->select('province_id', 'province_id as id', 'province_name as name');
+    }
+
+    /**
+     * Kabupaten/kota domisili pengajuan distributor (atribut: id, name).
+     */
+    public function distributorRegency(): BelongsTo
+    {
+        return $this->belongsTo(WilayahAdministratif::class, 'distributor_regency_id', 'regency_id')
+            ->select('regency_id', 'regency_id as id', 'regency_name as name');
     }
 
     public function distributorWilayah(): BelongsTo
@@ -395,7 +437,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * User biasa (buyer) yang ditandai admin sebagai reseller.
+     * User ecom yang ditandai admin sebagai reseller.
      */
     public function isReseller(): bool
     {
@@ -403,8 +445,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Level pembeli di halaman Outlet dan Reseller: reseller (outlet/user biasa bertanda reseller),
-     * outlet, atau buyer (user biasa).
+     * Memakai strata diskon subdist (> 50 karton): role subdist, atau user yang ditandai admin.
+     */
+    public function usesSubdistTier(): bool
+    {
+        return $this->isSubdist() || $this->isReseller();
+    }
+
+    /**
+     * Level pembeli di halaman Outlet dan Reseller: reseller (outlet/subdist/ecom bertanda reseller),
+     * outlet, subdist, atau ecom.
      */
     public function customerLevel(): string
     {
@@ -412,13 +462,30 @@ class User extends Authenticatable implements MustVerifyEmail
             return 'reseller';
         }
 
-        return $this->role === self::ROLE_OUTLET ? 'outlet' : 'buyer';
+        return match ($this->role) {
+            self::ROLE_OUTLET => 'outlet',
+            self::ROLE_SUBDIST => 'subdist',
+            default => 'ecom',
+        };
     }
 
     /**
      * Pembeli dilayani lewat jalur outlet (hub outlet, stok WMS, kurir toko/ambil sendiri):
      * reseller selalu, selain itu bila checkout memakai kode sales.
      */
+    /**
+     * Outlet yang kode sales di profilnya valid dianggap berkode sales di semua halaman,
+     * tidak bergantung pada parameter ?sales_code= di URL. Dipakai untuk memilih hub dan sumber stok.
+     */
+    public function hasOwnSalesCode(): bool
+    {
+        if (! $this->isOutlet()) {
+            return false;
+        }
+
+        return $this->hasOwnSalesCodeCache ??= static::isKnownSalesCode($this->sales_code);
+    }
+
     public function usesOutletChannel(bool $hasSalesCode): bool
     {
         return $this->isReseller() || $hasSalesCode;
@@ -430,11 +497,92 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Outlet yang terdaftar lewat link distributor ini.
+     * Semua gudang milik distributor ini: gudang utama (users.warehouse_id) lebih dulu, lalu gudang tambahan.
+     *
+     * @return \Illuminate\Support\Collection<int, Warehouse>
      */
-    public function referredOutlets(): HasMany
+    public function distributorWarehouses(): \Illuminate\Support\Collection
     {
-        return $this->hasMany(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_OUTLET);
+        if (! $this->isDistributor()) {
+            return collect();
+        }
+
+        $primary = $this->warehouse_id ? Warehouse::find($this->warehouse_id) : null;
+        $extras = Warehouse::where('owner_distributor_id', $this->id)
+            ->when($primary, fn ($q) => $q->where('id', '!=', $primary->id))
+            ->orderBy('name')->get();
+
+        return collect([$primary])->filter()->concat($extras)->values();
+    }
+
+    /**
+     * Gudang distributor induk yang bisa dipilih subdist (utama lebih dulu).
+     *
+     * @return \Illuminate\Support\Collection<int, Warehouse>
+     */
+    public function subdistWarehouseOptions(): \Illuminate\Support\Collection
+    {
+        if (! $this->isSubdist()) {
+            return collect();
+        }
+
+        $distributor = $this->referringDistributor;
+
+        return $distributor && $distributor->canReferOutlets() ? $distributor->distributorWarehouses() : collect();
+    }
+
+    /**
+     * Gudang asal order subdist: pilihan subdist (bila masih siap), selain itu gudang siap pertama
+     * (utama lebih dulu). Bila tidak ada yang siap, gudang utama dikembalikan agar alasannya bisa ditampilkan.
+     */
+    public function subdistWarehouse(): ?Warehouse
+    {
+        $options = $this->subdistWarehouseOptions();
+        if ($options->isEmpty()) {
+            return null;
+        }
+
+        $selectedId = session('subdist_warehouse_id');
+        $selected = $selectedId ? $options->firstWhere('id', $selectedId) : null;
+        if ($selected && $selected->isReadyForSubdist()) {
+            return $selected;
+        }
+
+        return $options->first(fn (Warehouse $w) => $w->isReadyForSubdist()) ?? $options->first();
+    }
+
+    /**
+     * Alasan subdist belum bisa berbelanja (distributor/gudang belum siap), atau null bila siap.
+     */
+    public function subdistFulfillmentProblem(): ?string
+    {
+        if (! $this->isSubdist()) {
+            return null;
+        }
+
+        $options = $this->subdistWarehouseOptions();
+        if ($options->isEmpty() || $options->contains(fn (Warehouse $w) => $w->isReadyForSubdist())) {
+            $warehouse = $this->subdistWarehouse();
+            if (! $warehouse) {
+                return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+            }
+
+            return null;
+        }
+
+        if ($options->contains(fn (Warehouse $w) => $w->is_active)) {
+            return 'Alamat gudang distributor Anda belum lengkap, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+        }
+
+        return 'Gudang distributor Anda belum aktif, sehingga belum bisa menerima pesanan. Silakan hubungi distributor Anda.';
+    }
+
+    /**
+     * Subdist: user yang terdaftar lewat link/kode distributor ini.
+     */
+    public function referredSubdists(): HasMany
+    {
+        return $this->hasMany(User::class, 'sales_code', 'distributor_sales_code')->where('role', self::ROLE_SUBDIST);
     }
 
     public function isAgent(): bool
@@ -482,9 +630,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->pakai_ppn !== false;
     }
 
-    public function isBuyer(): bool
+    public function isEcom(): bool
     {
-        return $this->role === self::ROLE_BUYER;
+        return $this->role === self::ROLE_ECOM;
+    }
+
+    public function isSubdist(): bool
+    {
+        return $this->role === self::ROLE_SUBDIST;
     }
 
     /**
@@ -493,10 +646,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function showsStorefrontIdentity(): bool
     {
         return in_array($this->role, [
-            self::ROLE_BUYER,
+            self::ROLE_ECOM,
             self::ROLE_RESELLER,
             self::ROLE_DISTRIBUTOR,
             self::ROLE_OUTLET,
+            self::ROLE_SUBDIST,
             self::ROLE_DRIIPPRENEUR,
             self::ROLE_AFFILIATOR,
         ], true);
@@ -533,7 +687,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canApplyAsDistributor(): bool
     {
-        return $this->role === self::ROLE_BUYER && empty($this->distributor_status);
+        return $this->role === self::ROLE_ECOM && empty($this->distributor_status);
     }
 
     public function hasDistributorApplicationPending(): bool
@@ -553,7 +707,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canApplyAsDriippreneur(): bool
     {
-        return $this->role === self::ROLE_BUYER && empty($this->driippreneur_status);
+        return $this->role === self::ROLE_ECOM && empty($this->driippreneur_status);
     }
 
     public function hasDriippreneurApplicationPending(): bool
@@ -730,10 +884,11 @@ class User extends Authenticatable implements MustVerifyEmail
             self::ROLE_INVENTORY_MANAGER => 'Inventory Manager',
             self::ROLE_DISTRIBUTOR => 'Distributor',
             self::ROLE_OUTLET => 'Outlet',
+            self::ROLE_SUBDIST => 'Subdist',
             self::ROLE_DRIIPPRENEUR => 'Driippreneur',
             self::ROLE_AFFILIATOR => 'Affiliator',
             'agent' => 'Agen',
-            'buyer' => 'Buyer',
+            self::ROLE_ECOM => 'Ecom',
         ];
 
         return $labels[$this->role] ?? ucwords(str_replace('_', ' ', (string) ($this->role ?? 'Admin')));

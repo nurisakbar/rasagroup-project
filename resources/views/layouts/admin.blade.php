@@ -159,212 +159,51 @@
       <ul class="sidebar-menu" data-widget="tree">
         <li class="header">MAIN MENU</li>
         @php
-            $adminRole = auth()->user()->role ?? '';
+            // Menu dibangun dari modul di database (menu Hak Akses): hanya modul yang boleh dilihat role ini.
+            $adminMenu = \App\Support\AdminAccess\AdminAccess::menuFor(auth()->user());
+            $currentModule = request()->route()?->getName()
+                ? \App\Support\AdminAccess\AdminAccess::moduleKeyForRoute(request()->route()->getName())
+                : null;
+            $renderedGroups = [];
         @endphp
-        
+
         <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
           <a href="{{ route('admin.dashboard') }}">
             <i class="fa fa-dashboard"></i> <span>DASHBOARD</span>
           </a>
         </li>
-        
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.orders.index') || request()->routeIs('admin.orders.show') ? 'active' : '' }}">
-          <a href="{{ route('admin.orders.index') }}">
-            <i class="fa fa-shopping-cart"></i> <span>LAPORAN PESANAN</span>
-          </a>
-        </li>
-        @endif
 
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin', 'finance', 'brand_marketing']))
-        <li class="{{ request()->routeIs('admin.reports.gmv.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.reports.gmv.index') }}">
-            <i class="fa fa-line-chart"></i> <span>LAPORAN GMV</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, \App\Http\Controllers\Admin\DistributorExternalSalesController::ALLOWED_ROLES, true))
-        <li class="{{ request()->routeIs('admin.reports.distributor-sales.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.reports.distributor-sales.index') }}">
-            <i class="fa fa-bar-chart"></i> <span>PENJUALAN DISTRIBUTOR</span>
-          </a>
-        </li>
-        @endif
-        @if(in_array($adminRole, \App\Http\Controllers\Admin\DistributorForecastReportController::ALLOWED_ROLES, true))
-        <li class="{{ request()->routeIs('admin.reports.distributor-forecast.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.reports.distributor-forecast.index') }}">
-            <i class="fa fa-line-chart"></i> <span>FORECAST DISTRIBUTOR</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.orders.create') ? 'active' : '' }}">
-          <a href="{{ route('admin.orders.create') }}">
-            <i class="fa fa-plus-square"></i> <span>INPUT TRANSAKSI</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'inventory_manager']))
-        <li class="{{ request()->routeIs('admin.warehouses.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.warehouses.index') }}">
-            <i class="fa fa-building"></i> <span>DATA HUB</span>
-          </a>
-        </li>
-        
-        <li class="{{ request()->routeIs('admin.armadas.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.armadas.index') }}">
-            <i class="fa fa-motorcycle"></i> <span>ARMADA PENGIRIMAN</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'inventory_manager', 'finance']))
-        <li class="{{ request()->routeIs('admin.distributors.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.distributors.index') }}">
-            <i class="fa fa-truck"></i> <span>DISTRIBUTOR</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.driippreneurs.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.driippreneurs.index') }}">
-            <i class="fa fa-users"></i> <span>AFFILIATOR</span>
-          </a>
-        </li>
-        @endif
-        
-        @if($adminRole === 'finance')
-        <li class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.orders.index') }}">
-            <i class="fa fa-exchange"></i> <span>TRANSAKSI</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, ['super_admin', 'finance']))
-        <li class="{{ request()->routeIs('admin.point-withdrawals.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.point-withdrawals.index') }}">
-            <i class="fa fa-money"></i> <span>PENARIKAN POIN</span>
-          </a>
-        </li>
-        <li class="{{ request()->routeIs('admin.payment-fees.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.payment-fees.index') }}">
-            <i class="fa fa-credit-card"></i> <span>BIAYA LAYANAN</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'customer_service']))
-        <li class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.users.index') }}">
-            <i class="fa fa-users"></i> <span>DATA PENGGUNA</span>
-          </a>
-        </li>
-        <li class="{{ request()->routeIs('admin.outlets.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.outlets.index') }}">
-            <i class="fa fa-building-o"></i> <span>OUTLET DAN RESELLER</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.sales.index') }}">
-            <i class="fa fa-briefcase"></i> <span>DATA SALES</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'brand_marketing', 'ecommerce', 'sales_admin', 'it_application']))
-        <li class="treeview {{ request()->routeIs('admin.warehouse-prices.*') || request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.price-levels.*') || request()->routeIs('admin.menus.*') ? 'active menu-open' : '' }}">
-          <a href="#">
-            <i class="fa fa-cube"></i> <span>MASTER DATA</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
-          </a>
-          <ul class="treeview-menu">
-            @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
-            <li class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.products.index') }}"><i class="fa fa-shopping-bag"></i> PRODUK</a>
+        @foreach($adminMenu as $item)
+          @if(!empty($item['group']))
+            @continue(in_array($item['group'], $renderedGroups, true))
+            @php
+                $renderedGroups[] = $item['group'];
+                $groupItems = array_values(array_filter($adminMenu, fn ($x) => ($x['group'] ?? null) === $item['group']));
+                $groupActive = in_array($currentModule, array_column($groupItems, 'key'), true);
+            @endphp
+            <li class="treeview {{ $groupActive ? 'active menu-open' : '' }}">
+              <a href="#">
+                <i class="fa {{ $groupItems[0]['icon'] ?? 'fa-cube' }}"></i> <span>{{ $item['group'] }}</span>
+                <span class="pull-right-container">
+                  <i class="fa fa-angle-left pull-right"></i>
+                </span>
+              </a>
+              <ul class="treeview-menu">
+                @foreach($groupItems as $sub)
+                  <li class="{{ $currentModule === $sub['key'] ? 'active' : '' }}">
+                    <a href="{{ route($sub['menu_route']) }}"><i class="fa {{ $sub['icon'] }}"></i> {{ $sub['name'] }}</a>
+                  </li>
+                @endforeach
+              </ul>
             </li>
-            <li class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.brands.index') }}"><i class="fa fa-bookmark"></i> BRAND</a>
+          @else
+            <li class="{{ $currentModule === $item['key'] ? 'active' : '' }}">
+              <a href="{{ route($item['menu_route']) }}">
+                <i class="fa {{ $item['icon'] }}"></i> <span>{{ $item['name'] }}</span>
+              </a>
             </li>
-            <li class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.categories.index') }}"><i class="fa fa-folder"></i> KATEGORI</a>
-            </li>
-            @endif
-            @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-            <li class="{{ request()->routeIs('admin.price-levels.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.price-levels.index') }}"><i class="fa fa-tags"></i> LEVEL HARGA</a>
-            </li>
-            @endif
-            @if(in_array($adminRole, \App\Http\Controllers\Admin\WarehousePriceController::ALLOWED_ROLES, true))
-            <li class="{{ request()->routeIs('admin.warehouse-prices.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.warehouse-prices.index') }}"><i class="fa fa-money"></i> MASTER HARGA</a>
-            </li>
-            @endif
-            @if(in_array($adminRole, ['super_admin', 'it_application']))
-            <li class="{{ request()->routeIs('admin.menus.*') ? 'active' : '' }}">
-              <a href="{{ route('admin.menus.index') }}"><i class="fa fa-list"></i> MENU</a>
-            </li>
-            @endif
-          </ul>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
-        <li class="{{ request()->routeIs('admin.sliders.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.sliders.index') }}">
-            <i class="fa fa-image"></i> <span>WEB SLIDER</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.website-popups.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.website-popups.index') }}">
-            <i class="fa fa-window-maximize"></i> <span>POP UP WEBSITE</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'it_application']))
-        <li class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.pages.index') }}">
-            <i class="fa fa-file-text"></i> <span>HALAMAN STATIS</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, ['super_admin', 'brand_marketing']))
-        <li class="{{ request()->routeIs('admin.information-channels.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.information-channels.index') }}">
-            <i class="fa fa-info-circle"></i> <span>SALURAN INFORMASI</span>
-          </a>
-        </li>
-        @endif
-
-        @if(in_array($adminRole, ['super_admin', 'ecommerce', 'sales_admin']))
-        <li class="{{ request()->routeIs('admin.discount-tiers.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.discount-tiers.index') }}">
-            <i class="fa fa-percent"></i> <span>POTONGAN HARGA</span>
-          </a>
-        </li>
-        @endif
-        
-        @if(in_array($adminRole, ['super_admin', 'it_application']))
-        <li class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-          <a href="{{ route('admin.settings.index') }}">
-            <i class="fa fa-cog"></i> <span>PENGATURAN</span>
-          </a>
-        </li>
-        @endif
+          @endif
+        @endforeach
       </ul>
       <!-- /.sidebar-menu -->
     </section>

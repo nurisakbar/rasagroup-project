@@ -144,12 +144,34 @@ class CartController extends Controller
         return $request->ajax() || $request->wantsJson();
     }
 
+    /** Panel bonus pembelian (dimuat ulang lewat AJAX saat isi keranjang berubah). */
+    public function bonus()
+    {
+        $carts = $this->currentRegularCarts();
+
+        return view('cart._bonus', ['bonus' => app(\App\Services\BonusService::class)->evaluate($carts, Auth::user())]);
+    }
+
+    public function chooseBonus(Request $request)
+    {
+        $data = $request->validate(['rule_id' => 'required|string', 'product_id' => 'required|string']);
+        $rule = \App\Models\BonusRule::running()->with('giftProducts')->find($data['rule_id']);
+        $product = \App\Models\Product::find($data['product_id']);
+        $ok = $rule && $product && Auth::user() && app(\App\Services\BonusService::class)->setChoice(Auth::user(), $rule, $product);
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => (bool) $ok], $ok ? 200 : 422);
+        }
+
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Pilihan hadiah disimpan.' : 'Pilihan hadiah tidak valid.');
+    }
+
     public function index()
     {
         $carts = $this->currentRegularCarts();
 
         // Get the warehouse for this cart (all items should be from same warehouse)
-        $cartWarehouse = $carts->first()?->warehouse;
+        $cartWarehouse = $this->stockWarehouse($carts->first()?->warehouse);
 
         if ($cartWarehouse) {
             $productIds = $carts->pluck('product_id')->toArray();
@@ -171,7 +193,9 @@ class CartController extends Controller
         $totalWeightFormatted = $this->formatTotalWeightGrams($totalWeight);
         $salesList = \App\Models\User::where('role', 'sales')->get();
 
-        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted', 'salesList'));
+        $bonus = app(\App\Services\BonusService::class)->evaluate($carts, Auth::user());
+
+        return view('cart.index', compact('carts', 'total', 'cartWarehouse', 'totalWeight', 'totalWeightFormatted', 'salesList', 'bonus'));
     }
 
     public function update(Request $request, Cart $cart)
@@ -196,7 +220,7 @@ class CartController extends Controller
             : $qtyInput;
 
         $availableStock = PHP_INT_MAX;
-        $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+        $warehouse = $this->stockWarehouse(\App\Models\Warehouse::find($cart->warehouse_id));
         if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
             $availableStock = $warehouse->getAvailableStock($product);
         }
@@ -346,6 +370,12 @@ class CartController extends Controller
 
         if ($denied = \App\Http\Middleware\PreventSuperAdminFromBuyer::deny($request)) {
             return $denied;
+        }
+
+        if ($problem = Auth::user()->subdistFulfillmentProblem()) {
+            return $request->ajax()
+                ? response()->json(['error' => $problem], 422)
+                : back()->with('error', $problem);
         }
 
         $this->tryApplyShoppingAddressFromUser();
@@ -522,8 +552,9 @@ class CartController extends Controller
         $existingQty = $cart ? (int) $cart->quantity : 0;
         
         $availableStock = PHP_INT_MAX;
-        if (! \App\Support\ShopFulfillment::assumeStockReady() && $warehouse) {
-            $availableStock = $warehouse->getAvailableStock($product);
+        $stockWarehouse = $this->stockWarehouse($warehouse);
+        if (! \App\Support\ShopFulfillment::assumeStockReady() && $stockWarehouse) {
+            $availableStock = $stockWarehouse->getAvailableStock($product);
         }
         
         if ($existingQty + $requestedBaseQty > $availableStock) {
@@ -816,7 +847,7 @@ class CartController extends Controller
         $baseNeeded = $product->orderedQuantityToBase($newOrd, $uom);
 
         if (! ShopFulfillment::assumeStockReady()) {
-            $warehouse = \App\Models\Warehouse::find($cart->warehouse_id);
+            $warehouse = $this->stockWarehouse(\App\Models\Warehouse::find($cart->warehouse_id));
             $availableStock = $warehouse ? $warehouse->getAvailableStock($product) : 0;
 
             if ($baseNeeded > $availableStock) {
@@ -837,5 +868,16 @@ class CartController extends Controller
             'line' => ['quantity_input' => $newOrd],
             'mini_cart_html' => view('themes.nest.partials.mini-cart')->render()
         ]);
+    }
+
+    /**
+     * Gudang pembanding stok: subdist selalu gudang distributor yang dipilihnya
+     * (bukan kolom warehouse_id di keranjang yang bisa tertinggal), lainnya gudang keranjang.
+     */
+    private function stockWarehouse(?\App\Models\Warehouse $cartWarehouse): ?\App\Models\Warehouse
+    {
+        $user = Auth::user();
+
+        return ($user && $user->isSubdist()) ? ($user->subdistWarehouse() ?? $cartWarehouse) : $cartWarehouse;
     }
 }

@@ -100,7 +100,7 @@
                                     @if($referringDistributor)
                                     <input type="hidden" name="distributor_code" value="{{ $referringDistributor->distributor_sales_code }}">
                                     <div class="form-group mb-20">
-                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai outlet melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
+                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai subdist melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
@@ -138,9 +138,10 @@
                                     <div class="login_footer form-group mb-50">
                                         <div class="chek-form">
                                             <div class="custome-checkbox">
-                                                <input class="form-check-input" type="checkbox" name="terms" id="exampleCheckbox12" value="" required />
+                                                <input class="form-check-input" type="checkbox" name="terms" id="exampleCheckbox12" value="1" {{ old('terms') ? 'checked' : '' }} />
                                                 <label class="form-check-label" for="exampleCheckbox12"><span style="color: #6A1B1B; font-weight: 500;">Saya setuju Syarat & Ketentuan</span></label>
                                             </div>
+                                            <div id="terms-alert" class="alert alert-danger py-2 px-3 mt-10 mb-0 {{ $errors->has('terms') ? '' : 'd-none' }}" role="alert" style="font-size: 13px;">{{ $errors->first('terms') ?: 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.' }}</div>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -170,6 +171,14 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
+        $('form[action="{{ route('register') }}"]').on('submit', function(e) {
+            if (!$('#exampleCheckbox12').is(':checked')) {
+                e.preventDefault();
+                $('#terms-alert').removeClass('d-none');
+                $('html, body').animate({ scrollTop: $('#terms-alert').offset().top - 200 }, 200);
+            }
+        });
+        $('#exampleCheckbox12').on('change', function() { if (this.checked) $('#terms-alert').addClass('d-none'); });
         $('#sales_code').select2({
             placeholder: 'Masukkan Nama Sales (Opsional)',
             allowClear: true,

@@ -27,11 +27,21 @@
                                 <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
                                     <div>
                                         <h3 class="mb-0">Kelola Stock</h3>
-                                        <p class="text-muted font-sm">Pantau dan update stok produk di warehouse Anda.</p>
+                                        <p class="text-muted font-sm mb-0">Pantau dan update stok produk di <strong>{{ $warehouse->name }}</strong>.</p>
+                                        @if($warehouses->count() > 1)
+                                            <form method="GET" action="{{ route('distributor.stock.index') }}" class="mt-2">
+                                                <select name="warehouse_id" class="form-select form-select-sm" style="max-width: 280px; border-radius: 10px;" onchange="this.form.submit()">
+                                                    @foreach($warehouses as $wh)
+                                                        <option value="{{ $wh->id }}" {{ $wh->id === $warehouse->id ? 'selected' : '' }}>{{ $wh->name }}{{ $wh->is_active ? '' : ' (nonaktif)' }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </form>
+                                        @endif
                                     </div>
                                     <div>
                                         <form action="{{ route('distributor.stock.sync') }}" method="POST" class="d-inline">
                                             @csrf
+                                            <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
                                             <button type="submit" class="btn btn-sm btn-fill-out rounded-pill">
                                                 <i class="fi-rs-refresh mr-5"></i> Sinkron Produk
                                             </button>
@@ -116,9 +126,9 @@
                         <small class="text-muted mt-1 d-block">Masukkan jumlah total stok fisik yang tersedia.</small>
                     </div>
                 </div>
-                <div class="modal-footer border-top p-4">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-brand rounded-pill px-4">Simpan Perubahan</button>
+                <div class="modal-footer border-top p-4 stock-modal-footer">
+                    <button type="button" class="btn stock-modal-btn stock-modal-btn-cancel" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn stock-modal-btn stock-modal-btn-save">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -129,6 +139,13 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <style>
+    .stock-modal-footer { display: flex; gap: 12px; justify-content: flex-end; }
+    .stock-modal-btn { height: 48px !important; min-width: 140px; padding: 0 24px !important; margin: 0 !important; border-radius: 12px !important; font-size: 15px !important; font-weight: 700 !important; line-height: 1 !important; display: inline-flex !important; align-items: center; justify-content: center; white-space: nowrap; box-shadow: none !important; }
+    .stock-modal-btn-cancel { background: #ffffff !important; color: #6A1B1B !important; border: 2px solid #6A1B1B !important; }
+    .stock-modal-btn-cancel:hover { background: #FAF6F1 !important; }
+    .stock-modal-btn-save { background: #6A1B1B !important; color: #ffffff !important; border: 2px solid #6A1B1B !important; }
+    .stock-modal-btn-save:hover { background: #531414 !important; border-color: #531414 !important; }
+    @media (max-width: 575px) { .stock-modal-footer .stock-modal-btn { flex: 1 1 0; min-width: 0; padding: 0 12px !important; } }
     .dataTables_filter { display: none; }
     #stock-table_wrapper .row:first-child { display: none; }
     #stock-table thead th { border-top: 0; border-bottom: 1px solid #f2f2f2; color: #253D4E; font-weight: 700; padding-bottom: 15px; }
@@ -185,6 +202,7 @@ $(document).ready(function() {
             url: "{{ route('distributor.stock.index') }}",
             data: function(d) {
                 d.filter = stockFilter;
+                d.warehouse_id = "{{ $warehouse->id }}";
             }
         },
         columns: [

@@ -747,7 +747,7 @@
                                 <tr @if($isItemFailed) style="background-color: #fff9f9;" @endif>
                                     <td>
                                         @if($item->product)
-                                            {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }}
+                                            {{ $item->product->code }} - {{ $item->product->display_name ?? $item->product->name }} @if($item->is_bonus)<span class="label label-success" style="font-size:10px;">BONUS</span>@endif
                                         @else
                                             Produk tidak tersedia
                                         @endif

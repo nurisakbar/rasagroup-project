@@ -19,11 +19,17 @@ class OutletController extends Controller
     /**
      * Display a listing of the resource.
      */
-    /** Tab halaman: outlet (daftar dengan kode sales), reseller (outlet/user biasa bertanda reseller), user biasa. */
-    public const TABS = ['outlet', 'reseller', 'buyer'];
+    /**
+     * Tab halaman: outlet (daftar dengan kode sales), subdist (daftar dengan kode distributor),
+     * reseller (outlet/subdist/ecom bertanda reseller), ecom (daftar tanpa kode).
+     */
+    public const TABS = ['outlet', 'subdist', 'reseller', 'ecom'];
 
-    /** Label tab (huruf kapital). Tab "buyer" = user biasa / pembeli ecommerce. */
-    public const TAB_LABELS = ['outlet' => 'OUTLET', 'reseller' => 'RESELLER', 'buyer' => 'ECOM'];
+    /** Label tab (huruf kapital). */
+    public const TAB_LABELS = ['outlet' => 'OUTLET', 'subdist' => 'SUBDIST', 'reseller' => 'RESELLER', 'ecom' => 'ECOM'];
+
+    /** Role yang dikelola di halaman ini. */
+    public const MANAGEABLE_ROLES = [User::ROLE_OUTLET, User::ROLE_SUBDIST, User::ROLE_ECOM];
 
     /** Prefix nama route & layout panel; dipakai ulang oleh panel Admin Hub. */
     protected string $routePrefix = 'admin.outlets';
@@ -189,14 +195,16 @@ class OutletController extends Controller
     /**
      * Query tiap tab:
      * - outlet: user yang mendaftar dengan kode sales (role outlet);
-     * - reseller: outlet atau user biasa yang ditandai reseller;
-     * - buyer: user biasa yang belum ditandai reseller.
+     * - subdist: user yang mendaftar dengan kode distributor (role subdist);
+     * - reseller: outlet, subdist, atau ecom yang ditandai reseller;
+     * - ecom: user yang mendaftar tanpa kode dan belum ditandai reseller.
      */
     private function tabQuery(string $tab)
     {
         return $this->scopeToPanel(match ($tab) {
-            'reseller' => User::whereIn('role', [User::ROLE_OUTLET, User::ROLE_BUYER])->where('is_reseller', true),
-            'buyer' => User::where('role', User::ROLE_BUYER)->where('is_reseller', false),
+            'reseller' => User::whereIn('role', self::MANAGEABLE_ROLES)->where('is_reseller', true),
+            'ecom' => User::where('role', User::ROLE_ECOM)->where('is_reseller', false),
+            'subdist' => User::where('role', User::ROLE_SUBDIST)->where('is_reseller', false),
             default => User::where('role', User::ROLE_OUTLET)->where('is_reseller', false),
         });
     }
@@ -211,7 +219,7 @@ class OutletController extends Controller
 
     protected function isManageable(User $user): bool
     {
-        return in_array($user->role, [User::ROLE_OUTLET, User::ROLE_BUYER], true)
+        return in_array($user->role, self::MANAGEABLE_ROLES, true)
             && in_array($user->customerLevel(), $this->tabs(), true)
             && $this->scopeToPanel(User::whereKey($user->getKey()))->exists();
     }
