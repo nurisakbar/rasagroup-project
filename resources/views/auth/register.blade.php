@@ -99,8 +99,14 @@
                                     
                                     @if($referringDistributor)
                                     <input type="hidden" name="distributor_code" value="{{ $referringDistributor->distributor_sales_code }}">
+                                    <input type="hidden" name="register_type" value="{{ $registerType }}">
+                                    @if($referralSales)
+                                        <input type="hidden" name="referral_sales_code" value="{{ $referralSales->sales_code }}">
+                                    @endif
                                     <div class="form-group mb-20">
-                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai subdist melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
+                                        <div class="alert alert-info font-sm mb-0">
+                                            Anda mendaftar sebagai <strong>{{ $registerType === 'outlet' ? 'outlet' : 'subdist' }}</strong> melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }})@if($referralSales), sales <strong>{{ $referralSales->name }}</strong> ({{ $referralSales->sales_code }})@endif.
+                                        </div>
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror

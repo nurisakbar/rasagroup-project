@@ -17,16 +17,25 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
+    /** Jenis pendaftaran lewat link distributor. */
+    private const REGISTER_TYPES = [User::ROLE_OUTLET, User::ROLE_SUBDIST];
+
+    /**
+     * Link pendaftaran distributor:
+     * - /register?kode=DST00003&jenis=outlet&sales=MCR090   (outlet, atas nama sales milik distributor)
+     * - /register?kode=DST00003&jenis=subdist&sales=MCR090  (subdist, atas nama sales milik distributor)
+     * - /register?kode=DST00003&jenis=subdist  atau link lama /register?distributor=DST00003  (subdist tanpa sales)
+     */
     public function create(Request $request): View
     {
-        $distributorCode = $request->query('distributor');
-        $referringDistributor = $this->findReferringDistributor($distributorCode);
+        $distributorCode = $request->query('kode', $request->query('distributor'));
+        $referral = $this->resolveReferral($distributorCode, $request->query('jenis'), $request->query('sales'));
 
         return view('auth.register', [
-            'referringDistributor' => $referringDistributor,
-            'invalidDistributorCode' => filled($distributorCode) && ! $referringDistributor,
-        ], [
-            'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
+            'referringDistributor' => $referral['distributor'] ?? null,
+            'registerType' => $referral['type'] ?? null,
+            'referralSales' => $referral['sales'] ?? null,
+            'invalidDistributorCode' => filled($distributorCode) && $referral === null,
         ]);
     }
 
@@ -35,6 +44,43 @@ class RegisteredUserController extends Controller
         $distributor = User::findDistributorBySalesCode($code);
 
         return $distributor?->canReferOutlets() ? $distributor : null;
+    }
+
+    /**
+     * Distributor, jenis, dan sales dari link pendaftaran; null bila link tidak valid.
+     * Sales harus milik distributor tersebut dan aktif. Jenis outlet wajib ada sales (outlet tercatat ke kode sales).
+     *
+     * @return array{distributor: User, type: string, sales: ?User}|null
+     */
+    private function resolveReferral(?string $distributorCode, ?string $type, ?string $salesCode): ?array
+    {
+        $distributor = $this->findReferringDistributor($distributorCode);
+        if (! $distributor) {
+            return null;
+        }
+
+        $type = strtolower(trim((string) $type)) ?: User::ROLE_SUBDIST;
+        if (! in_array($type, self::REGISTER_TYPES, true)) {
+            return null;
+        }
+
+        $sales = null;
+        if (filled($salesCode)) {
+            $sales = User::where('role', User::ROLE_SALES)
+                ->where('distributor_id', $distributor->id)
+                ->where('sales_code', strtoupper(trim($salesCode)))
+                ->where('is_active', true)
+                ->first();
+            if (! $sales) {
+                return null;
+            }
+        }
+
+        if ($type === User::ROLE_OUTLET && ! $sales) {
+            return null;
+        }
+
+        return ['distributor' => $distributor, 'type' => $type, 'sales' => $sales];
     }
 
     public function searchSales(Request $request)
@@ -78,11 +124,13 @@ class RegisteredUserController extends Controller
             'phone' => ['required', 'string', 'max:20', 'unique:'.User::class],
             'terms' => ['accepted'],
             'sales_code' => ['nullable', 'string', 'max:255'],
-            'distributor_code' => ['nullable', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
-                if (! $this->findReferringDistributor($value)) {
+            'distributor_code' => ['nullable', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+                if (! $this->resolveReferral($value, $request->input('register_type'), $request->input('referral_sales_code'))) {
                     $fail('Link pendaftaran distributor tidak valid.');
                 }
             }],
+            'register_type' => ['nullable', 'string', 'in:' . implode(',', self::REGISTER_TYPES)],
+            'referral_sales_code' => ['nullable', 'string', 'max:50'],
         ], [
             'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan sebelum mendaftar.',
         ]);
@@ -95,14 +143,21 @@ class RegisteredUserController extends Controller
             $salesCode = trim($parts[0]);
         }
 
-        // Kode distributor => subdist; kode sales => outlet; tanpa kode => ecom.
-        $viaDistributor = $request->filled('distributor_code');
-        if ($viaDistributor) {
-            $salesCode = $this->findReferringDistributor($request->distributor_code)->distributor_sales_code;
+        // Link distributor: jenis subdist => tercatat ke kode distributor; jenis outlet => tercatat ke kode sales
+        // milik distributor. Tanpa link: kode sales => outlet; tanpa kode => ecom.
+        $referral = $request->filled('distributor_code')
+            ? $this->resolveReferral($request->distributor_code, $request->input('register_type'), $request->input('referral_sales_code'))
+            : null;
+        $recruitedBySalesId = $referral['sales']?->id ?? null;
+
+        if ($referral) {
+            $salesCode = $referral['type'] === User::ROLE_SUBDIST
+                ? $referral['distributor']->distributor_sales_code
+                : $referral['sales']->sales_code;
         }
 
         $role = match (true) {
-            $viaDistributor => User::ROLE_SUBDIST,
+            $referral !== null => $referral['type'],
             ! empty($salesCode) => User::ROLE_OUTLET,
             default => User::ROLE_ECOM,
         };
@@ -119,6 +174,10 @@ class RegisteredUserController extends Controller
             // Outlet tercatat di hub milik sales yang kodenya dipakai saat daftar.
             'hub_id' => User::hubIdForSalesCode($salesCode),
         ]);
+
+        if ($recruitedBySalesId) {
+            $user->forceFill(['recruited_by_sales_id' => $recruitedBySalesId])->save();
+        }
 
         event(new Registered($user));
 

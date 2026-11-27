@@ -25,7 +25,7 @@
                         <div class="card border-0 shadow-sm border-radius-20 overflow-hidden mb-40" style="background-color: #ffffff;">
                             <div class="card-header bg-white border-bottom-0 p-30 pb-0">
                                 <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Outlet dan Subdist</h3>
-                                <p class="text-muted font-sm">Bagikan link di bawah ini. Outlet yang mendaftar lewat link ini tercatat atas nama distributor Anda.</p>
+                                <p class="text-muted font-sm">Bagikan link di bawah ini ke calon pendaftar. Pendaftar tercatat atas nama distributor Anda, dan atas nama sales bila memakai link sales.</p>
                             </div>
                             <div class="card-body p-30 pt-10">
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
@@ -39,7 +39,7 @@
                                 </div>
 
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran Outlet</h5>
+                                    <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran Subdist (Umum)</h5>
                                     <div class="input-group mb-15">
                                         <input type="text" class="form-control font-sm" value="{{ $registerLink }}" readonly aria-label="Link pendaftaran outlet">
                                         <button class="btn px-25 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $registerLink }}">
@@ -52,17 +52,58 @@
                                     </a>
                                 </div>
 
+                                <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                    <h5 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran per Sales</h5>
+                                    <p class="text-muted font-xs mb-15">Setiap sales punya link untuk calon <strong>outlet</strong> dan calon <strong>subdist</strong>. Pendaftar tercatat atas nama sales tersebut.</p>
+                                    @if($salespeople->isEmpty())
+                                        <p class="font-sm mb-0">Belum ada sales aktif. <a href="{{ route('buyer.sales.create') }}" style="color: #6A1B1B; font-weight: 600;">Tambah sales</a> untuk membuat link per sales.</p>
+                                    @else
+                                        <div class="table-responsive">
+                                            <table class="table font-sm align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sales</th>
+                                                        <th>Link Outlet</th>
+                                                        <th>Link Subdist</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($salespeople as $sales)
+                                                        <tr>
+                                                            <td class="text-nowrap"><strong>{{ $sales->name }}</strong><br><span class="text-muted font-xs">{{ $sales->sales_code }}</span></td>
+                                                            @foreach(['outlet' => 'outlet', 'subdist' => 'subdist'] as $type => $label)
+                                                                @php($link = $user->registrationLink($type, $sales))
+                                                                <td class="text-nowrap" data-link-type="{{ $type }}">
+                                                                    <button type="button" class="btn btn-xs py-1 px-2 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $link }}" title="{{ $link }}">
+                                                                        <i class="fi-rs-copy me-1"></i>Salin
+                                                                    </button>
+                                                                    <a class="btn btn-xs py-1 px-2" style="background-color: #25D366; color: #fff;" target="_blank" rel="noopener noreferrer"
+                                                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai ' . $label . ' ' . $user->name . ' (sales ' . $sales->name . ') melalui link berikut: ' . $link) }}">
+                                                                        WA
+                                                                    </a>
+                                                                </td>
+                                                            @endforeach
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @endif
+                                </div>
+
                                 <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">
-                                    Subdist Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
+                                    Outlet dan Subdist Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
                                 </h5>
                                 @if($outlets->isEmpty())
-                                    <p class="text-muted font-sm mb-0">Belum ada outlet yang mendaftar lewat link Anda.</p>
+                                    <p class="text-muted font-sm mb-0">Belum ada outlet atau subdist yang mendaftar lewat link Anda.</p>
                                 @else
                                     <div class="table-responsive">
                                         <table class="table font-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>Nama Subdist</th>
+                                                    <th>Nama</th>
+                                                    <th>Jenis</th>
+                                                    <th>Sales</th>
                                                     <th>No. HP</th>
                                                     <th>Tanggal Daftar</th>
                                                 </tr>
@@ -71,6 +112,8 @@
                                                 @foreach($outlets as $outlet)
                                                     <tr>
                                                         <td>{{ $outlet->name }}</td>
+                                                        <td>{{ $outlet->isSubdist() ? 'Subdist' : 'Outlet' }}</td>
+                                                        <td>{{ ($outlet->recruitedBySales ?? ($outlet->isOutlet() ? $outlet->salesPerson : null))?->name ?? '-' }}</td>
                                                         <td>{{ $outlet->phone ?: '-' }}</td>
                                                         <td>{{ $outlet->created_at->format('d M Y') }}</td>
                                                     </tr>

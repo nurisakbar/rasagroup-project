@@ -712,6 +712,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(User::class, 'distributor_id')->where('role', self::ROLE_DISTRIBUTOR);
     }
 
+    /** Sales yang merekrut user ini lewat link pendaftaran per sales. */
+    public function recruitedBySales(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recruited_by_sales_id')->withTrashed();
+    }
+
+    /**
+     * Link pendaftaran untuk calon outlet/subdist dari distributor ini, opsional atas nama salah satu sales-nya.
+     * Contoh: /register?kode=DST00003&jenis=outlet&sales=MCR090
+     */
+    public function registrationLink(string $type, ?User $sales = null): string
+    {
+        return route('register', array_filter([
+            'kode' => $this->distributor_sales_code,
+            'jenis' => $type,
+            'sales' => $sales?->sales_code,
+        ]));
+    }
+
     /** Sales milik distributor ini (menu Data Sales di akun distributor). */
     public function distributorSales(): HasMany
     {
