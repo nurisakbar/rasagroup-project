@@ -3,15 +3,20 @@
 namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
-use App\Models\DistributorSalesperson;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
- * CRUD data sales milik distributor yang sedang login. Distributor hanya melihat dan mengubah sales miliknya.
+ * CRUD sales milik distributor yang sedang login. Disimpan di tabel users yang sama dengan Data Sales admin
+ * (role sales) dengan distributor_id = distributor pemilik. Distributor hanya melihat dan mengubah sales miliknya.
+ *
+ * Sales distributor bukan akun login: email diisi alamat internal (.invalid) dan password acak.
  */
 class DistributorSalesController extends Controller
 {
@@ -32,14 +37,21 @@ class DistributorSalesController extends Controller
 
     public function create(): View
     {
-        return view('buyer.sales.form', ['salesperson' => new DistributorSalesperson()]);
+        return view('buyer.sales.form', ['salesperson' => new User()]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $salesperson = new DistributorSalesperson($this->validated($request));
-        $salesperson->distributor_id = Auth::id();
-        $salesperson->save();
+        $data = $this->validated($request);
+
+        $sales = new User();
+        $sales->forceFill($data + [
+            'role' => User::ROLE_SALES,
+            'distributor_id' => $this->distributor()->id,
+            'email' => 'sales-distributor-' . Str::uuid() . '@rasaconnect.invalid',
+            'password' => Hash::make(Str::random(48)),
+            'is_active' => true,
+        ])->save();
 
         return redirect()->route('buyer.sales.index')->with('success', 'Sales berhasil ditambahkan.');
     }
@@ -52,7 +64,7 @@ class DistributorSalesController extends Controller
     public function update(Request $request, string $sale): RedirectResponse
     {
         $salesperson = $this->findOwn($sale);
-        $salesperson->update($this->validated($request, $salesperson));
+        $salesperson->forceFill($this->validated($request, $salesperson))->save();
 
         return redirect()->route('buyer.sales.index')->with('success', 'Data sales berhasil diperbarui.');
     }
@@ -65,15 +77,20 @@ class DistributorSalesController extends Controller
         return redirect()->route('buyer.sales.index')->with('success', 'Sales ' . $salesperson->name . ' berhasil dihapus.');
     }
 
-    private function ownQuery()
+    private function distributor(): User
     {
         $user = Auth::user();
         abort_unless($user && $user->isDistributor(), 403);
 
-        return DistributorSalesperson::where('distributor_id', $user->id);
+        return $user;
     }
 
-    private function findOwn(string $id): DistributorSalesperson
+    private function ownQuery()
+    {
+        return User::where('role', User::ROLE_SALES)->where('distributor_id', $this->distributor()->id);
+    }
+
+    private function findOwn(string $id): User
     {
         return $this->ownQuery()->whereKey($id)->firstOrFail();
     }
@@ -82,7 +99,7 @@ class DistributorSalesController extends Controller
      * Field form memakai nama sales_name/sales_phone (bukan name/phone) agar browser tidak mengisi otomatis
      * dengan nama dan HP pemilik akun.
      */
-    private function validated(Request $request, ?DistributorSalesperson $current = null): array
+    private function validated(Request $request, ?User $current = null): array
     {
         $request->merge(['sales_phone' => preg_replace('/[\s\-()]/', '', (string) $request->input('sales_phone'))]);
 
@@ -90,8 +107,10 @@ class DistributorSalesController extends Controller
             'sales_name' => ['required', 'string', 'max:150'],
             'sales_phone' => [
                 'required', 'string', 'regex:/^\+?[0-9]{8,15}$/',
-                Rule::unique('distributor_salespeople', 'phone')
-                    ->where('distributor_id', Auth::id())
+                Rule::unique('users', 'phone')
+                    ->where('role', User::ROLE_SALES)
+                    ->where('distributor_id', $this->distributor()->id)
+                    ->whereNull('deleted_at')
                     ->ignore($current?->getKey()),
             ],
         ], [

@@ -666,6 +666,30 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === self::ROLE_SALES;
     }
 
+    /** Sales milik distributor (role sales dengan distributor_id), bukan sales perusahaan. */
+    public function isDistributorSales(): bool
+    {
+        return $this->isSales() && filled($this->distributor_id);
+    }
+
+    /** Distributor pemilik sales ini (khusus sales milik distributor). */
+    public function ownerDistributor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'distributor_id')->where('role', self::ROLE_DISTRIBUTOR);
+    }
+
+    /** Sales milik distributor ini (menu Data Sales di akun distributor). */
+    public function distributorSales(): HasMany
+    {
+        return $this->hasMany(User::class, 'distributor_id')->where('role', self::ROLE_SALES);
+    }
+
+    /** Hanya sales perusahaan (Data Sales admin), tanpa sales milik distributor. */
+    public function scopeCompanySales($query)
+    {
+        return $query->where('role', self::ROLE_SALES)->whereNull('distributor_id');
+    }
+
     public function getFaspayCompany(): string
     {
         if ($this->isDistributor()) {

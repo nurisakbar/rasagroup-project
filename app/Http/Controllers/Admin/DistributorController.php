@@ -265,7 +265,7 @@ class DistributorController extends Controller
     {
         $result = $this->ekspedisiku->getProvinces();
         $provinces = isset($result['data']) ? $result['data'] : [];
-        $salesList = User::where('role', User::ROLE_SALES)->orderBy('name')->get();
+        $salesList = User::companySales()->orderBy('name')->get();
         return view('admin.distributors.create', compact('provinces', 'salesList'));
     }
 
@@ -844,7 +844,7 @@ class DistributorController extends Controller
             }
         }
 
-        $salesList = User::where('role', User::ROLE_SALES)->orderBy('name')->get();
+        $salesList = User::companySales()->orderBy('name')->get();
 
         return view('admin.distributors.edit', compact('distributor', 'provinces', 'regencies', 'districts', 'villages', 'salesList'));
     }
