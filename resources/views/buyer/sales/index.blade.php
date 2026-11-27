@@ -35,7 +35,7 @@
                     <div class="card-body p-30">
                         <form method="GET" action="{{ route('buyer.sales.index') }}" class="row g-2 mb-20">
                             <div class="col-md-10">
-                                <input type="text" name="q" value="{{ $search }}" class="form-control font-sm" placeholder="Cari nama atau no. HP">
+                                <input type="text" name="q" value="{{ $search }}" class="form-control font-sm" placeholder="Cari kode, nama, no. HP, atau email">
                             </div>
                             <div class="col-md-2 d-grid">
                                 <button type="submit" class="btn btn-sm" style="background-color: #253D4E; color: #fff;"><i class="fi-rs-search mr-5"></i>Cari</button>
@@ -52,8 +52,10 @@
                                     <thead>
                                         <tr>
                                             <th style="width: 50px;">No</th>
+                                            <th>Kode Sales</th>
                                             <th>Nama</th>
                                             <th>No. HP</th>
+                                            <th>Email</th>
                                             <th>Ditambahkan</th>
                                             <th class="text-end">Aksi</th>
                                         </tr>
@@ -62,8 +64,10 @@
                                         @foreach($salespeople as $sales)
                                             <tr>
                                                 <td>{{ $salespeople->firstItem() + $loop->index }}</td>
+                                                <td><strong style="color: #6A1B1B;">{{ $sales->sales_code ?: '-' }}</strong></td>
                                                 <td><strong>{{ $sales->name }}</strong></td>
                                                 <td>{{ $sales->phone }}</td>
+                                                <td>{{ $sales->hasInternalEmail() ? '-' : $sales->email }}</td>
                                                 <td>{{ $sales->created_at->timezone(\App\Support\Wib::TZ)->format('d M Y') }}</td>
                                                 <td class="text-end text-nowrap">
                                                     <a href="{{ route('buyer.sales.edit', $sales) }}" class="btn btn-xs btn-outline-secondary py-1 px-2" title="Ubah"><i class="fi-rs-edit"></i></a>

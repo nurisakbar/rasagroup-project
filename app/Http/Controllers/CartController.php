@@ -191,7 +191,7 @@ class CartController extends Controller
 
         $totalWeight = $this->calculateCartsTotalWeightGrams($carts);
         $totalWeightFormatted = $this->formatTotalWeightGrams($totalWeight);
-        $salesList = \App\Models\User::companySales()->get();
+        $salesList = \App\Models\User::where('role', 'sales')->get();
 
         $bonus = app(\App\Services\BonusService::class)->evaluate($carts, Auth::user());
 

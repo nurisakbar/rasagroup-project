@@ -128,6 +128,27 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
+    /** Prefix kode sales (Data Sales admin dan sales milik distributor), mis. MCR001. */
+    public const SALES_CODE_PREFIX = 'MCR';
+
+    /**
+     * Kode sales berikutnya dengan format yang sudah ada: MCR + nomor urut minimal 3 digit (MCR001, MCR090, ...).
+     * Kode user yang sudah dihapus ikut dihitung agar tidak dipakai ulang. Panggil di dalam transaksi.
+     */
+    public static function generateSalesCode(): string
+    {
+        $prefix = self::SALES_CODE_PREFIX;
+
+        $max = static::withTrashed()
+            ->where('sales_code', 'regexp', '^' . $prefix . '[0-9]+$')
+            ->lockForUpdate()
+            ->pluck('sales_code')
+            ->map(fn ($code) => (int) substr($code, strlen($prefix)))
+            ->max() ?? 0;
+
+        return $prefix . str_pad((string) ($max + 1), 3, '0', STR_PAD_LEFT);
+    }
+
     public static function generateDistributorSalesCode(): string
     {
         $prefix = self::DISTRIBUTOR_SALES_CODE_PREFIX;
@@ -670,6 +691,19 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isDistributorSales(): bool
     {
         return $this->isSales() && filled($this->distributor_id);
+    }
+
+    /** Email pengganti (.invalid) untuk sales distributor yang tidak mengisi email. */
+    public const INTERNAL_EMAIL_DOMAIN = 'rasaconnect.invalid';
+
+    public static function internalSalesEmail(): string
+    {
+        return 'sales-distributor-' . \Illuminate\Support\Str::uuid() . '@' . self::INTERNAL_EMAIL_DOMAIN;
+    }
+
+    public function hasInternalEmail(): bool
+    {
+        return str_ends_with((string) $this->email, '@' . self::INTERNAL_EMAIL_DOMAIN);
     }
 
     /** Distributor pemilik sales ini (khusus sales milik distributor). */

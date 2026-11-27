@@ -17,7 +17,7 @@ class ProfileController extends Controller
 
     public function edit()
     {
-        $salesList = \App\Models\User::companySales()->get();
+        $salesList = \App\Models\User::where('role', 'sales')->get();
         return view('buyer.profile.edit', compact('salesList'));
     }
 

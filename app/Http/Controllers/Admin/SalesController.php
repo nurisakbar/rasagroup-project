@@ -58,9 +58,9 @@ class SalesController extends Controller
                 ->filterColumn('distributor', function ($query, $keyword) {
                     $query->whereHas('ownerDistributor', fn ($q) => $q->where('name', 'like', '%' . $keyword . '%'));
                 })
-                // Email internal sales distributor (bukan akun login) tidak ditampilkan.
+                // Email internal sales distributor (diisi otomatis bila email dikosongkan) tidak ditampilkan.
                 ->editColumn('email', function ($sale) {
-                    return $sale->distributor_id ? '-' : $sale->email;
+                    return $sale->hasInternalEmail() ? '-' : $sale->email;
                 })
                 ->editColumn('phone', function ($sale) {
                     return $sale->phone ?: '-';

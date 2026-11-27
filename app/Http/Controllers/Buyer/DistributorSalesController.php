@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,8 @@ use Illuminate\View\View;
  * CRUD sales milik distributor yang sedang login. Disimpan di tabel users yang sama dengan Data Sales admin
  * (role sales) dengan distributor_id = distributor pemilik. Distributor hanya melihat dan mengubah sales miliknya.
  *
- * Sales distributor bukan akun login: email diisi alamat internal (.invalid) dan password acak.
+ * Kode sales dibuat otomatis (MCR + nomor urut, satu urutan dengan sales admin) dan berlaku penuh seperti kode
+ * sales perusahaan. Sales distributor bukan akun login: password acak; email opsional (kosong = alamat internal).
  */
 class DistributorSalesController extends Controller
 {
@@ -27,8 +29,10 @@ class DistributorSalesController extends Controller
         $salespeople = $this->ownQuery()
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$search}%")
+                ->orWhere('sales_code', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('phone', 'like', "%{$search}%")))
-            ->orderBy('name')
+            ->orderBy('sales_code')
             ->paginate(15)
             ->withQueryString();
 
@@ -43,17 +47,22 @@ class DistributorSalesController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        $distributorId = $this->distributor()->id;
 
-        $sales = new User();
-        $sales->forceFill($data + [
-            'role' => User::ROLE_SALES,
-            'distributor_id' => $this->distributor()->id,
-            'email' => 'sales-distributor-' . Str::uuid() . '@rasaconnect.invalid',
-            'password' => Hash::make(Str::random(48)),
-            'is_active' => true,
-        ])->save();
+        $sales = DB::transaction(function () use ($data, $distributorId) {
+            $sales = new User();
+            $sales->forceFill($data + [
+                'role' => User::ROLE_SALES,
+                'sales_code' => User::generateSalesCode(),
+                'distributor_id' => $distributorId,
+                'password' => Hash::make(Str::random(48)),
+                'is_active' => true,
+            ])->save();
 
-        return redirect()->route('buyer.sales.index')->with('success', 'Sales berhasil ditambahkan.');
+            return $sales;
+        });
+
+        return redirect()->route('buyer.sales.index')->with('success', 'Sales ' . $sales->name . ' berhasil ditambahkan dengan kode ' . $sales->sales_code . '.');
     }
 
     public function edit(string $sale): View
@@ -105,6 +114,10 @@ class DistributorSalesController extends Controller
 
         $data = $request->validate([
             'sales_name' => ['required', 'string', 'max:150'],
+            'sales_email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('users', 'email')->ignore($current?->getKey()),
+            ],
             'sales_phone' => [
                 'required', 'string', 'regex:/^\+?[0-9]{8,15}$/',
                 Rule::unique('users', 'phone')
@@ -118,8 +131,14 @@ class DistributorSalesController extends Controller
             'sales_phone.required' => 'No. HP wajib diisi.',
             'sales_phone.regex' => 'No. HP harus berupa angka 8-15 digit (boleh diawali +).',
             'sales_phone.unique' => 'No. HP ini sudah dipakai sales lain milik Anda.',
+            'sales_email.email' => 'Format email tidak valid.',
+            'sales_email.unique' => 'Email ini sudah terdaftar di Rasaconnect.',
         ]);
 
-        return ['name' => $data['sales_name'], 'phone' => $data['sales_phone']];
+        return [
+            'name' => $data['sales_name'],
+            'phone' => $data['sales_phone'],
+            'email' => filled($data['sales_email'] ?? null) ? strtolower($data['sales_email']) : User::internalSalesEmail(),
+        ];
     }
 }

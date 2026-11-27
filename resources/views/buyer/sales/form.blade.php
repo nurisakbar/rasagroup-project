@@ -47,6 +47,15 @@
                                 @method('PUT')
                             @endif
 
+                            <p class="font-sm mb-20">
+                                Kode Sales:
+                                @if($isEdit && $salesperson->sales_code)
+                                    <strong style="color: #6A1B1B;">{{ $salesperson->sales_code }}</strong>
+                                @else
+                                    <span class="text-muted">dibuat otomatis saat disimpan (format MCR + nomor urut)</span>
+                                @endif
+                            </p>
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="sales_name">Nama Sales <span class="text-danger">*</span></label>
@@ -55,6 +64,10 @@
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="sales_phone">No. HP <span class="text-danger">*</span></label>
                                     <input type="text" id="sales_phone" name="sales_phone" class="form-control @error('sales_phone') is-invalid @enderror" value="{{ old('sales_phone', $salesperson->phone) }}" maxlength="20" placeholder="08xxxxxxxxxx" inputmode="tel" autocomplete="off" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label font-sm fw-bold" for="sales_email">Email</label>
+                                    <input type="email" id="sales_email" name="sales_email" class="form-control @error('sales_email') is-invalid @enderror" value="{{ old('sales_email', $salesperson->exists && ! $salesperson->hasInternalEmail() ? $salesperson->email : '') }}" maxlength="255" placeholder="nama@contoh.com" autocomplete="off">
                                 </div>
                             </div>
 
