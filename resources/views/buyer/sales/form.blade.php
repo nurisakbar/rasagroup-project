@@ -41,7 +41,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ $isEdit ? route('buyer.sales.update', $salesperson) : route('buyer.sales.store') }}" method="POST">
+                        <form autocomplete="off" action="{{ $isEdit ? route('buyer.sales.update', $salesperson) : route('buyer.sales.store') }}" method="POST">
                             @csrf
                             @if($isEdit)
                                 @method('PUT')
@@ -53,12 +53,12 @@
                                     <input type="text" class="form-control" value="{{ $distributor->name }}{{ $distributor->distributor_sales_code ? ' (' . $distributor->distributor_sales_code . ')' : '' }}" readonly>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label font-sm fw-bold" for="name">Nama Sales <span class="text-danger">*</span></label>
-                                    <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $salesperson->name) }}" maxlength="150" required>
+                                    <label class="form-label font-sm fw-bold" for="sales_name">Nama Sales <span class="text-danger">*</span></label>
+                                    <input type="text" id="sales_name" name="sales_name" class="form-control @error('sales_name') is-invalid @enderror" value="{{ old('sales_name', $salesperson->name) }}" maxlength="150" autocomplete="off" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label font-sm fw-bold" for="phone">No. HP <span class="text-danger">*</span></label>
-                                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $salesperson->phone) }}" maxlength="20" placeholder="08xxxxxxxxxx" inputmode="tel" required>
+                                    <label class="form-label font-sm fw-bold" for="sales_phone">No. HP <span class="text-danger">*</span></label>
+                                    <input type="text" id="sales_phone" name="sales_phone" class="form-control @error('sales_phone') is-invalid @enderror" value="{{ old('sales_phone', $salesperson->phone) }}" maxlength="20" placeholder="08xxxxxxxxxx" inputmode="tel" autocomplete="off" required>
                                 </div>
                             </div>
 

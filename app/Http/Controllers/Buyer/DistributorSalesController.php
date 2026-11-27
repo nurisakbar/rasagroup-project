@@ -78,23 +78,29 @@ class DistributorSalesController extends Controller
         return $this->ownQuery()->whereKey($id)->firstOrFail();
     }
 
+    /**
+     * Field form memakai nama sales_name/sales_phone (bukan name/phone) agar browser tidak mengisi otomatis
+     * dengan nama dan HP pemilik akun.
+     */
     private function validated(Request $request, ?DistributorSalesperson $current = null): array
     {
-        $request->merge(['phone' => preg_replace('/[\s\-()]/', '', (string) $request->input('phone'))]);
+        $request->merge(['sales_phone' => preg_replace('/[\s\-()]/', '', (string) $request->input('sales_phone'))]);
 
-        return $request->validate([
-            'name' => ['required', 'string', 'max:150'],
-            'phone' => [
+        $data = $request->validate([
+            'sales_name' => ['required', 'string', 'max:150'],
+            'sales_phone' => [
                 'required', 'string', 'regex:/^\+?[0-9]{8,15}$/',
                 Rule::unique('distributor_salespeople', 'phone')
                     ->where('distributor_id', Auth::id())
                     ->ignore($current?->getKey()),
             ],
         ], [
-            'name.required' => 'Nama sales wajib diisi.',
-            'phone.required' => 'No. HP wajib diisi.',
-            'phone.regex' => 'No. HP harus berupa angka 8-15 digit (boleh diawali +).',
-            'phone.unique' => 'No. HP ini sudah dipakai sales lain milik Anda.',
+            'sales_name.required' => 'Nama sales wajib diisi.',
+            'sales_phone.required' => 'No. HP wajib diisi.',
+            'sales_phone.regex' => 'No. HP harus berupa angka 8-15 digit (boleh diawali +).',
+            'sales_phone.unique' => 'No. HP ini sudah dipakai sales lain milik Anda.',
         ]);
+
+        return ['name' => $data['sales_name'], 'phone' => $data['sales_phone']];
     }
 }
