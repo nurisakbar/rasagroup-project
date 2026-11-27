@@ -215,7 +215,7 @@ class OrderLineBreakdown
             return null;
         }
 
-        $order->loadMissing('items.product.category');
+        $order->loadMissing(['items.product.category', 'items.product.brand']);
         $carts = $order->items->map(fn (OrderItem $item) => (object) [
             'product' => $item->product,
             'quantity' => (int) $item->quantity,
@@ -226,7 +226,7 @@ class OrderLineBreakdown
         foreach ($lines as $index => $line) {
             $item = $line['item'];
             $group = $item->product ? $service->getProductCategoryGroup($item->product) : null;
-            $percent = $group ? $service->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0)) : 0.0;
+            $percent = $group ? $service->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0), $item->product) : 0.0;
             if ($percent <= 0) {
                 continue;
             }

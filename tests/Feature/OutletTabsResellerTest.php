@@ -135,21 +135,23 @@ class OutletTabsResellerTest extends TestCase
         $sales = User::factory()->create(['role' => User::ROLE_SALES, 'sales_code' => 'TSQ' . strtoupper(substr(uniqid(), -6)), 'wa_verified_at' => now()]);
         $carts = collect([$syrup = $this->cart('Syrup', 20 * 6)]);
 
-        // Outlet dengan kode sales: 20 karton -> tier outlet 6%.
-        $this->assertSame(6.0, $service->calculateCartDiscount($carts, $this->outlet->fresh(), $sales->sales_code)['line_percentages'][$syrup->id]);
+        // Outlet dengan kode sales: 20 karton -> tier outlet 10%.
+        $this->assertSame(10.0, $service->calculateCartDiscount($carts, $this->outlet->fresh(), $sales->sales_code)['line_percentages'][$syrup->id]);
 
-        // Outlet jadi reseller: 20 karton belum dapat diskon (tier reseller > 50 karton).
+        // Outlet jadi reseller: langsung dapat diskon kategori tanpa MOQ dan tanpa kode sales (DRiPP Syrup 15%).
         $this->outlet->forceFill(['is_reseller' => true])->save();
         $reseller = $this->outlet->fresh();
-        $this->assertSame(0.0, $service->calculateCartDiscount($carts, $reseller, $sales->sales_code)['line_percentages'][$syrup->id]);
-        $big = collect([$s = $this->cart('Syrup', 51 * 6)]);
-        $this->assertSame(10.0, $service->calculateCartDiscount($big, $reseller, null)['line_percentages'][$s->id]);
+        $this->assertSame(15.0, $service->calculateCartDiscount($carts, $reseller, null)['line_percentages'][$syrup->id]);
+        $small = collect([$s = $this->cart('Syrup', 1)]);
+        $this->assertSame(15.0, $service->calculateCartDiscount($small, $reseller, null)['line_percentages'][$s->id]);
 
-        // Info kekurangan karton untuk reseller.
-        $hints = $service->subdistHints($carts, $reseller);
-        $this->assertSame([['group_name' => 'Syrup & Sauce', 'cartons' => 20, 'cartons_needed' => 31, 'percentage' => 10.0]], $hints);
-        $this->assertSame([], $service->subdistHints($big, $reseller));
+        // Reseller tidak menampilkan hint kekurangan karton karena tanpa MOQ.
+        $this->assertSame([], $service->subdistHints($carts, $reseller));
         $this->assertSame([], $service->subdistHints($carts, $this->buyer->fresh()));
+
+        // Subdist non-reseller tetap menampilkan hint kekurangan karton (> 50 karton).
+        $subdist = new User(['role' => User::ROLE_SUBDIST, 'is_reseller' => false]);
+        $this->assertSame([['group_name' => 'Syrup & Sauce', 'cartons' => 20, 'cartons_needed' => 31, 'percentage' => 15.0]], $service->subdistHints($carts, $subdist));
     }
 
     public function test_reseller_always_uses_outlet_channel(): void
@@ -164,22 +166,33 @@ class OutletTabsResellerTest extends TestCase
     public function test_reseller_gets_subdist_reseller_discount_tier(): void
     {
         $service = new DiscountService();
-        // User biasa: tier outlet (1 karton 0%, 3-5 karton 4%, 21+ karton 7%).
-        $this->assertSame(0.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 1));
-        $this->assertSame(4.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 3));
-        $this->assertSame(7.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 60));
+        // User biasa: tier outlet (1 karton 2.5%, 3-8 karton 5%, 19+ karton 10%).
+        $this->assertSame(2.5, $service->tierPercentage($this->buyer, 'syrup_sauce', 1));
+        $this->assertSame(5.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 3));
+        $this->assertSame(10.0, $service->tierPercentage($this->buyer, 'syrup_sauce', 60));
 
-        // Reseller: tier Subdist (> 50 karton 10% / 7%, di bawahnya belum dapat).
+        // Reseller: langsung dapat diskon per kategori & brand, abaikan jumlah karton (bahkan 0 karton / 1 botol).
         $this->buyer->forceFill(['is_reseller' => true])->save();
-        $this->assertSame(10.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 51));
-        $this->assertSame(7.0, $service->tierPercentage($this->buyer->fresh(), 'others', 51));
-        $this->assertSame(0.0, $service->tierPercentage($this->buyer->fresh(), 'syrup_sauce', 1));
+        $reseller = $this->buyer->fresh();
+        $this->assertSame(15.0, $service->tierPercentage($reseller, 'syrup_sauce', 0));
+        $this->assertSame(8.0, $service->tierPercentage($reseller, 'others', 0));
+        $this->assertSame(15.0, $service->tierPercentage($reseller, 'syrup_sauce', 51));
+        $this->assertSame(8.0, $service->tierPercentage($reseller, 'others', 51));
+
+        // Produk Multibev untuk reseller: Syrup 10%, Powder & Creamer 7%, tanpa MOQ.
+        $multibevSyrup = $this->cart('Syrup', 1, 'Multibev')->product;
+        $multibevPowder = $this->cart('POWDER', 1, 'Multibev')->product;
+        $this->assertSame(10.0, $service->tierPercentage($reseller, 'syrup_sauce', 0, $multibevSyrup));
+        $this->assertSame(7.0, $service->tierPercentage($reseller, 'others', 0, $multibevPowder));
     }
 
-    private function cart(string $category, int $quantity): \App\Models\Cart
+    private function cart(string $category, int $quantity, ?string $brand = 'DRiPP'): \App\Models\Cart
     {
-        $product = new \App\Models\Product(['name' => $category, 'price' => 111000, 'unit' => 'BT', 'large_unit' => 'CTN', 'units_per_large' => 6]);
+        $product = new \App\Models\Product(['name' => ($brand ? $brand . ' ' : '') . $category, 'price' => 111000, 'unit' => 'BT', 'large_unit' => 'CTN', 'units_per_large' => 6]);
         $product->setRelation('category', new \App\Models\Category(['name' => $category]));
+        if ($brand) {
+            $product->setRelation('brand', new \App\Models\Brand(['name' => $brand]));
+        }
         $cart = new \App\Models\Cart(['quantity' => $quantity]);
         $cart->id = (string) \Illuminate\Support\Str::uuid();
         $cart->setRelation('product', $product);
@@ -190,21 +203,24 @@ class OutletTabsResellerTest extends TestCase
     public function test_reseller_gets_discount_without_sales_code(): void
     {
         $service = new DiscountService();
-        $carts = collect([$syrup = $this->cart('Syrup', 51 * 6), $pulp = $this->cart('PULP', 51 * 6)]);
+        $carts = collect([
+            $drippSyrup = $this->cart('Syrup', 6, 'DRiPP'),
+            $multibevSyrup = $this->cart('Syrup', 6, 'Multibev'),
+            $drippPulp = $this->cart('PULP', 1, 'DRiPP'),
+            $multibevPowder = $this->cart('POWDER', 12, 'Multibev'),
+        ]);
 
         // User biasa tanpa kode sales: tidak dapat diskon MOQ.
         $plain = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
-        $this->assertSame(0.0, $plain['line_percentages'][$syrup->id]);
+        $this->assertSame(0.0, $plain['line_percentages'][$drippSyrup->id]);
 
-        // Reseller tanpa kode sales: 51 karton -> 10% (Syrup & Sauce) dan 7% (Pulp).
+        // Reseller tanpa kode sales & tanpa MOQ: DRiPP 15%/8%, Multibev 10%/7%.
         $this->buyer->forceFill(['is_reseller' => true])->save();
         $reseller = $service->calculateCartDiscount($carts, $this->buyer->fresh(), null);
-        $this->assertSame(10.0, $reseller['line_percentages'][$syrup->id]);
-        $this->assertSame(7.0, $reseller['line_percentages'][$pulp->id]);
-
-        // Reseller di bawah/sama dengan 50 karton: belum dapat diskon.
-        $small = collect([$s = $this->cart('Syrup', 50 * 6)]);
-        $this->assertSame(0.0, $service->calculateCartDiscount($small, $this->buyer->fresh(), null)['line_percentages'][$s->id]);
+        $this->assertSame(15.0, $reseller['line_percentages'][$drippSyrup->id]);
+        $this->assertSame(10.0, $reseller['line_percentages'][$multibevSyrup->id]);
+        $this->assertSame(8.0, $reseller['line_percentages'][$drippPulp->id]);
+        $this->assertSame(7.0, $reseller['line_percentages'][$multibevPowder->id]);
     }
 
     public function test_edit_form_is_read_only_except_reseller_flag(): void

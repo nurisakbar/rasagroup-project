@@ -7,25 +7,21 @@ use App\Models\Product;
 use App\Models\User;
 
 /**
- * Strata diskon MOQ untuk outlet & subdist:
+ * Strata diskon untuk outlet, subdist, & reseller:
  *
- * | Tipe customer | MOQ (total karton) | Syrup & Sauce | Pulp, Powder, Cocoa, dll |
- * |---------------|--------------------|---------------|--------------------------|
- * | Subdist       | > 50 karton        | 10%           | 7%                       |
- * | Outlet        | 1-2 karton         | 0%            | 0%                       |
- * | Outlet        | 3-5 karton         | 4%            | 2%                       |
- * | Outlet        | 6-10 karton        | 5%            | 4%                       |
- * | Outlet        | 11-20 karton       | 6%            | 5%                       |
- * | Outlet        | 21-32 karton       | 7%            | 6%                       |
- * | Outlet        | > 32 karton        | 7%            | 6% (tier tertinggi)      |
+ * | Tipe customer | MOQ (total karton) | DRiPP Syrup & Sauce | DRiPP Pulp, Powder, Cocoa, Accesoris | Multibev Syrup | Multibev Powder & Creamer |
+ * |---------------|--------------------|---------------------|--------------------------------------|----------------|---------------------------|
+ * | Reseller      | Tanpa MOQ          | 15%                 | 8%                                   | 10%            | 7%                        |
+ * | Subdist       | > 50 karton        | 15%                 | 8%                                   | 10%            | 7%                        |
+ * | Outlet        | 1-2 karton         | 2.5%                | 2%                                   | 2.5%           | 2%                        |
+ * | Outlet        | 3-8 karton         | 5%                  | 4%                                   | 5%             | 4%                        |
+ * | Outlet        | 9-18 karton        | 7.5%                | 5%                                   | 7.5%           | 5%                        |
+ * | Outlet        | 19-30 karton       | 10%                 | 6%                                   | 10%            | 6%                        |
+ * | Outlet        | > 30 karton        | 10%                 | 6% (tier tertinggi)                  | 10%            | 6% (tier tertinggi)       |
  *
- * MOQ dihitung PER GRUP: karton Syrup & Sauce dijumlah sendiri, karton Pulp/Powder/Cocoa dsb dijumlah
- * sendiri (memakai isi karton masing-masing produk). Tiap grup mendapat persen dari tier kartonnya sendiri.
- *
- * Subdist = user yang mendaftar lewat kode distributor (role subdist) atau user yang ditandai admin
- * (flag reseller). Subdist selalu memakai tier "Subdist" tanpa kode sales; yang belanja 50 karton atau
- * kurang per grup tidak mendapat diskon. Outlet dan ecom hanya mendapat diskon bila menginput kode sales
- * yang terdaftar (sales atau distributor).
+ * Reseller (flag `is_reseller = true`) langsung mendapat diskon sesuai brand & kategori tanpa syarat MOQ
+ * dan tanpa kode sales. Subdist (role `subdist` non-reseller) tetap memakai syarat > 50 karton per grup
+ * tanpa kode sales. Outlet dan ecom hanya mendapat diskon bila menginput kode sales yang terdaftar.
  */
 class DiscountService
 {
@@ -35,10 +31,10 @@ class DiscountService
     private const GROUP_SYRUP_SAUCE = ['Syrup', 'SAUCE'];
 
     /**
-     * Kategori grup 2 (Pulp, Powder, Cocoa, Accessories) sesuai tabel referensi diskon.
+     * Kategori grup 2 (Pulp, Powder, Cocoa, Creamer, Accessories) sesuai tabel referensi diskon.
      * Kategori lain di luar tabel (mis. Puree, Tea, Topping, Paste) tidak mendapat diskon MOQ.
      */
-    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'ACCESSORIES', 'ACCESORIS', 'AKSESORIS'];
+    private const GROUP_OTHERS = ['PULP', 'POWDER', 'COCOA', 'CREAMER', 'ACCESSORIES', 'ACCESORIS', 'AKSESORIS'];
 
     /**
      * Isi karton bila produk tidak punya data satuan besar.
@@ -88,22 +84,57 @@ class DiscountService
     }
 
     /**
-     * Persen diskon sebuah grup berdasarkan tipe customer dan jumlah karton grup tersebut.
+     * Apakah produk termasuk brand Multibev.
      */
-    public function tierPercentage(User $user, string $group, int $cartons): float
+    public function isMultibev(?Product $product): bool
     {
-        $isSyrupSauce = $group === 'syrup_sauce';
-
-        if ($this->getCustomerType($user) === 'subdist') {
-            return $cartons > self::SUBDIST_MIN_CARTONS_EXCLUSIVE ? ($isSyrupSauce ? 10.0 : 7.0) : 0.0;
+        if (! $product) {
+            return false;
         }
 
-        // Di atas 32 karton tetap memakai diskon maksimal (tier 21-32 karton).
+        $brandName = trim((string) ($product->brand?->name ?? ''));
+        if ($brandName !== '') {
+            return str_contains(strtoupper($brandName), 'MULTIBEV');
+        }
+
+        return str_contains(strtoupper((string) ($product->name ?? '')), 'MULTIBEV');
+    }
+
+    /**
+     * Persen diskon sebuah grup berdasarkan tipe customer, jumlah karton grup tersebut, dan brand produk.
+     */
+    public function tierPercentage(User $user, string $group, int $cartons, ?Product $product = null): float
+    {
+        $isSyrupSauce = $group === 'syrup_sauce';
+        $isMultibev = $this->isMultibev($product);
+
+        // Reseller (is_reseller = true): langsung dapat diskon sesuai brand & kategori, abaikan jumlah orderan.
+        if ($user->isReseller()) {
+            if ($isMultibev) {
+                return $isSyrupSauce ? 10.0 : 7.0;
+            }
+
+            return $isSyrupSauce ? 15.0 : 8.0;
+        }
+
+        if ($this->getCustomerType($user) === 'subdist') {
+            if ($cartons <= self::SUBDIST_MIN_CARTONS_EXCLUSIVE) {
+                return 0.0;
+            }
+
+            if ($isMultibev) {
+                return $isSyrupSauce ? 10.0 : 7.0;
+            }
+
+            return $isSyrupSauce ? 15.0 : 8.0;
+        }
+
+        // Di atas 30 karton tetap memakai diskon maksimal (tier 19-30 karton).
         return match (true) {
-            $cartons >= 21 => $isSyrupSauce ? 7.0 : 6.0,
-            $cartons >= 11 => $isSyrupSauce ? 6.0 : 5.0,
-            $cartons >= 6 => $isSyrupSauce ? 5.0 : 4.0,
-            $cartons >= 3 => $isSyrupSauce ? 4.0 : 2.0,
+            $cartons >= 19 => $isSyrupSauce ? 10.0 : 6.0,
+            $cartons >= 9 => $isSyrupSauce ? 7.5 : 5.0,
+            $cartons >= 3 => $isSyrupSauce ? 5.0 : 4.0,
+            $cartons >= 1 => $isSyrupSauce ? 2.5 : 2.0,
             default => 0.0,
         };
     }
@@ -112,14 +143,15 @@ class DiscountService
     public const SUBDIST_MIN_CARTONS_EXCLUSIVE = 50;
 
     /**
-     * Info untuk subdist: grup yang belum mencapai tier subdist dan kekurangan kartonnya.
+     * Info untuk subdist (non-reseller): grup yang belum mencapai tier subdist dan kekurangan kartonnya.
+     * Reseller tidak butuh MOQ sehingga tidak menampilkan hint.
      *
      * @param \Illuminate\Support\Collection<int, Cart> $carts
      * @return list<array{group_name: string, cartons: int, cartons_needed: int, percentage: float}>
      */
     public function subdistHints($carts, User $user): array
     {
-        if (! $user->usesSubdistTier()) {
+        if (! $user->isSubdist() || $user->isReseller()) {
             return [];
         }
 
@@ -152,7 +184,7 @@ class DiscountService
 
     /**
      * Diskon MOQ berlaku untuk pembelian dengan kode sales yang diinput dan terdaftar, atau untuk
-     * subdist (tidak perlu kode sales).
+     * subdist / reseller (tidak perlu kode sales).
      */
     public function isEligible(?string $salesCode, ?User $user = null): bool
     {
@@ -162,7 +194,7 @@ class DiscountService
     /**
      * Menghitung diskon berjenjang untuk seluruh isi keranjang.
      * Mengembalikan rincian diskon per grup, total diskon, karton per grup, dan persen per baris.
-     * Tanpa kode sales yang valid semua persen 0.
+     * Tanpa kode sales yang valid (untuk non-subdist/non-reseller) semua persen 0.
      *
      * @param \Illuminate\Support\Collection<int, Cart> $carts
      * @param User $user
@@ -173,35 +205,47 @@ class DiscountService
     {
         $eligible = $this->isEligible($salesCode, $user);
         $cartons = $this->cartonsPerGroup($carts);
-        $percentages = [];
-        foreach ($cartons as $group => $count) {
-            $percentages[$group] = $eligible ? $this->tierPercentage($user, $group, $count) : 0.0;
-        }
 
-        $groupSubtotals = ['syrup_sauce' => 0.0, 'others' => 0.0];
+        $buckets = [];
         $lines = [];
         foreach ($carts as $cartItem) {
             $product = $cartItem->product;
             $group = $product ? $this->getProductCategoryGroup($product) : null;
-            $lines[(string) $cartItem->id] = $group ? $percentages[$group] : 0.0;
-            if ($group) {
-                $groupSubtotals[$group] += $user->getProductPrice($product) * (int) $cartItem->quantity;
-            }
-        }
+            $percentage = ($eligible && $group)
+                ? $this->tierPercentage($user, $group, (int) ($cartons[$group] ?? 0), $product)
+                : 0.0;
 
-        $discountDetails = [];
-        $totalDiscountAmount = 0;
-        foreach ($groupSubtotals as $group => $subtotal) {
-            $percentage = $percentages[$group];
-            if ($subtotal <= 0 || $percentage <= 0) {
+            $lines[(string) $cartItem->id] = $percentage;
+
+            if (! $group || $percentage <= 0) {
                 continue;
             }
 
-            $discountAmount = ($subtotal * $percentage) / 100;
+            $lineSubtotal = $user->getProductPrice($product) * (int) $cartItem->quantity;
+            if ($lineSubtotal <= 0) {
+                continue;
+            }
+
+            $label = $this->discountGroupLabel($group, $product, $user);
+            $bucketKey = $label . '|' . $percentage;
+            if (! isset($buckets[$bucketKey])) {
+                $buckets[$bucketKey] = [
+                    'group_name' => $label,
+                    'percentage' => $percentage,
+                    'subtotal' => 0.0,
+                ];
+            }
+            $buckets[$bucketKey]['subtotal'] += $lineSubtotal;
+        }
+
+        $discountDetails = [];
+        $totalDiscountAmount = 0.0;
+        foreach ($buckets as $bucket) {
+            $discountAmount = ($bucket['subtotal'] * $bucket['percentage']) / 100;
             $totalDiscountAmount += $discountAmount;
             $discountDetails[] = [
-                'group_name' => $group === 'syrup_sauce' ? 'Syrup & Sauce' : 'Powder, Pulp & Lainnya',
-                'percentage' => $percentage,
+                'group_name' => $bucket['group_name'],
+                'percentage' => $bucket['percentage'],
                 'discount_amount' => $discountAmount,
             ];
         }
@@ -212,6 +256,15 @@ class DiscountService
             'cartons_per_group' => $cartons,
             'line_percentages' => $lines,
         ];
+    }
+
+    private function discountGroupLabel(string $group, ?Product $product, User $user): string
+    {
+        if ($user->usesSubdistTier() && $this->isMultibev($product)) {
+            return $group === 'syrup_sauce' ? 'Multibev Syrup' : 'Multibev Powder & Creamer';
+        }
+
+        return $group === 'syrup_sauce' ? 'Syrup & Sauce' : 'Powder, Pulp & Lainnya';
     }
 
     /**
