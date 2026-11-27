@@ -59,8 +59,8 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Sales</th>
-                                                        <th>Link Outlet</th>
-                                                        <th>Link Subdist</th>
+                                                        <th class="text-end" style="width: 130px;">Link Outlet</th>
+                                                        <th class="text-end" style="width: 130px;">Link Subdist</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -69,7 +69,7 @@
                                                             <td class="text-nowrap"><strong>{{ $sales->name }}</strong><br><span class="text-muted font-xs">{{ $sales->sales_code }}</span></td>
                                                             @foreach(['outlet', 'subdist'] as $type)
                                                                 @php($link = $user->registrationLink($type, $sales))
-                                                                <td class="text-nowrap" data-link-type="{{ $type }}">
+                                                                <td class="text-end text-nowrap" data-link-type="{{ $type }}">
                                                                     <button type="button" class="btn btn-xs py-1 px-2 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $link }}" title="{{ $link }}">
                                                                         <i class="fi-rs-copy me-1"></i>Salin
                                                                     </button>
