@@ -27,12 +27,12 @@ class DistributorSalesController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('buyer.sales.index', ['salespeople' => $salespeople, 'search' => $search, 'distributor' => Auth::user()]);
+        return view('buyer.sales.index', ['salespeople' => $salespeople, 'search' => $search]);
     }
 
     public function create(): View
     {
-        return view('buyer.sales.form', ['salesperson' => new DistributorSalesperson(), 'distributor' => Auth::user()]);
+        return view('buyer.sales.form', ['salesperson' => new DistributorSalesperson()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -46,7 +46,7 @@ class DistributorSalesController extends Controller
 
     public function edit(string $sale): View
     {
-        return view('buyer.sales.form', ['salesperson' => $this->findOwn($sale), 'distributor' => Auth::user()]);
+        return view('buyer.sales.form', ['salesperson' => $this->findOwn($sale)]);
     }
 
     public function update(Request $request, string $sale): RedirectResponse

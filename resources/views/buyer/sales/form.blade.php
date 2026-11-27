@@ -48,10 +48,6 @@
                             @endif
 
                             <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label font-sm fw-bold">Distributor</label>
-                                    <input type="text" class="form-control" value="{{ $distributor->name }}{{ $distributor->distributor_sales_code ? ' (' . $distributor->distributor_sales_code . ')' : '' }}" readonly>
-                                </div>
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="sales_name">Nama Sales <span class="text-danger">*</span></label>
                                     <input type="text" id="sales_name" name="sales_name" class="form-control @error('sales_name') is-invalid @enderror" value="{{ old('sales_name', $salesperson->name) }}" maxlength="150" autocomplete="off" required>
