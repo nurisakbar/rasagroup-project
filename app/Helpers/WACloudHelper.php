@@ -875,6 +875,7 @@ class WACloudHelper
         $methodLabel = match ($order->payment_method) {
             'manual_transfer' => 'Transfer Manual (BCA)',
             'distributor_transfer' => 'Transfer ke Rekening Distributor',
+            'distributor_top' => 'Tempo (TOP) ke Distributor' . ($order->payment_term_days ? ' ' . $order->payment_term_days . ' hari' : ''),
             'term_of_payment' => 'Term of payment / tempo',
             default => ucfirst(str_replace('_', ' ', (string) $order->payment_method)),
         };

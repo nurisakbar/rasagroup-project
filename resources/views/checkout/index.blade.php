@@ -253,24 +253,60 @@
                                     </ol>
                                     @include('partials.distributor-bank-accounts', ['accounts' => $distributorAccounts])
                                 </div>
-                                <style>
-                                    #card-distributor-transfer .dtp-head { display: flex; align-items: center; gap: 12px; }
-                                    #card-distributor-transfer .dtp-radio { margin: 0; flex: 0 0 auto; }
-                                    #card-distributor-transfer .dtp-icon { flex: 0 0 44px; height: 44px; border-radius: 50%; background: #6A1B1B; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-                                    #card-distributor-transfer .dtp-icon i { line-height: 1; margin-top: 3px; }
-                                    #card-distributor-transfer .dtp-title { margin: 0; cursor: pointer; line-height: 1.3; }
-                                    #card-distributor-transfer .dtp-title strong { display: block; font-family: 'Fira Sans', sans-serif; font-size: 17px; color: #253D4E; }
-                                    #card-distributor-transfer .dtp-title span { font-size: 13px; color: #6B7280; }
-                                    #card-distributor-transfer .dtp-title b { color: #6A1B1B; }
-                                    #card-distributor-transfer .dtp-steps { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 8px; }
-                                    #card-distributor-transfer .dtp-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: #fff; border: 1px dashed #D9C3B0; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #4B5563; }
-                                    #card-distributor-transfer .dtp-steps li span { width: 22px; height: 22px; border-radius: 50%; background: #FAF6F1; color: #6A1B1B; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #EADFD4; }
-                                </style>
                             </div>
-                            @elseif($distributorTransferOnly)
-                            <div class="alert alert-warning font-sm">Distributor Anda belum mengatur rekening pembayaran, sehingga pesanan belum bisa dibuat. Silakan hubungi distributor Anda.</div>
                             @endif
 
+                            @if(! empty($distributorTopTerms))
+                            @php
+                                // Subdist milik distributor: TOP terpilih otomatis bila distributor belum punya rekening.
+                                $topDefault = $distributorTransferOnly && $distributorAccounts->isEmpty();
+                            @endphp
+                            <!-- Bayar tempo (TOP) ke distributor: 7/14/30 hari -->
+                            <div class="payment-option mb-10 payment-method-card {{ $topDefault ? 'active' : '' }}" onclick="selectPayment('distributor_top')" id="card-distributor-top">
+                                <div class="dtp-head">
+                                    <input class="form-check-input dtp-radio" type="radio" name="payment_method" value="distributor_top" id="payDistributorTop" {{ $topDefault ? 'checked' : '' }}>
+                                    <div class="dtp-icon"><i class="fi-rs-calendar"></i></div>
+                                    <label class="dtp-title" for="payDistributorTop">
+                                        <strong>Bayar Tempo (TOP) ke Distributor</strong>
+                                        <span>Bayar ke <b>{{ $paymentDistributor->name }}</b> paling lambat sesuai tempo</span>
+                                    </label>
+                                </div>
+                                <div class="payment-content mt-15" style="display: block;">
+                                    <div class="top-terms" role="radiogroup" aria-label="Lama tempo">
+                                        @foreach($distributorTopTerms as $days)
+                                            <label class="top-term">
+                                                <input type="radio" name="top_days" value="{{ $days }}" {{ $loop->first ? 'checked' : '' }} data-due="{{ now()->addDays($days)->locale('id')->translatedFormat('d M Y') }}">
+                                                <span><strong>{{ $days }}</strong> hari</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <p class="top-due mb-0">Jatuh tempo: <strong id="topDueDate">{{ now()->addDays($distributorTopTerms[0])->locale('id')->translatedFormat('d M Y') }}</strong>. Pesanan langsung diproses; bayar ke rekening distributor sebelum jatuh tempo.</p>
+                                </div>
+                            </div>
+                            @endif
+
+                            <style>
+                                    #card-distributor-top .dtp-head, #card-distributor-transfer .dtp-head { display: flex; align-items: center; gap: 12px; }
+                                    #card-distributor-top .dtp-radio, #card-distributor-transfer .dtp-radio { margin: 0; flex: 0 0 auto; }
+                                    #card-distributor-top .dtp-icon, #card-distributor-transfer .dtp-icon { flex: 0 0 44px; height: 44px; border-radius: 50%; background: #6A1B1B; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+                                    #card-distributor-top .dtp-icon i, #card-distributor-transfer .dtp-icon i { line-height: 1; margin-top: 3px; }
+                                    #card-distributor-top .dtp-title, #card-distributor-transfer .dtp-title { margin: 0; cursor: pointer; line-height: 1.3; }
+                                    #card-distributor-top .dtp-title strong, #card-distributor-transfer .dtp-title strong { display: block; font-family: 'Fira Sans', sans-serif; font-size: 17px; color: #253D4E; }
+                                    #card-distributor-top .dtp-title span, #card-distributor-transfer .dtp-title span { font-size: 13px; color: #6B7280; }
+                                    #card-distributor-top .dtp-title b, #card-distributor-transfer .dtp-title b { color: #6A1B1B; }
+                                    #card-distributor-transfer .dtp-steps { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+                                    #card-distributor-transfer .dtp-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: #fff; border: 1px dashed #D9C3B0; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #4B5563; }
+                                    .top-terms { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+                                    .top-term { flex: 1 1 90px; margin: 0; cursor: pointer; }
+                                    .top-term input { position: absolute; opacity: 0; pointer-events: none; }
+                                    .top-term span { display: block; text-align: center; padding: 12px 10px; border-radius: 12px; border: 1.5px solid #EADFD4; background: #fff; color: #4B5563; font-size: 13px; transition: all .2s; }
+                                    .top-term span strong { display: block; font-family: 'Fira Sans', sans-serif; font-size: 22px; color: #253D4E; line-height: 1.1; }
+                                    .top-term input:checked + span { border-color: #6A1B1B; background: #6A1B1B; color: #fff; box-shadow: 0 6px 16px rgba(106,27,27,.2); }
+                                    .top-term input:checked + span strong { color: #fff; }
+                                    .top-due { font-size: 13px; color: #6B7280; }
+                                    .top-due strong { color: #6A1B1B; }
+                                    #card-distributor-transfer .dtp-steps li span { width: 22px; height: 22px; border-radius: 50%; background: #FAF6F1; color: #6A1B1B; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #EADFD4; }
+                            </style>
                             @unless($distributorTransferOnly)
                             <!-- Online Payment -->
                             @if(config('services.active_payment_gateway') === 'faspay')
@@ -1369,6 +1405,12 @@
         setSubmitEnabled(true);
     });
     
+    // Bayar tempo ke distributor: pilih lama tempo → perbarui tanggal jatuh tempo dan pilih metode TOP.
+    $(document).on('change', 'input[name="top_days"]', function () {
+        $('#topDueDate').text($(this).data('due'));
+        selectPayment('distributor_top');
+    });
+
     function checkExpeditionVisibility() {
         if (!currentAddressId) return;
         var selectedCard = $('[data-address-id="' + currentAddressId + '"]');
@@ -1835,6 +1877,7 @@
         else if(method === 'manual_transfer') cardId = 'card-transfer';
         else if(method === 'term_of_payment') cardId = 'card-tot';
         else if(method === 'distributor_transfer') cardId = 'card-distributor-transfer';
+        else if(method === 'distributor_top') cardId = 'card-distributor-top';
         else if(method === 'cod') cardId = 'card-cod';
         
         if(cardId) {

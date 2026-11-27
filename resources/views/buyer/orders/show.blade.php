@@ -287,7 +287,28 @@
                                                 @endif
                                             </div>
 
-                                            @if($order->payment_method === 'term_of_payment')
+                                            @if($order->isDistributorTop() && $order->payment_status !== 'paid')
+                                                {{-- Bayar tempo ke distributor: info jatuh tempo, rekening, unggah bukti bayar --}}
+                                                @php
+                                                    $payAccounts = $order->paymentDistributor?->bankAccounts()->where('is_active', true)->get() ?? collect();
+                                                @endphp
+                                                <div class="mt-4 pt-3 border-top">
+                                                    <div class="alert alert-warning font-sm text-start">
+                                                        <strong>Tempo {{ $order->payment_term_days }} hari</strong> — bayar ke <strong>{{ $order->paymentDistributor?->name }}</strong> paling lambat
+                                                        <strong>{{ $order->payment_due_at?->locale('id')->translatedFormat('d F Y') }}</strong>.
+                                                    </div>
+                                                    @include('partials.distributor-bank-accounts', ['accounts' => $payAccounts])
+                                                    @if($order->payment_proof)
+                                                        <div class="alert alert-info font-sm mb-0 mt-2 rounded-pill text-center">
+                                                            <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
+                                                        </div>
+                                                    @else
+                                                        <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-brand rounded-pill w-100 mt-2">
+                                                            <i class="fi-rs-upload mr-5"></i> Unggah Bukti Pembayaran
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            @elseif($order->payment_method === 'term_of_payment')
                                                 @if(!$order->finance_approved)
                                                     <div class="mt-4 pt-3 border-top text-center">
                                                         <div class="alert alert-warning font-sm mb-0 rounded-pill text-start d-flex align-items-center">

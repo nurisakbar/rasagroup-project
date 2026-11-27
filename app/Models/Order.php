@@ -40,6 +40,8 @@ class Order extends Model
         'shipping_address',
         'payment_method',
         'payment_distributor_id',
+        'payment_term_days',
+        'payment_due_at',
         'company',
         'payment_status',
         'paid_at',
@@ -106,6 +108,7 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'points_credited' => 'boolean',
         'paid_at' => 'datetime',
+        'payment_due_at' => 'date',
         'shipped_at' => 'datetime',
         'pickup_ready_at' => 'datetime',
         'received_at' => 'datetime',
@@ -197,6 +200,23 @@ class Order extends Model
     public function isDistributorTransfer(): bool
     {
         return $this->payment_method === self::PAYMENT_DISTRIBUTOR_TRANSFER;
+    }
+
+    /** Metode pembayaran: bayar tempo (TOP) ke distributor, 7/14/30 hari (subdist & outlet milik distributor). */
+    public const PAYMENT_DISTRIBUTOR_TOP = 'distributor_top';
+
+    /** Pilihan lama tempo (hari) untuk bayar tempo ke distributor. */
+    public const DISTRIBUTOR_TOP_TERMS = [7, 14, 30];
+
+    public function isDistributorTop(): bool
+    {
+        return $this->payment_method === self::PAYMENT_DISTRIBUTOR_TOP;
+    }
+
+    /** Dibayar ke distributor (transfer langsung atau tempo). */
+    public function isPaidToDistributor(): bool
+    {
+        return $this->isDistributorTransfer() || $this->isDistributorTop();
     }
 
     public function user(): BelongsTo
@@ -302,7 +322,7 @@ class Order extends Model
     public function isPaymentExpired(): bool
     {
         // TOP dan transfer ke rekening distributor (dikonfirmasi manual oleh distributor) tidak kedaluwarsa 30 menit.
-        if (in_array($this->payment_method, ['term_of_payment', self::PAYMENT_DISTRIBUTOR_TRANSFER], true)) {
+        if (in_array($this->payment_method, ['term_of_payment', self::PAYMENT_DISTRIBUTOR_TRANSFER, self::PAYMENT_DISTRIBUTOR_TOP], true)) {
             return false;
         }
 

@@ -138,11 +138,15 @@
                     </div>
                 </div>
 
-                @if($order->isDistributorTransfer())
-                    {{-- Pembayaran transfer ke rekening distributor: dikonfirmasi distributor --}}
+                @if($order->isPaidToDistributor())
+                    {{-- Pembayaran ke distributor (transfer / tempo): dikonfirmasi distributor --}}
                     <div class="od-card">
                         <h2 class="od-h"><i class="fi-rs-bank"></i> Pembayaran</h2>
-                        <p class="od-hint mb-2">Pembeli mentransfer ke rekening Anda. Periksa mutasi rekening sebelum mengonfirmasi.</p>
+                        @if($order->isDistributorTop())
+                            <p class="od-hint mb-2"><strong>Tempo {{ $order->payment_term_days }} hari</strong>, jatuh tempo <strong>{{ $order->payment_due_at?->locale('id')->translatedFormat('d F Y') }}</strong>{{ $order->payment_status !== 'paid' && $order->payment_due_at?->isPast() ? ' (sudah lewat jatuh tempo)' : '' }}. Pesanan boleh diproses sebelum dibayar.</p>
+                        @else
+                            <p class="od-hint mb-2">Pembeli mentransfer ke rekening Anda. Periksa mutasi rekening sebelum mengonfirmasi.</p>
+                        @endif
                         @if($order->payment_proof)
                             <p class="mb-2"><a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" rel="noopener" class="od-btn od-btn-block" style="border: 1.5px solid #6A1B1B; color: #6A1B1B;"><i class="fi-rs-picture mr-5"></i>Lihat bukti transfer</a></p>
                             @if($order->payment_submit_note)
@@ -151,7 +155,7 @@
                         @else
                             <p class="od-hint">Pembeli belum mengunggah bukti transfer.</p>
                         @endif
-                        @if($order->payment_status === 'pending')
+                        @if(in_array($order->payment_status, ['pending', 'term_of_payment'], true))
                             <form action="{{ route('distributor.manage-orders.update', $order) }}" method="POST" onsubmit="return confirm('Konfirmasi pembayaran Rp {{ number_format($order->total_amount, 0, ',', '.') }} sudah diterima?');">
                                 @csrf
                                 @method('PUT')
