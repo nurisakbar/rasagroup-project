@@ -27,7 +27,7 @@ class DistributorSalesController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('buyer.sales.index', ['salespeople' => $salespeople, 'search' => $search]);
+        return view('buyer.sales.index', ['salespeople' => $salespeople, 'search' => $search, 'distributor' => Auth::user()]);
     }
 
     public function create(): View
