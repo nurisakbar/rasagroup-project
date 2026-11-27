@@ -46,7 +46,8 @@
     <div class="container">
         <div class="row">
             <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
-                <div class="row align-items-center">
+                {{-- Gambar di samping form, rata atas dengan form (tidak di tengah vertikal). --}}
+                <div class="row align-items-start">
                     <div class="col-lg-6 pr-30 d-none d-lg-block">
                         <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Register" />
                     </div>
