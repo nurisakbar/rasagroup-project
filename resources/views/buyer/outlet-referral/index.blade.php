@@ -40,21 +40,17 @@
 
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                     <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran Subdist (Umum)</h5>
-                                    <div class="input-group mb-15">
+                                    <div class="input-group mb-0">
                                         <input type="text" class="form-control font-sm" value="{{ $registerLink }}" readonly aria-label="Link pendaftaran outlet">
                                         <button class="btn px-25 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $registerLink }}">
                                             <i class="fi-rs-copy"></i>
                                         </button>
                                     </div>
-                                    <a class="btn btn-sm" style="background-color: #25D366; color: #fff;" target="_blank" rel="noopener noreferrer"
-                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai subdist ' . $user->name . ' melalui link berikut: ' . $registerLink) }}">
-                                        Bagikan ke WhatsApp
-                                    </a>
                                 </div>
 
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
                                     <h5 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran per Sales</h5>
-                                    <p class="text-muted font-xs mb-15">Setiap sales punya link untuk calon <strong>outlet</strong> dan calon <strong>subdist</strong>. Pendaftar tercatat atas nama sales tersebut.</p>
+                                    <p class="text-muted font-xs mb-15">Setiap sales punya link untuk calon <strong>outlet</strong> dan calon <strong>subdist</strong>. Klik Salin lalu bagikan ke calon pendaftar; pendaftar tercatat atas nama sales tersebut.</p>
                                     @if($salespeople->isEmpty())
                                         <p class="font-sm mb-0">Belum ada sales aktif. <a href="{{ route('buyer.sales.create') }}" style="color: #6A1B1B; font-weight: 600;">Tambah sales</a> untuk membuat link per sales.</p>
                                     @else
@@ -71,16 +67,12 @@
                                                     @foreach($salespeople as $sales)
                                                         <tr>
                                                             <td class="text-nowrap"><strong>{{ $sales->name }}</strong><br><span class="text-muted font-xs">{{ $sales->sales_code }}</span></td>
-                                                            @foreach(['outlet' => 'outlet', 'subdist' => 'subdist'] as $type => $label)
+                                                            @foreach(['outlet', 'subdist'] as $type)
                                                                 @php($link = $user->registrationLink($type, $sales))
                                                                 <td class="text-nowrap" data-link-type="{{ $type }}">
                                                                     <button type="button" class="btn btn-xs py-1 px-2 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $link }}" title="{{ $link }}">
                                                                         <i class="fi-rs-copy me-1"></i>Salin
                                                                     </button>
-                                                                    <a class="btn btn-xs py-1 px-2" style="background-color: #25D366; color: #fff;" target="_blank" rel="noopener noreferrer"
-                                                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai ' . $label . ' ' . $user->name . ' (sales ' . $sales->name . ') melalui link berikut: ' . $link) }}">
-                                                                        WA
-                                                                    </a>
                                                                 </td>
                                                             @endforeach
                                                         </tr>
