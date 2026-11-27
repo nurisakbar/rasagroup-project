@@ -50,6 +50,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('buyer.sales.index') }}">
+                                <i class="fi-rs-id-badge mr-15"></i>Data Sales
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.forecast.index') }}">
                                 <i class="fi-rs-stats mr-15"></i>Forecast
                             </a>

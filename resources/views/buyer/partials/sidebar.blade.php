@@ -51,6 +51,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ Route::is('buyer.sales.*') ? 'active' : '' }}" href="{{ route('buyer.sales.index') }}">
+                    <i class="fi-rs-id-badge {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Data Sales
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.forecast.*') ? 'active' : '' }}" href="{{ route('buyer.forecast.index') }}">
                     <i class="fi-rs-stats {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Forecast
                 </a>

@@ -186,6 +186,9 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::put('/affiliate/bank', [App\Http\Controllers\Buyer\AffiliateController::class, 'updateBank'])->name('affiliate.bank.update');
     Route::get('/outlet-referral', [App\Http\Controllers\Buyer\OutletReferralController::class, 'index'])->name('outlet-referral.index');
 
+    // Data sales milik distributor
+    Route::resource('sales', App\Http\Controllers\Buyer\DistributorSalesController::class)->except(['show']);
+
     // Forecast kebutuhan distributor per outlet rekrutan
     Route::get('/forecast', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'index'])->name('forecast.index');
     Route::post('/forecast/lines', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'store'])->name('forecast.store');
