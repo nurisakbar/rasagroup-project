@@ -207,7 +207,12 @@ class OrderController extends Controller
             return redirect()->route('buyer.orders.show', $order)->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit).');
         }
 
-        return view('buyer.orders.confirm-payment', compact('order'));
+        // Order yang dibayar ke distributor: pembeli memilih rekening tujuan transfer.
+        $destinationAccounts = $order->isPaidToDistributor()
+            ? \App\Models\DistributorBankAccount::where('distributor_id', $order->payment_distributor_id)->where('is_active', true)->orderBy('bank_name')->get()
+            : collect();
+
+        return view('buyer.orders.confirm-payment', compact('order', 'destinationAccounts'));
     }
 
     public function storePaymentConfirmation(Request $request, Order $order)
@@ -218,6 +223,22 @@ class OrderController extends Controller
 
         if ($order->isPaymentExpired()) {
             return redirect()->route('buyer.orders.show', $order)->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit).');
+        }
+
+        $destination = null;
+        if ($order->isPaidToDistributor()) {
+            $request->validate([
+                'destination_account_id' => ['required', 'string'],
+            ], [
+                'destination_account_id.required' => 'Pilih rekening tujuan yang Anda transfer.',
+            ]);
+            $destination = \App\Models\DistributorBankAccount::where('distributor_id', $order->payment_distributor_id)
+                ->where('is_active', true)
+                ->whereKey($request->destination_account_id)
+                ->first();
+            if (! $destination) {
+                return back()->withInput()->withErrors(['destination_account_id' => 'Rekening tujuan tidak valid.']);
+            }
         }
 
         $request->validate([
@@ -232,6 +253,7 @@ class OrderController extends Controller
                     'payment_proof' => $path,
                     'payment_submit_note' => $request->payment_submit_note,
                     'payment_submitted_at' => now(),
+                    'payment_destination_account' => $destination?->label(),
                 ]);
 
                 if ($email = \App\Models\Setting::get('payment_confirmation_email')) {

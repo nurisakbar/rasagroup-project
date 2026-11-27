@@ -188,13 +188,16 @@
                                 </span>
                             </td>
                         </tr>
-                        @if($order->payment_method === 'manual_transfer' && $order->payment_proof)
+                        @if(in_array($order->payment_method, ['manual_transfer', 'distributor_transfer', 'distributor_top'], true) && $order->payment_proof)
                         <tr>
                             <th>Bukti Pembayaran</th>
                             <td>
                                 <a href="{{ Storage::url($order->payment_proof) }}" target="_blank" class="btn btn-sm btn-info" style="margin-bottom: 5px;">
                                     <i class="fa fa-image"></i> Lihat Bukti Transfer
                                 </a>
+                                @if($order->payment_destination_account)
+                                    <p class="mb-0" style="margin-top: 5px;"><small><i class="fa fa-bank"></i> Ditransfer ke rekening distributor: <strong>{{ $order->payment_destination_account }}</strong></small></p>
+                                @endif
                                 @if($order->payment_submit_note)
                                     <p class="text-muted mb-0" style="margin-top: 5px;"><small><i class="fa fa-info-circle"></i> Catatan: {{ $order->payment_submit_note }}</small></p>
                                 @endif

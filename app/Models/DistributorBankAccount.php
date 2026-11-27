@@ -106,6 +106,12 @@ class DistributorBankAccount extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+    /** Teks ringkas rekening, mis. "BCA · 1234567890 · a.n. PT Contoh" (disalin ke order saat konfirmasi bayar). */
+    public function label(): string
+    {
+        return $this->bank_name . ' · ' . $this->account_number . ' · a.n. ' . $this->account_name;
+    }
+
     public function distributor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'distributor_id');

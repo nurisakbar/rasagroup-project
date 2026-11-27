@@ -42,6 +42,7 @@ class Order extends Model
         'payment_distributor_id',
         'payment_term_days',
         'payment_due_at',
+        'payment_destination_account',
         'company',
         'payment_status',
         'paid_at',

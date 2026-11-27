@@ -147,6 +147,9 @@
                         @else
                             <p class="od-hint mb-2">Pembeli mentransfer ke rekening Anda. Periksa mutasi rekening sebelum mengonfirmasi.</p>
                         @endif
+                        @if($order->payment_destination_account)
+                            <p class="od-hint mb-2">Ditransfer ke: <strong>{{ $order->payment_destination_account }}</strong></p>
+                        @endif
                         @if($order->payment_proof)
                             <p class="mb-2"><a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" rel="noopener" class="od-btn od-btn-block" style="border: 1.5px solid #6A1B1B; color: #6A1B1B;"><i class="fi-rs-picture mr-5"></i>Lihat bukti transfer</a></p>
                             @if($order->payment_submit_note)
