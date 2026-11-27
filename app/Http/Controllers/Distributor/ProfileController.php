@@ -12,7 +12,7 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        $user = Auth::user()->loadMissing(['warehouse.province', 'warehouse.regency', 'warehouse.district']);
+        $user = Auth::user()->loadMissing(['warehouse.province', 'warehouse.regency', 'warehouse.district', 'bankAccounts']);
 
         return view('buyer.distributor.profile.index', compact('user'));
     }

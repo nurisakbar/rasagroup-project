@@ -327,7 +327,17 @@ class CheckoutController extends Controller
         'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
     ];
 
+ // Rekening distributor (subdist & outlet milik distributor). Subdist milik distributor hanya bisa transfer.
+    $paymentDistributor = Auth::user()->paymentDistributor();
+    $distributorAccounts = $paymentDistributor
+        ? $paymentDistributor->bankAccounts()->where('is_active', true)->get()
+        : collect();
+    $distributorTransferOnly = Auth::user()->isSubdist() && $paymentDistributor !== null;
+
     return view('checkout.index', compact(
+        'paymentDistributor',
+        'distributorAccounts',
+        'distributorTransferOnly',
         'carts', 
         'subtotal', 
         'catalogSubtotal',
@@ -841,10 +851,22 @@ class CheckoutController extends Controller
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
         }
-        // Subdist: hanya channel Faspay (tanpa TOP dan tanpa transfer manual).
-        if ($user->isSubdist()) {
+        // Transfer ke rekening distributor: subdist milik distributor HANYA metode ini; outlet milik distributor
+        // mendapat metode ini sebagai tambahan. Butuh minimal satu rekening aktif distributor.
+        $paymentDistributor = $user->paymentDistributor();
+        $hasDistributorAccounts = $paymentDistributor && $paymentDistributor->bankAccounts()->where('is_active', true)->exists();
+        if ($user->isSubdist() && $paymentDistributor) {
+            if (! $hasDistributorAccounts) {
+                return redirect()->route('cart.index')->with('error', 'Distributor Anda belum mengatur rekening pembayaran, sehingga pesanan belum bisa dibuat. Silakan hubungi distributor Anda.');
+            }
+            $allowedPayments = [Order::PAYMENT_DISTRIBUTOR_TRANSFER];
+        } elseif ($user->isSubdist()) {
+            // Subdist lain: hanya channel Faspay (tanpa TOP dan tanpa transfer manual).
             $allowedPayments = array_values(array_filter($allowedPayments, fn ($m) => str_starts_with($m, 'faspay')));
+        } elseif ($hasDistributorAccounts) {
+            $allowedPayments[] = Order::PAYMENT_DISTRIBUTOR_TRANSFER;
         }
+        $isDistributorTransfer = $request->input('payment_method') === Order::PAYMENT_DISTRIBUTOR_TRANSFER;
 
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
@@ -1233,6 +1255,7 @@ class CheckoutController extends Controller
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,
+                'payment_distributor_id' => $isDistributorTransfer ? $paymentDistributor->id : null,
                 'company' => $user->getFaspayCompany(),
                 'payment_status' => ($request->payment_method === 'term_of_payment' && $isFinanceApproved) ? 'term_of_payment' : 'pending',
                 'order_status' => 'pending',
@@ -1242,8 +1265,10 @@ class CheckoutController extends Controller
                 'affiliate_id' => $affiliateId,
                 'affiliate_points' => $affiliatePoints,
                 'sales_code' => $request->sales_code ?: ($user?->sales_code ?? null),
-                'finance_approved' => $isFinanceApproved,
-                'finance_approved_at' => $financeApprovedAt,
+                // Subdist bayar langsung ke distributor yang memenuhi pesanan: tidak perlu persetujuan finance,
+                // pesanan langsung masuk Pesanan Masuk distributor dan distributor yang mengonfirmasi pembayaran.
+                'finance_approved' => $isFinanceApproved || ($isDistributorTransfer && $user->isSubdist()),
+                'finance_approved_at' => $financeApprovedAt ?? (($isDistributorTransfer && $user->isSubdist()) ? now() : null),
             ]);
             
             Log::info('--- CHECKOUT DEBUG: ORDER CREATED ---', [

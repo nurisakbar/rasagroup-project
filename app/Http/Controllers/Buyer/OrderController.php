@@ -113,6 +113,11 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Hanya pesanan pending yang bisa diganti metode pembayarannya.');
         }
 
+        // Subdist milik distributor hanya boleh membayar dengan transfer ke rekening distributor.
+        if ($order->isDistributorTransfer() && $order->user?->isSubdist()) {
+            return redirect()->back()->with('error', 'Pesanan ini dibayar dengan transfer ke rekening distributor.');
+        }
+
         if ($order->isPaymentExpired()) {
             return redirect()->back()->with('error', 'Waktu pembayaran untuk pesanan ini telah habis (30 menit). Anda tidak dapat lagi mengubah metode pembayaran atau melakukan pembayaran.');
         }

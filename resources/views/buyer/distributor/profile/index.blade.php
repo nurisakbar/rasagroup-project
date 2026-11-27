@@ -68,6 +68,48 @@
                                         </div>
                                     </div>
 
+                                    <div class="p-4 border-radius-10 mb-4" id="rekening" style="background-color: #fff; border: 1.5px solid #ece7e4;">
+                                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                            <div>
+                                                <h5 class="mb-1 font-sm" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">
+                                                    <i class="fi-rs-bank mr-5"></i>Rekening Pembayaran
+                                                </h5>
+                                                <p class="font-xs text-muted mb-0">Rekening aktif tampil saat subdist dan outlet milik Anda membayar pesanan dengan transfer ke rekening distributor.</p>
+                                            </div>
+                                            <a href="{{ route('distributor.bank-accounts.create') }}" class="btn btn-sm rounded-pill" style="background-color: #6A1B1B; color: #fff;">
+                                                <i class="fi-rs-plus mr-5"></i>Tambah Rekening
+                                            </a>
+                                        </div>
+                                        @if($user->bankAccounts->isEmpty())
+                                            <div class="alert alert-warning font-sm mb-0 mt-3">Belum ada rekening. Subdist Anda belum bisa checkout sampai ada minimal satu rekening aktif.</div>
+                                        @else
+                                            <div class="mt-3">
+                                                @foreach($user->bankAccounts as $account)
+                                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 {{ $loop->first ? '' : 'border-top' }}">
+                                                        <div class="font-sm">
+                                                            <strong class="text-heading">{{ $account->bank_name }}</strong>
+                                                            <span class="mx-1">·</span>{{ $account->account_number }}
+                                                            <span class="d-block font-xs text-muted">a.n. {{ $account->account_name }}</span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            @if($account->is_active)
+                                                                <span class="badge bg-success">Aktif</span>
+                                                            @else
+                                                                <span class="badge bg-secondary">Nonaktif</span>
+                                                            @endif
+                                                            <a href="{{ route('distributor.bank-accounts.edit', $account) }}" class="btn btn-xs btn-outline-secondary py-1 px-2" title="Ubah"><i class="fi-rs-edit"></i></a>
+                                                            <form action="{{ route('distributor.bank-accounts.destroy', $account) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus rekening {{ e($account->bank_name) }} {{ e($account->account_number) }}?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-xs btn-outline-danger py-1 px-2" title="Hapus"><i class="fi-rs-trash"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+
                                     @if($wh)
                                         <div class="p-4 border-radius-10" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
                                             <h5 class="mb-3 font-sm" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">

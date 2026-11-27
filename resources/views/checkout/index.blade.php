@@ -234,6 +234,25 @@
                     <h4 class="mb-15"><i class="fi-rs-wallet mr-10 text-muted"></i>Metode Pembayaran</h4>
                     <div class="payment_method">
                         <div class="payment_accordion">
+                            @if($distributorAccounts->isNotEmpty())
+                            <!-- Transfer ke rekening distributor (subdist & outlet milik distributor) -->
+                            <div class="payment-option mb-10 payment-method-card {{ $distributorTransferOnly ? 'active' : '' }}" onclick="selectPayment('distributor_transfer')" id="card-distributor-transfer">
+                                <div class="form-check d-flex align-items-center">
+                                    <input class="form-check-input" type="radio" name="payment_method" value="distributor_transfer" id="payDistributorTransfer" {{ $distributorTransferOnly ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="payDistributorTransfer">
+                                        <strong>Transfer ke Rekening Distributor</strong>
+                                    </label>
+                                </div>
+                                <div class="payment-content pl-20 mt-10" style="display: block;">
+                                    <p class="font-sm text-muted mb-10">Transfer ke salah satu rekening <strong>{{ $paymentDistributor->name }}</strong> berikut, lalu unggah bukti transfer. Pembayaran dikonfirmasi oleh distributor.</p>
+                                    @include('partials.distributor-bank-accounts', ['accounts' => $distributorAccounts])
+                                </div>
+                            </div>
+                            @elseif($distributorTransferOnly)
+                            <div class="alert alert-warning font-sm">Distributor Anda belum mengatur rekening pembayaran, sehingga pesanan belum bisa dibuat. Silakan hubungi distributor Anda.</div>
+                            @endif
+
+                            @unless($distributorTransferOnly)
                             <!-- Online Payment -->
                             @if(config('services.active_payment_gateway') === 'faspay')
                                 @if($faspayActive['faspay_qris'] ?? true)
@@ -461,6 +480,8 @@
                             @endif
                             
 
+
+                            @endunless
 
                             @if(Auth::user()->isDistributor() && (int) (Auth::user()->term_of_payment ?? 0) > 0)
                             <div class="payment-option mb-10 payment-method-card" onclick="selectPayment('term_of_payment')" id="card-tot">
@@ -1794,6 +1815,7 @@
         if(method === 'faspay') cardId = 'card-faspay';
         else if(method === 'manual_transfer') cardId = 'card-transfer';
         else if(method === 'term_of_payment') cardId = 'card-tot';
+        else if(method === 'distributor_transfer') cardId = 'card-distributor-transfer';
         else if(method === 'cod') cardId = 'card-cod';
         
         if(cardId) {

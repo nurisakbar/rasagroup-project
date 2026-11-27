@@ -292,6 +292,21 @@
                                             </div>
                                         </div>
                                     </div>
+                                @elseif($order->isDistributorTransfer())
+                                    @php
+                                        $payDistributor = $order->paymentDistributor;
+                                        $payAccounts = $payDistributor ? $payDistributor->bankAccounts()->where('is_active', true)->get() : collect();
+                                    @endphp
+                                    <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">
+                                        <h5 class="mb-5" style="color: #253D4E;"><i class="fi-rs-bank mr-5" style="color: #6A1B1B;"></i>Transfer ke Rekening Distributor</h5>
+                                        <p class="font-sm text-muted mb-15">Transfer <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong> ke salah satu rekening <strong>{{ $payDistributor?->name }}</strong> berikut, lalu unggah bukti transfer. Pembayaran dikonfirmasi oleh distributor.</p>
+                                        @include('partials.distributor-bank-accounts', ['accounts' => $payAccounts])
+                                        <div class="mt-20 text-center">
+                                            <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-sm" style="background-color: #6A1B1B; color: #fff;">
+                                                <i class="fi-rs-upload mr-5"></i> Unggah Bukti Transfer
+                                            </a>
+                                        </div>
+                                    </div>
                                 @elseif(str_starts_with($order->payment_method, 'faspay_'))
                                     <!-- Faspay SNAP UI -->
                                     <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">

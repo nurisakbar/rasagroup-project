@@ -39,6 +39,7 @@ class Order extends Model
         'total_amount',
         'shipping_address',
         'payment_method',
+        'payment_distributor_id',
         'company',
         'payment_status',
         'paid_at',
@@ -184,6 +185,20 @@ class Order extends Model
         });
     }
 
+    /** Metode pembayaran: transfer langsung ke rekening distributor (subdist & outlet milik distributor). */
+    public const PAYMENT_DISTRIBUTOR_TRANSFER = 'distributor_transfer';
+
+    /** Distributor penerima pembayaran (metode distributor_transfer). */
+    public function paymentDistributor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payment_distributor_id');
+    }
+
+    public function isDistributorTransfer(): bool
+    {
+        return $this->payment_method === self::PAYMENT_DISTRIBUTOR_TRANSFER;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -286,7 +301,8 @@ class Order extends Model
      */
     public function isPaymentExpired(): bool
     {
-        if ($this->payment_method === 'term_of_payment') {
+        // TOP dan transfer ke rekening distributor (dikonfirmasi manual oleh distributor) tidak kedaluwarsa 30 menit.
+        if (in_array($this->payment_method, ['term_of_payment', self::PAYMENT_DISTRIBUTOR_TRANSFER], true)) {
             return false;
         }
 

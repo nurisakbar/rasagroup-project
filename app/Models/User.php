@@ -731,6 +731,33 @@ class User extends Authenticatable implements MustVerifyEmail
         ]));
     }
 
+    /** Rekening distributor ini untuk pembayaran subdist & outlet miliknya. */
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(DistributorBankAccount::class, 'distributor_id')->orderBy('bank_name');
+    }
+
+    /**
+     * Distributor penerima pembayaran pembeli ini (metode Transfer ke rekening distributor), atau null:
+     * - subdist milik distributor: distributor induknya (subdist hub tidak punya distributor induk → null);
+     * - outlet milik distributor: distributor pemilik sales yang kodenya dipakai outlet.
+     * Outlet milik hub, subdist hub, dan ecom: null (bayar ke perusahaan seperti biasa).
+     */
+    public function paymentDistributor(): ?User
+    {
+        if ($this->isSubdist()) {
+            return $this->referringDistributor;
+        }
+
+        if ($this->isOutlet() && filled($this->sales_code)) {
+            $sales = User::where('role', self::ROLE_SALES)->where('sales_code', $this->sales_code)->whereNotNull('distributor_id')->first();
+
+            return $sales?->ownerDistributor;
+        }
+
+        return null;
+    }
+
     /** Sales milik distributor ini (menu Data Sales di akun distributor). */
     public function distributorSales(): HasMany
     {

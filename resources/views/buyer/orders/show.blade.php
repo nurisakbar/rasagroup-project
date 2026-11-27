@@ -306,7 +306,16 @@
                                                             <i class="fi-rs-info mr-5"></i> Waktu pembayaran telah habis
                                                         </div>
                                                     @else
-                                                        @if(in_array($order->payment_method, ['manual_transfer', 'transfer']))
+                                                        @if($order->isDistributorTransfer())
+                                                            @php
+                                                                $payAccounts = $order->paymentDistributor?->bankAccounts()->where('is_active', true)->get() ?? collect();
+                                                            @endphp
+                                                            <div class="text-start mb-2">
+                                                                <p class="font-sm text-muted mb-2">Transfer ke rekening <strong>{{ $order->paymentDistributor?->name }}</strong>:</p>
+                                                                @include('partials.distributor-bank-accounts', ['accounts' => $payAccounts])
+                                                            </div>
+                                                        @endif
+                                                        @if(in_array($order->payment_method, ['manual_transfer', 'transfer', 'distributor_transfer']))
                                                             @if($order->payment_proof)
                                                                 <div class="alert alert-info font-sm mb-0 rounded-pill">
                                                                     <i class="fi-rs-time-fast mr-5"></i> Bukti Pembayaran Sedang Diverifikasi
@@ -325,7 +334,7 @@
                                                             @endif
                                                         @endif
                                                         
-                                                        @if(!$order->payment_proof)
+                                                        @if(!$order->payment_proof && ! ($order->isDistributorTransfer() && $order->user?->isSubdist()))
                                                         <button type="button" class="btn btn-outline-brand rounded-pill w-100 mt-2" data-bs-toggle="modal" data-bs-target="#changePaymentModal">
                                                             <i class="fi-rs-refresh mr-5"></i> Ganti Metode Pembayaran
                                                         </button>
