@@ -47,12 +47,10 @@
         <div class="row">
             <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
                 <div class="row align-items-center">
-                    {{-- Gambar di atas form (banner), form di bawahnya. --}}
-                    <div class="col-lg-8 m-auto mb-30 d-none d-lg-block">
-                        <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Register" style="display: block; margin: 0 auto; max-width: 100%; max-height: 360px; width: auto; height: auto;" />
+                    <div class="col-lg-6 pr-30 d-none d-lg-block">
+                        <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Register" />
                     </div>
-                    <div class="w-100"></div>
-                    <div class="col-lg-8 col-md-10 m-auto">
+                    <div class="col-lg-6 col-md-8">
                         <div class="login_wrap widget-taber-content background-white p-30 border-radius-20">
                             <div class="padding_eight_all">
                                 <div class="heading_s1">
