@@ -51,6 +51,7 @@
                                 <table class="table font-sm align-middle">
                                     <thead>
                                         <tr>
+                                            <th style="width: 50px;">No</th>
                                             <th>Nama</th>
                                             <th>No. HP</th>
                                             <th>Ditambahkan</th>
@@ -60,6 +61,7 @@
                                     <tbody>
                                         @foreach($salespeople as $sales)
                                             <tr>
+                                                <td>{{ $salespeople->firstItem() + $loop->index }}</td>
                                                 <td><strong>{{ $sales->name }}</strong></td>
                                                 <td>{{ $sales->phone }}</td>
                                                 <td>{{ $sales->created_at->timezone(\App\Support\Wib::TZ)->format('d M Y') }}</td>
