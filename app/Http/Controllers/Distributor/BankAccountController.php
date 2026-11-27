@@ -72,7 +72,8 @@ class BankAccountController extends Controller
         ]);
 
         $data = $request->validate([
-            'bank_name' => ['required', 'string', 'max:100'],
+            // Nama bank dari daftar; nama lama di luar daftar tetap diterima saat mengubah rekening yang sama.
+            'bank_name' => ['required', 'string', Rule::in(array_filter([...DistributorBankAccount::BANKS, $current?->bank_name]))],
             'account_number' => [
                 'required', 'regex:/^[0-9]{5,30}$/',
                 Rule::unique('distributor_bank_accounts')
@@ -83,7 +84,8 @@ class BankAccountController extends Controller
             'account_name' => ['required', 'string', 'max:150'],
             'is_active' => ['nullable', 'boolean'],
         ], [
-            'bank_name.required' => 'Nama bank wajib diisi.',
+            'bank_name.required' => 'Nama bank wajib dipilih.',
+            'bank_name.in' => 'Pilih nama bank dari daftar.',
             'account_number.required' => 'Nomor rekening wajib diisi.',
             'account_number.regex' => 'Nomor rekening hanya berisi angka (5-30 digit).',
             'account_number.unique' => 'Rekening ini sudah terdaftar.',

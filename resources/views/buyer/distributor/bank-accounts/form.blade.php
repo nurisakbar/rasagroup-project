@@ -52,12 +52,19 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="bank_name">Nama Bank <span class="text-danger">*</span></label>
-                                    <input type="text" id="bank_name" name="bank_name" class="form-control @error('bank_name') is-invalid @enderror" value="{{ old('bank_name', $account->bank_name) }}" maxlength="100" placeholder="Contoh: BCA" list="bank-options" required>
-                                    <datalist id="bank-options">
-                                        @foreach(['BCA', 'BRI', 'BNI', 'Mandiri', 'BSI', 'CIMB Niaga', 'Permata', 'Danamon', 'BTN', 'OCBC'] as $bank)
-                                            <option value="{{ $bank }}">
+                                    @php
+                                        $selectedBank = old('bank_name', $account->bank_name);
+                                        $bankOptions = \App\Models\DistributorBankAccount::BANKS;
+                                        if ($selectedBank && ! in_array($selectedBank, $bankOptions, true)) {
+                                            $bankOptions[] = $selectedBank; // nama lama di luar daftar tetap tampil
+                                        }
+                                    @endphp
+                                    <select id="bank_name" name="bank_name" class="form-select @error('bank_name') is-invalid @enderror" required>
+                                        <option value="">Pilih bank</option>
+                                        @foreach($bankOptions as $bank)
+                                            <option value="{{ $bank }}" @selected($selectedBank === $bank)>{{ $bank }}</option>
                                         @endforeach
-                                    </datalist>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="account_number">Nomor Rekening <span class="text-danger">*</span></label>
@@ -88,3 +95,24 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+    label[for=bank_name] { display: block; }
+    #bank_name + .select2-container { display: block; width: 100% !important; max-width: none !important; }
+    .select2-container .select2-selection--single { height: 45px; border: 1px solid #ececec; border-radius: 10px; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 43px; padding-left: 15px; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 43px; right: 8px; }
+</style>
+<script>
+    $(function () {
+        $('#bank_name').select2({
+            width: '100%',
+            placeholder: 'Pilih bank',
+            language: { noResults: function () { return 'Bank tidak ditemukan'; }, searching: function () { return 'Mencari...'; } },
+        });
+    });
+</script>
+@endpush
