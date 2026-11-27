@@ -237,16 +237,35 @@
                             @if($distributorAccounts->isNotEmpty())
                             <!-- Transfer ke rekening distributor (subdist & outlet milik distributor) -->
                             <div class="payment-option mb-10 payment-method-card {{ $distributorTransferOnly ? 'active' : '' }}" onclick="selectPayment('distributor_transfer')" id="card-distributor-transfer">
-                                <div class="form-check d-flex align-items-center">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="distributor_transfer" id="payDistributorTransfer" {{ $distributorTransferOnly ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="payDistributorTransfer">
+                                <div class="dtp-head">
+                                    <input class="form-check-input dtp-radio" type="radio" name="payment_method" value="distributor_transfer" id="payDistributorTransfer" {{ $distributorTransferOnly ? 'checked' : '' }}>
+                                    <div class="dtp-icon"><i class="fi-rs-bank"></i></div>
+                                    <label class="dtp-title" for="payDistributorTransfer">
                                         <strong>Transfer ke Rekening Distributor</strong>
+                                        <span>Dibayar ke <b>{{ $paymentDistributor->name }}</b></span>
                                     </label>
                                 </div>
-                                <div class="payment-content pl-20 mt-10" style="display: block;">
-                                    <p class="font-sm text-muted mb-10">Transfer ke salah satu rekening <strong>{{ $paymentDistributor->name }}</strong> berikut, lalu unggah bukti transfer. Pembayaran dikonfirmasi oleh distributor.</p>
+                                <div class="payment-content mt-15" style="display: block;">
+                                    <ol class="dtp-steps">
+                                        <li><span>1</span>Transfer sesuai total pesanan</li>
+                                        <li><span>2</span>Unggah bukti transfer</li>
+                                        <li><span>3</span>Distributor mengonfirmasi</li>
+                                    </ol>
                                     @include('partials.distributor-bank-accounts', ['accounts' => $distributorAccounts])
                                 </div>
+                                <style>
+                                    #card-distributor-transfer .dtp-head { display: flex; align-items: center; gap: 12px; }
+                                    #card-distributor-transfer .dtp-radio { margin: 0; flex: 0 0 auto; }
+                                    #card-distributor-transfer .dtp-icon { flex: 0 0 44px; height: 44px; border-radius: 50%; background: #6A1B1B; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+                                    #card-distributor-transfer .dtp-icon i { line-height: 1; margin-top: 3px; }
+                                    #card-distributor-transfer .dtp-title { margin: 0; cursor: pointer; line-height: 1.3; }
+                                    #card-distributor-transfer .dtp-title strong { display: block; font-family: 'Fira Sans', sans-serif; font-size: 17px; color: #253D4E; }
+                                    #card-distributor-transfer .dtp-title span { font-size: 13px; color: #6B7280; }
+                                    #card-distributor-transfer .dtp-title b { color: #6A1B1B; }
+                                    #card-distributor-transfer .dtp-steps { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+                                    #card-distributor-transfer .dtp-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; background: #fff; border: 1px dashed #D9C3B0; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #4B5563; }
+                                    #card-distributor-transfer .dtp-steps li span { width: 22px; height: 22px; border-radius: 50%; background: #FAF6F1; color: #6A1B1B; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #EADFD4; }
+                                </style>
                             </div>
                             @elseif($distributorTransferOnly)
                             <div class="alert alert-warning font-sm">Distributor Anda belum mengatur rekening pembayaran, sehingga pesanan belum bisa dibuat. Silakan hubungi distributor Anda.</div>
