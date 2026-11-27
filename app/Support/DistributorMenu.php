@@ -33,7 +33,7 @@ class DistributorMenu
                     $item('Pesanan Masuk', 'fi-rs-shopping-bag', route('distributor.manage-orders.index'), ['distributor.manage-orders.*'], self::pendingIncomingOrders()),
                     $item('Kelola Stok', 'fi-rs-box', route('distributor.stock.index'), ['distributor.stock.*']),
                     $item('Lokasi Gudang', 'fi-rs-building', route('distributor.warehouse-location.index'), ['distributor.warehouse-location.*']),
-                    $item('Rekening Pembayaran', 'fi-rs-bank', route('distributor.profile') . '#rekening', ['distributor.bank-accounts.*']),
+                    $item('Rekening Pembayaran', 'fi-rs-bank', route('distributor.bank-accounts.index'), ['distributor.bank-accounts.*']),
                 ],
             ],
             [

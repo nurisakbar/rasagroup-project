@@ -12,10 +12,17 @@ use Illuminate\View\View;
 
 /**
  * Rekening distributor yang tampil saat subdist dan outlet milik distributor membayar
- * (metode Transfer ke rekening distributor). Daftar rekening ada di halaman Profil Distributor.
+ * (metode Transfer ke rekening distributor). Halaman sendiri: menu Penjualan > Rekening Pembayaran.
  */
 class BankAccountController extends Controller
 {
+    public function index(): View
+    {
+        $accounts = DistributorBankAccount::where('distributor_id', Auth::id())->orderByDesc('is_active')->orderBy('bank_name')->get();
+
+        return view('buyer.distributor.bank-accounts.index', compact('accounts'));
+    }
+
     public function create(): View
     {
         return view('buyer.distributor.bank-accounts.form', ['account' => new DistributorBankAccount(['is_active' => true])]);
@@ -27,7 +34,7 @@ class BankAccountController extends Controller
         $account->distributor_id = Auth::id();
         $account->save();
 
-        return redirect()->route('distributor.profile')->with('success', 'Rekening ' . $account->bank_name . ' berhasil ditambahkan.');
+        return redirect()->route('distributor.bank-accounts.index')->with('success', 'Rekening ' . $account->bank_name . ' berhasil ditambahkan.');
     }
 
     public function edit(string $id): View
@@ -40,7 +47,7 @@ class BankAccountController extends Controller
         $account = $this->findOwn($id);
         $account->update($this->validated($request, $account));
 
-        return redirect()->route('distributor.profile')->with('success', 'Rekening ' . $account->bank_name . ' berhasil diperbarui.');
+        return redirect()->route('distributor.bank-accounts.index')->with('success', 'Rekening ' . $account->bank_name . ' berhasil diperbarui.');
     }
 
     public function destroy(string $id): RedirectResponse
@@ -48,7 +55,7 @@ class BankAccountController extends Controller
         $account = $this->findOwn($id);
         $account->delete();
 
-        return redirect()->route('distributor.profile')->with('success', 'Rekening ' . $account->bank_name . ' berhasil dihapus.');
+        return redirect()->route('distributor.bank-accounts.index')->with('success', 'Rekening ' . $account->bank_name . ' berhasil dihapus.');
     }
 
     private function findOwn(string $id): DistributorBankAccount

@@ -568,8 +568,8 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
 
         Route::get('/profile', [App\Http\Controllers\Distributor\ProfileController::class, 'index'])->name('profile');
 
-        // Rekening distributor untuk pembayaran subdist & outlet milik distributor (daftar di halaman profil)
-        Route::resource('bank-accounts', App\Http\Controllers\Distributor\BankAccountController::class)->except(['index', 'show']);
+        // Rekening distributor untuk pembayaran subdist & outlet milik distributor
+        Route::resource('bank-accounts', App\Http\Controllers\Distributor\BankAccountController::class)->except(['show']);
 
         // Lokasi gudang (sumber kirim & titik ambil subdist), diatur distributor sendiri; boleh lebih dari satu
         Route::get('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'index'])->name('warehouse-location.index');
