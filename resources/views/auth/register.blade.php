@@ -103,14 +103,24 @@
                                     @if($referralSales)
                                         <input type="hidden" name="referral_sales_code" value="{{ $referralSales->sales_code }}">
                                     @endif
+                                    @php
+                                        // Sama dengan kolom isian lain (Nama, Email, dst.), hanya tidak bisa diubah.
+                                        $readonlyStyle = 'background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); cursor: default;';
+                                    @endphp
+                                    <p class="mb-10 font-sm" style="color: #6A1B1B;">Mendaftar sebagai <strong>{{ $registerType === 'outlet' ? 'Outlet' : 'Subdist' }}</strong></p>
                                     <div class="form-group mb-20">
-                                        <div class="alert alert-info font-sm mb-0">
-                                            Anda mendaftar sebagai <strong>{{ $registerType === 'outlet' ? 'outlet' : 'subdist' }}</strong> melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }})@if($referralSales), sales <strong>{{ $referralSales->name }}</strong> ({{ $referralSales->sales_code }})@endif.
-                                        </div>
+                                        <label class="font-xs text-muted mb-5" for="referral_distributor_name">Distributor</label>
+                                        <input type="text" id="referral_distributor_name" value="{{ $referringDistributor->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
+                                    @if($referralSales)
+                                    <div class="form-group mb-20">
+                                        <label class="font-xs text-muted mb-5" for="referral_sales_name">Sales</label>
+                                        <input type="text" id="referral_sales_name" value="{{ $referralSales->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
+                                    </div>
+                                    @endif
                                     @else
                                     <div class="form-group mb-20">
                                         <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">
