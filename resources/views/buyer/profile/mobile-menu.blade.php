@@ -46,7 +46,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.outlet-referral.index') }}">
-                                <i class="fi-rs-users mr-15"></i>Rekrut Subdist
+                                <i class="fi-rs-users mr-15"></i>Outlet dan Subdist
                             </a>
                         </li>
                         <li class="nav-item">

@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Rekrut Subdist')
+@section('title', 'Outlet dan Subdist')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> Akun Saya
-            <span></span> Rekrut Subdist
+            <span></span> Outlet dan Subdist
         </div>
     </div>
 </div>
@@ -24,7 +24,7 @@
                     <div class="tab-pane fade show active" role="tabpanel">
                         <div class="card border-0 shadow-sm border-radius-20 overflow-hidden mb-40" style="background-color: #ffffff;">
                             <div class="card-header bg-white border-bottom-0 p-30 pb-0">
-                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Rekrut Subdist</h3>
+                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Outlet dan Subdist</h3>
                                 <p class="text-muted font-sm">Bagikan link di bawah ini. Outlet yang mendaftar lewat link ini tercatat atas nama distributor Anda.</p>
                             </div>
                             <div class="card-body p-30 pt-10">

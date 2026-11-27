@@ -66,7 +66,7 @@
                             <div class="fc-empty-icon"><i class="fi-rs-users"></i></div>
                             <h2>Belum ada subdist rekrutan</h2>
                             <p>Forecast diisi per subdist yang mendaftar lewat link rekrutmen Anda. Bagikan link Anda dulu, lalu kembali ke halaman ini.</p>
-                            <a href="{{ route('buyer.outlet-referral.index') }}" class="fc-btn fc-btn-main">Buka Rekrut Subdist</a>
+                            <a href="{{ route('buyer.outlet-referral.index') }}" class="fc-btn fc-btn-main">Buka Outlet dan Subdist</a>
                         </div>
                     @else
                         {{-- Langkah 1: pilih subdist --}}

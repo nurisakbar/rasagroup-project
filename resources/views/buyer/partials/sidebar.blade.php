@@ -47,7 +47,7 @@
             @if($isDistributor)
             <li class="nav-item">
                 <a class="nav-link {{ Route::is('buyer.outlet-referral.*') ? 'active' : '' }}" href="{{ route('buyer.outlet-referral.index') }}">
-                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Rekrut Subdist
+                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Outlet dan Subdist
                 </a>
             </li>
             <li class="nav-item">
