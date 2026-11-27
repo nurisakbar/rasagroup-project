@@ -16,15 +16,57 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-6">
-                @php
-                    $isDistributorPage = request()->is('distributor*') || (auth()->check() && auth()->user()->isDistributor());
-                    $profileRoute = $isDistributorPage ? route('distributor.profile') : route('buyer.profile');
-                @endphp
                 
+                @if(auth()->user()->isDistributor())
+                    {{-- Distributor: menu dikelompokkan per peran (penjual & pembeli), sama dengan sidebar desktop. --}}
+                    @foreach(\App\Support\DistributorMenu::groups() as $group)
+                        <div class="mobile-menu-heading {{ $loop->first ? 'mt-10' : 'mt-20' }}">
+                            <span>{{ $group['title'] }}</span>
+                            @if($group['hint'])<small>{{ $group['hint'] }}</small>@endif
+                        </div>
+                        <div class="mobile-menu-card">
+                            <ul class="nav flex-column">
+                                @foreach($group['items'] as $item)
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ $item['url'] }}">
+                                            <i class="{{ $item['icon'] }} mr-15"></i>
+                                            <span class="flex-grow-1">{{ $item['label'] }}</span>
+                                            @if(! empty($item['badge']))
+                                                <span class="mobile-menu-badge">{{ $item['badge'] }}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endforeach
+                    <div class="mobile-menu-card mt-20">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('buyer.profile.password.edit') }}">
+                                    <i class="fi-rs-lock mr-15"></i>Ubah Password
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://wa.me/6282151988440?text={{ urlencode('Halo Rasa Group, saya ingin bertanya') }}" target="_blank" rel="noopener noreferrer">
+                                    <i class="fi-rs-headphones mr-15"></i>Hubungi CS
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <form method="POST" action="{{ route('logout') }}" id="logout-form-mobile-page">
+                                    @csrf
+                                    <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-mobile-page').submit();">
+                                        <i class="fi-rs-sign-out mr-15"></i>Keluar
+                                    </a>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                @else
                 <div class="mobile-menu-card mt-10">
                     <ul class="nav flex-column" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ $profileRoute }}">
+                            <a class="nav-link" href="{{ route('buyer.profile') }}">
                                 <i class="fi-rs-user mr-15"></i>Profile Saya
                             </a>
                         </li>
@@ -38,28 +80,6 @@
                                 <i class="fi-rs-lock mr-15"></i>Ubah Password
                             </a>
                         </li>
-                        @if(auth()->user()->isDistributor())
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('distributor.warehouse-location.index') }}">
-                                <i class="fi-rs-marker mr-15"></i>Lokasi Gudang
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('buyer.outlet-referral.index') }}">
-                                <i class="fi-rs-users mr-15"></i>Outlet dan Subdist
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('buyer.sales.index') }}">
-                                <i class="fi-rs-id-badge mr-15"></i>Data Sales
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('buyer.forecast.index') }}">
-                                <i class="fi-rs-stats mr-15"></i>Forecast
-                            </a>
-                        </li>
-                        @endif
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('buyer.affiliate.index') }}">
                                 <i class="fi-rs-users mr-15"></i>Affiliasi
@@ -80,12 +100,17 @@
                         </li>
                     </ul>
                 </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
 <style>
+.mobile-menu-heading { padding: 0 6px 8px; font-family: 'Fira Sans', sans-serif; }
+.mobile-menu-heading span { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6A1B1B; }
+.mobile-menu-heading small { display: block; font-size: 12px; color: #8A7B70; }
+.mobile-menu-badge { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: #E53935; color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
 .mobile-menu-card {
     background-color: #fff;
     border-radius: 16px;

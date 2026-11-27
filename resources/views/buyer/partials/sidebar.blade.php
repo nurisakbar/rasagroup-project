@@ -7,77 +7,29 @@
 <div class="dashboard-menu d-none d-lg-block {{ $layout === 'horizontal' ? 'dashboard-menu-horizontal mb-4' : '' }}">
     <ul class="nav {{ $layout === 'horizontal' ? 'flex-row' : 'flex-column' }}" role="tablist">
         @if($isDistributorPage)
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.manage-orders.*') ? 'active' : '' }}" href="{{ route('distributor.manage-orders.index') }}">
-                    <i class="fi-rs-shopping-bag {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>{{ $layout === 'horizontal' ? 'Pesanan Masuk' : 'Pesanan Masuk' }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.stock.*') ? 'active' : '' }}" href="{{ route('distributor.stock.index') }}">
-                    <i class="fi-rs-box {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Kelola Stock
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.warehouse-location.*') ? 'active' : '' }}" href="{{ route('distributor.warehouse-location.index') }}">
-                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Lokasi Gudang
-                </a>
-            </li>
-            {{-- Point Of Sales disembunyikan sesuai permintaan --}}
-            <li class="nav-item d-none">
-                <a class="nav-link {{ Route::is('distributor.pos.*') ? 'active' : '' }}" href="{{ route('distributor.pos.index') }}">
-                    <i class="fi-rs-computer {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Point Of Sales
-                </a>
-            </li>
-            {{-- Restock: disembunyikan dari menu; rute tetap ada (distributor.orders.products / cart / checkout). --}}
-            <li class="nav-item distributor-sidebar-restock">
-                <a class="nav-link {{ Route::is('distributor.orders.products') || Route::is('distributor.orders.cart') || Route::is('distributor.orders.checkout') ? 'active' : '' }}" href="{{ route('distributor.orders.products') }}">
-                    <i class="fi-rs-shopping-cart-check {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Restock
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.addresses.*') ? 'active' : '' }}" href="{{ route('buyer.addresses.index') }}">
-                    <i class="fi-rs-marker {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Alamat Pengiriman
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.profile.operational-hours') ? 'active' : '' }}" href="{{ route('buyer.profile.operational-hours') }}">
-                    <i class="fi-rs-clock {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Jadwal Operasional
-                </a>
-            </li>
-            @if($isDistributor)
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.outlet-referral.*') ? 'active' : '' }}" href="{{ route('buyer.outlet-referral.index') }}">
-                    <i class="fi-rs-users {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Outlet dan Subdist
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.sales.*') ? 'active' : '' }}" href="{{ route('buyer.sales.index') }}">
-                    <i class="fi-rs-id-badge {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Data Sales
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('buyer.forecast.*') ? 'active' : '' }}" href="{{ route('buyer.forecast.index') }}">
-                    <i class="fi-rs-stats {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Forecast
-                </a>
-            </li>
-            @endif
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.orders.history') || Route::is('distributor.orders.show') || Route::is('buyer.orders.show') ? 'active' : '' }}" href="{{ route('distributor.orders.history') }}">
-                    <i class="fi-rs-history {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Riwayat Pembelian
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Route::is('distributor.profile') || Route::is('buyer.profile') || Route::is('buyer.profile.edit') ? 'active' : '' }}" href="{{ route('distributor.profile') }}">
-                    <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>Akun Saya
-                </a>
-            </li>
-            @if(!$isDistributor)
-                <li class="nav-item {{ $layout === 'vertical' ? 'mt-3' : '' }}">
-                    <a class="nav-link mode-switch buyer-mode text-brand fw-bold" href="{{ route('buyer.dashboard') }}">
-                        <i class="fi-rs-user {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i> {{ $layout === 'horizontal' ? 'Mode Pembeli' : 'Mode Pembeli' }}
-                    </a>
-                </li>
-            @endif
+            {{--
+                Distributor berperan sebagai PENJUAL (ke outlet & subdist) dan PEMBELI (ke Rasa Group).
+                Menu dikelompokkan per peran agar mudah dipahami. Kelompok & isinya ada di distributor-menu.
+            --}}
+            @foreach(\App\Support\DistributorMenu::groups() as $group)
+                @if($layout === 'vertical')
+                    <li class="nav-item dashboard-menu-heading {{ $loop->first ? '' : 'mt-3' }}">
+                        <span>{{ $group['title'] }}</span>
+                        @if($group['hint'])<small>{{ $group['hint'] }}</small>@endif
+                    </li>
+                @endif
+                @foreach($group['items'] as $item)
+                    <li class="nav-item">
+                        <a class="nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['url'] }}">
+                            <i class="{{ $item['icon'] }} {{ $layout === 'vertical' ? 'mr-10' : '' }}"></i>
+                            <span class="flex-grow-1">{{ $item['label'] }}</span>
+                            @if(! empty($item['badge']))
+                                <span class="dashboard-menu-badge">{{ $item['badge'] }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+            @endforeach
         @else
             {{-- BUYER MODE MENUS --}}
             <li class="nav-item">
@@ -188,7 +140,47 @@
         font-size: 13px;
     }
 
-    .distributor-sidebar-restock {
-        display: none !important;
+    .dashboard-menu ul li.dashboard-menu-heading {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0;
+        margin-bottom: 0;
+    }
+    .dashboard-menu .dashboard-menu-heading {
+        padding: 4px 20px 6px;
+        font-family: 'Fira Sans', sans-serif;
+    }
+    .dashboard-menu .dashboard-menu-heading span {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #6A1B1B;
+    }
+    .dashboard-menu .dashboard-menu-heading small {
+        display: block;
+        font-size: 11px;
+        color: #8A7B70;
+        line-height: 1.3;
+    }
+    .dashboard-menu .dashboard-menu-badge {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: 11px;
+        background: #E53935;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dashboard-menu .nav-link.active .dashboard-menu-badge,
+    .dashboard-menu .nav-link:hover .dashboard-menu-badge {
+        background: #fff;
+        color: #6A1B1B;
     }
 </style>
