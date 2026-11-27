@@ -48,32 +48,17 @@
                             @endif
 
                             <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label font-sm fw-bold">Distributor</label>
+                                    <input type="text" class="form-control" value="{{ $distributor->name }}{{ $distributor->distributor_sales_code ? ' (' . $distributor->distributor_sales_code . ')' : '' }}" readonly>
+                                </div>
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="name">Nama Sales <span class="text-danger">*</span></label>
                                     <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $salesperson->name) }}" maxlength="150" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label font-sm fw-bold" for="phone">No. HP <span class="text-danger">*</span></label>
-                                    <input type="text" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $salesperson->phone) }}" maxlength="30" placeholder="08xxxxxxxxxx" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label font-sm fw-bold" for="email">Email</label>
-                                    <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $salesperson->email) }}" maxlength="150">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label font-sm fw-bold" for="area">Area / Wilayah</label>
-                                    <input type="text" id="area" name="area" class="form-control @error('area') is-invalid @enderror" value="{{ old('area', $salesperson->area) }}" maxlength="150" placeholder="Contoh: Bekasi Timur">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label font-sm fw-bold" for="notes">Catatan</label>
-                                    <textarea id="notes" name="notes" rows="3" class="form-control @error('notes') is-invalid @enderror" maxlength="1000">{{ old('notes', $salesperson->notes) }}</textarea>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input type="hidden" name="is_active" value="0">
-                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" @checked(old('is_active', $salesperson->is_active))>
-                                        <label class="form-check-label font-sm" for="is_active">Sales aktif</label>
-                                    </div>
+                                    <input type="tel" id="phone" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $salesperson->phone) }}" maxlength="20" placeholder="08xxxxxxxxxx" inputmode="tel" required>
                                 </div>
                             </div>
 

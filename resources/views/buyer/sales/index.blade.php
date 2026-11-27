@@ -25,7 +25,7 @@
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Data Sales</h3>
-                                <p class="text-muted font-sm mb-0">Daftar sales milik distributor Anda.</p>
+                                <p class="text-muted font-sm mb-0">Sales milik distributor <strong>{{ $distributor->name }}</strong>{{ $distributor->distributor_sales_code ? ' (' . $distributor->distributor_sales_code . ')' : '' }}.</p>
                             </div>
                             <a href="{{ route('buyer.sales.create') }}" class="btn btn-sm px-20" style="background-color: #6A1B1B; color: #fff;">
                                 <i class="fi-rs-plus mr-5"></i>Tambah Sales
@@ -34,15 +34,8 @@
                     </div>
                     <div class="card-body p-30">
                         <form method="GET" action="{{ route('buyer.sales.index') }}" class="row g-2 mb-20">
-                            <div class="col-md-7">
-                                <input type="text" name="q" value="{{ $search }}" class="form-control font-sm" placeholder="Cari nama, no. HP, email, atau area">
-                            </div>
-                            <div class="col-md-3">
-                                <select name="status" class="form-select font-sm">
-                                    <option value="">Semua status</option>
-                                    <option value="active" @selected($status === 'active')>Aktif</option>
-                                    <option value="inactive" @selected($status === 'inactive')>Nonaktif</option>
-                                </select>
+                            <div class="col-md-10">
+                                <input type="text" name="q" value="{{ $search }}" class="form-control font-sm" placeholder="Cari nama atau no. HP">
                             </div>
                             <div class="col-md-2 d-grid">
                                 <button type="submit" class="btn btn-sm" style="background-color: #253D4E; color: #fff;"><i class="fi-rs-search mr-5"></i>Cari</button>
@@ -51,7 +44,7 @@
 
                         @if($salespeople->isEmpty())
                             <p class="text-muted font-sm mb-0">
-                                {{ $search !== '' || $status ? 'Tidak ada sales yang cocok dengan pencarian.' : 'Belum ada data sales. Klik "Tambah Sales" untuk menambahkan.' }}
+                                {{ $search !== '' ? 'Tidak ada sales yang cocok dengan pencarian.' : 'Belum ada data sales. Klik "Tambah Sales" untuk menambahkan.' }}
                             </p>
                         @else
                             <div class="table-responsive">
@@ -60,9 +53,7 @@
                                         <tr>
                                             <th>Nama</th>
                                             <th>No. HP</th>
-                                            <th>Email</th>
-                                            <th>Area</th>
-                                            <th>Status</th>
+                                            <th>Ditambahkan</th>
                                             <th class="text-end">Aksi</th>
                                         </tr>
                                     </thead>
@@ -71,15 +62,7 @@
                                             <tr>
                                                 <td><strong>{{ $sales->name }}</strong></td>
                                                 <td>{{ $sales->phone }}</td>
-                                                <td>{{ $sales->email ?: '-' }}</td>
-                                                <td>{{ $sales->area ?: '-' }}</td>
-                                                <td>
-                                                    @if($sales->is_active)
-                                                        <span class="badge bg-success">Aktif</span>
-                                                    @else
-                                                        <span class="badge bg-secondary">Nonaktif</span>
-                                                    @endif
-                                                </td>
+                                                <td>{{ $sales->created_at->timezone(\App\Support\Wib::TZ)->format('d M Y') }}</td>
                                                 <td class="text-end text-nowrap">
                                                     <a href="{{ route('buyer.sales.edit', $sales) }}" class="btn btn-xs btn-outline-secondary py-1 px-2" title="Ubah"><i class="fi-rs-edit"></i></a>
                                                     <form action="{{ route('buyer.sales.destroy', $sales) }}" method="POST" class="d-inline js-delete-sales" data-name="{{ $sales->name }}">

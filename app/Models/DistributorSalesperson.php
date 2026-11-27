@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Sales milik distributor (bukan akun login; hanya data yang dikelola distributor).
+ * distributor_id sengaja tidak fillable: selalu diisi dari distributor yang login dan tidak bisa dipindah.
  */
 class DistributorSalesperson extends Model
 {
@@ -15,9 +16,7 @@ class DistributorSalesperson extends Model
 
     protected $table = 'distributor_salespeople';
 
-    protected $fillable = ['distributor_id', 'name', 'phone', 'email', 'area', 'is_active', 'notes'];
-
-    protected $casts = ['is_active' => 'boolean'];
+    protected $fillable = ['name', 'phone'];
 
     public function distributor(): BelongsTo
     {

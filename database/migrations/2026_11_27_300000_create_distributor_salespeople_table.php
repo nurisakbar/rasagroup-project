@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Data sales milik distributor (dikelola sendiri oleh distributor dari akun belanjanya).
+ * Setiap sales wajib terikat ke satu distributor (distributor_id).
  */
 return new class extends Migration
 {
@@ -16,14 +17,11 @@ return new class extends Migration
             $table->uuid('distributor_id');
             $table->string('name', 150);
             $table->string('phone', 30);
-            $table->string('email', 150)->nullable();
-            $table->string('area', 150)->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->text('notes')->nullable();
             $table->timestamps();
 
             $table->foreign('distributor_id')->references('id')->on('users')->cascadeOnDelete();
             $table->index(['distributor_id', 'name']);
+            $table->unique(['distributor_id', 'phone']);
         });
     }
 

@@ -7,6 +7,7 @@ use App\Models\DistributorSalesperson;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -17,43 +18,41 @@ class DistributorSalesController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('q'));
-        $status = $request->query('status');
 
         $salespeople = $this->ownQuery()
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$search}%")
-                ->orWhere('phone', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('area', 'like', "%{$search}%")))
-            ->when(in_array($status, ['active', 'inactive'], true), fn ($q) => $q->where('is_active', $status === 'active'))
-            ->orderByDesc('is_active')
+                ->orWhere('phone', 'like', "%{$search}%")))
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
 
-        return view('buyer.sales.index', compact('salespeople', 'search', 'status'));
+        return view('buyer.sales.index', ['salespeople' => $salespeople, 'search' => $search, 'distributor' => Auth::user()]);
     }
 
     public function create(): View
     {
-        return view('buyer.sales.form', ['salesperson' => new DistributorSalesperson(['is_active' => true])]);
+        return view('buyer.sales.form', ['salesperson' => new DistributorSalesperson(), 'distributor' => Auth::user()]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $this->ownQuery()->create($this->validated($request) + ['distributor_id' => Auth::id()]);
+        $salesperson = new DistributorSalesperson($this->validated($request));
+        $salesperson->distributor_id = Auth::id();
+        $salesperson->save();
 
         return redirect()->route('buyer.sales.index')->with('success', 'Sales berhasil ditambahkan.');
     }
 
     public function edit(string $sale): View
     {
-        return view('buyer.sales.form', ['salesperson' => $this->findOwn($sale)]);
+        return view('buyer.sales.form', ['salesperson' => $this->findOwn($sale), 'distributor' => Auth::user()]);
     }
 
     public function update(Request $request, string $sale): RedirectResponse
     {
-        $this->findOwn($sale)->update($this->validated($request));
+        $salesperson = $this->findOwn($sale);
+        $salesperson->update($this->validated($request, $salesperson));
 
         return redirect()->route('buyer.sales.index')->with('success', 'Data sales berhasil diperbarui.');
     }
@@ -79,23 +78,23 @@ class DistributorSalesController extends Controller
         return $this->ownQuery()->whereKey($id)->firstOrFail();
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?DistributorSalesperson $current = null): array
     {
-        $data = $request->validate([
+        $request->merge(['phone' => preg_replace('/[\s\-()]/', '', (string) $request->input('phone'))]);
+
+        return $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]{6,30}$/'],
-            'email' => ['nullable', 'email', 'max:150'],
-            'area' => ['nullable', 'string', 'max:150'],
-            'is_active' => ['nullable', 'boolean'],
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'phone' => [
+                'required', 'string', 'regex:/^\+?[0-9]{8,15}$/',
+                Rule::unique('distributor_salespeople', 'phone')
+                    ->where('distributor_id', Auth::id())
+                    ->ignore($current?->getKey()),
+            ],
         ], [
             'name.required' => 'Nama sales wajib diisi.',
             'phone.required' => 'No. HP wajib diisi.',
-            'phone.regex' => 'No. HP hanya boleh berisi angka, spasi, +, -, atau tanda kurung.',
-            'email.email' => 'Format email tidak valid.',
+            'phone.regex' => 'No. HP harus berupa angka 8-15 digit (boleh diawali +).',
+            'phone.unique' => 'No. HP ini sudah dipakai sales lain milik Anda.',
         ]);
-        $data['is_active'] = $request->boolean('is_active');
-
-        return $data;
     }
 }
