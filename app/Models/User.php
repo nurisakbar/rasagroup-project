@@ -128,6 +128,27 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
+    /** Prefix kode sales (Data Sales admin dan sales milik distributor), mis. MCR001. */
+    public const SALES_CODE_PREFIX = 'MCR';
+
+    /**
+     * Kode sales berikutnya dengan format yang sudah ada: MCR + nomor urut minimal 3 digit (MCR001, MCR090, ...).
+     * Kode user yang sudah dihapus ikut dihitung agar tidak dipakai ulang. Panggil di dalam transaksi.
+     */
+    public static function generateSalesCode(): string
+    {
+        $prefix = self::SALES_CODE_PREFIX;
+
+        $max = static::withTrashed()
+            ->where('sales_code', 'regexp', '^' . $prefix . '[0-9]+$')
+            ->lockForUpdate()
+            ->pluck('sales_code')
+            ->map(fn ($code) => (int) substr($code, strlen($prefix)))
+            ->max() ?? 0;
+
+        return $prefix . str_pad((string) ($max + 1), 3, '0', STR_PAD_LEFT);
+    }
+
     public static function generateDistributorSalesCode(): string
     {
         $prefix = self::DISTRIBUTOR_SALES_CODE_PREFIX;
@@ -664,6 +685,89 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isSales(): bool
     {
         return $this->role === self::ROLE_SALES;
+    }
+
+    /** Sales milik distributor (role sales dengan distributor_id), bukan sales perusahaan. */
+    public function isDistributorSales(): bool
+    {
+        return $this->isSales() && filled($this->distributor_id);
+    }
+
+    /** Email pengganti (.invalid) untuk sales distributor yang tidak mengisi email. */
+    public const INTERNAL_EMAIL_DOMAIN = 'rasaconnect.invalid';
+
+    public static function internalSalesEmail(): string
+    {
+        return 'sales-distributor-' . \Illuminate\Support\Str::uuid() . '@' . self::INTERNAL_EMAIL_DOMAIN;
+    }
+
+    public function hasInternalEmail(): bool
+    {
+        return str_ends_with((string) $this->email, '@' . self::INTERNAL_EMAIL_DOMAIN);
+    }
+
+    /** Distributor pemilik sales ini (khusus sales milik distributor). */
+    public function ownerDistributor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'distributor_id')->where('role', self::ROLE_DISTRIBUTOR);
+    }
+
+    /** Sales yang merekrut user ini lewat link pendaftaran per sales. */
+    public function recruitedBySales(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recruited_by_sales_id')->withTrashed();
+    }
+
+    /**
+     * Link pendaftaran untuk calon outlet/subdist dari distributor ini, opsional atas nama salah satu sales-nya.
+     * Contoh: /register?kode=DST00003&jenis=outlet&sales=MCR090
+     */
+    public function registrationLink(string $type, ?User $sales = null): string
+    {
+        return route('register', array_filter([
+            'kode' => $this->distributor_sales_code,
+            'jenis' => $type,
+            'sales' => $sales?->sales_code,
+        ]));
+    }
+
+    /** Rekening distributor ini untuk pembayaran subdist & outlet miliknya. */
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(DistributorBankAccount::class, 'distributor_id')->orderBy('bank_name');
+    }
+
+    /**
+     * Distributor penerima pembayaran pembeli ini (metode Transfer ke rekening distributor), atau null:
+     * - subdist milik distributor: distributor induknya (subdist hub tidak punya distributor induk → null);
+     * - outlet milik distributor: distributor pemilik sales yang kodenya dipakai outlet.
+     * Outlet milik hub, subdist hub, dan ecom: null (bayar ke perusahaan seperti biasa).
+     */
+    public function paymentDistributor(): ?User
+    {
+        if ($this->isSubdist()) {
+            return $this->referringDistributor;
+        }
+
+        if ($this->isOutlet() && filled($this->sales_code)) {
+            $sales = User::where('role', self::ROLE_SALES)->where('sales_code', $this->sales_code)->whereNotNull('distributor_id')->first();
+
+            return $sales?->ownerDistributor;
+        }
+
+        return null;
+    }
+
+    /** Sales milik distributor ini (menu Data Sales di akun distributor). */
+    public function distributorSales(): HasMany
+    {
+        return $this->hasMany(User::class, 'distributor_id')->where('role', self::ROLE_SALES);
+    }
+
+    /** Hanya sales perusahaan (Data Sales admin), tanpa sales milik distributor. */
+    public function scopeCompanySales($query)
+    {
+        return $query->where('role', self::ROLE_SALES)->whereNull('distributor_id');
     }
 
     public function getFaspayCompany(): string

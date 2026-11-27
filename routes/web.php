@@ -186,6 +186,9 @@ Route::prefix('buyer')->name('buyer.')->middleware(['auth', 'wa.verified', \App\
     Route::put('/affiliate/bank', [App\Http\Controllers\Buyer\AffiliateController::class, 'updateBank'])->name('affiliate.bank.update');
     Route::get('/outlet-referral', [App\Http\Controllers\Buyer\OutletReferralController::class, 'index'])->name('outlet-referral.index');
 
+    // Data sales milik distributor
+    Route::resource('sales', App\Http\Controllers\Buyer\DistributorSalesController::class)->except(['show']);
+
     // Forecast kebutuhan distributor per outlet rekrutan
     Route::get('/forecast', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'index'])->name('forecast.index');
     Route::post('/forecast/lines', [App\Http\Controllers\Buyer\DistributorForecastController::class, 'store'])->name('forecast.store');
@@ -564,6 +567,9 @@ Route::prefix('distributor')->name('distributor.')->group(function () {
         })->name('dashboard');
 
         Route::get('/profile', [App\Http\Controllers\Distributor\ProfileController::class, 'index'])->name('profile');
+
+        // Rekening distributor untuk pembayaran subdist & outlet milik distributor
+        Route::resource('bank-accounts', App\Http\Controllers\Distributor\BankAccountController::class)->except(['show']);
 
         // Lokasi gudang (sumber kirim & titik ambil subdist), diatur distributor sendiri; boleh lebih dari satu
         Route::get('/warehouse-location', [App\Http\Controllers\Distributor\WarehouseLocationController::class, 'index'])->name('warehouse-location.index');

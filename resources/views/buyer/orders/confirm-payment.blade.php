@@ -39,6 +39,49 @@
                                         @csrf
                                         <div class="row">
                                             <div class="col-lg-8">
+                                                @if($order->isPaidToDistributor())
+                                                    <div class="form-group mb-4">
+                                                        <label class="form-label fw-bold">Saya membayar ke rekening <span class="text-danger">*</span></label>
+                                                        @if($destinationAccounts->isEmpty())
+                                                            <div class="alert alert-warning font-sm mb-0">Distributor belum mengatur rekening aktif. Hubungi distributor Anda.</div>
+                                                        @else
+                                                            <div class="dest-accounts">
+                                                                @foreach($destinationAccounts as $account)
+                                                                    <label class="dest-account">
+                                                                        <input type="radio" name="destination_account_id" value="{{ $account->id }}" required
+                                                                               @checked(old('destination_account_id', $destinationAccounts->count() === 1 ? $account->id : null) === $account->id)>
+                                                                        <span class="dest-box">
+                                                                            <span class="dest-check"></span>
+                                                                            <span class="dest-text">
+                                                                                <span class="dest-bank">{{ $account->bank_name }}</span>
+                                                                                <span class="dest-number">{{ trim(chunk_split($account->account_number, 4, ' ')) }}</span>
+                                                                                <span class="dest-name">a.n. {{ $account->account_name }}</span>
+                                                                            </span>
+                                                                        </span>
+                                                                    </label>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+                                                        @error('destination_account_id')
+                                                            <div class="text-danger small mt-2">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+                                                    <style>
+                                                        .dest-accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+                                                        .dest-account { margin: 0; cursor: pointer; }
+                                                        .dest-account input { position: absolute; opacity: 0; pointer-events: none; }
+                                                        .dest-box { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid #EADFD4; border-radius: 14px; background: #fff; transition: all .2s; height: 100%; }
+                                                        .dest-check { flex: 0 0 20px; height: 20px; border-radius: 50%; border: 2px solid #D9C3B0; margin-top: 2px; position: relative; }
+                                                        .dest-account input:checked + .dest-box { border-color: #6A1B1B; box-shadow: 0 6px 16px rgba(106,27,27,.12); background: #FFFBF8; }
+                                                        .dest-account input:checked + .dest-box .dest-check { border-color: #6A1B1B; }
+                                                        .dest-account input:checked + .dest-box .dest-check::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #6A1B1B; }
+                                                        .dest-text { display: flex; flex-direction: column; min-width: 0; }
+                                                        .dest-bank { font-size: 12px; font-weight: 700; color: #8A7B70; text-transform: uppercase; letter-spacing: .5px; }
+                                                        .dest-number { font-family: 'Fira Sans', sans-serif; font-size: 18px; font-weight: 700; color: #253D4E; letter-spacing: .5px; word-break: break-all; }
+                                                        .dest-name { font-size: 13px; color: #6B7280; }
+                                                    </style>
+                                                @endif
+
                                                 <div class="form-group mb-4">
                                                     <label class="form-label fw-bold">Bukti Transfer (Image) <span class="text-danger">*</span></label>
                                                     <input type="file" name="payment_proof" class="form-control" accept="image/*" required>
@@ -68,7 +111,11 @@
                                                         <span class="text-brand fw-bold fs-5">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
                                                     </div>
                                                     <hr>
-                                                    <p class="font-xs text-muted">Konfirmasi Anda akan ditinjau oleh tim admin kami (pusat) dalam waktu maksimal 1x24 jam.</p>
+                                                    @if($order->isPaidToDistributor() && $order->fulfilled_by_distributor)
+                                                        <p class="font-xs text-muted">Konfirmasi Anda akan ditinjau oleh distributor <strong>{{ $order->paymentDistributor?->name }}</strong>.</p>
+                                                    @else
+                                                        <p class="font-xs text-muted">Konfirmasi Anda akan ditinjau oleh tim admin kami (pusat) dalam waktu maksimal 1x24 jam.</p>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>

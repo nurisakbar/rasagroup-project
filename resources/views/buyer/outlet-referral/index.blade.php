@@ -1,6 +1,6 @@
 @extends('layouts.shop')
 
-@section('title', 'Rekrut Subdist')
+@section('title', 'Outlet dan Subdist')
 
 @section('content')
 <div class="page-header breadcrumb-wrap">
@@ -8,7 +8,7 @@
         <div class="breadcrumb">
             <a href="{{ route('home') }}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Beranda</a>
             <span></span> Akun Saya
-            <span></span> Rekrut Subdist
+            <span></span> Outlet dan Subdist
         </div>
     </div>
 </div>
@@ -24,8 +24,8 @@
                     <div class="tab-pane fade show active" role="tabpanel">
                         <div class="card border-0 shadow-sm border-radius-20 overflow-hidden mb-40" style="background-color: #ffffff;">
                             <div class="card-header bg-white border-bottom-0 p-30 pb-0">
-                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Rekrut Subdist</h3>
-                                <p class="text-muted font-sm">Bagikan link di bawah ini. Outlet yang mendaftar lewat link ini tercatat atas nama distributor Anda.</p>
+                                <h3 class="mb-0" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Outlet dan Subdist</h3>
+                                <p class="text-muted font-sm">Bagikan link di bawah ini ke calon pendaftar. Pendaftar tercatat atas nama distributor Anda, dan atas nama sales bila memakai link sales.</p>
                             </div>
                             <div class="card-body p-30 pt-10">
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
@@ -39,30 +39,55 @@
                                 </div>
 
                                 <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
-                                    <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran Outlet</h5>
-                                    <div class="input-group mb-15">
+                                    <h5 class="mb-10" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran Subdist (Umum)</h5>
+                                    <div class="input-group mb-0">
                                         <input type="text" class="form-control font-sm" value="{{ $registerLink }}" readonly aria-label="Link pendaftaran outlet">
                                         <button class="btn px-25 btn-copy" style="background-color: #6A1B1B; color: #fff;" data-clipboard-text="{{ $registerLink }}">
                                             <i class="fi-rs-copy"></i>
                                         </button>
                                     </div>
-                                    <a class="btn btn-sm" style="background-color: #25D366; color: #fff;" target="_blank" rel="noopener noreferrer"
-                                       href="https://wa.me/?text={{ rawurlencode('Daftar sebagai subdist ' . $user->name . ' melalui link berikut: ' . $registerLink) }}">
-                                        Bagikan ke WhatsApp
-                                    </a>
+                                </div>
+
+                                <div class="p-30 border-radius-15 mb-30" style="background-color: #F8F9FA; border: 1.5px solid #ECECEC;">
+                                    <h5 class="mb-5" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">Link Pendaftaran per Sales</h5>
+                                    <p class="text-muted font-xs mb-15">Setiap sales punya link untuk calon <strong>outlet</strong> dan calon <strong>subdist</strong>. Klik <strong>Outlet</strong> atau <strong>Subdist</strong> untuk menyalin link, lalu bagikan ke calon pendaftar. Pendaftar tercatat atas nama sales tersebut.</p>
+                                    @if($salespeople->isEmpty())
+                                        <p class="font-sm mb-0">Belum ada sales aktif. <a href="{{ route('buyer.sales.create') }}" style="color: #6A1B1B; font-weight: 600;">Tambah sales</a> untuk membuat link per sales.</p>
+                                    @else
+                                        <div class="sales-link-list">
+                                            @foreach($salespeople as $sales)
+                                                <div class="sales-link-row">
+                                                    <div class="sales-link-name">
+                                                        <strong>{{ $sales->name }}</strong>
+                                                        <span class="text-muted font-xs d-block">{{ $sales->sales_code }}</span>
+                                                    </div>
+                                                    <div class="sales-link-actions">
+                                                        @foreach(['outlet' => 'Outlet', 'subdist' => 'Subdist'] as $type => $label)
+                                                            @php($link = $user->registrationLink($type, $sales))
+                                                            <button type="button" class="btn btn-xs btn-copy" data-link-type="{{ $type }}" data-clipboard-text="{{ $link }}" title="Salin link {{ strtolower($label) }}: {{ $link }}">
+                                                                <i class="fi-rs-copy me-1"></i>{{ $label }}
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <h5 class="mb-15" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #253D4E;">
-                                    Subdist Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
+                                    Outlet dan Subdist Terdaftar ({{ number_format($outlets->total(), 0, ',', '.') }})
                                 </h5>
                                 @if($outlets->isEmpty())
-                                    <p class="text-muted font-sm mb-0">Belum ada outlet yang mendaftar lewat link Anda.</p>
+                                    <p class="text-muted font-sm mb-0">Belum ada outlet atau subdist yang mendaftar lewat link Anda.</p>
                                 @else
                                     <div class="table-responsive">
-                                        <table class="table font-sm">
+                                        <table class="table font-sm recruit-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Nama Subdist</th>
+                                                    <th>Nama</th>
+                                                    <th>Jenis</th>
+                                                    <th>Sales</th>
                                                     <th>No. HP</th>
                                                     <th>Tanggal Daftar</th>
                                                 </tr>
@@ -70,9 +95,11 @@
                                             <tbody>
                                                 @foreach($outlets as $outlet)
                                                     <tr>
-                                                        <td>{{ $outlet->name }}</td>
-                                                        <td>{{ $outlet->phone ?: '-' }}</td>
-                                                        <td>{{ $outlet->created_at->format('d M Y') }}</td>
+                                                        <td data-title="Nama">{{ $outlet->name }}</td>
+                                                        <td data-title="Jenis">{{ $outlet->isSubdist() ? 'Subdist' : 'Outlet' }}</td>
+                                                        <td data-title="Sales">{{ ($outlet->recruitedBySales ?? ($outlet->isOutlet() ? $outlet->salesPerson : null))?->name ?? '-' }}</td>
+                                                        <td data-title="No. HP">{{ $outlet->phone ?: '-' }}</td>
+                                                        <td data-title="Tanggal Daftar">{{ $outlet->created_at->format('d M Y') }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -89,6 +116,25 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<style>
+    .sales-link-list { background: #fff; border: 1px solid #ECECEC; border-radius: 12px; overflow: hidden; }
+    .sales-link-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 15px; }
+    .sales-link-row + .sales-link-row { border-top: 1px solid #ECECEC; }
+    .sales-link-name { min-width: 0; font-size: 14px; word-break: break-word; }
+    .sales-link-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .sales-link-actions .btn-copy { background-color: #6A1B1B; color: #fff; padding: 6px 12px; min-width: 92px; }
+    @media only screen and (max-width: 480px) {
+        .recruit-table td { text-align: right !important; }
+        .recruit-table td::before { font-weight: 600; color: #253D4E; }
+    }
+    @media (max-width: 575.98px) {
+        .sales-link-row { flex-direction: column; align-items: stretch; }
+        .sales-link-actions .btn-copy { flex: 1 1 0; }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>

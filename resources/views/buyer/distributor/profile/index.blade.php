@@ -68,6 +68,14 @@
                                         </div>
                                     </div>
 
+                                    <div class="p-4 border-radius-10 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #fff; border: 1.5px solid #ece7e4;">
+                                        <div>
+                                            <h5 class="mb-1 font-sm" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;"><i class="fi-rs-bank mr-5"></i>Rekening Pembayaran</h5>
+                                            <p class="font-xs text-muted mb-0">{{ $user->bankAccounts->where('is_active', true)->count() }} rekening aktif untuk pembayaran subdist &amp; outlet Anda.</p>
+                                        </div>
+                                        <a href="{{ route('distributor.bank-accounts.index') }}" class="btn btn-sm rounded-pill buyer-btn-maroon-outline">Kelola rekening</a>
+                                    </div>
+
                                     @if($wh)
                                         <div class="p-4 border-radius-10" style="background-color: #fffaf8; border: 1.5px solid #edd6d0;">
                                             <h5 class="mb-3 font-sm" style="font-family: 'Fira Sans', sans-serif; font-weight: 700; color: #6A1B1B;">

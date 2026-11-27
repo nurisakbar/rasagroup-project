@@ -153,6 +153,29 @@
                             </div>
                         </div>
 
+                        @if($order->isDistributorTop() && $order->payment_status !== 'paid')
+                            {{-- Bayar tempo ke distributor: pesanan langsung diproses, dibayar sebelum jatuh tempo --}}
+                            @php
+                                $payDistributor = $order->paymentDistributor;
+                                $payAccounts = $payDistributor ? $payDistributor->bankAccounts()->where('is_active', true)->get() : collect();
+                            @endphp
+                            <div class="text-start mb-50">
+                                <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">
+                                    <h5 class="mb-5" style="color: #253D4E;"><i class="fi-rs-calendar mr-5" style="color: #6A1B1B;"></i>Bayar Tempo {{ $order->payment_term_days }} Hari ke Distributor</h5>
+                                    <p class="font-sm text-muted mb-15">Pesanan langsung diproses. Bayar <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong> ke salah satu rekening <strong>{{ $payDistributor?->name }}</strong> paling lambat <strong style="color: #6A1B1B;">{{ $order->payment_due_at?->locale('id')->translatedFormat('d F Y') }}</strong>, lalu unggah bukti transfer.</p>
+                                    @if($payAccounts->isEmpty())
+                                        <div class="alert alert-warning font-sm">Distributor belum mengatur rekening. Hubungi distributor untuk info pembayaran.</div>
+                                    @endif
+                                    @include('partials.distributor-bank-accounts', ['accounts' => $payAccounts])
+                                    <div class="mt-20 text-center">
+                                        <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-sm" style="background-color: #6A1B1B; color: #fff;">
+                                            <i class="fi-rs-upload mr-5"></i> Unggah Bukti Transfer
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Payment Information -->
                         @if($order->payment_method !== 'term_of_payment')
                             @if($order->payment_status === 'pending')
@@ -290,6 +313,24 @@
                                                     </ol>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                @elseif($order->isDistributorTransfer())
+                                    @php
+                                        $payDistributor = $order->paymentDistributor;
+                                        $payAccounts = $payDistributor ? $payDistributor->bankAccounts()->where('is_active', true)->get() : collect();
+                                    @endphp
+                                    <div class="p-30 border-radius-20 bg-white shadow-sm" style="border: 1px solid #ECECEC;">
+                                        <h5 class="mb-5" style="color: #253D4E;"><i class="fi-rs-bank mr-5" style="color: #6A1B1B;"></i>Transfer ke Rekening Distributor</h5>
+                                        <p class="font-sm text-muted mb-15">Transfer <strong>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</strong> ke salah satu rekening <strong>{{ $payDistributor?->name }}</strong> berikut, lalu unggah bukti transfer. Pembayaran dikonfirmasi oleh distributor.</p>
+                                        @if($payAccounts->isEmpty())
+                                            <div class="alert alert-warning font-sm">Distributor belum mengatur rekening. Hubungi distributor untuk info pembayaran.</div>
+                                        @endif
+                                        @include('partials.distributor-bank-accounts', ['accounts' => $payAccounts])
+                                        <div class="mt-20 text-center">
+                                            <a href="{{ route('buyer.orders.confirm-payment', $order) }}" class="btn btn-sm" style="background-color: #6A1B1B; color: #fff;">
+                                                <i class="fi-rs-upload mr-5"></i> Unggah Bukti Transfer
+                                            </a>
                                         </div>
                                     </div>
                                 @elseif(str_starts_with($order->payment_method, 'faspay_'))

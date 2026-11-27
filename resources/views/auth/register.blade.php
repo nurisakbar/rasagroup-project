@@ -46,7 +46,8 @@
     <div class="container">
         <div class="row">
             <div class="col-xl-9 col-lg-10 col-md-12 m-auto">
-                <div class="row align-items-center">
+                {{-- Gambar di samping form, rata atas dengan form (tidak di tengah vertikal). --}}
+                <div class="row align-items-start">
                     <div class="col-lg-6 pr-30 d-none d-lg-block">
                         <img class="border-radius-20 shadow-lg" src="{{ asset('themes/nest-frontend/assets/imgs/page/login-1.png') }}" alt="Register" />
                     </div>
@@ -99,12 +100,28 @@
                                     
                                     @if($referringDistributor)
                                     <input type="hidden" name="distributor_code" value="{{ $referringDistributor->distributor_sales_code }}">
+                                    <input type="hidden" name="register_type" value="{{ $registerType }}">
+                                    @if($referralSales)
+                                        <input type="hidden" name="referral_sales_code" value="{{ $referralSales->sales_code }}">
+                                    @endif
+                                    @php
+                                        // Sama dengan kolom isian lain (Nama, Email, dst.), hanya tidak bisa diubah.
+                                        $readonlyStyle = 'background: #ffffff; border: none; border-radius: 12px; padding: 15px 25px; height: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); cursor: default;';
+                                    @endphp
+                                    <p class="mb-10 font-sm" style="color: #6A1B1B;">Mendaftar sebagai <strong>{{ $registerType === 'outlet' ? 'Outlet' : 'Subdist' }}</strong></p>
                                     <div class="form-group mb-20">
-                                        <div class="alert alert-info font-sm mb-0">Anda mendaftar sebagai subdist melalui distributor <strong>{{ $referringDistributor->name }}</strong> ({{ $referringDistributor->distributor_sales_code }}).</div>
+                                        <label class="font-xs text-muted mb-5" for="referral_distributor_name">Nama Distributor</label>
+                                        <input type="text" id="referral_distributor_name" value="{{ $referringDistributor->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
                                         @enderror
                                     </div>
+                                    @if($referralSales)
+                                    <div class="form-group mb-20">
+                                        <label class="font-xs text-muted mb-5" for="referral_sales_name">Nama Sales</label>
+                                        <input type="text" id="referral_sales_name" value="{{ $referralSales->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
+                                    </div>
+                                    @endif
                                     @else
                                     <div class="form-group mb-20">
                                         <select name="sales_code" id="sales_code" class="form-control select2" style="width: 100%;">

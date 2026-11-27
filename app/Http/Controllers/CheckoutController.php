@@ -327,7 +327,19 @@ class CheckoutController extends Controller
         'faspay_qris' => (bool) \App\Models\Setting::get('active_faspay_qris', 1),
     ];
 
+ // Rekening distributor (subdist & outlet milik distributor). Subdist milik distributor hanya bisa transfer.
+    $paymentDistributor = Auth::user()->paymentDistributor();
+    $distributorAccounts = $paymentDistributor
+        ? $paymentDistributor->bankAccounts()->where('is_active', true)->get()
+        : collect();
+    $distributorTransferOnly = Auth::user()->isSubdist() && $paymentDistributor !== null;
+    $distributorTopTerms = $paymentDistributor ? Order::DISTRIBUTOR_TOP_TERMS : [];
+
     return view('checkout.index', compact(
+        'paymentDistributor',
+        'distributorAccounts',
+        'distributorTransferOnly',
+        'distributorTopTerms',
         'carts', 
         'subtotal', 
         'catalogSubtotal',
@@ -841,16 +853,33 @@ class CheckoutController extends Controller
         if ($user->isDistributor() && (int) ($user->term_of_payment ?? 0) > 0) {
             $allowedPayments[] = 'term_of_payment';
         }
-        // Subdist: hanya channel Faspay (tanpa TOP dan tanpa transfer manual).
-        if ($user->isSubdist()) {
+        // Pembayaran ke distributor (subdist & outlet milik distributor):
+        // - Transfer ke rekening distributor (butuh minimal satu rekening aktif);
+        // - Bayar tempo (TOP) ke distributor 7/14/30 hari, bebas dipilih pembeli.
+        // Subdist milik distributor HANYA metode ke distributor; outlet milik distributor mendapatnya sebagai tambahan.
+        $paymentDistributor = $user->paymentDistributor();
+        $hasDistributorAccounts = $paymentDistributor && $paymentDistributor->bankAccounts()->where('is_active', true)->exists();
+        $distributorPayments = $paymentDistributor
+            ? array_values(array_filter([$hasDistributorAccounts ? Order::PAYMENT_DISTRIBUTOR_TRANSFER : null, Order::PAYMENT_DISTRIBUTOR_TOP]))
+            : [];
+        if ($user->isSubdist() && $paymentDistributor) {
+            $allowedPayments = $distributorPayments;
+        } elseif ($user->isSubdist()) {
+            // Subdist lain: hanya channel Faspay (tanpa TOP dan tanpa transfer manual).
             $allowedPayments = array_values(array_filter($allowedPayments, fn ($m) => str_starts_with($m, 'faspay')));
+        } else {
+            $allowedPayments = array_merge($allowedPayments, $distributorPayments);
         }
+        $isDistributorTransfer = $request->input('payment_method') === Order::PAYMENT_DISTRIBUTOR_TRANSFER;
+        $isDistributorTop = $request->input('payment_method') === Order::PAYMENT_DISTRIBUTOR_TOP;
+        $paidToDistributor = $isDistributorTransfer || $isDistributorTop;
 
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
             'expedition_id' => 'required|exists:expeditions,id',
             'expedition_service' => 'required|string',
             'payment_method' => ['required', 'string', Rule::in($allowedPayments)],
+            'top_days' => ['nullable', 'required_if:payment_method,' . Order::PAYMENT_DISTRIBUTOR_TOP, 'integer', Rule::in(Order::DISTRIBUTOR_TOP_TERMS)],
             'sales_code' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -1233,8 +1262,11 @@ class CheckoutController extends Controller
                 'total_amount' => $total,
                 'shipping_address' => $shippingAddressText,
                 'payment_method' => $request->payment_method,
+                'payment_distributor_id' => $paidToDistributor ? $paymentDistributor->id : null,
+                'payment_term_days' => $isDistributorTop ? (int) $request->top_days : null,
+                'payment_due_at' => $isDistributorTop ? now()->addDays((int) $request->top_days)->toDateString() : null,
                 'company' => $user->getFaspayCompany(),
-                'payment_status' => ($request->payment_method === 'term_of_payment' && $isFinanceApproved) ? 'term_of_payment' : 'pending',
+                'payment_status' => (($request->payment_method === 'term_of_payment' && $isFinanceApproved) || $isDistributorTop) ? 'term_of_payment' : 'pending',
                 'order_status' => 'pending',
                 'notes' => $orderNotes,
                 'points_earned' => $pointsEarned,
@@ -1242,8 +1274,11 @@ class CheckoutController extends Controller
                 'affiliate_id' => $affiliateId,
                 'affiliate_points' => $affiliatePoints,
                 'sales_code' => $request->sales_code ?: ($user?->sales_code ?? null),
-                'finance_approved' => $isFinanceApproved,
-                'finance_approved_at' => $financeApprovedAt,
+                // Subdist bayar langsung ke distributor yang memenuhi pesanan: tidak perlu persetujuan finance,
+                // pesanan langsung masuk Pesanan Masuk distributor dan distributor yang mengonfirmasi pembayaran.
+                // TOP ke distributor: piutang ditanggung distributor, pesanan langsung diproses.
+                'finance_approved' => $isFinanceApproved || ($isDistributorTransfer && $user->isSubdist()) || $isDistributorTop,
+                'finance_approved_at' => $financeApprovedAt ?? ((($isDistributorTransfer && $user->isSubdist()) || $isDistributorTop) ? now() : null),
             ]);
             
             Log::info('--- CHECKOUT DEBUG: ORDER CREATED ---', [
@@ -1380,7 +1415,10 @@ class CheckoutController extends Controller
                 'config_active_gateway' => config('services.active_payment_gateway')
             ]);
 
-            if ($request->payment_method === 'term_of_payment') {
+            if ($isDistributorTop && ! $order->fulfilled_by_distributor) {
+                // TOP ke distributor untuk outlet (dikirim dari hub perusahaan): langsung diteruskan ke hub.
+                $order->notifyHubAfterFinanceApproval();
+            } elseif ($request->payment_method === 'term_of_payment') {
                 // TOT/TOP: tidak membuat invoice Faspay; pesanan menunggu pembayaran sesuai tempo
                 Log::info('Checkout Debug: TOP selected, skipping gateway.');
                 

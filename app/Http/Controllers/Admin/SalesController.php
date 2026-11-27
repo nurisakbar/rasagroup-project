@@ -16,8 +16,8 @@ class SalesController extends Controller
     {
         if ($request->ajax()) {
             $sales = User::where('role', User::ROLE_SALES)
-                ->with('warehouse:id,name')
-                ->select('id', 'sales_code', 'name', 'email', 'phone', 'monthly_target', 'is_active', 'warehouse_id', 'created_at');
+                ->with(['warehouse:id,name', 'ownerDistributor:id,name,distributor_sales_code'])
+                ->select('id', 'sales_code', 'name', 'email', 'phone', 'monthly_target', 'is_active', 'warehouse_id', 'distributor_id', 'created_at');
 
             return DataTables::of($sales)
                 ->addIndexColumn()
@@ -49,6 +49,19 @@ class SalesController extends Controller
                 ->filterColumn('hub', function ($query, $keyword) {
                     $query->whereHas('warehouse', fn ($q) => $q->where('name', 'like', '%' . $keyword . '%'));
                 })
+                // Sales milik distributor (diinput distributor dari menu Data Sales); kosong = sales perusahaan.
+                ->addColumn('distributor', function ($sale) {
+                    return $sale->ownerDistributor
+                        ? e($sale->ownerDistributor->name) . ' <span class="label label-info">' . e($sale->ownerDistributor->distributor_sales_code) . '</span>'
+                        : '<span class="text-muted">-</span>';
+                })
+                ->filterColumn('distributor', function ($query, $keyword) {
+                    $query->whereHas('ownerDistributor', fn ($q) => $q->where('name', 'like', '%' . $keyword . '%'));
+                })
+                // Email internal sales distributor (diisi otomatis bila email dikosongkan) tidak ditampilkan.
+                ->editColumn('email', function ($sale) {
+                    return $sale->hasInternalEmail() ? '-' : $sale->email;
+                })
                 ->editColumn('phone', function ($sale) {
                     return $sale->phone ?: '-';
                 })
@@ -58,7 +71,7 @@ class SalesController extends Controller
                 ->editColumn('created_at', function ($sale) {
                     return $sale->created_at->format('d M Y');
                 })
-                ->rawColumns(['action', 'status'])
+                ->rawColumns(['action', 'status', 'distributor'])
                 ->make(true);
         }
 
