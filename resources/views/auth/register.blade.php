@@ -109,7 +109,7 @@
                                     @endphp
                                     <p class="mb-10 font-sm" style="color: #6A1B1B;">Mendaftar sebagai <strong>{{ $registerType === 'outlet' ? 'Outlet' : 'Subdist' }}</strong></p>
                                     <div class="form-group mb-20">
-                                        <label class="font-xs text-muted mb-5" for="referral_distributor_name">Distributor</label>
+                                        <label class="font-xs text-muted mb-5" for="referral_distributor_name">Nama Distributor</label>
                                         <input type="text" id="referral_distributor_name" value="{{ $referringDistributor->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
                                         @error('distributor_code')
                                             <span class="text-danger small">{{ $message }}</span>
@@ -117,7 +117,7 @@
                                     </div>
                                     @if($referralSales)
                                     <div class="form-group mb-20">
-                                        <label class="font-xs text-muted mb-5" for="referral_sales_name">Sales</label>
+                                        <label class="font-xs text-muted mb-5" for="referral_sales_name">Nama Sales</label>
                                         <input type="text" id="referral_sales_name" value="{{ $referralSales->name }}" readonly tabindex="-1" style="{{ $readonlyStyle }}" />
                                     </div>
                                     @endif
